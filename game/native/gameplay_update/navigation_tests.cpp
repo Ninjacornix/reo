@@ -28,9 +28,43 @@ reo::native::gameplay_collision::response::Grid empty_walls(){
     put(8,1000);put(12,1000);put(16,1);put(20,1);put(32,32);put(36,44);put(40,36);put(44,0xffffffff);
     return reo::native::gameplay_collision::response::Grid::import(std::as_bytes(std::span(bytes)));
 }
+std::shared_ptr<const n::Asset> chain_asset(bool malformed_unused){
+    constexpr unsigned count=8,node_base=44,tail=node_base+64*count+4*count*count,directory=tail+8;
+    std::vector<std::uint8_t> bytes(directory+64);
+    const auto put=[&](unsigned at,unsigned value){for(unsigned i=0;i<4;++i)bytes[at+i]=std::uint8_t(value>>(8*i));};
+    put(0,0x20030724);put(4,12);put(8,16);put(16,1);bytes[20]=7;put(24,32);
+    put(32,tail-32);put(36,directory-32);put(40,count);
+    for(unsigned node=0;node<count;++node){
+        const auto at=node_base+64*node;bytes[at]=1;put(at+16,0xffffffff);
+        for(unsigned slot=0;slot<4;++slot){bytes[at+20+slot]=255;bytes[at+36+2*slot]=1;}
+        if(node+1<count){bytes[at+1]=1;bytes[at+20]=std::uint8_t(node+1);}
+    }
+    for(unsigned at=node_base+64*count;at<tail;++at)bytes[at]=255;
+    if(malformed_unused)bytes[node_base+64*7+20]=127;
+    n::ImportFailure failure;auto parsed=n::Asset::read(bytes,failure);check(bool(parsed));
+    return std::make_shared<const n::Asset>(std::move(*parsed));
+}
+void graph_owner_contracts(){
+    u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());
+    Notifications notifications;u::Owner owner(world,notifications);
+    const auto id=world.spawn_primary(0,std::make_unique<u::world::Actor>()).id;check(bool(id));
+    check(world.session().room_variants.store(7,0)&&world.navigation().bind(chain_asset(false)));
+    n::RouteOutput output{-22,-23,{1,2,3},{4,5,6},1234};
+    const auto graph=owner.bounded_navigation_route(id,7,0,7,output,4096);
+    check(graph.status==n::QueryStatus::completed&&graph.used_graph_solver&&graph.selected==1&&output.first==1&&output.second==2&&output.cost==7);
+    check(graph.considered_edges<=4096&&graph.graph_vertex_scans<=2*8*8&&graph.graph_admission_checks==4*8);
+    std::int16_t link=314;const auto local=owner.local_navigation_route(id,7,0,7,2,output,link,4096);
+    check(local.status==n::QueryStatus::completed&&local.used_graph_solver&&local.considered_edges==graph.considered_edges&&local.graph_vertex_scans==graph.graph_vertex_scans&&link==-1&&output.cost==7);
+    output={-22,-23,{1,2,3},{4,5,6},1234};const auto limited=owner.bounded_navigation_route(id,7,0,7,output,13);
+    check(limited.status==n::QueryStatus::unavailable&&limited.budget_exhausted&&!limited.used_graph_solver&&limited.considered_edges==13&&output.first==-22&&output.second==-23&&output.cost==1234);
+    check(world.navigation().bind(chain_asset(true)));const auto fallback=owner.bounded_navigation_route(id,7,0,7,output,4096);
+    check(fallback.status==n::QueryStatus::completed&&!fallback.used_graph_solver&&fallback.graph_admission_checks>0&&fallback.considered_edges<=4096&&fallback.selected==1&&output.second==2&&output.cost==7);
+    check(owner.close()==u::Status::completed&&world.close()==u::world::Status::completed);
+}
 }
 int main(){
     try{
+        graph_owner_contracts();
         u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());
         Notifications notifications;u::Owner owner(world,notifications);const auto id=world.spawn_primary(0,std::make_unique<u::world::Actor>()).id;check(bool(id));
         check(owner.admit_navigation_condition(id,7,0).status==n::QueryStatus::unavailable);

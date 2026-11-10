@@ -18,8 +18,8 @@ struct Graph {
             const auto& node=input.nodes()[from];
             // Any admitted direct target is a terminal recursive state: the
             // source overwrites earlier branch results and returns immediately.
-            if(direct[from]!=-1){const auto slot=std::size_t(direct[from]);add(from,destination,node.costs[slot]);}
-            else for(std::size_t slot=0;slot<4;++slot)if(admitted[from][slot])add(from,node.neighbors[slot],node.costs[slot]);
+            if(direct[from]!=-1){++result.construction_checks;const auto slot=std::size_t(direct[from]);add(from,destination,node.costs[slot]);}
+            else for(std::size_t slot=0;slot<4;++slot){++result.construction_checks;if(admitted[from][slot])add(from,node.neighbors[slot],node.costs[slot]);}
         }
     }
     std::array<std::uint32_t,128> distances(std::int32_t exclude,std::int32_t second=-1)noexcept{
@@ -63,6 +63,7 @@ GraphCostResult graph_cost_route(const Bank& bank,std::uint32_t room,std::int32_
     else{
         query.build();const auto distance=query.distances(source);const auto& root=graph->nodes()[std::size_t(source)];
         for(std::size_t slot=0;slot<4;++slot){
+            ++result.selection_checks;
             if(!query.admitted[std::size_t(source)][slot])continue;
             const auto next=root.neighbors[slot];
             // Root direct target chooses its node but leaves earlier best cost
@@ -76,6 +77,7 @@ GraphCostResult graph_cost_route(const Bank& bank,std::uint32_t room,std::int32_
                 const auto terminal=query.direct[std::size_t(source)];
                 if(terminal!=-1)remaining=root.costs[std::size_t(terminal)];
                 else for(std::size_t branch=0;branch<4;++branch){
+                    ++result.selection_checks;
                     if(!query.admitted[std::size_t(source)][branch])continue;
                     const auto child=root.neighbors[branch];if(child==source||distance[std::size_t(child)]==infinity)continue;
                     const auto cost=std::uint32_t(root.costs[branch])+distance[std::size_t(child)];if(cost<remaining)remaining=cost;
@@ -90,6 +92,7 @@ GraphCostResult graph_cost_route(const Bank& bank,std::uint32_t room,std::int32_
             else{
                 const auto child_distance=query.distances(source,owner);const auto& child=graph->nodes()[std::size_t(owner)];std::uint32_t child_best=infinity;
                 for(std::size_t slot=0;slot<4;++slot){
+                    ++result.selection_checks;
                     if(!query.admitted[std::size_t(owner)][slot])continue;
                     const auto next=child.neighbors[slot];if(next==source||next==owner)continue;
                     const auto remaining=child_distance[std::size_t(next)];if(remaining==infinity)continue;

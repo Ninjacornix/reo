@@ -41,6 +41,11 @@ Evidence is sealed by
 817170 bodies are word-audited against the pinned overlay and execute only in
 the reference fixture. Native runtime code uses typed state and no guest RAM.
 
+The later [graph adoption](NAVIGATION_COST_GRAPH_RESEARCH.md) supersedes the
+retail cost-work admission count above. Sampled local queries now complete within
+the native4096-edge budget through actual Owner APIs. Original-comparison limits
+remain explicit; this is not installed native gameplay acceptance.
+
 Next are cross-room link collection/traversal and the actual actor destination/
 AI consumers. Wider work/content admission, real loading, semantic saves and
 coherent native game installation/acceptance are still required for Stage4.

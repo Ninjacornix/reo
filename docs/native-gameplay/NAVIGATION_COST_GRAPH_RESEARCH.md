@@ -1,14 +1,14 @@
 # Bounded cost-route graph candidate: proof and remaining checks
 
-2026-11-10. Bounded candidate component qualified. The existing bounded
-depth-first cost API remains selected. This document does not close a Stage4
-gate or claim a measured game slowdown fix. Installed gameplay remains V39.
+2026-11-10. Bounded graph formulation and actual cost/local/Owner API adoption
+qualified. The installed game remains V39. No measured slowdown fix or Stage4
+completion is claimed.
 
 `graph_cost_route` requires all four edge predicates at every authored node to
 be known for the same immutable, serialized query snapshot. Otherwise it returns
 unavailable without changing route outputs. That is more conservative than the
-existing path-dependent admission, so any later adoption must preserve its
-existing bounded fallback rather than treating whole-graph refusal as no path.
+path-dependent admission. The cost API preserves bounded enumeration as fallback
+instead of treating whole-graph refusal as no path.
 
 The graph reformulation follows these source properties:
 
@@ -62,9 +62,31 @@ pass. Evidence: `build-native-sjuni/navigation-graph-{llvm,gcc}-v6/receipt.json`
 matching `navigation-graph-parent-*-v3.log`/`navigation-graph-tests-*-v3.log`
 and `tools/native_reconstruction/native_navigation_cost_graph_qualification_v1.json`.
 
-Before adoption: preserve low-budget/root-direct behavior, honest work accounting
-and bounded fallback for unknown graph records, then requalify actual local/Owner
-consumers. Keep complete original matches distinct from the3391 bounded reference
-contexts; a graph proof is not a captured game test. Existing initialized-cost,
-authored-condition, actual scene loading and coherent gameplay acceptance gates
-remain. The candidate is not yet selected by the route API or installed game.
+The subsequent adoption cohort preserves first-direct and small-budget behavior,
+counts graph admission, construction, relaxation and selection work, and requires
+a conservative16*N+28 edge budget before dispatch. Vertex scans have a separate
+2*N*N bound. Unknown graph preparation commits no output and the original native
+enumeration continues within the remaining budget. Actual Owner tests exercise an
+eight-node chain, local API metadata, budget13 refusal, and successful fallback
+when only an unused target node's outgoing slot is malformed.
+
+Both compilers pass63898732 identical checks. All20004 sampled retail cost
+queries and sampled local queries complete without budget refusals. The old
+enumeration baseline remains separate (16378 complete,3626 budget refusals).
+Actual cost/local API graph uses total75833/9561; observed maxima are688 edge
+inspections and5151 vertex scans. Completed original comparisons total82085 cost
+API calls,56772 local calls and753667 separately exercised graph calls.
+
+The shared extended-original allowance completes157 cost API,156 local and one
+guard self-test call.3469 cost and3256 local contexts remain source-unverified
+at the recorded limits. These repeated function contexts are not unique incidents;
+their exact identities are in the hashed receipts. This cohort's limits differ
+from the earlier candidate-only cohort because it verifies both actual APIs.
+
+Both parent builds and ten integration tests pass. The first LLVM CTest launch
+lacked its compiler runtime DLL directory and executed no tests; rerunning with
+the matching PATH passes without source changes. Evidence is sealed by
+`native_navigation_cost_adoption_qualification_v1.json` (SHA256
+`01378069de863da3c0736b6cb83ea30474a17180c542b2aa20cb460eb3847abd`).
+Initialized-cost, authored-condition, full AI/movement, real scene loading,
+native saves and coherent gameplay installation/acceptance remain open.

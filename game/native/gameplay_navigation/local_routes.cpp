@@ -26,9 +26,9 @@ CostRouteResult local_route(const Bank& bank,std::uint32_t room,std::int32_t sou
     }
     destination_link=-1;
     if(result.selected!=-1){
-        const auto variant=bank.current_variant(room);if(!variant)return {QueryStatus::unavailable,-1,false,result.considered_edges,result.cost_written};
+        const auto variant=bank.current_variant(room);if(!variant){result.status=QueryStatus::unavailable;result.selected=-1;return result;}
         const auto link=find_admitted_link(bank,actor,std::int32_t(room),*variant,destination,room_flags);
-        if(link.status!=QueryStatus::completed)return {QueryStatus::unavailable,-1,false,result.considered_edges,result.cost_written};
+        if(link.status!=QueryStatus::completed){result.status=QueryStatus::unavailable;result.selected=-1;return result;}
         if(link.index)destination_link=std::int16_t(*link.index);
     }
     return result;

@@ -41,6 +41,11 @@ and actual Owner binary identities are sealed by
 the declared original zero/FF scratch-fill port; production has typed local
 state and no guest-addressed scratch memory.
 
+The later [graph adoption](NAVIGATION_COST_GRAPH_RESEARCH.md) supersedes the
+retail work-budget admission count above: all20004 sampled cost queries now
+complete through the actual API. Bounded original-comparison limits remain
+explicit, and installed V39 is unchanged.
+
 Next are outer/cross-room dispatch and actual actor destination/AI consumers,
 with redundant-work reduction and broader admission comparisons for the costly
 searches. The known r041 ordinal gate, remaining gameplay families, real asset

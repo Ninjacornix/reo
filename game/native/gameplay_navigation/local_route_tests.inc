@@ -2,12 +2,16 @@ std::uint64_t local_cases{},local_refusals{},local_budgets{},local_retail_refusa
 n::CostRouteResult compare_local(const n::Bank& bank,[[maybe_unused]] std::span<const std::uint8_t> bytes,n::ActorFacts facts,unsigned status,std::int32_t source,std::int32_t destination,std::uint16_t flags,unsigned policy,n::RouteOutput& output,std::int16_t& link,std::size_t maximum=65536,unsigned room=7){
     [[maybe_unused]] const auto before=output;[[maybe_unused]] const auto before_link=link;
     const auto result=n::local_route(bank,room,source,destination,facts,status,flags,policy,output,link,maximum);
+    if(result.used_graph_solver){++local_api_graph_cases;api_graph_work_maximum=std::max(api_graph_work_maximum,std::uint64_t(result.considered_edges));api_graph_vertex_maximum=std::max(api_graph_vertex_maximum,std::uint64_t(result.graph_vertex_scans));}
+    check(result.considered_edges<=maximum);
     if(result.status!=n::QueryStatus::completed){++local_refusals;if(result.budget_exhausted)++local_budgets;return result;}
 #ifdef REO_NAVIGATION_ORIGINAL
     std::copy(bytes.begin(),bytes.end(),memory.begin()+0x843780);const auto section=word(bytes,4);
     put(memory,0x83e540,word(bytes,section));put(memory,0x83e544,std::uint32_t(0x843780+section+4));
     const auto variant=bank.current_variant(room);check(bool(variant));memory[0x4b9d20+room]=*variant;
-    const auto graph=bank.room(room);check(bool(graph));source_graph(*graph,room);
+    const auto graph=bank.room(room);check(bool(graph));
+    const bool bounded_original=result.used_graph_solver&&graph->nodes().size()>6&&original_cost_needs_guard(bank,facts,status,room,source,destination,flags,before,maximum);
+    source_graph(*graph,room);
     const auto edge_flags=bank.edge_flags(room);check(bool(edge_flags));std::copy(edge_flags->begin(),edge_flags->end(),memory.begin()+0x1000000+word(graph->encoding(),0));
     for(unsigned i=0;i<128;++i)memory[0x83e550+164*room+0x14+i]=*bank.occupancy(room,i);
     constexpr unsigned actor=0xf00000,out=0x1d00000,stack=0x1f00000;
@@ -18,7 +22,11 @@ n::CostRouteResult compare_local(const n::Bank& bank,[[maybe_unused]] std::span<
     put(memory,stack,out+28);put(memory,stack+8,out+32);put(memory,stack+16,policy);
     R5900Context context;PS2Runtime runtime;context.pc=0x817db0;
     const std::array<unsigned,8> args{actor,room,std::uint32_t(source),std::uint32_t(destination),out,out+1,out+4,out+16};for(unsigned i=0;i<args.size();++i)SET_GPR_U32(&context,4+i,args[i]);
-    SET_GPR_U32(&context,29,stack);SET_GPR_U32(&context,31,0x100);reference_cost_address=out+28;reference_cost_written=false;original_transform_port(memory.data(),&context,&runtime);
+    SET_GPR_U32(&context,29,stack);SET_GPR_U32(&context,31,0x100);reference_cost_address=out+28;reference_cost_written=false;
+    reference_cost_recursions=0;reference_cost_recursion_limit=bounded_original?16384:0;
+    try{original_transform_port(memory.data(),&context,&runtime);}
+    catch(const OriginalCostLimit& limit){record_original_cost_limit(bank,facts,status,room,source,destination,flags,1,limit);return result;}
+    reference_cost_recursion_limit=0;if(bounded_original){++graph_original_extended;++original_extended_by_kind[1];}
     check(result.cost_written==reference_cost_written);reference_cost_address=0;
     check(context.pc==0x100&&GPR_U32(&context,29)==stack&&std::int32_t(result.selected)==std::bit_cast<std::int32_t>(GPR_U32(&context,2)));
     check(output.first==std::bit_cast<std::int8_t>(memory[out])&&output.second==std::bit_cast<std::int8_t>(memory[out+1]));

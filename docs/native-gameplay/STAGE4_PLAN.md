@@ -68,11 +68,13 @@ The current resource and inventory implementation includes:
   empty geometry, not retail room acceptance. The actual Owner publishes the
   audited812540 entry-prefix current node; the rest of that AI caller, scene
   loading, broader admission, saves and installation remain open.
-- [Bounded cost graph candidate](NAVIGATION_COST_GRAPH_RESEARCH.md) now has
-  753902 completed original comparisons per compiler and admits all20004 sampled
-  retail queries.3391 extended source contexts remain limited and separately
-  identified; the current cost API still selects depth-first routing. Adoption,
-  current local/Owner validation and native game acceptance remain open.
+- [Bounded cost graph adoption](NAVIGATION_COST_GRAPH_RESEARCH.md) now supplies
+  actual cost/local/Owner consumers, preserving first-direct, low-budget and
+  unknown-graph fallback behavior. Both compilers pass63898732 identical checks
+  and ten parent tests. All20004 sampled retail cost queries and sampled local
+  queries complete within their native work budget.6725 repeated cost/local
+  source contexts remain limited and separately identified. Full AI/movement,
+  actual loading, semantic saves and native game acceptance remain open.
 
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.

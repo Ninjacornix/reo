@@ -1,4 +1,5 @@
 #include "cost_routes.hpp"
+#include "cost_graph.hpp"
 namespace reo::native::gameplay_navigation {
 namespace {
 struct FollowCost {QueryStatus status{QueryStatus::completed};float cost{10000};std::int32_t immediate{-1};};
@@ -32,13 +33,14 @@ struct Search {
     }
 };
 }
-CostRouteResult bounded_cost_route(const Bank& bank,std::uint32_t room,std::int32_t source,std::int32_t destination,
-    ActorFacts actor,std::uint32_t actor_status,std::optional<std::uint16_t> room_flags,RouteOutput& output,std::size_t maximum_edges)noexcept{
+static CostRouteResult cost_route_impl(const Bank& bank,std::uint32_t room,std::int32_t source,std::int32_t destination,
+    ActorFacts actor,std::uint32_t actor_status,std::optional<std::uint16_t> room_flags,RouteOutput& output,std::size_t maximum_edges,bool allow_graph)noexcept{
     const auto graph=bank.room(room);
     if(!graph||source<0||destination<0||std::size_t(source)>=graph->nodes().size()||std::size_t(destination)>=graph->nodes().size())return {};
     Search search{bank,*graph,room,destination,actor,actor_status,room_flags,maximum_edges};
+    bool graph_attempted=false;std::size_t preparation{};
     float best=10000;std::int32_t selected=-1,secondary=-1;
-    const auto unavailable=[&]{return CostRouteResult{QueryStatus::unavailable,-1,search.exhausted,search.considered};};
+    const auto unavailable=[&]{return CostRouteResult{QueryStatus::unavailable,-1,search.exhausted,search.considered,false,false,0,preparation};};
     if(source==destination)selected=source;
     else{
         const auto& node=graph->nodes()[std::size_t(source)];
@@ -52,6 +54,23 @@ CostRouteResult bounded_cost_route(const Bank& bank,std::uint32_t room,std::int3
             // Retain an earlier candidate's best cost and secondary when this
             // later direct-target branch exits; neither is reset by the source.
             if(next==destination){selected=next;break;}
+            // Keep tiny-budget and first-direct behavior unchanged. A complete
+            // graph solve uses at most16*N+28 edge inspections including this
+            // root probe; the independent vertex scan bound is2*N*N. Extra
+            // root-self selection checks are included in that conservative cap.
+            if(allow_graph&&!graph_attempted&&maximum_edges>=16*graph->nodes().size()+28){
+                graph_attempted=true;auto candidate=output;
+                const auto solved=graph_cost_route(bank,room,source,destination,actor,actor_status,room_flags,candidate);
+                preparation=solved.admission_checks;
+                const auto work=solved.admission_checks+solved.construction_checks+solved.relaxations+solved.selection_checks;
+                search.considered+=work;
+                if(solved.status==QueryStatus::completed){
+                    output=candidate;return {QueryStatus::completed,solved.selected,false,search.considered,solved.cost_written,true,solved.vertex_scans,preparation};
+                }
+                // Pure preparation changed no caller state. Unknown graph data
+                // can still have an admitted original path; enumerate that path
+                // within the remaining honest work budget rather than no-path.
+            }
             search.scratch.fill(-1);search.scratch[std::size_t(source)]=1;
             const auto child=search.follow(next,float(node.costs[slot]),0);
             if(child.status!=QueryStatus::completed)return unavailable();
@@ -63,6 +82,14 @@ CostRouteResult bounded_cost_route(const Bank& bank,std::uint32_t room,std::int3
     output.first_position=graph->nodes()[std::size_t(output.first)].position;
     output.second_position=graph->nodes()[std::size_t(output.second)].position;
     if(selected!=-1)output.cost=best;
-    return {QueryStatus::completed,std::int8_t(selected),false,search.considered,selected!=-1};
+    return {QueryStatus::completed,std::int8_t(selected),false,search.considered,selected!=-1,false,0,preparation};
+}
+CostRouteResult bounded_cost_route(const Bank& bank,std::uint32_t room,std::int32_t source,std::int32_t destination,
+    ActorFacts actor,std::uint32_t status,std::optional<std::uint16_t> flags,RouteOutput& output,std::size_t maximum)noexcept{
+    return cost_route_impl(bank,room,source,destination,actor,status,flags,output,maximum,true);
+}
+CostRouteResult enumerated_cost_route(const Bank& bank,std::uint32_t room,std::int32_t source,std::int32_t destination,
+    ActorFacts actor,std::uint32_t status,std::optional<std::uint16_t> flags,RouteOutput& output,std::size_t maximum)noexcept{
+    return cost_route_impl(bank,room,source,destination,actor,status,flags,output,maximum,false);
 }
 }
