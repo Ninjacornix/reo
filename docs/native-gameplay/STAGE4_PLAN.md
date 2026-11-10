@@ -97,6 +97,12 @@ The current resource and inventory implementation includes:
   wording. Full initialization, observations, goal/action dispatch and actual
   gameplay installation remain open.
 
+- [AI control requests](AI_CONTROL_REQUESTS.md) now supply complete registration,
+  lookup and four-byte request publication through the canonical Session and
+  actual Actor Owner. Both compilers pass30579888 comparison checks and twelve
+  parent tests. Service/acknowledgement/reset, full initialization and native
+  gameplay acceptance remain open; queued does not claim delivered.
+
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.
 - [Placed-resource collisions](RESOURCE_COLLISIONS.md) through the shared128

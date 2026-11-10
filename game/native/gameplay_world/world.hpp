@@ -11,6 +11,7 @@
 #include "../gameplay_session/room_variants.hpp"
 #include "../gameplay_navigation/actor_routes.hpp"
 #include "../gameplay_ai/execution.hpp"
+#include "../gameplay_ai/control_requests.hpp"
 #include <array>
 #include <memory>
 #include <optional>
@@ -155,6 +156,7 @@ struct Session : actors::HitSession {
     // Authored primary population count, source4BAEA0. Unknown is not zero;
     // storage/registration and the active byte remain independent concepts.
     std::optional<std::uint32_t> primary_population;
+    gameplay_ai::ControlRequests ai_control_requests;
 };
 struct Profile {
     std::vector<input::Remap> layouts;

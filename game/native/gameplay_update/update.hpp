@@ -194,6 +194,8 @@ public:
     gameplay_ai::Status set_ai_goal(const world::actors::EntityId&,std::uint32_t);
     gameplay_ai::Status set_ai_action(const world::actors::EntityId&,std::uint32_t);
     gameplay_ai::Status select_ai_weight_profile(const world::actors::EntityId&,std::int32_t);
+    std::optional<gameplay_ai::RegistrationStatus> register_ai_control(const world::actors::EntityId&);
+    std::optional<gameplay_ai::RequestResult> publish_ai_control(const world::actors::EntityId&,std::uint32_t);
 private:
     world::World& world_;
     tasks::Scheduler linked_;

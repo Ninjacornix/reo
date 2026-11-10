@@ -1,0 +1,116 @@
+{
+  "schema": 1,
+  "status": "qualified native AI control registration and request producers",
+  "game_launched": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_ai/execution.cpp": "7fcbbd7e464c86ed235701065f9845261b409992c6b0d84590741dab1b7a9b83",
+    "game/native/gameplay_ai/execution_tests.cpp": "b10d04ac644fb2204fc6423dd07af90d7ba5b65e473b2d8602b5b55258d057a1",
+    "game/native/gameplay_ai/execution.hpp": "873cd86d04e277b3fe3cf96ab351e21e46c46d5bdc206f50f0881e4bca77e6fa",
+    "game/native/gameplay_ai/weight_profiles.inc": "b6158eee9573adaa82548e76608a794bf92eccacabc541ee113868718364782e",
+    "game/native/gameplay_ai/CMakeLists.txt": "157c592fb9077d8d59c0bd1f4cd087825dd6d0e1540e6a105f740325e42f41ed",
+    "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f",
+    "tools/native_reconstruction/verify_gameplay_ai.py": "26ce80afd6ba6a1ef59272890e040126b48b5e60eaea88427942ef64062e5039",
+    "tools/native_reconstruction/generate_ai_weight_profiles.py": "46e5b86cd93ca0d1561a055e07084288a0ae62229714ff10424eb3003e4fe80e",
+    "recomp/config/output_ovl/o9/o9_008123E0_0x8123e0.cpp": "d81aaf5f7dbc114a3985e23d69dc0e06fc3008750f2c7043368b332dce29c135",
+    "recomp/config/output_ovl/o9/o9_00813380_0x813380.cpp": "4507f274a78e8f59879844a8ab8a7536e44636286c240a66adb8743023794f4b",
+    "recomp/config/output_ovl/o9/o9_0081A6E0_0x81a6e0.cpp": "8393d28752aac2e131843a77d47c4a1c05edc294958476d2bcd3ec4253ed3eb2",
+    "recomp/config/output_ovl/o9/o9_0081A6F0_0x81a6f0.cpp": "4fed2445c053912fa77ba147e5829bfed867ccbaa3769878e561213ed595a5c1",
+    "recomp/config/output_ovl/o9/o9_00814B30_0x814b30.cpp": "90e5162903fb67c9e648de30eecacc85d1c3b7d62205774433f85e3b639a6cb0",
+    "recomp/config/output/sub_00107AB0_0x107ab0.cpp": "aec9b514abcb0c7125dc0dc54990acf0d1216b77af65d3d98c9c8c25891f973a",
+    "recomp/config/output_ovl/o2/o2_00681240_0x681240.cpp": "99ec606073978a10d48898537cc3a89a57174eb30245c242fe7f9a9f45f40f93",
+    "recomp/config/output_ovl/o2/o2_006812B0_0x6812b0.cpp": "dc728814093b53e0cce66ab92881f39373a07edaa00542ab451f5f8c7f8d6943",
+    "recomp/config/output_ovl/o2/o2_00681330_0x681330.cpp": "de10a83948649cb72205ffac40690bb361b6e1a06468a137e1ad32d9820ce66a",
+    "recomp/config/output_ovl/o2/o2_00681710_0x681710.cpp": "87e6c99c0b8a3373f0f2f87200ce4ec25edabf2401fe2dbefd670cf342a1f9df",
+    "recomp/config/output_ovl/o2/o2_00681790_0x681790.cpp": "964f26f1bd7c2bd88f88d37094e7de4b2766cb3d84f607167beab282685e112e",
+    "recomp/config/output_ovl/o9/o9_00815DF0_0x815df0.cpp": "237e581f27198b7a77f955b2221c3f62aa4fd278d8a89aee84d6ef569fdaeb53",
+    "game/native/gameplay_ai/control_requests.cpp": "fda20a1dda7e3cec3a52789675ae1b73ade0ca8b970ebfa93f2c219de886f8aa",
+    "game/native/gameplay_ai/control_requests.hpp": "25c3bed8b8d25075c96f6a911b348af25fbeaf06af47a755a58a0da599c7b6f0",
+    "game/native/gameplay_ai/control_request_tests.inc": "a68009d696d71dd8191ffb864d477b48f6c2da606e45a9f1e3bd870858a7f5a3",
+    "game/native/CMakeLists.txt": "25e2b90f1e515db01e882c1a7f11ca2ba2927eae1061b9ac064bd34b82ba074a",
+    "game/native/gameplay_world/world.hpp": "53329e7e3c7b9e06edd72cbb1ff43de2a12c618a552aa4f8957edb75329d79e6",
+    "game/native/gameplay_update/ai.cpp": "446bf3e26eaa60e4b71997277168063cd8a74b81c766a6179f9483a150c5e089",
+    "game/native/gameplay_update/ai_tests.cpp": "ddecfddfdcab6fdc3be413b7e7e6ea880a6b40eeb6b1d737574186126273b754",
+    "game/native/gameplay_update/update.hpp": "c25278d9fb13d99700f51bd32eab65835aab9305c49216d6fc2db328b3d7e35a",
+    "game/native/gameplay_update/CMakeLists.txt": "bbb5d1b8f9ee5591e90a04d4c4f9aecd3b580210a17c44a836f50f42a625f752",
+    "tools/native_reconstruction/gameplay_update_sources.py": "f79399c83cb640f132bd9da13026a712e6eccf3e511c7d23af0d45872d53ce7a",
+    "tools/native_reconstruction/effect_work_sources.py": "2fb449d5c11db285ef8d07fc0612a9e075beca3eba1211c1dd238c66faef0586",
+    "tools/native_reconstruction/qualify_gameplay_ai_controls_v1.py": "589eff2cabe8f795f5e0b816f286cc2283dbde5b61833f8d32d937e618e93088"
+  },
+  "cohorts": {
+    "llvm": {
+      "path": "build-native-sjuni/gameplay-ai-control-llvm-v1/receipt.json",
+      "sha256": "9fd82dd17c10a5f8e67c33982a876721be4cab44292ee7007c077ed388d94150",
+      "observed": {
+        "checks": 30579888,
+        "goal_cases": 131072,
+        "action_cases": 131072,
+        "phase_cases": 256,
+        "finish_cases": 65536,
+        "profile_cases": 256,
+        "profile_refusals": 4,
+        "copies": 20,
+        "clears": 40,
+        "control_membership_cases": 64,
+        "control_register_cases": 152,
+        "control_unregister_cases": 44,
+        "control_lookup_cases": 18432,
+        "control_request_cases": 18432,
+        "control_publish_cases": 66
+      }
+    },
+    "gcc": {
+      "path": "build-native-sjuni/gameplay-ai-control-gcc-v1/receipt.json",
+      "sha256": "b3a19eddfde81b0a2777ab65bc3e8dd57f87800cb9a93e861449afad8ad2eba6",
+      "observed": {
+        "checks": 30579888,
+        "goal_cases": 131072,
+        "action_cases": 131072,
+        "phase_cases": 256,
+        "finish_cases": 65536,
+        "profile_cases": 256,
+        "profile_refusals": 4,
+        "copies": 20,
+        "clears": 40,
+        "control_membership_cases": 64,
+        "control_register_cases": 152,
+        "control_unregister_cases": 44,
+        "control_lookup_cases": 18432,
+        "control_request_cases": 18432,
+        "control_publish_cases": 66
+      }
+    }
+  },
+  "parent_checks": {
+    "build-native-sjuni/gameplay-ai-control-parent-llvm-v1.log": "2bb040edbbe68c37d871bc6f37a1b567836de97591df1008d29aae27a3d47b22",
+    "build-native-sjuni/gameplay-ai-control-tests-llvm-v1.log": "3919132d214d5266471024f5e9b568ef835e9aed3331261531c77ff571ab1b6d",
+    "build-native-sjuni/gameplay-ai-control-parent-gcc-v1.log": "40f5ea388b785262e5b8a1bd3fe00b3115427e48b5280f50aba2130f89c4ddc7",
+    "build-native-sjuni/gameplay-ai-control-tests-gcc-v1.log": "1a8c0b2f0ff75d6d0012b0dccaae8546e9f65b6d882be2c2d291f77e04a4a0b8"
+  },
+  "qualified_binaries": {
+    "build-native-sjuni/gameplay-native-llvm-v1/gameplay_update/gameplay_ai_owner_tests.exe": "5af93f87a3f4c48d328dfbdd50ee2b843a469060a4fcc7ecceace792d0663e71",
+    "build-native-sjuni/gameplay-native-llvm-v1/gameplay_update/libreo_native_gameplay_update.a": "3455c1aa8917d66487c4361f1f1643f4717bc66422adc9b89c79e12dbff68ed5",
+    "build-native-sjuni/gameplay-native-llvm-v1/gameplay_update/CMakeFiles/reo_native_gameplay_update.dir/ai.cpp.obj": "179cec84c14c9aaf7ca6f179808a1aa8d60c663a1107fa0db006e7a8b3259c6c",
+    "build-native-sjuni/gameplay-native-llvm-v1/gameplay_ai/gameplay_ai_tests.exe": "6825d1df9471f8c33f3fc90a12044ba1dccfbea3fb48bf59437745e647bb4169",
+    "build-native-sjuni/gameplay-native-llvm-v1/gameplay_ai/libreo_native_gameplay_ai.a": "5a88968cda9b217db8370b70e497ac13a08f6819252e0f908a250c2c3f4ace17",
+    "build-native-sjuni/gameplay-native-llvm-v1/gameplay_ai/CMakeFiles/reo_native_gameplay_ai.dir/control_requests.cpp.obj": "fbf1f9122268a0104b87767964ef87aff00b21590558794b3c38a8a6b58e87a3",
+    "build-native-sjuni/gameplay-native-gcc-v1/gameplay_update/gameplay_ai_owner_tests.exe": "71d3293ad86ace644848b61ae0bf0defb11007f0cb6b986bd006b7f3e1bcaab9",
+    "build-native-sjuni/gameplay-native-gcc-v1/gameplay_update/libreo_native_gameplay_update.a": "e25f52a9b896f2a35a681594f6d1fa73467a814a74c5c0c007c192e9cee6ee31",
+    "build-native-sjuni/gameplay-native-gcc-v1/gameplay_update/CMakeFiles/reo_native_gameplay_update.dir/ai.cpp.obj": "982a4cd2c4758d13739d4e02ba96e246eb523b10a26d621af63adb9015a7866e",
+    "build-native-sjuni/gameplay-native-gcc-v1/gameplay_ai/gameplay_ai_tests.exe": "97ffff8fc31b11dec308425ec8990baf441e3aaf1ec52ddfbaf5c733b11406a0",
+    "build-native-sjuni/gameplay-native-gcc-v1/gameplay_ai/libreo_native_gameplay_ai.a": "1ddeaf55b0b4006a6248e69404170ee5af1eb7151d66e5418a8bb2d1be0da279",
+    "build-native-sjuni/gameplay-native-gcc-v1/gameplay_ai/CMakeFiles/reo_native_gameplay_ai.dir/control_requests.cpp.obj": "c688fac65f3678e2925a5437a0e21703ccbf93a319eb8bef709d37eceaa517a2"
+  },
+  "prior_execution": {
+    "path": "tools/native_reconstruction/native_gameplay_ai_execution_qualification_v1.json",
+    "sha256": "9c508c4e2da02f72ee3c59baf5d7cc205f66ef7524dea673e0fefdb2a1203a2c"
+  },
+  "limitations": [
+    "Both compiler cohorts pass30579888 identical checks, including all prior goal/action/profile comparisons and complete681240/6812B0/681330/681710/681790/815DF0. Membership64, registration152, removal44, lookup18432, request18432 and actor-control publisher66 calls execute complete original bodies without new surroundings ports.",
+    "One Session-owned ControlRequests holds64 typed registrations and64 pending requests. Registration membership narrows kind/target to byte/signed halfword; request lookup compares full arguments against stored values. Selector-1 means FF; other selectors use low-byte+1 with wrapping. Registration preserves old phase/payload fields while replacing key/counters/owner tag; removal clears only original fields. Source projections compare changed and unchanged bytes.",
+    "Requests copy exactly four bytes and append only after a matching registration and capacity admission. Full and missing registration outcomes remain distinct; lookup occurs before the full check. Actor-control publication narrows its parameter to one byte followed by three zero bytes. Source full-capacity and duplicate/reuse cases compare without overwritten pending data.",
+    "Both parent builds and twelve integration tests pass. Actual Owner uses the canonical actor slot, checks identity/open state, and reaches the SAME Session queue for registration/publication. Tests distinguish actor slot5 from primary physical index0, reject foreign/retired identities and verify the copied payload.",
+    "This is a native producer/queue component, not an installed service loop or network transport. The service, acknowledgement/owner updates, reset/consumption and full AI initialization/observations/dispatch remain open. The queue currently exposes pending values for its future actual service consumer; no fabricated delivery or successful network send is claimed. Installed V39 and game speed remain unchanged; no game or slowdown test occurred."
+  ]
+}

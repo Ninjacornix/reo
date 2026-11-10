@@ -1,4 +1,5 @@
 #include "execution.hpp"
+#include "control_requests.hpp"
 #include <bit>
 #include <cstring>
 #include <fstream>
@@ -60,6 +61,7 @@ void compare(unsigned pc,std::uint32_t argument,ai::ExecutionState before){
 #endif
     if(pc==0x813380)++goal_cases;else if(pc==0x81a6e0)++action_cases;else if(pc==0x81a6f0)++phase_cases;else if(pc==0x814b30)++finish_cases;else ++profile_cases;
 }
+#include "control_request_tests.inc"
 }
 #ifdef REO_AI_ORIGINAL
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
@@ -88,6 +90,7 @@ int main(int argc,char** argv){
         // Full halfword gate:256 is nonzero, while65536 resets the goal.
         auto halfword=state(42);const auto previous=halfword.previous_goal;ai::set_goal(halfword,256);check(halfword.goal==256&&halfword.goal_refresh==0&&halfword.previous_goal==previous);
         ai::set_goal(halfword,65536);check(halfword.goal==0&&halfword.goal_refresh==1&&halfword.previous_goal==256);
-        std::cout<<"{\"checks\":"<<checks<<",\"goal_cases\":"<<goal_cases<<",\"action_cases\":"<<action_cases<<",\"phase_cases\":"<<phase_cases<<",\"finish_cases\":"<<finish_cases<<",\"profile_cases\":"<<profile_cases<<",\"profile_refusals\":"<<profile_refusals<<",\"copies\":"<<copies<<",\"clears\":"<<clears<<"}\n";
+        control_contracts();
+        std::cout<<"{\"checks\":"<<checks<<",\"goal_cases\":"<<goal_cases<<",\"action_cases\":"<<action_cases<<",\"phase_cases\":"<<phase_cases<<",\"finish_cases\":"<<finish_cases<<",\"profile_cases\":"<<profile_cases<<",\"profile_refusals\":"<<profile_refusals<<",\"copies\":"<<copies<<",\"clears\":"<<clears<<",\"control_membership_cases\":"<<control_membership_cases<<",\"control_register_cases\":"<<control_register_cases<<",\"control_unregister_cases\":"<<control_unregister_cases<<",\"control_lookup_cases\":"<<control_lookup_cases<<",\"control_request_cases\":"<<control_request_cases<<",\"control_publish_cases\":"<<control_publish_cases<<"}\n";
     }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
 }
