@@ -37,7 +37,7 @@ void reevaluation_owner(){
     u::scenario::SceneResources resources;
     const auto reference_id=world.spawn_primary(0,std::make_unique<u::world::Actor>()).id;
     const auto peer_id=world.spawn_primary(2,std::make_unique<u::world::Actor>()).id;
-    const auto self_id=world.spawn_primary(3,std::make_unique<u::world::Actor>()).id;
+    const auto self_id=world.spawn_primary(1,std::make_unique<u::world::Actor>()).id;
     auto reference=world.resolve(reference_id),peer=world.resolve(peer_id),self=world.resolve(self_id);check(reference&&peer&&self);
     self->slot=1;self->room=reference->room=7;peer->ai_execution.emplace();peer->ai_execution->goal=3;
     check(owner.reevaluate_ai_goal(self_id,resources).status==ai::Status::unavailable);
@@ -66,9 +66,30 @@ void reevaluation_owner(){
     reset();state.combined_weights.fill(0);state.combined_weights[3]=255;self->status=0x200;goal(2);
     for(unsigned winner:{5u,6u,7u,8u}){reset();state.combined_weights.fill(0);if(winner<8)state.combined_weights[winner]=255;const auto result=owner.reevaluate_ai_goal(self_id,resources);check(result.status==ai::Status::completed&&!result.goal_written&&state.goal==17&&state.observation_flags==0);}
     reset();self->status=8;goal(13);reset();self->motion_class=0x3b;goal(14);
+    reset();
+    self->motion_class = 0x3b;
+    auto dispatched = owner.dispatch_ai_goal(self_id, resources);
+    check(dispatched.status == ai::Status::completed && dispatched.selected == 14 &&
+          state.goal_parameters[0] == 9 && state.goal_parameters[1] == 180);
+    state.goal_parameters[0] = 0;
+    auto& random = world.session().random;
+    random.restore({1234, 4321, 99});
+    const auto random_before = random.state();
+    dispatched = owner.dispatch_ai_goal(self_id, resources);
+    check(dispatched.status == ai::Status::completed && dispatched.selected == 14 &&
+          state.goal_parameters[0] == 180 && state.goal_phases[1] == 1 &&
+          random.state().primary != random_before.primary);
+    self->motion_class = 0;
+    dispatched = owner.dispatch_ai_goal(self_id, resources);
+    check(dispatched.status == ai::Status::completed && dispatched.selected == 14 &&
+          state.goal == 0 && state.action == 0);
+    reset();
+    dispatched = owner.dispatch_ai_goal(self_id, resources);
+    check(dispatched.status == ai::Status::unavailable && dispatched.selected == 3 && state.goal == 3);
     reset();check(world.retire_primary(2)==u::world::actors::EntityStatus::completed);check(owner.reevaluate_ai_goal(self_id,resources).status==ai::Status::unavailable&&state.observation_flags==0);
     state.goal_refresh=0;check(owner.reevaluate_ai_goal(self_id,resources).status==ai::Status::completed);
-    check(world.retire_primary(3)==u::world::actors::EntityStatus::completed&&owner.reevaluate_ai_goal(self_id,resources).status==ai::Status::unavailable);
+    check(world.retire_primary(1)==u::world::actors::EntityStatus::completed&&owner.reevaluate_ai_goal(self_id,resources).status==ai::Status::unavailable);
+    check(!owner.dispatch_ai_goal(self_id, resources).selected);
     check(world.close()==u::world::Status::completed&&owner.reevaluate_ai_goal(reference_id,resources).status==ai::Status::unavailable&&owner.close()==u::Status::completed);
 }
 void reaction_owner(){

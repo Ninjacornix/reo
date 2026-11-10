@@ -150,6 +150,11 @@ The current resource and inventory implementation includes:
   caller, goal/action dispatch, live content binding, and game acceptance
   remain open.
 
+- [Direct AI goal dispatch](AI_GOAL_DISPATCH.md) connects reevaluation to native
+  goals 0, 6, and 14. Both compilers pass 131,841 original comparisons and
+  thirteen parent tests. The other callbacks, immediate redispatch, and the
+  live outer AI caller remain open.
+
 - [Target-cache scratch audit](TARGET_CACHE_SCRATCH_AUDIT.md) identifies controlled
   source inverse-sort dependence on unwritten scratch. Both compilers agree on
   48 profiles,192 strict runs and192 separate initialization-policy runs. This

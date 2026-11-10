@@ -84,9 +84,13 @@ void compare(unsigned pc,std::uint32_t argument,ai::ExecutionState before){
 #include "priority_goal_tests.inc"
 #include "reaction_tests.inc"
 #include "observation_gate_tests.inc"
+#include "goal_dispatch_tests.inc"
 }
 #ifdef REO_AI_ORIGINAL
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
+    if (context->pc == 0x813de0) reference_dispatched_goal = 0;
+    if (context->pc == 0x814b30) reference_dispatched_goal = 6;
+    if (context->pc == 0x815820) reference_dispatched_goal = 14;
     if(context->pc==0x1afe70)++activity_queries;
     if(context->pc==0x813380)++reference_goal_sets;
     if(context->pc==0x1aec80){check(GPR_U32(context,4)==1);++reference_random_draws;}
@@ -123,6 +127,7 @@ int main(int argc,char** argv){
         priority_goal_contracts();
         reaction_contracts();
         observation_gate_contracts();
+        goal_dispatch_contracts();
         std::cout<<'{';bool first=true;
         const auto emit=[&](const char* key,std::uint64_t value){if(!first)std::cout<<',';first=false;std::cout<<'"'<<key<<"\":"<<value;};
         emit("checks",checks);emit("goal_cases",goal_cases);emit("action_cases",action_cases);emit("phase_cases",phase_cases);emit("finish_cases",finish_cases);
@@ -135,6 +140,8 @@ int main(int argc,char** argv){
         emit("goal_resource_cases",goal_resource_cases);emit("target_busy_cases",target_busy_cases);emit("goal_reevaluation_cases",goal_reevaluation_cases);emit("goal_reevaluation_writes",goal_reevaluation_writes);emit("goal_reevaluation_refusals",goal_reevaluation_refusals);emit("goal_alias_cases",goal_alias_cases);
         emit("reaction_cases",reaction_cases);emit("reaction_random_draws",reaction_random_draws);emit("reaction_writes",reaction_writes);emit("reaction_refusals",reaction_refusals);
         emit("observation_blocked_cases",observation_blocked_cases);emit("observation_gate_cases",observation_gate_cases);emit("observation_gate_random_draws",observation_gate_random_draws);emit("observation_gate_admitted",observation_gate_admitted);emit("observation_gate_refusals",observation_gate_refusals);
+        emit("goal_dispatch_cases",goal_dispatch_cases);
+        emit("goal_dispatch_refusals",goal_dispatch_refusals);
         std::cout<<"}\n";
     }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
 }

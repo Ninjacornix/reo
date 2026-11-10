@@ -1,4 +1,5 @@
 #include "priority_goals.hpp"
+#include "reactions.hpp"
 #include "../gameplay_world/world.hpp"
 #include "../gameplay_scenario/scene_resources.hpp"
 #include "../gameplay_navigation/bank.hpp"
@@ -66,6 +67,51 @@ GoalReevaluated reevaluate_goal(gameplay_world::Actor& actor,const gameplay_worl
     case 3:return goal(actor_target_busy(actor)?2:5);
     case 4:return goal(1);
     default:return {Status::completed,false};
+    }
+}
+
+namespace {
+Status update_motion_goal(gameplay_world::Actor& actor, gameplay_session::Random& random) noexcept {
+    auto& state = *actor.ai_execution;
+    if (actor.motion_class != 0x3b) {
+        set_goal(state, 0);
+        set_action(state, 0);
+        return Status::completed;
+    }
+    if (!state.goal_phases[0]) {
+        state.goal_phases[0] = 1;
+        state.goal_parameters[0] = 10;
+        state.goal_parameters[1] = 180;
+    }
+    if (state.goal_parameters[0]) {
+        --state.goal_parameters[0];
+        return Status::completed;
+    }
+    state.goal_parameters[0] = state.goal_parameters[1];
+    const bool first_reaction = state.goal_phases[1] == 0;
+    if (first_reaction)
+        state.goal_phases[1] = 1;
+    return schedule_reaction(state, actor.character, first_reaction ? 2 : 3, random).status;
+}
+}
+
+GoalDispatched dispatch_goal(gameplay_world::Actor& actor, const gameplay_world::Actor* reference,
+    const gameplay_world::Actor* companion, const gameplay_navigation::Bank& bank,
+    const gameplay_scenario::SceneResources& resources, gameplay_session::Random& random) noexcept {
+    if (reevaluate_goal(actor, reference, companion, bank, resources).status != Status::completed)
+        return {};
+    auto& state = *actor.ai_execution;
+    const auto selected = state.goal;
+    switch (selected) {
+    case 0:
+        return {Status::completed, selected};
+    case 6:
+        finish_goal_six(state);
+        return {Status::completed, selected};
+    case 14:
+        return {update_motion_goal(actor, random), selected};
+    default:
+        return {Status::unavailable, selected};
     }
 }
 }
