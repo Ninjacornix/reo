@@ -1,17 +1,18 @@
 #include "behavior.hpp"
 #include "motion.hpp"
 #include <limits>
+#include <stdexcept>
 
 namespace reo::native::gameplay_world {
 BehaviorFrameServices::BehaviorFrameServices(Services& frame,BehaviorServices& behavior,
-    std::span<const std::int16_t> amounts):frame_(frame),behavior_(behavior),
-    hit_timer_amounts_(amounts.begin(),amounts.end()){}
+    std::span<const std::int16_t> amounts,ActivityPublication* publication):frame_(frame),behavior_(behavior),
+    hit_timer_amounts_(amounts.begin(),amounts.end()),publication_(publication){}
 BehaviorFrameServices::BehaviorFrameServices(Services& frame,BehaviorServices& behavior,
-    const gameplay_collision::response::Grid& floors,std::span<const std::int16_t> amounts):
-    BehaviorFrameServices(frame,behavior,amounts){floors_=&floors;}
+    const gameplay_collision::response::Grid& floors,std::span<const std::int16_t> amounts,ActivityPublication* publication):
+    BehaviorFrameServices(frame,behavior,amounts,publication){floors_=&floors;}
 void BehaviorFrameServices::begin_offline_frame(World& w){frame_.begin_offline_frame(w);}
 void BehaviorFrameServices::run(Stage stage,World& w,Actor& a){
-    if(stage==Stage::update_behavior)update_behavior(w,a,behavior_,hit_timer_amounts_,floors_);
+    if(stage==Stage::update_behavior)update_behavior(w,a,behavior_,hit_timer_amounts_,floors_,publication_);
     else frame_.run(stage,w,a);
 }
 bool BehaviorFrameServices::remote_motion(World& w,Actor& a){return frame_.remote_motion(w,a);}
@@ -20,7 +21,7 @@ void BehaviorFrameServices::switch_grid(World& w,std::int32_t next,std::int32_t 
 float BehaviorFrameServices::grid_response(World& w,std::uint8_t grid){return frame_.grid_response(w,grid);}
 void update_behavior(World& w,Actor& a,BehaviorServices& services,
                      std::span<const std::int16_t> hit_timer_amounts,
-                     const gameplay_collision::response::Grid* floors){
+                     const gameplay_collision::response::Grid* floors,ActivityPublication* publication){
     auto& s=w.session();
     if(floors){sample_surface(a,*floors);resolve_surface(a,*floors);}
     else{
@@ -52,7 +53,9 @@ void update_behavior(World& w,Actor& a,BehaviorServices& services,
                 else if(!services.suppress_action_notice(w,a,s.previous_primary,s.previous_secondary))
                     services.publish(a,s,1);
             }
-            services.run(BehaviorStage::activity_notice,w,a);
+            if(publication){
+                if(!publication->publish_activity(w,a))throw std::runtime_error("Native actor activity publication unavailable");
+            }else services.run(BehaviorStage::activity_notice,w,a);
         }
     }
     a.status&=0xff7fffffu;a.auxiliary_status&=0xfffefeffu;

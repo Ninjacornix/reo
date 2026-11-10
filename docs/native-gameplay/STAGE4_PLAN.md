@@ -78,8 +78,10 @@ The current resource and inventory implementation includes:
   and installation remain open.
 - [Actor state and periodic publication](ACTOR_STATE_MESSAGES.md) supplies
   selector2, its actual primary/substate and selected-gauge helpers, and664F60's
-  clock/slot gate. The Owner facade uses its bound simulation clock. BAC writers
-  and import, outer behavior binding, transport and installation remain open.
+  clock/slot gate. The [actual behavior composition](ACTOR_ACTIVITY_PUBLICATION.md)
+  now binds World/frame/behavior through the UpdateOwner's same actor identity
+  and clock. BAC writers/import, other behavior frontiers, transport and
+  installation remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;

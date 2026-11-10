@@ -75,3 +75,10 @@ including preservation when no snapshot occurs. Both compilers pass 32,768
 cases and 2,562,408 ordered trace words. Status/hit child effects retain their
 separate declared provider scope. Evidence:
 [behavior qualification v2](../../tools/native_reconstruction/native_gameplay_behavior_qualification_v2.json).
+
+The subsequent [activity-publication composition](ACTOR_ACTIVITY_PUBLICATION.md)
+replaces the activity provider when supplied the actual native UpdateOwner.
+It invokes the real periodic/state publisher through the canonical actor and
+clock, preserving partial failure before secondary action dispatch. The same
+current behavior still compares against the complete original on both compilers.
+Other behavior providers and game installation remain open.

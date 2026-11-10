@@ -19,23 +19,35 @@ public:
     virtual bool suppress_action_notice(World&,Actor&,std::uint8_t previous_primary,
                                         std::uint8_t previous_secondary)=0;
 };
+// Actual activity-notice consumer, borrowed for a synchronous behavior pass.
+// A false result stops this pass and retains mutations preceding publication.
+class ActivityPublication {
+public:
+    virtual ~ActivityPublication()=default;
+    virtual bool publish_activity(World&,Actor&)noexcept=0;
+};
 // Operates directly on the canonical World actor/session. Timers, status and
 // pending hits use their qualified native cores; other providers remain explicit.
 // Throws leave a partial invocation, exactly as World service failures do.
 void update_behavior(World&,Actor&,BehaviorServices&,std::span<const std::int16_t> hit_timer_amounts,
-                     const gameplay_collision::response::Grid* native_floors=nullptr);
+                     const gameplay_collision::response::Grid* native_floors=nullptr,
+                     ActivityPublication* publication=nullptr);
 // Actual primary-frame consumer of update_behavior. The remaining frame ports
 // and behavior effects are borrowed synchronous owners and must outlive this
 // adapter; a supplied native floor owner must also outlive it. Timer content is
 // copied so callers cannot leave a dangling span. Without that owner both
 // surface operations remain explicit required BehaviorServices effects.
+// A supplied activity publication owner must likewise outlive this adapter;
+// otherwise the activity stage remains an explicit required behavior effect.
 class BehaviorFrameServices final : public Services {
 public:
     BehaviorFrameServices(Services& frame,BehaviorServices& behavior,
-                          std::span<const std::int16_t> hit_timer_amounts);
+                          std::span<const std::int16_t> hit_timer_amounts,
+                          ActivityPublication* publication=nullptr);
     BehaviorFrameServices(Services& frame,BehaviorServices& behavior,
                           const gameplay_collision::response::Grid& floors,
-                          std::span<const std::int16_t> hit_timer_amounts);
+                          std::span<const std::int16_t> hit_timer_amounts,
+                          ActivityPublication* publication=nullptr);
     void begin_offline_frame(World&)override;
     void run(Stage,World&,Actor&)override;
     bool remote_motion(World&,Actor&)override;
@@ -47,5 +59,6 @@ private:
     BehaviorServices& behavior_;
     std::vector<std::int16_t> hit_timer_amounts_;
     const gameplay_collision::response::Grid* floors_{};
+    ActivityPublication* publication_{};
 };
 } // namespace reo::native::gameplay_world

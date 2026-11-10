@@ -6,6 +6,7 @@
 #include "../gameplay_events/statistics.hpp"
 #include "completion_conditions.hpp"
 #include "scenario_publication.hpp"
+#include "../gameplay_world/behavior.hpp"
 
 namespace reo::native::gameplay_update {
 namespace tasks=gameplay_tasks;
@@ -63,7 +64,7 @@ struct Result {
     bool completion_checked{};
     gameplay_events::Recorded completion;
 };
-class Owner final:public world::actors::StatusTiming,private scenario::FlagNotifications {
+class Owner final:public world::actors::StatusTiming,public world::ActivityPublication,private scenario::FlagNotifications {
 public:
     // Borrowed native world and notification target must outlive this owner.
     Owner(world::World&,scenario::FlagNotifications&,std::shared_ptr<const gameplay_events::RuleBook> = gameplay_events::RuleBook::file1(),GameplayMessageSink* = nullptr);
@@ -106,6 +107,11 @@ public:
     PublicationStatus record_periodic_actor_state(const world::actors::EntityId& actor)noexcept{
         if(!open())return PublicationStatus::unavailable;
         return publication_.periodic_actor_state(actor);
+    }
+    bool publish_activity(world::World& source,world::Actor& actor)noexcept override{
+        if(&source!=&world_)return false;
+        const auto id=world_.identity_of(actor);if(!id)return false;
+        return record_periodic_actor_state(id)==PublicationStatus::completed;
     }
     PublicationStatus clear_actor_status(const world::actors::EntityId& id,std::uint32_t selector)noexcept{
         if(!open())return PublicationStatus::unavailable;

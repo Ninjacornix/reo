@@ -49,3 +49,8 @@ Nine of sixteen actor branches are admitted, including two intentional
 no-message cases. Selectors1/3/5/6/8/9/11, gauge writers/import, outer behavior
 binding, final transport and semantic native World save/load remain open.
 Coherent game installation and representative acceptance are still required.
+
+Follow-up: [behavior activity publication](ACTOR_ACTIVITY_PUBLICATION.md) now
+binds that outer activity stage through the native World/frame/behavior and
+UpdateOwner. The earlier qualification above remains unchanged; the game itself
+is still onV39 and has not installed this composition.
