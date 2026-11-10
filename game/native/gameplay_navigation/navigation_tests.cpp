@@ -4,6 +4,7 @@
 #include "edges.hpp"
 #include "routes.hpp"
 #include "cost_routes.hpp"
+#include "cost_graph.hpp"
 #include "local_routes.hpp"
 #include "link_collection.hpp"
 #include "cross_room.hpp"
@@ -56,6 +57,8 @@ std::vector<std::uint8_t> synthetic(){
 n::Asset imported(const std::vector<std::uint8_t>& bytes){n::ImportFailure why;auto asset=n::Asset::read(bytes,why);check(bool(asset)&&why.reason==n::ImportError::none);return std::move(*asset);}
 #ifdef REO_NAVIGATION_ORIGINAL
 std::uint32_t reference_cost_address{};bool reference_cost_written{};
+struct OriginalCostLimit {bool global{};};
+std::size_t reference_cost_recursion_limit{},reference_cost_recursions{};
 std::vector<std::uint8_t> memory(0x2000000);
 std::uint32_t call(unsigned pc,std::array<unsigned,4> args={}){
     R5900Context context;PS2Runtime runtime;context.pc=pc;SET_GPR_U32(&context,29,0x1f00000);SET_GPR_U32(&context,31,0x100);
@@ -294,6 +297,7 @@ void edge_contracts(){
 }
 #include "ranked_route_tests.inc"
 #include "cost_route_tests.inc"
+#include "cost_graph_tests.inc"
 #include "local_route_tests.inc"
 #include "link_collection_tests.inc"
 #include "cross_room_tests.inc"
@@ -375,6 +379,20 @@ void owned(const char* path){
                 n::RouteOutput cost_output{-22,-23,{1,2,3},{4,5,6},std::bit_cast<float>(0x7fc01234u)};
                 const auto cost_result=compare_cost(bank,{std::uint8_t(profile*7),std::uint8_t(profile),std::uint8_t(profile)},profile?0x88u:0u,std::int32_t(source),std::int32_t(destination),std::uint16_t(profile?0xffff:0),cost_output,4096,room);
                 if(cost_result.status!=n::QueryStatus::completed){++cost_retail_refusals;if(cost_result.budget_exhausted)++cost_retail_budgets;}
+                n::RouteOutput candidate{-22,-23,{1,2,3},{4,5,6},std::bit_cast<float>(0x7fc01234u)};
+                const auto solved=n::graph_cost_route(bank,room,std::int32_t(source),std::int32_t(destination),{std::uint8_t(profile*7),std::uint8_t(profile),std::uint8_t(profile)},profile?0x88u:0u,std::uint16_t(profile?0xffff:0),candidate);
+                graph_admission_maximum=std::max(graph_admission_maximum,std::uint64_t(solved.admission_checks));graph_relaxation_maximum=std::max(graph_relaxation_maximum,std::uint64_t(solved.relaxations));graph_scan_maximum=std::max(graph_scan_maximum,std::uint64_t(solved.vertex_scans));
+                if(solved.status==n::QueryStatus::completed){
+                    ++graph_retail_admitted;
+                    if(cost_result.status==n::QueryStatus::completed){
+                        check(solved.selected==cost_result.selected&&solved.cost_written==cost_result.cost_written&&candidate.first==cost_output.first&&candidate.second==cost_output.second);
+                        check(std::memcmp(&candidate.first_position,&cost_output.first_position,12)==0&&std::memcmp(&candidate.second_position,&cost_output.second_position,12)==0&&std::bit_cast<unsigned>(candidate.cost)==std::bit_cast<unsigned>(cost_output.cost));++graph_retail_equivalent;
+                    }else{
+                        check(cost_result.budget_exhausted);++graph_retail_new;
+                        n::RouteOutput extended{-22,-23,{1,2,3},{4,5,6},std::bit_cast<float>(0x7fc01234u)};
+                        check(compare_cost(bank,{std::uint8_t(profile*7),std::uint8_t(profile),std::uint8_t(profile)},profile?0x88u:0u,std::int32_t(source),std::int32_t(destination),std::uint16_t(profile?0xffff:0),extended,65536,room,true,true).status==n::QueryStatus::completed);
+                    }
+                }else ++graph_retail_refused;
                 for(unsigned policy:{0u,1u,2u}){
                     n::RouteOutput local_output{-22,-23,{1,2,3},{4,5,6},std::bit_cast<float>(0x7fc01234u)};std::int16_t destination_link=314;
                     const auto local_result=compare_local(bank,bytes,{std::uint8_t(profile*7),std::uint8_t(profile),std::uint8_t(profile)},profile?0x88u:0u,std::int32_t(source),std::int32_t(destination),std::uint16_t(profile?0xffff:0),policy,local_output,destination_link,4096,room);
@@ -444,6 +462,13 @@ void owned(const char* path){
 void navigation_reference_write(std::uint32_t at,std::size_t size){
     if(reference_cost_address&&at<=reference_cost_address&&std::size_t(reference_cost_address-at)<size)reference_cost_written=true;
 }
+void navigation_reference_cost_entry(){
+    if(reference_cost_recursion_limit){
+        if(++reference_cost_recursions>reference_cost_recursion_limit)throw OriginalCostLimit{false};
+        if(graph_original_total_entries==2000000)throw OriginalCostLimit{true};
+        ++graph_original_total_entries;
+    }
+}
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
     if(context->pc==0x817470)reference_cross_stack=GPR_U32(context,29);
     if(context->pc==0x8179f0){
@@ -473,13 +498,14 @@ int main(int argc,char** argv){
 #ifdef REO_NAVIGATION_ORIGINAL
         check(argc==8);const auto constants=read(argv[2]);for(std::size_t at=0;at<constants.size();){const auto address=word(constants,at),count=word(constants,at+4);at+=8;check(at+count<=constants.size()&&address<=memory.size()&&count<=memory.size()-address);std::copy_n(constants.begin()+at,count,memory.begin()+address);at+=count;}const auto overlay=read(argv[1]);check(overlay.size()==113152);std::copy(overlay.begin(),overlay.end(),memory.begin()+0x810000);
 #endif
-        contracts();bank_contracts();condition_contracts();link_contracts();edge_contracts();ranked_contracts();cost_contracts();local_contracts();collection_contracts();cross_room_contracts();actor_route_contracts();destination_contracts();visibility_contracts();
+        contracts();bank_contracts();condition_contracts();link_contracts();edge_contracts();ranked_contracts();cost_contracts();graph_cost_contracts();local_contracts();collection_contracts();cross_room_contracts();actor_route_contracts();destination_contracts();visibility_contracts();
 #ifdef REO_NAVIGATION_ORIGINAL
         for(int i=3;i<argc;++i)owned(argv[i]);
         check(asset_rooms==166&&asset_nodes==3334&&asset_conditions==2167&&asset_links==432);
 #else
         for(int i=1;i<argc;++i)owned(argv[i]);
 #endif
-        std::cout<<"{\"checks\":"<<checks<<",\"nearest_cases\":"<<nearest_cases<<",\"action_cases\":"<<action_cases<<",\"asset_rooms\":"<<asset_rooms<<",\"asset_nodes\":"<<asset_nodes<<",\"asset_conditions\":"<<asset_conditions<<",\"asset_links\":"<<asset_links<<",\"refusals\":"<<refusals<<",\"nearest_refusals\":"<<nearest_refusals<<",\"action_refusals\":"<<action_refusals<<",\"bindings\":"<<bindings<<",\"clears\":"<<clears<<",\"bank_cells\":"<<bank_cells<<",\"bank_visit_cells\":"<<bank_visit_cells<<",\"bank_clears\":"<<bank_clears<<",\"condition_cases\":"<<condition_cases<<",\"link_cases\":"<<link_cases<<",\"link_refusals\":"<<link_refusals<<",\"edge_cases\":"<<edge_cases<<",\"edge_refusals\":"<<edge_refusals<<",\"retail_edge_refusals\":"<<retail_edge_refusals<<",\"edge_flag_bindings\":"<<edge_flag_bindings<<",\"ranked_cases\":"<<ranked_cases<<",\"ranked_refusals\":"<<ranked_refusals<<",\"ranked_retail_refusals\":"<<ranked_retail_refusals<<",\"cost_cases\":"<<cost_cases<<",\"cost_refusals\":"<<cost_refusals<<",\"cost_budgets\":"<<cost_budgets<<",\"cost_retail_refusals\":"<<cost_retail_refusals<<",\"cost_retail_budgets\":"<<cost_retail_budgets<<",\"cost_maximum_work\":"<<cost_maximum_work<<",\"cost_scratch_clears\":"<<cost_scratch_clears<<",\"local_cases\":"<<local_cases<<",\"local_refusals\":"<<local_refusals<<",\"local_budgets\":"<<local_budgets<<",\"local_retail_refusals\":"<<local_retail_refusals<<",\"local_retail_budgets\":"<<local_retail_budgets<<",\"collection_cases\":"<<collection_cases<<",\"collection_entries\":"<<collection_entries<<",\"collection_refusals\":"<<collection_refusals<<",\"collection_unknown_costs\":"<<collection_unknown_costs<<",\"collection_retail_refusals\":"<<collection_retail_refusals<<",\"collection_retail_unknown_costs\":"<<collection_retail_unknown_costs<<",\"cross_search_cases\":"<<cross_search_cases<<",\"cross_route_cases\":"<<cross_route_cases<<",\"cross_refusals\":"<<cross_refusals<<",\"cross_corrected_cases\":"<<cross_corrected_cases<<",\"cross_retail_cases\":"<<cross_retail_cases<<",\"actor_route_cases\":"<<actor_route_cases<<",\"actor_action_cases\":"<<actor_action_cases<<",\"actor_route_refusals\":"<<actor_route_refusals<<",\"actor_route_corrected_cases\":"<<actor_route_corrected_cases<<",\"actor_route_retail_cases\":"<<actor_route_retail_cases<<",\"destination_cases\":"<<destination_cases<<",\"destination_refusals\":"<<destination_refusals<<",\"destination_corrected_cases\":"<<destination_corrected_cases<<",\"destination_retail_cases\":"<<destination_retail_cases<<",\"visibility_cases\":"<<visibility_cases<<",\"visible_nearest_cases\":"<<visible_nearest_cases<<",\"visibility_refusals\":"<<visibility_refusals<<",\"visibility_retail_cases\":"<<visibility_retail_cases<<",\"node_policy_cases\":"<<node_policy_cases<<",\"node_choice_cases\":"<<node_choice_cases<<",\"node_choice_refusals\":"<<node_choice_refusals<<"}\n";
+        std::cout<<"{\"checks\":"<<checks<<",\"nearest_cases\":"<<nearest_cases<<",\"action_cases\":"<<action_cases<<",\"asset_rooms\":"<<asset_rooms<<",\"asset_nodes\":"<<asset_nodes<<",\"asset_conditions\":"<<asset_conditions<<",\"asset_links\":"<<asset_links<<",\"refusals\":"<<refusals<<",\"nearest_refusals\":"<<nearest_refusals<<",\"action_refusals\":"<<action_refusals<<",\"bindings\":"<<bindings<<",\"clears\":"<<clears<<",\"bank_cells\":"<<bank_cells<<",\"bank_visit_cells\":"<<bank_visit_cells<<",\"bank_clears\":"<<bank_clears<<",\"condition_cases\":"<<condition_cases<<",\"link_cases\":"<<link_cases<<",\"link_refusals\":"<<link_refusals<<",\"edge_cases\":"<<edge_cases<<",\"edge_refusals\":"<<edge_refusals<<",\"retail_edge_refusals\":"<<retail_edge_refusals<<",\"edge_flag_bindings\":"<<edge_flag_bindings<<",\"ranked_cases\":"<<ranked_cases<<",\"ranked_refusals\":"<<ranked_refusals<<",\"ranked_retail_refusals\":"<<ranked_retail_refusals<<",\"cost_cases\":"<<cost_cases<<",\"cost_refusals\":"<<cost_refusals<<",\"cost_budgets\":"<<cost_budgets<<",\"cost_retail_refusals\":"<<cost_retail_refusals<<",\"cost_retail_budgets\":"<<cost_retail_budgets<<",\"cost_maximum_work\":"<<cost_maximum_work<<",\"cost_scratch_clears\":"<<cost_scratch_clears<<",\"local_cases\":"<<local_cases<<",\"local_refusals\":"<<local_refusals<<",\"local_budgets\":"<<local_budgets<<",\"local_retail_refusals\":"<<local_retail_refusals<<",\"local_retail_budgets\":"<<local_retail_budgets<<",\"collection_cases\":"<<collection_cases<<",\"collection_entries\":"<<collection_entries<<",\"collection_refusals\":"<<collection_refusals<<",\"collection_unknown_costs\":"<<collection_unknown_costs<<",\"collection_retail_refusals\":"<<collection_retail_refusals<<",\"collection_retail_unknown_costs\":"<<collection_retail_unknown_costs<<",\"cross_search_cases\":"<<cross_search_cases<<",\"cross_route_cases\":"<<cross_route_cases<<",\"cross_refusals\":"<<cross_refusals<<",\"cross_corrected_cases\":"<<cross_corrected_cases<<",\"cross_retail_cases\":"<<cross_retail_cases<<",\"actor_route_cases\":"<<actor_route_cases<<",\"actor_action_cases\":"<<actor_action_cases<<",\"actor_route_refusals\":"<<actor_route_refusals<<",\"actor_route_corrected_cases\":"<<actor_route_corrected_cases<<",\"actor_route_retail_cases\":"<<actor_route_retail_cases<<",\"destination_cases\":"<<destination_cases<<",\"destination_refusals\":"<<destination_refusals<<",\"destination_corrected_cases\":"<<destination_corrected_cases<<",\"destination_retail_cases\":"<<destination_retail_cases<<",\"visibility_cases\":"<<visibility_cases<<",\"visible_nearest_cases\":"<<visible_nearest_cases<<",\"visibility_refusals\":"<<visibility_refusals<<",\"visibility_retail_cases\":"<<visibility_retail_cases<<",\"node_policy_cases\":"<<node_policy_cases<<",\"node_choice_cases\":"<<node_choice_cases<<",\"node_choice_refusals\":"<<node_choice_refusals<<",\"graph_cost_cases\":"<<graph_cost_cases<<",\"graph_cost_refusals\":"<<graph_cost_refusals<<",\"graph_admission_maximum\":"<<graph_admission_maximum<<",\"graph_relaxation_maximum\":"<<graph_relaxation_maximum<<",\"graph_scan_maximum\":"<<graph_scan_maximum<<",\"graph_retail_admitted\":"<<graph_retail_admitted<<",\"graph_retail_equivalent\":"<<graph_retail_equivalent<<",\"graph_retail_new\":"<<graph_retail_new<<",\"graph_retail_refused\":"<<graph_retail_refused<<",\"graph_original_extended\":"<<graph_original_extended<<",\"graph_original_limited\":"<<graph_original_limited<<",\"graph_original_total_entries\":"<<graph_original_total_entries<<",\"graph_original_per_query_limited\":"<<graph_original_per_query_limited<<",\"graph_original_global_limited\":"<<graph_original_global_limited<<",\"graph_guard_self_tests\":"<<graph_guard_self_tests<<",\"graph_original_limited_queries\":[";
+        for(std::size_t i=0;i<graph_original_limit_rows.size();++i){if(i)std::cout<<',';std::cout<<'[';for(unsigned j=0;j<9;++j){if(j)std::cout<<',';std::cout<<graph_original_limit_rows[i][j];}std::cout<<']';}std::cout<<"]}\n";
     }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

@@ -1,9 +1,17 @@
 std::uint64_t cost_cases{},cost_refusals{},cost_budgets{},cost_retail_refusals{},cost_retail_budgets{},cost_maximum_work{};
-n::CostRouteResult compare_cost(const n::Bank& bank,n::ActorFacts facts,unsigned status,std::int32_t source,std::int32_t destination,std::uint16_t flags,n::RouteOutput& output,std::size_t maximum=65536,unsigned room=7){
+std::uint64_t graph_cost_cases{},graph_cost_refusals{},graph_admission_maximum{},graph_relaxation_maximum{},graph_scan_maximum{};
+std::uint64_t graph_retail_admitted{},graph_retail_equivalent{},graph_retail_new{},graph_retail_refused{};
+std::uint64_t graph_original_extended{},graph_original_limited{},graph_original_total_entries{},graph_original_per_query_limited{},graph_original_global_limited{},graph_guard_self_tests{};
+std::vector<std::array<std::uint32_t,9>> graph_original_limit_rows;
+n::CostRouteResult compare_cost(const n::Bank& bank,n::ActorFacts facts,unsigned status,std::int32_t source,std::int32_t destination,std::uint16_t flags,n::RouteOutput& output,std::size_t maximum=65536,unsigned room=7,bool graph_solver=false,[[maybe_unused]] bool bounded_original=false){
     [[maybe_unused]] const auto before=output;
-    const auto result=n::bounded_cost_route(bank,room,source,destination,facts,status,flags,output,maximum);
-    cost_maximum_work=std::max(cost_maximum_work,std::uint64_t(result.considered_edges));
-    if(result.status!=n::QueryStatus::completed){++cost_refusals;if(result.budget_exhausted)++cost_budgets;return result;}
+    n::CostRouteResult result;
+    if(graph_solver){
+        const auto candidate=n::graph_cost_route(bank,room,source,destination,facts,status,flags,output);
+        result={candidate.status,candidate.selected,false,candidate.admission_checks+candidate.relaxations,candidate.cost_written};
+        graph_admission_maximum=std::max(graph_admission_maximum,std::uint64_t(candidate.admission_checks));graph_relaxation_maximum=std::max(graph_relaxation_maximum,std::uint64_t(candidate.relaxations));graph_scan_maximum=std::max(graph_scan_maximum,std::uint64_t(candidate.vertex_scans));
+    }else{result=n::bounded_cost_route(bank,room,source,destination,facts,status,flags,output,maximum);cost_maximum_work=std::max(cost_maximum_work,std::uint64_t(result.considered_edges));}
+    if(result.status!=n::QueryStatus::completed){if(graph_solver)++graph_cost_refusals;else{++cost_refusals;if(result.budget_exhausted)++cost_budgets;}return result;}
 #ifdef REO_NAVIGATION_ORIGINAL
     const auto graph=bank.room(room);check(bool(graph));source_graph(*graph,room);
     const auto edge_flags=bank.edge_flags(room);check(bool(edge_flags));std::copy(edge_flags->begin(),edge_flags->end(),memory.begin()+0x1000000+word(graph->encoding(),0));
@@ -16,13 +24,21 @@ n::CostRouteResult compare_cost(const n::Bank& bank,n::ActorFacts facts,unsigned
     R5900Context context;PS2Runtime runtime;context.pc=0x818b70;
     const std::array<unsigned,8> args{actor,room,std::uint32_t(source),std::uint32_t(destination),out,out+1,out+4,out+16};
     for(unsigned i=0;i<args.size();++i)SET_GPR_U32(&context,4+i,args[i]);
-    SET_GPR_U32(&context,29,stack);SET_GPR_U32(&context,31,0x100);reference_cost_address=out+28;reference_cost_written=false;original_transform_port(memory.data(),&context,&runtime);
+    SET_GPR_U32(&context,29,stack);SET_GPR_U32(&context,31,0x100);reference_cost_address=out+28;reference_cost_written=false;
+    reference_cost_recursions=0;reference_cost_recursion_limit=bounded_original?16384:0;
+    try{original_transform_port(memory.data(),&context,&runtime);}
+    catch(const OriginalCostLimit& limit){
+        reference_cost_recursion_limit=0;reference_cost_address=0;++graph_original_limited;const auto variant=bank.current_variant(room);
+        if(limit.global)++graph_original_global_limited;else ++graph_original_per_query_limited;
+        graph_original_limit_rows.push_back({room,variant?std::uint32_t(*variant):UINT32_MAX,std::uint32_t(source),std::uint32_t(destination),status,flags,facts.slot,std::uint32_t(reference_cost_recursions),limit.global?1u:0u});return result;
+    }
+    reference_cost_recursion_limit=0;if(bounded_original)++graph_original_extended;
     check(result.cost_written==reference_cost_written);reference_cost_address=0;
     check(context.pc==0x100&&GPR_U32(&context,29)==stack);
     check(std::int32_t(result.selected)==std::bit_cast<std::int32_t>(GPR_U32(&context,2)));
     check(output.first==std::bit_cast<std::int8_t>(memory[out])&&output.second==std::bit_cast<std::int8_t>(memory[out+1]));
     check(std::memcmp(&output.first_position,memory.data()+out+4,12)==0&&std::memcmp(&output.second_position,memory.data()+out+16,12)==0);
-    check(std::bit_cast<unsigned>(output.cost)==word(memory,out+28));++cost_cases;
+    check(std::bit_cast<unsigned>(output.cost)==word(memory,out+28));if(graph_solver)++graph_cost_cases;else ++cost_cases;
 #endif
     return result;
 }

@@ -1,4 +1,4 @@
-add_library(reo_native_gameplay_navigation STATIC navigation.cpp bank.cpp conditions.cpp edges.cpp routes.cpp cost_routes.cpp local_routes.cpp link_collection.cpp cross_room.cpp actor_routes.cpp destination.cpp)
+add_library(reo_native_gameplay_navigation STATIC navigation.cpp bank.cpp conditions.cpp edges.cpp routes.cpp cost_routes.cpp cost_graph.cpp local_routes.cpp link_collection.cpp cross_room.cpp actor_routes.cpp destination.cpp)
 target_link_libraries(reo_native_gameplay_navigation PUBLIC reo_native_transform_math)
 target_compile_features(reo_native_gameplay_navigation PUBLIC cxx_std_20)
 target_include_directories(reo_native_gameplay_navigation PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
