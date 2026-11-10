@@ -18,6 +18,7 @@ public:
     gameplay_scenario::SceneStatus detach(gameplay_scenario::SceneResources&,const actors::EntityId&,std::uint8_t)noexcept override;
     gameplay_scenario::SceneStatus refresh(gameplay_scenario::SceneResources&,const actors::EntityId&)noexcept override;
 private:
+    friend class ResourceRecipes;
     World& world_;
     gameplay_scenario::SceneResources& resources_;
     const gameplay_scenario::ResourceTemplates& templates_;

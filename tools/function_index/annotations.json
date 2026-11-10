@@ -99758,7 +99758,7 @@
       "id": "o2:0x005B30F0",
       "image": "o2",
       "address": "0x005B30F0",
-      "proposed_name": "fill_first_quantity_using_second_template_capacity_candidate",
+      "proposed_name": "fill_first_quantity_using_first_template_capacity_candidate",
       "confidence": "probable",
       "confidence_detail": "Probable role; mechanics verified",
       "evidence": [
@@ -99767,7 +99767,7 @@
           "line": 26
         }
       ],
-      "rationale": "Second quantity must>0; first must be below capacity read from second's template. Transfers min(second quantity,signed16(capacity-first quantity)), with halfword stores. Returns0 when admission fails,1 when source remains, or destroys second through5B1AF0 and returns3. Capacity comes from second, unlike5B2D00; no matching-content guard inside."
+      "rationale": "Second quantity must>0; first must be below capacity read from the first template: a0 is unchanged at5B310C's call to5B4320. Uses signed16(capacity-first quantity), preserving wrapped negative differences and halfword stores. Returns0 when admission fails,1 when source remains, or destroys second through5B1AF0 and returns3. No matching-content guard inside. Corrected during native recipe comparison; the earlier second-template interpretation was wrong."
     },
     {
       "id": "o2:0x005B31B0",

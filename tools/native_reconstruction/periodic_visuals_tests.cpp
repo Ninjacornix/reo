@@ -175,6 +175,9 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_RESOURCE_PAIRS
 #include "tools/native_reconstruction/resource_pairs_tests.inc"
 #endif
+#ifdef REO_RESOURCE_RECIPES
+#include "tools/native_reconstruction/resource_recipes_tests.inc"
+#endif
 #ifdef REO_WEAPON_RESOURCES
 #include "tools/native_reconstruction/weapon_resources_tests.inc"
 #endif
@@ -301,6 +304,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_RESOURCE_PAIRS
     compare_resource_pairs(argv[2],argv[3],ram);
 #endif
+#ifdef REO_RESOURCE_RECIPES
+    compare_resource_recipes(argv[2],argv[3],ram);
+#endif
 #ifdef REO_WEAPON_RESOURCES
     compare_weapon_resources(argv[4],ram);
 #endif
@@ -351,6 +357,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_RESOURCE_PAIRS
     <<",\"pair_queries\":"<<pair_queries<<",\"pair_quantity_cases\":"<<pair_quantity_cases<<",\"pair_release_cases\":"<<pair_release_cases<<",\"pair_refusals\":"<<pair_refusals
+#endif
+#ifdef REO_RESOURCE_RECIPES
+    <<",\"recipe_primitive_cases\":"<<recipe_primitive_cases<<",\"recipe_active_cases\":"<<recipe_active_cases<<",\"recipe_owner_cases\":"<<recipe_owner_cases<<",\"recipe_refusals\":"<<recipe_refusals
 #endif
 #ifdef REO_WEAPON_RESOURCES
     <<",\"weapon_refreshes\":"<<weapon_refreshes<<",\"weapon_loaded_banks\":"<<weapon_loaded_banks<<",\"weapon_missing_banks\":"<<weapon_missing_banks<<",\"weapon_pcm_frames\":"<<weapon_pcm_frames<<",\"weapon_signal_samples\":"<<weapon_signal_samples<<",\"weapon_refusals\":"<<weapon_refusals<<",\"weapon_file_reads\":"<<weapon_file_reads

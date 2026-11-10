@@ -41,6 +41,7 @@ private:
     friend class DelayedResourceWork;
     friend class gameplay_weapon_resources::Equipment;
     friend class ResourceContents;
+    friend class ResourceRecipes;
     ResourceModels& models_;
     ResourceFrames& frames_;
     const gameplay_scenario::ResourceTemplates& templates_;

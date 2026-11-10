@@ -24,6 +24,9 @@ The current resource and inventory implementation includes:
   untouched instance state and selecting work through its actual descriptor.
 - [Compatibility and quantity transfer](RESOURCE_PAIRS.md), including the
   character-specific table and actual model/collision retirement on depletion.
+- [Recipe primitive execution](RESOURCE_RECIPES.md), including actual content,
+  model and inventory consumers. The main owned dispatcher still requires its
+  actual cooperative event consumer.
 
 Those components pass both compiler comparisons and parent checks. The
 [weapon resource owner](WEAPON_RESOURCE_OWNER.md) also passes both compiler

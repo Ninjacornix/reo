@@ -25,6 +25,7 @@ public:
     std::int8_t move_quantity(std::uint8_t destination,std::optional<std::uint8_t> source,std::uint32_t amount);
     std::int8_t swap_quantity(std::uint8_t first,std::uint8_t second);
 private:
+    friend class ResourceRecipes;
     World& world_;gameplay_scenario::SceneResources& resources_;
     const gameplay_scenario::ResourceTemplates& templates_;ResourceFrames& frames_;
     gameplay_scenario::SceneDescriptor descriptor(std::uint8_t)const;

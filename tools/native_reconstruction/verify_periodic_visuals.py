@@ -28,6 +28,7 @@ def main():
     p.add_argument('--resource-inventory', action='store_true')
     p.add_argument('--resource-content', action='store_true')
     p.add_argument('--resource-pairs', action='store_true')
+    p.add_argument('--resource-recipes', action='store_true')
     p.add_argument('--weapon-resources', action='store_true')
     p.add_argument('--equipment-resources', action='store_true')
     p.add_argument('--equipment-selection', action='store_true')
@@ -42,6 +43,7 @@ def main():
     assert not args.resource_inventory or args.resource_actions
     assert not args.resource_content or args.resource_inventory
     assert not args.resource_pairs or args.resource_content
+    assert not args.resource_recipes or args.resource_pairs
     assert not args.weapon_resources or args.resource_inventory
     assert not args.equipment_resources or args.weapon_resources
     assert not args.equipment_selection or args.equipment_resources
@@ -109,6 +111,9 @@ def main():
     if args.resource_pairs:
         for at in [0x5b3690,0x5b3820,0x5b3920,0x5b39a0,0x5b3dd0,0x5b3e40,0x5b4020,0x5b4320,0x5b1af0]:
             entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
+    if args.resource_recipes:
+        for at in [0x5b2d00,0x5b2dc0,0x5b2e70,0x5b2ec0,0x5b2f00,0x5b3080,0x5b30f0,0x5b31b0,0x5b3200,0x5b3380,0x5b3400,0x5b3490,0x5b3590,0x5b3640,0x5b1b50]:
+            entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.weapon_resources:
         for at in [0x1d3b00,0x1ad610,0x6b4ae0,0x5b4ce0]:
             folder=ROOT/('recomp/config/output' if at<0x370000 else 'recomp/config/output_ovl/o2')
@@ -148,6 +153,7 @@ def main():
     if args.resource_inventory: units+=['game/native/gameplay_world/inventory.cpp']
     if args.resource_content: units+=['game/native/gameplay_world/resource_use.cpp','game/native/gameplay_world/resource_contents.cpp']
     if args.resource_pairs: units+=['game/native/gameplay_world/resource_pairs.cpp']
+    if args.resource_recipes: units+=['game/native/gameplay_world/resource_recipes.cpp']
     if args.weapon_resources:
         units+=['game/native/'+n for n in ['gameplay_weapon_resources/weapon_resources.cpp','gameplay_bank_loading/aliases.cpp','gameplay_bank_loading/loader.cpp','gameplay_audio/owner.cpp','gameplay_audio/import.cpp','gameplay_audio/routing.cpp','gameplay_audio/spatial.cpp','audio_banks/v2/session.cpp','audio_banks/v2/algorithms.cpp','resources/bounded_view.cpp','resources/virtual_file_view.cpp','resources/resource_session.cpp','resources_windows/pinned_file.cpp','resource_io/async_read_owner.cpp','afs_source_range/afs_source_range.cpp','tasks/serial_worker.cpp']]
         units=list(dict.fromkeys(units))
@@ -189,6 +195,8 @@ def main():
         name='tools/native_reconstruction/resource_content_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.resource_pairs:
         name='tools/native_reconstruction/resource_pairs_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.resource_recipes:
+        name='tools/native_reconstruction/resource_recipes_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.weapon_resources:
         name='tools/native_reconstruction/weapon_resources_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.equipment_resources:
@@ -329,6 +337,7 @@ def main():
         if args.resource_inventory: command.insert(1,'-DREO_RESOURCE_INVENTORY=1')
         if args.resource_content: command.insert(1,'-DREO_RESOURCE_CONTENT=1')
         if args.resource_pairs: command.insert(1,'-DREO_RESOURCE_PAIRS=1')
+        if args.resource_recipes: command.insert(1,'-DREO_RESOURCE_RECIPES=1')
         if args.weapon_resources: command.insert(1,'-DREO_WEAPON_RESOURCES=1')
         if args.equipment_resources: command.insert(1,'-DREO_EQUIPMENT_RESOURCES=1')
         if args.equipment_selection: command.insert(1,'-DREO_EQUIPMENT_SELECTION=1')
