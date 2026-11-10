@@ -9,6 +9,7 @@
 #include "../gameplay_scenario/model_reference.hpp"
 #include "inventory_state.hpp"
 #include "../gameplay_session/room_variants.hpp"
+#include "../gameplay_navigation/actor_routes.hpp"
 #include <array>
 #include <memory>
 #include <optional>
@@ -51,6 +52,7 @@ struct ActorCollision {
 struct Actor : actors::Entity,actors::HitActor {
     bool active{},visible{};
     std::uint8_t ai_control{},normalized_marker{};
+    std::optional<gameplay_navigation::ActorRouteState> navigation_route;
     std::uint8_t character{};
     std::optional<std::uint32_t> gauge_value; // original BAC; unknown until its actual owner/import supplies it
     std::uint16_t terminal_countdown{}; // original C62, distinct from status/hit recovery timers

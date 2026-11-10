@@ -50,6 +50,12 @@ The current resource and inventory implementation includes:
   the separate3617 explicit cost-initialization profiles are documented source
   corrections.189 sampled contexts stay unavailable. Actor route-state/AI,
   broader admission, loading, saves and actual installation remain open.
+- [Canonical actor routes/actions](NAVIGATION_ACTOR_ROUTES.md) now supplies
+  complete8173D0/816EF0 through the actual World Actor and shared Bank, with16416
+  actor comparisons and ten parent tests per compiler. The absent actor
+  component and one controlled unknown-cost case refuse explicitly. Initial/
+  current-node producers, destination setup, movement/AI, saves and installation
+  remain open.
 
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.

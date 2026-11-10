@@ -58,6 +58,11 @@ int main(){
         const auto unknown_cross=owner.cross_room_navigation_route(id,7,7,0,0,cross_output);check(unknown_cross.collection_failure==n::CollectionFailure::unknown_cost&&cross_output.link==314);
         const auto corrected_cross=owner.cross_room_navigation_route(id,7,7,0,0,cross_output,{true,4096,128});check(corrected_cross.status==n::QueryStatus::completed&&corrected_cross.selected==0&&cross_output.link==0&&world.navigation().visits(0)[0]==1);
         actor->slot=5;actor->status=0x80;check(owner.cross_room_navigation_route(id,200,201,-1,-1,cross_output).selected==-1);actor->status=0;
+        check(owner.refresh_actor_navigation(id,true).status==n::QueryStatus::unavailable);
+        actor->room=7;actor->navigation_route.emplace();auto& navigation=*actor->navigation_route;
+        navigation.destination_room=7;navigation.final_position={9,8,7};navigation.previous_action=654;
+        check(owner.refresh_actor_navigation(id,true).selected==0&&navigation.output.route.first_position.x==9&&navigation.output.route.second_position.y==8&&navigation.last_current_node==0&&navigation.action==0&&navigation.previous_action==654);
+        check((*world.navigation().occupancy(7,0)&32)!=0);
         check(owner.admit_navigation_condition(id,7,2).status==n::QueryStatus::unavailable&&owner.admit_navigation_condition(id,8,0).status==n::QueryStatus::unavailable);
         check(owner.admitted_navigation_link(id,7,0,1).status==n::QueryStatus::completed&&!owner.admitted_navigation_link(id,7,0,1).index);
         u::world::World foreign({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());const auto other=foreign.spawn_primary(0,std::make_unique<u::world::Actor>()).id;

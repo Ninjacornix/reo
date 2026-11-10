@@ -1,6 +1,6 @@
 std::uint64_t cross_search_cases{},cross_route_cases{},cross_refusals{},cross_corrected_cases{},cross_retail_cases{};
 #ifdef REO_NAVIGATION_ORIGINAL
-bool reference_initialize_collection{};std::uint64_t reference_collection_calls{},reference_visit_copies{};
+bool reference_initialize_collection{};std::uint64_t reference_collection_calls{},reference_visit_copies{};std::uint32_t reference_cross_stack{};
 void cross_reference_setup(const n::Bank& bank,std::span<const std::uint8_t> bytes,n::ActorFacts facts,unsigned status,const n::RoomFlags& flags){
     std::copy(bytes.begin(),bytes.end(),memory.begin()+0x843780);
     for(unsigned room=0;room<128;++room){memory[0x4b9d20+room]=bank.current_variant(room).value_or(0);put(memory,0x4b9e20+12*room,flags[room].value_or(0));}
