@@ -6,6 +6,12 @@ conditional sleep request: continue the work and do not put the PC to sleep.
 
 The current resource and inventory implementation includes:
 
+- [Native navigation inputs and queries](NAVIGATION_INPUTS.md) now supply all five
+  owned SGL inputs and bounded unfiltered nearest/reverse-action queries with
+  original comparisons on both compilers. Canonical variant production, mutable
+  room/visit/occupancy state, dynamic conditions, route/AI consumers and game
+  installation remain open.
+
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.
 - [Placed-resource collisions](RESOURCE_COLLISIONS.md) through the shared128
