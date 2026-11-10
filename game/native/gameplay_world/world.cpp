@@ -1,5 +1,6 @@
 #include "world.hpp"
 #include "linked_models.hpp"
+#include "auxiliary_actors.hpp"
 #include <bit>
 #include <exception>
 #include <stdexcept>
@@ -46,12 +47,18 @@ actors::EntityCreated World::spawn_linked(std::unique_ptr<Actor> actor)noexcept{
 actors::EntityStatus World::retire_linked(const actors::EntityId& id)noexcept{
     if(closed_)return actors::EntityStatus::closed;
     for(const auto& primary:primary_)if(primary==id)return actors::EntityStatus::invalid;
+    if(auxiliary_actors_&&auxiliary_actors_->physical_slot(id))return actors::EntityStatus::invalid;
     return entities_.retire(id);
 }
 LinkedModelPool& World::linked_models(){
     if(closed_)throw std::runtime_error("Native linked model owner is closed");
     if(!linked_models_)linked_models_.reset(new LinkedModelPool(*this));
     return *linked_models_;
+}
+AuxiliaryActorPool& World::auxiliary_actors(){
+    if(closed_)throw std::runtime_error("Native auxiliary actor owner is closed");
+    if(!auxiliary_actors_)auxiliary_actors_.reset(new AuxiliaryActorPool(*this));
+    return *auxiliary_actors_;
 }
 std::shared_ptr<Actor> World::resolve(const actors::EntityId& id)const noexcept{
     if(closed_)return{};
@@ -67,9 +74,10 @@ actors::EntityId World::identity(std::size_t index)const noexcept{
     return index<primary_.size()?primary_[index]:actors::EntityId{};
 }
 Status World::close()noexcept{
-    if(updating_||(linked_models_&&linked_models_->busy()))return Status::busy;
+    if(updating_||(linked_models_&&linked_models_->busy())||(auxiliary_actors_&&auxiliary_actors_->busy()))return Status::busy;
     closed_=true;primary_.fill({});
     if(linked_models_)(void)linked_models_->close();
+    if(auxiliary_actors_)(void)auxiliary_actors_->close();
     entities_.shutdown();return Status::completed;
 }
 Result World::update_primary(Services& services){

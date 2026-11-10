@@ -6,7 +6,7 @@ from verify_gameplay_collision import COMPILERS
 ROOT=Path(__file__).resolve().parents[2]
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
- p=argparse.ArgumentParser();p.add_argument('--compiler',choices=COMPILERS,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--statistics',action='store_true');p.add_argument('--automatic',action='store_true');p.add_argument('--publication',action='store_true');p.add_argument('--actor-status',action='store_true');p.add_argument('--actor-actions',action='store_true');p.add_argument('--actor-inventory',action='store_true');p.add_argument('--actor-state',action='store_true');p.add_argument('--actor-activity',action='store_true');p.add_argument('--actor-gauge',action='store_true');p.add_argument('--actor-hit-gauge',action='store_true');p.add_argument('--actor-snapshot',action='store_true');p.add_argument('--actor-alignment',action='store_true');p.add_argument('--actor-contact-alignment',action='store_true');p.add_argument('--actor-contact-snapshot',action='store_true');p.add_argument('--actor-room-object',action='store_true');a=p.parse_args();a.actor_contact_snapshot|=a.actor_room_object;a.actor_alignment|=a.actor_contact_alignment or a.actor_contact_snapshot;a.actor_snapshot|=a.actor_alignment;a.actor_hit_gauge|=a.actor_snapshot;a.actor_gauge|=a.actor_hit_gauge;a.actor_activity|=a.actor_gauge;a.actor_state|=a.actor_activity;a.actor_inventory|=a.actor_state;a.actor_actions|=a.actor_inventory;a.actor_status|=a.actor_actions;a.publication|=a.actor_status;a.automatic|=a.publication;a.statistics|=a.automatic;out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
+ p=argparse.ArgumentParser();p.add_argument('--compiler',choices=COMPILERS,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--statistics',action='store_true');p.add_argument('--automatic',action='store_true');p.add_argument('--publication',action='store_true');p.add_argument('--actor-status',action='store_true');p.add_argument('--actor-actions',action='store_true');p.add_argument('--actor-inventory',action='store_true');p.add_argument('--actor-state',action='store_true');p.add_argument('--actor-activity',action='store_true');p.add_argument('--actor-gauge',action='store_true');p.add_argument('--actor-hit-gauge',action='store_true');p.add_argument('--actor-snapshot',action='store_true');p.add_argument('--actor-alignment',action='store_true');p.add_argument('--actor-contact-alignment',action='store_true');p.add_argument('--actor-contact-snapshot',action='store_true');p.add_argument('--actor-room-object',action='store_true');p.add_argument('--actor-auxiliary-pool',action='store_true');a=p.parse_args();a.actor_room_object|=a.actor_auxiliary_pool;a.actor_contact_snapshot|=a.actor_room_object;a.actor_alignment|=a.actor_contact_alignment or a.actor_contact_snapshot;a.actor_snapshot|=a.actor_alignment;a.actor_hit_gauge|=a.actor_snapshot;a.actor_gauge|=a.actor_hit_gauge;a.actor_activity|=a.actor_gauge;a.actor_state|=a.actor_activity;a.actor_inventory|=a.actor_state;a.actor_actions|=a.actor_inventory;a.actor_status|=a.actor_actions;a.publication|=a.actor_status;a.automatic|=a.publication;a.statistics|=a.automatic;out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
  image=ROOT/'build-function-index/owned-overlays/o0.bin';assert sha(image)=='bfac1906d63d585736e46573295cff12e308720af6b49914e1ad8695dfcf50c2';raw=image.read_bytes();entries={};proof=[]
  addresses=[0x37bfb0,0x37c060,0x37c170,0x37c200,0x37c2c0,0x37c3b0]+([0x37b990,0x37bbc0,0x37c470,0x1b02d0]if a.statistics else[])
  if a.automatic:
@@ -16,6 +16,7 @@ def main():
  if a.actor_state:addresses += [0x664d00,0x664f60,0x667f90,0x668c80]
  if a.actor_gauge:addresses += [0x660060,0x667e90,0x668050,0x668110,0x1b0340]
  if a.actor_hit_gauge:addresses += [0x660af0,0x666620,0x666d90]
+ if a.actor_auxiliary_pool:addresses += [0x682c60,0x682d10,0x682e30,0x666640,0x682f80,0x683b10]
  if a.actor_contact_alignment:addresses += [0x666f50,0x376e70,0x3700c0,0x370100,0x192180,0x1226f0,0x120908,0x122140,0x1224a8,0x191ef0,0x1920a0,0x192190,0x1921a0,0x18f340,0x18f470]
  if a.statistics:
   elf=ROOT/'game_data/SLUS_207.65';assert sha(elf)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46';read=elf_reader(elf.read_bytes())
@@ -45,6 +46,7 @@ def main():
   if a.actor_hit_gauge:files += ['tools/native_reconstruction/actor_hit_gauge_tests.inc']
   if a.actor_snapshot:files += ['tools/native_reconstruction/actor_snapshot_message_tests.inc']
   if a.actor_alignment:files += ['tools/native_reconstruction/actor_alignment_message_tests.inc']
+  if a.actor_auxiliary_pool:files += ['tools/native_reconstruction/auxiliary_actor_pool_tests.inc','game/native/gameplay_world/CMakeLists.txt']
   if a.actor_room_object:files += ['tools/native_reconstruction/actor_room_object_message_tests.inc']
   if a.actor_contact_snapshot:files += ['tools/native_reconstruction/actor_contact_snapshot_tests.inc']
   if a.actor_contact_alignment:files += ['tools/native_reconstruction/actor_contact_alignment_tests.inc','game/native/gameplay_world/CMakeLists.txt','game/native/transform_math/CMakeLists.txt']
@@ -121,6 +123,9 @@ def main():
   if a.actor_room_object:
    flags += ['-DREO_ACTOR_ROOM_OBJECT_MESSAGE=1']
    r['actor_room_object_admission']='Complete67E230 selector9 reads signed X/Z from canonical imported32-record RoomObject Owner; inactive initialized cells retained, invalid/uninitialized domains refused; actual UpdateOwner binding, receiver/transport remain open'
+  if a.actor_auxiliary_pool:
+   flags += ['-DREO_AUXILIARY_ACTOR_POOL=1']
+   r['auxiliary_actor_pool_admission']='Complete682C60/682D10/682E30 pool order/reuse and683B10 attachment reservations,666640/682F80 lookup versus World-owned native10-actor pool. Leased retired state is not guest memory; real actor/model construction and updates remain open'
   objects,receipts=compile_objects(ROOT,out,cc,flags,UPDATE_UNITS,frozen,env);r['production_objects']=receipts
   cmd[:]=[str(cc),*flags,*objects,str(out/'source'/fixture),'-o',str(exe)]
  try:

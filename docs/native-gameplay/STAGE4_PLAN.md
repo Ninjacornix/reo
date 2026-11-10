@@ -149,6 +149,11 @@ The current resource and inventory implementation includes:
   compiler comparisons include actual UpdateOwner-to-queue-to-receiver delivery,
   retained failures and model exhaustion. External transport, remaining message/
   action/AI branches, semantic saves and installation remain open.
+- [Auxiliary actor ownership](AUXILIARY_ACTOR_POOL.md) now supplies the distinct
+  ten-actor pool, four attachment reservations and filtered/unfiltered identifier
+  lookup in the canonical World. Both compiler comparisons cover reuse/order,
+  retirement and coexistence with the fifty-model pool. Actual auxiliary actor
+  construction, callbacks/AI/movement, peer binding and installation remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;

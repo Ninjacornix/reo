@@ -16,7 +16,7 @@ def main():
  files=sources+['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_world/tests.cpp','game/native/gameplay_actors/entity.hpp','game/native/gameplay_actors/entity.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/health.cpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_session/session.hpp','tools/native_reconstruction/gameplay_actor_oracle/runtime.hpp','tools/native_reconstruction/gameplay_world_oracle/tests.cpp','tools/native_reconstruction/verify_gameplay_world.py']
  files += ['game/native/gameplay_collision/'+n for n in ['actors.hpp','response.hpp','collision.hpp']]
  native_units=['game/native/'+group+'/'+name+'.cpp'for group,names in [
-  ('gameplay_world',['world','linked_models','model_poses','model_constraints','bodies']),
+  ('gameplay_world',['world','linked_models','auxiliary_actors','model_poses','model_constraints','bodies']),
   ('gameplay_actors',['entity','input','health']),
   ('gameplay_collision',['collision','response','actors','actor_views']),
   ('animation',['model','model_math','curves','constraints','constraint_math']),

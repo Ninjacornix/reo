@@ -139,6 +139,7 @@ enum class Stage {
 };
 class World;
 class LinkedModelPool;
+class AuxiliaryActorPool;
 class Services {
 public:
     virtual ~Services()=default;
@@ -167,6 +168,7 @@ public:
     actors::EntityCreated spawn_linked(std::unique_ptr<Actor>)noexcept;
     actors::EntityStatus retire_linked(const actors::EntityId&)noexcept;
     LinkedModelPool& linked_models();
+    AuxiliaryActorPool& auxiliary_actors();
     std::shared_ptr<Actor> primary(std::size_t)const noexcept;
     std::shared_ptr<Actor> resolve(const actors::EntityId&)const noexcept;
     actors::EntityId identity_of(const Actor&)const noexcept;
@@ -195,9 +197,11 @@ public:
     std::uint8_t selected_frame_marker{};
     std::uint16_t& frame_shared_counter;
 private:
+    friend class AuxiliaryActorPool;
     actors::EntityStore entities_;
     std::array<actors::EntityId,8> primary_;
     std::unique_ptr<LinkedModelPool> linked_models_;
+    std::unique_ptr<AuxiliaryActorPool> auxiliary_actors_;
     std::vector<input::Remap> layouts_;
     std::vector<input::ControllerFrame> controllers_;
     bool updating_{},closed_{};

@@ -2,7 +2,7 @@
 UPDATE_UNITS=[
     "game/native/"+group+"/"+name+".cpp"
     for group,names in [
-        ('gameplay_world',['world', 'behavior', 'surfaces', 'motion', 'linked_models', 'bodies', 'model_poses', 'model_constraints', 'resource_models', 'model_attachments','alignment']),
+        ('gameplay_world',['world', 'behavior', 'surfaces', 'motion', 'linked_models','auxiliary_actors', 'bodies', 'model_poses', 'model_constraints', 'resource_models', 'model_attachments','alignment']),
         ('gameplay_actors',['entity', 'health', 'status', 'hit', 'input']),
         ('gameplay_session',['session']),
         ('gameplay_tasks',['tasks', 'events']),

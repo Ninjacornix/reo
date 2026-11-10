@@ -175,6 +175,9 @@ void compare(const e::Events& owner,const std::uint8_t* memory){check(owner.avai
 #ifdef REO_ACTOR_ROOM_OBJECT_MESSAGE
 #include "tools/native_reconstruction/actor_room_object_message_tests.inc"
 #endif
+#ifdef REO_AUXILIARY_ACTOR_POOL
+#include "tools/native_reconstruction/auxiliary_actor_pool_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
 #ifdef REO_COMPLETION_STATISTICS
@@ -251,6 +254,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_ACTOR_ROOM_OBJECT_MESSAGE
     compare_actor_room_object_messages(memory);
 #endif
+#ifdef REO_AUXILIARY_ACTOR_POOL
+    compare_auxiliary_actor_pool(memory);
+#endif
     std::cout<<"{\"checks\":"<<checks<<",\"appends\":"<<appends<<",\"retirements\":"<<retirements<<",\"prunings\":"<<prunings<<",\"resets\":"<<resets<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<calls
 #ifdef REO_COMPLETION_STATISTICS
     <<",\"completion_cases\":"<<completion_cases<<",\"completion_initializations\":"<<completion_initializations<<",\"completion_refusals\":"<<completion_refusals
@@ -296,6 +302,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_ACTOR_ROOM_OBJECT_MESSAGE
     <<",\"room_object_message_cases\":"<<room_object_message_cases<<",\"room_object_messages\":"<<room_object_messages<<",\"room_object_message_lookups\":"<<room_object_message_lookups<<",\"room_object_message_refusals\":"<<room_object_message_refusals
+#endif
+#ifdef REO_AUXILIARY_ACTOR_POOL
+    <<",\"auxiliary_pool_cases\":"<<auxiliary_pool_cases<<",\"auxiliary_pool_lookups\":"<<auxiliary_pool_lookups<<",\"auxiliary_pool_reuses\":"<<auxiliary_pool_reuses<<",\"auxiliary_pool_refusals\":"<<auxiliary_pool_refusals<<",\"auxiliary_pool_lifetimes\":"<<auxiliary_pool_lifetimes
 #endif
     <<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
