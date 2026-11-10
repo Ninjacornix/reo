@@ -6,7 +6,7 @@ from verify_gameplay_collision import COMPILERS
 ROOT=Path(__file__).resolve().parents[2]
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
- p=argparse.ArgumentParser();p.add_argument('--compiler',choices=COMPILERS,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--statistics',action='store_true');p.add_argument('--automatic',action='store_true');p.add_argument('--publication',action='store_true');p.add_argument('--actor-status',action='store_true');p.add_argument('--actor-actions',action='store_true');p.add_argument('--actor-inventory',action='store_true');p.add_argument('--actor-state',action='store_true');p.add_argument('--actor-activity',action='store_true');p.add_argument('--actor-gauge',action='store_true');p.add_argument('--actor-hit-gauge',action='store_true');p.add_argument('--actor-snapshot',action='store_true');p.add_argument('--actor-alignment',action='store_true');a=p.parse_args();a.actor_snapshot|=a.actor_alignment;a.actor_hit_gauge|=a.actor_snapshot;a.actor_gauge|=a.actor_hit_gauge;a.actor_activity|=a.actor_gauge;a.actor_state|=a.actor_activity;a.actor_inventory|=a.actor_state;a.actor_actions|=a.actor_inventory;a.actor_status|=a.actor_actions;a.publication|=a.actor_status;a.automatic|=a.publication;a.statistics|=a.automatic;out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
+ p=argparse.ArgumentParser();p.add_argument('--compiler',choices=COMPILERS,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--statistics',action='store_true');p.add_argument('--automatic',action='store_true');p.add_argument('--publication',action='store_true');p.add_argument('--actor-status',action='store_true');p.add_argument('--actor-actions',action='store_true');p.add_argument('--actor-inventory',action='store_true');p.add_argument('--actor-state',action='store_true');p.add_argument('--actor-activity',action='store_true');p.add_argument('--actor-gauge',action='store_true');p.add_argument('--actor-hit-gauge',action='store_true');p.add_argument('--actor-snapshot',action='store_true');p.add_argument('--actor-alignment',action='store_true');p.add_argument('--actor-contact-alignment',action='store_true');a=p.parse_args();a.actor_alignment|=a.actor_contact_alignment;a.actor_snapshot|=a.actor_alignment;a.actor_hit_gauge|=a.actor_snapshot;a.actor_gauge|=a.actor_hit_gauge;a.actor_activity|=a.actor_gauge;a.actor_state|=a.actor_activity;a.actor_inventory|=a.actor_state;a.actor_actions|=a.actor_inventory;a.actor_status|=a.actor_actions;a.publication|=a.actor_status;a.automatic|=a.publication;a.statistics|=a.automatic;out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
  image=ROOT/'build-function-index/owned-overlays/o0.bin';assert sha(image)=='bfac1906d63d585736e46573295cff12e308720af6b49914e1ad8695dfcf50c2';raw=image.read_bytes();entries={};proof=[]
  addresses=[0x37bfb0,0x37c060,0x37c170,0x37c200,0x37c2c0,0x37c3b0]+([0x37b990,0x37bbc0,0x37c470,0x1b02d0]if a.statistics else[])
  if a.automatic:
@@ -16,6 +16,7 @@ def main():
  if a.actor_state:addresses += [0x664d00,0x664f60,0x667f90,0x668c80]
  if a.actor_gauge:addresses += [0x660060,0x667e90,0x668050,0x668110,0x1b0340]
  if a.actor_hit_gauge:addresses += [0x660af0,0x666620,0x666d90]
+ if a.actor_contact_alignment:addresses += [0x666f50,0x376e70,0x3700c0,0x370100,0x192180,0x1226f0,0x120908,0x122140,0x1224a8,0x191ef0,0x1920a0,0x192190,0x1921a0,0x18f340,0x18f470]
  if a.statistics:
   elf=ROOT/'game_data/SLUS_207.65';assert sha(elf)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46';read=elf_reader(elf.read_bytes())
  for at in addresses:
@@ -25,7 +26,7 @@ def main():
   for entry,first,last in [(0x5f2b70,0x5f2b9c,0x5f2bbc),(0x586aa0,0x586b88,0x586bc8),(0x65ed70,0x65efd4,0x65f004),(0x5d76d0,0x5d7734,0x5d7758)]:
    name=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{entry:08X}_*')).relative_to(ROOT).as_posix();field_sources.append(name);proof.append(compare_source('primary actor item ID, pitch adjustment/base and target index provenance',name,first,last,lambda x,n:o2[x-0x570000:x-0x570000+n]))
  if a.actor_alignment:
-  for entry in [0x666f50,0x66d850]:
+  for entry in ([0x66d850]if a.actor_contact_alignment else[0x666f50,0x66d850]):
    name=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{entry:08X}_*')).relative_to(ROOT).as_posix();field_sources.append(name);end=int(re.search(r'// Address: 0x[0-9a-f]+ - 0x([0-9a-f]+)',(ROOT/name).read_text())[1],16);proof.append(compare_source('static alignment field provenance only; these producer/consumer bodies are not executed by this message fixture',name,entry,end,lambda x,n:o2[x-0x570000:x-0x570000+n]))
  fixture='tools/native_reconstruction/cooperative_events_tests.cpp';helper='tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp';unit='game/native/gameplay_events/events.cpp';profile='game/native/gameplay_events/event_priority_profile.inc'
  files=[unit,'game/native/gameplay_events/events.hpp',profile,'game/native/gameplay_events/CMakeLists.txt','game/native/CMakeLists.txt',fixture,helper,Path(__file__).relative_to(ROOT).as_posix(),*entries.values(),*field_sources]
@@ -44,6 +45,7 @@ def main():
   if a.actor_hit_gauge:files += ['tools/native_reconstruction/actor_hit_gauge_tests.inc']
   if a.actor_snapshot:files += ['tools/native_reconstruction/actor_snapshot_message_tests.inc']
   if a.actor_alignment:files += ['tools/native_reconstruction/actor_alignment_message_tests.inc']
+  if a.actor_contact_alignment:files += ['tools/native_reconstruction/actor_contact_alignment_tests.inc','game/native/gameplay_world/CMakeLists.txt','game/native/transform_math/CMakeLists.txt']
   files=list(dict.fromkeys(files))
   for name in files:
    for inc in re.findall(r'^\s*#include "([^"]+)"',(ROOT/name).read_text(),re.M):
@@ -99,10 +101,21 @@ def main():
    r['actor_status_switch_sha256']=sha(out/'actor_status_switch.bin')
    with (out/'reference.hpp').open('a')as reference:reference.write('\ninline std::int32_t actor_gauge_exact_word(float value,std::uint32_t pc){if(pc!=0x668180u||value<0.f||value>400000.f||std::trunc(value)!=value)throw std::runtime_error("Unadmitted gauge float conversion");return std::int32_t(value); }\n#undef FPU_CVT_W_S\n#define FPU_CVT_W_S(x) actor_gauge_exact_word(x,ctx->pc)\n')
    r['declared_ports'].append('Pure668110 conversion admitted only at668180 for exact integral owned caps from caller percentage100; every other float-to-word conversion throws')
+  if a.actor_contact_alignment:
+   import struct
+   flags += ['-DREO_ACTOR_CONTACT_ALIGNMENT=1']
+   words=[int(x,16)for x in re.findall(r'0x([0-9a-fA-F]+)',frozen['game/native/transform_math/heading_profile.inc'].decode().split('atan_words',1)[1])];assert struct.pack('<19I',*words)==read(0x2392b8,76)
+   blocks=[(0x2392b8,read(0x2392b8,76)),(0x22fe20,read(0x22fe20,32)),(0x241c78,read(0x241c78,40)),(0x38ca98,raw[0x38ca98-0x370000:0x38ca98-0x370000+4]),(0x38b290,raw[0x38b290-0x370000:0x38b290-0x370000+4])]
+   assert struct.unpack('<I',blocks[3][1])[0]==0x38d1b717 and struct.unpack('<I',blocks[4][1])[0]==0x38c90fdb
+   with(out/'alignment_constants.bin').open('wb')as data:
+    for at,b in blocks:data.write(struct.pack('<II',at,len(b))+b)
+   r['alignment_constants']=[{'address':hex(at),'bytes':len(b),'sha256':hashlib.sha256(b).hexdigest()}for at,b in blocks]
+   with(out/'reference.hpp').open('a')as reference:reference.write('\n#define FPU_C_EQ_S(a,b) ((a)==(b))\ninline std::int32_t alignment_exact_word(float value,std::uint32_t pc){if(pc==0x668180u)return actor_gauge_exact_word(value,pc);if((pc!=0x191f50u&&pc!=0x191f68u)||!std::isfinite(value)||value<0.f||value>65536.f)throw std::runtime_error("Unadmitted alignment float conversion");return std::int32_t(value); }\n#undef FPU_CVT_W_S\n#define FPU_CVT_W_S(x) alignment_exact_word(x,ctx->pc)\n')
+   r['actor_contact_alignment_admission']='Complete666F50 with original376E70/atan2/atan/angle and separate sine/cosine chain versus native contact geometry producer; finite FP32 values, actual UpdateOwner prepare and selector6; movement/transport remain open'
   objects,receipts=compile_objects(ROOT,out,cc,flags,UPDATE_UNITS,frozen,env);r['production_objects']=receipts
   cmd[:]=[str(cc),*flags,*objects,str(out/'source'/fixture),'-o',str(exe)]
  try:
-  for label,command in [('compile',cmd),('run',[str(exe),str(out/'priorities.bin')]+([str(out/'scenario_rules.bin')]if a.statistics else[])+([str(out/'condition_switch.bin')]if a.automatic else[])+([str(out/'actor_status_switch.bin')]if a.actor_status else[]))]:
+  for label,command in [('compile',cmd),('run',[str(exe),str(out/'priorities.bin')]+([str(out/'scenario_rules.bin')]if a.statistics else[])+([str(out/'condition_switch.bin')]if a.automatic else[])+([str(out/'actor_status_switch.bin')]if a.actor_status else[])+([str(out/'alignment_constants.bin')]if a.actor_contact_alignment else[]))]:
    result=subprocess.run(command,capture_output=True,env=env,timeout=180);(out/(label+'.stdout.txt')).write_bytes(result.stdout);(out/(label+'.stderr.txt')).write_bytes(result.stderr);assert result.returncode==0,label+' failed; see retained logs'
    if label=='run':r['observed']=json.loads(result.stdout)
   r['source_unchanged']=all((ROOT/n).read_bytes()==b for n,b in frozen.items());assert r['source_unchanged'];r.update(status='passed',binary_sha256=sha(exe))

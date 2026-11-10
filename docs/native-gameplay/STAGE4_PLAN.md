@@ -127,6 +127,12 @@ The current resource and inventory implementation includes:
   and gauge state. Both compiler comparisons cover raw values, mapping and
   callback mutation. Real target producers, alignment movement, remaining
   selectors, transport and game installation remain open.
+- [Contact alignment preparation](ACTOR_CONTACT_ALIGNMENT.md) now supplies
+  complete666F50 through canonical contact geometry and the same optional
+  target. Native heading math compares against the complete original atan/
+  quadrant/turn and separate sine/cosine chain on both compilers. The actual
+  UpdateOwner prepares and publishes the result. Other target producers,
+  alignment motion, remaining messages, transport and installation remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;

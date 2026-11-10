@@ -144,6 +144,9 @@ void compare(const e::Events& owner,const std::uint8_t* memory){check(owner.avai
 #ifdef REO_ACTOR_ALIGNMENT_MESSAGE
 #include "tools/native_reconstruction/actor_alignment_message_tests.inc"
 #endif
+#ifdef REO_ACTOR_CONTACT_ALIGNMENT
+#include "tools/native_reconstruction/actor_contact_alignment_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
 #ifdef REO_COMPLETION_STATISTICS
@@ -152,6 +155,9 @@ int main(int argc,char** argv)try{
     +1
 #endif
 #ifdef REO_ACTOR_STATUS_MESSAGE
+    +1
+#endif
+#ifdef REO_ACTOR_CONTACT_ALIGNMENT
     +1
 #endif
 #else
@@ -208,6 +214,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_ACTOR_ALIGNMENT_MESSAGE
     compare_actor_alignment_messages(memory);
 #endif
+#ifdef REO_ACTOR_CONTACT_ALIGNMENT
+    compare_actor_contact_alignment(memory,argv[5]);
+#endif
     std::cout<<"{\"checks\":"<<checks<<",\"appends\":"<<appends<<",\"retirements\":"<<retirements<<",\"prunings\":"<<prunings<<",\"resets\":"<<resets<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<calls
 #ifdef REO_COMPLETION_STATISTICS
     <<",\"completion_cases\":"<<completion_cases<<",\"completion_initializations\":"<<completion_initializations<<",\"completion_refusals\":"<<completion_refusals
@@ -244,6 +253,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_ACTOR_ALIGNMENT_MESSAGE
     <<",\"actor_alignment_cases\":"<<actor_alignment_cases<<",\"actor_alignment_messages\":"<<actor_alignment_messages<<",\"actor_alignment_lookups\":"<<actor_alignment_lookups<<",\"actor_alignment_refusals\":"<<actor_alignment_refusals
+#endif
+#ifdef REO_ACTOR_CONTACT_ALIGNMENT
+    <<",\"contact_alignment_cases\":"<<contact_alignment_cases<<",\"heading_cases\":"<<heading_cases<<",\"contact_alignment_rejections\":"<<contact_alignment_rejections<<",\"contact_alignment_refusals\":"<<contact_alignment_refusals<<",\"contact_alignment_owner_cases\":"<<contact_alignment_owner_cases
 #endif
     <<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

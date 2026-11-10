@@ -8,6 +8,7 @@
 #include "scenario_publication.hpp"
 #include "actor_gauge.hpp"
 #include "../gameplay_world/behavior.hpp"
+#include "../gameplay_world/alignment.hpp"
 
 namespace reo::native::gameplay_update {
 namespace tasks=gameplay_tasks;
@@ -104,6 +105,11 @@ public:
     PublicationStatus record_actor_message(const world::actors::EntityId& actor,ActorMessageSelector selector)noexcept{
         if(!open())return PublicationStatus::unavailable;
         return publication_.actor_message(actor,selector);
+    }
+    std::optional<bool> prepare_actor_contact_alignment(const world::actors::EntityId& id,std::uint32_t limit,float offset){
+        if(!open())return std::nullopt;
+        const auto actor=world_.resolve(id);if(!actor)return std::nullopt;
+        return world::prepare_contact_alignment(*actor,limit,offset);
     }
     PublicationStatus record_periodic_actor_state(const world::actors::EntityId& actor)noexcept{
         if(!open())return PublicationStatus::unavailable;

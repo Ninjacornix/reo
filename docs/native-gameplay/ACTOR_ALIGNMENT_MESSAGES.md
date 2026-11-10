@@ -8,7 +8,9 @@ yaw. It is separate from current/saved position, body direction and collision
 shape targets. Source666F50 writes C34/C38/C3C and C4C after contact-offset
 admission;66D850 consumes that target during alignment. Those two bodies have
 owned instruction-word provenance audits here. They are not executed by this
-message comparison or claimed migrated. Other source phases reuse overlapping
+message comparison or claimed migrated by that historical fixture. The later
+[native contact producer](ACTOR_CONTACT_ALIGNMENT.md) now executes666F50 and its
+complete heading/trig chain in separate qualified comparisons. Other source phases reuse overlapping
 storage; that does not establish an admitted native alignment target.
 
 Selector6 uses this same value through UpdateOwner/StatePublication and the
@@ -28,6 +30,6 @@ and wrapped integer channels. The actual Owner facade also sends with unknown
 gauge state. Both parent builds and all eight integration checks per compiler
 pass. Evidence: `native_actor_alignment_message_qualification_v1.json`.
 
-Actual target producers/import, alignment movement, selectors3/5/8/9/11,
+Other target producers/import, alignment movement, selectors3/5/8/9/11,
 queue/receiver/transport, semantic native saves and game installation/acceptance
 remain open.
