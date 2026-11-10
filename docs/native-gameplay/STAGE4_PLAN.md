@@ -175,6 +175,11 @@ The current resource and inventory implementation includes:
   Both compilers pass 147,456 timing and 4,096 waypoint-dispatch comparisons.
   Scripted arrival, resource requests, and live acceptance remain open.
 
+- [Active-room default waypoints](AI_ACTIVE_WAYPOINTS.md) now synchronize the
+  route action and generate steering through the canonical actor input.
+  The composed original comparison covers 120 active-room waypoint frames.
+  Condition-specific handlers and live game acceptance remain open.
+
 - [Target-cache scratch audit](TARGET_CACHE_SCRATCH_AUDIT.md) identifies controlled
   source inverse-sort dependence on unwritten scratch. Both compilers agree on
   48 profiles,192 strict runs and192 separate initialization-policy runs. This

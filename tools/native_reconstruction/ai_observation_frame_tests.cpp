@@ -28,10 +28,12 @@ unsigned wall_hits{}, wall_resets{};
 unsigned refused_frames{};
 unsigned ai_frames{}, gated_frames{}, refused_actions{};
 unsigned off_room_frames{};
+unsigned active_waypoint_frames{}, waypoint_contacts{}, waypoint_flags{};
 std::array<unsigned, 4> threat_bands{};
 std::optional<unsigned> original_event;
 bool original_wall_hit{};
 bool original_dispatched_goal{}, original_dispatched_action{}, original_off_room_action{};
+bool original_active_waypoint{};
 const n::VisibilityRoom* active_room{};
 std::vector<std::uint8_t> memory(0x2000000);
 
@@ -116,6 +118,7 @@ void project_actor(std::span<std::uint8_t> bytes, const g::Actor& actor) {
     put(bytes, 0x38, actor.position);
     put(bytes, 0x92, actor.orientation[1]);
     put(bytes, 0x1e2, actor.room);
+    put(bytes, 0x534, actor.projectile_contact.normal);
     bytes[0x54f] = actor.motion_class;
     bytes[0xb98] = actor.character;
     put(bytes, 0xba0, actor.status);
@@ -141,9 +144,11 @@ void project_actor(std::span<std::uint8_t> bytes, const g::Actor& actor) {
     put(bytes, 0x1000, state.goal_parameters);
     put(bytes, 0x1008, state.action_phases);
     bytes[0x100c] = std::uint8_t(actor.navigation_route->current_node);
+    put(bytes, 0x101c, actor.navigation_route->output.route.first_position);
     put(bytes, 0x1038, state.steering_value);
     bytes[0x103a] = state.action_marker;
     put(bytes, 0x1054, actor.navigation_route->action);
+    put(bytes, 0x1056, actor.navigation_route->previous_action);
     bytes[0x105a] = actor.navigation_route->completed;
     bytes[0x105b] = actor.transient_marker;
     put(bytes, 0x105c, actor.navigation_route->travel_ticks);
@@ -188,13 +193,15 @@ void compare(unsigned seed, const c::response::Grid& grid,
     u::Owner owner(world, notifications);
     s::SceneResources resources;
     reo::native::gameplay_scene::Records records;
+    const bool active_waypoint = full_ai_frame && seed % 7 != 0 && seed % 5 == 1 && seed < 1024;
+    const bool waypoint_wall = active_waypoint && seed % 2 == 1;
     const std::array walls{c::response::Triangle{
-        0x10000,
+        waypoint_wall && seed % 3 != 0 ? 0x10002u : 0x10000u,
         {c::Vec3{100, -100, 450}, c::Vec3{300, -100, 450}, c::Vec3{200, 200, 450}},
         {0, 0, -1},
         450,
     }};
-    const bool wall_profile = !full_ai_frame && seed % 5 == 1;
+    const bool wall_profile = (!full_ai_frame && seed % 5 == 1) || waypoint_wall;
     const n::VisibilityRoom room{grid,
                                  {},
                                  wall_profile ? std::span<const c::response::Triangle>(walls)
@@ -288,6 +295,17 @@ void compare(unsigned seed, const c::response::Grid& grid,
         state.goal_parameters[0] = std::uint16_t(seed % 3);
         state.goal_parameters[1] = 180;
         state.action_phases[0] = waypoint ? 1 : std::uint8_t(seed % 2);
+        state.forward_wall_ticks = seed % 4;
+        if (active_waypoint) {
+            state.goal = seed % 3 ? 0 : 6;
+            state.action = 2;
+            state.action_marker = seed % 3 ? 0 : 11;
+            self->navigation_route->action = seed % 3 ? 13 : 0x7700;
+            self->navigation_route->previous_action = 0x4500;
+            self->navigation_route->completed = seed % 13 == 1 ? 1 : 0;
+            self->navigation_route->output.route.first_position = {200, 30, 500};
+            self->projectile_contact.normal = {0, 0, seed % 11 == 1 ? 1.f : -1.f};
+        }
     }
     self->inventory.storage[17] = 4;
     s::SceneDescriptor descriptor;
@@ -342,12 +360,17 @@ void compare(unsigned seed, const c::response::Grid& grid,
     put(memory, 0x83e558 + 7 * 164, 1u);
     memory[0x3243d2] = session_gate ? 2 : 0;
     memory[0x4bae8d] = world.session().suppress_hits;
+    const c::Vec3 camera_position{0, 80, 400}, camera_target{100, 0, 600};
+    put(memory, 0x324138, camera_position);
+    put(memory, 0x324144, camera_target);
+    const auto camera_heading =
+        m::direction_turn(camera_target.x - camera_position.x, camera_target.z - camera_position.z);
     if (seed == 4097)
         world.target_metrics().invalidate();
     a::ObservationUpdated result;
     if (full_ai_frame) {
-        const auto frame =
-            owner.run_ai_frame(world.identity(self_slot), session_gate, room, records, resources);
+        const auto frame = owner.run_ai_frame(world.identity(self_slot), session_gate, room,
+                                              records, resources, camera_heading);
         if (seed == 1024) {
             check(frame.status == u::AiFrameStatus::action_unavailable &&
                   frame.observation.status == a::Status::completed &&
@@ -362,6 +385,11 @@ void compare(unsigned seed, const c::response::Grid& grid,
             ++gated_frames;
         else if (self->transient_marker)
             ++off_room_frames;
+        else if (active_waypoint) {
+            ++active_waypoint_frames;
+            if (state.steering_button_20 == 1)
+                ++waypoint_flags;
+        }
     } else {
         result = owner.update_ai_observations(world.identity(self_slot), room, records, resources);
     }
@@ -392,6 +420,7 @@ void compare(unsigned seed, const c::response::Grid& grid,
     original_dispatched_goal = false;
     original_dispatched_action = false;
     original_off_room_action = false;
+    original_active_waypoint = false;
     active_room = &room;
     const auto previous_walls = wall_calls;
     original_transform_port(memory.data(), &context, &runtime);
@@ -410,6 +439,7 @@ void compare(unsigned seed, const c::response::Grid& grid,
     check(original_dispatched_goal == (full_ai_frame && !gate_bits));
     check(original_dispatched_action == (full_ai_frame && !gate_bits));
     check(original_off_room_action == (full_ai_frame && !gate_bits && self->transient_marker));
+    check(original_active_waypoint == (active_waypoint && !gate_bits));
     check(world.session().random.state().primary ==
           transform_read<std::uint16_t>(memory.data(), 0x3244b0));
     check(world.session().random.state().secondary ==
@@ -436,6 +466,14 @@ void original_transform_port(std::uint8_t* memory, R5900Context* context, PS2Run
         original_dispatched_action = true;
     if (context->pc == 0x81beb0)
         original_off_room_action = true;
+    if (context->pc == 0x81a880) {
+        original_active_waypoint = true;
+        const auto return_pc = GPR_U32(context, 31);
+        o9_0081A880_0x81a880(memory, context, runtime);
+        check(context->pc == 0x81a8f0 && GPR_U32(context, 31) == return_pc);
+        original_transform_port(memory, context, runtime);
+        return;
+    }
     if (context->pc == 0x8130d0) {
         if (!original_dispatched_goal)
             original_event = other;
@@ -456,10 +494,19 @@ void original_transform_port(std::uint8_t* memory, R5900Context* context, PS2Run
             context->f[0] = m::radians(std::uint16_t(arg));
             break;
         case 0x370140: {
-            check(other == primary_base + 0x38);
+            check(other == primary_base + 0x38 || other == arg + 0x101c - 0x38);
             const auto from = transform_read<g::Position>(memory, arg);
             const auto to = transform_read<g::Position>(memory, other);
             SET_GPR_U32(context, 2, m::position_direction_turn(to.x - from.x, to.z - from.z));
+            break;
+        }
+        case 0x376e70: {
+            check((arg == 0x324138 && other == 0x324144) ||
+                  (other >= primary_base + 0x534 &&
+                   (other - primary_base - 0x534) % primary_stride == 0));
+            const auto from = transform_read<c::Vec3>(memory, arg);
+            const auto to = transform_read<c::Vec3>(memory, other);
+            SET_GPR_U32(context, 2, m::direction_turn(to.x - from.x, to.z - from.z));
             break;
         }
         case 0x191bc0: {
@@ -483,6 +530,25 @@ void original_transform_port(std::uint8_t* memory, R5900Context* context, PS2Run
             original_wall_hit = bool(hit.hit);
             SET_GPR_U32(context, 2, original_wall_hit);
             ++wall_calls;
+            break;
+        }
+        case 0x5795e0: {
+            check(active_room && GPR_U32(context, 8) == UINT32_MAX && GPR_U32(context, 9) == 0);
+            auto filter = active_room->filter;
+            filter.include = UINT32_MAX;
+            filter.exclude = 0;
+            filter.dynamic_kind_gate = false;
+            const auto hit = c::trace::shorten(
+                active_room->walls, transform_read<c::Vec3>(memory, arg),
+                transform_read<c::Vec3>(memory, other), filter, active_room->dynamic);
+            check(hit.status == c::trace::SamplingStatus::complete);
+            SET_GPR_U32(context, 2, bool(hit.hit));
+            if (hit.hit) {
+                transform_write(memory, GPR_U32(context, 6), hit.hit->point);
+                transform_write(memory, GPR_U32(context, 7), hit.hit->normal);
+                transform_write(memory, GPR_U32(context, 10), hit.hit->type);
+                ++waypoint_contacts;
+            }
             break;
         }
         case 0x107c68:
@@ -520,7 +586,10 @@ int main(int argc, char** argv) try {
               << ",\"threat_bands\":[" << threat_bands[0] << ',' << threat_bands[1] << ','
               << threat_bands[2] << ',' << threat_bands[3] << "],\"ai_frames\":" << ai_frames
               << ",\"gated_frames\":" << gated_frames << ",\"refused_actions\":" << refused_actions
-              << ",\"off_room_frames\":" << off_room_frames << "}\n";
+              << ",\"off_room_frames\":" << off_room_frames
+              << ",\"active_waypoint_frames\":" << active_waypoint_frames
+              << ",\"waypoint_contacts\":" << waypoint_contacts
+              << ",\"waypoint_flags\":" << waypoint_flags << "}\n";
 } catch (const std::exception& error) {
     std::cerr << error.what() << '\n';
     return 1;

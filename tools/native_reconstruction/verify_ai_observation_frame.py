@@ -25,16 +25,17 @@ IMAGES = (
             0x812460, 0x813330, 0x8133D0, 0x813DE0, 0x814B30, 0x815820,
             0x81A720, 0x81A770, 0x81A780, 0x81BB80, 0x825CC0, 0x823190, 0x817140,
             0x81BEB0, 0x81C1A0, 0x81BF00, 0x81BF10, 0x81A470,
+            0x81A880, 0x81A8F0, 0x81B8C0, 0x81A210,
         ),
     ),
     (
         "build-function-index/owned-overlays/o2.bin", "recomp/config/output_ovl/o2", 0x570000,
-        "45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226", (0x5F2210,),
+        "45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226", (0x5F2210, 0x666EA0),
     ),
     (
         "game_data/SLUS_207.65", "recomp/config/output", None,
         "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46",
-        (0x107AB0, 0x1AEC80, 0x191D10),
+        (0x107AB0, 0x1AEC80, 0x191D10, 0x1920A0),
     ),
 )
 FIXTURE = "tools/native_reconstruction/ai_observation_frame_tests.cpp"
@@ -108,6 +109,7 @@ def prepare_reference(out, entries, frozen):
     (out / "word_conversion.hpp").write_bytes(frozen[CONVERSION])
     (out / "reference.hpp").write_bytes(reference + b"""
 #define GPR_S32(c,n) std::bit_cast<std::int32_t>(GPR_U32(c,n))
+#define SRA32(a,b) (std::bit_cast<std::int32_t>(std::uint32_t(a)) >> (b))
 #define FPU_DIV_S(a,b) ((a)/(b))
 #include "word_conversion.hpp"
 #define FPU_CVT_W_S(a) Ps2FpuConvertWord(a)
@@ -176,6 +178,9 @@ def main():
             "579980 room wall probe through the same native trace consumer",
             "107C68 checked eight-byte zero fill",
             "370140 reference-facing heading through qualified native position math",
+            "376E70 camera and contact heading through qualified native math",
+            "5795E0 checked waypoint wall segment through the native ordered trace",
+            "81A880 tail dispatch resumes at the selected original 81A8F0 entry",
         ],
     )
     try:

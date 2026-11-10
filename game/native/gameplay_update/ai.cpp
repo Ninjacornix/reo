@@ -31,19 +31,24 @@ gameplay_ai::GoalDispatched Owner::dispatch_ai_goal(const world::actors::EntityI
     return gameplay_ai::dispatch_goal(*actor, reference.get(), companion.get(), world_.navigation(),
                                      resources, world_.session().random);
 }
-gameplay_ai::Status Owner::dispatch_active_ai_action(const world::actors::EntityId& id, bool paused) {
+gameplay_ai::Status Owner::dispatch_active_ai_action(
+    const world::actors::EntityId& id, bool updates_blocked,
+    const gameplay_navigation::VisibilityRoom* room, std::optional<std::uint16_t> camera_heading) {
     if (!open())
         return gameplay_ai::Status::unavailable;
     const auto actor = world_.resolve(id);
     if (!actor || world_.identity(actor->slot) != id)
         return gameplay_ai::Status::unavailable;
+    if (!updates_blocked && actor->ai_execution && actor->ai_execution->action == 2)
+        return advance_active_ai_waypoint(*actor, room, camera_heading);
     const auto reference = world_.primary(0);
-    return gameplay_ai::dispatch_active_room_action(*actor, reference.get(), paused);
+    return gameplay_ai::dispatch_active_room_action(*actor, reference.get(), updates_blocked);
 }
 AiFrameResult Owner::run_ai_frame(const world::actors::EntityId& id, bool updates_blocked,
                                   const gameplay_navigation::VisibilityRoom& room,
                                   const gameplay_scene::Records& records,
-                                  const scenario::SceneResources& resources) {
+                                  const scenario::SceneResources& resources,
+                                  std::optional<std::uint16_t> camera_heading) {
     AiFrameResult result;
     if (!open())
         return result;
@@ -80,7 +85,7 @@ AiFrameResult Owner::run_ai_frame(const world::actors::EntityId& id, bool update
         actor->transient_marker
             ? gameplay_ai::dispatch_off_room_action(*actor, world_.navigation(),
                                                     world_.session().clock_mode)
-            : dispatch_active_ai_action(id, false);
+            : dispatch_active_ai_action(id, false, &room, camera_heading);
     if (action_status != gameplay_ai::Status::completed) {
         result.status = AiFrameStatus::action_unavailable;
         return result;
