@@ -12,6 +12,7 @@ from audit_retail_effect_descriptors import compare_source,elf_reader
 from generate_ai_weight_profiles import generated
 from generate_ai_reaction_policies import generated as generated_reactions
 from generate_ai_observation_policies import generated as generated_observations
+from generate_ai_waypoint_speeds import generated as generated_waypoint_speeds
 from verify_gameplay_collision import COMPILERS
 
 ROOT=Path(__file__).resolve().parents[2]
@@ -35,6 +36,7 @@ def main():
     assert (ROOT/'game/native/gameplay_ai/weight_profiles.inc').read_text()==generated()
     assert (ROOT/'game/native/gameplay_ai/reaction_policies.inc').read_text()==generated_reactions()
     assert (ROOT/'game/native/gameplay_ai/observation_policies.inc').read_text()==generated_observations()
+    assert (ROOT/"game/native/gameplay_ai/off_room_travel_speeds.inc").read_text() == generated_waypoint_speeds()
     assert struct.unpack_from('<I',o2_raw,0x71b034-0x570000)[0]==0x41c80000
     assert struct.unpack_from('<6I',raw,0x82b860-0x810000)==(0x8231c0,)*6
     goal_table = struct.unpack_from("<16I", raw, 0x8294c0 - 0x810000)
@@ -48,7 +50,15 @@ def main():
         0x81c320, 0x81bf00, 0x81bf00, 0x81bf00, 0x81bf00,
     )
     entries={};proof=[]
-    for address in [0x8120c0,0x8123e0,0x813380,0x81a6e0,0x81a6f0,0x814b30,0x107ab0,0x681240,0x6812b0,0x681330,0x681710,0x681790,0x815df0,0x681820,0x6818d0,0x1afe70,0x1b0300,0x811770,0x810f30,0x8133d0,0x825cc0,0x823190,0x817140,0x8130d0,0x1aec80,0x812ef0,0x813bd0,0x813330,0x813de0,0x815820,0x81a720,0x81a770,0x81a780,0x81bb80,0x81beb0,0x81c1a0,0x81bf00,0x81c260,0x81c2c0,0x81c320]:
+    addresses = [
+        0x8120c0, 0x8123e0, 0x813380, 0x81a6e0, 0x81a6f0, 0x814b30, 0x107ab0,
+        0x681240, 0x6812b0, 0x681330, 0x681710, 0x681790, 0x815df0, 0x681820,
+        0x6818d0, 0x1afe70, 0x1b0300, 0x811770, 0x810f30, 0x8133d0, 0x825cc0,
+        0x823190, 0x817140, 0x8130d0, 0x1aec80, 0x812ef0, 0x813bd0, 0x813330,
+        0x813de0, 0x815820, 0x81a720, 0x81a770, 0x81a780, 0x81bb80, 0x81beb0,
+        0x81c1a0, 0x81bf00, 0x81c260, 0x81c2c0, 0x81c320, 0x81bf10, 0x81a470, 0x191d10,
+    ]
+    for address in addresses:
         folder=ROOT/('recomp/config/output' if address<0x200000 else 'recomp/config/output_ovl/'+('o8' if address==0x810f30 else 'o2' if address<0x810000 else 'o9'))
         path=next(folder.glob(f'*_{address:08X}_0x{address:x}.cpp'))
         end=int(re.search(r'// Address: 0x[0-9a-f]+ - 0x([0-9a-f]+)',path.read_text())[1],16)
@@ -71,8 +81,9 @@ def main():
     steering_units = [
         "game/native/gameplay_ai/steering.cpp", "game/native/transform_math/heading.cpp",
         "game/native/transform_math/transform_math.cpp", "game/native/gameplay_ai/off_room_actions.cpp",
+        "game/native/gameplay_ai/off_room_travel.cpp",
     ]
-    files += steering_units
+    files += [*steering_units, "tools/native_reconstruction/generate_ai_waypoint_speeds.py"]
     conversion='third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h'
     files+=observation_units+[conversion,'game/native/gameplay_ai/observation_gate_tests.inc','game/native/gameplay_ai/observation_policies.inc','tools/native_reconstruction/generate_ai_observation_policies.py']
     # Freeze native quoted-include dependencies. Original runtime headers are

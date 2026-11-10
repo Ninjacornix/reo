@@ -1,4 +1,5 @@
 #include "off_room_actions.hpp"
+#include "off_room_travel.hpp"
 #include "../gameplay_world/world.hpp"
 
 namespace reo::native::gameplay_ai {
@@ -34,7 +35,8 @@ Status synthesize_off_room_motion(gameplay_world::Actor& actor) noexcept {
     return Status::completed;
 }
 
-Status dispatch_off_room_action(gameplay_world::Actor& actor) noexcept {
+Status dispatch_off_room_action(gameplay_world::Actor& actor, const gameplay_navigation::Bank& bank,
+                                std::uint8_t clock_mode) noexcept {
     if (!actor.ai_execution || actor.ai_execution->action > 10)
         return Status::unavailable;
     if (synthesize_off_room_motion(actor) != Status::completed)
@@ -43,7 +45,7 @@ Status dispatch_off_room_action(gameplay_world::Actor& actor) noexcept {
     auto& state = *actor.ai_execution;
     switch (state.action) {
         case 2:
-            return Status::unavailable;
+        return advance_off_room_waypoint(actor, bank, clock_mode);
         case 4:
         case 5:
         case 6:

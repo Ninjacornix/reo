@@ -1,6 +1,6 @@
 std::uint64_t off_room_motion_cases{}, off_room_action_cases{};
 
-void compare_off_room_action(gw::Actor& actor, bool dispatch) {
+void compare_off_room_action(gw::Actor& actor, const gn::Bank& bank, bool dispatch) {
 #ifdef REO_AI_ORIGINAL
     constexpr unsigned at = 0x10000;
     std::fill_n(memory.begin() + at, 0x1100, 0xa5);
@@ -8,8 +8,8 @@ void compare_off_room_action(gw::Actor& actor, bool dispatch) {
     put(memory, at + 0x1054, actor.navigation_route->action);
     auto expected = std::vector<std::uint8_t>(memory.begin() + at, memory.begin() + at + 0x1100);
 #endif
-    const auto status =
-        dispatch ? ai::dispatch_off_room_action(actor) : ai::synthesize_off_room_motion(actor);
+    const auto status = dispatch ? ai::dispatch_off_room_action(actor, bank, 0)
+                                 : ai::synthesize_off_room_motion(actor);
     check(status == ai::Status::completed);
 #ifdef REO_AI_ORIGINAL
     project_steering_actor(expected, 0, actor);
@@ -30,6 +30,8 @@ void compare_off_room_action(gw::Actor& actor, bool dispatch) {
 }
 
 void off_room_action_contracts() {
+    reo::native::gameplay_session::RoomVariants variants;
+    const gn::Bank bank(variants);
     gw::Actor actor;
     actor.navigation_route.emplace();
     for (unsigned waypoint = 0; waypoint < 65536; ++waypoint) {
@@ -39,7 +41,7 @@ void off_room_action_contracts() {
             actor.ai_execution->action = 2;
             actor.ai_execution->steering_button_10 = steer;
             actor.navigation_route->action = std::uint16_t(waypoint);
-            compare_off_room_action(actor, false);
+            compare_off_room_action(actor, bank, false);
         }
     }
     for (auto action : {0, 1, 3, 4, 5, 6, 7, 8, 9, 10}) {
@@ -49,22 +51,23 @@ void off_room_action_contracts() {
             actor.ai_execution->action = std::uint16_t(action);
             actor.ai_execution->action_phases[0] = std::uint8_t(phase);
             if (action >= 4 && action <= 6 && !phase) {
-                check(ai::dispatch_off_room_action(actor) == ai::Status::unavailable &&
+                check(ai::dispatch_off_room_action(actor, bank, 0) == ai::Status::unavailable &&
                       actor.ai_execution->action == action &&
                       actor.ai_execution->action_phases[0] == 0);
                 continue;
             }
-            compare_off_room_action(actor, true);
+            compare_off_room_action(actor, bank, true);
         }
     }
     actor.ai_execution->action = 2;
     actor.navigation_route->action = 0x770d;
-    check(ai::dispatch_off_room_action(actor) == ai::Status::unavailable &&
+    actor.navigation_route->destination_room = 7;
+    check(ai::dispatch_off_room_action(actor, bank, 0) == ai::Status::unavailable &&
           actor.motion_class == 0x31);
     actor.navigation_route.reset();
     check(ai::synthesize_off_room_motion(actor) == ai::Status::unavailable &&
           actor.motion_class == 0x31);
     actor.ai_execution->action = 65535;
-    check(ai::dispatch_off_room_action(actor) == ai::Status::unavailable &&
+    check(ai::dispatch_off_room_action(actor, bank, 0) == ai::Status::unavailable &&
           actor.motion_class == 0x31);
 }

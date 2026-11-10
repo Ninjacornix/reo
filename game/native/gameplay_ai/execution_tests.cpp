@@ -6,6 +6,7 @@
 #include "observation_gates.hpp"
 #include "steering.hpp"
 #include "off_room_actions.hpp"
+#include "off_room_travel.hpp"
 #include "../transform_math/heading.hpp"
 #include "../gameplay_session/session.hpp"
 #include "../gameplay_world/world.hpp"
@@ -90,6 +91,7 @@ void compare(unsigned pc,std::uint32_t argument,ai::ExecutionState before){
 #include "goal_dispatch_tests.inc"
 #include "steering_tests.inc"
 #include "off_room_action_tests.inc"
+#include "off_room_travel_tests.inc"
 }
 #ifdef REO_AI_ORIGINAL
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
@@ -139,6 +141,7 @@ int main(int argc,char** argv){
         goal_dispatch_contracts();
         steering_contracts();
         off_room_action_contracts();
+        off_room_travel_contracts();
         std::cout<<'{';bool first=true;
         const auto emit=[&](const char* key,std::uint64_t value){if(!first)std::cout<<',';first=false;std::cout<<'"'<<key<<"\":"<<value;};
         emit("checks",checks);emit("goal_cases",goal_cases);emit("action_cases",action_cases);emit("phase_cases",phase_cases);emit("finish_cases",finish_cases);
@@ -157,6 +160,8 @@ int main(int argc,char** argv){
         emit("active_room_action_cases",active_room_action_cases);
         emit("off_room_motion_cases",off_room_motion_cases);
         emit("off_room_action_cases",off_room_action_cases);
+        emit("waypoint_timing_cases",waypoint_timing_cases);
+        emit("waypoint_travel_cases",waypoint_travel_cases);
         std::cout<<"}\n";
     }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
 }

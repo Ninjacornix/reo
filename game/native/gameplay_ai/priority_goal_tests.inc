@@ -43,11 +43,16 @@ void compare_target_busy(const gw::Actor& actor){
 #endif
     ++target_busy_cases;
 }
-std::shared_ptr<const gn::Asset> reevaluation_asset(bool nodes=true){
+std::shared_ptr<const gn::Asset> reevaluation_asset(bool nodes=true,bool waypoint_actions=false){
     const unsigned count=nodes?1:0,tail=44+64*count+4*count*count,directory=tail+8;
     std::vector<std::uint8_t> bytes(directory+64);const auto write=[&](unsigned at,unsigned value){for(unsigned i=0;i<4;++i)bytes[at+i]=std::uint8_t(value>>(8*i));};
     write(0,0x20030724);write(4,12);write(8,16);write(16,1);bytes[20]=7;write(24,32);write(32,tail-32);write(36,directory-32);write(40,count);
     if(nodes){bytes[44]=1;write(60,0xffffffff);for(unsigned i=0;i<4;++i){bytes[64+i]=255;bytes[108+i]=255;}}
+    if (nodes && waypoint_actions) {
+        bytes[45] = 2;
+        bytes[64] = bytes[65] = 0;
+        write(68, 0x77886602);
+    }
     gn::ImportFailure failure;auto result=gn::Asset::read(bytes,failure);check(bool(result));return std::make_shared<const gn::Asset>(std::move(*result));
 }
 void goal_actor(gw::Actor& actor,unsigned seed=7){

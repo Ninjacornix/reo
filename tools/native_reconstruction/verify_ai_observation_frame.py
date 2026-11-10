@@ -24,7 +24,7 @@ IMAGES = (
             0x812540, 0x813BD0, 0x812EF0, 0x8130D0, 0x813380, 0x81A6E0, 0x81A6F0,
             0x812460, 0x813330, 0x8133D0, 0x813DE0, 0x814B30, 0x815820,
             0x81A720, 0x81A770, 0x81A780, 0x81BB80, 0x825CC0, 0x823190, 0x817140,
-            0x81BEB0, 0x81C1A0, 0x81BF00,
+            0x81BEB0, 0x81C1A0, 0x81BF00, 0x81BF10, 0x81A470,
         ),
     ),
     (
@@ -34,7 +34,7 @@ IMAGES = (
     (
         "game_data/SLUS_207.65", "recomp/config/output", None,
         "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46",
-        (0x107AB0, 0x1AEC80),
+        (0x107AB0, 0x1AEC80, 0x191D10),
     ),
 )
 FIXTURE = "tools/native_reconstruction/ai_observation_frame_tests.cpp"

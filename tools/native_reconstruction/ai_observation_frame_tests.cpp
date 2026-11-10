@@ -144,7 +144,9 @@ void project_actor(std::span<std::uint8_t> bytes, const g::Actor& actor) {
     put(bytes, 0x1038, state.steering_value);
     bytes[0x103a] = state.action_marker;
     put(bytes, 0x1054, actor.navigation_route->action);
+    bytes[0x105a] = actor.navigation_route->completed;
     bytes[0x105b] = actor.transient_marker;
+    put(bytes, 0x105c, actor.navigation_route->travel_ticks);
     put(bytes, 0x1060, state.observation_timeout);
     bytes[0x106c] = state.threat_band;
     bytes[0x106d] = state.previous_threat_band;
@@ -277,13 +279,15 @@ void compare(unsigned seed, const c::response::Grid& grid,
         state.steering_button_20 = 2;
         state.reaction = 199;
         state.goal = std::array<std::uint16_t, 3>{0, 6, 14}[seed % 3];
-        state.action = seed == 1024 ? 2 : std::uint16_t(seed / 7 % 2);
-        self->navigation_route->action = 13;
+        const bool waypoint = seed == 1024 || (self->transient_marker && seed % 3 == 1);
+        state.action = waypoint ? 2 : std::uint16_t(seed / 7 % 2);
+        self->navigation_route->action = seed == 1024 ? 12 : 13;
+        self->navigation_route->travel_ticks = seed == 1024 ? 0 : 57;
         state.goal_refresh = self->motion_class == 0x3b && seed % 17 == 0 ? 1 : 0;
         state.goal_phases[0] = 1;
         state.goal_parameters[0] = std::uint16_t(seed % 3);
         state.goal_parameters[1] = 180;
-        state.action_phases[0] = std::uint8_t(seed % 2);
+        state.action_phases[0] = waypoint ? 1 : std::uint8_t(seed % 2);
     }
     self->inventory.storage[17] = 4;
     s::SceneDescriptor descriptor;
@@ -347,7 +351,7 @@ void compare(unsigned seed, const c::response::Grid& grid,
         if (seed == 1024) {
             check(frame.status == u::AiFrameStatus::action_unavailable &&
                   frame.observation.status == a::Status::completed &&
-                  frame.goal.status == a::Status::completed && self->motion_class == 0x31);
+                  frame.goal.status == a::Status::completed && self->motion_class == 3);
             ++refused_actions;
             return;
         }

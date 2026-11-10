@@ -76,9 +76,11 @@ AiFrameResult Owner::run_ai_frame(const world::actors::EntityId& id, bool update
         result.status = AiFrameStatus::goal_unavailable;
         return result;
     }
-    const auto action_status = actor->transient_marker
-        ? gameplay_ai::dispatch_off_room_action(*actor)
-        : dispatch_active_ai_action(id, false);
+    const auto action_status =
+        actor->transient_marker
+            ? gameplay_ai::dispatch_off_room_action(*actor, world_.navigation(),
+                                                    world_.session().clock_mode)
+            : dispatch_active_ai_action(id, false);
     if (action_status != gameplay_ai::Status::completed) {
         result.status = AiFrameStatus::action_unavailable;
         return result;

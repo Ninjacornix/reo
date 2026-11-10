@@ -170,6 +170,11 @@ The current resource and inventory implementation includes:
   pass 196,608 motion and 2,557 dispatch comparisons, plus 100 off-room frames
   in the composed comparison. Waypoint movement and request producers remain open.
 
+- [Off-room waypoint movement](AI_OFF_ROOM_WAYPOINTS.md) now advances ordinary
+  travel and arrival through the canonical actor route and Session clock mode.
+  Both compilers pass 147,456 timing and 4,096 waypoint-dispatch comparisons.
+  Scripted arrival, resource requests, and live acceptance remain open.
+
 - [Target-cache scratch audit](TARGET_CACHE_SCRATCH_AUDIT.md) identifies controlled
   source inverse-sort dependence on unwritten scratch. Both compilers agree on
   48 profiles,192 strict runs and192 separate initialization-policy runs. This
