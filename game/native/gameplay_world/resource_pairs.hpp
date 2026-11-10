@@ -28,6 +28,7 @@ private:
     friend class ResourceRecipes;
     friend class OwnedResourceRecipes;
     friend class ResourceConsumption;
+    friend class ResourceHealthEffects;
     World& world_;gameplay_scenario::SceneResources& resources_;
     const gameplay_scenario::ResourceTemplates& templates_;ResourceFrames& frames_;
     gameplay_scenario::SceneDescriptor descriptor(std::uint8_t)const;

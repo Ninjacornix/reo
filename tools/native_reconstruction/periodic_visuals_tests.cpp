@@ -48,7 +48,14 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
     if(context->pc==0x1b0300){SET_GPR_U32(context,2,memory[0x3243f2]);done();return;}
 #endif
 #ifdef REO_RESOURCE_WRAPPERS
-    if(context->pc==0x811190||context->pc==0x810870){extern void wrapper_message_port(std::uint8_t*,R5900Context*);wrapper_message_port(memory,context);done();return;}
+    if(context->pc==0x811190||context->pc==0x810870){
+#ifdef REO_RESOURCE_HEALTH
+        if(memory[GPR_U32(context,5)]==14){extern void health_message_port(std::uint8_t*,R5900Context*);health_message_port(memory,context);done();return;}
+#endif
+        extern void wrapper_message_port(std::uint8_t*,R5900Context*);wrapper_message_port(memory,context);done();return;}
+#endif
+#ifdef REO_RESOURCE_HEALTH
+    if(context->pc==0x6e1430||context->pc==0x665ca0||context->pc==0x1c1ce0||context->pc==0x1b4820||context->pc==0x811d40||context->pc==0x8115f0){extern void health_ui_port(std::uint8_t*,R5900Context*);health_ui_port(memory,context);done();return;}
 #endif
 #ifdef REO_RESOURCE_COMPANIONS
     if(companion_live_capture){
@@ -193,6 +200,9 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_RESOURCE_WRAPPERS
 #include "tools/native_reconstruction/resource_wrappers_tests.inc"
 #endif
+#ifdef REO_RESOURCE_HEALTH
+#include "tools/native_reconstruction/resource_health_tests.inc"
+#endif
 #ifdef REO_WEAPON_RESOURCES
 #include "tools/native_reconstruction/weapon_resources_tests.inc"
 #endif
@@ -331,6 +341,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_RESOURCE_WRAPPERS
     compare_resource_wrappers(argv[2],argv[3],ram);
 #endif
+#ifdef REO_RESOURCE_HEALTH
+    compare_resource_health(argv[2],argv[3],ram);
+#endif
 #ifdef REO_WEAPON_RESOURCES
     compare_weapon_resources(argv[4],ram);
 #endif
@@ -393,6 +406,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_RESOURCE_WRAPPERS
     <<",\"wrapper_cases\":"<<wrapper_cases<<",\"wrapper_messages\":"<<wrapper_messages<<",\"wrapper_frontends\":"<<wrapper_frontends<<",\"wrapper_refusals\":"<<wrapper_refusals
+#endif
+#ifdef REO_RESOURCE_HEALTH
+    <<",\"health_cases\":"<<health_cases<<",\"health_event_cases\":"<<health_event_cases<<",\"health_ui_cases\":"<<health_ui_cases<<",\"health_refusals\":"<<health_refusals
 #endif
 #ifdef REO_WEAPON_RESOURCES
     <<",\"weapon_refreshes\":"<<weapon_refreshes<<",\"weapon_loaded_banks\":"<<weapon_loaded_banks<<",\"weapon_missing_banks\":"<<weapon_missing_banks<<",\"weapon_pcm_frames\":"<<weapon_pcm_frames<<",\"weapon_signal_samples\":"<<weapon_signal_samples<<",\"weapon_refusals\":"<<weapon_refusals<<",\"weapon_file_reads\":"<<weapon_file_reads

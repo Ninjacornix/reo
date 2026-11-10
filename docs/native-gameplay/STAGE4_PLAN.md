@@ -42,6 +42,9 @@ The current resource and inventory implementation includes:
   Owner status clearing, phase/authority/suppression and mapped-channel behavior.
   Other message selectors, actual network consumers and game installation remain
   open.
+- [Item healing/status core](RESOURCE_HEALTH_EFFECTS.md), including actual actor
+  mutations, native status messages and cooperative event publication. The outer
+  effect/deployment paths and required UI/device/text consumers remain open.
 - [Direct item consumption and visibility](RESOURCE_CONSUMPTION.md), using the
   actual inventory/model lifecycle and completion-event consumers, and
   [inventory callers/message frontend](RESOURCE_INVENTORY_CALLERS.md) over the

@@ -1,5 +1,6 @@
 #include "owned_resource_recipes.hpp"
 #include "resource_consumption.hpp"
+#include "resource_health_effects.hpp"
 #include "../gameplay_update/update.hpp"
 #include <cstring>
 #include <iostream>
@@ -46,6 +47,9 @@ int main()try{
     messages.callback=[](const u::ResourceOperationMessage&){return false;};bool message_failed{};try{consumption.use_carried_content(id,10100);}catch(const std::runtime_error&){message_failed=true;}check(message_failed&&resources.get(*resources.slot(3))->parameter==2&&world.resolve(id)->inventory.carried[0]==3);
     message_failed=false;try{consumption.consume_carried_content(id,10100);}catch(const std::runtime_error&){message_failed=true;}check(message_failed&&resources.get(*resources.slot(3))->parameter==1&&world.resolve(id)->inventory.carried[0]==3);
     message_failed=false;try{consumption.destroy_content(id,10100);}catch(const std::runtime_error&){message_failed=true;}check(message_failed&&resources.get(*resources.slot(3))->active&&world.resolve(id)->inventory.carried[0]==3);
+    session->message_phase=0;put(encoded,32+10,std::uint16_t(0x13));check(templates.load(encoded));item=*resources.get(*resources.slot(3));item.attachment_id=300;item.template_index=0;check(resources.replace(*resources.slot(3),item)==s::SceneStatus::completed);const auto live=world.resolve(id);live->current=5;live->maximum=100;live->status=1;live->auxiliary_status=0;g::ResourceHealthEffects healing(primitives,update);
+    const auto healed=healing.apply(3,id);check(healed.status==g::ResourceHealthStatus::completed&&healed.value==1&&live->current==100&&live->status==0&&live->auxiliary_status==0x20);const auto health_events=update.cooperative_events().snapshot();check(health_events.size()==2&&health_events.back().value.id==3&&health_events.back().value.first==300&&health_events.back().value.timestamp==123&&health_events.back().value.room==7);
+    item=*resources.get(*resources.slot(3));item.attachment_id=312;check(resources.replace(*resources.slot(3),item)==s::SceneStatus::completed);session->inventory_owner=3;const auto unavailable=healing.apply(3,id);check(unavailable.status==g::ResourceHealthStatus::ui_unavailable&&(live->auxiliary_status&0x1000u)&&session->inventory_owner==0&&update.cooperative_events().snapshot().size()==2);
     g::World other({{g::input::Remap{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<g::Session>());u::Owner other_update(other,notifications);bool refused{};try{g::OwnedResourceRecipes wrong(primitives,other_update);}catch(const std::invalid_argument&){refused=true;}check(refused);
     check(world.retire_primary(0)==g::actors::EntityStatus::completed);refused=false;try{recipes.publish(0xf,0x136,42,id);}catch(const std::runtime_error&){refused=true;}check(refused);check(update.close()==u::Status::completed);refused=false;try{recipes.apply(3,4);}catch(const std::runtime_error&){refused=true;}check(refused);check(world.close()==g::Status::completed);
     std::cout<<checks<<" owned recipe model/event/update composition checks passed.\n";
