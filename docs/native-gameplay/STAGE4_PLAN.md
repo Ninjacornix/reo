@@ -29,6 +29,11 @@ The current resource and inventory implementation includes:
   root policies and their recursive companions, with41326 original comparisons
   per compiler through the same graph/occupancy/condition owners. The separate
   bounded-cost policy, outer/cross-room dispatch and actor/AI execution remain open.
+- [Bounded-cost navigation](NAVIGATION_COST_ROUTES.md) now preserves818B70/818E30
+  for completed native searches and uses an explicit work-admission budget.
+  Both compilers pass81928 cost comparisons and ten parent tests;3626 sampled
+  retail queries exceed the lower4096-edge verification profile and remain open.
+  Outer/cross-room dispatch, wider work admission and actor/AI execution are next.
 
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.

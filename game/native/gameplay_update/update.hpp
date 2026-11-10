@@ -13,6 +13,7 @@
 #include "../gameplay_navigation/conditions.hpp"
 #include "../gameplay_navigation/edges.hpp"
 #include "../gameplay_navigation/routes.hpp"
+#include "../gameplay_navigation/cost_routes.hpp"
 
 namespace reo::native::gameplay_update {
 namespace tasks=gameplay_tasks;
@@ -173,6 +174,7 @@ public:
     gameplay_navigation::LinkResult admitted_navigation_link(const world::actors::EntityId&,std::int32_t room,std::int32_t variant,std::int32_t node);
     gameplay_navigation::AdmissionResult admit_navigation_edge(const world::actors::EntityId&,std::uint32_t room,std::int32_t source,std::int32_t destination);
     gameplay_navigation::RouteResult ranked_navigation_route(const world::actors::EntityId&,std::uint32_t room,std::int32_t source,std::int32_t destination,gameplay_navigation::RankedPolicy,gameplay_navigation::RouteOutput&);
+    gameplay_navigation::CostRouteResult bounded_navigation_route(const world::actors::EntityId&,std::uint32_t room,std::int32_t source,std::int32_t destination,gameplay_navigation::RouteOutput&,std::size_t maximum_edges=65536);
     State state;
 private:
     world::World& world_;

@@ -3,6 +3,7 @@
 #include "conditions.hpp"
 #include "edges.hpp"
 #include "routes.hpp"
+#include "cost_routes.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -23,6 +24,7 @@ std::uint64_t checks{},nearest_cases{},action_cases{},asset_nodes{},asset_condit
 std::uint64_t condition_cases{},link_cases{},link_refusals{};
 std::uint64_t edge_cases{},edge_refusals{};
 std::uint64_t retail_edge_refusals{},edge_flag_bindings{};
+std::uint64_t cost_scratch_clears{};
 void check(bool value,std::source_location at=std::source_location::current()){
     ++checks;if(!value)throw std::runtime_error("Navigation check "+std::to_string(checks)+" line "+std::to_string(at.line()));
 }
@@ -282,6 +284,7 @@ void edge_contracts(){
 #endif
 }
 #include "ranked_route_tests.inc"
+#include "cost_route_tests.inc"
 void owned(const char* path){
     const auto bytes=read(path);const auto asset=imported(bytes);asset_rooms+=asset.descriptors().size();asset_links+=asset.links().size();
     reo::native::gameplay_session::RoomVariants native_variants;n::Bank bank(native_variants);const auto shared=std::make_shared<const n::Asset>(asset);
@@ -335,6 +338,9 @@ void owned(const char* path){
                     const auto result=compare_ranked(bank,{std::uint8_t(profile*7),std::uint8_t(profile),std::uint8_t(profile)},profile?0x88u:0u,std::int32_t(source),std::int32_t(destination),std::uint16_t(profile?0xffff:0),policy,output,room);
                     if(result.status!=n::QueryStatus::completed)++ranked_retail_refusals;
                 }
+                n::RouteOutput cost_output{-22,-23,{1,2,3},{4,5,6},std::bit_cast<float>(0x7fc01234u)};
+                const auto cost_result=compare_cost(bank,{std::uint8_t(profile*7),std::uint8_t(profile),std::uint8_t(profile)},profile?0x88u:0u,std::int32_t(source),std::int32_t(destination),std::uint16_t(profile?0xffff:0),cost_output,4096,room);
+                if(cost_result.status!=n::QueryStatus::completed){++cost_retail_refusals;if(cost_result.budget_exhausted)++cost_retail_budgets;}
             }
         }
         check(word(memory,0x83e540)==links&&word(memory,0x83e548)==call(0x816080)&&word(memory,0x83e54c)==call(0x8160c0));
@@ -377,7 +383,11 @@ void owned(const char* path){
 #ifdef REO_NAVIGATION_ORIGINAL
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
     switch(context->pc){
-    case 0x107c68:{const auto start=GPR_U32(context,4),count=GPR_U32(context,6);check(GPR_U32(context,5)==0&&((start==0x83e550&&count==0x5200)||(start==0x83e540&&count==16)));std::fill_n(memory+start,count,0);++clears;SET_GPR_U32(context,2,start);context->pc=GPR_U32(context,31);return;}
+    case 0x107c68:{
+        const auto start=GPR_U32(context,4),count=GPR_U32(context,6),value=GPR_U32(context,5);
+        if(start==0x893780&&value==255&&count==128){std::fill_n(memory+start,count,255);++cost_scratch_clears;}
+        else{check(value==0&&((start==0x83e550&&count==0x5200)||(start==0x83e540&&count==16)));std::fill_n(memory+start,count,0);++clears;}
+        SET_GPR_U32(context,2,start);context->pc=GPR_U32(context,31);return;}
 #include "dispatch.inc"
     default:throw std::runtime_error("Unexpected navigation original port "+std::to_string(context->pc));
     }
@@ -388,13 +398,13 @@ int main(int argc,char** argv){
 #ifdef REO_NAVIGATION_ORIGINAL
         check(argc==7);const auto overlay=read(argv[1]);check(overlay.size()==113152);std::copy(overlay.begin(),overlay.end(),memory.begin()+0x810000);
 #endif
-        contracts();bank_contracts();condition_contracts();link_contracts();edge_contracts();ranked_contracts();
+        contracts();bank_contracts();condition_contracts();link_contracts();edge_contracts();ranked_contracts();cost_contracts();
 #ifdef REO_NAVIGATION_ORIGINAL
         for(int i=2;i<argc;++i)owned(argv[i]);
         check(asset_rooms==166&&asset_nodes==3334&&asset_conditions==2167&&asset_links==432);
 #else
         for(int i=1;i<argc;++i)owned(argv[i]);
 #endif
-        std::cout<<"{\"checks\":"<<checks<<",\"nearest_cases\":"<<nearest_cases<<",\"action_cases\":"<<action_cases<<",\"asset_rooms\":"<<asset_rooms<<",\"asset_nodes\":"<<asset_nodes<<",\"asset_conditions\":"<<asset_conditions<<",\"asset_links\":"<<asset_links<<",\"refusals\":"<<refusals<<",\"nearest_refusals\":"<<nearest_refusals<<",\"action_refusals\":"<<action_refusals<<",\"bindings\":"<<bindings<<",\"clears\":"<<clears<<",\"bank_cells\":"<<bank_cells<<",\"bank_visit_cells\":"<<bank_visit_cells<<",\"bank_clears\":"<<bank_clears<<",\"condition_cases\":"<<condition_cases<<",\"link_cases\":"<<link_cases<<",\"link_refusals\":"<<link_refusals<<",\"edge_cases\":"<<edge_cases<<",\"edge_refusals\":"<<edge_refusals<<",\"retail_edge_refusals\":"<<retail_edge_refusals<<",\"edge_flag_bindings\":"<<edge_flag_bindings<<",\"ranked_cases\":"<<ranked_cases<<",\"ranked_refusals\":"<<ranked_refusals<<",\"ranked_retail_refusals\":"<<ranked_retail_refusals<<"}\n";
+        std::cout<<"{\"checks\":"<<checks<<",\"nearest_cases\":"<<nearest_cases<<",\"action_cases\":"<<action_cases<<",\"asset_rooms\":"<<asset_rooms<<",\"asset_nodes\":"<<asset_nodes<<",\"asset_conditions\":"<<asset_conditions<<",\"asset_links\":"<<asset_links<<",\"refusals\":"<<refusals<<",\"nearest_refusals\":"<<nearest_refusals<<",\"action_refusals\":"<<action_refusals<<",\"bindings\":"<<bindings<<",\"clears\":"<<clears<<",\"bank_cells\":"<<bank_cells<<",\"bank_visit_cells\":"<<bank_visit_cells<<",\"bank_clears\":"<<bank_clears<<",\"condition_cases\":"<<condition_cases<<",\"link_cases\":"<<link_cases<<",\"link_refusals\":"<<link_refusals<<",\"edge_cases\":"<<edge_cases<<",\"edge_refusals\":"<<edge_refusals<<",\"retail_edge_refusals\":"<<retail_edge_refusals<<",\"edge_flag_bindings\":"<<edge_flag_bindings<<",\"ranked_cases\":"<<ranked_cases<<",\"ranked_refusals\":"<<ranked_refusals<<",\"ranked_retail_refusals\":"<<ranked_retail_refusals<<",\"cost_cases\":"<<cost_cases<<",\"cost_refusals\":"<<cost_refusals<<",\"cost_budgets\":"<<cost_budgets<<",\"cost_retail_refusals\":"<<cost_retail_refusals<<",\"cost_retail_budgets\":"<<cost_retail_budgets<<",\"cost_maximum_work\":"<<cost_maximum_work<<",\"cost_scratch_clears\":"<<cost_scratch_clears<<"}\n";
     }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }
