@@ -48,11 +48,11 @@ internal static class HeadlessChecks {
               "Keyboard movement must send only the digital D-pad after remapping.");
         Control<Button>("ResetBindingsButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         window.ShowPage("Graphics");Dispatcher.UIThread.RunJobs();
-        window.CheckMovieDecoderSettings(Check);
         var resolution=Control<ComboBox>("InternalResolution");resolution.IsDropDownOpen=true;Dispatcher.UIThread.RunJobs();
         Check(resolution.GetRealizedContainers().Any(),"Dropdown does not populate RC1 choices.");resolution.IsDropDownOpen=false;
         Control<ComboBox>("InternalResolution").SelectedIndex=2;
         Check(window.settings.InternalResolution==4,"Resolution selector does not reach shared settings.");
+        window.CheckMovieDecoderSettings(Check);
         window.ShowPage("Audio");Dispatcher.UIThread.RunJobs();
         var music=Control<Slider>("MusicVolume");
         var track=music.GetVisualDescendants().OfType<Track>().First();track.Value=37;
