@@ -1,5 +1,10 @@
 #include "update.hpp"
 namespace reo::native::gameplay_update {
+gameplay_ai::ReactionScheduled Owner::schedule_ai_reaction(const world::actors::EntityId& id,std::uint32_t event){
+    if(!open())return {};
+    const auto actor=world_.resolve(id);if(!actor||!actor->ai_execution)return {};
+    return gameplay_ai::schedule_reaction(*actor->ai_execution,actor->character,event,world_.session().random);
+}
 gameplay_ai::GoalReevaluated Owner::reevaluate_ai_goal(const world::actors::EntityId& id,const scenario::SceneResources& resources){
     if(!open())return {};
     const auto actor=world_.resolve(id);if(!actor)return {};

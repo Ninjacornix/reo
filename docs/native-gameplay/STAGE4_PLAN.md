@@ -130,6 +130,11 @@ The current resource and inventory implementation includes:
   62722 complete reevaluations and512 alias cases; twelve parent tests pass.
   Full observations, reactions/actions, construction and game acceptance remain open.
 
+- [AI reaction scheduling](AI_REACTIONS.md) now supplies complete8130D0 through
+  canonical execution state and the actual Session RNG. Both compilers pass
+  895957 complete reaction comparisons/1014101 identical random draws and twelve
+  parent tests. Full observation/timer consumption and game acceptance remain open.
+
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.
 - [Placed-resource collisions](RESOURCE_COLLISIONS.md) through the shared128

@@ -69,11 +69,29 @@ void reevaluation_owner(){
     check(world.retire_primary(3)==u::world::actors::EntityStatus::completed&&owner.reevaluate_ai_goal(self_id,resources).status==ai::Status::unavailable);
     check(world.close()==u::world::Status::completed&&owner.reevaluate_ai_goal(reference_id,resources).status==ai::Status::unavailable&&owner.close()==u::Status::completed);
 }
+void reaction_owner(){
+    u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());Notifications notifications;u::Owner owner(world,notifications);
+    const auto id=world.spawn_primary(0,std::make_unique<u::world::Actor>()).id;auto actor=world.resolve(id);check(bool(actor));
+    auto& random=world.session().random;random.restore({0,54321,99});
+    check(owner.schedule_ai_reaction(id,12).status==ai::Status::unavailable&&random.state().primary==0);
+    actor->ai_execution.emplace();auto& state=*actor->ai_execution;state.reaction=77;state.pending_reaction=55;state.reaction_countdown=100;
+    auto result=owner.schedule_ai_reaction(id,12);check(result.status==ai::Status::completed&&result.written&&result.random_draws==0&&state.pending_reaction==11&&state.reaction_countdown==5&&state.reaction==77&&random.state().primary==0);
+    result=owner.schedule_ai_reaction(id,0);check(result.status==ai::Status::completed&&!result.written&&result.random_draws==1&&state.pending_reaction==11&&state.reaction_countdown==5&&random.state().primary==176);
+    random.restore({2,54321,99});result=owner.schedule_ai_reaction(id,0);check(result.written&&result.random_draws==2&&state.pending_reaction==1&&state.reaction_countdown==10&&random.state().primary==61952);
+    random.restore({4,54321,99});result=owner.schedule_ai_reaction(id,0);check(result.written&&result.random_draws==2&&state.pending_reaction==11&&random.state().primary==58541&&random.state().secondary==54321&&random.state().observed==99);
+    const auto before=random.state();actor->character=255;state.combined_weights.fill(0);state.combined_weights[3]=200;
+    result=owner.schedule_ai_reaction(id,5);check(result.written&&result.random_draws==0&&state.pending_reaction==11&&state.reaction_countdown==27&&random.state()==before);
+    state.combined_weights.fill(0);const auto old=state;result=owner.schedule_ai_reaction(id,6);check(result.status==ai::Status::unavailable&&state==old&&random.state()==before);
+    result=owner.schedule_ai_reaction(id,0xffffffff);check(result.status==ai::Status::completed&&!result.written&&state==old&&random.state()==before);
+    check(world.retire_primary(0)==u::world::actors::EntityStatus::completed&&owner.schedule_ai_reaction(id,12).status==ai::Status::unavailable&&random.state()==before);
+    check(world.close()==u::world::Status::completed&&owner.schedule_ai_reaction(id,12).status==ai::Status::unavailable&&owner.close()==u::Status::completed);
+}
 }
 int main(){
     try{
         initialization_owner();
         reevaluation_owner();
+        reaction_owner();
         u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());
         Notifications notifications;u::Owner owner(world,notifications);
         const auto id=world.spawn_primary(0,std::make_unique<u::world::Actor>()).id;check(bool(id));

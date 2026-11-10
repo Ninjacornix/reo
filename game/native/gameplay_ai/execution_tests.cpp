@@ -2,6 +2,8 @@
 #include "control_requests.hpp"
 #include "initialization.hpp"
 #include "priority_goals.hpp"
+#include "reactions.hpp"
+#include "../gameplay_session/session.hpp"
 #include "../gameplay_world/world.hpp"
 #include "../gameplay_scenario/scene_resources.hpp"
 #include "../gameplay_session/activity.hpp"
@@ -20,6 +22,7 @@ namespace ai=reo::native::gameplay_ai;
 namespace {
 std::uint64_t checks{},goal_cases{},action_cases{},phase_cases{},finish_cases{},profile_cases{},profile_refusals{},copies{},clears{};
 std::uint64_t reference_goal_sets{};
+std::uint64_t reference_random_draws{};
 void check(bool value,std::source_location at=std::source_location::current()){
     ++checks;if(!value)throw std::runtime_error("AI execution check at "+std::to_string(at.line()));
 }
@@ -76,11 +79,13 @@ void compare(unsigned pc,std::uint32_t argument,ai::ExecutionState before){
 #include "activity_tests.inc"
 #include "initialization_tests.inc"
 #include "priority_goal_tests.inc"
+#include "reaction_tests.inc"
 }
 #ifdef REO_AI_ORIGINAL
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
     if(context->pc==0x1afe70)++activity_queries;
     if(context->pc==0x813380)++reference_goal_sets;
+    if(context->pc==0x1aec80){check(GPR_U32(context,4)==1);++reference_random_draws;}
     if(context->pc==0x107ab0){check(GPR_U32(context,4)==0x110b0&&GPR_U32(context,6)==8);++copies;}
     switch(context->pc){
     case 0x107c68:{const auto at=GPR_U32(context,4);check((at==0x110b8||at==0x110c0)&&GPR_U32(context,5)==0&&GPR_U32(context,6)==8);std::memset(memory+at,0,8);++clears;SET_GPR_U32(context,2,at);context->pc=GPR_U32(context,31);return;}
@@ -112,6 +117,7 @@ int main(int argc,char** argv){
         activity_contracts();
         initialization_contracts();
         priority_goal_contracts();
+        reaction_contracts();
         std::cout<<'{';bool first=true;
         const auto emit=[&](const char* key,std::uint64_t value){if(!first)std::cout<<',';first=false;std::cout<<'"'<<key<<"\":"<<value;};
         emit("checks",checks);emit("goal_cases",goal_cases);emit("action_cases",action_cases);emit("phase_cases",phase_cases);emit("finish_cases",finish_cases);
@@ -122,6 +128,7 @@ int main(int argc,char** argv){
         emit("activity_queries",activity_queries);emit("activity_mode_cases",activity_mode_cases);emit("activity_mode_refusals",activity_mode_refusals);
         emit("initialization_cases",initialization_cases);emit("initialization_disabled",initialization_disabled);emit("initialization_limited",initialization_limited);emit("initialization_refusals",initialization_refusals);
         emit("goal_resource_cases",goal_resource_cases);emit("target_busy_cases",target_busy_cases);emit("goal_reevaluation_cases",goal_reevaluation_cases);emit("goal_reevaluation_writes",goal_reevaluation_writes);emit("goal_reevaluation_refusals",goal_reevaluation_refusals);emit("goal_alias_cases",goal_alias_cases);
+        emit("reaction_cases",reaction_cases);emit("reaction_random_draws",reaction_random_draws);emit("reaction_writes",reaction_writes);emit("reaction_refusals",reaction_refusals);
         std::cout<<"}\n";
     }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
 }
