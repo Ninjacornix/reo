@@ -143,6 +143,12 @@ The current resource and inventory implementation includes:
   scenario commands. Both compiler comparisons cover signed coordinates,
   initialized inactive records and owner replacement during lookup. Incoming
   application, messages3/8/11, transport and installation remain open.
+- [Native reception and bounded queue](ACTOR_RECEPTION_AND_QUEUE.md) now apply
+  branches4/6/9/10/12/14/15 through actual actor/inventory/room-object state,
+  shared pose cleanup and real equipment/resource/model reconciliation. Both
+  compiler comparisons include actual UpdateOwner-to-queue-to-receiver delivery,
+  retained failures and model exhaustion. External transport, remaining message/
+  action/AI branches, semantic saves and installation remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;

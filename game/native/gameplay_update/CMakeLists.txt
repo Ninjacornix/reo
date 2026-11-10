@@ -11,3 +11,11 @@ add_test(NAME native_gameplay_collision_workers COMMAND gameplay_collision_worke
 add_executable(gameplay_cooperative_events_tests cooperative_events_tests.cpp)
 target_link_libraries(gameplay_cooperative_events_tests PRIVATE reo_native_gameplay_update)
 add_test(NAME native_gameplay_cooperative_events COMMAND gameplay_cooperative_events_tests)
+
+add_library(reo_native_gameplay_reception STATIC reception.cpp actor_message_queue.cpp)
+target_compile_features(reo_native_gameplay_reception PUBLIC cxx_std_20)
+target_include_directories(reo_native_gameplay_reception PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
+target_link_libraries(reo_native_gameplay_reception PUBLIC reo_native_gameplay_update reo_native_gameplay_weapon_resources)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(reo_native_gameplay_reception PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+endif()

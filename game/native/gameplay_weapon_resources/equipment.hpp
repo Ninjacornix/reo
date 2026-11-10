@@ -19,6 +19,10 @@ public:
     Attached attach(std::uint8_t logical_resource)noexcept;
     //666DE0 primary selection and the reached5F1F70/5B4D50 action-kind query.
     Selected select(const gameplay_actors::EntityId&,std::uint8_t logical_resource)noexcept;
+    //67ED50 shared receiver tail: retain/rebuild the current item's binding,
+    // then derive its action kind through the same actual equipment owners.
+    Selected reconcile(const gameplay_actors::EntityId&)noexcept;
+    bool bound_to(const gameplay_world::World&)const noexcept;
 private:
     Owner& weapons_;
     gameplay_world::ResourceFactory& factory_;

@@ -38,6 +38,10 @@ template<class T>void put(std::uint8_t* memory,std::uint32_t at,T value){transfo
 constexpr std::uint32_t model=0x3b85b0,heap=0x800000,parts=0x900000,child_pool=0xb00000;
 bool allocated{};
 bool task_retired{};
+#ifdef REO_ACTOR_RECEPTION
+bool actor_reception_capture{};
+bool actor_reception_port(std::uint8_t*,R5900Context*);
+#endif
 #ifdef REO_ACTOR_RECOVERY
 bool actor_recovery_capture{};
 bool actor_recovery_port(std::uint8_t*,R5900Context*);
@@ -55,6 +59,9 @@ struct CompanionPolicyCapture {unsigned children{},released{},retired{},spawned{
 #endif
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
     ++calls;const auto done=[&](){context->pc=GPR_U32(context,31);};
+#ifdef REO_ACTOR_RECEPTION
+    if(actor_reception_capture&&actor_reception_port(memory,context)){done();return;}
+#endif
 #ifdef REO_ACTOR_RECOVERY
     if(actor_recovery_capture&&actor_recovery_port(memory,context)){done();return;}
 #endif
@@ -288,6 +295,10 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_ACTOR_ZERO_HEALTH
 #include "tools/native_reconstruction/actor_zero_health_tests.inc"
 #endif
+#ifdef REO_ACTOR_RECEPTION
+#include "tools/native_reconstruction/actor_reception_tests.inc"
+#include "tools/native_reconstruction/actor_message_queue_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
 #ifdef REO_RESOURCE_STATIC
@@ -302,6 +313,10 @@ int main(int argc,char** argv)try{
         2
 #endif
     );const auto corpus=load(argv[1]);std::vector<std::uint8_t> ram(0x2000000);auto* memory=ram.data();
+#ifdef REO_RECEPTION_ONLY
+    owned_constants(memory);compare_actor_reception(argv[4],argv[2],ram);compare_actor_message_queue();
+    std::cout<<"{\"checks\":"<<checks<<",\"reception_cases\":"<<reception_cases<<",\"reception_equipment\":"<<reception_equipment<<",\"reception_refusals\":"<<reception_refusals<<",\"reception_queue_cases\":"<<reception_queue_cases<<",\"game_run\":false}\n";return 0;
+#endif
 #ifdef REO_RESOURCE_COMPANIONS_FOCUSED
     compare_resource_companions(corpus,ram);
     compare_companion_factory(corpus,argv[2],argv[3],ram);
@@ -493,6 +508,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_EQUIPMENT_SELECTION
     compare_equipment_selection(argv[4],argv[2],ram);
+#endif
+#ifdef REO_ACTOR_RECEPTION
+    compare_actor_reception(argv[4],argv[2],ram);compare_actor_message_queue();
 #endif
 #ifdef REO_RESOURCE_COMPANION_POLICY
     compare_resource_companion_policy(ram);

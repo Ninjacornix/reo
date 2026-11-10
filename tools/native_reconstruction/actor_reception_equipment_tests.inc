@@ -1,0 +1,31 @@
+void compare_reception_equipment(const char* iso_path,const char* static_path,std::vector<std::uint8_t>& ram){
+    using namespace weapon_fixture;using namespace actor_reception_fixture;using delayed_fixture::Fixture;
+    const auto pinned=r::win32::PinnedFile::open_verified(std::filesystem::path(iso_path),owned_iso_bytes,owned_iso_sha);check(pinned.status==r::win32::PinnedStatus::ok);
+    const auto archive=[&](std::uint64_t offset,std::uint64_t bytes){reo::assets::VirtualFile file;file.size=bytes;file.segments.push_back({0,bytes,offset,std::make_shared<reo::assets::Source>(pinned.file->identity().final_path,pinned.file),{}});const auto view=r::VirtualFileView::create(file);check(view.status==r::Status::ok);const auto result=af::Archive::open(view.view,0,bytes);check(result.status==af::Status::completed);return result.archive;};
+    const auto catalogue=w::Catalogue::prepare_file1_rom(archive(17065984,477052928));const auto snd=archive(924106752,1062582272);const auto assets=factory_load(static_path,16);
+    const auto encoded=[](unsigned action,bool flag){std::vector<std::byte> data(56);const auto word=[&](unsigned at,unsigned value){std::memcpy(data.data()+at,&value,4);};word(0,3);word(4,1);word(16,32);word(32,flag?1:0);data[46]=std::byte{1};data[47]=std::byte(std::uint8_t(action));return data;};
+    for(unsigned n=0;n<=256;++n){
+        Fixture q(ram,assets[0],encoded((n*37)&255u,false));auto engine=std::make_shared<b::Session>();auto audio=std::make_shared<a::Owner>(engine,q.world.session().random);l::Loader loader(audio,snd);w::Owner weapons(q.world,q.resources,q.templates,catalogue,audio,loader);w::Equipment equipment(weapons,q.factory);
+        for(unsigned i=0;i<2;++i){auto actor=std::make_unique<g::Actor>();actor->slot=std::uint8_t(i);check(bool(q.world.spawn_primary(i,std::move(actor)).id));q.memory[base+i*0x10e0+3]=std::uint8_t(i);}
+        const auto actor=q.world.primary(0);seed_actor(q.memory,base,*actor,n);actor->selected_resource=3;actor->resource_action=0x1234;actor->category=std::uint8_t(n%3);constexpr std::array<unsigned,5> variants{0,4,65530,65531,65535};actor->model_variant=std::uint16_t(variants[(n/3)%variants.size()]);const unsigned tag=actor->category?unsigned(actor->model_variant)+5:1;
+        q.memory[base+0xc7c]=3;put(q.memory,base+0xca8,actor->resource_action);q.memory[base+2]=actor->category;put(q.memory,base+0xbb4,actor->model_variant);q.world.selected_actor=1;q.world.session().message_phase=1;q.world.mode=1;q.world.session().primary_population=4;q.memory[0x4baded]=1;q.memory[0x3243fb]=1;q.memory[0x3243f2]=1;put(q.memory,0x4baea0,4u);put(q.memory,base+0x10e0+0xba0,0u);
+        const bool previous=(n&1)!=0,active=(n&4)!=0||n==256,matching=(n&2)!=0;
+        s::SceneDescriptor d;d.active=std::uint8_t(active);d.instance_index=8;d.template_index=n%7?0:255;d.ownership_tag=std::uint16_t(matching?tag:tag+17);d.flags=0x1234;
+        if(previous){const auto original=call(q.memory,0x591230,{0});const auto made=q.factory.create(0);check(made.status==g::ResourceModelStatus::completed&&GPR_U32(&original,2)==q.address(made.id));d.primary=made.model;}
+        if(n==256)for(unsigned i=0;i<64;++i){const auto original=call(q.memory,0x591230,{0});const auto made=q.factory.create(0);check(made.status==g::ResourceModelStatus::completed&&GPR_U32(&original,2)==q.address(made.id));}
+        q.sync(d);u::ActorReception receiver(q.world,nullptr,&equipment);const Message value=u::ActorStatusMessage{u::MessageRoute::mode_one,1,n*1664525u,std::bit_cast<std::int16_t>(std::uint16_t(n))};encode(q.memory,value);
+        call(q.memory,0x67ed50,{1,packet,1});const auto result=receiver.receive(std::get<u::ActorStatusMessage>(value),true);if(result.status!=u::ReceptionStatus::completed||!result.equipment||result.equipment->status!=s::SceneStatus::completed)throw std::runtime_error("Reception equipment unavailable case="+std::to_string(n));check(true);
+        const bool rebuilt=!previous||unsigned(d.ownership_tag)!=tag;check(result.equipment->changed==rebuilt&&bool(result.equipment->attachment)==rebuilt);compare_actor(q.memory,base,*actor);check(actor->resource_action==get<std::uint16_t>(q.memory,base+0xca8));const auto descriptor=q.resources.get(*q.resources.slot(3));check(descriptor->ownership_tag==get<std::uint16_t>(q.memory,delayed_fixture::descriptor+40)&&descriptor->flags==get<unsigned>(q.memory,delayed_fixture::descriptor+24));q.compare_world();
+        if(n==256)check(result.equipment->attachment&&result.equipment->attachment->primary.status==g::ResourceModelStatus::full);
+        if(n==0){g::World foreign({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<g::Session>());bool refused=false;try{u::ActorReception invalid(foreign,nullptr,&equipment);}catch(const std::invalid_argument&){refused=true;}check(refused);++reception_refusals;}
+        ++reception_equipment;
+    }
+    // Unknown required population preserves actual model creation and receiver
+    // pose cleanup, while retaining the earlier action value on refusal.
+    {
+        Fixture q(ram,assets[0],encoded(127,true));auto engine=std::make_shared<b::Session>();auto audio=std::make_shared<a::Owner>(engine,q.world.session().random);l::Loader loader(audio,snd);w::Owner weapons(q.world,q.resources,q.templates,catalogue,audio,loader);w::Equipment equipment(weapons,q.factory);
+        for(unsigned i=0;i<2;++i){auto actor=std::make_unique<g::Actor>();actor->slot=std::uint8_t(i);check(bool(q.world.spawn_primary(i,std::move(actor)).id));}const auto actor=q.world.primary(0);actor->selected_resource=3;actor->resource_action=0x1234;actor->root_motion_delta={1,2,3};q.world.selected_actor=1;q.world.session().message_phase=1;q.world.session().primary_population.reset();s::SceneDescriptor d;d.active=1;d.instance_index=8;d.template_index=0;q.sync(d);u::ActorReception receiver(q.world,nullptr,&equipment);
+        const auto result=receiver.receive(u::ActorStatusMessage{u::MessageRoute::mode_one,1,8,9},true);const auto descriptor=q.resources.get(*q.resources.slot(3));check(result.status==u::ReceptionStatus::unavailable&&result.equipment&&result.equipment->attachment&&descriptor->primary&&(descriptor->flags&0x20001u)==0x20001u&&actor->resource_action==0x1234&&actor->root_motion_delta.x==0&&actor->status==8&&actor->current==9);++reception_refusals;
+    }
+    placement_floors=nullptr;
+}

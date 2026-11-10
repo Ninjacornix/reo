@@ -63,6 +63,9 @@ public:
     // Published source ordinals address the canonical32-record table, including
     // initialized inactive records. This is not an external object capability.
     std::optional<std::array<std::int8_t,2>> source_coordinates(std::uint8_t ordinal)const noexcept;
+    // Incoming coordinate updates change this canonical state only. Geometry
+    // and occupancy advance through their existing owners at their real stages.
+    bool apply_source_coordinates(std::uint8_t,std::array<std::int8_t,2>)noexcept;
     Cell cell_at(Vec3)const noexcept;
     Rectangle footprint(const Object&)const;
     Vec3 center(const Object&)const;

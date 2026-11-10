@@ -48,6 +48,8 @@ def main():
     p.add_argument('--actor-progression', action='store_true')
     p.add_argument('--actor-recovery', action='store_true')
     p.add_argument('--focus-recovery', action='store_true')
+    p.add_argument('--actor-reception', action='store_true')
+    p.add_argument('--focus-reception', action='store_true')
     p.add_argument('--actor-zero-health', action='store_true')
     p.add_argument('--focus-zero-health', action='store_true')
     p.add_argument('--weapon-resources', action='store_true')
@@ -82,6 +84,8 @@ def main():
     assert not args.actor_progression or args.actor_terminal
     assert not args.actor_recovery or args.actor_progression
     assert not args.focus_recovery or args.actor_recovery
+    assert not args.actor_reception or (args.actor_zero_health and args.equipment_selection)
+    assert not args.focus_reception or (args.actor_reception and not args.focus_recovery and not args.focus_zero_health and not args.focus_companions)
     assert not args.actor_zero_health or args.actor_recovery
     assert not args.focus_zero_health or (args.actor_zero_health and not args.focus_recovery)
     assert not args.weapon_resources or args.resource_inventory
@@ -192,6 +196,8 @@ def main():
     if args.actor_recovery:
         for at in [0x65fcb0,0x65fab0,0x5d4cf0,0x5d4bf0,0x5d50e0,0x5d50f0,0x5d4570,0x5d5950,0x5d4810,0x5d4470,0x5d46c0,0x663350,0x58c7b0,0x664d00,0x667f90,0x668c80]:
             entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
+    if args.actor_reception:
+        at=0x67ed50;entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.actor_zero_health:
         for at in [0x65fba0,0x6607d0]:entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.weapon_resources:
@@ -250,6 +256,7 @@ def main():
     if args.weapon_resources:
         units+=['game/native/'+n for n in ['gameplay_weapon_resources/weapon_resources.cpp','gameplay_bank_loading/aliases.cpp','gameplay_bank_loading/loader.cpp','gameplay_audio/owner.cpp','gameplay_audio/import.cpp','gameplay_audio/routing.cpp','gameplay_audio/spatial.cpp','audio_banks/v2/session.cpp','audio_banks/v2/algorithms.cpp','resources/bounded_view.cpp','resources/virtual_file_view.cpp','resources/resource_session.cpp','resources_windows/pinned_file.cpp','resource_io/async_read_owner.cpp','afs_source_range/afs_source_range.cpp','tasks/serial_worker.cpp']]
         units=list(dict.fromkeys(units))
+    if args.actor_reception: units+=['game/native/gameplay_update/reception.cpp','game/native/gameplay_update/actor_message_queue.cpp']
     if args.equipment_resources: units+=['game/native/gameplay_weapon_resources/equipment.cpp']
     if args.resource_companion_policy: units+=['game/native/gameplay_effects/resource_companion.cpp']
     if args.resource_companions: units+=['game/native/'+n for n in ['gameplay_effects/resource_companion_actions.cpp','gameplay_world/animation_audio.cpp','gameplay_world/footwear.cpp','gameplay_scenario/scene_models.cpp','gameplay_scenario/content.cpp','gameplay_audio/scenario_cues.cpp','gameplay_collision/regions.cpp','gameplay_lighting/lights.cpp','gameplay_lighting/timed_lights.cpp','gameplay_scenario/lighting.cpp']]
@@ -319,6 +326,10 @@ def main():
         name='tools/native_reconstruction/actor_gauge_progression_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.actor_recovery:
         name='tools/native_reconstruction/actor_recovery_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.actor_reception:
+        name='tools/native_reconstruction/actor_reception_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+        name='tools/native_reconstruction/actor_reception_equipment_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+        name='tools/native_reconstruction/actor_message_queue_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.actor_zero_health:
         name='tools/native_reconstruction/actor_zero_health_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.weapon_resources:
@@ -452,6 +463,9 @@ def main():
             skeleton=ROOT/'build-native-sjuni/animation-owned-corpus-v2/owned_skeletons.bin';receipt=json.loads((skeleton.parent/'receipt.json').read_bytes());assert sha(skeleton)==receipt['output_sha256']['owned_skeletons.bin'];(out/skeleton.name).write_bytes(skeleton.read_bytes());record['recovery_skeletons_sha256']=sha(skeleton)
             record['recovery_admission']='Complete65FCB0 with actual status publications, inventory/model consumers, pose snapshots, health classification and WorldAnimation/Playback activation using confirmed absent banks; enabled selector1 delivery, retained failures and native gauge-to-recovery composition are compared or checked separately'
             record['declared_ports'].append('Recovery UI6E1430 and final room/message sinks remain declared; actual WorldAnimation selects with confirmed absent banks for the current online profile, then actual Playback activation. Real clip-bearing recovery acceptance remains open.')
+        if args.actor_reception:
+            at,size=0x740750,64;value=overlay['o2'][at-0x570000:at-0x570000+size];record['actor_reception_switch_sha256']=hashlib.sha256(value).hexdigest();init+='{const std::uint8_t data[]{'+','.join(str(v)for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
+            record['actor_reception_admission']='Complete67ED50 selectors4/6/9/10/12/14/15 and shared admission/pose/equipment tail through canonical World/RoomObject/Equipment owners; remaining selectors and actual transport remain open'
         (out/'owned_constants.hpp').write_text(init+'}\n')
         (out / 'owned_effect_geometry.bin').write_bytes((corpus / 'owned_effect_geometry.bin').read_bytes())
         if args.resource_static:
@@ -546,6 +560,8 @@ def main():
         if args.actor_progression: command.insert(1,'-DREO_ACTOR_GAUGE_PROGRESSION=1')
         if args.actor_recovery: command.insert(1,'-DREO_ACTOR_RECOVERY=1')
         if args.focus_recovery: command.insert(1,'-DREO_RECOVERY_ONLY=1')
+        if args.actor_reception: command.insert(1,'-DREO_ACTOR_RECEPTION=1')
+        if args.focus_reception: command.insert(1,'-DREO_RECEPTION_ONLY=1')
         if args.actor_zero_health: command.insert(1,'-DREO_ACTOR_ZERO_HEALTH=1')
         if args.focus_zero_health: command.insert(1,'-DREO_ZERO_HEALTH_ONLY=1')
         if args.weapon_resources: command.insert(1,'-DREO_WEAPON_RESOURCES=1')

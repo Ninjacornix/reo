@@ -40,6 +40,10 @@ std::optional<std::array<std::int8_t,2>> Owner::source_coordinates(std::uint8_t 
     if(!initialized_||ordinal>=objects_.size())return{};
     const auto& object=objects_[ordinal];return std::array<std::int8_t,2>{object.x,object.z};
 }
+bool Owner::apply_source_coordinates(std::uint8_t ordinal,std::array<std::int8_t,2> value)noexcept{
+    if(!initialized_||ordinal>=objects_.size())return false;
+    auto& object=objects_[ordinal];object.x=value[0];object.z=value[1];return true;
+}
 Owner Owner::import(std::span<const std::byte> types,std::span<const std::byte> placements){
     Owner result;const auto count=word(types,4),type_offset=word(types,8),model_offset=word(types,12);if(count>32)throw std::invalid_argument("Room-object type count exceeds physical capacity");result.type_count_=count;
     if(type_offset){if(type_offset>types.size()||std::size_t(count)*8>types.size()-type_offset)throw std::invalid_argument("Room-object type table outside owned blob");for(unsigned i=0;i<count;++i){const auto at=type_offset+8*i;auto& t=result.types_[i];t.profile=signed_byte(types,at);t.capacity=signed_byte(types,at+1);t.request_threshold=signed_byte(types,at+2);t.callback=std::to_integer<std::uint8_t>(types[at+3]);t.parameter4=std::to_integer<std::uint8_t>(types[at+4]);t.parameter5=std::to_integer<std::uint8_t>(types[at+5]);t.flags=std::uint16_t(word(types,at+4)>>16);if(t.profile<0||std::size_t(t.profile)>=profiles.size()||t.callback>=4)throw std::invalid_argument("Unsupported room-object profile/callback");}}

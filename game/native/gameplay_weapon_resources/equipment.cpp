@@ -5,6 +5,32 @@ namespace reo::native::gameplay_weapon_resources {
 Equipment::Equipment(Owner& weapons,gameplay_world::ResourceFactory& factory):weapons_(weapons),factory_(factory){
     if(!factory_.frames_.open()||!weapons_.bound_to(factory_.frames_.world_,factory_.frames_.resources_,factory_.templates_))throw std::invalid_argument("Native equipment owners unavailable or foreign");
 }
+bool Equipment::bound_to(const gameplay_world::World& world)const noexcept{return factory_.frames_.open()&&&factory_.frames_.world_==&world;}
+Selected Equipment::reconcile(const gameplay_actors::EntityId& id)noexcept{
+    using namespace gameplay_scenario;using gameplay_world::ResourceModelStatus;
+    Selected result;auto& frames=factory_.frames_;
+    if(!frames.open()){result.status=SceneStatus::provider_unavailable;return result;}
+    const auto actor=frames.world_.resolve(id);if(!actor){result.status=SceneStatus::invalid_identity;return result;}
+    if(!actor->selected_resource)return result;
+    try{
+        const auto resource=frames.resources_.slot(actor->selected_resource);auto descriptor=resource?frames.resources_.get(*resource):std::nullopt;
+        if(!descriptor)throw std::runtime_error("Native received equipment descriptor unavailable");
+        const auto tag=actor->category==0?unsigned(actor->slot)+1u:unsigned(actor->model_variant)+5u;
+        // Source compares the full tag against the stored halfword; large
+        // model variants must not be narrowed before this comparison.
+        if(!descriptor->primary||descriptor->ownership_tag!=tag){
+            descriptor->ownership_tag=std::uint16_t(tag);descriptor->flags|=1u;
+            if(frames.resources_.replace(*resource,*descriptor)!=SceneStatus::completed)throw std::runtime_error("Native received equipment descriptor retired");
+            result.changed=true;result.attachment=attach(actor->selected_resource);
+            if(result.attachment->primary.status!=ResourceModelStatus::completed&&result.attachment->primary.status!=ResourceModelStatus::full)throw std::runtime_error("Native received equipment attachment unavailable");
+        }
+        const auto selected_id=frames.resources_.slot(actor->selected_resource);const auto selected=selected_id?frames.resources_.get(*selected_id):std::nullopt;
+        if(!selected)throw std::runtime_error("Native received equipment action descriptor unavailable");
+        const auto action=actor->selected_resource&&selected->active&&selected->template_index!=255?factory_.templates_.action_kind(selected->template_index):std::int8_t(0);
+        actor->resource_action=std::uint16_t(std::int16_t(action));
+    }catch(const std::exception&){result.status=SceneStatus::provider_unavailable;}
+    return result;
+}
 Attached Equipment::attach(std::uint8_t slot)noexcept{
     using namespace gameplay_world;using namespace gameplay_scenario;
     Attached result{{ResourceModelStatus::completed,{},{}},{}};
