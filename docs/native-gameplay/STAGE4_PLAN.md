@@ -94,6 +94,11 @@ The current resource and inventory implementation includes:
   canonical Session, descriptors, templates and real model retirement. Terminal
   and periodic-gauge callers, other list producers/consumers, semantic save/load
   and game installation remain open.
+- [Terminal countdown and transition](ACTOR_TERMINAL_TIMER.md) now supplies
+  complete6687A0 through actual inventory transfer, model retirement, action-pose
+  capture and the native behavior stage. A native frame comparison includes later
+  action7 publication and rejection. Other terminal/cap transitions, periodic
+  progression, initialization/import and installation remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;

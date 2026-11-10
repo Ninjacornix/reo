@@ -6,6 +6,7 @@ namespace reo::native::gameplay_world {
 class ActorResourceOperations final {
 public:
     explicit ActorResourceOperations(ResourceRecipes&);
+    bool bound_to(const World& world)const noexcept{return &world_==&world;}
     std::int8_t transfer_quantity(const actors::EntityId&,std::uint32_t mode,
         std::uint32_t first,std::uint32_t second,std::uint32_t amount); //5F4FE0
     std::int8_t release_instances(const actors::EntityId&,std::uint32_t mode,
