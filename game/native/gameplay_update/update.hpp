@@ -87,6 +87,16 @@ public:
         if(!open())return PublicationStatus::unavailable;
         return publication_.resource_operation(resource,actor,operation);
     }
+    PublicationStatus record_actor_status(const world::actors::EntityId& actor)noexcept{
+        if(!open())return PublicationStatus::unavailable;
+        return publication_.actor_status(actor);
+    }
+    PublicationStatus clear_actor_status(const world::actors::EntityId& id,std::uint32_t selector)noexcept{
+        if(!open())return PublicationStatus::unavailable;
+        const auto actor=world_.resolve(id);if(!actor)return PublicationStatus::unavailable;
+        world::actors::clear_status_fields(*actor,selector);
+        return publication_.actor_status(id);
+    }
     gameplay_events::Recorded check_scenario_events(){
         if(!open()||!world_.session().scenario)return{gameplay_events::StatisticsStatus::unavailable};
         return statistics_.automatic(*world_.session().scenario,CompletionConditions(world_,flags_,choices_),cooperative_,clock_.update_counter());

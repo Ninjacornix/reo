@@ -33,6 +33,7 @@ public:
     virtual void snapshot(StatusActor&,StatusSession&)=0;
 };
 bool periodic_damage_admitted(const StatusActor&) noexcept;
+void clear_status_fields(StatusActor&,std::uint32_t selector)noexcept;
 void clear_status(StatusActor&,StatusSession&,StatusServices&,std::uint8_t selector);
 void tick_status(StatusActor&,StatusSession&,StatusServices&,gameplay_session::Random&);
 void select_zero_health_action(StatusActor&,StatusSession&,StatusServices&);

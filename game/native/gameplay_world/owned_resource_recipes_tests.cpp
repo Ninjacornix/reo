@@ -16,6 +16,7 @@ struct Notifications:s::FlagNotifications {bool changed(const s::ScenarioFlagCha
 struct Messages:u::GameplayMessageSink {
     std::function<bool(const u::ResourceOperationMessage&)> callback;
     bool send(const u::ScenarioOwnerMessage&)noexcept override{return false;}
+    bool send(const u::ActorStatusMessage&)noexcept override{return false;}
     bool send(const u::ResourceOperationMessage& value)noexcept override{return callback&&callback(value);}
 };
 int main()try{

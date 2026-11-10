@@ -38,6 +38,10 @@ The current resource and inventory implementation includes:
 - [Scenario ownership publication](SCENARIO_OWNERSHIP_PUBLICATION.md) through
   actual flag writes and timer callbacks. The admitted local writer is native;
   other writers and actual message queue/transport consumers remain open.
+- [Actor health/status messages](ACTOR_STATUS_MESSAGES.md), including actual
+  Owner status clearing, phase/authority/suppression and mapped-channel behavior.
+  Other message selectors, actual network consumers and game installation remain
+  open.
 - [Direct item consumption and visibility](RESOURCE_CONSUMPTION.md), using the
   actual inventory/model lifecycle and completion-event consumers, and
   [inventory callers/message frontend](RESOURCE_INVENTORY_CALLERS.md) over the

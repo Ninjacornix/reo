@@ -24,6 +24,23 @@ struct EmptyActors:u::world::Services {
     void switch_grid(u::world::World&,std::int32_t,std::int32_t)override{std::terminate();}
     float grid_response(u::world::World&,std::uint8_t)override{std::terminate();}
 };
+struct ActorMessages:u::GameplayMessageSink {
+    std::optional<u::ActorStatusMessage> last;unsigned sends{},lookups{};bool available{true};
+    bool send(const u::ScenarioOwnerMessage&)noexcept override{return false;}
+    bool send(const u::ResourceOperationMessage&)noexcept override{return false;}
+    bool send(const u::ActorStatusMessage& value)noexcept override{++sends;last=value;return available;}
+    std::optional<unsigned> room_owner(u::MessageRoute route,std::uint16_t room)noexcept override{if(route!=u::MessageRoute::mode_one||room!=0x1234)std::terminate();++lookups;return 3;}
+};
+void check_actor_status(){
+    u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());Notifications notifications;ActorMessages messages;u::Owner owner(world,notifications,e::RuleBook::file1(),&messages);
+    const auto id=world.spawn_primary(0,std::make_unique<u::world::Actor>()).id;check(bool(id));auto actor=world.resolve(id);actor->current=10;actor->maximum=100;actor->status=3;world.session().message_phase=1;
+    check(owner.clear_actor_status(id,0x10004)==u::PublicationStatus::completed&&actor->current==100&&actor->status==0);check(messages.sends==1&&messages.last&&messages.last->health==100&&messages.last->status==0&&messages.last->channel==1&&messages.last->route==u::MessageRoute::mode_zero);
+    world.session().actor_message_suppression=14;actor->current=1;check(owner.clear_actor_status(id,1)==u::PublicationStatus::completed&&actor->current==100&&messages.sends==1);
+    world.session().actor_message_suppression=0;world.paused=1;actor->status=3;check(owner.clear_actor_status(id,2)==u::PublicationStatus::completed&&actor->status==2&&messages.sends==1);
+    world.paused=0;world.mode=1;world.room=0x1234;actor->category=1;actor->status=0x10000003;actor->current=55;check(owner.clear_actor_status(id,5)==u::PublicationStatus::completed&&actor->status==0x10000000&&messages.lookups==1&&messages.sends==2&&messages.last->channel==4&&messages.last->health==55);
+    actor->category=0;actor->current=1;actor->status=3;messages.available=false;check(owner.clear_actor_status(id,4)==u::PublicationStatus::message_unavailable&&actor->current==100&&actor->status==0);
+    check(world.retire_primary(0)==u::world::actors::EntityStatus::completed&&owner.clear_actor_status(id,1)==u::PublicationStatus::unavailable);check(owner.close()==u::Status::completed&&world.close()==u::world::Status::completed);
+}
 void check_automatic_worker(){
     u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());Notifications notifications;
     e::RuleGroup group;group.automatic={{3,2,42,0,5,2}};u::Owner owner(world,notifications,e::RuleBook::create({group},{0}));
@@ -49,6 +66,7 @@ void check_automatic_worker(){
     check(owner.close()==u::Status::completed&&owner.check_scenario_events().status==e::StatisticsStatus::unavailable);check(world.close()==u::world::Status::completed);
 }
 int main()try{
+    check_actor_status();
     check_automatic_worker();
     u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());Notifications notifications;u::Owner owner(world,notifications);check(owner.open());
     world.room=0x1234;check(owner.clock().restore({0,0,0,0},UINT32_MAX)==u::tasks::Status::completed);

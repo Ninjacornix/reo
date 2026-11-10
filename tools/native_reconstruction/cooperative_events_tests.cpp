@@ -13,12 +13,23 @@ template<class T>void put(std::uint8_t* m,unsigned at,T v){transform_write(m,at,
 #ifdef REO_SCENARIO_PUBLICATION
 void publication_message_port(std::uint8_t*,R5900Context*);
 #endif
+#ifdef REO_ACTOR_STATUS_MESSAGE
+void actor_status_message_port(std::uint8_t*,R5900Context*);
+void actor_room_owner_port(std::uint8_t*,R5900Context*);
+#endif
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){++calls;const auto done=[&](){context->pc=GPR_U32(context,31);};switch(context->pc){
 #ifdef REO_COMPLETION_STATISTICS
 case 0x1b0300:SET_GPR_U32(context,2,memory[0x3243f2]);done();return;
 #endif
 #ifdef REO_SCENARIO_PUBLICATION
-case 0x811190:case 0x810870:publication_message_port(memory,context);done();return;
+case 0x811190:case 0x810870:
+#ifdef REO_ACTOR_STATUS_MESSAGE
+if(memory[GPR_U32(context,5)]==14){actor_status_message_port(memory,context);done();return;}
+#endif
+publication_message_port(memory,context);done();return;
+#endif
+#ifdef REO_ACTOR_STATUS_MESSAGE
+case 0x811d40:case 0x8115f0:actor_room_owner_port(memory,context);done();return;
 #endif
 case 0x107c68:{const auto at=GPR_U32(context,4),n=GPR_U32(context,6);check(at<=0x2000000&&n<=0x2000000-at&&GPR_U32(context,5)==0);std::memset(memory+at,0,n);SET_GPR_U32(context,2,at);done();return;}
 #include "dispatch.inc"
@@ -39,11 +50,17 @@ void compare(const e::Events& owner,const std::uint8_t* memory){check(owner.avai
 #ifdef REO_SCENARIO_PUBLICATION
 #include "tools/native_reconstruction/scenario_publication_tests.inc"
 #endif
+#ifdef REO_ACTOR_STATUS_MESSAGE
+#include "tools/native_reconstruction/actor_status_message_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
 #ifdef REO_COMPLETION_STATISTICS
     3
 #ifdef REO_AUTOMATIC_COMPLETION
+    +1
+#endif
+#ifdef REO_ACTOR_STATUS_MESSAGE
     +1
 #endif
 #else
@@ -73,6 +90,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_SCENARIO_PUBLICATION
     compare_scenario_publication(memory);
 #endif
+#ifdef REO_ACTOR_STATUS_MESSAGE
+    compare_actor_status_messages(memory,argv[4]);
+#endif
     std::cout<<"{\"checks\":"<<checks<<",\"appends\":"<<appends<<",\"retirements\":"<<retirements<<",\"prunings\":"<<prunings<<",\"resets\":"<<resets<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<calls
 #ifdef REO_COMPLETION_STATISTICS
     <<",\"completion_cases\":"<<completion_cases<<",\"completion_initializations\":"<<completion_initializations<<",\"completion_refusals\":"<<completion_refusals
@@ -82,6 +102,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_SCENARIO_PUBLICATION
     <<",\"publication_cases\":"<<publication_cases<<",\"publication_messages\":"<<publication_messages<<",\"publication_refusals\":"<<publication_refusals
+#endif
+#ifdef REO_ACTOR_STATUS_MESSAGE
+    <<",\"actor_status_cases\":"<<actor_status_cases<<",\"actor_status_messages\":"<<actor_status_messages<<",\"actor_status_lookups\":"<<actor_status_lookups<<",\"actor_status_refusals\":"<<actor_status_refusals
 #endif
     <<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

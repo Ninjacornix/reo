@@ -7,6 +7,7 @@ struct Sink:u::GameplayMessageSink {
     reo::native::gameplay_scenario::FlagState& flags;std::vector<u::ScenarioOwnerMessage> values;bool available{true};
     explicit Sink(reo::native::gameplay_scenario::FlagState& f):flags(f){}
     bool send(const u::ResourceOperationMessage&)noexcept override{return false;}
+    bool send(const u::ActorStatusMessage&)noexcept override{return false;}
     bool send(const u::ScenarioOwnerMessage& value)noexcept override{
         values.push_back(value);if(reentrant)check(flags.scenario_owner(index,reentrant==1?255:0));return available;
     }

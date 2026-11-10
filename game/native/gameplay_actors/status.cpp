@@ -10,8 +10,8 @@ bool periodic_damage_admitted(const StatusActor& a) noexcept {
     default:return false;
     }
 }
-void clear_status(StatusActor& a,StatusSession& s,StatusServices& services,std::uint8_t code){
-    switch(code){
+void clear_status_fields(StatusActor& a,std::uint32_t code)noexcept{
+    switch(std::uint8_t(code)){
     case 1:a.current=a.maximum;break;
     case 2:a.status&=~std::uint32_t(1);break;
     case 3:a.status&=~std::uint32_t(2);break;
@@ -21,7 +21,9 @@ void clear_status(StatusActor& a,StatusSession& s,StatusServices& services,std::
     case 7:a.current=a.maximum;a.status&=~std::uint32_t(2);break;
     default:break;
     }
-    services.publish(a,s,0x0e);
+}
+void clear_status(StatusActor& a,StatusSession& s,StatusServices& services,std::uint8_t code){
+    clear_status_fields(a,code);services.publish(a,s,0x0e);
 }
 void tick_status(StatusActor& a,StatusSession& s,StatusServices& services,gameplay_session::Random& random){
     const std::uint16_t interval_one=s.clock_mode?10:20,interval_two=s.clock_mode?30:60;
