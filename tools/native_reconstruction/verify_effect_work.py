@@ -61,6 +61,7 @@ def main():
     units += ['game/native/transform_math/transform_math.cpp', 'game/native/gameplay_actors/entity.cpp']
     units += ['game/native/gameplay_scenario/' + n + '.cpp' for n in ['periodic_effects', 'scene_controls', 'flags', 'fog']]
     units += ['game/native/gameplay_session/session.cpp', 'game/native/gameplay_tasks/tasks.cpp']
+    units += ['game/native/'+n for n in ['gameplay_effects/resource_companion.cpp','gameplay_world/resource_models.cpp','gameplay_world/model_attachments.cpp','gameplay_scenario/scene_resources.cpp','gameplay_scenario/resource_templates.cpp']]
     units=list(dict.fromkeys(units+SURFACE_WORLD_UNITS))
     if args.surface_work:units+=['game/native/gameplay_collision/room_objects.cpp']
     files = list(units)

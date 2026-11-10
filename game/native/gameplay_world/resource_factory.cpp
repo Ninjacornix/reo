@@ -1,4 +1,5 @@
 #include "resource_factory.hpp"
+#include "../gameplay_effects/periodic_visuals.hpp"
 #include <bit>
 #include <cmath>
 #include <new>
@@ -20,7 +21,11 @@ void DelayedResourceWork::update(ResourceModels& models,const ResourceModelId& i
     const auto token=owner_.lock();if(!token||!token->owner)throw std::runtime_error("Native delayed resource factory retired");
     token->owner->delayed_frame(models,id,model);
 }
-ResourceModelCreated ResourceFactory::create(std::uint16_t content,std::int8_t){
+bool ResourceFactory::bind_companions(gameplay_effects::PeriodicVisuals& owner)noexcept{
+    if(!owner.companions_bound_to(frames_.world_,frames_.resources_,models_,templates_))return false;
+    companions_=&owner;return true;
+}
+ResourceModelCreated ResourceFactory::create(std::uint16_t content,std::int8_t companion_argument){
     if(!frames_.open())return{ResourceModelStatus::closed,{},{}};
     auto created=models_.create(ResourceModelPlacement::front);
     if(created.status!=ResourceModelStatus::completed)return created;
@@ -32,7 +37,8 @@ ResourceModelCreated ResourceFactory::create(std::uint16_t content,std::int8_t){
             callback_class=std::to_integer<std::uint8_t>(templates_.state().templates[selector].encoded[20]);
         }
         if(callback_class>3)throw std::runtime_error("Native resource factory callback consumer unavailable");
-        switch(content){case 0x75:case 0x135:case 0x1d:case 0x1c:case 0x3200:case 0x72:throw std::runtime_error("Native resource companion visual consumer unavailable");default:break;}
+        bool special{};switch(content){case 0x75:case 0x135:case 0x1d:case 0x1c:case 0x3200:case 0x72:special=true;break;default:break;}
+        if(special&&(!companions_||!companions_->companions_bound_to(frames_.world_,frames_.resources_,models_,templates_)))throw std::runtime_error("Native resource companion visual consumer unavailable");
         const auto index=assets_->find(std::bit_cast<std::int16_t>(content));
         auto& model=*created.model;
         model.content_id=content;model.active=true;model.category=8;model.draw_tag=255;model.asset_index=index;
@@ -44,6 +50,13 @@ ResourceModelCreated ResourceFactory::create(std::uint16_t content,std::int8_t){
         if(callback_class==1)model.work=std::make_shared<WeaponModelWork>(frames_);
         else if(callback_class==2)model.work=std::make_shared<DelayedResourceWork>(*this);
         else model.work=std::make_shared<CommonModelWork>(frames_);
+        if(special){
+            const auto effects=companions_->create_resource_companions(created.id,companion_argument);
+            if(effects.status==gameplay_effects::WorkStatus::unavailable){
+                for(const auto& id:effects.identities)if(id)(void)companions_->retire(id);
+                throw std::runtime_error("Native resource companion construction unavailable");
+            }
+        }
         return created;
     }catch(const std::bad_alloc&){(void)models_.retire(created.id);return{ResourceModelStatus::no_memory,{},{}};}
     catch(const std::exception&){(void)models_.retire(created.id);return{ResourceModelStatus::unavailable,{},{}};}

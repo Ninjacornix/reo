@@ -3,6 +3,7 @@
 #include "resource_static_assets.hpp"
 #include "../gameplay_scenario/resource_collisions.hpp"
 #include "../gameplay_collision/response.hpp"
+namespace reo::native::gameplay_effects {class PeriodicVisuals;}
 namespace reo::native::gameplay_world {
 class ResourceFactory;
 struct ResourceFactoryToken final {ResourceFactory* owner;};
@@ -26,6 +27,7 @@ public:
     ResourceFactory& operator=(const ResourceFactory&)=delete;
     ResourceModelCreated create(std::uint16_t content,std::int8_t companion_argument=0);
     ResourceModelCreated create_delayed(std::uint16_t content,std::int16_t ticks);
+    bool bind_companions(gameplay_effects::PeriodicVisuals&)noexcept;
     // Retains the actual immutable floor grid for this room and validates the
     // canonical shared scene owner. A later room change invalidates admission.
     bool bind_scene(gameplay_scenario::ResourceCollisions&,
@@ -44,6 +46,7 @@ private:
     std::shared_ptr<const gameplay_collision::response::Grid> floors_;
     std::uint16_t scene_room_{};
     std::shared_ptr<ResourceFactoryToken> token_;
+    gameplay_effects::PeriodicVisuals* companions_{};
     void delayed_frame(ResourceModels&,const ResourceModelId&,ResourceModel&);
 };
 }

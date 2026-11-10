@@ -2,6 +2,7 @@
 #include "geometry.hpp"
 #include "work.hpp"
 #include "surface_work.hpp"
+#include "resource_companion.hpp"
 #include "../gameplay_scenario/surface_effects.hpp"
 #include "../gameplay_scenario/periodic_effects.hpp"
 #include "../gameplay_scenario/fog.hpp"
@@ -44,6 +45,7 @@ struct VisualOutput {
     gameplay_actors::EntityId id;
     std::shared_ptr<const EffectBank> bank;
     bool visible{};
+    std::optional<std::uint8_t> category;
     std::vector<PieceOutput> pieces;
 };
 struct EffectFrame {std::uint64_t revision{};std::vector<VisualOutput> visuals;};
@@ -70,6 +72,11 @@ public:
     struct SurfaceCreated {WorkStatus status{WorkStatus::unavailable};std::size_t attempted{},created{};std::array<gameplay_actors::EntityId,8> identities;};
     SurfaceCreated create_surface_work()noexcept;
     std::optional<SurfaceState> surface_state(const gameplay_actors::EntityId&)const noexcept;
+    bool bind_resource_companions(gameplay_world::World&,gameplay_scenario::SceneResources&,gameplay_world::ResourceModels&,const gameplay_scenario::ResourceTemplates&,ResourceCompanionActions&)noexcept;
+    bool companions_bound_to(const gameplay_world::World&,const gameplay_scenario::SceneResources&,const gameplay_world::ResourceModels&,const gameplay_scenario::ResourceTemplates&)const noexcept;
+    struct CompanionsCreated {WorkStatus status{WorkStatus::unavailable};std::size_t attempted{},created{};std::array<gameplay_actors::EntityId,2> identities;};
+    CompanionsCreated create_resource_companions(const gameplay_actors::EntityId& model,std::int8_t argument)noexcept;
+    std::optional<ResourceCompanionState> resource_companion_state(const gameplay_actors::EntityId&)const noexcept;
     gameplay_scenario::EmissionResult emit(const gameplay_scenario::PeriodicEmission&)noexcept override;
     WorkCreated create(const WorkRequest&)noexcept override;
     WorkStatus emit_surface(const SurfaceEmission&)noexcept override;
@@ -87,6 +94,7 @@ private:
     struct Editing;
     class Edit;
     struct SurfaceRuntime;
+    struct CompanionRuntime;
     class SurfaceSink;
     struct Piece {bool active{};PieceOutput output;};
     gameplay_actors::EntityStore entities_{{168}};
@@ -96,6 +104,7 @@ private:
     gameplay_session::Random* random_{};
     gameplay_scenario::Fog* fog_{};
     std::unique_ptr<SurfaceRuntime> surfaces_;
+    std::unique_ptr<CompanionRuntime> companions_;
     std::shared_ptr<Editing> editing_;
     mutable std::mutex publication_;
     std::shared_ptr<const EffectFrame> published_;
@@ -108,6 +117,7 @@ private:
     VisualReport update_impl(transform_math::Vector,const std::optional<transform_math::Matrix>&)noexcept;
     WorkCreated create_impl(const WorkRequest&,bool internal)noexcept;
     WorkStatus emit_surface_impl(const SurfaceEmission&,bool internal)noexcept;
+    void sample_children(Node&,std::int16_t,transform_math::Vector,const std::optional<transform_math::Matrix>&,VisualReport&);
 };
 // Complete652CE0/370420/370FE0 finite SDK-profile position policy. No host
 // clock or PS2 vector/register state is used by the production implementation.

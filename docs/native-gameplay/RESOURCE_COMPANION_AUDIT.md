@@ -1,8 +1,9 @@
 # Resource companion migration audit
 
-Status: ongoing implementation. The six special factory routes remain
-unavailable. The new654720 state policy is qualified; it does not yet
-construct a real visual, start a light task or play audio. No game was launched.
+Status: the later [native companion composition](RESOURCE_COMPANIONS.md) now
+supplies the six factory routes when their actual native owners are bound.
+The policy-only checkpoint below remains historical evidence; its captured
+intents alone did not qualify real visuals, light tasks or audio. No game was launched.
 Both compilers pass262,144 focused policy cases and20,150,915 combined resource/
 inventory/equipment assertions. Policy observations include50,518 render
 requests,7,282 fades,23,483 retirements,815 light-task requests and35,335 audio
@@ -16,15 +17,23 @@ Evidence is sealed in `native_resource_companion_policy_qualification_v1.json`.
 instructions and exact float constants, rather than inferred item names. Content,
 effect and attribute identifiers in the table are hexadecimal.
 
-| Content | Effect/variant | Local offset | Subtype | Attributes |
+| Content | Effect/child mask | Local offset | Subtype | Attributes |
 | --- | --- | --- | --- | --- |
 |72 |27/0 |(0,18.700000762939453,0) |0 |1 |
-|3200 |7F/−1 |(0,−1,0) |6 |1 |
+|3200 |7F/FFFF |(0,−1,0) |6 |1 |
 |1C |44/0 |(0,10.100000381469727,5.699999809265137) |3 |0E |
 |1D, first |40/0 |(0,10.199999809265137,3.5) |4 |15 |
-|1D, second |3F/32 |(0,10.100000381469727,5.699999809265137) |3 |4E |
+|1D, second |3F/20 |(0,10.100000381469727,5.699999809265137) |3 |4E |
 |135 |43/0 |(0,10.100000381469727,5.699999809265137) |3 |0E |
 |75 |91/0 |(−54.150001525878906,−2.380000114440918,0) |5 |A5 |
+
+All of these constructors pass variant0. The earlier table mislabeled a2's
+child-enable mask as a variant:6525D0 forwards t0 to652E20 as the variant and
+a2 to652470 as the child mask. Complete visual comparison caught the error in
+the new constructor before qualification:3200's first child retained800 when
+the source enabled it.FFFF enables all16 possible children;20 enables child5.
+Neither constructor makes the extra random variant choice implied by the old
+table. The independently qualified654720 policy did not implement construction.
 
 The default3200 argument changes initial age to the original remaining lifetime
 and remaining time to2. This write precedes the common null guard, so the full/
@@ -62,8 +71,9 @@ the160-bank020 frontier was a superseded probe, not the current state. Temporary
 lights must reuse that canonical owner. [Generation-safe access](LIGHTING_CAPABILITIES.md)
 now does so without changing room bindings' physical-slot reuse. The
 [timed task](TIMED_LIGHTS.md) also compares through actual native owners.
-Actual actor constructor tags, companion callers and rendering consumers remain
-required for1D admission.
+The task now reads the existing canonical actor floor/material byte175;
+there is no separate constructor tag. Companion callers and rendering consumers
+remain required for1D admission.
 
 The comparison corrected the new policy's unknown-subtype path: it hides the
 visual and enters retirement. The first fixture used unrelated synthetic RNG
@@ -76,6 +86,7 @@ retirement already clears its canonical model too. A retained native lease can
 observe that cleared object while fading; it must not retarget a recycled model
 generation. No invented final-pose snapshot is needed.
 
-Remaining integration includes actual shared work/child capacity, native model
-leases, room lighting and timed tasks, real resource audio, material sampling/
-fade publication, the six factory branches and full owned-asset acceptance.
+The later composition closes shared work/child capacity, native model leases,
+timed light requests, resource-audio requests, material sampling/fade publication
+and the six bound factory branches under its measured owned profiles. Actual
+game caller installation, wider room construction and game acceptance remain.

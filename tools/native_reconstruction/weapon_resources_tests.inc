@@ -5,6 +5,9 @@
 #include "owned_iso.hpp"
 #include <chrono>
 unsigned weapon_refreshes{},weapon_loaded_banks{},weapon_missing_banks{},weapon_pcm_frames{},weapon_signal_samples{},weapon_refusals{};
+#ifdef REO_RESOURCE_COMPANIONS
+unsigned companion_action_audio_frames{},companion_action_audio_signal{},companion_action_audio_requests{};
+#endif
 namespace weapon_fixture {
 namespace w=reo::native::gameplay_weapon_resources;
 namespace g=reo::native::gameplay_world;
@@ -37,6 +40,10 @@ void compare_weapon_resources(const char* iso_path,std::vector<std::uint8_t>& ra
     check(!catalogue->find(-1)&&!catalogue->find(3));compare_bank(*catalogue->cleared(),*reo::native::animation::WeaponProgramBank::import({}));
     g::World world{{{g::input::Remap{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<g::Session>()};s::SceneResources resources;s::ResourceTemplates templates;
     auto engine=std::make_shared<b::Session>();auto audio=std::make_shared<a::Owner>(engine,world.session().random);l::Loader loader(audio,snd);w::Owner owner(world,resources,templates,catalogue,audio,loader);check(owner.bound_to(world,resources,templates));
+#ifdef REO_RESOURCE_COMPANIONS
+    g::ResourceModels action_models;reo::native::gameplay_scenario::Lighting action_lighting;reo::native::gameplay_lighting::Pool action_pool(action_lighting);reo::native::gameplay_tasks::Scheduler action_tasks;reo::native::gameplay_lighting::TimedLights action_lights(world,action_tasks,action_pool);
+    a::SpatialContext action_spatial;action_spatial.world_to_screen=reo::native::transform_math::identity();g::animation_events::BasicAudio action_frontend(world,*audio,action_spatial,resources,templates);e::NativeResourceCompanionActions companion_actions(world,resources,action_models,templates,action_frontend,action_lights);
+#endif
     std::array<reo::native::gameplay_actors::EntityId,4> entities;for(unsigned slot=0;slot<4;++slot){auto actor=std::make_unique<g::Actor>();actor->slot=std::uint8_t(slot);entities[slot]=world.spawn_primary(slot,std::move(actor)).id;check(bool(entities[slot]));}
     std::fill(ram.begin(),ram.end(),0);auto* memory=ram.data();owned_constants(memory);
     const auto template_for=[&](int selector){std::vector<std::byte> data(56);unsigned value=3;std::memcpy(data.data(),&value,4);value=1;std::memcpy(data.data()+4,&value,4);value=32;std::memcpy(data.data()+16,&value,4);data[46]=std::byte(std::uint8_t(selector));check(templates.load(data));memory[0x74bb5e]=std::uint8_t(selector);};
@@ -58,8 +65,18 @@ void compare_weapon_resources(const char* iso_path,std::vector<std::uint8_t>& ra
         if(!member){check((weapon.selector==0||weapon.selector==51)&&loaded.status==l::LoadStatus::not_found&&!loaded.member);++weapon_missing_banks;continue;}
         check(loaded.status==l::LoadStatus::completed&&loaded.member==member);++weapon_loaded_banks;const auto source=snd->member(*member);check(source.status==af::Status::completed);std::vector<std::uint8_t> bytes(source.view->size());check(source.view->read(0,{reinterpret_cast<std::byte*>(bytes.data()),bytes.size()}).status==r::Status::ok);check(direct.install(direct.begin_bank(8),bytes).status==a::Status::completed);const auto description=a::import_snd(bytes,8);check(description.status==a::Status::completed);
         for(unsigned cue=0;cue<128;++cue){const auto& row=description.value.descriptors[cue];if(row.type!=0||row.next!=255)continue;const b::Command stop=b::StopAll{false};check(engine->apply({&stop,1}).status==b::Status::ok&&reference->apply({&stop,1}).status==b::Status::ok);world.session().random.restore({31,217,0});reference_random.restore({31,217,0});const auto actual=audio->request({8,cue}),expected=direct.request({8,cue});check(actual.status==expected.status&&actual.commands==expected.commands&&world.session().random.state()==reference_random.state());std::array<float,256> pcm{},expected_pcm{};check(engine->mix_add(pcm.data(),128,gains)==b::Status::ok&&reference->mix_add(expected_pcm.data(),128,gains)==b::Status::ok&&pcm==expected_pcm);weapon_pcm_frames+=128;for(float sample:pcm)if(sample!=0)++weapon_signal_samples;}
+#ifdef REO_RESOURCE_COMPANIONS
+        for(unsigned cue=0;cue<128;++cue){
+            const auto& row=description.value.descriptors[cue];if(row.type!=0||row.next!=255)continue;const b::Command stop=b::StopAll{false};check(engine->apply({&stop,1}).status==b::Status::ok&&reference->apply({&stop,1}).status==b::Status::ok);world.session().random.restore({31,217,0});reference_random.restore({31,217,0});
+            check(companion_actions.cue(entities[0],std::uint16_t(cue)));const auto actual=companion_actions.last_audio();const auto expected=direct.positional({8,cue},{0,0,0},action_spatial,1);check(actual&&actual->status==expected.status&&actual->commands==expected.commands&&world.session().random.state()==reference_random.state());
+            std::array<float,256> pcm{},expected_pcm{};check(engine->mix_add(pcm.data(),128,gains)==b::Status::ok&&reference->mix_add(expected_pcm.data(),128,gains)==b::Status::ok&&pcm==expected_pcm);companion_action_audio_frames+=128;++companion_action_audio_requests;for(float sample:pcm)if(sample!=0)++companion_action_audio_signal;
+        }
+#endif
     }
     check(weapon_loaded_banks==14&&weapon_missing_banks==2&&weapon_signal_samples>0&&counted->reads==prepared_reads);
+#ifdef REO_RESOURCE_COMPANIONS
+    check(companion_action_audio_frames>0&&companion_action_audio_signal>0&&companion_action_audio_requests>0);
+#endif
     // Full queues do not undo the committed animation binding. Mode2 skips it.
     template_for(0);world.session().sound_loading_mode=0;std::array<l::LoadTicket,8> tickets;for(auto& ticket:tickets){const auto value=loader.enqueue("weapon00",8);check(value.status==l::LoadStatus::accepted);ticket=value.ticket;}const auto full=owner.refresh(entities[0]);check(full.status==w::Status::completed&&full.programs_changed&&full.audio&&full.audio->status==l::LoadStatus::full);++weapon_refusals;world.session().sound_loading_mode=2;check(!owner.refresh(entities[0]).audio);for(auto ticket:tickets)check(loader.cancel(ticket));
     template_for(-1);const auto old=world.resolve(entities[0])->weapon_programs;check(!owner.refresh(entities[0]).programs_changed&&world.resolve(entities[0])->weapon_programs==old);template_for(3);const auto unknown=owner.refresh(entities[0]);check(unknown.status==w::Status::unavailable&&unknown.programs_changed&&world.resolve(entities[0])->weapon_programs==catalogue->cleared());++weapon_refusals;

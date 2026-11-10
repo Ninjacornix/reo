@@ -1,5 +1,11 @@
 # Native primary resource construction
 
+Current follow-ups: [delayed work](RESOURCE_DELAYED.md),
+[placement](RESOURCE_PLACEMENT.md), [shared collisions](RESOURCE_COLLISIONS.md)
+and [special companions](RESOURCE_COMPANIONS.md) now have actual native owners
+and source comparisons. Special companions require explicit canonical owner
+binding. The initial qualification below records its earlier, narrower scope.
+
 `ResourceFactory` supplies the admitted 591230 path through the same native
 64-model owner, immutable NBD pose bank and concrete common/weapon frame work.
 Template lookup preserves signed content normalization and callback classes

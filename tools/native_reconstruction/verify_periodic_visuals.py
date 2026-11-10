@@ -8,6 +8,7 @@ import re
 import subprocess
 import struct
 from effect_work_sources import SURFACE_WORLD_UNITS
+from comparison_objects import compile_objects
 from audit_retail_effect_descriptors import compare_source, elf_reader
 ROOT = Path(__file__).resolve().parents[2]
 sha = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
@@ -29,6 +30,8 @@ def main():
     p.add_argument('--equipment-resources', action='store_true')
     p.add_argument('--equipment-selection', action='store_true')
     p.add_argument('--resource-companion-policy', action='store_true')
+    p.add_argument('--resource-companions', action='store_true')
+    p.add_argument('--focus-companions', action='store_true')
     args = p.parse_args()
     assert not args.resource_factory or args.resource_static
     assert not args.resource_placement or args.resource_factory
@@ -39,6 +42,8 @@ def main():
     assert not args.equipment_resources or args.weapon_resources
     assert not args.equipment_selection or args.equipment_resources
     assert not args.resource_companion_policy or args.resource_placement
+    assert not args.resource_companions or (args.resource_companion_policy and args.weapon_resources)
+    assert not args.focus_companions or args.resource_companions
     out = args.output.resolve()
     assert not out.exists() and out.is_relative_to(ROOT / 'build-native-sjuni')
     corpus = args.corpus.resolve()
@@ -59,6 +64,9 @@ def main():
     if args.resource_placement: pending += [0x370320,0x191a40,0x1aec80]
     if args.resource_delayed: pending += [0x1904a0,0x190020]
     ports = [0x107c68, 0x18dc50, 0x18dca0, 0x18dc90, 0x1b10c0, 0x1b1110, 0x1b3830, 0x573740]
+    if args.resource_companions:
+        pending += [0x654180,0x652880,0x654720,0x5df450]
+        ports += [0x6b2680,0x1b8c70]
     entries = {}
     while pending:
         at = pending.pop()
@@ -105,6 +113,8 @@ def main():
             bank='sub' if at<0x370000 else 'o0' if at<0x570000 else 'o2'
             folder=ROOT/('recomp/config/output' if bank=='sub' else 'recomp/config/output_ovl/'+bank)
             entries[at]=next(folder.glob(f'{bank}_{at:08X}_*')).relative_to(ROOT).as_posix()
+    if args.resource_companions:
+        at=0x654180;entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     originals = list(entries.values())
     proof = []
     for at, name in entries.items():
@@ -116,6 +126,7 @@ def main():
     units += ['game/native/transform_math/transform_math.cpp', 'game/native/gameplay_actors/entity.cpp']
     units += ['game/native/gameplay_scenario/' + n + '.cpp' for n in ['periodic_effects', 'scene_controls', 'flags', 'fog']]
     units += ['game/native/gameplay_session/session.cpp', 'game/native/gameplay_tasks/tasks.cpp']
+    units += ['game/native/'+n for n in ['gameplay_effects/resource_companion.cpp','gameplay_world/resource_models.cpp','gameplay_world/model_attachments.cpp','gameplay_scenario/scene_resources.cpp','gameplay_scenario/resource_templates.cpp']]
     units=list(dict.fromkeys(units+SURFACE_WORLD_UNITS))
     if args.resource_pulses:
         units += ['game/native/'+n for n in ['gameplay_world/resource_frames.cpp','gameplay_world/resource_models.cpp','gameplay_world/resource_programs.cpp','gameplay_scenario/scene_resources.cpp','animation/weapon_program.cpp']]
@@ -129,6 +140,8 @@ def main():
         units=list(dict.fromkeys(units))
     if args.equipment_resources: units+=['game/native/gameplay_weapon_resources/equipment.cpp']
     if args.resource_companion_policy: units+=['game/native/gameplay_effects/resource_companion.cpp']
+    if args.resource_companions: units+=['game/native/'+n for n in ['gameplay_effects/resource_companion_actions.cpp','gameplay_world/animation_audio.cpp','gameplay_world/footwear.cpp','gameplay_scenario/scene_models.cpp','gameplay_scenario/content.cpp','gameplay_audio/scenario_cues.cpp','gameplay_collision/regions.cpp','gameplay_lighting/lights.cpp','gameplay_lighting/timed_lights.cpp','gameplay_scenario/lighting.cpp']]
+    units=list(dict.fromkeys(units))
     files = list(units)
     frozen = {}
     for name in files:
@@ -143,7 +156,7 @@ def main():
                 files.append(relative)
     fixture = 'tools/native_reconstruction/periodic_visuals_tests.cpp'
     helper = 'tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp'
-    for name in originals + [fixture, helper, Path(__file__).relative_to(ROOT).as_posix()]:
+    for name in originals + [fixture, helper, Path(__file__).relative_to(ROOT).as_posix(),'tools/native_reconstruction/comparison_objects.py']:
         frozen[name] = (ROOT / name).read_bytes()
     if args.resource_pulses:
         name='tools/native_reconstruction/resource_pulses_tests.inc';frozen[name]=(ROOT/name).read_bytes()
@@ -167,8 +180,11 @@ def main():
         name='tools/native_reconstruction/equipment_selection_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.resource_companion_policy:
         name='tools/native_reconstruction/resource_companion_policy_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.resource_companions:
+        name='tools/native_reconstruction/resource_companions_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     out.mkdir(parents=True)
     record = dict(schema=1, status='failed', game_run=False, installed_in_game=False, stage4_complete=False,
+                  focused_companion_run=args.focus_companions,
                   selected_visual_family='variant0 logical36/37/38, flags1A193, null parent, complete6535C0 callback',
                   physical_ps2_exceptional_parity=False, opcode131_installed=False,
                   source_sha256={n: hashlib.sha256(b).hexdigest() for n, b in frozen.items()},
@@ -244,6 +260,8 @@ def main():
         if args.resource_companion_policy:
             for at,size in [(0x7401b0,28),(0x7401d0,28)]:
                 value=overlay['o2'][at-0x570000:at-0x570000+size];record.setdefault('resource_companion_switches',{})[hex(at)]=value.hex();init+='{const std::uint8_t data[]{'+','.join(str(v)for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
+        if args.resource_companions:
+            at,size=0x73ebc0,48;value=overlay['o2'][at-0x570000:at-0x570000+size];record['companion_offset_constants']=value.hex();init+='{const std::uint8_t data[]{'+','.join(str(v)for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
         (out/'owned_constants.hpp').write_text(init+'}\n')
         (out / 'owned_effect_geometry.bin').write_bytes((corpus / 'owned_effect_geometry.bin').read_bytes())
         if args.resource_static:
@@ -280,7 +298,6 @@ def main():
         binary = out / 'checks.exe'
         command = [str(args.compiler), '-std=c++20', '-O2', '-msse4.1', '-pthread', '-Wall', '-Wextra', '-Wpedantic', '-Werror',
                    '-Wno-unused-label', '-Wno-unused-parameter', '-fno-fast-math', '-ffp-contract=off', '-I' + str(out), '-I' + str(out / 'source')]
-        command += [str(out / 'source' / name) for name in units] + [str(out / 'tests.cpp'), '-o', str(binary)]
         if args.resource_pulses: command.insert(1,'-DREO_RESOURCE_PULSES=1')
         if args.resource_static: command.insert(1,'-DREO_RESOURCE_STATIC=1')
         if args.resource_factory: command.insert(1,'-DREO_RESOURCE_FACTORY=1')
@@ -288,10 +305,16 @@ def main():
         if args.resource_delayed: command.insert(1,'-DREO_RESOURCE_DELAYED=1')
         if args.resource_actions: command.insert(1,'-DREO_RESOURCE_ACTIONS=1')
         if args.resource_inventory: command.insert(1,'-DREO_RESOURCE_INVENTORY=1')
-        if args.weapon_resources: command.insert(1,'-DREO_WEAPON_RESOURCES=1');command.insert(-2,'-lbcrypt')
+        if args.weapon_resources: command.insert(1,'-DREO_WEAPON_RESOURCES=1')
         if args.equipment_resources: command.insert(1,'-DREO_EQUIPMENT_RESOURCES=1')
         if args.equipment_selection: command.insert(1,'-DREO_EQUIPMENT_SELECTION=1')
         if args.resource_companion_policy: command.insert(1,'-DREO_RESOURCE_COMPANION_POLICY=1')
+        if args.resource_companions: command.insert(1,'-DREO_RESOURCE_COMPANIONS=1')
+        if args.focus_companions: command.insert(1,'-DREO_RESOURCE_COMPANIONS_FOCUSED=1')
+        objects,object_receipts=compile_objects(ROOT,out,args.compiler,command[1:],units,frozen,env)
+        record['production_objects']=object_receipts
+        command += objects+[str(out/'tests.cpp'),'-o',str(binary)]
+        if args.weapon_resources:command+=['-lbcrypt']
         record['command'] = command
         for label, cmd in [('compile', command), ('run', [str(binary), str(out / 'owned_effect_geometry.bin')]+([str(out/'owned_static_nbd.bin')] if args.resource_static else [])+([str(out/'owned_templates.bin')] if args.resource_factory else [])+([str(ROOT/'iso/Resident Evil - Outbreak (v2.00).iso')] if args.weapon_resources else []))]:
             result = subprocess.run(cmd, env=env, capture_output=True, timeout=240 if args.weapon_resources else 180)

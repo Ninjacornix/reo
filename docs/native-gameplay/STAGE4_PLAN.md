@@ -27,19 +27,20 @@ comparisons with actual ROM/SND assets and background decode/PCM checks.
 actual model/secondary release, canonical weapon refresh and natural full-pool
 side effects. [Primary equipment selection](EQUIPMENT_SELECTION.md) also compares
 through actual attachment construction and signed action publication, including
-full model and sound capacity. Equipment use/recipe/transfer, extended actors, special companions, actual
+full model and sound capacity. Equipment use/recipe/transfer, extended actors, actual
 installation and game acceptance remain open; the stage is still incomplete.
 The [inventory owner correction](INVENTORY_OWNER_TAG.md) preserves the modal
 owner byte rather than collapsing player identities to a boolean. Current
 behavior comparisons cover all256 values; the actual inventory UI remains open.
-The [resource companion audit](RESOURCE_COMPANION_AUDIT.md) now includes a
-qualified654720 state policy. Actual shared visual/child consumers, resource
-audio and timed lighting remain open, so the six factory routes still refuse.
+The [resource companions](RESOURCE_COMPANIONS.md) now implement all six bound
+factory routes through the actual shared visual/child, model, audio and timed
+lighting owners. Both compiler comparisons include full construction, material
+fading, action gates and capacity. Unbound or foreign owners still refuse.
 Ordinary room-lighting script commands and all166 LIG inputs already have a
 native owner. [Temporary-light access](LIGHTING_CAPABILITIES.md) now reuses that
 same owner. The [timed resource light](TIMED_LIGHTS.md) now uses that owner and
-the actual scheduler; actor constructor tags, companion callers and rendering
-consumers remain open.
+the actual scheduler and canonical actor floor/material tag. Actual game caller
+installation remains open; rendering submission belongs to Stage5.
 
 The [modernization direction](../NATIVE_MODERNIZATION_DIRECTION.md) is
 authoritative. Stage 3 closed on source-identified V38; its media/resource owners

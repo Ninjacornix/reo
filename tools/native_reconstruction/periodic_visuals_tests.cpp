@@ -7,6 +7,9 @@
 #include <iostream>
 #include <source_location>
 #include <thread>
+#ifdef REO_RESOURCE_COMPANIONS
+#include "game/native/gameplay_effects/resource_companion_actions.hpp"
+#endif
 #ifdef REO_WEAPON_RESOURCES
 #include "owned_weapons.hpp"
 #include <cstdio>
@@ -32,12 +35,21 @@ template<class T>void put(std::uint8_t* memory,std::uint32_t at,T value){transfo
 constexpr std::uint32_t model=0x3b85b0,heap=0x800000,parts=0x900000,child_pool=0xb00000;
 bool allocated{};
 bool task_retired{};
+#ifdef REO_RESOURCE_COMPANIONS
+bool companion_live_capture{};unsigned companion_light_requests{},companion_cue_requests{};std::uint16_t companion_last_cue{};
+#endif
 #ifdef REO_RESOURCE_COMPANION_POLICY
 bool companion_policy_capture{};
 struct CompanionPolicyCapture {unsigned children{},released{},retired{},spawned{},cues{};std::int16_t sample_time{};std::uint16_t child_attributes{},cue{};float fade_delta{};bool faded{};} companion_policy_observed;
 #endif
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
     ++calls;const auto done=[&](){context->pc=GPR_U32(context,31);};
+#ifdef REO_RESOURCE_COMPANIONS
+    if(companion_live_capture){
+        if(context->pc==0x6b2680){++companion_light_requests;done();return;}
+        if(context->pc==0x1b8c70){++companion_cue_requests;companion_last_cue=std::uint16_t(GPR_U32(context,5));done();return;}
+    }
+#endif
 #ifdef REO_RESOURCE_COMPANION_POLICY
     if(companion_policy_capture){
         constexpr unsigned work=0x120000;
@@ -98,11 +110,11 @@ std::vector<std::vector<std::byte>> load(const char* path){
     std::ifstream source(path,std::ios::binary);std::uint32_t n{};source.read(reinterpret_cast<char*>(&n),4);check(n==12);std::vector<std::vector<std::byte>> data;
     for(unsigned i=0;i<n;++i){std::uint32_t size{};source.read(reinterpret_cast<char*>(&size),4);check(size&&size<0x200000);data.emplace_back(size);source.read(reinterpret_cast<char*>(data.back().data()),size);check(bool(source));}return data;
 }
-void prepare(std::uint8_t* memory,std::span<const std::byte> nbd,std::span<const std::byte> efdata){
+void prepare(std::uint8_t* memory,std::span<const std::byte> nbd,std::span<const std::byte> efdata,std::uint32_t nbd_at=0x100000){
     owned_constants(memory);
-    std::memcpy(memory+0x100000,nbd.data(),nbd.size());std::memcpy(memory+0xa00000,efdata.data(),efdata.size());
+    std::memcpy(memory+nbd_at,nbd.data(),nbd.size());std::memcpy(memory+0xa00000,efdata.data(),efdata.size());
     std::memcpy(memory+0x3926d0,efdata.data(),1024);
-    const auto raw_model=0x100000+get<std::uint32_t>(memory,0x100014),raw_forest=0x100000+get<std::uint32_t>(memory,0x100024);
+    const auto raw_model=nbd_at+get<std::uint32_t>(memory,nbd_at+0x14),raw_forest=nbd_at+get<std::uint32_t>(memory,nbd_at+0x24);
     const auto count=call(memory,0x1a31b0,{raw_model});put(memory,model+0x808,parts);
     for(unsigned i=0;i<GPR_U32(&count,2);++i){const auto c=call(memory,0x1a34b0,{raw_model,i});put(memory,parts+152*i+4,GPR_U32(&c,2));call(memory,0x1a3500,{raw_model,i,parts+152*i+8});}
     put(memory,0x32440c,std::uint32_t(0x400000));call(memory,0x1d3350,{model,raw_forest,0});
@@ -169,6 +181,9 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_RESOURCE_COMPANION_POLICY
 #include "tools/native_reconstruction/resource_companion_policy_tests.inc"
 #endif
+#ifdef REO_RESOURCE_COMPANIONS
+#include "tools/native_reconstruction/resource_companions_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
 #ifdef REO_RESOURCE_STATIC
@@ -183,6 +198,13 @@ int main(int argc,char** argv)try{
         2
 #endif
     );const auto corpus=load(argv[1]);std::vector<std::uint8_t> ram(0x2000000);auto* memory=ram.data();
+#ifdef REO_RESOURCE_COMPANIONS_FOCUSED
+    compare_resource_companions(corpus,ram);
+    compare_companion_factory(corpus,argv[2],argv[3],ram);
+    compare_companion_capacity(corpus,ram);
+    std::cout<<"{\"checks\":"<<checks<<",\"companion_live_cases\":"<<companion_live_cases<<",\"companion_live_frames\":"<<companion_live_frames<<",\"companion_live_pieces\":"<<companion_live_pieces<<",\"companion_live_missing\":"<<companion_live_missing<<",\"companion_live_unavailable\":"<<companion_live_unavailable<<",\"companion_live_lights\":"<<companion_live_lights<<",\"companion_live_audio\":"<<companion_live_audio<<",\"companion_factory_cases\":"<<companion_factory_cases<<",\"companion_factory_refusals\":"<<companion_factory_refusals<<",\"companion_capacity_cases\":"<<companion_capacity_cases<<",\"original_helper_calls\":"<<calls<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"game_run\":false}\n";
+    return 0;
+#endif
     for(unsigned asset=0;asset<corpus.size();asset+=2){
         auto bank=e::EffectBank::import(corpus[asset],corpus[asset+1]);++banks;
         for(unsigned profile=0;profile<3;++profile){
@@ -279,6 +301,11 @@ int main(int argc,char** argv)try{
 #ifdef REO_RESOURCE_COMPANION_POLICY
     compare_resource_companion_policy(ram);
 #endif
+#ifdef REO_RESOURCE_COMPANIONS
+    compare_resource_companions(corpus,ram);
+    compare_companion_factory(corpus,argv[2],argv[3],ram);
+    compare_companion_capacity(corpus,ram);
+#endif
     auto bank=e::EffectBank::import(corpus[0],corpus[1]);e::PeriodicVisuals owner(bank);check(owner.emit({35,{}}).status==s::EmissionStatus::unavailable);check(owner.emit({36,{},1}).status==s::EmissionStatus::unavailable);
     check(owner.emit({36,{std::numeric_limits<float>::quiet_NaN(),0,0}}).status==s::EmissionStatus::unavailable);check(owner.update({std::numeric_limits<float>::quiet_NaN(),0,0}).status==e::VisualStatus::invalid_camera&&owner.size()==0);
     std::atomic<bool> done{},bad{};std::atomic<unsigned> reads{};
@@ -318,6 +345,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_RESOURCE_COMPANION_POLICY
     <<",\"companion_policy_cases\":"<<companion_policy_cases<<",\"companion_policy_renders\":"<<companion_policy_renders<<",\"companion_policy_fades\":"<<companion_policy_fades<<",\"companion_policy_retirements\":"<<companion_policy_retirements<<",\"companion_policy_spawn_intents\":"<<companion_policy_spawn_intents<<",\"companion_policy_audio_intents\":"<<companion_policy_audio_intents
+#endif
+#ifdef REO_RESOURCE_COMPANIONS
+    <<",\"companion_live_cases\":"<<companion_live_cases<<",\"companion_live_frames\":"<<companion_live_frames<<",\"companion_live_pieces\":"<<companion_live_pieces<<",\"companion_live_missing\":"<<companion_live_missing<<",\"companion_live_unavailable\":"<<companion_live_unavailable<<",\"companion_live_lights\":"<<companion_live_lights<<",\"companion_live_audio\":"<<companion_live_audio<<",\"companion_factory_cases\":"<<companion_factory_cases<<",\"companion_factory_refusals\":"<<companion_factory_refusals<<",\"companion_capacity_cases\":"<<companion_capacity_cases<<",\"companion_action_audio_frames\":"<<companion_action_audio_frames<<",\"companion_action_audio_signal\":"<<companion_action_audio_signal<<",\"companion_action_audio_requests\":"<<companion_action_audio_requests
 #endif
     <<",\"original_helper_calls\":"<<calls<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"concurrent_reader_pass\":true,\"game_run\":false}\n";
     return 0;

@@ -20,6 +20,9 @@ class BasicAudio final : public Audio {
     void resource(Actor&, std::uint16_t event) override;
     void node(Actor&, std::uint16_t) override;
     void position(Actor&, std::uint32_t) override;
+    bool bound_to(const World& world,const gameplay_scenario::SceneResources& resources,const gameplay_scenario::ResourceTemplates& templates)const noexcept{
+        return &world_==&world && &resources_==&resources && &templates_==&templates&&!world.closed()&&owner_.bound_to(world.session().random);
+    }
     void bind_scene_models(gameplay_scenario::SceneModels& models)noexcept{models_=&models;}
     // Absence means the source frontend made no bank request. Actual ignored
     // pending/unavailable/native command outcomes are retained, never converted

@@ -1,5 +1,6 @@
 #include "periodic_visuals.hpp"
 #include "../gameplay_contact_world/contacts.hpp"
+#include "../gameplay_world/resource_models.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -98,7 +99,13 @@ struct PeriodicVisuals::Node final:gameplay_scenario::PeriodicVisual {
     VisualBinding binding;
     std::optional<gameplay_scenario::FogPulse> pulse;
     std::optional<SurfaceState> surface;
+    std::optional<ResourceCompanionState> resource_companion;
+    std::shared_ptr<gameplay_world::ResourceModel> resource_model;
+    std::optional<std::uint8_t> category;
     gameplay_actors::EntityId surface_actor;
+};
+struct PeriodicVisuals::CompanionRuntime {
+    gameplay_world::World& world;gameplay_scenario::SceneResources& resources;gameplay_world::ResourceModels& models;const gameplay_scenario::ResourceTemplates& templates;ResourceCompanionActions& actions;
 };
 struct PeriodicVisuals::SurfaceRuntime {
     std::shared_ptr<gameplay_world::World> world;
@@ -188,6 +195,51 @@ PeriodicVisuals::SurfaceCreated PeriodicVisuals::create_surface_work()noexcept{
 }
 std::optional<SurfaceState> PeriodicVisuals::surface_state(const gameplay_actors::EntityId& id)const noexcept{
     const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));return node?node->surface:std::optional<SurfaceState>{};
+}
+bool PeriodicVisuals::companions_bound_to(const gameplay_world::World& world,const gameplay_scenario::SceneResources& resources,const gameplay_world::ResourceModels& models,const gameplay_scenario::ResourceTemplates& templates)const noexcept{
+    return admitted()&&companions_ && &companions_->world==&world && &companions_->resources==&resources && &companions_->models==&models&&bound_to(world.session().random)&&&companions_->templates==&templates&&companions_->actions.bound_to(world,resources,models,templates);
+}
+bool PeriodicVisuals::bind_resource_companions(gameplay_world::World& world,gameplay_scenario::SceneResources& resources,gameplay_world::ResourceModels& models,const gameplay_scenario::ResourceTemplates& templates,ResourceCompanionActions& actions)noexcept{
+    if(busy_||companions_||!bound_to(world.session().random)||!actions.bound_to(world,resources,models,templates))return false;
+    try{companions_=std::make_unique<CompanionRuntime>(CompanionRuntime{world,resources,models,templates,actions});return true;}
+    catch(const std::bad_alloc&){return false;}
+}
+std::optional<ResourceCompanionState> PeriodicVisuals::resource_companion_state(const gameplay_actors::EntityId& id)const noexcept{
+    const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));return node?node->resource_companion:std::nullopt;
+}
+PeriodicVisuals::CompanionsCreated PeriodicVisuals::create_resource_companions(const gameplay_actors::EntityId& model_id,std::int8_t argument)noexcept{
+    CompanionsCreated result;
+    if(busy_||!companions_||!companions_bound_to(companions_->world,companions_->resources,companions_->models,companions_->templates))return result;
+    const auto model=companions_->models.retain(model_id);if(!model||!model->current())return result;
+    struct Request {std::uint16_t effect;std::uint32_t child_mask;transform_math::Vector offset;std::uint8_t subtype;std::uint16_t attributes;};
+    const auto value=[](std::uint32_t bits){return std::bit_cast<float>(bits);};
+    std::array<Request,2> requests{};std::size_t count=1;
+    switch(model->content_id){
+    case 0x72:requests[0]={0x27,0,{0,value(0x4195999a),0},0,1};break;
+    case 0x3200:requests[0]={0x7f,0xffff,{0,-1,0},6,1};break;
+    case 0x1c:requests[0]={0x44,0,{0,value(0x4121999a),value(0x40b66666)},3,0xe};break;
+    case 0x1d:requests[0]={0x40,0,{0,value(0x41233333),3.5f},4,0x15};requests[1]={0x3f,32,{0,value(0x4121999a),value(0x40b66666)},3,0x4e};count=2;break;
+    case 0x135:requests[0]={0x43,0,{0,value(0x4121999a),value(0x40b66666)},3,0xe};break;
+    case 0x75:requests[0]={0x91,0,{value(0xc258999a),value(0xc01851ec),0},5,0xa5};break;
+    default:result.status=WorkStatus::completed;return result;
+    }
+    auto basis=transform_math::identity();for(unsigned c=0;c<3;++c)for(unsigned r=0;r<3;++r)basis[c][r]=model->pose[c][r];
+    result.status=WorkStatus::completed;
+    for(std::size_t i=0;i<count;++i){
+        ++result.attempted;const auto& request=requests[i];
+        //5DF450 passes a2 as the child-enable mask and t0 as variant0.
+        const auto made=create_impl({basis,request.offset,0,request.effect,request.child_mask,0x1a193,WorkUpdate::scaled},false);
+        if(made.status!=WorkStatus::completed){result.status=made.status;if(made.status==WorkStatus::unavailable)return result;continue;}
+        const auto node=std::static_pointer_cast<Node>(entities_.acquire(made.edit->identity()));
+        node->resource_model=model;node->resource_companion.emplace();auto& state=*node->resource_companion;
+        state.content=model->content_id;state.position=request.offset;state.basis=basis;state.subtype=request.subtype;state.attributes=request.attributes;
+        state.remaining=state.loop_lifetime=node->remaining;
+        if(model->content_id==0x3200&&!argument){state.age=state.remaining;state.remaining=2;}
+        if(model->content_id==0x75)state.camera_offset=10;
+        if(i+1==count)node->category=0x1c;
+        result.identities[i]=made.edit->identity();++result.created;
+    }
+    return result;
 }
 WorkCreated PeriodicVisuals::create(const WorkRequest& request)noexcept{
     return create_impl(request,false);
@@ -282,6 +334,48 @@ bool PeriodicVisuals::retire_node(gameplay_actors::EntityId id)noexcept{
 bool PeriodicVisuals::retire(const gameplay_actors::EntityId& id)noexcept{return !closed_&&!busy_&&retire_node(id);}
 VisualReport PeriodicVisuals::update(transform_math::Vector camera)noexcept{return update_impl(camera,{});}
 VisualReport PeriodicVisuals::update_with_view(transform_math::Vector camera,const transform_math::Matrix& view)noexcept{return update_impl(camera,view);}
+void PeriodicVisuals::sample_children(Node& node,std::int16_t sample_time,transform_math::Vector camera,const std::optional<transform_math::Matrix>& view,VisualReport& report){
+    const auto* companion=node.resource_companion?&*node.resource_companion:nullptr;
+    const bool scaled=companion||node.update==WorkUpdate::scaled;
+    const auto attributes=companion?companion->child_attributes:node.attributes;
+    const auto material_scale=companion?companion->material_scale:node.feedback_scale;
+    const auto additional_offset=companion?transform_math::Vector{}:node.additional_offset;
+    const auto basis=companion?std::optional(companion->basis):node.basis;
+    const auto position=companion?companion->position:node.initial_position;
+    const auto angles=companion?companion->angles:node.angles;
+    const auto uniform=companion?companion->scale:node.uniform;
+    const auto camera_offset=companion?companion->camera_offset:node.camera_offset;
+    const auto& binding=node.binding;const auto& group=*node.bank->tracks().group(binding.group);
+    std::optional<transform_math::Matrix> inverse;
+    if(!scaled&&(node.flags&0x80000)){if(!view)throw std::invalid_argument("Native camera matrix required for effect");inverse=inverse_camera(*view);}
+    for(std::size_t i=0;i<node.pieces.size();++i){
+        auto& output=pieces_[node.pieces[i]].output;const auto& part=binding.pieces[i];output.visible=part.selector!=0;
+        if(!output.visible)continue;
+        Parameters sampled;sample_transform(group.parts[part.selector-1].channels,sample_time,sampled);
+        const auto& mesh=node.bank->geometry().meshes()[part.mesh];
+        if(scaled&&(attributes&8))std::fill_n(output.material_values.begin(),mesh.indices.size(),1.f);
+        else{
+            node.bank->materials().sample(mesh,sample_time,output.material_values);
+            if(scaled&&(attributes&0x100))for(std::size_t j=0;j<mesh.indices.size();++j)output.material_values[j]=output.material_values[j]*material_scale;
+        }
+        if(scaled&&(attributes&1))sampled.translation={sampled.translation.x+additional_offset.x,sampled.translation.y+additional_offset.y,sampled.translation.z+additional_offset.z};
+        if(basis){
+            sampled.translation=transform_math::direction(*basis,sampled.translation);
+        }
+        if(inverse)sampled.translation=transform_math::direction(*inverse,sampled.translation);
+        sampled.translation={position.x+sampled.translation.x,position.y+sampled.translation.y,position.z+sampled.translation.z};
+        if(scaled){
+            if(attributes&2)for(unsigned j=0;j<3;++j)sampled.rotation[j]=add(sampled.rotation[j],angles[j]);
+            if(attributes&4)sampled.scale={sampled.scale.x*uniform.x,sampled.scale.y*uniform.y,sampled.scale.z*uniform.z};
+            if(!(output.flags&0x40))output.parameters208={1,1,1};
+            if(attributes&0x20)sampled.translation=toward_camera(sampled.translation,camera,camera_offset);
+        }else output.parameters208=node.parameters208;
+        if(!finite(sampled.translation)||!finite(sampled.scale))throw std::domain_error("Native effect transform finite profile");
+        output.parameters={sampled.scale,sampled.translation,{sampled.rotation[0],sampled.rotation[1],sampled.rotation[2]}};
+        if(node.update==WorkUpdate::oriented&&i==1)output.parameters.rotation[2]=node.oriented_angle;
+        ++report.pieces;
+    }
+}
 VisualReport PeriodicVisuals::update_impl(transform_math::Vector camera,const std::optional<transform_math::Matrix>& view)noexcept{
     VisualReport report;if(closed_){report.status=VisualStatus::closed;return report;}
     if(busy_){report.status=VisualStatus::busy;return report;}
@@ -293,6 +387,34 @@ VisualReport PeriodicVisuals::update_impl(transform_math::Vector camera,const st
             const auto id=*cursor++;const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));
             if(!node)throw std::logic_error("Native periodic visual identity unexpectedly stale");
             ++report.visited;
+            if(node->resource_companion){
+                if(!companions_||!companions_bound_to(companions_->world,companions_->resources,companions_->models,companions_->templates)||!node->resource_model)throw std::logic_error("Native resource companion owners unavailable");
+                const auto& model=*node->resource_model;
+                const auto descriptor_id=companions_->resources.slot(model.resource_slot);
+                const auto descriptor=descriptor_id?companions_->resources.get(*descriptor_id):std::nullopt;
+                if(!descriptor)throw std::domain_error("Native resource companion descriptor unavailable");
+                std::shared_ptr<gameplay_world::Actor> actor;gameplay_actors::EntityId actor_id;
+                if(descriptor->ownership_tag>0&&descriptor->ownership_tag<5){
+                    const auto index=descriptor->ownership_tag-1;actor=companions_->world.primary(index);actor_id=companions_->world.identity(index);
+                    if(!actor)throw std::domain_error("Native resource companion primary actor unavailable");
+                }
+                const ResourceCompanionModel frame{model.active,model.visible,model.content_id,model.resource_slot,model.flags,model.draw_tag,model.position,model.axis_scale,model.pose};
+                const auto step=advance_resource_companion(*node->resource_companion,frame,actor?std::optional(ResourceCompanionActor{actor->primary,actor->secondary}):std::nullopt,*random_);
+                node->visible=node->resource_companion->visible;
+                if(step.spawn_gameplay&&!companions_->actions.light(actor_id,node->resource_companion->position))throw std::domain_error("Native resource companion timed light unavailable");
+                if(step.resource_cue&&!companions_->actions.cue(actor_id,*step.resource_cue))throw std::domain_error("Native resource companion audio unavailable");
+                if(step.retire){retire_node(id);++report.retired;continue;}
+                if(step.render)sample_children(*node,step.sample_time,camera,view,report);
+                if(step.fade_children){
+                    for(std::size_t i=0;i<node->pieces.size();++i){
+                        const auto& part=node->binding.pieces[i];const auto* mesh=node->bank->geometry().material(part.root,part.material);
+                        if(!mesh)throw std::domain_error("Native resource companion fade material unavailable");
+                        auto& values=pieces_[node->pieces[i]].output.material_values;
+                        for(std::size_t j=0;j<mesh->indices.size();++j){const float next=values[j]-node->resource_companion->fade_delta;values[j]=next<0?0.f:next>1?1.f:next;}
+                    }
+                }
+                continue;
+            }
             if(node->surface){
                 if(!surfaces_)throw std::logic_error("Native surface work owner unavailable");
                 const auto actor=surfaces_->world->resolve(node->surface_actor);
@@ -331,36 +453,7 @@ VisualReport PeriodicVisuals::update_impl(transform_math::Vector camera,const st
                     node->remaining=add(node->remaining,-2);
                 }
                 if(node->remaining<0){retire_node(id);++report.retired;continue;}
-                const auto& binding=node->binding;const auto& group=*node->bank->tracks().group(binding.group);
-                std::optional<transform_math::Matrix> inverse;
-                if(!scaled&&(node->flags&0x80000)){if(!view)throw std::invalid_argument("Native camera matrix required for effect");inverse=inverse_camera(*view);}
-                for(std::size_t i=0;i<node->pieces.size();++i){
-                    auto& output=pieces_[node->pieces[i]].output;const auto& part=binding.pieces[i];output.visible=part.selector!=0;
-                    if(!output.visible)continue;
-                    Parameters sampled;sample_transform(group.parts[part.selector-1].channels,node->age,sampled);
-                    const auto& mesh=node->bank->geometry().meshes()[part.mesh];
-                    if(scaled&&(node->attributes&8))std::fill_n(output.material_values.begin(),mesh.indices.size(),1.f);
-                    else{
-                        node->bank->materials().sample(mesh,node->age,output.material_values);
-                        if(scaled&&(node->attributes&0x100))for(std::size_t j=0;j<mesh.indices.size();++j)output.material_values[j]=output.material_values[j]*node->feedback_scale;
-                    }
-                    if(scaled&&(node->attributes&1))sampled.translation={sampled.translation.x+node->additional_offset.x,sampled.translation.y+node->additional_offset.y,sampled.translation.z+node->additional_offset.z};
-                    if(node->basis){
-                        sampled.translation=transform_math::direction(*node->basis,sampled.translation);
-                    }
-                    if(inverse)sampled.translation=transform_math::direction(*inverse,sampled.translation);
-                    sampled.translation={node->initial_position.x+sampled.translation.x,node->initial_position.y+sampled.translation.y,node->initial_position.z+sampled.translation.z};
-                    if(scaled){
-                        if(node->attributes&2)for(unsigned j=0;j<3;++j)sampled.rotation[j]=add(sampled.rotation[j],node->angles[j]);
-                        if(node->attributes&4)sampled.scale={sampled.scale.x*node->uniform.x,sampled.scale.y*node->uniform.y,sampled.scale.z*node->uniform.z};
-                        if(!(output.flags&0x40))output.parameters208={1,1,1};
-                        if(node->attributes&0x20)sampled.translation=toward_camera(sampled.translation,camera,node->camera_offset);
-                    }else output.parameters208=node->parameters208;
-                    if(!finite(sampled.translation)||!finite(sampled.scale))throw std::domain_error("Native effect transform finite profile");
-                    output.parameters={sampled.scale,sampled.translation,{sampled.rotation[0],sampled.rotation[1],sampled.rotation[2]}};
-                    if(node->update==WorkUpdate::oriented&&i==1)output.parameters.rotation[2]=node->oriented_angle;
-                    ++report.pieces;
-                }
+                sample_children(*node,node->age,camera,view,report);
                 if(scaled)node->remaining=add(node->remaining,-2);
                 node->age=add(node->age,2);continue;
             }
@@ -380,7 +473,7 @@ VisualReport PeriodicVisuals::update_impl(transform_math::Vector camera,const st
         }
         if(revision_==UINT64_MAX)throw std::overflow_error("Native effect frame revision exhausted");
         auto frame=std::make_shared<EffectFrame>();frame->revision=revision_+1;frame->visuals.reserve(order_.size());
-        for(const auto& id:order_){const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));VisualOutput output;output.id=id;output.bank=node->bank;output.visible=node->visible;output.pieces.reserve(node->pieces.size());for(const auto slot:node->pieces)output.pieces.push_back(pieces_[slot].output);frame->visuals.push_back(std::move(output));}
+        for(const auto& id:order_){const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));VisualOutput output;output.id=id;output.bank=node->bank;output.visible=node->visible;output.category=node->category;output.pieces.reserve(node->pieces.size());for(const auto slot:node->pieces)output.pieces.push_back(pieces_[slot].output);frame->visuals.push_back(std::move(output));}
         revision_=frame->revision;publish(std::move(frame));return report;
     }catch(const std::bad_alloc&){failure_=VisualStatus::no_memory;}
     catch(const std::exception&){failure_=VisualStatus::invalid_profile;}
@@ -392,5 +485,6 @@ void PeriodicVisuals::close()noexcept{
     closed_=true;entities_.shutdown();publish({});
     editing_->owner=nullptr;
     surfaces_.reset();
+    companions_.reset();
 }
 }

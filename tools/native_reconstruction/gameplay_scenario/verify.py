@@ -122,6 +122,7 @@ def main(a):
     units += [('object_'+n,ROOT/'game/native/gameplay_collision'/(n+'.cpp'))for n in ['collision','response','sweep','actors','ownership','room_objects','footprint','trace','room_geometry','object_interactions','object_lifetime']]
     units += [('canonical_light_access',ROOT/'game/native/gameplay_lighting/lights.cpp')]
     units += [('effect_'+n,ROOT/'game/native/gameplay_effects'/(n+'.cpp'))for n in ['periodic_visuals','geometry','tracks']]
+    units += [('companion_'+n,ROOT/'game/native'/folder/(n+'.cpp'))for folder,n in [('gameplay_effects','resource_companion'),('gameplay_world','resource_models'),('gameplay_world','model_attachments'),('gameplay_scenario','resource_templates')]]
     units += [('animation_'+n,ROOT/'game/native/animation'/(n+'.cpp'))for n in ['model','model_math','curves']]
     units += [('periodic_tasks',ROOT/'game/native/gameplay_scenario/periodic_effects.cpp')]
     if not a.pin_effects_commit:

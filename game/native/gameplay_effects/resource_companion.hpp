@@ -1,7 +1,10 @@
 #pragma once
 #include "../transform_math/transform_math.hpp"
 #include "../gameplay_session/session.hpp"
+#include "../gameplay_actors/entity.hpp"
 #include <optional>
+namespace reo::native::gameplay_world {class World;class ResourceModels;}
+namespace reo::native::gameplay_scenario {class SceneResources;class ResourceTemplates;}
 namespace reo::native::gameplay_effects {
 // Native semantic state for654720. This policy does not allocate work/children,
 // play sound, create gameplay tasks, or claim that those consumers are present.
@@ -33,4 +36,13 @@ struct ResourceCompanionStep {
 ResourceCompanionStep advance_resource_companion(ResourceCompanionState&,
     const ResourceCompanionModel&,const std::optional<ResourceCompanionActor>&,
     gameplay_session::Random&);
+// Cross-subsystem side effects are supplied by the concrete native audio/light
+// composition. A policy-only fixture does not satisfy this ownership contract.
+class ResourceCompanionActions {
+public:
+    virtual ~ResourceCompanionActions()=default;
+    virtual bool bound_to(const gameplay_world::World&,const gameplay_scenario::SceneResources&,const gameplay_world::ResourceModels&,const gameplay_scenario::ResourceTemplates&)const noexcept=0;
+    virtual bool light(const gameplay_actors::EntityId&,transform_math::Vector)noexcept=0;
+    virtual bool cue(const gameplay_actors::EntityId&,std::uint16_t)noexcept=0;
+};
 }
