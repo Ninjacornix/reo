@@ -74,6 +74,19 @@ struct State {
     std::optional<std::uint32_t> audio_tick;
 };
 enum class Status {completed,busy,closed,actor_failure,script_failure,task_failure,flag_failure,statistics_failure};
+enum class AiFrameStatus {
+    unavailable,
+    gated,
+    completed,
+    observation_unavailable,
+    goal_unavailable,
+    action_unavailable,
+};
+struct AiFrameResult {
+    AiFrameStatus status{AiFrameStatus::unavailable};
+    gameplay_ai::ObservationUpdated observation;
+    gameplay_ai::GoalDispatched goal;
+};
 struct Result {
     Status status{Status::completed};
     std::size_t worker_calls{},script_operations{};
@@ -211,6 +224,9 @@ public:
     gameplay_ai::ObservationAdmitted admit_ai_reference_reaction(const world::actors::EntityId&,std::uint32_t mode);
     gameplay_ai::ObservationUpdated update_ai_observations(const world::actors::EntityId&,
         const gameplay_navigation::VisibilityRoom&,const gameplay_scene::Records&,const scenario::SceneResources&);
+    AiFrameResult run_ai_frame(const world::actors::EntityId&, bool updates_blocked,
+        const gameplay_navigation::VisibilityRoom&, const gameplay_scene::Records&,
+        const scenario::SceneResources&);
 private:
     world::World& world_;
     tasks::Scheduler linked_;

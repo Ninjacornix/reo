@@ -39,6 +39,49 @@ gameplay_ai::Status Owner::dispatch_active_ai_action(const world::actors::Entity
     const auto reference = world_.primary(0);
     return gameplay_ai::dispatch_active_room_action(*actor, reference.get(), paused);
 }
+AiFrameResult Owner::run_ai_frame(const world::actors::EntityId& id, bool updates_blocked,
+                                  const gameplay_navigation::VisibilityRoom& room,
+                                  const gameplay_scene::Records& records,
+                                  const scenario::SceneResources& resources) {
+    AiFrameResult result;
+    if (!open())
+        return result;
+    const auto actor = world_.resolve(id);
+    if (!actor || world_.identity(actor->slot) != id || !actor->ai_execution)
+        return result;
+
+    auto& input = actor->input;
+    auto& state = *actor->ai_execution;
+    input.held = 0;
+    input.pressed = 0;
+    input.history[0] = 0;
+    input.analog.fill(0);
+    state.steering_button_10 = 1;
+    state.steering_button_20 = 0;
+    state.reaction = 0;
+    if (updates_blocked || state.inhibited || actor->response_lock ||
+        world_.session().suppress_hits || (actor->status & 0x20u)) {
+        result.status = AiFrameStatus::gated;
+        return result;
+    }
+
+    result.observation = update_ai_observations(id, room, records, resources);
+    if (result.observation.status != gameplay_ai::Status::completed) {
+        result.status = AiFrameStatus::observation_unavailable;
+        return result;
+    }
+    result.goal = dispatch_ai_goal(id, resources);
+    if (result.goal.status != gameplay_ai::Status::completed) {
+        result.status = AiFrameStatus::goal_unavailable;
+        return result;
+    }
+    if (actor->transient_marker || dispatch_active_ai_action(id, false) != gameplay_ai::Status::completed) {
+        result.status = AiFrameStatus::action_unavailable;
+        return result;
+    }
+    result.status = AiFrameStatus::completed;
+    return result;
+}
 gameplay_ai::InitializationResult Owner::initialize_ai(const world::actors::EntityId& id){
     if(!open())return {};
     const auto actor=world_.resolve(id);if(!actor)return {};

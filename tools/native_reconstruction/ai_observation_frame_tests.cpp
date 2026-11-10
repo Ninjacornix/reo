@@ -3,6 +3,7 @@
 #include "game/native/gameplay_world/linked_models.hpp"
 #include "game/native/gameplay_world/target_metrics.hpp"
 #include "game/native/animation/model.hpp"
+#include "game/native/transform_math/heading.hpp"
 #include "reference.hpp"
 #include "functions.h"
 #include <fstream>
@@ -25,9 +26,11 @@ constexpr unsigned stack = 0x1f00000;
 unsigned case_number{}, checks{}, draw_calls{}, scene_calls{}, wall_calls{}, event_calls{};
 unsigned wall_hits{}, wall_resets{};
 unsigned refused_frames{};
+unsigned ai_frames{}, gated_frames{}, refused_actions{};
 std::array<unsigned, 4> threat_bands{};
 std::optional<unsigned> original_event;
 bool original_wall_hit{};
+bool original_dispatched_goal{}, original_dispatched_action{};
 const n::VisibilityRoom* active_room{};
 std::vector<std::uint8_t> memory(0x2000000);
 
@@ -116,8 +119,19 @@ void project_actor(std::span<std::uint8_t> bytes, const g::Actor& actor) {
     bytes[0xb98] = actor.character;
     put(bytes, 0xba0, actor.status);
     put(bytes, 0xba4, actor.auxiliary_status);
+    bytes[0xbd0] = actor.response_lock;
     put(bytes, 0xc84, actor.inventory.carried);
     put(bytes, 0xc88, actor.inventory.storage);
+    put(bytes, 0xf78, actor.input.pressed);
+    put(bytes, 0xf7c, actor.input.released);
+    put(bytes, 0xf80, actor.input.held);
+    put(bytes, 0xf84, actor.input.history);
+    put(bytes, 0xf90, actor.input.repeat);
+    put(bytes, 0xf94, actor.input.repeat_timer);
+    put(bytes, 0xf98, actor.input.analog);
+    bytes[0xff1] = state.inhibited;
+    bytes[0xff2] = state.steering_button_10;
+    bytes[0xff3] = state.steering_button_20;
     put(bytes, 0xff4, state.goal);
     put(bytes, 0xff6, state.previous_goal);
     put(bytes, 0xff8, state.action);
@@ -126,7 +140,9 @@ void project_actor(std::span<std::uint8_t> bytes, const g::Actor& actor) {
     put(bytes, 0x1000, state.goal_parameters);
     put(bytes, 0x1008, state.action_phases);
     bytes[0x100c] = std::uint8_t(actor.navigation_route->current_node);
+    put(bytes, 0x1038, state.steering_value);
     bytes[0x103a] = state.action_marker;
+    bytes[0x105b] = actor.transient_marker;
     put(bytes, 0x1060, state.observation_timeout);
     bytes[0x106c] = state.threat_band;
     bytes[0x106d] = state.previous_threat_band;
@@ -161,7 +177,8 @@ void project_actor(std::span<std::uint8_t> bytes, const g::Actor& actor) {
 }
 
 void compare(unsigned seed, const c::response::Grid& grid,
-             const std::shared_ptr<const reo::native::animation::Skeleton>& skeleton) {
+             const std::shared_ptr<const reo::native::animation::Skeleton>& skeleton,
+             bool full_ai_frame = false) {
     g::World world({{{1, 2, 4}}, 1, {68, UINT64_MAX}}, std::make_shared<g::Session>());
     Notifications notifications;
     u::Owner owner(world, notifications);
@@ -173,7 +190,7 @@ void compare(unsigned seed, const c::response::Grid& grid,
         {0, 0, -1},
         450,
     }};
-    const bool wall_profile = seed % 5 == 1;
+    const bool wall_profile = !full_ai_frame && seed % 5 == 1;
     const n::VisibilityRoom room{grid,
                                  {},
                                  wall_profile ? std::span<const c::response::Triangle>(walls)
@@ -243,6 +260,28 @@ void compare(unsigned seed, const c::response::Grid& grid,
     state.observation_timeout = 2;
     state.forced_priority = seed / 67 % 3 == 0 ? -1 : std::int32_t(seed % 8);
     state.forced_content = 0x131;
+    const auto gate_bits = full_ai_frame && seed % 3 == 0 ? seed / 3 % 32 : 0u;
+    const bool session_gate = (gate_bits & 1) != 0;
+    if (full_ai_frame) {
+        self->motion_class = seed % 4 == 0 ? 0x3b : 0;
+        self->transient_marker = seed == 1024 ? 1 : 0;
+        self->status = gate_bits & 16 ? 0x20 : 0;
+        self->response_lock = gate_bits & 4 ? 2 : 0;
+        world.session().suppress_hits = (gate_bits & 8) != 0;
+        self->input = {13, 17, 21, {25, 33, 42}, 53, -7, {1, 2, 3, 4, 5, 6, 7, 8}};
+        state.inhibited = gate_bits & 2 ? 2 : 0;
+        state.steering_value = 0x1234;
+        state.steering_button_10 = 3;
+        state.steering_button_20 = 2;
+        state.reaction = 199;
+        state.goal = std::array<std::uint16_t, 3>{0, 6, 14}[seed % 3];
+        state.action = std::uint16_t(seed / 7 % 2);
+        state.goal_refresh = self->motion_class == 0x3b && seed % 17 == 0 ? 1 : 0;
+        state.goal_phases[0] = 1;
+        state.goal_parameters[0] = std::uint16_t(seed % 3);
+        state.goal_parameters[1] = 180;
+        state.action_phases[0] = std::uint8_t(seed % 2);
+    }
     self->inventory.storage[17] = 4;
     s::SceneDescriptor descriptor;
     descriptor.attachment_id = seed / 89 % 2 ? 0x131 : 0x132;
@@ -293,31 +332,56 @@ void compare(unsigned seed, const c::response::Grid& grid,
     put(memory, 0x3244b8, std::uint16_t(4321));
     put(memory, 0x3243dc, world.room);
     put(memory, 0x83e530, 23u);
+    put(memory, 0x83e558 + 7 * 164, 1u);
+    memory[0x3243d2] = session_gate ? 2 : 0;
+    memory[0x4bae8d] = world.session().suppress_hits;
     if (seed == 4097)
         world.target_metrics().invalidate();
-    const auto result =
-        owner.update_ai_observations(world.identity(self_slot), room, records, resources);
+    a::ObservationUpdated result;
+    if (full_ai_frame) {
+        const auto frame =
+            owner.run_ai_frame(world.identity(self_slot), session_gate, room, records, resources);
+        if (self->transient_marker) {
+            check(frame.status == u::AiFrameStatus::action_unavailable &&
+                  frame.observation.status == a::Status::completed &&
+                  frame.goal.status == a::Status::completed);
+            ++refused_actions;
+            return;
+        }
+        check(frame.status == (gate_bits ? u::AiFrameStatus::gated : u::AiFrameStatus::completed));
+        result = frame.observation;
+        ++ai_frames;
+        if (gate_bits)
+            ++gated_frames;
+    } else {
+        result = owner.update_ai_observations(world.identity(self_slot), room, records, resources);
+    }
     if (seed >= 4096) {
         check(result.status == a::Status::unavailable);
         check(state.observation_timeout == 2 && result.targets_examined == 0);
         ++refused_frames;
         return;
     }
-    check(result.status == a::Status::completed);
-    check(result.targets_examined == target_count);
-    ++threat_bands.at(state.threat_band);
+    if (!gate_bits) {
+        check(result.status == a::Status::completed);
+        check(result.targets_examined == target_count);
+        if (!full_ai_frame)
+            ++threat_bands.at(state.threat_band);
+    }
     auto expected = source_before;
     for (unsigned i = 0; i < 8; ++i)
         project_actor(std::span(expected).subspan(i * primary_stride, primary_stride),
                       *world.primary(i));
     R5900Context context;
     PS2Runtime runtime;
-    context.pc = 0x812540;
+    context.pc = full_ai_frame ? 0x812460 : 0x812540;
     SET_GPR_U32(&context, 4, primary_base + self_slot * primary_stride);
     SET_GPR_U32(&context, 29, stack);
     SET_GPR_U32(&context, 31, 0x100);
     original_event.reset();
     original_wall_hit = false;
+    original_dispatched_goal = false;
+    original_dispatched_action = false;
     active_room = &room;
     const auto previous_walls = wall_calls;
     original_transform_port(memory.data(), &context, &runtime);
@@ -331,7 +395,10 @@ void compare(unsigned seed, const c::response::Grid& grid,
         if (result.goal_and_action_reset)
             ++wall_resets;
     }
-    check(result.scene_candidates.count == transform_read<std::uint32_t>(memory.data(), 0x83e530));
+    check((gate_bits ? 23u : result.scene_candidates.count) ==
+          transform_read<std::uint32_t>(memory.data(), 0x83e530));
+    check(original_dispatched_goal == (full_ai_frame && !gate_bits));
+    check(original_dispatched_action == (full_ai_frame && !gate_bits));
     check(world.session().random.state().primary ==
           transform_read<std::uint16_t>(memory.data(), 0x3244b0));
     check(world.session().random.state().secondary ==
@@ -352,8 +419,13 @@ void original_transform_port(std::uint8_t* memory, R5900Context* context, PS2Run
     const unsigned arg = GPR_U32(context, 4), other = GPR_U32(context, 5);
     if (context->pc == 0x1aec80)
         ++draw_calls;
+    if (context->pc == 0x813330)
+        original_dispatched_goal = true;
+    if (context->pc == 0x81a720)
+        original_dispatched_action = true;
     if (context->pc == 0x8130d0) {
-        original_event = other;
+        if (!original_dispatched_goal)
+            original_event = other;
         ++event_calls;
     }
     switch (context->pc) {
@@ -370,6 +442,13 @@ void original_transform_port(std::uint8_t* memory, R5900Context* context, PS2Run
         case 0x191f80:
             context->f[0] = m::radians(std::uint16_t(arg));
             break;
+        case 0x370140: {
+            check(other == primary_base + 0x38);
+            const auto from = transform_read<g::Position>(memory, arg);
+            const auto to = transform_read<g::Position>(memory, other);
+            SET_GPR_U32(context, 2, m::position_direction_turn(to.x - from.x, to.z - from.z));
+            break;
+        }
         case 0x191bc0: {
             const auto trig = m::sin_cos(context->f[12]);
             check(transform_read<float>(memory, arg) == 0.f &&
@@ -417,15 +496,18 @@ int main(int argc, char** argv) try {
         compare(case_number, grid, skeleton);
     compare(4096, grid, skeleton);
     compare(4097, grid, skeleton);
+    for (unsigned seed = 0; seed < 1025; ++seed, ++case_number)
+        compare(seed, grid, skeleton, true);
     check(wall_hits > wall_resets && wall_resets > 0);
     check(std::ranges::all_of(threat_bands, [](unsigned count) { return count > 0; }));
-    std::cout << "{\"cases\":" << case_number << ",\"checks\":" << checks
-              << ",\"draw_calls\":" << draw_calls << ",\"scene_calls\":" << scene_calls
-              << ",\"wall_calls\":" << wall_calls << ",\"wall_hits\":" << wall_hits
-              << ",\"wall_resets\":" << wall_resets << ",\"event_calls\":" << event_calls
-              << ",\"refused_frames\":" << refused_frames << ",\"threat_bands\":["
-              << threat_bands[0] << ',' << threat_bands[1] << ',' << threat_bands[2] << ','
-              << threat_bands[3] << "]}\n";
+    std::cout << "{\"cases\":4096,\"checks\":" << checks << ",\"draw_calls\":" << draw_calls
+              << ",\"scene_calls\":" << scene_calls << ",\"wall_calls\":" << wall_calls
+              << ",\"wall_hits\":" << wall_hits << ",\"wall_resets\":" << wall_resets
+              << ",\"event_calls\":" << event_calls << ",\"refused_frames\":" << refused_frames
+              << ",\"threat_bands\":[" << threat_bands[0] << ',' << threat_bands[1] << ','
+              << threat_bands[2] << ',' << threat_bands[3] << "],\"ai_frames\":" << ai_frames
+              << ",\"gated_frames\":" << gated_frames << ",\"refused_actions\":" << refused_actions
+              << "}\n";
 } catch (const std::exception& error) {
     std::cerr << error.what() << '\n';
     return 1;

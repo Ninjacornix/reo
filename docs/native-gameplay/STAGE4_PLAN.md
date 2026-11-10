@@ -160,6 +160,11 @@ The current resource and inventory implementation includes:
   active-room action comparisons. The navigation heading regression and
   thirteen parent tests pass. Other action families and live callers remain open.
 
+- [Native AI frame](AI_FRAME.md) connects the input reset, observation pass,
+  direct goals, and admitted active-room actions in original order. Both
+  compilers pass 1,024 full-frame comparisons and all thirteen parent tests.
+  Remaining action families, live scheduling, and game acceptance remain open.
+
 - [Target-cache scratch audit](TARGET_CACHE_SCRATCH_AUDIT.md) identifies controlled
   source inverse-sort dependence on unwritten scratch. Both compilers agree on
   48 profiles,192 strict runs and192 separate initialization-policy runs. This

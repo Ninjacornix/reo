@@ -20,7 +20,11 @@ IMAGES = (
     (
         "build-function-index/owned-overlays/o9.bin", "recomp/config/output_ovl/o9", 0x810000,
         "604126d6edca1b1333948d79d1d2c8d2f2e22f4a233efbdfb769c106dafe7343",
-        (0x812540, 0x813BD0, 0x812EF0, 0x8130D0, 0x813380, 0x81A6E0, 0x81A6F0),
+        (
+            0x812540, 0x813BD0, 0x812EF0, 0x8130D0, 0x813380, 0x81A6E0, 0x81A6F0,
+            0x812460, 0x813330, 0x8133D0, 0x813DE0, 0x814B30, 0x815820,
+            0x81A720, 0x81A770, 0x81A780, 0x81BB80, 0x825CC0, 0x823190, 0x817140,
+        ),
     ),
     (
         "build-function-index/owned-overlays/o2.bin", "recomp/config/output_ovl/o2", 0x570000,
@@ -170,6 +174,7 @@ def main():
             "191F80 and 191BC0 finite heading and forward vector via native transform math",
             "579980 room wall probe through the same native trace consumer",
             "107C68 checked eight-byte zero fill",
+            "370140 reference-facing heading through qualified native position math",
         ],
     )
     try:
