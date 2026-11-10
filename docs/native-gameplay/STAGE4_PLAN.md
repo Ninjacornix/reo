@@ -103,6 +103,12 @@ The current resource and inventory implementation includes:
   parent tests. Service/acknowledgement/reset, full initialization and native
   gameplay acceptance remain open; queued does not claim delivered.
 
+- [Control value/ownership reception](AI_CONTROL_RECEIVE.md) now supplies both
+  complete bounded receive helpers through the same Session registrations.
+  Both compilers pass75024841 comparisons/checks and twelve parent tests. The
+  external activity-mode fact is explicit; its complete provider/producer,
+  outgoing service/transport and coherent game acceptance remain open.
+
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.
 - [Placed-resource collisions](RESOURCE_COLLISIONS.md) through the shared128

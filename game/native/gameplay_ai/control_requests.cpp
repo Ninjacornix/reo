@@ -37,4 +37,38 @@ RequestResult ControlRequests::request(std::int32_t kind,std::int32_t target,std
 RequestResult publish_actor_control(ControlRequests& controls,std::uint8_t actor_slot,std::uint32_t value)noexcept{
     return controls.request(0,actor_slot,{std::uint8_t(value),0,0,0});
 }
+ControlApplied ControlRequests::apply(std::uint8_t encoded_index,std::span<const std::uint8_t> payload,std::uint8_t mode,std::optional<std::int32_t> activity_mode)noexcept{
+    auto& target=registrations_[encoded_index&63];
+    if(mode==0){
+        if(payload.size()<4)return {ControlApplyStatus::malformed};
+        for(std::size_t i=0;i<4;++i)target.payload[i]=payload[i];
+        return {ControlApplyStatus::completed,1,1};
+    }
+    if(mode==1){
+        if(!activity_mode)return {};
+        if(*activity_mode==0){
+            if(payload.empty())return {ControlApplyStatus::malformed};
+            target.owner_tag=payload[0];return {ControlApplyStatus::completed,1,1};
+        }
+    }
+    return {ControlApplyStatus::completed,1,0};
+}
+ControlApplied ControlRequests::receive(std::span<const std::uint8_t> packet,std::optional<std::int32_t> activity_mode)noexcept{
+    if(packet.size()<4)return {ControlApplyStatus::malformed};
+    const auto mode=packet[0];
+    if(mode==0){
+        if(packet.size()<9)return {ControlApplyStatus::malformed};
+        return apply(packet[4],packet.subspan(5,4),0,activity_mode);
+    }
+    if(packet[1]<4)return {ControlApplyStatus::malformed};
+    const auto count=std::size_t((packet[1]-4)/2);
+    if(count>(packet.size()-4)/2)return {ControlApplyStatus::malformed};
+    if(count&&mode==1&&!activity_mode)return {};
+    ControlApplied result{ControlApplyStatus::completed};
+    for(std::size_t i=0;i<count;++i){
+        const auto item=apply(packet[4+2*i],packet.subspan(5+2*i,1),mode,activity_mode);
+        result.visited+=item.visited;result.written+=item.written;
+    }
+    return result;
+}
 }

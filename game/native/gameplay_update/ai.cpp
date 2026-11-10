@@ -1,5 +1,9 @@
 #include "update.hpp"
 namespace reo::native::gameplay_update {
+gameplay_ai::ControlApplied Owner::receive_ai_controls(std::span<const std::uint8_t> packet,std::optional<std::int32_t> activity_mode){
+    if(!open())return {};
+    return world_.session().ai_control_requests.receive(packet,activity_mode);
+}
 std::optional<gameplay_ai::RegistrationStatus> Owner::register_ai_control(const world::actors::EntityId& id){
     if(!open())return {};
     const auto actor=world_.resolve(id);if(!actor)return {};

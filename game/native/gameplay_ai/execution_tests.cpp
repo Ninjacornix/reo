@@ -67,6 +67,7 @@ void compare(unsigned pc,std::uint32_t argument,ai::ExecutionState before){
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
     if(context->pc==0x107ab0){check(GPR_U32(context,4)==0x110b0&&GPR_U32(context,6)==8);++copies;}
     switch(context->pc){
+    case 0x1afe70:SET_GPR_U32(context,2,std::uint32_t(reference_activity_mode));context->pc=GPR_U32(context,31);++activity_queries;return;
     case 0x107c68:{const auto at=GPR_U32(context,4);check((at==0x110b8||at==0x110c0)&&GPR_U32(context,5)==0&&GPR_U32(context,6)==8);std::memset(memory+at,0,8);++clears;SET_GPR_U32(context,2,at);context->pc=GPR_U32(context,31);return;}
 #include "dispatch.inc"
     default:throw std::runtime_error("Undeclared AI original dependency "+std::to_string(context->pc));
@@ -91,6 +92,7 @@ int main(int argc,char** argv){
         auto halfword=state(42);const auto previous=halfword.previous_goal;ai::set_goal(halfword,256);check(halfword.goal==256&&halfword.goal_refresh==0&&halfword.previous_goal==previous);
         ai::set_goal(halfword,65536);check(halfword.goal==0&&halfword.goal_refresh==1&&halfword.previous_goal==256);
         control_contracts();
-        std::cout<<"{\"checks\":"<<checks<<",\"goal_cases\":"<<goal_cases<<",\"action_cases\":"<<action_cases<<",\"phase_cases\":"<<phase_cases<<",\"finish_cases\":"<<finish_cases<<",\"profile_cases\":"<<profile_cases<<",\"profile_refusals\":"<<profile_refusals<<",\"copies\":"<<copies<<",\"clears\":"<<clears<<",\"control_membership_cases\":"<<control_membership_cases<<",\"control_register_cases\":"<<control_register_cases<<",\"control_unregister_cases\":"<<control_unregister_cases<<",\"control_lookup_cases\":"<<control_lookup_cases<<",\"control_request_cases\":"<<control_request_cases<<",\"control_publish_cases\":"<<control_publish_cases<<"}\n";
+        control_receive_contracts();
+        std::cout<<"{\"checks\":"<<checks<<",\"goal_cases\":"<<goal_cases<<",\"action_cases\":"<<action_cases<<",\"phase_cases\":"<<phase_cases<<",\"finish_cases\":"<<finish_cases<<",\"profile_cases\":"<<profile_cases<<",\"profile_refusals\":"<<profile_refusals<<",\"copies\":"<<copies<<",\"clears\":"<<clears<<",\"control_membership_cases\":"<<control_membership_cases<<",\"control_register_cases\":"<<control_register_cases<<",\"control_unregister_cases\":"<<control_unregister_cases<<",\"control_lookup_cases\":"<<control_lookup_cases<<",\"control_request_cases\":"<<control_request_cases<<",\"control_publish_cases\":"<<control_publish_cases<<",\"control_apply_cases\":"<<control_apply_cases<<",\"control_receive_cases\":"<<control_receive_cases<<",\"control_receive_refusals\":"<<control_receive_refusals<<",\"activity_queries\":"<<activity_queries<<"}\n";
     }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
 }

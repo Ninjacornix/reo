@@ -22,6 +22,8 @@ struct ControlRequest {
 enum class RegistrationStatus {created,exists,full};
 enum class RequestStatus {queued,missing_registration,full};
 struct RequestResult {RequestStatus status{RequestStatus::missing_registration};std::optional<std::uint8_t> registration;};
+enum class ControlApplyStatus {completed,unavailable,malformed};
+struct ControlApplied {ControlApplyStatus status{ControlApplyStatus::unavailable};std::size_t visited{},written{};};
 class ControlRequests final {
 public:
     bool registered(std::uint32_t kind,std::uint32_t target)const noexcept; //681240
@@ -36,6 +38,12 @@ public:
     // there is one shared registration array, not a second mutable projection.
     ControlRegistration* registration(std::size_t index)noexcept{return index<registrations_.size()?&registrations_[index]:nullptr;}
     std::span<const ControlRequest> pending()const noexcept{return {requests_.data(),count_};}
+    // Complete681820 mutation policy, with an explicit external activity-mode
+    // fact. That fact is required only for owner messages (mode1).
+    ControlApplied apply(std::uint8_t encoded_index,std::span<const std::uint8_t> payload,std::uint8_t mode,std::optional<std::int32_t> activity_mode)noexcept;
+    // Complete bounded6818D0 framing. Malformed packet extents are rejected
+    // before writes; unsafe original out-of-bounds profiles are not emulated.
+    ControlApplied receive(std::span<const std::uint8_t> packet,std::optional<std::int32_t> activity_mode)noexcept;
 private:
     std::array<ControlRegistration,64> registrations_{};
     std::array<ControlRequest,64> requests_{};

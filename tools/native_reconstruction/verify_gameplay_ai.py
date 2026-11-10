@@ -29,7 +29,7 @@ def main():
     assert sha(main_image)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46'
     assert (ROOT/'game/native/gameplay_ai/weight_profiles.inc').read_text()==generated()
     entries={};proof=[]
-    for address in [0x8123e0,0x813380,0x81a6e0,0x81a6f0,0x814b30,0x107ab0,0x681240,0x6812b0,0x681330,0x681710,0x681790,0x815df0]:
+    for address in [0x8123e0,0x813380,0x81a6e0,0x81a6f0,0x814b30,0x107ab0,0x681240,0x6812b0,0x681330,0x681710,0x681790,0x815df0,0x681820,0x6818d0]:
         folder=ROOT/('recomp/config/output' if address==0x107ab0 else 'recomp/config/output_ovl/'+('o2' if address<0x810000 else 'o9'))
         path=next(folder.glob(f'*_{address:08X}_0x{address:x}.cpp'))
         end=int(re.search(r'// Address: 0x[0-9a-f]+ - 0x([0-9a-f]+)',path.read_text())[1],16)
@@ -63,6 +63,7 @@ def main():
         limitations=['Negative profile indices remain unavailable: original signed comparison lacks a lower bound and would address adjacent content. Indices>=20 preserve the source no-op.',
             'Qualified native state primitives and actual Owner integration are separate checks. Full AI initialization, observations, reevaluation, remaining goal/action callbacks and game installation remain open.'])
     try:
+        receipt['declared_ports'].append('1AFE70 controlled read-only external activity-mode result for681820; full activity-mode provider/producer is not claimed migrated')
         for label,cmd in [('compile',command),('test',[str(exe),str(out/'o9.bin')])]:
             result=subprocess.run(cmd,capture_output=True,env=env,timeout=180);(out/f'{label}.stdout.txt').write_bytes(result.stdout);(out/f'{label}.stderr.txt').write_bytes(result.stderr);receipt['commands'].append(dict(label=label,exit_code=result.returncode,command=cmd))
             assert result.returncode==0,label+': '+result.stderr.decode(errors='replace')[-2000:]
