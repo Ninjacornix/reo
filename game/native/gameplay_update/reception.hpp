@@ -17,6 +17,7 @@ public:
     ReceptionResult receive(const ActorStatusMessage&,bool local_echo=false)noexcept;
     ReceptionResult receive(const ActorAlignmentMessage&,bool local_echo=false)noexcept;
     ReceptionResult receive(const ActorInteractionMessage&,bool local_echo=false)noexcept;
+    ReceptionResult receive(const ActorInteractionRequestMessage&,bool local_echo=false)noexcept;
     ReceptionResult receive(const ActorInventoryMessage&,bool local_echo=false)noexcept;
     ReceptionResult receive(const ActorResourcePairMessage&,bool local_echo=false)noexcept;
     ReceptionResult receive(const ActorRoomObjectMessage&,bool local_echo=false)noexcept;

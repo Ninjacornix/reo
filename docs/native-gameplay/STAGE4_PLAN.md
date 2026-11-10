@@ -165,6 +165,12 @@ The current resource and inventory implementation includes:
   and a World-bound inventory-map cache. Partial off-room receipts preserve
   unknown state. Higher speech/text/UI consumers, sender3, other incoming
   branches, external transport and installation remain open.
+- [Semantic interaction requests](ACTOR_INTERACTION_REQUESTS.md) now bind
+  outgoing/incoming selector3 through the same canonical hit pending byte and
+  model reference, preserving the typed anchor/orientation/distance/endpoint.
+  All16 outgoing branches have native policy within their capability profiles;
+  real producers/consumption, remaining incoming/action/AI/VM branches,
+  external transport, semantic saves and game installation remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;

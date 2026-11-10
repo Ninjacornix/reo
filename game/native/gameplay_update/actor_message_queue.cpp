@@ -5,6 +5,7 @@ ActorMessageQueue::ActorMessageQueue(ActorReception& receiver,std::size_t capaci
 bool ActorMessageQueue::send(const ActorStatusMessage& value)noexcept{return enqueue(value);}
 bool ActorMessageQueue::send(const ActorAlignmentMessage& value)noexcept{return enqueue(value);}
 bool ActorMessageQueue::send(const ActorInteractionMessage& value)noexcept{return enqueue(value);}
+bool ActorMessageQueue::send(const ActorInteractionRequestMessage& value)noexcept{return enqueue(value);}
 bool ActorMessageQueue::send(const ActorInventoryMessage& value)noexcept{return enqueue(value);}
 bool ActorMessageQueue::send(const ActorResourcePairMessage& value)noexcept{return enqueue(value);}
 bool ActorMessageQueue::send(const ActorRoomObjectMessage& value)noexcept{return enqueue(value);}

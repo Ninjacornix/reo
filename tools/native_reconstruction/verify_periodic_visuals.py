@@ -466,7 +466,7 @@ def main():
             record['declared_ports'].append('Recovery UI6E1430 and final room/message sinks remain declared; actual WorldAnimation selects with confirmed absent banks for the current online profile, then actual Playback activation. Real clip-bearing recovery acceptance remains open.')
         if args.actor_reception:
             at,size=0x740750,64;value=overlay['o2'][at-0x570000:at-0x570000+size];record['actor_reception_switch_sha256']=hashlib.sha256(value).hexdigest();init+='{const std::uint8_t data[]{'+','.join(str(v)for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
-            record['actor_reception_admission']='Complete67ED50 selectors4/6/8/9/10/11/12/14/15 and shared admission/pose/equipment tail through canonical World/RoomObject/Equipment owners; remaining selectors and actual transport remain open'
+            record['actor_reception_admission']='Complete67ED50 selectors3/4/6/8/9/10/11/12/14/15 and shared admission/pose/equipment tail through canonical World/RoomObject/Equipment owners; remaining selectors and actual transport remain open'
         (out/'owned_constants.hpp').write_text(init+'}\n')
         (out / 'owned_effect_geometry.bin').write_bytes((corpus / 'owned_effect_geometry.bin').read_bytes())
         if args.resource_static:

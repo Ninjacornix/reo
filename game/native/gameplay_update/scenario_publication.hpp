@@ -31,7 +31,7 @@ struct ActorActionMessage {
     std::array<std::uint8_t,4> values{};std::uint8_t equipment{};
     static constexpr unsigned type=7,length=12,options=0,dispatch_mode=4;
 };
-enum class ActorMessageSelector:std::uint8_t {none=0,snapshot=1,state=2,interaction=4,contact_snapshot=5,alignment=6,action=7,peer=8,room_object=9,resource_pair=10,speech=11,carried=12,reserved=13,status=14,extra=15};
+enum class ActorMessageSelector:std::uint8_t {none=0,snapshot=1,state=2,interaction_request=3,interaction=4,contact_snapshot=5,alignment=6,action=7,peer=8,room_object=9,resource_pair=10,speech=11,carried=12,reserved=13,status=14,extra=15};
 struct ActorSnapshotMessage {
     MessageRoute route{};std::uint32_t channel{};
     std::array<std::uint8_t,4> action{};gameplay_world::Position position;
@@ -63,6 +63,11 @@ struct ActorContactSnapshotMessage {
 struct ActorInteractionMessage {
     MessageRoute route{};std::uint32_t channel{};std::array<std::uint8_t,4> values{};
     static constexpr unsigned type=4,length=8,options=0,dispatch_mode=4;
+};
+struct ActorInteractionRequestMessage {
+    MessageRoute route{};std::uint32_t channel{};std::uint8_t pending{},scene_model{};
+    gameplay_world::InteractionRequest request;
+    static constexpr unsigned type=3,length=32,options=0,dispatch_mode=4;
 };
 struct ActorAlignmentMessage {
     MessageRoute route{};std::uint32_t channel{};gameplay_world::AlignmentTarget target;
@@ -107,6 +112,7 @@ public:
     virtual bool send(const ActorStatusMessage&)noexcept=0;
     virtual bool send(const ActorActionMessage&)noexcept{return false;}
     virtual bool send(const ActorInteractionMessage&)noexcept{return false;}
+    virtual bool send(const ActorInteractionRequestMessage&)noexcept{return false;}
     virtual bool send(const ActorResourcePairMessage&)noexcept{return false;}
     virtual bool send(const ActorInventoryMessage&)noexcept{return false;}
     virtual bool send(const ActorStateMessage&)noexcept{return false;}
@@ -197,6 +203,12 @@ public:
             return dispatch_actor(*actor,message);
         }
         case ActorMessageSelector::interaction:{ActorInteractionMessage message;message.values={actor->interaction_kind,actor->interaction_mode,actor->interaction_slot,actor->interaction_detail};return dispatch_actor(*actor,message);}
+        case ActorMessageSelector::interaction_request:{
+            if(!actor->interaction_request||!actor->scene_model.slot())return PublicationStatus::unavailable;
+            ActorInteractionRequestMessage message;message.pending=actor->transient_action;
+            message.scene_model=*actor->scene_model.slot();message.request=*actor->interaction_request;
+            return dispatch_actor(*actor,message);
+        }
         case ActorMessageSelector::peer:{
             if(!actor->peer_request||!peer_reference_admitted(actor->peer_request->peer))return PublicationStatus::unavailable;
             ActorPeerMessage message;message.state=std::uint16_t(actor->transient_contact|(unsigned(actor->peer_request->state_high)<<8));message.peer=actor->peer_request->peer;message.parameters=actor->peer_request->parameters;

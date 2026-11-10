@@ -34,6 +34,12 @@ ReceptionResult ActorReception::receive(const ActorInteractionMessage& message,b
     const auto admitted=begin(message.channel,local_echo);if(!admitted.actor)return{admitted.status,{}};
     auto& actor=*admitted.actor;actor.interaction_kind=message.values[0];actor.interaction_mode=message.values[1];actor.interaction_slot=message.values[2];actor.interaction_detail=message.values[3];return finish(actor);
 }
+ReceptionResult ActorReception::receive(const ActorInteractionRequestMessage& message,bool local_echo)noexcept{
+    const auto admitted=begin(message.channel,local_echo);if(!admitted.actor)return{admitted.status,{}};
+    auto& actor=*admitted.actor;actor.transient_action=message.pending;actor.scene_model=message.scene_model;
+    actor.interaction_request=message.request;actor.related_target_state=0;
+    return finish(actor);
+}
 ReceptionResult ActorReception::receive(const ActorInventoryMessage& message,bool local_echo)noexcept{
     const auto admitted=begin(message.channel,local_echo);if(!admitted.actor)return{admitted.status,{}};
     auto& actor=*admitted.actor;

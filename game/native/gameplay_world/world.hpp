@@ -20,6 +20,10 @@ namespace input=gameplay_actors::input;
 struct Position {float x{},y{},z{};};
 struct AlignmentTarget {Position position;std::int16_t yaw{};};
 struct PeerRequest {std::uint8_t state_high{};actors::ActorReference peer;std::array<std::int16_t,2> parameters{};};
+struct InteractionRequest {
+    std::uint8_t kind{},parameter{};Position anchor;
+    std::uint32_t orientation{};float travel_distance{};std::uint8_t endpoint{};
+};
 struct CollisionShapeTarget {gameplay_collision::Vec3 center;float radius{};};
 struct ControlRequest {std::uint8_t pending{},kind{};std::uint16_t parameter{};};
 struct ProjectileContact {gameplay_collision::Vec3 point,normal;};
@@ -76,6 +80,10 @@ struct Actor : actors::Entity,actors::HitActor {
     // including when pending-hit cleanup clears only that byte.
     std::optional<PeerRequest> peer_request;
     SpeechState speech;
+    // AB9/ABA, ABC..AD0. AB8 remains inherited transient_action; ABB remains
+    // scene_model. The three unused bytes after endpoint are not native state.
+    std::optional<InteractionRequest> interaction_request;
+    std::optional<std::int8_t> related_target_state; // D32, shared phase-dependent cached target/state
     std::array<std::uint8_t,2> explicit_resource_pair{}; // authored action pair CAA/CAB
     std::uint16_t linked_model_variant{};
     std::uint16_t gauge_modifier_one{},gauge_modifier_two{}; // BB6/BB8; third BBA view is linked_model_variant
