@@ -244,10 +244,7 @@ public partial class MainWindow : Window {
         BackupButton.IsEnabled = !updating && !running && !launching && !backingUp;
         RefreshCardAvailability();
         if (previousRunning && !running) {
-            int exitCode = game.Process!.ExitCode;
-            Status.Text = exitCode == 0
-                ? "The game has closed. Your session logs have been saved."
-                : $"The game closed unexpectedly (exit code {exitCode}). Open Logs for details.";
+            _ = ShowGameExitStatus(game.Process!, Status.Text);
             LaunchButton.Content = PlayButtonLabel;
             LaunchButton.IsEnabled = true;
             controller.SessionEnabled = false;
@@ -265,6 +262,11 @@ public partial class MainWindow : Window {
         }
         if (game.NetworkStatus != null && !graphicsPreparing)
             Status.Text = game.NetworkStatus;
+    }
+    async Task ShowGameExitStatus(Process process, string previousStatus) {
+        string message = await game.ExitStatus(process.ExitCode);
+        if (ReferenceEquals(game.Process, process) && !launching && Status.Text == previousStatus)
+            Status.Text = message;
     }
     async void LaunchGame(object? sender, RoutedEventArgs e) {
         string mode = settings.ResolvedCoopMode;
