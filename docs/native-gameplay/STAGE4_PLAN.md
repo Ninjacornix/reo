@@ -138,7 +138,15 @@ The current resource and inventory implementation includes:
 - [AI observation admission](AI_OBSERVATION_GATES.md) now supplies complete
   812EF0/813BD0 through canonical execution state and Session RNG. Both compilers
   pass2887680 admission comparisons,278784 predicate comparisons and twelve
-  parent tests. Full observation/cache production and game acceptance remain open.
+  parent tests. Refreshed full current-source VM suites pass19719138 checks and
+  30245 original dispatcher calls per compiler. Full observation/cache production
+  and game acceptance remain open.
+
+- [Target-cache scratch audit](TARGET_CACHE_SCRATCH_AUDIT.md) identifies controlled
+  source inverse-sort dependence on unwritten scratch. Both compilers agree on
+  48 profiles,192 strict runs and192 separate initialization-policy runs. This
+  guides explicit native work initialization; it is not an installed fix or a
+  confirmed cause of the player's stutter.
 
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.
