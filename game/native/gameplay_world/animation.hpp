@@ -16,6 +16,7 @@ class WorldAnimation final {
     WorldAnimation(World& world, WorldMotionResources& resources, const MotionProfiles& profiles,
                    MotionPrelude& prelude)
         : world_(world), resources_(resources), profiles_(profiles), prelude_(prelude) {}
+    bool bound_to(const World& world)const noexcept{return &world==&world_&&!world_.closed();}
     void select(const actors::EntityId&, std::uint32_t encoded, float initial, float blend);
     void select_blended(const actors::EntityId&, std::uint32_t primary, std::uint32_t secondary,
                         float weight);

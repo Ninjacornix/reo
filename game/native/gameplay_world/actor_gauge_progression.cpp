@@ -1,11 +1,12 @@
 #include "actor_gauge_progression.hpp"
 #include "actor_state.hpp"
+#include "actor_recovery.hpp"
 #include "motion.hpp"
 #include "../gameplay_update/update.hpp"
 #include <stdexcept>
 namespace reo::native::gameplay_world {
-ActorGaugeProgression::ActorGaugeProgression(gameplay_update::Owner& update,ActorResourceOperations& operations,GaugeTransitionEffects* effects):update_(update),operations_(operations),world_(update.world()),effects_(effects){
-    if(!update_.open()||!operations_.bound_to(world_)||(effects_&&!effects_->bound_to(world_)))throw std::invalid_argument("Native gauge progression owners closed or foreign");
+ActorGaugeProgression::ActorGaugeProgression(gameplay_update::Owner& update,ActorResourceOperations& operations,GaugeTransitionEffects* effects,ActorRecovery* recovery):update_(update),operations_(operations),world_(update.world()),effects_(effects),recovery_(recovery){
+    if(!update_.open()||!operations_.bound_to(world_)||(effects_&&!effects_->bound_to(world_))||(recovery_&&!recovery_->bound_to(world_)))throw std::invalid_argument("Native gauge progression owners closed or foreign");
 }
 GaugeTransitionEffects& ActorGaugeProgression::effects(){
     if(!effects_||!effects_->bound_to(world_))throw std::runtime_error("Native gauge transition consumer unavailable");
@@ -90,7 +91,8 @@ std::uint8_t ActorGaugeProgression::tick(const actors::EntityId& id){
             }
         }else if(actor->category==1){actor->status|=0x40u;(void)operations_.transfer_inventory(id,0);transition(1);}
     }else{
-        if(!effects().recover(id,2))throw std::runtime_error("Native gauge recovery transition unavailable");
+        if(recovery_)recovery_->apply(id,2);
+        else if(!effects().recover(id,2))throw std::runtime_error("Native gauge recovery transition unavailable");
         if(actor->category==0&&actor->ai_control&&actor->room!=world_.room&&!effects().notify_off_room(id))throw std::runtime_error("Native gauge recovery notification unavailable");
     }
     return 1;

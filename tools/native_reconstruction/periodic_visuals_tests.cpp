@@ -38,6 +38,10 @@ template<class T>void put(std::uint8_t* memory,std::uint32_t at,T value){transfo
 constexpr std::uint32_t model=0x3b85b0,heap=0x800000,parts=0x900000,child_pool=0xb00000;
 bool allocated{};
 bool task_retired{};
+#ifdef REO_ACTOR_RECOVERY
+bool actor_recovery_capture{};
+bool actor_recovery_port(std::uint8_t*,R5900Context*);
+#endif
 #ifdef REO_ACTOR_GAUGE_PROGRESSION
 bool gauge_progression_capture{};
 bool gauge_progression_port(std::uint8_t*,R5900Context*);
@@ -51,6 +55,9 @@ struct CompanionPolicyCapture {unsigned children{},released{},retired{},spawned{
 #endif
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
     ++calls;const auto done=[&](){context->pc=GPR_U32(context,31);};
+#ifdef REO_ACTOR_RECOVERY
+    if(actor_recovery_capture&&actor_recovery_port(memory,context)){done();return;}
+#endif
 #ifdef REO_ACTOR_GAUGE_PROGRESSION
     if(gauge_progression_capture&&gauge_progression_port(memory,context)){done();return;}
 #endif
@@ -275,6 +282,9 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_ACTOR_GAUGE_PROGRESSION
 #include "tools/native_reconstruction/actor_gauge_progression_tests.inc"
 #endif
+#ifdef REO_ACTOR_RECOVERY
+#include "tools/native_reconstruction/actor_recovery_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
 #ifdef REO_RESOURCE_STATIC
@@ -294,6 +304,12 @@ int main(int argc,char** argv)try{
     compare_companion_factory(corpus,argv[2],argv[3],ram);
     compare_companion_capacity(corpus,ram);
     std::cout<<"{\"checks\":"<<checks<<",\"companion_live_cases\":"<<companion_live_cases<<",\"companion_live_frames\":"<<companion_live_frames<<",\"companion_live_pieces\":"<<companion_live_pieces<<",\"companion_live_missing\":"<<companion_live_missing<<",\"companion_live_unavailable\":"<<companion_live_unavailable<<",\"companion_live_lights\":"<<companion_live_lights<<",\"companion_live_audio\":"<<companion_live_audio<<",\"companion_factory_cases\":"<<companion_factory_cases<<",\"companion_factory_refusals\":"<<companion_factory_refusals<<",\"companion_capacity_cases\":"<<companion_capacity_cases<<",\"original_helper_calls\":"<<calls<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"game_run\":false}\n";
+    return 0;
+#endif
+#ifdef REO_RECOVERY_ONLY
+    owned_constants(memory);
+    compare_actor_recovery(argv[2],argv[3],ram);
+    std::cout<<"{\"checks\":"<<checks<<",\"actor_recovery_cases\":"<<actor_recovery_cases<<",\"actor_recovery_animation\":"<<actor_recovery_animation<<",\"actor_recovery_ui\":"<<actor_recovery_ui<<",\"actor_recovery_refusals\":"<<actor_recovery_refusals<<",\"actor_recovery_messages\":"<<actor_recovery_messages<<",\"actor_recovery_compositions\":"<<actor_recovery_compositions<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"game_run\":false}\n";
     return 0;
 #endif
     for(unsigned asset=0;asset<corpus.size();asset+=2){
@@ -341,6 +357,12 @@ int main(int argc,char** argv)try{
     }
     // The real periodic task now emits through this exact visual/resource
     // owner; no successful visual fixture substitutes for6525D0 in this chain.
+#ifdef REO_RECOVERY_ONLY
+    owned_constants(memory);
+    compare_actor_recovery(argv[2],argv[3],ram);
+    std::cout<<"{\"checks\":"<<checks<<",\"actor_recovery_cases\":"<<actor_recovery_cases<<",\"actor_recovery_animation\":"<<actor_recovery_animation<<",\"actor_recovery_ui\":"<<actor_recovery_ui<<",\"actor_recovery_refusals\":"<<actor_recovery_refusals<<",\"actor_recovery_messages\":"<<actor_recovery_messages<<",\"actor_recovery_compositions\":"<<actor_recovery_compositions<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"game_run\":false}\n";
+    return 0;
+#endif
     for(unsigned asset=0;asset<corpus.size();asset+=2){
         auto bank=e::EffectBank::import(corpus[asset],corpus[asset+1]);
         for(unsigned profile=0;profile<8;++profile){
@@ -445,6 +467,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_ACTOR_GAUGE_PROGRESSION
     compare_actor_gauge_progression(argv[2],argv[3],ram);
 #endif
+#ifdef REO_ACTOR_RECOVERY
+    compare_actor_recovery(argv[2],argv[3],ram);
+#endif
 #ifdef REO_EQUIPMENT_RESOURCES
     compare_equipment_resources(argv[4],argv[2],ram);
 #endif
@@ -537,6 +562,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_ACTOR_GAUGE_PROGRESSION
     <<",\"gauge_progression_cases\":"<<gauge_progression_cases<<",\"gauge_progression_callbacks\":"<<gauge_progression_callbacks<<",\"gauge_progression_live\":"<<gauge_progression_live<<",\"gauge_progression_refusals\":"<<gauge_progression_refusals<<",\"gauge_progression_compositions\":"<<gauge_progression_compositions<<",\"gauge_progression_recoveries\":"<<gauge_progression_recoveries<<",\"gauge_progression_notifications\":"<<gauge_progression_notifications
+#endif
+#ifdef REO_ACTOR_RECOVERY
+    <<",\"actor_recovery_cases\":"<<actor_recovery_cases<<",\"actor_recovery_animation\":"<<actor_recovery_animation<<",\"actor_recovery_ui\":"<<actor_recovery_ui<<",\"actor_recovery_refusals\":"<<actor_recovery_refusals<<",\"actor_recovery_messages\":"<<actor_recovery_messages<<",\"actor_recovery_compositions\":"<<actor_recovery_compositions
 #endif
 #ifdef REO_WEAPON_RESOURCES
     <<",\"weapon_refreshes\":"<<weapon_refreshes<<",\"weapon_loaded_banks\":"<<weapon_loaded_banks<<",\"weapon_missing_banks\":"<<weapon_missing_banks<<",\"weapon_pcm_frames\":"<<weapon_pcm_frames<<",\"weapon_signal_samples\":"<<weapon_signal_samples<<",\"weapon_refusals\":"<<weapon_refusals<<",\"weapon_file_reads\":"<<weapon_file_reads<<",\"weapon_missing_file_reads\":"<<weapon_missing_file_reads

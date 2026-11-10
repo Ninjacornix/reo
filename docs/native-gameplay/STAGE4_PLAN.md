@@ -110,6 +110,12 @@ The current resource and inventory implementation includes:
   suppression word. Both compiler comparisons cover callback mutation and
   recursive suppression. Real field producers, remaining selectors, actual
   queue/receiver/transport and installation remain open.
+- [Recovery transition and gauge caller](ACTOR_RECOVERY.md) now supplies65FCB0
+  through canonical status/full-state messages, inventory/resource retirement,
+  health classification, actual animation selection and channel activation. The
+  gauge owner can bind it directly. Both compiler comparisons include confirmed
+  absent animation banks; loaded-clip recovery, actual UI, the separate65FBA0
+  zero-health entry/behavior caller and game installation remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;

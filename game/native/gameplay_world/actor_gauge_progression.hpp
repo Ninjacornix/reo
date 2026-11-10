@@ -3,6 +3,7 @@
 #include "behavior.hpp"
 namespace reo::native::gameplay_update {class Owner;}
 namespace reo::native::gameplay_world {
+class ActorRecovery;
 // Remaining actual UI/recovery/remote-notice consumers. No successful defaults;
 // implementations belong to this World and outlive synchronous progression.
 class GaugeTransitionEffects {
@@ -19,12 +20,13 @@ inline constexpr std::array<std::uint32_t,8> actor_gauge_rates{30,60,24,60,60,30
 inline constexpr std::array<float,8> actor_gauge_scales{.5f,.7f,.9f,1.f,1.2f,1.4f,1.6f,1.f}; //71AD10
 class ActorGaugeProgression final:public ProgressionTiming {
 public:
-    ActorGaugeProgression(gameplay_update::Owner&,ActorResourceOperations&,GaugeTransitionEffects* = nullptr);
+    ActorGaugeProgression(gameplay_update::Owner&,ActorResourceOperations&,GaugeTransitionEffects* = nullptr,ActorRecovery* = nullptr);
     std::uint8_t tick(const actors::EntityId&);
     bool apply_progression_timer(World&,Actor&)override;
 private:
     gameplay_update::Owner& update_;ActorResourceOperations& operations_;World& world_;
     GaugeTransitionEffects* effects_{};
+    ActorRecovery* recovery_{};
     GaugeTransitionEffects& effects();
     void close_ui();
 };
