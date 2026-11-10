@@ -6,7 +6,7 @@ from verify_gameplay_collision import COMPILERS
 ROOT=Path(__file__).resolve().parents[2]
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
- p=argparse.ArgumentParser();p.add_argument('--compiler',choices=COMPILERS,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--statistics',action='store_true');p.add_argument('--automatic',action='store_true');p.add_argument('--publication',action='store_true');p.add_argument('--actor-status',action='store_true');p.add_argument('--actor-actions',action='store_true');p.add_argument('--actor-inventory',action='store_true');p.add_argument('--actor-state',action='store_true');p.add_argument('--actor-activity',action='store_true');p.add_argument('--actor-gauge',action='store_true');p.add_argument('--actor-hit-gauge',action='store_true');p.add_argument('--actor-snapshot',action='store_true');p.add_argument('--actor-alignment',action='store_true');p.add_argument('--actor-contact-alignment',action='store_true');p.add_argument('--actor-contact-snapshot',action='store_true');p.add_argument('--actor-room-object',action='store_true');p.add_argument('--actor-auxiliary-pool',action='store_true');p.add_argument('--actor-peer',action='store_true');p.add_argument('--actor-speech',action='store_true');p.add_argument('--actor-requests',action='store_true');a=p.parse_args();a.actor_speech|=a.actor_requests;a.actor_peer|=a.actor_speech;a.actor_auxiliary_pool|=a.actor_peer;a.actor_room_object|=a.actor_auxiliary_pool;a.actor_contact_snapshot|=a.actor_room_object;a.actor_alignment|=a.actor_contact_alignment or a.actor_contact_snapshot;a.actor_snapshot|=a.actor_alignment;a.actor_hit_gauge|=a.actor_snapshot;a.actor_gauge|=a.actor_hit_gauge;a.actor_activity|=a.actor_gauge;a.actor_state|=a.actor_activity;a.actor_inventory|=a.actor_state;a.actor_actions|=a.actor_inventory;a.actor_status|=a.actor_actions;a.publication|=a.actor_status;a.automatic|=a.publication;a.statistics|=a.automatic;out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
+ p=argparse.ArgumentParser();p.add_argument('--compiler',choices=COMPILERS,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--statistics',action='store_true');p.add_argument('--automatic',action='store_true');p.add_argument('--publication',action='store_true');p.add_argument('--actor-status',action='store_true');p.add_argument('--actor-actions',action='store_true');p.add_argument('--actor-inventory',action='store_true');p.add_argument('--actor-state',action='store_true');p.add_argument('--actor-activity',action='store_true');p.add_argument('--actor-gauge',action='store_true');p.add_argument('--actor-hit-gauge',action='store_true');p.add_argument('--actor-snapshot',action='store_true');p.add_argument('--actor-alignment',action='store_true');p.add_argument('--actor-contact-alignment',action='store_true');p.add_argument('--actor-contact-snapshot',action='store_true');p.add_argument('--actor-room-object',action='store_true');p.add_argument('--actor-auxiliary-pool',action='store_true');p.add_argument('--actor-peer',action='store_true');p.add_argument('--actor-speech',action='store_true');p.add_argument('--actor-requests',action='store_true');p.add_argument('--interaction-transitions',action='store_true');a=p.parse_args();a.actor_requests|=a.interaction_transitions;a.actor_speech|=a.actor_requests;a.actor_peer|=a.actor_speech;a.actor_auxiliary_pool|=a.actor_peer;a.actor_room_object|=a.actor_auxiliary_pool;a.actor_contact_snapshot|=a.actor_room_object;a.actor_alignment|=a.actor_contact_alignment or a.actor_contact_snapshot;a.actor_snapshot|=a.actor_alignment;a.actor_hit_gauge|=a.actor_snapshot;a.actor_gauge|=a.actor_hit_gauge;a.actor_activity|=a.actor_gauge;a.actor_state|=a.actor_activity;a.actor_inventory|=a.actor_state;a.actor_actions|=a.actor_inventory;a.actor_status|=a.actor_actions;a.publication|=a.actor_status;a.automatic|=a.publication;a.statistics|=a.automatic;out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
  image=ROOT/'build-function-index/owned-overlays/o0.bin';assert sha(image)=='bfac1906d63d585736e46573295cff12e308720af6b49914e1ad8695dfcf50c2';raw=image.read_bytes();entries={};proof=[]
  addresses=[0x37bfb0,0x37c060,0x37c170,0x37c200,0x37c2c0,0x37c3b0]+([0x37b990,0x37bbc0,0x37c470,0x1b02d0]if a.statistics else[])
  if a.automatic:
@@ -17,6 +17,7 @@ def main():
  if a.actor_gauge:addresses += [0x660060,0x667e90,0x668050,0x668110,0x1b0340]
  if a.actor_hit_gauge:addresses += [0x660af0,0x666620,0x666d90]
  if a.actor_auxiliary_pool:addresses += [0x682c60,0x682d10,0x682e30,0x666640,0x682f80,0x683b10]
+ if a.interaction_transitions:addresses += [0x64ef10,0x667370]
  if a.actor_contact_alignment:addresses += [0x666f50,0x376e70,0x3700c0,0x370100,0x192180,0x1226f0,0x120908,0x122140,0x1224a8,0x191ef0,0x1920a0,0x192190,0x1921a0,0x18f340,0x18f470]
  if a.statistics:
   elf=ROOT/'game_data/SLUS_207.65';assert sha(elf)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46';read=elf_reader(elf.read_bytes())
@@ -52,6 +53,7 @@ def main():
   if a.actor_peer:files += ['tools/native_reconstruction/actor_peer_message_tests.inc']
   if a.actor_speech:files += ['tools/native_reconstruction/actor_speech_message_tests.inc']
   if a.actor_requests:files += ['tools/native_reconstruction/actor_interaction_request_tests.inc']
+  if a.interaction_transitions:files += ['tools/native_reconstruction/actor_interaction_transition_tests.inc']
   if a.actor_auxiliary_pool:files += ['tools/native_reconstruction/auxiliary_actor_pool_tests.inc','game/native/gameplay_world/CMakeLists.txt']
   if a.actor_room_object:files += ['tools/native_reconstruction/actor_room_object_message_tests.inc']
   if a.actor_contact_snapshot:files += ['tools/native_reconstruction/actor_contact_snapshot_tests.inc']
@@ -141,10 +143,16 @@ def main():
   if a.actor_requests:
    flags += ['-DREO_ACTOR_REQUEST_MESSAGE=1']
    r['actor_request_admission']='Complete67E230 selector3 semantic fields, canonical AB8/ABB aliases and native optional interaction request; real-model sender profile, unowned trailing padding excluded from native values and wire claims'
+  if a.interaction_transitions:
+   import struct
+   flags += ['-DREO_INTERACTION_TRANSITIONS=1']
+   profile=frozen['game/native/gameplay_world/interaction_transition_profile.inc'].decode().split('interaction_transition_states',1)[1];values=[int(v,16)for v in re.findall(r'0x([0-9a-f]+)',profile)];assert len(values)==100 and struct.pack('<100H',*values)==o2[0x711890-0x570000:0x711890-0x570000+200]
+   (out/'interaction_states.bin').write_bytes(struct.pack('<100H',*values));r['interaction_states_sha256']=sha(out/'interaction_states.bin')
+   r['interaction_transition_admission']='64EF10 table-driven branch and complete667370 snapshot through actual World/Owner and canonical interaction request. Explicit50-row/two-column prefix; source unchecked indexing and room/network transition branches remain unavailable after pending consumption, not claimed migrated'
   objects,receipts=compile_objects(ROOT,out,cc,flags,UPDATE_UNITS,frozen,env);r['production_objects']=receipts
   cmd[:]=[str(cc),*flags,*objects,str(out/'source'/fixture),'-o',str(exe)]
  try:
-  for label,command in [('compile',cmd),('run',[str(exe),str(out/'priorities.bin')]+([str(out/'scenario_rules.bin')]if a.statistics else[])+([str(out/'condition_switch.bin')]if a.automatic else[])+([str(out/'actor_status_switch.bin')]if a.actor_status else[])+([str(out/'alignment_constants.bin')]if a.actor_contact_alignment else[]))]:
+  for label,command in [('compile',cmd),('run',[str(exe),str(out/'priorities.bin')]+([str(out/'scenario_rules.bin')]if a.statistics else[])+([str(out/'condition_switch.bin')]if a.automatic else[])+([str(out/'actor_status_switch.bin')]if a.actor_status else[])+([str(out/'alignment_constants.bin')]if a.actor_contact_alignment else[])+([str(out/'interaction_states.bin')]if a.interaction_transitions else[]))]:
    result=subprocess.run(command,capture_output=True,env=env,timeout=180);(out/(label+'.stdout.txt')).write_bytes(result.stdout);(out/(label+'.stderr.txt')).write_bytes(result.stderr);assert result.returncode==0,label+' failed; see retained logs'
    if label=='run':r['observed']=json.loads(result.stdout)
   r['source_unchanged']=all((ROOT/n).read_bytes()==b for n,b in frozen.items());assert r['source_unchanged'];r.update(status='passed',binary_sha256=sha(exe))

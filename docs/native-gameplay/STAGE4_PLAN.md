@@ -171,6 +171,11 @@ The current resource and inventory implementation includes:
   All16 outgoing branches have native policy within their capability profiles;
   real producers/consumption, remaining incoming/action/AI/VM branches,
   external transport, semantic saves and game installation remain open.
+- [Interaction state selection](ACTOR_INTERACTION_TRANSITIONS.md) now consumes
+  the canonical request through64EF10's admitted table branch and the actual
+  UpdateOwner, including queued delivery across Worlds. Pending consumption on
+  rejection is preserved. The room/network-dependent branch, actual primary
+  frame callers and remaining Stage4 consumers/installation remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;

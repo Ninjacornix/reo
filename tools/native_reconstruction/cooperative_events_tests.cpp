@@ -220,8 +220,14 @@ void compare(const e::Events& owner,const std::uint8_t* memory){check(owner.avai
 #ifdef REO_ACTOR_REQUEST_MESSAGE
 #include "tools/native_reconstruction/actor_interaction_request_tests.inc"
 #endif
+#ifdef REO_INTERACTION_TRANSITIONS
+#include "tools/native_reconstruction/actor_interaction_transition_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
+#ifdef REO_INTERACTION_TRANSITIONS
+    1+
+#endif
 #ifdef REO_COMPLETION_STATISTICS
     3
 #ifdef REO_AUTOMATIC_COMPLETION
@@ -308,6 +314,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_ACTOR_REQUEST_MESSAGE
     compare_actor_interaction_requests(memory);
 #endif
+#ifdef REO_INTERACTION_TRANSITIONS
+    compare_actor_interaction_transitions(memory,argv[argc-1]);
+#endif
     std::cout<<"{\"checks\":"<<checks<<",\"appends\":"<<appends<<",\"retirements\":"<<retirements<<",\"prunings\":"<<prunings<<",\"resets\":"<<resets<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<calls
 #ifdef REO_COMPLETION_STATISTICS
     <<",\"completion_cases\":"<<completion_cases<<",\"completion_initializations\":"<<completion_initializations<<",\"completion_refusals\":"<<completion_refusals
@@ -365,6 +374,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_ACTOR_REQUEST_MESSAGE
     <<",\"actor_request_cases\":"<<actor_request_cases<<",\"actor_request_messages\":"<<actor_request_messages<<",\"actor_request_lookups\":"<<actor_request_lookups<<",\"actor_request_refusals\":"<<actor_request_refusals<<",\"actor_request_hit_aliases\":"<<actor_request_hit_aliases
+#endif
+#ifdef REO_INTERACTION_TRANSITIONS
+    <<",\"interaction_transition_cases\":"<<interaction_transition_cases<<",\"interaction_transition_refusals\":"<<interaction_transition_refusals<<",\"interaction_transition_owner_cases\":"<<interaction_transition_owner_cases
 #endif
     <<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

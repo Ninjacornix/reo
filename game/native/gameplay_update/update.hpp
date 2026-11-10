@@ -9,6 +9,7 @@
 #include "actor_gauge.hpp"
 #include "../gameplay_world/behavior.hpp"
 #include "../gameplay_world/alignment.hpp"
+#include "../gameplay_world/interaction_transitions.hpp"
 
 namespace reo::native::gameplay_update {
 namespace tasks=gameplay_tasks;
@@ -85,6 +86,9 @@ public:
     tasks::SimulationClock& clock()noexcept{return clock_;}
     gameplay_events::Events& cooperative_events()noexcept{return cooperative_;}
     gameplay_events::Statistics& completion_statistics()noexcept{return statistics_;}
+    world::InteractionTransition consume_actor_interaction_request(const world::actors::EntityId& id,std::uint32_t selector)noexcept{
+        return open()?world::consume_interaction_request(world_,id,selector):world::InteractionTransition{};
+    }
     scenario::ActionChoices& action_choices()noexcept{return choices_;}
     PublicationStatus record_resource_operation(std::uint32_t resource,std::uint32_t actor,std::uint32_t operation)noexcept{
         if(!open())return PublicationStatus::unavailable;
