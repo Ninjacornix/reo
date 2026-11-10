@@ -9,9 +9,11 @@
 #include "cross_room.hpp"
 #include "actor_routes.hpp"
 #include "destination.hpp"
+#include "visibility.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -297,6 +299,7 @@ void edge_contracts(){
 #include "cross_room_tests.inc"
 #include "actor_route_tests.inc"
 #include "destination_tests.inc"
+#include "visibility_tests.inc"
 void owned(const char* path){
     const auto bytes=read(path);const auto asset=imported(bytes);asset_rooms+=asset.descriptors().size();asset_links+=asset.links().size();
     reo::native::gameplay_session::RoomVariants native_variants;n::Bank bank(native_variants);const auto shared=std::make_shared<const n::Asset>(asset);
@@ -421,6 +424,11 @@ void owned(const char* path){
 #endif
     for(const auto& graph:asset.graphs()){
         asset_nodes+=graph.nodes().size();asset_conditions+=graph.conditions().size();source_graph(graph);
+        const auto clear=visibility_grid({});const auto empty_grid=collision::response::Grid::import(std::as_bytes(std::span(clear)));
+        for(const auto& node:graph.nodes()){
+            const auto result=compare_visible_nearest(graph,{empty_grid,{},{}},clear,node.position,0);
+            if(result.status==n::QueryStatus::completed)++visibility_retail_cases;
+        }
         for(unsigned i=0;i<graph.conditions().size();++i)for(unsigned profile=0;profile<8;++profile)for(unsigned flags:{0u,0xffffu})compare_condition(graph,std::int32_t(i),{std::uint8_t(profile),std::uint8_t(7-profile),std::uint8_t(profile&1?255:0)},std::uint16_t(flags));
         for(unsigned i=0;i<graph.nodes().size();++i){
             const auto& node=graph.nodes()[i];compare_action(graph,std::int32_t(i));
@@ -465,13 +473,13 @@ int main(int argc,char** argv){
 #ifdef REO_NAVIGATION_ORIGINAL
         check(argc==8);const auto constants=read(argv[2]);for(std::size_t at=0;at<constants.size();){const auto address=word(constants,at),count=word(constants,at+4);at+=8;check(at+count<=constants.size()&&address<=memory.size()&&count<=memory.size()-address);std::copy_n(constants.begin()+at,count,memory.begin()+address);at+=count;}const auto overlay=read(argv[1]);check(overlay.size()==113152);std::copy(overlay.begin(),overlay.end(),memory.begin()+0x810000);
 #endif
-        contracts();bank_contracts();condition_contracts();link_contracts();edge_contracts();ranked_contracts();cost_contracts();local_contracts();collection_contracts();cross_room_contracts();actor_route_contracts();destination_contracts();
+        contracts();bank_contracts();condition_contracts();link_contracts();edge_contracts();ranked_contracts();cost_contracts();local_contracts();collection_contracts();cross_room_contracts();actor_route_contracts();destination_contracts();visibility_contracts();
 #ifdef REO_NAVIGATION_ORIGINAL
         for(int i=3;i<argc;++i)owned(argv[i]);
         check(asset_rooms==166&&asset_nodes==3334&&asset_conditions==2167&&asset_links==432);
 #else
         for(int i=1;i<argc;++i)owned(argv[i]);
 #endif
-        std::cout<<"{\"checks\":"<<checks<<",\"nearest_cases\":"<<nearest_cases<<",\"action_cases\":"<<action_cases<<",\"asset_rooms\":"<<asset_rooms<<",\"asset_nodes\":"<<asset_nodes<<",\"asset_conditions\":"<<asset_conditions<<",\"asset_links\":"<<asset_links<<",\"refusals\":"<<refusals<<",\"nearest_refusals\":"<<nearest_refusals<<",\"action_refusals\":"<<action_refusals<<",\"bindings\":"<<bindings<<",\"clears\":"<<clears<<",\"bank_cells\":"<<bank_cells<<",\"bank_visit_cells\":"<<bank_visit_cells<<",\"bank_clears\":"<<bank_clears<<",\"condition_cases\":"<<condition_cases<<",\"link_cases\":"<<link_cases<<",\"link_refusals\":"<<link_refusals<<",\"edge_cases\":"<<edge_cases<<",\"edge_refusals\":"<<edge_refusals<<",\"retail_edge_refusals\":"<<retail_edge_refusals<<",\"edge_flag_bindings\":"<<edge_flag_bindings<<",\"ranked_cases\":"<<ranked_cases<<",\"ranked_refusals\":"<<ranked_refusals<<",\"ranked_retail_refusals\":"<<ranked_retail_refusals<<",\"cost_cases\":"<<cost_cases<<",\"cost_refusals\":"<<cost_refusals<<",\"cost_budgets\":"<<cost_budgets<<",\"cost_retail_refusals\":"<<cost_retail_refusals<<",\"cost_retail_budgets\":"<<cost_retail_budgets<<",\"cost_maximum_work\":"<<cost_maximum_work<<",\"cost_scratch_clears\":"<<cost_scratch_clears<<",\"local_cases\":"<<local_cases<<",\"local_refusals\":"<<local_refusals<<",\"local_budgets\":"<<local_budgets<<",\"local_retail_refusals\":"<<local_retail_refusals<<",\"local_retail_budgets\":"<<local_retail_budgets<<",\"collection_cases\":"<<collection_cases<<",\"collection_entries\":"<<collection_entries<<",\"collection_refusals\":"<<collection_refusals<<",\"collection_unknown_costs\":"<<collection_unknown_costs<<",\"collection_retail_refusals\":"<<collection_retail_refusals<<",\"collection_retail_unknown_costs\":"<<collection_retail_unknown_costs<<",\"cross_search_cases\":"<<cross_search_cases<<",\"cross_route_cases\":"<<cross_route_cases<<",\"cross_refusals\":"<<cross_refusals<<",\"cross_corrected_cases\":"<<cross_corrected_cases<<",\"cross_retail_cases\":"<<cross_retail_cases<<",\"actor_route_cases\":"<<actor_route_cases<<",\"actor_action_cases\":"<<actor_action_cases<<",\"actor_route_refusals\":"<<actor_route_refusals<<",\"actor_route_corrected_cases\":"<<actor_route_corrected_cases<<",\"actor_route_retail_cases\":"<<actor_route_retail_cases<<",\"destination_cases\":"<<destination_cases<<",\"destination_refusals\":"<<destination_refusals<<",\"destination_corrected_cases\":"<<destination_corrected_cases<<",\"destination_retail_cases\":"<<destination_retail_cases<<"}\n";
+        std::cout<<"{\"checks\":"<<checks<<",\"nearest_cases\":"<<nearest_cases<<",\"action_cases\":"<<action_cases<<",\"asset_rooms\":"<<asset_rooms<<",\"asset_nodes\":"<<asset_nodes<<",\"asset_conditions\":"<<asset_conditions<<",\"asset_links\":"<<asset_links<<",\"refusals\":"<<refusals<<",\"nearest_refusals\":"<<nearest_refusals<<",\"action_refusals\":"<<action_refusals<<",\"bindings\":"<<bindings<<",\"clears\":"<<clears<<",\"bank_cells\":"<<bank_cells<<",\"bank_visit_cells\":"<<bank_visit_cells<<",\"bank_clears\":"<<bank_clears<<",\"condition_cases\":"<<condition_cases<<",\"link_cases\":"<<link_cases<<",\"link_refusals\":"<<link_refusals<<",\"edge_cases\":"<<edge_cases<<",\"edge_refusals\":"<<edge_refusals<<",\"retail_edge_refusals\":"<<retail_edge_refusals<<",\"edge_flag_bindings\":"<<edge_flag_bindings<<",\"ranked_cases\":"<<ranked_cases<<",\"ranked_refusals\":"<<ranked_refusals<<",\"ranked_retail_refusals\":"<<ranked_retail_refusals<<",\"cost_cases\":"<<cost_cases<<",\"cost_refusals\":"<<cost_refusals<<",\"cost_budgets\":"<<cost_budgets<<",\"cost_retail_refusals\":"<<cost_retail_refusals<<",\"cost_retail_budgets\":"<<cost_retail_budgets<<",\"cost_maximum_work\":"<<cost_maximum_work<<",\"cost_scratch_clears\":"<<cost_scratch_clears<<",\"local_cases\":"<<local_cases<<",\"local_refusals\":"<<local_refusals<<",\"local_budgets\":"<<local_budgets<<",\"local_retail_refusals\":"<<local_retail_refusals<<",\"local_retail_budgets\":"<<local_retail_budgets<<",\"collection_cases\":"<<collection_cases<<",\"collection_entries\":"<<collection_entries<<",\"collection_refusals\":"<<collection_refusals<<",\"collection_unknown_costs\":"<<collection_unknown_costs<<",\"collection_retail_refusals\":"<<collection_retail_refusals<<",\"collection_retail_unknown_costs\":"<<collection_retail_unknown_costs<<",\"cross_search_cases\":"<<cross_search_cases<<",\"cross_route_cases\":"<<cross_route_cases<<",\"cross_refusals\":"<<cross_refusals<<",\"cross_corrected_cases\":"<<cross_corrected_cases<<",\"cross_retail_cases\":"<<cross_retail_cases<<",\"actor_route_cases\":"<<actor_route_cases<<",\"actor_action_cases\":"<<actor_action_cases<<",\"actor_route_refusals\":"<<actor_route_refusals<<",\"actor_route_corrected_cases\":"<<actor_route_corrected_cases<<",\"actor_route_retail_cases\":"<<actor_route_retail_cases<<",\"destination_cases\":"<<destination_cases<<",\"destination_refusals\":"<<destination_refusals<<",\"destination_corrected_cases\":"<<destination_corrected_cases<<",\"destination_retail_cases\":"<<destination_retail_cases<<",\"visibility_cases\":"<<visibility_cases<<",\"visible_nearest_cases\":"<<visible_nearest_cases<<",\"visibility_refusals\":"<<visibility_refusals<<",\"visibility_retail_cases\":"<<visibility_retail_cases<<",\"node_policy_cases\":"<<node_policy_cases<<",\"node_choice_cases\":"<<node_choice_cases<<",\"node_choice_refusals\":"<<node_choice_refusals<<"}\n";
     }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

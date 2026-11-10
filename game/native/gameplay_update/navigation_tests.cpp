@@ -23,6 +23,11 @@ std::shared_ptr<const n::Asset> asset(){
     n::ImportFailure failure;auto parsed=n::Asset::read(bytes,failure);check(bool(parsed));
     return std::make_shared<const n::Asset>(std::move(*parsed));
 }
+reo::native::gameplay_collision::response::Grid empty_walls(){
+    std::vector<std::uint8_t> bytes(52);const auto put=[&](unsigned at,unsigned value){for(unsigned i=0;i<4;++i)bytes[at+i]=std::uint8_t(value>>(8*i));};
+    put(8,1000);put(12,1000);put(16,1);put(20,1);put(32,32);put(36,44);put(40,36);put(44,0xffffffff);
+    return reo::native::gameplay_collision::response::Grid::import(std::as_bytes(std::span(bytes)));
+}
 }
 int main(){
     try{
@@ -59,17 +64,23 @@ int main(){
         const auto corrected_cross=owner.cross_room_navigation_route(id,7,7,0,0,cross_output,{true,4096,128});check(corrected_cross.status==n::QueryStatus::completed&&corrected_cross.selected==0&&cross_output.link==0&&world.navigation().visits(0)[0]==1);
         actor->slot=5;actor->status=0x80;check(owner.cross_room_navigation_route(id,200,201,-1,-1,cross_output).selected==-1);actor->status=0;
         check(owner.refresh_actor_navigation(id,true).status==n::QueryStatus::unavailable);
+        const auto walls=empty_walls();const n::VisibilityRoom visibility{walls,{},{}};
+        check(owner.refresh_current_navigation_node(id,visibility).status==n::QueryStatus::unavailable);
         actor->room=7;actor->navigation_route.emplace();auto& navigation=*actor->navigation_route;
         navigation.destination_room=7;navigation.final_position={9,8,7};navigation.previous_action=654;
         check(owner.refresh_actor_navigation(id,true).selected==0&&navigation.output.route.first_position.x==9&&navigation.output.route.second_position.y==8&&navigation.last_current_node==0&&navigation.action==0&&navigation.previous_action==654);
         check((*world.navigation().occupancy(7,0)&32)!=0);
         actor->slot=0;check(owner.begin_actor_navigation(id,{12,13,14},7).selected==0&&navigation.final_position.y==13&&navigation.output.route.second_position.z==14&&navigation.output.route.first==navigation.destination_node&&navigation.output.route.second==navigation.destination_node);
+        navigation.current_node=-42;check(owner.refresh_current_navigation_node(id,visibility).node==0&&navigation.current_node==0);
+        navigation.selection_mode=1;actor->position.x=-10;check(owner.refresh_current_navigation_node(id,visibility).node==0&&navigation.current_node==0);actor->position.x=0;navigation.selection_mode=0;
         check(owner.admit_navigation_condition(id,7,2).status==n::QueryStatus::unavailable&&owner.admit_navigation_condition(id,8,0).status==n::QueryStatus::unavailable);
         check(owner.admitted_navigation_link(id,7,0,1).status==n::QueryStatus::completed&&!owner.admitted_navigation_link(id,7,0,1).index);
         u::world::World foreign({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());const auto other=foreign.spawn_primary(0,std::make_unique<u::world::Actor>()).id;
         check(owner.admit_navigation_condition(other,7,0).status==n::QueryStatus::unavailable&&owner.admitted_navigation_link(other,7,0,0).status==n::QueryStatus::unavailable);
+        check(owner.refresh_current_navigation_node(other,visibility).status==n::QueryStatus::unavailable);
         check(world.retire_primary(0)==u::world::actors::EntityStatus::completed&&owner.applicable_navigation_condition(id,7,1).status==n::QueryStatus::unavailable);
         check(world.close()==u::world::Status::completed&&owner.admit_navigation_condition(id,7,0).status==n::QueryStatus::unavailable&&owner.admitted_navigation_link(id,7,0,0).status==n::QueryStatus::unavailable);
+        check(owner.refresh_current_navigation_node(id,visibility).status==n::QueryStatus::unavailable);
         check(owner.close()==u::Status::completed);std::cout<<"{\"checks\":"<<checks<<"}\n";
     }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

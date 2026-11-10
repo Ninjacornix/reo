@@ -61,6 +61,13 @@ The current resource and inventory implementation includes:
   and full audited heading/distance chain. Both compilers pass15884 destination
   comparisons and ten parent tests. Initial/current-node production, filtered
   collision queries, remaining AI/movement, saves and installation remain open.
+- [Navigation visibility/current-node selection](NAVIGATION_VISIBILITY.md) now
+  composes complete filtered queries, real native ordered collision and actor
+  policy selection. Both compilers pass6144 policy,480 selection and3408 filtered
+  nearest comparisons plus ten parent tests.3334 node profiles use controlled
+  empty geometry, not retail room acceptance. The actual Owner publishes the
+  audited812540 entry-prefix current node; the rest of that AI caller, scene
+  loading, broader admission, saves and installation remain open.
 
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.

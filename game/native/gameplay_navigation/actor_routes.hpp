@@ -8,7 +8,7 @@ struct ActorRouteState {
     Position final_position;
     CrossRoomOutput output;
     std::uint16_t previous_action{},action{},destination_room{};
-    std::uint8_t completed{},refresh{};
+    std::uint8_t completed{},selection_mode{},refresh{};
 };
 // Complete bounded8173D0: local policy0 or cross-room dispatch, followed by the
 // last-current-node write even on completed no-path results.

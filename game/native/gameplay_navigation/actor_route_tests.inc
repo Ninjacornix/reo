@@ -17,7 +17,7 @@ n::CrossRoomResult compare_actor_route(n::Bank& bank,[[maybe_unused]] std::span<
     write_byte(0x100e,before.output.route.first);write_byte(0x100f,before.output.route.second);write_position(0x1010,before.final_position);
     write_position(0x101c,before.output.route.first_position);write_position(0x1028,before.output.route.second_position);
     put(memory,actor+0x1054,before.previous_action);put(memory,actor+0x1056,before.action);put(memory,actor+0x1058,before.destination_room);put(memory,actor+0x10aa,before.output.link);
-    memory[actor+0x105a]=before.completed;memory[actor+0x1064]=before.refresh;put(memory,actor+0x1e2,room);
+    memory[actor+0x105a]=before.completed;memory[actor+0x105b]=before.selection_mode;memory[actor+0x1064]=before.refresh;put(memory,actor+0x1e2,room);
     if(begin){
         const auto& input=begin->actor;check(input.identity.slot==facts.slot&&input.status==status&&input.room==room);
         put(memory,actor+0xba4,input.auxiliary_status);write_position(0x38,input.position);memory[actor+0x54f]=input.motion_class;memory[actor+0x10a9]=input.transient_marker;
@@ -33,7 +33,7 @@ n::CrossRoomResult compare_actor_route(n::Bank& bank,[[maybe_unused]] std::span<
     check_byte(0x100e,state.output.route.first);check_byte(0x100f,state.output.route.second);check_position(0x1010,state.final_position);
     check_position(0x101c,state.output.route.first_position);check_position(0x1028,state.output.route.second_position);
     check_half(0x1054,state.previous_action);check_half(0x1056,state.action);check_half(0x1058,state.destination_room);check_half(0x10aa,std::bit_cast<std::uint16_t>(state.output.link));
-    check(memory[actor+0x105a]==state.completed&&memory[actor+0x1064]==state.refresh);
+    check(memory[actor+0x105a]==state.completed&&memory[actor+0x105b]==state.selection_mode&&memory[actor+0x1064]==state.refresh);
     const auto mask=word(memory,0x83e54c);for(unsigned actor_slot=0;actor_slot<4;++actor_slot){const auto visits=bank.visits(actor_slot);check(std::equal(visits.begin(),visits.end(),memory.begin()+mask+actor_slot*visits.size()));}
     for(unsigned node=0;node<128;++node){check(bank.occupancy(room,node)==memory[0x83e550+164*room+0x14+node]);}
     if(begin){++destination_cases;if(profile.initialize_collection_cost)++destination_corrected_cases;}
