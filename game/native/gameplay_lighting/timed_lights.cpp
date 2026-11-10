@@ -70,12 +70,14 @@ bool TimedLights::bound_to(const gameplay_world::World& w,const gameplay_tasks::
     return !shared_->closed && &shared_->world==&w && &shared_->tasks==&t && &shared_->pool==&p;
 }
 TimedStatus TimedLights::failure()const noexcept{return shared_->fault;}
+bool TimedLights::bound_to(const gameplay_world::World& world)const noexcept{
+    return !shared_->closed&&!world.closed() && &shared_->world==&world&&!shared_->tasks.closed()&&!shared_->pool.closed();
+}
 TimedCreated TimedLights::create(const gameplay_actors::EntityId& id,const std::array<float,3>& position)noexcept{
     auto& owner=*shared_;
     if(owner.closed||owner.world.closed()||owner.tasks.closed()||owner.pool.closed())return{TimedStatus::closed,gameplay_tasks::Status::closed,{},{}};
     const auto actor=owner.world.resolve(id);if(!actor)return{TimedStatus::actor_unavailable,gameplay_tasks::Status::invalid,{},{}};
     if(actor->primary!=2||actor->secondary!=11)return{TimedStatus::skipped,gameplay_tasks::Status::invalid,{},{}};
-    if(!actor->lighting_tag)return{TimedStatus::tag_unavailable,gameplay_tasks::Status::invalid,{},{}};
     try{
         std::erase_if(owner.entries,[&](const auto& e){return !owner.tasks.contains(e.handle);});
         auto state=std::make_shared<TimedState>();auto work=std::make_shared<Work>(shared_,id,state);
@@ -84,7 +86,7 @@ TimedCreated TimedLights::create(const gameplay_actors::EntityId& id,const std::
             const auto result=task.status==gameplay_tasks::Status::full?TimedStatus::task_full:task.status==gameplay_tasks::Status::no_memory?TimedStatus::no_memory:TimedStatus::task_unavailable;
             return{result,task.status,{},{}};
         }
-        const auto light=owner.pool.create(timed_definition(position),*actor->lighting_tag,0);
+        const auto light=owner.pool.create(timed_definition(position),actor->surface_material,0);
         if(light.status!=Status::completed){(void)owner.tasks.erase(task.handle);return{light.status==Status::full?TimedStatus::light_full:TimedStatus::light_unavailable,task.status,{},{}};}
         work->light=light.id;owner.entries.push_back({task.handle,std::move(state),light.id});
         return{TimedStatus::completed,task.status,task.handle,light.id};

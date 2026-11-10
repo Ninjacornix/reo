@@ -13,7 +13,7 @@ Definition timed_definition(const std::array<float,3>&)noexcept;
 // Complete5D8630 timing policy. Returns retirement without touching pool/task
 // ownership. Runtime calls it only for a live light and actor generation.
 bool advance_timed_light(TimedState&,Definition&,std::uint8_t clock_mode);
-enum class TimedStatus {completed,skipped,task_full,light_full,actor_unavailable,tag_unavailable,closed,no_memory,task_unavailable,light_unavailable};
+enum class TimedStatus {completed,skipped,task_full,light_full,actor_unavailable,closed,no_memory,task_unavailable,light_unavailable};
 struct TimedCreated {
     TimedStatus status{TimedStatus::closed};
     gameplay_tasks::Status task_status{gameplay_tasks::Status::invalid};
@@ -32,6 +32,7 @@ public:
     TimedCreated create(const gameplay_actors::EntityId&,const std::array<float,3>&)noexcept;
     std::optional<TimedSnapshot> snapshot(const gameplay_tasks::Handle&)const noexcept;
     bool bound_to(const gameplay_world::World&,const gameplay_tasks::Scheduler&,const Pool&)const noexcept;
+    bool bound_to(const gameplay_world::World&)const noexcept;
     TimedStatus failure()const noexcept;
     void close()noexcept;
 private:

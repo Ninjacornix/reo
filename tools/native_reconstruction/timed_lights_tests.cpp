@@ -52,7 +52,7 @@ void compare_light(const std::uint8_t* m,unsigned slot,const l::Light& light){
     const auto payload=words(light.descriptor);for(unsigned i=0;i<13;++i){check(get<std::uint32_t>(m,at+4+4*i)==std::bit_cast<std::uint32_t>(payload[i]));}
 }
 void reset_original(std::uint8_t* m){std::memset(m+light_at,0,64*56);m[0x747538]=0;std::memset(m+task_at,0,256);original_task=false;deny_task=false;}
-std::unique_ptr<w::Actor> actor(std::optional<std::uint8_t> tag){auto a=std::make_unique<w::Actor>();a->active=true;a->primary=2;a->secondary=11;a->lighting_tag=tag;return a;}
+std::unique_ptr<w::Actor> actor(std::uint8_t tag){auto a=std::make_unique<w::Actor>();a->active=true;a->primary=2;a->secondary=11;a->surface_material=tag;return a;}
 struct Noop: t::Task{void update(t::Scheduler&,const t::Handle&)noexcept override{}};
 struct Spawn: t::Task{
     l::TimedLights* owner{};w::actors::EntityId actor_id;l::TimedCreated made;
@@ -95,8 +95,8 @@ int main()try{
     }
     auto session=std::make_shared<w::Session>();w::World world({{{0x100,0x10,0x20}},1,{16,100}},session);auto id=world.spawn_primary(0,actor({})).id;
     reo::native::gameplay_scenario::Lighting canonical;l::Pool pool(canonical);t::Scheduler tasks;l::TimedLights timed(world,tasks,pool);
-    check(timed.create(id,{0,0,0}).status==l::TimedStatus::tag_unavailable&&tasks.size()==0&&pool.size()==0);++refusals;
-    world.resolve(id)->primary=0;check(timed.create(id,{0,0,0}).status==l::TimedStatus::skipped);world.resolve(id)->primary=2;world.resolve(id)->lighting_tag=0;
+    check(w::Actor{}.surface_material==255);
+    world.resolve(id)->primary=0;check(timed.create(id,{0,0,0}).status==l::TimedStatus::skipped);world.resolve(id)->primary=2;world.resolve(id)->surface_material=0;
     for(unsigned pair=0;pair<65536;++pair){
         reset_original(m);m[actor_at+8]=std::uint8_t(pair>>8);m[actor_at+9]=std::uint8_t(pair);m[actor_at+0x175]=0;world.resolve(id)->primary=m[actor_at+8];world.resolve(id)->secondary=m[actor_at+9];
         call(m,0x6b2680,{actor_at,position_at});const auto guarded=timed.create(id,{});const bool eligible=pair==0x020b;check(original_task==eligible);check(guarded.status==(eligible?l::TimedStatus::completed:l::TimedStatus::skipped));

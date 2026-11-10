@@ -3,9 +3,11 @@
 `gameplay_lighting::TimedLights` implements the6B2680 request and
 5D85E0/5D8630 task through the existing World,32-task scheduler and canonical
 64-light pool. The authored7202C0 definition receives the caller's position.
-Only actor action2/secondary11 admits a request. The actor's original175 lighting
-tag is an optional native component: an unknown constructor binding refuses
-the request instead of silently substituting zero.
+Only actor action2/secondary11 admits a request. Its tag comes directly from the
+existing canonical actor `surface_material` byte, original175. The floor and
+collision owners already publish that field. The first draft added a redundant
+optional tag; this was an overly restrictive binding and is superseded by the
+material-bound qualification. No second mutable actor scalar remains.
 
 Clock mode zero initializes44/30/20/20 counters; other modes initialize
 22/15/10/10. Signed halfword counters wrap, phase0 falls through to phase1,
@@ -34,7 +36,10 @@ real scheduler updates. Tests cover every clock byte and lighting tag, mode
 changes, cancellation, same-pass construction, pool exhaustion, explicit task
 erasure, foreign identities, reset/reuse, actor replacement and cleanup. Four
 parent world/collision tests also pass on both compilers. The sealed qualification
-is `tools/native_reconstruction/native_timed_lights_qualification_v1.json`.
+is `tools/native_reconstruction/native_timed_lights_qualification_v1.json` for
+the earlier draft and `native_timed_lights_qualification_v2.json` for the current
+canonical material binding. The latter has seven genuine refusals; an invented
+unknown-tag refusal is removed.
 
 The oracle executes complete constructor, update, light-pool and sine bodies.
 Scheduler admission/retirement are declared captured ports on the original side;
@@ -46,6 +51,6 @@ explicit comments in the extracted fixture. The older file's module-header
 entry is never executed. The failed first comparison lacked fixture-only AND/OR
 macros; the retained v3 receipts cover the corrected fixture.
 
-This component is not installed in a game candidate. Actual actor constructor
-tag publication, the1D companion caller, renderer consumption and full Stage4
+This component is not installed in a game candidate. The1D companion caller,
+renderer consumption and full Stage4
 acceptance remain required. No game or audio device was launched.
