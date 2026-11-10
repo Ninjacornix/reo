@@ -40,7 +40,7 @@ def main():
     overlay = (ROOT/'build-function-index/owned-overlays/o9.bin').read_bytes()
     elf = elf_reader((ROOT/'game_data/SLUS_207.65').read_bytes())
     sources, entries, audits = [], {}, []
-    selected = {0x815e30, 0x815e70, 0x8171d0, 0x8171e0, 0x8194d0, 0x8194f0, 0x8196e0}
+    selected = {0x815e30, 0x815e70, 0x8171d0, 0x8171e0, 0x819220, 0x819360, 0x8193a0, 0x819410, 0x8194d0, 0x8194f0, 0x8196e0, 0x81a0e0}
     for path in sorted((ROOT/'recomp/config/output_ovl/o9').glob('o9_*.cpp')):
         address = int(path.stem.split('_')[-1], 16)
         if 0x816000 <= address < 0x816460 or address in selected:
@@ -58,7 +58,7 @@ def main():
     unit = 'game/native/gameplay_navigation/navigation.cpp'
     fixture = 'game/native/gameplay_navigation/navigation_tests.cpp'
     helper = 'tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp'
-    files = [unit, fixture, 'game/native/gameplay_navigation/navigation.hpp', 'game/native/gameplay_navigation/bank.cpp', 'game/native/gameplay_navigation/bank.hpp', 'game/native/gameplay_session/room_variants.hpp', 'game/native/gameplay_navigation/CMakeLists.txt', 'game/native/CMakeLists.txt', helper, Path(__file__).relative_to(ROOT).as_posix(), *sources]
+    files = [unit, fixture, 'game/native/gameplay_navigation/navigation.hpp', 'game/native/gameplay_navigation/bank.cpp', 'game/native/gameplay_navigation/bank.hpp', 'game/native/gameplay_navigation/conditions.cpp', 'game/native/gameplay_navigation/conditions.hpp', 'game/native/gameplay_session/room_variants.hpp', 'game/native/gameplay_navigation/CMakeLists.txt', 'game/native/CMakeLists.txt', helper, Path(__file__).relative_to(ROOT).as_posix(), *sources]
     frozen = {name: (ROOT/name).read_bytes() for name in files}
     out.mkdir(parents=True)
     for name, data in frozen.items():
@@ -99,11 +99,11 @@ def main():
     env = dict(os.environ)
     env['PATH'] = str(compiler.parent)+os.pathsep+env.get('PATH', '')
     exe = out/'navigation.exe'
-    command = [str(compiler), '-std=c++20', '-O2', '-msse4.1', '-DREO_NAVIGATION_ORIGINAL=1', '-Wall', '-Wextra', '-Wpedantic', '-Werror', '-Wno-unused-label', '-Wno-unused-parameter', '-fno-fast-math', '-ffp-contract=off', '-I'+str(out), '-I'+str(out/'source'), str(out/'source'/unit), str(out/'source/game/native/gameplay_navigation/bank.cpp'), str(out/'source'/fixture), str(out/'original.cpp'), '-o', str(exe)]
+    command = [str(compiler), '-std=c++20', '-O2', '-msse4.1', '-DREO_NAVIGATION_ORIGINAL=1', '-Wall', '-Wextra', '-Wpedantic', '-Werror', '-Wno-unused-label', '-Wno-unused-parameter', '-fno-fast-math', '-ffp-contract=off', '-I'+str(out), '-I'+str(out/'source'), str(out/'source'/unit), str(out/'source/game/native/gameplay_navigation/bank.cpp'), str(out/'source/game/native/gameplay_navigation/conditions.cpp'), str(out/'source'/fixture), str(out/'original.cpp'), '-o', str(exe)]
     receipt = dict(schema=1,status='failed',game_launched=False,installed_in_game=False,stage4_complete=False,compiler_sha256=sha(compiler),source_sha256={name: hashlib.sha256(data).hexdigest() for name, data in frozen.items()},original_word_audits=audits,pinned_inputs=PINS,assets=asset_evidence,commands=[],declared_ports=['107C68 bounded zero-fill in original-only test surroundings; real runtime allocator not installed'],limitations=['Native immutable input/query owner only; canonical mutable room-variant, occupancy, visits, dynamic conditions and actual AI/scene consumers remain open.', 'Nearest comparison covers flags0 with finite distance; flags1 segment collision is not admitted. Empty or overflowed distances return unavailable.', 'Malformed reachable neighbor/condition references return unavailable; no adjacent-section emulation or silent asset repair.', 'Original route ordering is preserved; no measured performance fix or game installation is claimed.'])
     receipt['limitations'] = [
         'Native immutable input/query and mutable Bank component; World/session/VM composition is qualified separately by the current full VM runner.',
-        'Controlled explicit variants reproduce mode2 room selection/clearing. Mode0/1 callbacks, live SGL loader, dynamic conditions and actual AI/scene consumers remain open.',
+        'Controlled explicit variants reproduce mode2 room selection/clearing. Actor facts and flag values exercise complete dynamic condition and admitted link selection; actual UpdateOwner composition is qualified separately. Mode0/1 callbacks, live SGL loader and route/AI/scene execution remain open.',
         'Same asset rebinding preserves mutable visits, clears occupancy and rereads variants. A different asset starts from its authored visit bytes; unknown required variants refuse binding before effects.',
         'Nearest flags0 finite-distance and bounded reverse-action profiles only. Empty/nonfinite/overflowed nearest queries and reachable malformed references return unavailable.',
         'No game launched or installed; no measured performance fix or Stage4 completion is claimed.',

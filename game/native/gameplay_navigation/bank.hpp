@@ -16,6 +16,7 @@ public:
     void clear_rooms()noexcept;
     void close()noexcept;
     bool bound()const noexcept{return bound_&&!closed_;}
+    const Asset* asset()const noexcept{return bound()?asset_.get():nullptr;}
     const RoomGraph* room(std::uint32_t)const noexcept;
     std::optional<std::uint8_t> occupancy(std::uint32_t room,std::uint32_t node)const noexcept;
     bool occupancy(std::uint32_t room,std::uint32_t node,std::uint8_t)noexcept;

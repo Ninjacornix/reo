@@ -10,6 +10,7 @@
 #include "../gameplay_world/behavior.hpp"
 #include "../gameplay_world/alignment.hpp"
 #include "../gameplay_world/interaction_transitions.hpp"
+#include "../gameplay_navigation/conditions.hpp"
 
 namespace reo::native::gameplay_update {
 namespace tasks=gameplay_tasks;
@@ -165,6 +166,9 @@ public:
     scenario::Interpreter& scripts()noexcept{return scripts_;}
     scenario::OfflineCoordinator& offline()noexcept{return offline_;}
     scenario::FlagState& flags()noexcept{return flags_;}
+    gameplay_navigation::ConditionResult applicable_navigation_condition(const world::actors::EntityId&,std::uint32_t room,std::int32_t index);
+    gameplay_navigation::AdmissionResult admit_navigation_condition(const world::actors::EntityId&,std::uint32_t room,std::int32_t index);
+    gameplay_navigation::LinkResult admitted_navigation_link(const world::actors::EntityId&,std::int32_t room,std::int32_t variant,std::int32_t node);
     State state;
 private:
     world::World& world_;

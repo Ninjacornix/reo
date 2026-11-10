@@ -16,6 +16,10 @@ The current resource and inventory implementation includes:
   visits, and seal on World closure. Complete original comparisons and current
   full VM suites pass on both compilers. Dynamic conditions, routes/AI and actual
   loading/installation remain open.
+- [Navigation conditions and links](NAVIGATION_CONDITIONS.md) now use the same
+  actor AI-control field and canonical strided flag bank through the actual
+  UpdateOwner. Complete bounded source comparisons and ten parent checks pass
+  per compiler. Node edges, route policies and scene/AI execution remain open.
 
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.

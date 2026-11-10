@@ -1,4 +1,4 @@
-add_library(reo_native_gameplay_update STATIC update.cpp collision_workers.cpp actor_gauge.cpp)
+add_library(reo_native_gameplay_update STATIC update.cpp collision_workers.cpp actor_gauge.cpp navigation.cpp)
 target_compile_features(reo_native_gameplay_update PUBLIC cxx_std_20)
 target_link_libraries(reo_native_gameplay_update PUBLIC reo_native_gameplay_world reo_native_gameplay_tasks reo_native_gameplay_scenario reo_native_gameplay_events)
 target_include_directories(reo_native_gameplay_update PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
@@ -11,6 +11,9 @@ add_test(NAME native_gameplay_collision_workers COMMAND gameplay_collision_worke
 add_executable(gameplay_cooperative_events_tests cooperative_events_tests.cpp)
 target_link_libraries(gameplay_cooperative_events_tests PRIVATE reo_native_gameplay_update)
 add_test(NAME native_gameplay_cooperative_events COMMAND gameplay_cooperative_events_tests)
+add_executable(gameplay_navigation_owner_tests navigation_tests.cpp)
+target_link_libraries(gameplay_navigation_owner_tests PRIVATE reo_native_gameplay_update)
+add_test(NAME native_gameplay_navigation_owner COMMAND gameplay_navigation_owner_tests)
 
 add_library(reo_native_gameplay_reception STATIC reception.cpp actor_message_queue.cpp)
 target_compile_features(reo_native_gameplay_reception PUBLIC cxx_std_20)
