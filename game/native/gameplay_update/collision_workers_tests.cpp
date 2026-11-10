@@ -13,8 +13,8 @@ void check(bool value,std::source_location location=std::source_location::curren
 }
 g::Profile profile(){return{{{0x100,0x10,0x20}},1,{16,2}};}
 struct Notifications:s::FlagNotifications {
-    void changed(const s::ScenarioFlagChange&)noexcept override{}
-    void changed(const s::StridedFlagChange&)noexcept override{}
+    bool changed(const s::ScenarioFlagChange&)noexcept override{return true;}
+    bool changed(const s::StridedFlagChange&)noexcept override{return true;}
 };
 struct Secondary:g::actors::Entity {
     c::Vec3 position{1,2,3},normal{0,1,0},displacement;

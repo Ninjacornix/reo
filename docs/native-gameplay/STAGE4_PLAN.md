@@ -33,8 +33,11 @@ The current resource and inventory implementation includes:
 - [Completion statistics and explicit item events](COMPLETION_STATISTICS.md),
   using all five owned rule groups and the same actual event pool, and
   [automatic completion](AUTOMATIC_COMPLETION.md) through the actual native
-  worker/flag/actor/action-choice owners. Ownership-tag publication, other
+  worker/flag/actor/action-choice owners. Other ownership writers, statistics
   counters and game caller installation remain open.
+- [Scenario ownership publication](SCENARIO_OWNERSHIP_PUBLICATION.md) through
+  actual flag writes and timer callbacks. The admitted local writer is native;
+  other writers and actual message queue/transport consumers remain open.
 - [Direct item consumption and visibility](RESOURCE_CONSUMPTION.md), using the
   actual inventory/model lifecycle and completion-event consumers. Message
   wrappers, health/status effects and game caller installation remain open.

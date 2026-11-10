@@ -5,6 +5,7 @@
 #include "../gameplay_events/events.hpp"
 #include "../gameplay_events/statistics.hpp"
 #include "completion_conditions.hpp"
+#include "scenario_publication.hpp"
 
 namespace reo::native::gameplay_update {
 namespace tasks=gameplay_tasks;
@@ -62,10 +63,10 @@ struct Result {
     bool completion_checked{};
     gameplay_events::Recorded completion;
 };
-class Owner final:public world::actors::StatusTiming {
+class Owner final:public world::actors::StatusTiming,private scenario::FlagNotifications {
 public:
     // Borrowed native world and notification target must outlive this owner.
-    Owner(world::World&,scenario::FlagNotifications&,std::shared_ptr<const gameplay_events::RuleBook> = gameplay_events::RuleBook::file1());
+    Owner(world::World&,scenario::FlagNotifications&,std::shared_ptr<const gameplay_events::RuleBook> = gameplay_events::RuleBook::file1(),ScenarioMessageSink* = nullptr);
     ~Owner();
     Owner(const Owner&)=delete;
     Owner& operator=(const Owner&)=delete;
@@ -119,11 +120,19 @@ private:
     tasks::SimulationClock clock_;
     gameplay_events::Events cooperative_;
     gameplay_events::Statistics statistics_;
+    scenario::FlagNotifications& notifications_;
     scenario::FlagState flags_;
+    ScenarioPublication publication_;
     scenario::ActionChoices choices_;
     scenario::Interpreter scripts_;
     scenario::OfflineCoordinator offline_;
     bool running_{},closed_{};
+    bool changed(const scenario::ScenarioFlagChange& value)noexcept override{
+        if(!open())return false;
+        if(publication_.publish(value.id,value.value,value.actor_owner)!=PublicationStatus::completed)return false;
+        return notifications_.changed(value);
+    }
+    bool changed(const scenario::StridedFlagChange& value)noexcept override{return notifications_.changed(value);}
     Status run_script(std::size_t,scenario::Providers,std::size_t,Result&)noexcept;
     Status script_service(Services&,scenario::Providers,std::size_t,Result&);
     Result workers(Services&,world::Services&,scenario::Providers,std::size_t,std::size_t);

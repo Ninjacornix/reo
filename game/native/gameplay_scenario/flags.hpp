@@ -22,8 +22,8 @@ struct StridedFlagChange {std::uint32_t record{},bit{};std::uint8_t slot{};bool 
 class FlagNotifications {
 public:
     virtual ~FlagNotifications()=default;
-    virtual void changed(const ScenarioFlagChange&)noexcept=0;
-    virtual void changed(const StridedFlagChange&)noexcept=0;
+    virtual bool changed(const ScenarioFlagChange&)noexcept=0;
+    virtual bool changed(const StridedFlagChange&)noexcept=0;
 };
 // Externally serialized authoritative native banks. Notifications are synchronous
 // after the write and may reenter ordinary flag operations; no lock is held.
@@ -43,6 +43,14 @@ public:
     std::optional<bool> actor_flag(ActorFlagFamily,std::uint8_t category,std::uint32_t id)const noexcept;
     const FlagStateSnapshot& snapshot()const noexcept{return state_;}
     void restore(const FlagStateSnapshot& value)noexcept{state_=value;}
+    std::optional<std::uint8_t> scenario_owner(std::uint32_t id)const noexcept{
+        if(id>=state_.scenario_owners.size())return{};
+        return state_.scenario_owners[id];
+    }
+    bool scenario_owner(std::uint32_t id,std::uint8_t owner)noexcept{
+        if(id>=state_.scenario_owners.size())return false;
+        state_.scenario_owners[id]=owner;return true;
+    }
     SharedFlags shared()const noexcept{return state_.shared;}
     void shared(const SharedFlags& value)noexcept{state_.shared=value;}
     bool notification_ready()const noexcept{return notifications_!=nullptr;}

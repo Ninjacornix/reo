@@ -4,7 +4,7 @@ unsigned owned_recipe_cases{},owned_recipe_event_cases{},owned_recipe_event_mask
 namespace owned_recipe_fixture {
 using namespace recipe_fixture;
 namespace u=reo::native::gameplay_update;
-struct Notifications:s::FlagNotifications {void changed(const s::ScenarioFlagChange&)noexcept override{std::terminate();}void changed(const s::StridedFlagChange&)noexcept override{std::terminate();}};
+struct Notifications:s::FlagNotifications {bool changed(const s::ScenarioFlagChange&)noexcept override{std::terminate();}bool changed(const s::StridedFlagChange&)noexcept override{std::terminate();}};
 struct Owned {
     Fixture q;Notifications notifications;u::Owner update;
     g::ResourcePairs pairs;g::ResourceContents contents;g::WorldInventory inventory;g::ResourceRecipes recipes;g::OwnedResourceRecipes owner;

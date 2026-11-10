@@ -8,8 +8,9 @@ namespace s=reo::native::gameplay_scenario;
 void check(bool value,std::source_location at=std::source_location::current()){if(!value)throw std::runtime_error("Cooperative update-owner binding check at "+std::to_string(at.line()));}
 // No flag operations are exercised; these callbacks fail if unexpectedly used.
 struct Notifications:s::FlagNotifications {
-    void changed(const s::ScenarioFlagChange&)noexcept override{std::terminate();}
-    void changed(const s::StridedFlagChange&)noexcept override{std::terminate();}
+    unsigned scenario_changes{};
+    bool changed(const s::ScenarioFlagChange&)noexcept override{++scenario_changes;return true;}
+    bool changed(const s::StridedFlagChange&)noexcept override{std::terminate();}
 };
 struct Remaining:u::Services {
     std::vector<u::Worker> calls;
@@ -25,15 +26,16 @@ struct EmptyActors:u::world::Services {
 };
 void check_automatic_worker(){
     u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());Notifications notifications;
-    e::RuleGroup group;group.automatic={{3,0,42,0,5,2}};u::Owner owner(world,notifications,e::RuleBook::create({group},{0}));
+    e::RuleGroup group;group.automatic={{3,2,42,0,5,2}};u::Owner owner(world,notifications,e::RuleBook::create({group},{0}));
     world.mode=1;world.paused=1;Remaining remaining;EmptyActors actors;
+    check(bool(world.spawn_primary(0,std::make_unique<u::world::Actor>()).id));
     const auto program=std::make_shared<const s::Program>(std::vector<std::vector<std::byte>>{{std::byte{1},std::byte{},std::byte{},std::byte{},std::byte{0xa},std::byte{},std::byte{},std::byte{}}});
     for(unsigned i=0;i<2;++i)check(owner.scripts().install(i,program)==s::Status::completed);
     check(owner.clock().restore({},123)==u::tasks::Status::completed);
     auto result=owner.run_workers(remaining,actors);check(result.status==u::Status::statistics_failure&&result.completion_checked&&!result.clock_committed);
     world.session().scenario=0;check(owner.initialize_completion_statistics()==e::StatisticsStatus::completed);
     result=owner.run_workers(remaining,actors);check(result.status==u::Status::completed&&result.completion_checked&&result.completion.matched==0);
-    remaining.calls.clear();check(owner.flags().write(s::FlagBank::scenario,42,true));
+    remaining.calls.clear();check(owner.flags().scenario(42,1,s::NotifyOwner::selected_actor_plus_one,1));check(owner.flags().scenario_owner(42)==1&&notifications.scenario_changes==1);
     result=owner.run_workers(remaining,actors);check(result.status==u::Status::completed&&result.completion_checked&&result.completion.matched==1&&result.completion.recorded==1);
     check((remaining.calls==std::vector<u::Worker>{u::Worker::reset_entity_queues,u::Worker::armed_request,u::Worker::clear_interaction_activity,u::Worker::clear_proxy_work}));
     const auto events=owner.cooperative_events().snapshot();check(events.size()==1&&events[0].value.id==5&&events[0].value.timestamp==123&&owner.completion_statistics().state().points==2);
@@ -42,6 +44,8 @@ void check_automatic_worker(){
     result=owner.run_workers(remaining,actors);check(result.status==u::Status::completed&&!result.completion_checked&&owner.cooperative_events().snapshot().empty());
     owner.state.session_work_gate=0;result=owner.run_workers(remaining,actors);check(result.status==u::Status::completed&&result.completion_checked&&result.completion.matched==1);
     s::ActionChoices foreign;s::Providers providers;providers.action_choices=&foreign;result=owner.run_workers(remaining,actors,providers);check(result.status==u::Status::script_failure&&!result.completion_checked);
+    world.session().message_phase=1;check(!owner.flags().scenario(43,1,s::NotifyOwner::selected_actor_plus_one,1));check(owner.flags().get(s::FlagBank::scenario,43)==true&&owner.flags().scenario_owner(43)==0&&notifications.scenario_changes==1);
+    world.primary(0)->status=0x400;check(owner.flags().scenario(44,1,s::NotifyOwner::selected_actor_plus_one,1));check(owner.flags().scenario_owner(44)==0&&notifications.scenario_changes==2);
     check(owner.close()==u::Status::completed&&owner.check_scenario_events().status==e::StatisticsStatus::unavailable);check(world.close()==u::world::Status::completed);
 }
 int main()try{

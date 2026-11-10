@@ -12,8 +12,8 @@ namespace s=reo::native::gameplay_scenario;
 namespace t=reo::native::gameplay_tasks;
 std::vector<std::uint32_t>* trace;
 struct Notifications final:s::FlagNotifications {
-    void changed(const s::ScenarioFlagChange& v)noexcept override{trace->insert(trace->end(),{0x5703e0,v.id,v.value,v.actor_owner});}
-    void changed(const s::StridedFlagChange&)noexcept override{std::terminate();}
+    bool changed(const s::ScenarioFlagChange& v)noexcept override{trace->insert(trace->end(),{0x5703e0,v.id,v.value,v.actor_owner});return true;}
+    bool changed(const s::StridedFlagChange&)noexcept override{std::terminate();}
 };
 constexpr std::uint32_t addresses[]{0x6816f0,0x371a90,0x6671d0,0x5d7ed0,0x581ee0,0x6d6240,0x682fd0,0x6bbba0,
     0x6ef150,0x5da680,0x3769f0,0x376ae0,0x376b80,0x66a3a0,0x6832f0,0x5dc430,0x5dc4b0,0x5dc500,
@@ -162,6 +162,9 @@ void original_port(std::uint8_t* r,R5900Context* ctx,PS2Runtime* runtime){
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "original_update.cpp"
 #pragma GCC diagnostic pop
+void canonical_inactive_primaries(u::Owner& o){
+    for(unsigned i=0;i<4;++i)if(!o.world().primary(i)){if(!o.world().spawn_primary(i,std::make_unique<w::Actor>()).id)throw std::runtime_error("Fixture canonical inactive primary");}
+}
 void install(u::Owner& o,s::DispatchProfile profile){
     o.world().session().scenario=0;if(o.initialize_completion_statistics()!=reo::native::gameplay_events::StatisticsStatus::completed)throw std::runtime_error("Fixture completion initialization");
     const auto program=std::make_shared<const s::Program>(std::vector<std::vector<std::byte>>{{std::byte{0xa},std::byte{},std::byte{},std::byte{}}},profile);
@@ -215,6 +218,7 @@ int main()try{
     std::vector<std::uint8_t> ram(0x2000000,0xa5),expected(ram);std::uint64_t cases{},words{},paused{},limited{},phase_cases{},phase_words{},committed{};
     w::Profile profile;profile.layouts.resize(1);w::World native_world(profile,std::make_shared<w::Session>()),reference_world(profile,std::make_shared<w::Session>());
     Notifications native_notify,reference_notify;u::Owner native(native_world,native_notify,ordering_rules()),reference(reference_world,reference_notify,ordering_rules());original_owner=&reference;
+    canonical_inactive_primaries(native);canonical_inactive_primaries(reference);
     for(std::uint32_t seed=0;seed<2048;++seed){
         native_world.mode=std::uint8_t(seed%3);native_world.paused=std::bit_cast<std::int8_t>(std::uint8_t(seed));native_world.selected_actor=std::uint8_t(seed%4);
         native.state.limit_override=seed%5==0;native.state.session_work_gate=std::int16_t(seed%2);
@@ -274,6 +278,7 @@ int main()try{
     std::vector<std::uint32_t> lifecycle_trace;trace=&lifecycle_trace;Workers work;work.seed=23;
     w::World lifecycle_world(profile,std::make_shared<w::Session>());lifecycle_world.mode=1;Notifications notifications;
     u::Owner lifecycle(lifecycle_world,notifications,ordering_rules());std::uint32_t checks{};
+    canonical_inactive_primaries(lifecycle);
     const auto check=[&](bool okay){++checks;if(!okay)throw std::runtime_error("Native update owner lifetime/admission check "+std::to_string(checks));};
     check(lifecycle.clock().restore({0,0,8,0},0)==t::Status::completed);
     check(lifecycle_world.session().timer_seconds()==8 && lifecycle_world.session().timer_subseconds()==0);

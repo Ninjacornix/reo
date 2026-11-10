@@ -11,7 +11,7 @@ namespace e=reo::native::gameplay_events;
 unsigned checks{};
 void check(bool value){++checks;if(!value)throw std::runtime_error("Owned recipe composition check "+std::to_string(checks));}
 template<class T>void put(std::span<std::byte> bytes,unsigned at,T value){std::memcpy(bytes.data()+at,&value,sizeof value);}
-struct Notifications:s::FlagNotifications {void changed(const s::ScenarioFlagChange&)noexcept override{std::terminate();}void changed(const s::StridedFlagChange&)noexcept override{std::terminate();}};
+struct Notifications:s::FlagNotifications {bool changed(const s::ScenarioFlagChange&)noexcept override{std::terminate();}bool changed(const s::StridedFlagChange&)noexcept override{std::terminate();}};
 int main()try{
     auto session=std::make_shared<g::Session>();g::World world({{g::input::Remap{1,2,4}},1,{16,UINT64_MAX}},session);Notifications notifications;u::Owner update(world,notifications);world.room=7;check(update.clock().restore({},123)==u::tasks::Status::completed);
     auto actor=std::make_unique<g::Actor>();actor->character=3;const auto id=world.spawn_primary(0,std::move(actor)).id;check(bool(id));

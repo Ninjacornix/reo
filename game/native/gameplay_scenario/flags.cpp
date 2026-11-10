@@ -29,13 +29,13 @@ bool FlagState::write(FlagBank bank,std::uint32_t id,bool set)noexcept {
 }
 bool FlagState::scenario(std::uint32_t id,std::uint8_t value,NotifyOwner route,std::uint8_t actor_owner)noexcept {
     if(!notifications_||id>=512)return false;
-    write(FlagBank::scenario,id,value!=0);notifications_->changed(ScenarioFlagChange{id,value,actor_owner,route});return true;
+    write(FlagBank::scenario,id,value!=0);return notifications_->changed(ScenarioFlagChange{id,value,actor_owner,route});
 }
 bool FlagState::strided(std::uint32_t record,std::uint32_t bit,std::uint8_t slot,bool set,bool notify)noexcept {
     if(record>=state_.strided.size()||slot>=6||(notify&&!notifications_))return false;
     const auto mask=std::uint16_t(1u<<(bit&31));auto& value=state_.strided[record][slot];
     value=set?std::uint16_t(value|mask):std::uint16_t(value&~mask);
-    if(notify)notifications_->changed(StridedFlagChange{record,bit,slot,set});
+    if(notify)return notifications_->changed(StridedFlagChange{record,bit,slot,set});
     return true;
 }
 std::optional<bool> FlagState::test_strided(std::uint32_t record,std::uint32_t bit,std::uint8_t slot)const noexcept{

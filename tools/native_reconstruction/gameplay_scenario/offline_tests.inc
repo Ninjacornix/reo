@@ -3,8 +3,8 @@ namespace {
 struct NoticeSink final:vm::FlagNotifications {
     std::vector<std::tuple<std::uint32_t,std::uint8_t,std::uint8_t>> scenario_events;
     std::vector<std::tuple<std::uint32_t,std::uint32_t,bool,std::uint8_t>> room_events;
-    void changed(const vm::ScenarioFlagChange& c)noexcept override{scenario_events.emplace_back(c.id,c.value,c.actor_owner);}
-    void changed(const vm::StridedFlagChange& c)noexcept override{room_events.emplace_back(c.record,c.bit,c.set,c.slot);}
+    bool changed(const vm::ScenarioFlagChange& c)noexcept override{scenario_events.emplace_back(c.id,c.value,c.actor_owner);return true;}
+    bool changed(const vm::StridedFlagChange& c)noexcept override{room_events.emplace_back(c.record,c.bit,c.set,c.slot);return true;}
 };
 void export_bank(std::vector<std::uint8_t>& ram,std::uint32_t at,const vm::FlagWords& values){std::memcpy(ram.data()+at,values.data(),64);}
 void export_flags(std::vector<std::uint8_t>& ram,const vm::FlagStateSnapshot& s){

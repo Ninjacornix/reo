@@ -21,6 +21,11 @@ absent primary is inactive. The new512 ownership tags reside once in FlagState's
 snapshot;512 is an explicit native admission extent, not a proven original bound.
 Their remaining logical/network publication writers still require migration.
 
+The subsequent [ownership publication implementation](SCENARIO_OWNERSHIP_PUBLICATION.md)
+now supplies the admitted67DBD0 writer behind actual update-owned flag and timer
+calls. Other direct writers and actual message queue/transport consumers remain
+open; the conditions still use this same canonical tag array.
+
 Automatic completion preserves seen-byte suppression, rule order, independent
 duplicate scoring,32-bit score wrapping, flags, seen writes and actual event
 requests. Full event capacity retains earlier score/seen writes and counts drops.

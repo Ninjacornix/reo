@@ -10,9 +10,15 @@ unsigned checks{},calls{},appends{},retirements{},prunings{},resets{},refusals{}
 void check(bool value,std::source_location at=std::source_location::current()){++checks;if(!value)throw std::runtime_error("Cooperative event check "+std::to_string(checks)+" line "+std::to_string(at.line()));}
 template<class T>T get(const std::uint8_t* m,unsigned at){return transform_read<T>(m,at);}
 template<class T>void put(std::uint8_t* m,unsigned at,T v){transform_write(m,at,v);}
+#ifdef REO_SCENARIO_PUBLICATION
+void publication_message_port(std::uint8_t*,R5900Context*);
+#endif
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){++calls;const auto done=[&](){context->pc=GPR_U32(context,31);};switch(context->pc){
 #ifdef REO_COMPLETION_STATISTICS
 case 0x1b0300:SET_GPR_U32(context,2,memory[0x3243f2]);done();return;
+#endif
+#ifdef REO_SCENARIO_PUBLICATION
+case 0x811190:case 0x810870:publication_message_port(memory,context);done();return;
 #endif
 case 0x107c68:{const auto at=GPR_U32(context,4),n=GPR_U32(context,6);check(at<=0x2000000&&n<=0x2000000-at&&GPR_U32(context,5)==0);std::memset(memory+at,0,n);SET_GPR_U32(context,2,at);done();return;}
 #include "dispatch.inc"
@@ -29,6 +35,9 @@ void compare(const e::Events& owner,const std::uint8_t* memory){check(owner.avai
 #endif
 #ifdef REO_AUTOMATIC_COMPLETION
 #include "tools/native_reconstruction/automatic_completion_tests.inc"
+#endif
+#ifdef REO_SCENARIO_PUBLICATION
+#include "tools/native_reconstruction/scenario_publication_tests.inc"
 #endif
 int main(int argc,char** argv)try{
     check(argc==
@@ -61,12 +70,18 @@ int main(int argc,char** argv)try{
 #ifdef REO_AUTOMATIC_COMPLETION
     compare_automatic_completion(memory,argv[2],argv[3]);
 #endif
+#ifdef REO_SCENARIO_PUBLICATION
+    compare_scenario_publication(memory);
+#endif
     std::cout<<"{\"checks\":"<<checks<<",\"appends\":"<<appends<<",\"retirements\":"<<retirements<<",\"prunings\":"<<prunings<<",\"resets\":"<<resets<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<calls
 #ifdef REO_COMPLETION_STATISTICS
     <<",\"completion_cases\":"<<completion_cases<<",\"completion_initializations\":"<<completion_initializations<<",\"completion_refusals\":"<<completion_refusals
 #endif
 #ifdef REO_AUTOMATIC_COMPLETION
     <<",\"condition_cases\":"<<condition_cases<<",\"automatic_cases\":"<<automatic_cases<<",\"automatic_refusals\":"<<automatic_refusals
+#endif
+#ifdef REO_SCENARIO_PUBLICATION
+    <<",\"publication_cases\":"<<publication_cases<<",\"publication_messages\":"<<publication_messages<<",\"publication_refusals\":"<<publication_refusals
 #endif
     <<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
