@@ -8,12 +8,14 @@
 #include "../gameplay_collision/contact_component.hpp"
 #include "../gameplay_scenario/model_reference.hpp"
 #include "inventory_state.hpp"
+#include "../gameplay_session/room_variants.hpp"
 #include <array>
 #include <memory>
 #include <optional>
 #include <vector>
 
 namespace reo::native::animation {class Instance;class Constraints;class Playback;class WeaponProgramBank;}
+namespace reo::native::gameplay_navigation {class Bank;}
 namespace reo::native::gameplay_world {
 namespace actors=gameplay_actors;
 namespace input=gameplay_actors::input;
@@ -131,6 +133,7 @@ struct Actor : actors::Entity,actors::HitActor {
     input::Frame input;
 };
 struct Session : actors::HitSession {
+    gameplay_session::RoomVariants room_variants;
     gameplay_session::Random random{};
     gameplay_session::Options options;
     std::uint8_t previous_primary{},previous_secondary{};
@@ -191,6 +194,7 @@ public:
     actors::EntityStatus retire_linked(const actors::EntityId&)noexcept;
     LinkedModelPool& linked_models();
     AuxiliaryActorPool& auxiliary_actors();
+    gameplay_navigation::Bank& navigation();
     std::shared_ptr<Actor> primary(std::size_t)const noexcept;
     std::shared_ptr<Actor> resolve(const actors::EntityId&)const noexcept;
     std::shared_ptr<Actor> referenced_actor(const actors::ActorReference&)const noexcept;
@@ -225,6 +229,7 @@ private:
     std::array<actors::EntityId,8> primary_;
     std::unique_ptr<LinkedModelPool> linked_models_;
     std::unique_ptr<AuxiliaryActorPool> auxiliary_actors_;
+    std::unique_ptr<gameplay_navigation::Bank> navigation_;
     std::vector<input::Remap> layouts_;
     std::vector<input::ControllerFrame> controllers_;
     bool updating_{},closed_{};

@@ -1,6 +1,7 @@
 #include "world.hpp"
 #include "linked_models.hpp"
 #include "auxiliary_actors.hpp"
+#include "../gameplay_navigation/bank.hpp"
 #include <bit>
 #include <exception>
 #include <stdexcept>
@@ -25,6 +26,11 @@ World::~World(){
     // lifetime precondition. It cannot be repaired by returning to that call.
     if(updating_||(linked_models_&&linked_models_->busy()))std::terminate();
     (void)close(); // Reentrant actor destruction sees a sealed, intact owner.
+}
+gameplay_navigation::Bank& World::navigation(){
+    if(closed_)throw std::runtime_error("Native navigation owner is closed");
+    if(!navigation_)navigation_.reset(new gameplay_navigation::Bank(session_->room_variants));
+    return *navigation_;
 }
 actors::EntityCreated World::spawn_primary(std::size_t index,std::unique_ptr<Actor> actor)noexcept{
     if(closed_)return{actors::EntityStatus::closed,{}};
@@ -86,6 +92,7 @@ Status World::close()noexcept{
     closed_=true;primary_.fill({});
     if(linked_models_)(void)linked_models_->close();
     if(auxiliary_actors_)(void)auxiliary_actors_->close();
+    if(navigation_)navigation_->close();
     entities_.shutdown();return Status::completed;
 }
 Result World::update_primary(Services& services){

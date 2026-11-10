@@ -7,6 +7,7 @@ IDS += ['007003E0','007006D0','007009A0','00700A50','00700B00','00700BB0','00700
 IDS += ['0068D670','0068D690','0068D6B0','0068D6D0','0068D6F0','0068D760','0068D780','0068D8F0','00592900','00592960','00592A10','00592B00','00592B90','00592C20','00592D50','005B4A50','00592CA0']
 IDS += ['00691170','00691290','006918C0','006919D0','00691C10','006908E0','006909B0','00691E70','00691EB0','00701D10','00701DA0','00701E60','007008C0','00700930']
 IDS += ['006915C0','00691630']
+IDS += ['0068ECA0']
 IDS += ['0068D310','0068D350','0068D380','0068D3D0','0068D400','0068D450','0068D4E0','0068D550','005BF0F0','005BF1B0']
 IDS += ['0068D5D0','0068D5F0','0068D610','0068D630','006B1DC0','006B1EC0','006B1FE0','006B2020','006B2170','006B2FA0','006B3020','006B3090']
 IDS += ['00690340','00690370','006903A0','006903C0']
@@ -108,6 +109,7 @@ def main(a):
     shutil.copyfile(HERE/'surface_vm_tests.inc',out/'surface_vm_tests.inc')
     shutil.copyfile(HERE/'offline_tests.inc',out/'offline_tests.inc')
     shutil.copyfile(HERE/'actor_request_vm_tests.inc',out/'actor_request_vm_tests.inc')
+    shutil.copyfile(HERE/'room_variant_vm_tests.inc',out/'room_variant_vm_tests.inc')
     shutil.copyfile(HERE/'periodic_control_vm_tests.inc',out/'periodic_control_vm_tests.inc')
     shutil.copyfile(HERE/'room_rule_tests.inc',out/'room_rule_tests.inc')
     shutil.copyfile(HERE/'room_object_vm_tests.inc',out/'room_object_vm_tests.inc')
@@ -135,6 +137,7 @@ def main(a):
     source_paths=[HERE/'no_model_vm_tests.inc',HERE/'actor_request_vm_tests.inc',HERE/'room_object_vm_tests.inc',HERE/'tests.cpp',HERE/'offline_tests.inc',HERE/'room_rule_tests.inc',HERE/'scene_vm_fixture.inc',HERE/'sequence_vm_fixture.inc',HERE/'lighting_vm_fixture.inc',HERE/'control_vm_fixture.inc',HERE/'stream_vm_fixture.inc',HERE/'actor_vm_fixture.inc',HERE/'model_vm_fixture.inc',reference,HERE/'verify.py',ROOT/'game/native/gameplay_tasks/tasks.hpp',ROOT/'game/native/gameplay_tasks/tasks.cpp',ROOT/'game/native/gameplay_actors/entity.hpp',ROOT/'game/native/gameplay_actors/entity.cpp',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_runtime_macros.h',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h']
     source_paths += [path for label,path in units if not path.is_relative_to(ROOT/'build-native-sjuni')]
     source_paths.append(HERE/'periodic_control_vm_tests.inc')
+    source_paths.append(HERE/'room_variant_vm_tests.inc')
     source_paths += [HERE/'surface_vm_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]
     source_paths += [ROOT/'game/native/transform_math/transform_math.hpp',ROOT/'game/native/transform_math/transform_math.cpp']

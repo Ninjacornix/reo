@@ -11,6 +11,11 @@ The current resource and inventory implementation includes:
   original comparisons on both compilers. Canonical variant production, mutable
   room/visit/occupancy state, dynamic conditions, route/AI consumers and game
   installation remain open.
+- [World navigation and room variants](NAVIGATION_BANK.md) now bind those inputs
+  through the sole Session map and ordinary script5A, own mutable occupancy and
+  visits, and seal on World closure. Complete original comparisons and current
+  full VM suites pass on both compilers. Dynamic conditions, routes/AI and actual
+  loading/installation remain open.
 
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.

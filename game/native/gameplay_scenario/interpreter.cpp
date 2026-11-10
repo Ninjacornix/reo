@@ -31,7 +31,7 @@ std::uint32_t word(const std::byte* p)noexcept{
 std::size_t payload_minimum(std::uint32_t op)noexcept{
     switch(op){case 0xa8:return 4;case 0x131:return 14;case 0x100:return 4;case 0x109:return 8;case 0xc2:case 0xc3:return 5;case 0xc4:return 9;case 0xc5:case 0xc6:case 0xc7:return 1;case 0xb0:case 0xb1:return 1;case 0xb4:return 8;case 0x135:return 20;case 0x155:return 8;case 0x180:return 4;
     case 0x50:case 0x54:case 0x55:case 0x104:case 0x105:return 12;case 0x57:return 16;
-    case 0x51:case 0x52:case 0x58:case 0x5f:case 0x72:case 0xb5:case 0xf6:return 8;
+    case 0x51:case 0x52:case 0x58:case 0x5a:case 0x5f:case 0x72:case 0xb5:case 0xf6:return 8;
     case 0x53:case 0x56:case 0x59:case 0x5b:case 0x5c:case 0x5d:case 0x5e:return 4;
     case 0x70:case 0xa0:case 0xa1:return 4;case 0x20:case 0x23:case 0x24:return 1;case 0x10:case 0x11:case 0x14:return 4;case 0x13:return 6;case 0x15:return 1;case 0x16:return 16;case 0x17:return 8;
     case 3:case 4:case 6:case 0x44:case 0x4c:return 4;case 8:return 5;
@@ -114,7 +114,7 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     for(std::size_t i=0;i<out.size();++i)if(control_command(std::uint32_t(i)))out[i]={true,false,false,false,false,false,false,false,false,true};
     for(const auto i:{0x70,0x71})out[i]={true,false,false,false,false,false,false,false,false,false,true};
     for(const auto i:{0x104,0x105})out[i]={true,false,false,false,false,false,false,false,false,true};
-    for(const auto i:{0x135,0x155,0x180}){out[i].native_algorithm=true;out[i].world_required=true;}
+    for(const auto i:{0x5a,0x135,0x155,0x180}){out[i].native_algorithm=true;out[i].world_required=true;}
     out[0x135].scene_controls_required=true;out[0x135].action_choices_required=true;
     out[0x135].selected_actor_required=true;out[0x155].selected_actor_required=true;
     for(const auto i:{0xb0,0xb1,0xb4}){out[i].native_algorithm=true;out[i].models_required=true;}
@@ -176,7 +176,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
     if(c.program->needs_scene_controls()&&!providers.scene_controls)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_streams()&&(!providers.streams||!providers.stream_backend||!context.stream_tick))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_saved_controls()&&(!providers.saved_controls||context.selected_actor>=SavedControlRecords::owner_count))return{Status::provider_unavailable,0,{},0};
-    if(c.program->needs_world()&&(!providers.world||providers.world->selected_actor!=context.selected_actor))return{Status::provider_unavailable,0,{},0};
+    if(c.program->needs_world()&&(!providers.world||providers.world->closed()||providers.world->selected_actor!=context.selected_actor))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_selected_actor()&&!providers.world->primary(context.selected_actor))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_action_choices()&&!providers.action_choices)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_scenario()&&!providers.world->scenario)return{Status::provider_unavailable,0,{},0};
@@ -364,6 +364,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
         case 0xe9:{++c.condition;const auto matches=providers.session_counters->consume(offline?context.selected_actor:0,value(0),value(4)!=0);
             if(!matches)return result(Status::provider_unavailable);
             if(!*matches){const auto status=scan(true);if(status!=Status::completed)return result(status);flow=2;}break;}
+        case 0x5a:if(providers.world->closed()||!providers.world->session().room_variants.store(value(0),value(4)))return result(Status::provider_unavailable);break;
         case 0x44:if(value(0)<128&&!providers.flags->write(FlagBank::bounded_byte,value(0),true))return result(Status::provider_unavailable);break;
         case 0x40:case 0x41:case 0x42:case 0x43:
             if(!providers.flags->strided(value(0),value(4),0,opcode==0x40||opcode==0x42,opcode==0x42||opcode==0x43))return result(Status::provider_unavailable);

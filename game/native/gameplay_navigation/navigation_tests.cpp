@@ -1,4 +1,5 @@
 #include "navigation.hpp"
+#include "bank.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -14,7 +15,7 @@
 #endif
 namespace n=reo::native::gameplay_navigation;
 namespace {
-std::uint64_t checks{},nearest_cases{},action_cases{},asset_nodes{},asset_conditions{},asset_rooms{},asset_links{},refusals{},bindings{},clears{},nearest_refusals{},action_refusals{};
+std::uint64_t checks{},nearest_cases{},action_cases{},asset_nodes{},asset_conditions{},asset_rooms{},asset_links{},refusals{},bindings{},clears{},nearest_refusals{},action_refusals{},bank_cells{},bank_visit_cells{},bank_clears{};
 void check(bool value,std::source_location at=std::source_location::current()){
     ++checks;if(!value)throw std::runtime_error("Navigation check "+std::to_string(checks)+" line "+std::to_string(at.line()));
 }
@@ -135,8 +136,28 @@ void contracts(){
     auto second=std::vector<std::uint8_t>(bytes.begin()+44,bytes.end());const auto end=std::uint32_t(bytes.size());bytes.insert(bytes.end(),second.begin(),second.end());put(bytes,36,end);put(bytes,34,std::uint16_t(0));
     asset=imported(bytes);check(asset.graphs().size()==2&&asset.find_room(7,0)->source_offset()==end);
 }
+void bank_contracts(){
+    auto bytes=synthetic();bytes.insert(bytes.begin()+16,20,0);put(bytes,8,std::uint32_t(36));put(bytes,12,std::uint32_t(1));put(bytes,44,std::uint32_t(52));
+    for(unsigned i=0;i<4;++i)bytes[32+i]=std::uint8_t(17+i);
+    const auto asset=std::make_shared<const n::Asset>(imported(bytes));
+    reo::native::gameplay_session::RoomVariants variants;n::Bank bank(variants);
+    check(!variants.get(7)&&!bank.bind(asset)&&!bank.bound()&&!bank.room(7));
+    check(variants.store(7,0)&&bank.bind(asset)&&bank.room(7));
+    for(unsigned i=0;i<4;++i)check(bank.visits(i).size()==1&&bank.visits(i)[0]==17+i);
+    check(bank.visit(2,0,255)&&bank.occupancy(7,127,255));check(bank.bind(asset)&&bank.visits(2)[0]==255&&bank.occupancy(7,127)==0);
+    check(variants.store(7,1)&&bank.room(7));check(bank.bind(asset)&&!bank.room(7)&&bank.visits(2)[0]==255);
+    bank.clear_rooms();check(!bank.bound()&&!bank.room(7)&&bank.visits(0).empty());
+    check(variants.store(7,0)&&bank.bind(asset)&&bank.visits(2)[0]==255&&bank.room(7));
+    check(bank.bind(std::make_shared<const n::Asset>(*asset))&&bank.visits(2)[0]==19);
+    check(!bank.bind(nullptr)&&bank.bound()&&bank.room(7));
+    check(!bank.visit(4,0,1)&&!bank.visit(0,1,1)&&!bank.clear_actor_visits(4)&&bank.visits(4).empty());
+    check(!bank.occupancy(128,0)&&!bank.occupancy(0,128)&&!bank.occupancy(128,0,1)&&!bank.occupancy(0,128,1));
+    bank.close();check(!bank.bound()&&!bank.bind(asset)&&!bank.clear_actor_visits(0)&&!bank.occupancy(7,0)&&bank.visits(0).empty());
+    check(!variants.get(128)&&!variants.store(128,1));
+}
 void owned(const char* path){
     const auto bytes=read(path);const auto asset=imported(bytes);asset_rooms+=asset.descriptors().size();asset_links+=asset.links().size();
+    reo::native::gameplay_session::RoomVariants native_variants;n::Bank bank(native_variants);const auto shared=std::make_shared<const n::Asset>(asset);
 #ifdef REO_NAVIGATION_ORIGINAL
     constexpr unsigned input=0x843780;std::copy(bytes.begin(),bytes.end(),memory.begin()+input);
     const auto a=word(bytes,4),b=word(bytes,8);const auto links=asset.links().size();
@@ -148,16 +169,26 @@ void owned(const char* path){
     for(const auto& descriptor:asset.descriptors())if(descriptor.variant>=0&&descriptor.variant<=255)variants.push_back(unsigned(descriptor.variant));
     std::sort(variants.begin(),variants.end());variants.erase(std::unique(variants.begin(),variants.end()),variants.end());
     for(const auto variant:variants){
+        std::array<std::uint8_t,128> native_values;native_values.fill(std::uint8_t(variant));native_variants.restore(native_values);check(bank.bind(shared));
         std::fill_n(memory.begin()+0x4b9d20,128,std::uint8_t(variant));call(0x815e70,{2});
         for(unsigned room=0;room<128;++room){
             const auto graph=asset.find_room(std::int32_t(room),std::int32_t(variant));const auto entry=0x83e550+164*room;
             check(word(memory,entry)==unsigned(bool(graph)));
+            check(bank.room(room)==shared->find_room(std::int32_t(room),std::int32_t(variant)));
             if(graph)check(word(memory,entry+8)==graph->nodes().size()&&word(memory,entry+12)==input+graph->source_offset()+12&&word(memory,entry+0x98)==graph->conditions().size());
             check(std::all_of(memory.begin()+entry+0x14,memory.begin()+entry+0x94,[](auto value){return value==0;}));++bindings;
         }
         check(word(memory,0x83e540)==links&&word(memory,0x83e548)==call(0x816080)&&word(memory,0x83e54c)==call(0x8160c0));
     }
     for(unsigned i=0;i<4;++i)check(call(0x8194d0,{i})==call(0x8160c0)+i*links);
+    for(unsigned actor=0;actor<4;++actor){
+        const auto visit_base=call(0x8160c0);
+        for(unsigned other=0;other<4;++other)for(unsigned link=0;link<links;++link){const auto value=std::uint8_t(17*actor+23*other+link);check(bank.visit(other,link,value));memory[visit_base+other*links+link]=value;}
+        for(unsigned room=0;room<128;++room)for(unsigned node=0;node<128;++node){const auto value=std::uint8_t(room+node*17+actor*31);check(bank.occupancy(room,node,value));memory[0x83e550+164*room+0x14+node]=value;}
+        check(bank.clear_actor_visits(actor));call(0x8194f0,{actor});++bank_clears;
+        for(unsigned other=0;other<4;++other)for(unsigned link=0;link<links;++link){check(bank.visits(other)[link]==memory[visit_base+other*links+link]);++bank_visit_cells;}
+        for(unsigned room=0;room<128;++room)for(unsigned node=0;node<128;++node){check(bank.occupancy(room,node)==memory[0x83e550+164*room+0x14+node]);++bank_cells;}
+    }
     // Relocation is performed only in original test memory. Native import
     // retains file-relative immutable offsets and does not rewrite the asset.
     call(0x8163f0);
@@ -197,13 +228,13 @@ int main(int argc,char** argv){
 #ifdef REO_NAVIGATION_ORIGINAL
         check(argc==7);const auto overlay=read(argv[1]);check(overlay.size()==113152);std::copy(overlay.begin(),overlay.end(),memory.begin()+0x810000);
 #endif
-        contracts();
+        contracts();bank_contracts();
 #ifdef REO_NAVIGATION_ORIGINAL
         for(int i=2;i<argc;++i)owned(argv[i]);
         check(asset_rooms==166&&asset_nodes==3334&&asset_conditions==2167&&asset_links==432);
 #else
         for(int i=1;i<argc;++i)owned(argv[i]);
 #endif
-        std::cout<<"{\"checks\":"<<checks<<",\"nearest_cases\":"<<nearest_cases<<",\"action_cases\":"<<action_cases<<",\"asset_rooms\":"<<asset_rooms<<",\"asset_nodes\":"<<asset_nodes<<",\"asset_conditions\":"<<asset_conditions<<",\"asset_links\":"<<asset_links<<",\"refusals\":"<<refusals<<",\"nearest_refusals\":"<<nearest_refusals<<",\"action_refusals\":"<<action_refusals<<",\"bindings\":"<<bindings<<",\"clears\":"<<clears<<"}\n";
+        std::cout<<"{\"checks\":"<<checks<<",\"nearest_cases\":"<<nearest_cases<<",\"action_cases\":"<<action_cases<<",\"asset_rooms\":"<<asset_rooms<<",\"asset_nodes\":"<<asset_nodes<<",\"asset_conditions\":"<<asset_conditions<<",\"asset_links\":"<<asset_links<<",\"refusals\":"<<refusals<<",\"nearest_refusals\":"<<nearest_refusals<<",\"action_refusals\":"<<action_refusals<<",\"bindings\":"<<bindings<<",\"clears\":"<<clears<<",\"bank_cells\":"<<bank_cells<<",\"bank_visit_cells\":"<<bank_visit_cells<<",\"bank_clears\":"<<bank_clears<<"}\n";
     }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

@@ -206,6 +206,7 @@ PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
 #include "periodic_control_vm_tests.inc"
 #include "no_model_vm_tests.inc"
 #include "surface_vm_tests.inc"
+#include "room_variant_vm_tests.inc"
 int main(int argc,char** argv)try{
     check(argc==2);
     no_model_vm_tests();
@@ -242,6 +243,7 @@ int main(int argc,char** argv)try{
     room_rules_tests();
     room_objects_vm_tests();
     actor_requests_vm_tests();
+    room_variant_vm_tests();
     periodic_control_vm_tests(argv[1]);
     for(unsigned profile=0;profile<16;++profile)for(const auto operation:{0u,1u,2u,3u,4u,5u,6u,0xffffffffu}){
         std::vector<std::byte> b;for(const auto opcode:{0x30u,0x31u,0x32u,0x33u})emit(b,opcode,{42});
@@ -355,5 +357,5 @@ int main(int argc,char** argv)try{
         for(std::size_t i=0;i<coverage.size();++i){if(i)std::cout<<',';std::cout<<(coverage[i].native_algorithm?"true":"false");count+=coverage[i].native_algorithm?1u:0u;}
         std::cout<<"],\"count\":"<<count<<",\"total\":432}";
     }
-    std::cout<<"},\"original_numeric_handler_invocations\":65536,\"game_launched\":false}\n";
+    std::cout<<"},\"room_variant_handlers\":"<<room_variant_handlers<<",\"room_variant_dispatches\":"<<room_variant_dispatches<<",\"room_variant_refusals\":"<<room_variant_refusals<<",\"room_variant_world_cases\":"<<room_variant_world_cases<<",\"original_numeric_handler_invocations\":65536,\"game_launched\":false}\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
