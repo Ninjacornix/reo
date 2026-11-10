@@ -115,6 +115,13 @@ The current resource and inventory implementation includes:
   result substitute is removed. Actual mode producers, control service and
   coherent native gameplay acceptance remain open.
 
+- [Actor AI initialization](AI_INITIALIZATION.md) now supplies complete8120C0
+  for admitted canonical components, including actual control producers and
+  goal/action/profile consumers. Both compilers pass80542165 checks and twelve
+  parent tests; registration/queue limits preserve subsequent source resets.
+  Actual actor construction, control service, full observations/dispatch and
+  coherent native gameplay acceptance remain open.
+
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.
 - [Placed-resource collisions](RESOURCE_COLLISIONS.md) through the shared128

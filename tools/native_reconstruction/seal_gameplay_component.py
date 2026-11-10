@@ -10,12 +10,12 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def seal(*,target,suite,status,expected,extra_sources,binaries,prior,limitations,test_count=12,ports=None):
+def seal(*,target,suite,status,expected,extra_sources,binaries,prior,limitations,test_count=12,ports=None,receipt_version=1,additional_evidence=()):
     target=ROOT/target;assert not target.exists()
     sources,cohorts,parent_checks,qualified_binaries={},{},{},{}
     observed=None
     for cc in ['llvm','gcc']:
-        path=ROOT/f'build-native-sjuni/{suite}-{cc}-v1/receipt.json'
+        path=ROOT/f'build-native-sjuni/{suite}-{cc}-v{receipt_version}/receipt.json'
         receipt=json.loads(path.read_bytes());data=receipt['observed']
         assert receipt['status']=='passed' and receipt['source_unchanged']
         assert data==expected,(cc,data)
@@ -40,5 +40,6 @@ def seal(*,target,suite,status,expected,extra_sources,binaries,prior,limitations
     previous=ROOT/prior
     target.write_text(json.dumps(dict(schema=1,status=status,game_launched=False,installed_in_game=False,
         stage4_complete=False,source_sha256=sources,cohorts=cohorts,parent_checks=parent_checks,
-        qualified_binaries=qualified_binaries,prior=dict(path=prior,sha256=sha(previous)),limitations=limitations),indent=2)+'\n')
+        qualified_binaries=qualified_binaries,prior=dict(path=prior,sha256=sha(previous)),
+        additional_evidence={name:sha(ROOT/name) for name in additional_evidence},limitations=limitations),indent=2)+'\n')
     print(sha(target))

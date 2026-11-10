@@ -1,4 +1,5 @@
-add_library(reo_native_gameplay_ai STATIC execution.cpp control_requests.cpp)
+add_library(reo_native_gameplay_ai STATIC execution.cpp control_requests.cpp initialization.cpp)
+target_link_libraries(reo_native_gameplay_ai PUBLIC reo_native_gameplay_navigation)
 target_compile_features(reo_native_gameplay_ai PUBLIC cxx_std_20)
 target_include_directories(reo_native_gameplay_ai PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")

@@ -1,5 +1,11 @@
 #include "update.hpp"
 namespace reo::native::gameplay_update {
+gameplay_ai::InitializationResult Owner::initialize_ai(const world::actors::EntityId& id){
+    if(!open())return {};
+    const auto actor=world_.resolve(id);if(!actor)return {};
+    return gameplay_ai::initialize(world_.navigation(),world_.session().ai_control_requests,actor->ai_control,actor->slot,
+        actor->ai_execution?&*actor->ai_execution:nullptr,actor->navigation_route?&*actor->navigation_route:nullptr);
+}
 std::optional<std::int32_t> Owner::ai_activity_mode()const noexcept{
     if(!open())return {};
     return gameplay_session::activity_mode(world_.mode,world_.session().activity);

@@ -15,10 +15,11 @@ bool Bank::bind(std::shared_ptr<const Asset> asset){
     auto visits=asset==asset_?visits_:std::vector<std::uint8_t>(asset->initial_visit_masks().begin(),asset->initial_visit_masks().end());
     auto edge_flags=asset==asset_?graph_edge_flags_:std::vector<std::array<std::uint8_t,4>>{};
     if(asset!=asset_)for(const auto& graph:asset->graphs())edge_flags.push_back(graph.initial_edge_flags());
+    if(asset!=asset_)header_byte_=0x24; // Asset::read admits version20030724 only.
     asset_=std::move(asset);visits_=std::move(visits);graph_edge_flags_=std::move(edge_flags);selected_=selection;occupancy_={};bound_=true;return true;
 }
 void Bank::clear_rooms()noexcept{selected_={};occupancy_={};bound_=false;}
-void Bank::close()noexcept{closed_=true;clear_rooms();visits_.clear();graph_edge_flags_.clear();asset_.reset();}
+void Bank::close()noexcept{closed_=true;clear_rooms();visits_.clear();graph_edge_flags_.clear();asset_.reset();header_byte_=0;}
 const RoomGraph* Bank::room(std::uint32_t index)const noexcept{
     if(!bound()||index>=selected_.size()||!selected_[index])return nullptr;
     return &asset_->graphs()[*selected_[index]];

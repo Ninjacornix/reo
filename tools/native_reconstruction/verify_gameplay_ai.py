@@ -31,7 +31,7 @@ def main():
     assert sha(main_image)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46'
     assert (ROOT/'game/native/gameplay_ai/weight_profiles.inc').read_text()==generated()
     entries={};proof=[]
-    for address in [0x8123e0,0x813380,0x81a6e0,0x81a6f0,0x814b30,0x107ab0,0x681240,0x6812b0,0x681330,0x681710,0x681790,0x815df0,0x681820,0x6818d0,0x1afe70,0x1b0300,0x811770,0x810f30]:
+    for address in [0x8120c0,0x8123e0,0x813380,0x81a6e0,0x81a6f0,0x814b30,0x107ab0,0x681240,0x6812b0,0x681330,0x681710,0x681790,0x815df0,0x681820,0x6818d0,0x1afe70,0x1b0300,0x811770,0x810f30]:
         folder=ROOT/('recomp/config/output' if address<0x200000 else 'recomp/config/output_ovl/'+('o8' if address==0x810f30 else 'o2' if address<0x810000 else 'o9'))
         path=next(folder.glob(f'*_{address:08X}_0x{address:x}.cpp'))
         end=int(re.search(r'// Address: 0x[0-9a-f]+ - 0x([0-9a-f]+)',path.read_text())[1],16)
@@ -44,6 +44,19 @@ def main():
         'tools/native_reconstruction/generate_ai_weight_profiles.py',*entries.values()]
     files+=['game/native/gameplay_ai/control_requests.cpp','game/native/gameplay_ai/control_requests.hpp','game/native/gameplay_ai/control_request_tests.inc']
     files+=['game/native/gameplay_session/activity.cpp','game/native/gameplay_session/activity.hpp','game/native/gameplay_session/CMakeLists.txt','game/native/gameplay_ai/activity_tests.inc']
+    files+=['game/native/gameplay_ai/initialization.cpp','game/native/gameplay_ai/initialization.hpp','game/native/gameplay_ai/initialization_tests.inc',
+        'game/native/gameplay_navigation/bank.cpp','game/native/gameplay_navigation/navigation.cpp']
+    # Freeze native quoted-include dependencies. Original runtime headers are
+    # intentionally supplied by the separately generated test-only surroundings.
+    closure=set(files);pending=[ROOT/name for name in files if name not in entries.values()]
+    while pending:
+        path=pending.pop()
+        for name in re.findall(r'#include "([^"\n]+)"',path.read_text()):
+            included=next((p.resolve() for p in [path.parent/name,ROOT/name] if p.is_file()),None)
+            if included and included.is_relative_to(ROOT):
+                relative=included.relative_to(ROOT).as_posix()
+                if relative not in closure:closure.add(relative);pending.append(included)
+    files=sorted(closure)
     frozen={name:(ROOT/name).read_bytes() for name in files};out.mkdir(parents=True)
     for name,data in frozen.items():
         path=out/'source'/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(data)
@@ -60,6 +73,8 @@ def main():
     exe=out/'checks.exe';command=[str(compiler),'-std=c++20','-O2','-msse4.1','-DREO_AI_ORIGINAL=1','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-label','-Wno-unused-parameter','-I'+str(out),'-I'+str(out/'source'),str(out/'source'/unit),str(out/'source'/fixture),str(out/'original.cpp'),'-o',str(exe)]
     command.insert(command.index(str(out/'original.cpp')),str(out/'source/game/native/gameplay_ai/control_requests.cpp'))
     command.insert(command.index(str(out/'original.cpp')),str(out/'source/game/native/gameplay_session/activity.cpp'))
+    for name in ['game/native/gameplay_ai/initialization.cpp','game/native/gameplay_navigation/bank.cpp','game/native/gameplay_navigation/navigation.cpp']:
+        command.insert(command.index(str(out/'original.cpp')),str(out/'source'/name))
     receipt=dict(schema=1,status='failed',game_launched=False,installed_in_game=False,stage4_complete=False,
         compiler_sha256=sha(compiler),source_sha256={name:hashlib.sha256(data).hexdigest() for name,data in frozen.items()},
         owned_image_sha256={image.relative_to(ROOT).as_posix():sha(image),main_image.relative_to(ROOT).as_posix():sha(main_image),o2_image.relative_to(ROOT).as_posix():sha(o2_image),o8_image.relative_to(ROOT).as_posix():sha(o8_image)},

@@ -10,9 +10,31 @@ struct Notifications:u::scenario::FlagNotifications {
     bool changed(const u::scenario::ScenarioFlagChange&)noexcept override{std::terminate();}
     bool changed(const u::scenario::StridedFlagChange&)noexcept override{std::terminate();}
 };
+void initialization_owner(){
+    u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());Notifications notifications;u::Owner owner(world,notifications);
+    const auto id=world.spawn_primary(0,std::make_unique<u::world::Actor>()).id;check(bool(id));auto actor=world.resolve(id);
+    std::array<std::uint8_t,20> bytes{};bytes[0]=0x24;bytes[1]=7;bytes[2]=3;bytes[3]=0x20;bytes[4]=12;bytes[8]=16;
+    reo::native::gameplay_navigation::ImportFailure failure;auto asset=reo::native::gameplay_navigation::Asset::read(bytes,failure);check(bool(asset));
+    check(world.navigation().bind(std::make_shared<const reo::native::gameplay_navigation::Asset>(std::move(*asset)))&&world.navigation().header_byte()==0x24);
+    check(owner.initialize_ai(id).status==ai::Status::completed&&!actor->ai_execution&&!actor->navigation_route&&world.navigation().header_byte()==0);
+    actor->ai_control=1;check(owner.initialize_ai(id).status==ai::Status::unavailable&&world.session().ai_control_requests.pending().empty());
+    actor->slot=3;actor->ai_execution.emplace();actor->navigation_route.emplace();auto& state=*actor->ai_execution;auto& route=*actor->navigation_route;
+    state.goal=42;state.action=9;state.combined_weights.fill(77);route.selection_mode=2;route.refresh=7;route.current_node=-3;
+    const auto first=owner.initialize_ai(id);check(first.status==ai::Status::completed&&first.registration==ai::RegistrationStatus::created&&first.publication->status==ai::RequestStatus::queued);
+    check(state.goal==0&&state.previous_goal==42&&state.action==0&&state.previous_action==9&&state.weight_profile==0&&state.base_weights==ai::weight_profile(0)->base);
+    check(state.combined_weights[0]==77&&state.room_memo==65535&&state.periodic_counter==60&&state.forced_priority==-1&&route.selection_mode==255&&route.refresh==0&&route.current_node==-3);
+    auto& controls=world.session().ai_control_requests;
+    check(controls.registrations()[0].target==3&&controls.pending().size()==1&&controls.pending()[0].payload==std::array<std::uint8_t,4>{});
+    const auto second=owner.initialize_ai(id);check(second.registration==ai::RegistrationStatus::exists&&second.publication->status==ai::RequestStatus::queued&&controls.pending().size()==2);
+    for(auto i=controls.pending().size();i<64;++i)(void)ai::publish_actor_control(controls,3,99);
+    state.goal=17;const auto limited=owner.initialize_ai(id);check(limited.status==ai::Status::completed&&limited.publication->status==ai::RequestStatus::full&&state.previous_goal==17&&controls.pending().size()==64);
+    check(world.retire_primary(0)==u::world::actors::EntityStatus::completed&&owner.initialize_ai(id).status==ai::Status::unavailable);
+    check(world.close()==u::world::Status::completed&&owner.initialize_ai(id).status==ai::Status::unavailable&&owner.close()==u::Status::completed);
+}
 }
 int main(){
     try{
+        initialization_owner();
         u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());
         Notifications notifications;u::Owner owner(world,notifications);
         const auto id=world.spawn_primary(0,std::make_unique<u::world::Actor>()).id;check(bool(id));

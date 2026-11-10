@@ -13,6 +13,10 @@ struct ExecutionState {
     std::uint8_t goal_refresh{},action_marker{};
     std::optional<std::uint8_t> weight_profile;
     std::array<std::uint8_t,8> base_weights{},reactive_weights{},status_weights{},combined_weights{};
+    std::uint8_t inhibited{},reaction{},pending_reaction{},observation_flags{};
+    std::uint16_t periodic_counter{},room_memo{},reaction_countdown{};
+    std::uint32_t action_counter{};
+    std::int32_t forced_priority{};
     friend bool operator==(const ExecutionState&,const ExecutionState&)=default;
 };
 struct WeightProfile {

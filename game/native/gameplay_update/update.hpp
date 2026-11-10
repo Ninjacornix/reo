@@ -21,6 +21,7 @@
 #include "../gameplay_navigation/visibility.hpp"
 #include "../gameplay_navigation/scene_candidates.hpp"
 #include "../gameplay_navigation/scene_lookup.hpp"
+#include "../gameplay_ai/initialization.hpp"
 
 namespace reo::native::gameplay_update {
 namespace tasks=gameplay_tasks;
@@ -198,6 +199,7 @@ public:
     std::optional<gameplay_ai::RequestResult> publish_ai_control(const world::actors::EntityId&,std::uint32_t);
     std::optional<std::int32_t> ai_activity_mode()const noexcept;
     gameplay_ai::ControlApplied receive_ai_controls(std::span<const std::uint8_t>);
+    gameplay_ai::InitializationResult initialize_ai(const world::actors::EntityId&);
 private:
     world::World& world_;
     tasks::Scheduler linked_;

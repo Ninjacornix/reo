@@ -1,5 +1,6 @@
 #include "execution.hpp"
 #include "control_requests.hpp"
+#include "initialization.hpp"
 #include "../gameplay_session/activity.hpp"
 #include <bit>
 #include <cstring>
@@ -25,6 +26,8 @@ ai::ExecutionState state(unsigned seed){
     for(unsigned i=0;i<4;++i){result.goal_phases[i]=std::uint8_t(seed+i);result.action_phases[i]=std::uint8_t(seed*3+i);result.goal_parameters[i]=std::uint16_t(seed*7+i);}
     if(seed&1)result.weight_profile=std::uint8_t(seed%20);
     for(unsigned i=0;i<8;++i){result.base_weights[i]=std::uint8_t(seed+i);result.reactive_weights[i]=std::uint8_t(seed*3+i);result.status_weights[i]=std::uint8_t(seed*7+i);result.combined_weights[i]=std::uint8_t(seed*11+i);}
+    result.inhibited=std::uint8_t(seed+13);result.reaction=std::uint8_t(seed+17);result.pending_reaction=std::uint8_t(seed+19);result.observation_flags=std::uint8_t(seed+23);
+    result.periodic_counter=std::uint16_t(seed*17);result.room_memo=std::uint16_t(seed*19);result.reaction_countdown=std::uint16_t(seed*23);result.action_counter=seed*67u;result.forced_priority=std::bit_cast<std::int32_t>(seed*97u);
     return result;
 }
 #ifdef REO_AI_ORIGINAL
@@ -37,6 +40,8 @@ void project(std::vector<std::uint8_t>& target,const ai::ExecutionState& s){
     target[a+0x1074]=s.goal_refresh;target[a+0x103a]=s.action_marker;
     target[a+0x1067]=s.weight_profile.value_or(255);put(target,a+0x10ac,s.weight_profile?0x828a60u+56u*(*s.weight_profile):0u);
     for(unsigned i=0;i<8;++i){target[a+0x10b0+i]=s.base_weights[i];target[a+0x10b8+i]=s.reactive_weights[i];target[a+0x10c0+i]=s.status_weights[i];target[a+0x10c8+i]=s.combined_weights[i];}
+    target[a+0xff1]=s.inhibited;target[a+0x1098]=s.reaction;target[a+0x1099]=s.pending_reaction;target[a+0x1083]=s.observation_flags;
+    put(target,a+0x1072,s.periodic_counter);put(target,a+0x107c,s.room_memo);put(target,a+0x109a,s.reaction_countdown);put(target,a+0x1034,s.action_counter);put(target,a+0x109c,s.forced_priority);
 }
 #endif
 void compare(unsigned pc,std::uint32_t argument,ai::ExecutionState before){
@@ -64,6 +69,7 @@ void compare(unsigned pc,std::uint32_t argument,ai::ExecutionState before){
 }
 #include "control_request_tests.inc"
 #include "activity_tests.inc"
+#include "initialization_tests.inc"
 }
 #ifdef REO_AI_ORIGINAL
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
@@ -96,6 +102,16 @@ int main(int argc,char** argv){
         control_contracts();
         control_receive_contracts();
         activity_contracts();
-        std::cout<<"{\"checks\":"<<checks<<",\"goal_cases\":"<<goal_cases<<",\"action_cases\":"<<action_cases<<",\"phase_cases\":"<<phase_cases<<",\"finish_cases\":"<<finish_cases<<",\"profile_cases\":"<<profile_cases<<",\"profile_refusals\":"<<profile_refusals<<",\"copies\":"<<copies<<",\"clears\":"<<clears<<",\"control_membership_cases\":"<<control_membership_cases<<",\"control_register_cases\":"<<control_register_cases<<",\"control_unregister_cases\":"<<control_unregister_cases<<",\"control_lookup_cases\":"<<control_lookup_cases<<",\"control_request_cases\":"<<control_request_cases<<",\"control_publish_cases\":"<<control_publish_cases<<",\"control_apply_cases\":"<<control_apply_cases<<",\"control_receive_cases\":"<<control_receive_cases<<",\"control_receive_refusals\":"<<control_receive_refusals<<",\"activity_queries\":"<<activity_queries<<",\"activity_mode_cases\":"<<activity_mode_cases<<",\"activity_mode_refusals\":"<<activity_mode_refusals<<"}\n";
+        initialization_contracts();
+        std::cout<<'{';bool first=true;
+        const auto emit=[&](const char* key,std::uint64_t value){if(!first)std::cout<<',';first=false;std::cout<<'"'<<key<<"\":"<<value;};
+        emit("checks",checks);emit("goal_cases",goal_cases);emit("action_cases",action_cases);emit("phase_cases",phase_cases);emit("finish_cases",finish_cases);
+        emit("profile_cases",profile_cases);emit("profile_refusals",profile_refusals);emit("copies",copies);emit("clears",clears);
+        emit("control_membership_cases",control_membership_cases);emit("control_register_cases",control_register_cases);emit("control_unregister_cases",control_unregister_cases);
+        emit("control_lookup_cases",control_lookup_cases);emit("control_request_cases",control_request_cases);emit("control_publish_cases",control_publish_cases);
+        emit("control_apply_cases",control_apply_cases);emit("control_receive_cases",control_receive_cases);emit("control_receive_refusals",control_receive_refusals);
+        emit("activity_queries",activity_queries);emit("activity_mode_cases",activity_mode_cases);emit("activity_mode_refusals",activity_mode_refusals);
+        emit("initialization_cases",initialization_cases);emit("initialization_disabled",initialization_disabled);emit("initialization_limited",initialization_limited);emit("initialization_refusals",initialization_refusals);
+        std::cout<<"}\n";
     }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
 }

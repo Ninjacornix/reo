@@ -16,6 +16,10 @@ public:
     void clear_rooms()noexcept;
     void close()noexcept;
     bool bound()const noexcept{return bound_&&!closed_;}
+    // Mutable first header byte of this loaded SGL session. The immutable
+    // imported version remains provenance;8120C0 clears this runtime byte.
+    std::uint8_t header_byte()const noexcept{return header_byte_;}
+    bool clear_header_byte()noexcept{if(closed_)return false;header_byte_=0;return true;}
     const Asset* asset()const noexcept{return bound()?asset_.get():nullptr;}
     // Current canonical session byte, not the variant selected at last bind.
     std::optional<std::uint8_t> current_variant(std::uint32_t room)const noexcept{return bound()?variants_.get(room):std::nullopt;}
@@ -35,5 +39,6 @@ private:
     std::vector<std::uint8_t> visits_;
     std::vector<std::array<std::uint8_t,4>> graph_edge_flags_;
     bool bound_{},closed_{};
+    std::uint8_t header_byte_{};
 };
 }
