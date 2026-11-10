@@ -1,4 +1,5 @@
 #include "update.hpp"
+#include "../gameplay_scenario/scene_resources.hpp"
 #include <iostream>
 #include <stdexcept>
 namespace u=reo::native::gameplay_update;
@@ -31,10 +32,48 @@ void initialization_owner(){
     check(world.retire_primary(0)==u::world::actors::EntityStatus::completed&&owner.initialize_ai(id).status==ai::Status::unavailable);
     check(world.close()==u::world::Status::completed&&owner.initialize_ai(id).status==ai::Status::unavailable&&owner.close()==u::Status::completed);
 }
+void reevaluation_owner(){
+    u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());Notifications notifications;u::Owner owner(world,notifications);
+    u::scenario::SceneResources resources;
+    const auto reference_id=world.spawn_primary(0,std::make_unique<u::world::Actor>()).id;
+    const auto peer_id=world.spawn_primary(2,std::make_unique<u::world::Actor>()).id;
+    const auto self_id=world.spawn_primary(3,std::make_unique<u::world::Actor>()).id;
+    auto reference=world.resolve(reference_id),peer=world.resolve(peer_id),self=world.resolve(self_id);check(reference&&peer&&self);
+    self->slot=1;self->room=reference->room=7;peer->ai_execution.emplace();peer->ai_execution->goal=3;
+    check(owner.reevaluate_ai_goal(self_id,resources).status==ai::Status::unavailable);
+    self->ai_execution.emplace();auto& state=*self->ai_execution;
+    const auto reset=[&]{state={};state.goal=17;state.goal_refresh=1;state.observation_flags=255;state.combined_weights[0]=10;self->character=0;self->motion_class=0;self->status=self->auxiliary_status=0;reference->status=reference->auxiliary_status=0;reference->motion_class=0;peer->ai_execution->goal=3;};
+    reset();check(owner.reevaluate_ai_goal(self_id,resources).status==ai::Status::unavailable&&state.observation_flags==255);
+    std::vector<std::uint8_t> bytes(184);const auto put=[&](unsigned at,unsigned value){for(unsigned i=0;i<4;++i)bytes[at+i]=std::uint8_t(value>>(8*i));};
+    put(0,0x20030724);put(4,12);put(8,16);put(16,1);bytes[20]=7;put(24,32);put(32,80);put(36,88);put(40,1);bytes[44]=1;put(60,0xffffffff);
+    for(unsigned i=0;i<4;++i){bytes[64+i]=255;bytes[108+i]=255;}
+    reo::native::gameplay_navigation::ImportFailure failure;auto asset=reo::native::gameplay_navigation::Asset::read(bytes,failure);check(bool(asset));
+    check(world.session().room_variants.store(7,0)&&world.navigation().bind(std::make_shared<const reo::native::gameplay_navigation::Asset>(std::move(*asset))));
+    const auto goal=[&](unsigned value){const auto result=owner.reevaluate_ai_goal(self_id,resources);check(result.status==ai::Status::completed&&result.goal_written&&state.goal==value&&state.observation_flags==0);};
+    reset();goal(3);check(state.goal_refresh==0);
+    reset();reference->status=8;goal(10);check(state.goal_phases[3]==0);
+    reset();reference->motion_class=0x30;reference->auxiliary_status=0x01000000;goal(10);check(state.goal_phases[3]==1);
+    reset();reference->motion_class=0x25;goal(10);check(state.goal_phases[3]==2);
+    reset();reference->status=8;peer->ai_execution->goal=10;goal(3);
+    reset();reference->status=8;state.peer_priority=1;goal(3);
+    reset();state.reference_request=1;state.goal_resource=0xdeadbeef;reference->equipment_slot=201;goal(11);check(state.goal_resource==201);
+    reset();state.owned_request=256;goal(12);check(state.owned_request==0);
+    u::scenario::SceneDescriptor descriptor;descriptor.active=128;descriptor.authored_id=0x131;check(bool(resources.load(73,descriptor)));
+    reset();self->character=7;self->inventory.storage[28]=73;reference->class_marker=2;reference->current=1;reference->maximum=1000;state.goal_resource=0xdeadbeef;goal(15);check(state.goal_resource==0xdeadbe49);
+    reset();state.combined_weights.fill(0);state.combined_weights[3]=255;goal(5);
+    reset();state.combined_weights.fill(0);state.combined_weights[3]=255;self->status=0x200;goal(2);
+    for(unsigned winner:{5u,6u,7u,8u}){reset();state.combined_weights.fill(0);if(winner<8)state.combined_weights[winner]=255;const auto result=owner.reevaluate_ai_goal(self_id,resources);check(result.status==ai::Status::completed&&!result.goal_written&&state.goal==17&&state.observation_flags==0);}
+    reset();self->status=8;goal(13);reset();self->motion_class=0x3b;goal(14);
+    reset();check(world.retire_primary(2)==u::world::actors::EntityStatus::completed);check(owner.reevaluate_ai_goal(self_id,resources).status==ai::Status::unavailable&&state.observation_flags==0);
+    state.goal_refresh=0;check(owner.reevaluate_ai_goal(self_id,resources).status==ai::Status::completed);
+    check(world.retire_primary(3)==u::world::actors::EntityStatus::completed&&owner.reevaluate_ai_goal(self_id,resources).status==ai::Status::unavailable);
+    check(world.close()==u::world::Status::completed&&owner.reevaluate_ai_goal(reference_id,resources).status==ai::Status::unavailable&&owner.close()==u::Status::completed);
+}
 }
 int main(){
     try{
         initialization_owner();
+        reevaluation_owner();
         u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());
         Notifications notifications;u::Owner owner(world,notifications);
         const auto id=world.spawn_primary(0,std::make_unique<u::world::Actor>()).id;check(bool(id));

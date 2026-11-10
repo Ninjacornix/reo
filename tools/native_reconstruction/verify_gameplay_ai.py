@@ -5,6 +5,7 @@ import json
 import os
 import re
 import subprocess
+import struct
 from pathlib import Path
 
 from audit_retail_effect_descriptors import compare_source,elf_reader
@@ -30,8 +31,10 @@ def main():
     assert sha(o8_image)=='f42da66b07a00fb221c5954b0e02b06a46b5694afd5596e866d35feec1fc92ab'
     assert sha(main_image)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46'
     assert (ROOT/'game/native/gameplay_ai/weight_profiles.inc').read_text()==generated()
+    assert struct.unpack_from('<I',o2_raw,0x71b034-0x570000)[0]==0x41c80000
+    assert struct.unpack_from('<6I',raw,0x82b860-0x810000)==(0x8231c0,)*6
     entries={};proof=[]
-    for address in [0x8120c0,0x8123e0,0x813380,0x81a6e0,0x81a6f0,0x814b30,0x107ab0,0x681240,0x6812b0,0x681330,0x681710,0x681790,0x815df0,0x681820,0x6818d0,0x1afe70,0x1b0300,0x811770,0x810f30]:
+    for address in [0x8120c0,0x8123e0,0x813380,0x81a6e0,0x81a6f0,0x814b30,0x107ab0,0x681240,0x6812b0,0x681330,0x681710,0x681790,0x815df0,0x681820,0x6818d0,0x1afe70,0x1b0300,0x811770,0x810f30,0x8133d0,0x825cc0,0x823190,0x817140]:
         folder=ROOT/('recomp/config/output' if address<0x200000 else 'recomp/config/output_ovl/'+('o8' if address==0x810f30 else 'o2' if address<0x810000 else 'o9'))
         path=next(folder.glob(f'*_{address:08X}_0x{address:x}.cpp'))
         end=int(re.search(r'// Address: 0x[0-9a-f]+ - 0x([0-9a-f]+)',path.read_text())[1],16)
@@ -46,6 +49,8 @@ def main():
     files+=['game/native/gameplay_session/activity.cpp','game/native/gameplay_session/activity.hpp','game/native/gameplay_session/CMakeLists.txt','game/native/gameplay_ai/activity_tests.inc']
     files+=['game/native/gameplay_ai/initialization.cpp','game/native/gameplay_ai/initialization.hpp','game/native/gameplay_ai/initialization_tests.inc',
         'game/native/gameplay_navigation/bank.cpp','game/native/gameplay_navigation/navigation.cpp']
+    goal_units=['game/native/gameplay_ai/priority_goals.cpp','game/native/gameplay_scenario/scene_resources.cpp','game/native/gameplay_scenario/resource_templates.cpp']
+    files+=goal_units+['game/native/gameplay_ai/priority_goal_tests.inc']
     # Freeze native quoted-include dependencies. Original runtime headers are
     # intentionally supplied by the separately generated test-only surroundings.
     closure=set(files);pending=[ROOT/name for name in files if name not in entries.values()]
@@ -60,7 +65,7 @@ def main():
     frozen={name:(ROOT/name).read_bytes() for name in files};out.mkdir(parents=True)
     for name,data in frozen.items():
         path=out/'source'/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(data)
-    (out/'reference.hpp').write_bytes(frozen[helper]+b'\n#define GPR_S32(c,n) std::bit_cast<std::int32_t>(GPR_U32(c,n))\n')
+    (out/'reference.hpp').write_bytes(frozen[helper]+b'\n#define GPR_S32(c,n) std::bit_cast<std::int32_t>(GPR_U32(c,n))\n#define FPU_DIV_S(a,b) ((a)/(b))\n')
     body='\n'.join(frozen[name].decode() for name in entries.values());(out/'original.cpp').write_text(body)
     actual={Path(name).stem for name in entries.values()};calls=set(re.findall(r'\b((?:sub|o[0-9]+)_[0-9A-Fa-f]+_0x[0-9a-f]+)\(rdram',body))
     (out/'functions.h').write_text('#pragma once\n'+''.join(f'void {name}(std::uint8_t*,R5900Context*,PS2Runtime*);\n' for name in sorted(actual))+''.join(f'inline void {name}(std::uint8_t* m,R5900Context* c,PS2Runtime* r){{original_transform_port(m,c,r);}}\n' for name in sorted(calls-actual)))
@@ -69,20 +74,22 @@ def main():
     for name in ['ps2_recompiled_stubs.h','ps2_stubs.h','ps2_syscalls.h']:(out/name).write_text('#pragma once\n')
     (out/'dispatch.inc').write_text(''.join(f'case {address}:{Path(name).stem}(memory,context,runtime);return;\n' for address,name in entries.items()))
     (out/'o9.bin').write_bytes(raw)
+    (out/'o2.bin').write_bytes(o2_raw)
     compiler=COMPILERS[args.compiler];env=dict(os.environ);env['PATH']=str(compiler.parent)+os.pathsep+env.get('PATH','')
-    exe=out/'checks.exe';command=[str(compiler),'-std=c++20','-O2','-msse4.1','-DREO_AI_ORIGINAL=1','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-label','-Wno-unused-parameter','-I'+str(out),'-I'+str(out/'source'),str(out/'source'/unit),str(out/'source'/fixture),str(out/'original.cpp'),'-o',str(exe)]
+    exe=out/'checks.exe';command=[str(compiler),'-std=c++20','-O2','-fno-fast-math','-ffp-contract=off','-msse4.1','-DREO_AI_ORIGINAL=1','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-label','-Wno-unused-parameter','-I'+str(out),'-I'+str(out/'source'),str(out/'source'/unit),str(out/'source'/fixture),str(out/'original.cpp'),'-o',str(exe)]
     command.insert(command.index(str(out/'original.cpp')),str(out/'source/game/native/gameplay_ai/control_requests.cpp'))
     command.insert(command.index(str(out/'original.cpp')),str(out/'source/game/native/gameplay_session/activity.cpp'))
-    for name in ['game/native/gameplay_ai/initialization.cpp','game/native/gameplay_navigation/bank.cpp','game/native/gameplay_navigation/navigation.cpp']:
+    for name in ['game/native/gameplay_ai/initialization.cpp','game/native/gameplay_navigation/bank.cpp','game/native/gameplay_navigation/navigation.cpp',*goal_units]:
         command.insert(command.index(str(out/'original.cpp')),str(out/'source'/name))
     receipt=dict(schema=1,status='failed',game_launched=False,installed_in_game=False,stage4_complete=False,
         compiler_sha256=sha(compiler),source_sha256={name:hashlib.sha256(data).hexdigest() for name,data in frozen.items()},
         owned_image_sha256={image.relative_to(ROOT).as_posix():sha(image),main_image.relative_to(ROOT).as_posix():sha(main_image),o2_image.relative_to(ROOT).as_posix():sha(o2_image),o8_image.relative_to(ROOT).as_posix():sha(o8_image)},
         original_word_audits=proof,commands=[],declared_ports=['107C68 exact two eight-byte zero fills in original-only profile selection surroundings'],
+        immutable_evidence={'o2_71b034_f32_bits':0x41c80000,'o9_82b860_targets':[0x8231c0]*6},
         limitations=['Negative profile indices remain unavailable: original signed comparison lacks a lower bound and would address adjacent content. Indices>=20 preserve the source no-op.',
-            'Qualified native state primitives and actual Owner integration are separate checks. Full AI initialization, observations, reevaluation, remaining goal/action callbacks and game installation remain open.'])
+            'Qualified native state primitives and actual Owner integration are separate checks. Full observations, remaining goal/action callbacks, control servicing and game installation remain open.'])
     try:
-        for label,cmd in [('compile',command),('test',[str(exe),str(out/'o9.bin')])]:
+        for label,cmd in [('compile',command),('test',[str(exe),str(out/'o9.bin'),str(out/'o2.bin')])]:
             result=subprocess.run(cmd,capture_output=True,env=env,timeout=180);(out/f'{label}.stdout.txt').write_bytes(result.stdout);(out/f'{label}.stderr.txt').write_bytes(result.stderr);receipt['commands'].append(dict(label=label,exit_code=result.returncode,command=cmd))
             assert result.returncode==0,label+': '+result.stderr.decode(errors='replace')[-2000:]
             if label=='test':receipt['observed']=json.loads(result.stdout)

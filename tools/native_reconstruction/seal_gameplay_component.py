@@ -10,7 +10,7 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def seal(*,target,suite,status,expected,extra_sources,binaries,prior,limitations,test_count=12,ports=None,receipt_version=1,additional_evidence=()):
+def seal(*,target,suite,status,expected,extra_sources,binaries,prior,limitations,test_count=12,ports=None,receipt_version=1,parent_version=1,additional_evidence=()):
     target=ROOT/target;assert not target.exists()
     sources,cohorts,parent_checks,qualified_binaries={},{},{},{}
     observed=None
@@ -29,7 +29,7 @@ def seal(*,target,suite,status,expected,extra_sources,binaries,prior,limitations
             assert sha(path.parent/name)==digest,name
         cohorts[cc]=dict(path=path.relative_to(ROOT).as_posix(),sha256=sha(path),observed=data)
         for kind in ['parent','tests']:
-            path=ROOT/f'build-native-sjuni/{suite}-{kind}-{cc}-v1.log'
+            path=ROOT/f'build-native-sjuni/{suite}-{kind}-{cc}-v{parent_version}.log'
             raw=path.read_bytes();text=raw.decode('utf-16' if raw.startswith(b'\xff\xfe') else 'utf-8-sig')
             assert (f'100% tests passed, 0 tests failed out of {test_count}' in text) if kind=='tests' else ('FAILED:' not in text and 'error:' not in text)
             parent_checks[path.relative_to(ROOT).as_posix()]=sha(path)

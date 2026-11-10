@@ -22,6 +22,7 @@
 #include "../gameplay_navigation/scene_candidates.hpp"
 #include "../gameplay_navigation/scene_lookup.hpp"
 #include "../gameplay_ai/initialization.hpp"
+#include "../gameplay_ai/priority_goals.hpp"
 
 namespace reo::native::gameplay_update {
 namespace tasks=gameplay_tasks;
@@ -200,6 +201,7 @@ public:
     std::optional<std::int32_t> ai_activity_mode()const noexcept;
     gameplay_ai::ControlApplied receive_ai_controls(std::span<const std::uint8_t>);
     gameplay_ai::InitializationResult initialize_ai(const world::actors::EntityId&);
+    gameplay_ai::GoalReevaluated reevaluate_ai_goal(const world::actors::EntityId&,const scenario::SceneResources&);
 private:
     world::World& world_;
     tasks::Scheduler linked_;

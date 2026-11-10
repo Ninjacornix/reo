@@ -124,6 +124,12 @@ The current resource and inventory implementation includes:
   VM suites pass19719138 checks/30245 original dispatcher calls per compiler;
   their dependency-list correction and failed standalone links are recorded.
 
+- [AI goal reevaluation](AI_GOAL_REEVALUATION.md) now supplies complete8133D0,
+  character7 item selection825CC0 and target-busy823190 through canonical Actor,
+  navigation and resource owners. Both compilers pass94095293 checks including
+  62722 complete reevaluations and512 alias cases; twelve parent tests pass.
+  Full observations, reactions/actions, construction and game acceptance remain open.
+
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.
 - [Placed-resource collisions](RESOURCE_COLLISIONS.md) through the shared128

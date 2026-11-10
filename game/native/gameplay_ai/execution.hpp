@@ -17,6 +17,11 @@ struct ExecutionState {
     std::uint16_t periodic_counter{},room_memo{},reaction_countdown{};
     std::uint32_t action_counter{};
     std::int32_t forced_priority{};
+    std::uint8_t peer_priority{},reference_request{};
+    std::uint16_t owned_request{};
+    //1090 is a full word;825CC0 replaces only its low byte while goal B writes
+    // a zero-extended equipment-slot byte. Do not split these mutable aliases.
+    std::uint32_t goal_resource{};
     friend bool operator==(const ExecutionState&,const ExecutionState&)=default;
 };
 struct WeightProfile {
