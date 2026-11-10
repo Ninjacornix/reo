@@ -45,6 +45,7 @@ def main():
     p.add_argument('--actor-resource-operations', action='store_true')
     p.add_argument('--resource-auxiliary', action='store_true')
     p.add_argument('--actor-terminal', action='store_true')
+    p.add_argument('--actor-progression', action='store_true')
     p.add_argument('--weapon-resources', action='store_true')
     p.add_argument('--equipment-resources', action='store_true')
     p.add_argument('--equipment-selection', action='store_true')
@@ -74,6 +75,7 @@ def main():
     assert not args.actor_resource_operations or args.resource_ownership
     assert not args.resource_auxiliary or args.actor_resource_operations
     assert not args.actor_terminal or args.resource_auxiliary
+    assert not args.actor_progression or args.actor_terminal
     assert not args.weapon_resources or args.resource_inventory
     assert not args.equipment_resources or args.weapon_resources
     assert not args.equipment_selection or args.equipment_resources
@@ -176,6 +178,9 @@ def main():
         for at in [0x5b5f10,0x5b6180,0x5b6300,0x5f6800]:entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.actor_terminal:
         for at in [0x6687a0,0x667370]:entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
+    if args.actor_progression:
+        for at in [0x667420,0x667e90,0x668050,0x1b0340,0x65fc90]:
+            bank='sub'if at<0x370000 else'o2';folder=ROOT/('recomp/config/output'if bank=='sub'else'recomp/config/output_ovl/o2');entries[at]=next(folder.glob(f'{bank}_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.weapon_resources:
         for at in [0x1d3b00,0x1ad610,0x6b4ae0,0x5b4ce0]:
             folder=ROOT/('recomp/config/output' if at<0x370000 else 'recomp/config/output_ovl/o2')
@@ -227,6 +232,7 @@ def main():
     if args.resource_ownership: units+=['game/native/gameplay_world/resource_ownership.cpp']
     if args.actor_resource_operations: units+=['game/native/gameplay_world/actor_resource_operations.cpp','game/native/gameplay_world/equipment_notice.cpp','game/native/gameplay_world/resource_auxiliary_lists.cpp']
     if args.actor_terminal: units+=['game/native/gameplay_world/actor_terminal_timer.cpp']
+    if args.actor_progression: units+=['game/native/gameplay_world/actor_gauge_progression.cpp']
     if args.weapon_resources:
         units+=['game/native/'+n for n in ['gameplay_weapon_resources/weapon_resources.cpp','gameplay_bank_loading/aliases.cpp','gameplay_bank_loading/loader.cpp','gameplay_audio/owner.cpp','gameplay_audio/import.cpp','gameplay_audio/routing.cpp','gameplay_audio/spatial.cpp','audio_banks/v2/session.cpp','audio_banks/v2/algorithms.cpp','resources/bounded_view.cpp','resources/virtual_file_view.cpp','resources/resource_session.cpp','resources_windows/pinned_file.cpp','resource_io/async_read_owner.cpp','afs_source_range/afs_source_range.cpp','tasks/serial_worker.cpp']]
         units=list(dict.fromkeys(units))
@@ -295,6 +301,8 @@ def main():
         name='tools/native_reconstruction/resource_auxiliary_lists_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.actor_terminal:
         name='tools/native_reconstruction/actor_terminal_timer_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.actor_progression:
+        name='tools/native_reconstruction/actor_gauge_progression_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.weapon_resources:
         name='tools/native_reconstruction/weapon_resources_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.equipment_resources:
@@ -414,6 +422,10 @@ def main():
                 value=overlay['o2'][at-0x570000:at-0x570000+size];record.setdefault('resource_companion_switches',{})[hex(at)]=value.hex();init+='{const std::uint8_t data[]{'+','.join(str(v)for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
         if args.resource_companions:
             at,size=0x73ebc0,48;value=overlay['o2'][at-0x570000:at-0x570000+size];record['companion_offset_constants']=value.hex();init+='{const std::uint8_t data[]{'+','.join(str(v)for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
+        if args.actor_progression:
+            for at,size in [(0x71adb0,32),(0x71add0,32),(0x71ad10,32),(0x740478,4)]:
+                value=overlay['o2'][at-0x570000:at-0x570000+size];record.setdefault('gauge_progression_tables',{})[hex(at)]={'bytes':size,'sha256':hashlib.sha256(value).hexdigest()};init+='{const std::uint8_t data[]{'+','.join(str(v)for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
+            record['declared_ports'].append('667420 global UI/timer request6DF160, close-admission6DEE80, UI-close6E1430, recovery65FCB0 and off-room notice81C690 are explicit controlled effects; actual inventory5F6800 and pose667370 execute')
         (out/'owned_constants.hpp').write_text(init+'}\n')
         (out / 'owned_effect_geometry.bin').write_bytes((corpus / 'owned_effect_geometry.bin').read_bytes())
         if args.resource_static:
@@ -505,6 +517,7 @@ def main():
         if args.actor_resource_operations: command.insert(1,'-DREO_ACTOR_RESOURCE_OPERATIONS=1')
         if args.resource_auxiliary: command.insert(1,'-DREO_RESOURCE_AUXILIARY_LISTS=1')
         if args.actor_terminal: command.insert(1,'-DREO_ACTOR_TERMINAL_TIMER=1')
+        if args.actor_progression: command.insert(1,'-DREO_ACTOR_GAUGE_PROGRESSION=1')
         if args.weapon_resources: command.insert(1,'-DREO_WEAPON_RESOURCES=1')
         if args.equipment_resources: command.insert(1,'-DREO_EQUIPMENT_RESOURCES=1')
         if args.equipment_selection: command.insert(1,'-DREO_EQUIPMENT_SELECTION=1')

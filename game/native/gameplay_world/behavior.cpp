@@ -16,14 +16,14 @@ private:World& world_;Actor& actor_;GaugeApplication& gauge_;
 };
 }
 BehaviorFrameServices::BehaviorFrameServices(Services& frame,BehaviorServices& behavior,
-    std::span<const std::int16_t> amounts,ActivityPublication* publication,GaugeApplication* gauge,TerminalTiming* terminal):frame_(frame),behavior_(behavior),
-    hit_timer_amounts_(amounts.begin(),amounts.end()),publication_(publication),gauge_(gauge),terminal_(terminal){}
+    std::span<const std::int16_t> amounts,ActivityPublication* publication,GaugeApplication* gauge,TerminalTiming* terminal,ProgressionTiming* progression):frame_(frame),behavior_(behavior),
+    hit_timer_amounts_(amounts.begin(),amounts.end()),publication_(publication),gauge_(gauge),terminal_(terminal),progression_(progression){}
 BehaviorFrameServices::BehaviorFrameServices(Services& frame,BehaviorServices& behavior,
-    const gameplay_collision::response::Grid& floors,std::span<const std::int16_t> amounts,ActivityPublication* publication,GaugeApplication* gauge,TerminalTiming* terminal):
-    BehaviorFrameServices(frame,behavior,amounts,publication,gauge,terminal){floors_=&floors;}
+    const gameplay_collision::response::Grid& floors,std::span<const std::int16_t> amounts,ActivityPublication* publication,GaugeApplication* gauge,TerminalTiming* terminal,ProgressionTiming* progression):
+    BehaviorFrameServices(frame,behavior,amounts,publication,gauge,terminal,progression){floors_=&floors;}
 void BehaviorFrameServices::begin_offline_frame(World& w){frame_.begin_offline_frame(w);}
 void BehaviorFrameServices::run(Stage stage,World& w,Actor& a){
-    if(stage==Stage::update_behavior)update_behavior(w,a,behavior_,hit_timer_amounts_,floors_,publication_,gauge_,terminal_);
+    if(stage==Stage::update_behavior)update_behavior(w,a,behavior_,hit_timer_amounts_,floors_,publication_,gauge_,terminal_,progression_);
     else frame_.run(stage,w,a);
 }
 bool BehaviorFrameServices::remote_motion(World& w,Actor& a){return frame_.remote_motion(w,a);}
@@ -32,7 +32,7 @@ void BehaviorFrameServices::switch_grid(World& w,std::int32_t next,std::int32_t 
 float BehaviorFrameServices::grid_response(World& w,std::uint8_t grid){return frame_.grid_response(w,grid);}
 void update_behavior(World& w,Actor& a,BehaviorServices& services,
                      std::span<const std::int16_t> hit_timer_amounts,
-                     const gameplay_collision::response::Grid* floors,ActivityPublication* publication,GaugeApplication* gauge,TerminalTiming* terminal){
+                     const gameplay_collision::response::Grid* floors,ActivityPublication* publication,GaugeApplication* gauge,TerminalTiming* terminal,ProgressionTiming* progression){
     auto& s=w.session();
     if(floors){sample_surface(a,*floors);resolve_surface(a,*floors);}
     else{
@@ -49,7 +49,8 @@ void update_behavior(World& w,Actor& a,BehaviorServices& services,
         actors::select_zero_health_action(a,s,services);
         if(gauge){BoundHitGauge bound(w,a,*gauge);actors::consume_pending_hit(a,s,services,hit_timer_amounts,&bound);}
         else actors::consume_pending_hit(a,s,services,hit_timer_amounts);
-        services.run(BehaviorStage::progression,w,a);
+        if(progression){if(!progression->apply_progression_timer(w,a))throw std::runtime_error("Native actor gauge timing unavailable");}
+        else services.run(BehaviorStage::progression,w,a);
         services.run(BehaviorStage::interaction,w,a);
         if(terminal){if(!terminal->apply_terminal_timer(w,a))throw std::runtime_error("Native actor terminal timing unavailable");}
         else services.run(BehaviorStage::terminal_timer,w,a);

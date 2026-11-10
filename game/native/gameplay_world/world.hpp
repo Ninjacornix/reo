@@ -63,6 +63,7 @@ struct Actor : actors::Entity,actors::HitActor {
     std::array<std::uint8_t,2> explicit_resource_pair{}; // authored action pair CAA/CAB
     std::uint16_t linked_model_variant{};
     std::uint16_t gauge_modifier_one{},gauge_modifier_two{}; // BB6/BB8; third BBA view is linked_model_variant
+    std::uint8_t gauge_rate_variant{}; // original BBE, distinct from model_variant BB4
     std::uint16_t contact_flags{};
     std::uint16_t action_flags{};
     float surface_blend_weight{},surface_blend_rate{};

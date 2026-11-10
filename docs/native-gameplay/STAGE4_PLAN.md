@@ -99,6 +99,12 @@ The current resource and inventory implementation includes:
   capture and the native behavior stage. A native frame comparison includes later
   action7 publication and rejection. Other terminal/cap transitions, periodic
   progression, initialization/import and installation remain open.
+- [Periodic gauge policy](ACTOR_PERIODIC_GAUGE.md) now supplies667420 through
+  actual inventory, resource retirement, threshold/cap events, action snapshots
+  and its native behavior stage. Both compiler comparisons include timer
+  modifiers, callback mutation, actual models and retained failure prefixes.
+  UI/recovery/off-room effects remain required consumers; their migration,
+  other actions, semantic save/load and installation remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;

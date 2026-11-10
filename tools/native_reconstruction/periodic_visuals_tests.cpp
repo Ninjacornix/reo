@@ -38,6 +38,10 @@ template<class T>void put(std::uint8_t* memory,std::uint32_t at,T value){transfo
 constexpr std::uint32_t model=0x3b85b0,heap=0x800000,parts=0x900000,child_pool=0xb00000;
 bool allocated{};
 bool task_retired{};
+#ifdef REO_ACTOR_GAUGE_PROGRESSION
+bool gauge_progression_capture{};
+bool gauge_progression_port(std::uint8_t*,R5900Context*);
+#endif
 #ifdef REO_RESOURCE_COMPANIONS
 bool companion_live_capture{};unsigned companion_light_requests{},companion_cue_requests{};std::uint16_t companion_last_cue{};
 #endif
@@ -47,6 +51,9 @@ struct CompanionPolicyCapture {unsigned children{},released{},retired{},spawned{
 #endif
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
     ++calls;const auto done=[&](){context->pc=GPR_U32(context,31);};
+#ifdef REO_ACTOR_GAUGE_PROGRESSION
+    if(gauge_progression_capture&&gauge_progression_port(memory,context)){done();return;}
+#endif
 #ifdef REO_OWNED_RECIPES
     if(context->pc==0x1b0300){SET_GPR_U32(context,2,memory[0x3243f2]);done();return;}
 #endif
@@ -265,6 +272,9 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_ACTOR_TERMINAL_TIMER
 #include "tools/native_reconstruction/actor_terminal_timer_tests.inc"
 #endif
+#ifdef REO_ACTOR_GAUGE_PROGRESSION
+#include "tools/native_reconstruction/actor_gauge_progression_tests.inc"
+#endif
 int main(int argc,char** argv)try{
     check(argc==
 #ifdef REO_RESOURCE_STATIC
@@ -432,6 +442,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_ACTOR_TERMINAL_TIMER
     compare_actor_terminal_timer(argv[2],argv[3],ram);
 #endif
+#ifdef REO_ACTOR_GAUGE_PROGRESSION
+    compare_actor_gauge_progression(argv[2],argv[3],ram);
+#endif
 #ifdef REO_EQUIPMENT_RESOURCES
     compare_equipment_resources(argv[4],argv[2],ram);
 #endif
@@ -521,6 +534,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_ACTOR_TERMINAL_TIMER
     <<",\"terminal_timer_cases\":"<<terminal_timer_cases<<",\"terminal_timer_transitions\":"<<terminal_timer_transitions<<",\"terminal_timer_live\":"<<terminal_timer_live<<",\"terminal_timer_compositions\":"<<terminal_timer_compositions<<",\"terminal_timer_refusals\":"<<terminal_timer_refusals
+#endif
+#ifdef REO_ACTOR_GAUGE_PROGRESSION
+    <<",\"gauge_progression_cases\":"<<gauge_progression_cases<<",\"gauge_progression_callbacks\":"<<gauge_progression_callbacks<<",\"gauge_progression_live\":"<<gauge_progression_live<<",\"gauge_progression_refusals\":"<<gauge_progression_refusals<<",\"gauge_progression_compositions\":"<<gauge_progression_compositions<<",\"gauge_progression_recoveries\":"<<gauge_progression_recoveries<<",\"gauge_progression_notifications\":"<<gauge_progression_notifications
 #endif
 #ifdef REO_WEAPON_RESOURCES
     <<",\"weapon_refreshes\":"<<weapon_refreshes<<",\"weapon_loaded_banks\":"<<weapon_loaded_banks<<",\"weapon_missing_banks\":"<<weapon_missing_banks<<",\"weapon_pcm_frames\":"<<weapon_pcm_frames<<",\"weapon_signal_samples\":"<<weapon_signal_samples<<",\"weapon_refusals\":"<<weapon_refusals<<",\"weapon_file_reads\":"<<weapon_file_reads<<",\"weapon_missing_file_reads\":"<<weapon_missing_file_reads
