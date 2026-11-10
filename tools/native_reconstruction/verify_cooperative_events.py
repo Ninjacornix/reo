@@ -6,7 +6,7 @@ from verify_gameplay_collision import COMPILERS
 ROOT=Path(__file__).resolve().parents[2]
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
- p=argparse.ArgumentParser();p.add_argument('--compiler',choices=COMPILERS,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--statistics',action='store_true');p.add_argument('--automatic',action='store_true');p.add_argument('--publication',action='store_true');p.add_argument('--actor-status',action='store_true');p.add_argument('--actor-actions',action='store_true');p.add_argument('--actor-inventory',action='store_true');p.add_argument('--actor-state',action='store_true');p.add_argument('--actor-activity',action='store_true');p.add_argument('--actor-gauge',action='store_true');p.add_argument('--actor-hit-gauge',action='store_true');p.add_argument('--actor-snapshot',action='store_true');a=p.parse_args();a.actor_hit_gauge|=a.actor_snapshot;a.actor_gauge|=a.actor_hit_gauge;a.actor_activity|=a.actor_gauge;a.actor_state|=a.actor_activity;a.actor_inventory|=a.actor_state;a.actor_actions|=a.actor_inventory;a.actor_status|=a.actor_actions;a.publication|=a.actor_status;a.automatic|=a.publication;a.statistics|=a.automatic;out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
+ p=argparse.ArgumentParser();p.add_argument('--compiler',choices=COMPILERS,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--statistics',action='store_true');p.add_argument('--automatic',action='store_true');p.add_argument('--publication',action='store_true');p.add_argument('--actor-status',action='store_true');p.add_argument('--actor-actions',action='store_true');p.add_argument('--actor-inventory',action='store_true');p.add_argument('--actor-state',action='store_true');p.add_argument('--actor-activity',action='store_true');p.add_argument('--actor-gauge',action='store_true');p.add_argument('--actor-hit-gauge',action='store_true');p.add_argument('--actor-snapshot',action='store_true');p.add_argument('--actor-alignment',action='store_true');a=p.parse_args();a.actor_snapshot|=a.actor_alignment;a.actor_hit_gauge|=a.actor_snapshot;a.actor_gauge|=a.actor_hit_gauge;a.actor_activity|=a.actor_gauge;a.actor_state|=a.actor_activity;a.actor_inventory|=a.actor_state;a.actor_actions|=a.actor_inventory;a.actor_status|=a.actor_actions;a.publication|=a.actor_status;a.automatic|=a.publication;a.statistics|=a.automatic;out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
  image=ROOT/'build-function-index/owned-overlays/o0.bin';assert sha(image)=='bfac1906d63d585736e46573295cff12e308720af6b49914e1ad8695dfcf50c2';raw=image.read_bytes();entries={};proof=[]
  addresses=[0x37bfb0,0x37c060,0x37c170,0x37c200,0x37c2c0,0x37c3b0]+([0x37b990,0x37bbc0,0x37c470,0x1b02d0]if a.statistics else[])
  if a.automatic:
@@ -24,6 +24,9 @@ def main():
  if a.actor_snapshot:
   for entry,first,last in [(0x5f2b70,0x5f2b9c,0x5f2bbc),(0x586aa0,0x586b88,0x586bc8),(0x65ed70,0x65efd4,0x65f004),(0x5d76d0,0x5d7734,0x5d7758)]:
    name=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{entry:08X}_*')).relative_to(ROOT).as_posix();field_sources.append(name);proof.append(compare_source('primary actor item ID, pitch adjustment/base and target index provenance',name,first,last,lambda x,n:o2[x-0x570000:x-0x570000+n]))
+ if a.actor_alignment:
+  for entry in [0x666f50,0x66d850]:
+   name=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{entry:08X}_*')).relative_to(ROOT).as_posix();field_sources.append(name);end=int(re.search(r'// Address: 0x[0-9a-f]+ - 0x([0-9a-f]+)',(ROOT/name).read_text())[1],16);proof.append(compare_source('static alignment field provenance only; these producer/consumer bodies are not executed by this message fixture',name,entry,end,lambda x,n:o2[x-0x570000:x-0x570000+n]))
  fixture='tools/native_reconstruction/cooperative_events_tests.cpp';helper='tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp';unit='game/native/gameplay_events/events.cpp';profile='game/native/gameplay_events/event_priority_profile.inc'
  files=[unit,'game/native/gameplay_events/events.hpp',profile,'game/native/gameplay_events/CMakeLists.txt','game/native/CMakeLists.txt',fixture,helper,Path(__file__).relative_to(ROOT).as_posix(),*entries.values(),*field_sources]
  if a.statistics:
@@ -40,6 +43,7 @@ def main():
   if a.actor_gauge:files += ['tools/native_reconstruction/actor_gauge_effects_tests.inc','game/native/gameplay_update/CMakeLists.txt']
   if a.actor_hit_gauge:files += ['tools/native_reconstruction/actor_hit_gauge_tests.inc']
   if a.actor_snapshot:files += ['tools/native_reconstruction/actor_snapshot_message_tests.inc']
+  if a.actor_alignment:files += ['tools/native_reconstruction/actor_alignment_message_tests.inc']
   files=list(dict.fromkeys(files))
   for name in files:
    for inc in re.findall(r'^\s*#include "([^"]+)"',(ROOT/name).read_text(),re.M):
@@ -70,6 +74,7 @@ def main():
   (out/'condition_switch.bin').write_bytes(raw[0x38cce0-0x370000:0x38cce0-0x370000+64]);r['condition_switch_sha256']=sha(out/'condition_switch.bin');r['automatic_worker_installed_in_native_owner']=True
   flags=cmd[1:cmd.index(str(out/'source'/unit))];flags += ['-DREO_AUTOMATIC_COMPLETION=1','-pthread','-fno-fast-math','-ffp-contract=off']
   if a.publication:flags += ['-DREO_SCENARIO_PUBLICATION=1']
+  if a.actor_alignment:flags += ['-DREO_ACTOR_ALIGNMENT_MESSAGE=1'];r['actor_alignment_admission']='Complete67E230 selector6 through canonical optional alignment target, raw XYZ and signed yaw; real producers/import, alignment execution and transport remain open'
   if a.actor_snapshot:flags += ['-DREO_ACTOR_SNAPSHOT_MESSAGE=1'];r['actor_snapshot_admission']='Complete67E230 selector1 with raw float XYZ, canonical action/aim/resource fields, actual gauge helpers and shared suppression word; unknown stack padding is not a native wire format'
   if a.actor_hit_gauge:flags += ['-DREO_ACTOR_HIT_GAUGE=1'];r['actor_hit_gauge_admission']='Actual native World/behavior/pending-hit/gauge/cooperative pool; complete660AF0 with actual660060/666620/666D90 for the controlled numeric80/800000 retained-action branch; UI/statistics/final contact effects are declared ports'
   if a.actor_gauge:flags += ['-DREO_ACTOR_GAUGE_EFFECTS=1'];r['actor_gauge_admission']='Complete660060/667E90/668050/1B0340 through actual Events and bound clock; complete pure668110 runs only at source caller argument100 and its discarded return is not projected'

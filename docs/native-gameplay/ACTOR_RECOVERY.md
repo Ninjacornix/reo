@@ -48,6 +48,7 @@ complete owned body/shape pointer tables. Failed runs are retained, including
 the GCC fixture-formatting warning corrected with strict warnings still enabled.
 
 Confirmed absent banks are not loaded-clip or installed-game recovery acceptance.
-The actual UI consumer, broader animation/field initialization, separate65FBA0
-zero-health entry and its behavior caller, queue/receiver/transport, native
+The separate65FBA0 entry and its behavior caller now have a
+[qualified native consumer](ACTOR_ZERO_HEALTH.md). The actual UI consumer,
+broader animation/field initialization, queue/receiver/transport, native
 save/load and representative installation tests remain open.

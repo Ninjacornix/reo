@@ -16,6 +16,7 @@ namespace reo::native::gameplay_world {
 namespace actors=gameplay_actors;
 namespace input=gameplay_actors::input;
 struct Position {float x{},y{},z{};};
+struct AlignmentTarget {Position position;std::int16_t yaw{};};
 struct CollisionShapeTarget {gameplay_collision::Vec3 center;float radius{};};
 struct ControlRequest {std::uint8_t pending{},kind{};std::uint16_t parameter{};};
 struct ProjectileContact {gameplay_collision::Vec3 point,normal;};
@@ -65,6 +66,9 @@ struct Actor : actors::Entity,actors::HitActor {
     std::optional<std::uint8_t> interaction_resource; // C80, descriptor item ID from5F2B70
     std::optional<std::int16_t> aim_pitch_adjustment,aim_target_pitch; // BC8/CD4
     std::optional<std::uint8_t> aim_target_index; // CDC, FF means no selected target
+    // Primary alignment contract C34/C38/C3C and C4C. Other source-state
+    // overlays do not establish this target; actual producers/import must.
+    std::optional<AlignmentTarget> alignment_target;
     std::array<std::uint8_t,2> explicit_resource_pair{}; // authored action pair CAA/CAB
     std::uint16_t linked_model_variant{};
     std::uint16_t gauge_modifier_one{},gauge_modifier_two{}; // BB6/BB8; third BBA view is linked_model_variant

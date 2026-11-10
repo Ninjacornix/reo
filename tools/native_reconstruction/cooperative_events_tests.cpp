@@ -32,6 +32,11 @@ bool actor_state_capture{};
 void actor_state_message_port(std::uint8_t*,R5900Context*);
 void actor_state_room_owner_port(std::uint8_t*,R5900Context*);
 #endif
+#ifdef REO_ACTOR_ALIGNMENT_MESSAGE
+bool actor_alignment_capture{};
+void actor_alignment_message_port(std::uint8_t*,R5900Context*);
+void actor_alignment_room_owner_port(std::uint8_t*,R5900Context*);
+#endif
 #ifdef REO_ACTOR_SNAPSHOT_MESSAGE
 bool actor_snapshot_capture{};
 void actor_snapshot_message_port(std::uint8_t*,R5900Context*);
@@ -51,6 +56,9 @@ case 0x1b0300:SET_GPR_U32(context,2,memory[0x3243f2]);done();return;
 #endif
 #ifdef REO_SCENARIO_PUBLICATION
 case 0x811190:case 0x810870:
+#ifdef REO_ACTOR_ALIGNMENT_MESSAGE
+if(actor_alignment_capture){actor_alignment_message_port(memory,context);done();return;}
+#endif
 #ifdef REO_ACTOR_SNAPSHOT_MESSAGE
 if(actor_snapshot_capture){actor_snapshot_message_port(memory,context);done();return;}
 #endif
@@ -70,6 +78,9 @@ publication_message_port(memory,context);done();return;
 #endif
 #ifdef REO_ACTOR_STATUS_MESSAGE
 case 0x811d40:case 0x8115f0:
+#ifdef REO_ACTOR_ALIGNMENT_MESSAGE
+if(actor_alignment_capture){actor_alignment_room_owner_port(memory,context);done();return;}
+#endif
 #ifdef REO_ACTOR_SNAPSHOT_MESSAGE
 if(actor_snapshot_capture){actor_snapshot_room_owner_port(memory,context);done();return;}
 #endif
@@ -129,6 +140,9 @@ void compare(const e::Events& owner,const std::uint8_t* memory){check(owner.avai
 #endif
 #ifdef REO_ACTOR_SNAPSHOT_MESSAGE
 #include "tools/native_reconstruction/actor_snapshot_message_tests.inc"
+#endif
+#ifdef REO_ACTOR_ALIGNMENT_MESSAGE
+#include "tools/native_reconstruction/actor_alignment_message_tests.inc"
 #endif
 int main(int argc,char** argv)try{
     check(argc==
@@ -191,6 +205,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_ACTOR_SNAPSHOT_MESSAGE
     compare_actor_snapshot_messages(memory);
 #endif
+#ifdef REO_ACTOR_ALIGNMENT_MESSAGE
+    compare_actor_alignment_messages(memory);
+#endif
     std::cout<<"{\"checks\":"<<checks<<",\"appends\":"<<appends<<",\"retirements\":"<<retirements<<",\"prunings\":"<<prunings<<",\"resets\":"<<resets<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<calls
 #ifdef REO_COMPLETION_STATISTICS
     <<",\"completion_cases\":"<<completion_cases<<",\"completion_initializations\":"<<completion_initializations<<",\"completion_refusals\":"<<completion_refusals
@@ -224,6 +241,9 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_ACTOR_SNAPSHOT_MESSAGE
     <<",\"actor_snapshot_cases\":"<<actor_snapshot_cases<<",\"actor_snapshot_messages\":"<<actor_snapshot_messages<<",\"actor_snapshot_lookups\":"<<actor_snapshot_lookups<<",\"actor_snapshot_refusals\":"<<actor_snapshot_refusals<<",\"actor_snapshot_frames\":"<<actor_snapshot_frames
+#endif
+#ifdef REO_ACTOR_ALIGNMENT_MESSAGE
+    <<",\"actor_alignment_cases\":"<<actor_alignment_cases<<",\"actor_alignment_messages\":"<<actor_alignment_messages<<",\"actor_alignment_lookups\":"<<actor_alignment_lookups<<",\"actor_alignment_refusals\":"<<actor_alignment_refusals
 #endif
     <<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

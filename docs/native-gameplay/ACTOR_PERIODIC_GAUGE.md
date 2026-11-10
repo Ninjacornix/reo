@@ -23,8 +23,10 @@ records use the existing667E90/668050/37C060 native consumers, not a second even
 or clock owner. The cap path applies actual65FC90's status400 prefix and5F6800
 inventory retention, then rereads the character cap. Its known action4 branches
 use the same actual inventory and native pose snapshot. UI admission/close,
-global notification6DF160, recovery65FCB0 and off-room notification81C690 remain
-explicit required effect consumers. They have no successful defaults. The known
+global notification6DF160 and off-room notification81C690 remain explicit
+required effect consumers. Recovery65FCB0 can now bind the
+[actual native recovery owner](ACTOR_RECOVERY.md); without it the original
+required recovery port remains. None has a successful default. The known
 inventory-owner clear precedes the remaining6E1430 close consumer.
 
 Direct6DF160 source inspection confirms a global UI/timer request with further

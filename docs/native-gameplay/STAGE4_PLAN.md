@@ -114,14 +114,19 @@ The current resource and inventory implementation includes:
   through canonical status/full-state messages, inventory/resource retirement,
   health classification, actual animation selection and channel activation. The
   gauge owner can bind it directly. Both compiler comparisons include confirmed
-  absent animation banks; loaded-clip recovery, actual UI, the separate65FBA0
-  zero-health entry/behavior caller and game installation remain open.
+  absent animation banks; loaded-clip recovery, actual UI and game installation
+  remain open.
 - [Zero-health entry and behavior](ACTOR_ZERO_HEALTH.md) now supplies65FBA0 and
   complete6607D0 through actual inventory/model retirement, action poses and
   full-state publication. The behavior adapter uses that same status core with
   real native effects. Both compiler comparisons include retained delivery
   failures and later action7 publication. Other actions, initialization, actual
   UI/transport, semantic saves and installation remain open.
+- [Alignment-target publication](ACTOR_ALIGNMENT_MESSAGES.md) now supplies
+  selector6 through a canonical optional target, independently of current pose
+  and gauge state. Both compiler comparisons cover raw values, mapping and
+  callback mutation. Real target producers, alignment movement, remaining
+  selectors, transport and game installation remain open.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;

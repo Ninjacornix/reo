@@ -28,7 +28,7 @@ struct ActorActionMessage {
     std::array<std::uint8_t,4> values{};std::uint8_t equipment{};
     static constexpr unsigned type=7,length=12,options=0,dispatch_mode=4;
 };
-enum class ActorMessageSelector:std::uint8_t {none=0,snapshot=1,state=2,interaction=4,action=7,resource_pair=10,carried=12,reserved=13,status=14,extra=15};
+enum class ActorMessageSelector:std::uint8_t {none=0,snapshot=1,state=2,interaction=4,alignment=6,action=7,resource_pair=10,carried=12,reserved=13,status=14,extra=15};
 struct ActorSnapshotMessage {
     MessageRoute route{};std::uint32_t channel{};
     std::array<std::uint8_t,4> action{};gameplay_world::Position position;
@@ -48,6 +48,10 @@ struct ActorStateMessage {
 struct ActorInteractionMessage {
     MessageRoute route{};std::uint32_t channel{};std::array<std::uint8_t,4> values{};
     static constexpr unsigned type=4,length=8,options=0,dispatch_mode=4;
+};
+struct ActorAlignmentMessage {
+    MessageRoute route{};std::uint32_t channel{};gameplay_world::AlignmentTarget target;
+    static constexpr unsigned type=6,length=20,options=0,dispatch_mode=4;
 };
 struct ActorResourcePairMessage {
     MessageRoute route{};std::uint32_t channel{};std::array<std::uint8_t,2> pair{};std::array<std::uint8_t,4> carried{};
@@ -71,6 +75,7 @@ public:
     virtual bool send(const ActorInventoryMessage&)noexcept{return false;}
     virtual bool send(const ActorStateMessage&)noexcept{return false;}
     virtual bool send(const ActorSnapshotMessage&)noexcept{return false;}
+    virtual bool send(const ActorAlignmentMessage&)noexcept{return false;}
     virtual std::optional<std::uint32_t> room_owner(MessageRoute,std::uint16_t)noexcept{return{};}
 };
 enum class PublicationStatus {completed,unavailable,message_unavailable};
@@ -128,6 +133,11 @@ public:
             message.gauge_band=*band;return dispatch_actor(*actor,message);
         }
         case ActorMessageSelector::status:{ActorStatusMessage message;message.status=actor->status;message.health=actor->current;return dispatch_actor(*actor,message);}
+        case ActorMessageSelector::alignment:{
+            if(!actor->alignment_target)return PublicationStatus::unavailable;
+            ActorAlignmentMessage message;message.target=*actor->alignment_target;
+            return dispatch_actor(*actor,message);
+        }
         case ActorMessageSelector::interaction:{ActorInteractionMessage message;message.values={actor->interaction_kind,actor->interaction_mode,actor->interaction_slot,actor->interaction_detail};return dispatch_actor(*actor,message);}
         case ActorMessageSelector::resource_pair:{ActorResourcePairMessage message;message.pair=actor->explicit_resource_pair;message.carried=actor->inventory.carried;return dispatch_actor(*actor,message);}
         case ActorMessageSelector::carried:case ActorMessageSelector::extra:{
