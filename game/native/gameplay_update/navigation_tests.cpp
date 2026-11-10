@@ -78,7 +78,16 @@ void scene_owner_contracts(){
     actor->collision.local_center.z=54;actor->motion_class=0x1a;check(owner.collect_actor_scene_candidates(id,*records).count==0);actor->motion_class=0;
     check(controls.apply(u::scenario::ControlCommand::disable_one,{42},nullptr).matched==1&&owner.collect_actor_scene_candidates(id,*records).count==0);
     check(controls.apply(u::scenario::ControlCommand::enable_one,{42},nullptr).matched==1&&owner.collect_actor_scene_candidates(id,*records).records[0]==*scene_id);
+    actor->room=7;actor->character=7;actor->slot=5;actor->ai_control=0;
+    check(world.session().room_variants.store(7,0)&&world.navigation().bind(asset()));
+    actor->ai_control=1;record->value.condition_ordinal=2;records->touch();
+    check(owner.find_scene_navigation_condition(id,1,*records).record==*scene_id&&owner.find_scene_navigation_condition(id,1,*records,&result).record==*scene_id);
+    actor->ai_control=0;check(!owner.find_scene_navigation_condition(id,1,*records).record);
+    record->value.condition_ordinal=0;record->value.enabled=0;shape.busy=true;records->touch();
+    check(owner.find_scene_navigation_condition(id,1,*records).record==*scene_id);
+    actor->room=8;check(owner.find_scene_navigation_condition(id,0,*records).status==n::QueryStatus::unavailable);actor->room=7;
     check(controls.erase(*scene_id)==u::scenario::ControlStatus::completed&&!records->acquire(result.records[0]));
+    check(owner.find_scene_navigation_condition(id,0,*records,&result).status==n::QueryStatus::unavailable);
     check(owner.collect_actor_scene_candidates(id,*records).count==0);
     check(world.retire_primary(0)==u::world::actors::EntityStatus::completed&&owner.collect_actor_scene_candidates(id,*records).status==n::QueryStatus::unavailable);
     check(owner.close()==u::Status::completed&&world.close()==u::world::Status::completed);

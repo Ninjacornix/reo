@@ -20,6 +20,7 @@
 #include "../gameplay_navigation/destination.hpp"
 #include "../gameplay_navigation/visibility.hpp"
 #include "../gameplay_navigation/scene_candidates.hpp"
+#include "../gameplay_navigation/scene_lookup.hpp"
 
 namespace reo::native::gameplay_update {
 namespace tasks=gameplay_tasks;
@@ -187,6 +188,7 @@ public:
     gameplay_navigation::CrossRoomResult begin_actor_navigation(const world::actors::EntityId&,gameplay_navigation::Position,std::uint16_t destination_room,gameplay_navigation::CrossRoomProfile={});
     gameplay_navigation::NodeResult refresh_current_navigation_node(const world::actors::EntityId&,const gameplay_navigation::VisibilityRoom&);
     gameplay_navigation::SceneCandidates collect_actor_scene_candidates(const world::actors::EntityId&,const gameplay_scene::Records&);
+    gameplay_navigation::SceneLookupResult find_scene_navigation_condition(const world::actors::EntityId&,std::int32_t condition,const gameplay_scene::Records&,const gameplay_navigation::SceneCandidates* candidates=nullptr);
     gameplay_navigation::CollectionResult collect_navigation_links(const world::actors::EntityId&,std::uint32_t room,std::int32_t node,gameplay_navigation::CollectionProfile={});
     State state;
 private:

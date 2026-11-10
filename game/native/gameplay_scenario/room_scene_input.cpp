@@ -65,6 +65,7 @@ RoomSceneInput::RoomSceneInput(std::span<const std::byte> input,
     record.enabled = 0;
     record.body = ControlOther{std::uint8_t(tag)};
     d.ordinal = std::uint8_t(ordinal + 1);
+    record.condition_ordinal=d.ordinal;
     gameplay_scene::CollisionShape shape;
     for (unsigned i = 0; i < 4; ++i)
       shape.bounds[i] = {std::bit_cast<std::int32_t>(word(source, 8 + 8 * i)),

@@ -66,6 +66,13 @@ nav::CrossRoomResult Owner::begin_actor_navigation(const world::actors::EntityId
     const nav::RouteActorFacts facts{{actor->character,actor->slot,actor->ai_control},actor->status,actor->auxiliary_status,actor->room,{actor->position.x,actor->position.y,actor->position.z},actor->motion_class,actor->transient_marker};
     return nav::begin_actor_route(world_.navigation(),facts,world_.session().room,flags,*actor->navigation_route,destination,destination_room,profile);
 }
+nav::SceneLookupResult Owner::find_scene_navigation_condition(const world::actors::EntityId& id,std::int32_t condition,const gameplay_scene::Records& records,const nav::SceneCandidates* candidates){
+    if(!open())return {};
+    const auto actor=world_.resolve(id);if(!actor)return {};
+    const nav::ActorFacts facts{actor->character,actor->slot,actor->ai_control};
+    if(candidates)return nav::find_scene_candidate(world_.navigation(),facts,actor->room,condition,records,*candidates);
+    return nav::find_global_scene_candidate(world_.navigation(),facts,actor->room,condition,records);
+}
 nav::SceneCandidates Owner::collect_actor_scene_candidates(const world::actors::EntityId& id,const gameplay_scene::Records& records){
     if(!open())return {};
     const auto actor=world_.resolve(id);if(!actor)return {};

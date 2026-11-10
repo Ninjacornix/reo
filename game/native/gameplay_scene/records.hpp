@@ -20,7 +20,10 @@ struct Record : gameplay_scenario::SceneControl {
     gameplay_actors::EntityId owner;
     RecordId source;
     std::optional<DoorDetails> door;
-    std::optional<std::uint8_t> owner_snapshot, extra;
+    std::optional<std::uint8_t> owner_snapshot,extra; // original44/45; distinct from3F
+    // Original3F: allocator zeroes it; room initialization writes ordinal+1.
+    // Condition lookup reads this byte SIGNED, including the default zero.
+    std::uint8_t condition_ordinal{};
     // Used only for tags whose +48 has no existing semantic typed projection.
     // Type0 destination and type2 descriptor always use their body field.
     std::optional<std::uint32_t> other_content;

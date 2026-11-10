@@ -83,6 +83,13 @@ The current resource and inventory implementation includes:
   collision center Z, not radius1B8. Full812540, condition-based lookup, actual
   provider/loading and native gameplay acceptance remain open.
 
+- [Condition-based scene lookup](NAVIGATION_SCENE_LOOKUP.md) now composes both
+  complete lookup helpers with native applicability and canonical ordinal3F.
+  Both compiler suites pass13825 list/4608 global comparisons and ten parent
+  tests. Refreshed full room initialization checks actual base/helper ordinal
+  production across166 owned rooms; the existing three strict model-reference
+  refusals remain. Full AI goals/actions and native gameplay acceptance stay open.
+
 - [Primary construction](RESOURCE_FACTORY.md) from actual NBD poses and ITEM
   templates through the canonical64-model owner.
 - [Placed-resource collisions](RESOURCE_COLLISIONS.md) through the shared128

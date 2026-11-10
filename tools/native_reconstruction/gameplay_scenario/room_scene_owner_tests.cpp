@@ -157,6 +157,8 @@ void compare(World &world, const sc::RoomSceneInput &input,
     check(p.upper == fixture_read<std::int32_t>(ram.data(), at + 0x24));
     check(p.kind == ram[at + 0x30] && p.query_class == ram[at + 0x31] &&
           p.priority == ram[at + 0x32] && p.active == (ram[at + 0x3c] != 0));
+    const auto canonical=world.controls.records()->acquire(id);
+    check(canonical&&canonical->value.condition_ordinal==ram[at+0x3f]);
     if (p.kind < 14) {
       const auto record = world.controls.get(id);
       check(bool(record));
