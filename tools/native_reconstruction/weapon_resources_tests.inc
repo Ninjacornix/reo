@@ -73,7 +73,7 @@ void compare_weapon_resources(const char* iso_path,std::vector<std::uint8_t>& ra
         }
 #endif
     }
-    check(weapon_loaded_banks==14&&weapon_missing_banks==2&&weapon_signal_samples>0&&counted->reads==prepared_reads);
+    check(weapon_loaded_banks==owned_weapons.size()-2&&weapon_missing_banks==2&&weapon_signal_samples>0&&counted->reads==prepared_reads);
 #ifdef REO_RESOURCE_COMPANIONS
     check(companion_action_audio_frames>0&&companion_action_audio_signal>0&&companion_action_audio_requests>0);
 #endif

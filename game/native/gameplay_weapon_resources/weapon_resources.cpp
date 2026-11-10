@@ -16,6 +16,13 @@ std::shared_ptr<const Catalogue> Catalogue::prepare_file1_rom(std::shared_ptr<co
         if(read.status!=resources::Status::ok||read.bytes!=bytes.size()||closed!=resources::Status::ok)throw std::runtime_error("Native weapon source read failed");
         result->banks_[unsigned(selectors[i])]=animation::WeaponProgramBank::import(bytes);
     }
+    constexpr std::array<std::int8_t,18> absent{
+#include "known_wmd_absences.inc"
+    };
+    // The original clears its destination before requesting a WMD, then ignores
+    // a missing-file result and still queues the sound bank. Admit only the
+    // stock absences audited against the complete ROM inventory and ITEM banks.
+    for(const auto selector:absent)result->banks_[unsigned(selector)]=result->cleared_;
     return result;
 }
 std::shared_ptr<const animation::WeaponProgramBank> Catalogue::find(std::int8_t selector)const noexcept{

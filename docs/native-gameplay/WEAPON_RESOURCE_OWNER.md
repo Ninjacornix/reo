@@ -49,3 +49,8 @@ World/collision tests pass with LLVM and GCC. Exact receipts and source hashes
 are sealed in `native_weapon_resource_owner_qualification_v1.json`.
 Equipment attachment construction5B18D0, use/recipes/transfer, extended owners,
 actual installation and game acceptance remain open.
+
+The later [stock WMD absence correction](WEAPON_WMD_ABSENCE.md) expands this
+historical sixteen-bank admission with eighteen audited cleared-bank bindings.
+It compares the complete refresh/depletion callers, actual sound enqueue and
+32 installed sound banks. The original qualification seal remains unchanged.

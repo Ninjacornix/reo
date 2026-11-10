@@ -1,7 +1,7 @@
-# Stock weapon selectors without WMD files: follow-up finding
+# Stock weapon selectors without WMD files
 
-Status: source/asset investigation; the native correction is not yet implemented
-or installed. This finding follows the admitted resource-depletion checkpoint.
+Status: the native correction is qualified on both compilers. It is not
+installed. Stage4 remains incomplete.
 
 All five owned ITEM sections contain29 nonnegative weapon-selector values. The
 complete pinned File1 asset inventory contains16 named WMD members, at ROM
@@ -23,16 +23,45 @@ therefore remains cleared. Source1D3B00 then formats the same selector's sound
 name and calls1AD610 regardless of that file-read result; sound-loading mode2
 and actual queue capacity still govern enqueue.
 
-The current native `Catalogue` contains only the sixteen existing WMD banks.
-`Owner::refresh` clears the actor binding, sees a missing catalogue bank and
-returns unavailable before enqueuing sound. Its existing sixteen-selector
-qualification remains a valid bounded checkpoint, but this gate excludes real
-stock inputs and must close before gameplay installation.
+The earlier native `Catalogue` contained only the sixteen existing WMD banks.
+`Owner::refresh` cleared the actor binding, saw a missing catalogue bank and
+returned unavailable before enqueuing sound. That bounded checkpoint excluded
+these real stock inputs.
 
-Next implementation: admit only the audited stock absences as the existing
-native cleared program bank, then continue the actual named sound enqueue.
-Keep unknown selectors distinct from these known absences. Compare complete
-refresh/cost/depletion callers for the additional stock values with the explicit
-failed-file-read contract, and include actual weapon35 sound loading/cue output.
-Do not invent a generic success fallback or a new program for a missing file.
+`known_wmd_absences.inc` now admits exactly those eighteen values as the same
+immutable cleared bank. `Owner::refresh` consequently continues through the
+existing bounded named sound loader. The original slot0 clear rule, loading
+mode2 suppression and queue-full behavior remain. Unknown selector3 still
+returns unavailable after clearing the binding. Preparation still reads only the
+sixteen actual ROM members; refresh and depletion do no further ROM reads.
+
+The comparison derives the absence set independently from all332 nonnegative
+selector rows in the five owned ITEM sections and every named WMD inventory
+member, then requires exact equality with the production profile. Both compilers
+compare6,528 refresh cases across the34 admitted selectors, all four actors,
+loading modes, descriptor gates and selected slots0/3/255. Actual asynchronous
+loading installs32 sound banks and reports the two existing missing sound names
+(selectors0/51). Direct-install reference mixing compares45,568 PCM frames.
+The combined depletion/cost matrix adds4,033 live cases, including all eighteen
+absences, redirected descriptor self indices, mode2, and full sound/visual pools.
+A real weapon35 cue bank produces337 commands and55,706 nonzero samples under
+explicit controlled identity-bank assignment. These isolated checks do not
+establish an observed room's bank assignment.
+
+Complete original refresh/depletion/cost/audio frontends execute. The final
+WMD-read port accepts only the independently enumerated existing/absent paths;
+an absent path returns0 without touching the cleared buffer. Static owned-word
+audits cover1CC8F0/1AA480/1A9F20/1A9D70 and explain that contract; filesystem
+worker internals are not newly executed. Final positioned audio uses the
+independently qualified native mixer. Prior qualification seals remain
+historical snapshots.
+
+Both cohorts pass273,209,210 combined assertions with identical observations,
+including1,153 failed WMD attempts that leave the cleared buffer unchanged.
+Both parent builds and eight integration checks per compiler pass. Identities
+are sealed in `native_stock_wmd_absence_qualification_v1.json`, SHA256
+acb3eab3aa1dcd70bd373e0c4fa980055561b5e958c6195d3a01a4367050c5bf.
+
+Actual gameplay installation, inventory ownership/transfer/UI callers and the
+remaining Stage4 families still require work. Installed V39 is unchanged.
 This is not a game-session measurement or a reproduced slowdown diagnosis.

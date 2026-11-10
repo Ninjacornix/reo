@@ -17,7 +17,7 @@
 #include "owned_weapons.hpp"
 #include <cstdio>
 #include <string>
-unsigned weapon_file_reads{};
+unsigned weapon_file_reads{},weapon_missing_file_reads{};
 std::string weapon_string(const std::uint8_t* memory,unsigned at){if(at>0x2000000-128)throw std::runtime_error("Invalid weapon string");for(unsigned n=0;n<128;++n)if(!memory[at+n])return {reinterpret_cast<const char*>(memory+at),n};throw std::runtime_error("Unbounded weapon string");}
 #endif
 #ifdef REO_RESOURCE_PLACEMENT
@@ -114,7 +114,7 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
 #endif
 #ifdef REO_WEAPON_RESOURCES
     case 0x10a830:{const auto dst=GPR_U32(context,4);const auto format=weapon_string(memory,GPR_U32(context,5));check(dst>=0x1e00000&&dst<0x2000000-128&&(format=="weapon%02d"||format=="data/rom/motion/weapon/wp%02d.wmd"));const auto n=std::snprintf(reinterpret_cast<char*>(memory+dst),128,format.c_str(),std::bit_cast<std::int32_t>(GPR_U32(context,6)));check(n>=0&&n<128);SET_GPR_U32(context,2,n);done();return;}
-    case 0x1cc8f0:{const auto name=weapon_string(memory,GPR_U32(context,4));const auto dst=GPR_U32(context,5);check(dst>=0x749180&&dst<0x74b180&&(dst-0x749180)%2048==0&&GPR_U32(context,6)==1&&GPR_U32(context,7)==0);bool found{};for(const auto& weapon:owned_weapons){std::array<char,128> expected{};std::snprintf(expected.data(),expected.size(),"data/rom/motion/weapon/wp%02d.wmd",weapon.selector);if(name==expected.data()){check(weapon.bytes.size()<=2048);std::memcpy(memory+dst,weapon.bytes.data(),weapon.bytes.size());found=true;break;}}check(found);++weapon_file_reads;SET_GPR_U32(context,2,0);done();return;}
+    case 0x1cc8f0:{const auto name=weapon_string(memory,GPR_U32(context,4));const auto dst=GPR_U32(context,5);check(dst>=0x749180&&dst<0x74b180&&(dst-0x749180)%2048==0&&GPR_U32(context,6)==1&&GPR_U32(context,7)==0);bool found{};for(const auto& weapon:owned_weapons){std::array<char,128> expected{};std::snprintf(expected.data(),expected.size(),"data/rom/motion/weapon/wp%02d.wmd",weapon.selector);if(name==expected.data()){check(weapon.bytes.size()<=2048);if(weapon.bytes.empty())++weapon_missing_file_reads;else std::memcpy(memory+dst,weapon.bytes.data(),weapon.bytes.size());found=true;break;}}check(found);++weapon_file_reads;SET_GPR_U32(context,2,0);done();return;}
 #endif
     case 0x18dc50:check(!allocated&&GPR_U32(context,5)==4&&GPR_U32(context,4)<0x100000);allocated=true;++heap_allocations;SET_GPR_U32(context,2,1);done();return;
     case 0x18dca0:check(allocated&&GPR_U32(context,4)==1);SET_GPR_U32(context,2,heap);done();return;
@@ -476,7 +476,7 @@ int main(int argc,char** argv)try{
     <<",\"depletion_cases\":"<<depletion_cases<<",\"depletion_live\":"<<depletion_live<<",\"depletion_refusals\":"<<depletion_refusals<<",\"depletion_audio_commands\":"<<depletion_audio_commands<<",\"depletion_signal\":"<<depletion_signal
 #endif
 #ifdef REO_WEAPON_RESOURCES
-    <<",\"weapon_refreshes\":"<<weapon_refreshes<<",\"weapon_loaded_banks\":"<<weapon_loaded_banks<<",\"weapon_missing_banks\":"<<weapon_missing_banks<<",\"weapon_pcm_frames\":"<<weapon_pcm_frames<<",\"weapon_signal_samples\":"<<weapon_signal_samples<<",\"weapon_refusals\":"<<weapon_refusals<<",\"weapon_file_reads\":"<<weapon_file_reads
+    <<",\"weapon_refreshes\":"<<weapon_refreshes<<",\"weapon_loaded_banks\":"<<weapon_loaded_banks<<",\"weapon_missing_banks\":"<<weapon_missing_banks<<",\"weapon_pcm_frames\":"<<weapon_pcm_frames<<",\"weapon_signal_samples\":"<<weapon_signal_samples<<",\"weapon_refusals\":"<<weapon_refusals<<",\"weapon_file_reads\":"<<weapon_file_reads<<",\"weapon_missing_file_reads\":"<<weapon_missing_file_reads
 #endif
 #ifdef REO_EQUIPMENT_RESOURCES
     <<",\"equipment_cases\":"<<equipment_cases<<",\"equipment_full_cases\":"<<equipment_full_cases<<",\"equipment_refusals\":"<<equipment_refusals

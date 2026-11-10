@@ -1,9 +1,8 @@
 # Stage 4: native gameplay and scheduling
 
 Status, 2026-11-10: implementation started; **Stage 4 is incomplete**. The user
-requested the whole stage. Their latest instruction authorizes PC sleep only
-after the entire stage is complete and validated; do not sleep at a component
-checkpoint or while required work remains.
+requested the whole stage. Their latest instruction revokes the earlier
+conditional sleep request: continue the work and do not put the PC to sleep.
 
 The current resource and inventory implementation includes:
 
@@ -50,9 +49,10 @@ The current resource and inventory implementation includes:
   retirement on depletion. Weapon depletion/cost and actual UI/transport
   consumers remain open.
 - [Weapon depletion and use cost](RESOURCE_DEPLETION.md) through actual content,
-  debris, equipped-resource cue and weapon refresh consumers. The current WMD
-  admission excludes eighteen real stock absence cases; the
-  [explicit absence/sound-queue correction](WEAPON_WMD_ABSENCE.md) is next.
+  debris, equipped-resource cue and weapon refresh consumers. The
+  [explicit absence/sound-queue correction](WEAPON_WMD_ABSENCE.md) additionally
+  admits all eighteen audited stock selectors without WMD files, continuing
+  actual sound enqueue through the canonical loader.
 - [Resource deployment](RESOURCE_DEPLOYMENT.md) through actual content, model,
   visual, floor and update owners, including repeated-placement retention and
   the eleven-instance limit. Position messages share canonical publication;

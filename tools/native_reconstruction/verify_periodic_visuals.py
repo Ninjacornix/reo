@@ -39,6 +39,7 @@ def main():
     p.add_argument('--resource-effects', action='store_true')
     p.add_argument('--resource-debris', action='store_true')
     p.add_argument('--resource-depletion', action='store_true')
+    p.add_argument('--stock-wmd-absence', action='store_true')
     p.add_argument('--weapon-resources', action='store_true')
     p.add_argument('--equipment-resources', action='store_true')
     p.add_argument('--equipment-selection', action='store_true')
@@ -62,6 +63,7 @@ def main():
     assert not args.resource_effects or args.resource_deployment
     assert not args.resource_debris or args.resource_effects
     assert not args.resource_depletion or args.resource_debris
+    assert not args.stock_wmd_absence or args.resource_depletion
     assert not args.weapon_resources or args.resource_inventory
     assert not args.equipment_resources or args.weapon_resources
     assert not args.equipment_selection or args.equipment_resources
@@ -405,20 +407,44 @@ def main():
             selectors=[0,1,2,4,5,7,8,9,12,18,22,23,24,25,26,51]
             selected=[next(m for m in json.loads(inventory.read_bytes()) if m['member']==f'NETBIO00.DAT/0/{1260+i}')for i in range(16)]
             record['weapon_assets']=selected
-            values=[]
+            values={}
             with (ROOT/'iso/Resident Evil - Outbreak (v2.00).iso').open('rb') as iso:
                 for selector,member in zip(selectors,selected):
-                    iso.seek(member['iso_offset']);payload=iso.read(member['bytes']);assert hashlib.sha256(payload).hexdigest()==member['sha256'];values.append('{'+str(selector)+',{'+','.join(str(v)for v in payload)+'}}')
-            (out/'owned_weapons.hpp').write_text('struct OwnedWeapon {int selector;std::vector<std::uint8_t> bytes;};\ninline const std::array<OwnedWeapon,16> owned_weapons{{'+','.join(values)+'}};\n')
+                    iso.seek(member['iso_offset']);payload=iso.read(member['bytes']);assert hashlib.sha256(payload).hexdigest()==member['sha256'];values[selector]=payload
+            if args.stock_wmd_absence:
+                # Derive absence independently from the complete named inventory
+                # and every owned ITEM row, then verify the production profile.
+                members=json.loads(inventory.read_bytes())
+                named={int(re.fullmatch(r'wp(\d+)\.wmd',n.lower()).group(1)):m['member'] for m in members for n in m.get('names',[]) if re.fullmatch(r'wp(\d+)\.wmd',n.lower())}
+                assert named=={selector:member['member'] for selector,member in zip(selectors,selected)}
+                item_selectors=set();rows=[]
+                with (out/'owned_templates.bin').open('rb')as data:
+                    assert struct.unpack('<I',data.read(4))[0]==5
+                    for bank in range(5):
+                        size=struct.unpack('<I',data.read(4))[0];section=data.read(size);count=struct.unpack_from('<I',section,4)[0];start=struct.unpack_from('<I',section,16)[0]
+                        assert len(section)==size and start+count*24<=size
+                        for row in range(count):
+                            selector=struct.unpack_from('<b',section,start+row*24+14)[0]
+                            if selector>=0:item_selectors.add(selector);rows.append(dict(bank=bank,row=row,selector=selector))
+                absent=sorted(item_selectors-set(named));profile=frozen['game/native/gameplay_weapon_resources/known_wmd_absences.inc'].decode().split('\n',1)[1]
+                assert absent==[int(v)for v in profile.strip().split(',')]
+                assert len(item_selectors)==29 and len(absent)==18
+                for selector in absent:values[selector]=b''
+                record['stock_wmd_absence_audit']=dict(inventory_sha256=sha(inventory),named_members=named,item_selectors=sorted(item_selectors),absent=absent,item_rows=rows)
+            values=['{'+str(selector)+',{'+','.join(str(v)for v in payload)+'}}' for selector,payload in sorted(values.items())]
+            (out/'owned_weapons.hpp').write_text('struct OwnedWeapon {int selector;std::vector<std::uint8_t> bytes;};\ninline const std::array<OwnedWeapon,'+str(len(values))+'> owned_weapons{{'+','.join(values)+'}};\n')
             digest='69ae2c48e6f01e2605659feabb54eb9b82c63a809bdc8a78ad2d160b3c59a4a1'
             (out/'owned_iso.hpp').write_text('constexpr std::uint64_t owned_iso_bytes=4698767360ull;\nconstexpr reo::native::resources::win32::Digest owned_iso_sha{'+','.join(str(v)for v in bytes.fromhex(digest))+'};\n')
         if args.resource_depletion:
-            cue=next(m for m in json.loads(inventory.read_bytes()) if 'weapon33.snd' in [n.lower()for n in m.get('names',[])])
+            cue_name='weapon35.snd' if args.stock_wmd_absence else 'weapon33.snd'
+            cue=next(m for m in json.loads(inventory.read_bytes()) if cue_name in [n.lower()for n in m.get('names',[])])
             with (ROOT/'iso/Resident Evil - Outbreak (v2.00).iso').open('rb')as iso:
                 iso.seek(cue['iso_offset']);data=iso.read(cue['bytes']);assert hashlib.sha256(data).hexdigest()==cue['sha256']
             descriptor=struct.unpack_from('<I',data,32)[0]+16+5*16;assert data[descriptor]==0 and data[descriptor+9]==255
             (out/'owned_depletion_cue.bin').write_bytes(data);record['depletion_cue_asset']=cue
-            record['declared_ports'].append('1B93D0 final positioned bank request uses an independently qualified native audio owner/mixer; complete1B8C70 frontend executes; weapon33 cue bank is a controlled identity-bank assignment')
+            record['declared_ports'].append('1B93D0 final positioned bank request uses an independently qualified native audio owner/mixer; complete1B8C70 frontend executes; '+cue_name+' cue bank is a controlled identity-bank assignment')
+            if args.stock_wmd_absence:
+                record['declared_ports'].append('1CC8F0 returns0 without writing only for the18 independently audited missing stock WMD paths; complete original refresh/depletion callers execute. Original filesystem worker internals are not newly executed.')
         env = dict(os.environ)
         env['PATH'] = str(args.compiler.resolve().parent) + os.pathsep + env.get('PATH', '')
         binary = out / 'checks.exe'
@@ -442,6 +468,7 @@ def main():
         if args.resource_effects: command.insert(1,'-DREO_RESOURCE_EFFECTS=1')
         if args.resource_debris: command.insert(1,'-DREO_RESOURCE_DEBRIS=1')
         if args.resource_depletion: command.insert(1,'-DREO_RESOURCE_DEPLETION=1')
+        if args.stock_wmd_absence: command.insert(1,'-DREO_STOCK_WMD_ABSENCE=1')
         if args.weapon_resources: command.insert(1,'-DREO_WEAPON_RESOURCES=1')
         if args.equipment_resources: command.insert(1,'-DREO_EQUIPMENT_RESOURCES=1')
         if args.equipment_selection: command.insert(1,'-DREO_EQUIPMENT_SELECTION=1')

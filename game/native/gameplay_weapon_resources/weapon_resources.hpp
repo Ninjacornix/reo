@@ -7,7 +7,8 @@
 namespace reo::native::gameplay_world {class ResourceDepletion;}
 namespace reo::native::gameplay_weapon_resources {
 // Prepared before gameplay from the actual File1 ROM archive. Its sixteen
-// immutable banks are shared by native actors; changing equipment does no I/O.
+// immutable banks and eighteen audited cleared-bank absences are shared by
+// native actors; changing equipment does no WMD I/O.
 class Catalogue final {
 public:
     static std::shared_ptr<const Catalogue> prepare_file1_rom(std::shared_ptr<const afs_source_range::Archive>);

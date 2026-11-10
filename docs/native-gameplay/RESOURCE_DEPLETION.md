@@ -14,9 +14,9 @@ from the new content, and the passed actor's selected equipment is refreshed.
 There is no inventory detach, extra completion event, model replacement or game
 speed change. The admitted native visibility field is boolean (source byte0/1).
 
-Cue5 is the1B8C70 resource route, not the1B8BB0 actor route. It uses the actor's
+Cue5 is the1B8C70 resource route. It uses the actor's
 currently selected resource metadata and identity bank slot+8 before content
-changes. Nonprimary-category cue5 and absent selectors preserve their original
+changes. Nonprimary-category cue5 and selector-1 preserve their original
 no-request behavior. Natural visual capacity or missing effect resources do not
 suppress later cue/replacement work; a full named-bank queue does not undo the
 committed descriptor, quantity or WMD changes.
@@ -48,11 +48,11 @@ calls perform no additional ROM reads. Parent builds and eight integration check
 per compiler pass. Identities are sealed in
 `native_resource_depletion_qualification_v1.json`.
 
-This checkpoint admits the current sixteen prepared WMD selectors. **Stock item
-selectors with no WMD file still need an explicit absence profile**: the current
-native weapon owner refuses them and skips their later sound request. That
-[source/asset gap](WEAPON_WMD_ABSENCE.md) is the next fix, so this checkpoint does
-not establish complete stock weapon support. Other ownership/transfer/UI/game
+This historical checkpoint admitted sixteen prepared WMD selectors. The later
+[explicit stock absence correction](WEAPON_WMD_ABSENCE.md) adds eighteen real
+ITEM selectors without WMD files, preserving a cleared bank and continuing the
+sound request. Its expanded source/asset evidence supersedes that admission
+limitation; the earlier seal is unchanged. Other ownership/transfer/UI/game
 callers, real installation and coherent scenario acceptance also remain open.
 Installed V39 is unchanged; Stage4 remains incomplete. No game or physical audio
 device was launched for these checks.
