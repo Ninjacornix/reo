@@ -113,6 +113,11 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}/build-ninja/ci/server/source:${{ github.workspace }}/build-ninja/ci/opensnap
         run: python -B -m unittest discover -s network/server/tests -v
+      - name: Test SQLite storage and signup compatibility
+        working-directory: build-ninja/ci/opensnap
+        env:
+          PYTHONPATH: ${{ github.workspace }}/build-ninja/ci/server/source:${{ github.workspace }}/build-ninja/ci/opensnap
+        run: python -B -m unittest tests.test_sqlite_backend tests.test_storage_factory tests.test_web_signup -q
 
   windows-launcher:
     name: Windows launcher
