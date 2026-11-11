@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "status": "qualified_partial_native_scripted_motion_assets",
+  "game_launched": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_world/CMakeLists.txt": "16014853ebfaeae94c0489b35841f167a6121cf12ce651ad4aa2cb1a99625267",
+    "game/native/gameplay_world/scripted_motion_assets.hpp": "9633162b2950c2f18ca38ef6541d923f7b7d66800e9b378e2d891a609fd956f5",
+    "game/native/gameplay_world/scripted_motion_assets.cpp": "13399e2970eb39f6d990a17ecfa545458f72bdd497f35b48ec236ed473037779",
+    "game/native/gameplay_world/scripted_motion_assets_tests.cpp": "fd9426821d87f9b23efc4d5593456db49a3c006bcf5ddf93d1348badaec2fb8c",
+    "game/native/gameplay_world/scripted_motion_members.inc": "8fa70d03cbe15f518dda67432191f3215a148be603a8dc6b9558622f5bbf0516",
+    "tools/native_reconstruction/generate_scripted_motion_profile.py": "c00bd461a2afb56e9f2c920a2333e33662789e4b73bcec6351ce0e0b56bfc518",
+    "tools/native_reconstruction/verify_scripted_motion_assets.py": "450ae9c4afe58f9b743b0ec4b9e4a6e86e869b33c22040a1cd6753d9244578eb",
+    "tools/native_reconstruction/scripted_motion_loader_reference_tests.inc": "d98f1ecaf44e4e4d60b75a2591017b5ad1377498201f1ea1ae04726066e0f4f9",
+    "docs/native-gameplay/SCRIPTED_MOTION_ASSETS.md": "e343e59f25b3716695bb52c59c8dfc1b8b86b80e36bcc80dd2b3a781ba49d7bd",
+    "docs/native-gameplay/STAGE4_PLAN.md": "1065f7be98580660b222d50b9a148012f16c7bb8a2b69488f50516eacd1b4fc8"
+  },
+  "cohorts": {
+    "llvm": {
+      "assets": {
+        "receipt": "build-native-sjuni/scripted-motion-assets-llvm-v2/receipt.json",
+        "sha256": "7a7a1f73e8b51e9caecbcd7e959574e61fb1ac18a4d5fcbf087837dc47b02fbe",
+        "observed": {
+          "checks": 13209,
+          "owned_members": 89,
+          "owned_blocks": 750,
+          "consumer_updates": 16,
+          "original_loader_cases": 128
+        }
+      },
+      "parent_build": {
+        "path": "build-native-sjuni/scripted-motion-assets-parent-llvm-v1.log",
+        "sha256": "e58361b03434fbb24ffb52f6a2c137f2ec07e3f1902f74561b67983c92ecacdb"
+      },
+      "parent_tests": {
+        "path": "build-native-sjuni/scripted-motion-assets-tests-llvm-v1.log",
+        "sha256": "56c640d25cfd491f82640f78e44e1360ed3156492c604e9152b1a335e85d1d70"
+      }
+    },
+    "gcc": {
+      "assets": {
+        "receipt": "build-native-sjuni/scripted-motion-assets-gcc-v2/receipt.json",
+        "sha256": "7ab57da41178f4d8cd20e735ad314f6412397dda27bd853602ae176f4830f35d",
+        "observed": {
+          "checks": 13209,
+          "owned_members": 89,
+          "owned_blocks": 750,
+          "consumer_updates": 16,
+          "original_loader_cases": 128
+        }
+      },
+      "parent_build": {
+        "path": "build-native-sjuni/scripted-motion-assets-parent-gcc-v1.log",
+        "sha256": "e58361b03434fbb24ffb52f6a2c137f2ec07e3f1902f74561b67983c92ecacdb"
+      },
+      "parent_tests": {
+        "path": "build-native-sjuni/scripted-motion-assets-tests-gcc-v1.log",
+        "sha256": "b8bdfc6a08223f7bf6881c6a332703296e94f66af6be35382997ed6fde359ef8"
+      }
+    }
+  },
+  "profile": {
+    "path": "build-native-sjuni/scripted-motion-member-profile-v1/receipt.json",
+    "sha256": "07a097f1abba0b93b5e796a804aed4bbc81b1dabc0454cb9cdcdecbfe9fd85a2"
+  },
+  "boundaries": [
+    "Archive I/O and immutable preparation qualified; actual scene lifecycle caller migration remains open.",
+    "Original1D1CC0 routing uses declared format/read/construction observation ports; actual native reads and banks are checked separately.",
+    "Common-player-bank guard invalidation and authored actor channel-count production remain scene lifecycle work.",
+    "No game launched or speedup measured. Step4 remains incomplete."
+  ]
+}

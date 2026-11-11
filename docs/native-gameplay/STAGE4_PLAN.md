@@ -3,6 +3,11 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to keep the PC awake afterward.
 
+- [Native scripted motion assets](SCRIPTED_MOTION_ASSETS.md) now load all89
+  mapped body/head members by verified full-path alias ordinal. Both compiler
+  cohorts cover actual blocks, constructors, Update callbacks and model poses,
+  plus full original loader routing. Six parent tests pass on each compiler.
+  Cutscene lifecycle callers and game installation remain open.
 - [Native linked actor updates](LINKED_ACTOR_UPDATES.md) now adopt the actual
   shared fifty-node pool, scripted callbacks, post-callback poses, simulation
   clock countdown and canonical expiry publication in Update Owner. Both
