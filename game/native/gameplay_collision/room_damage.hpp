@@ -19,6 +19,22 @@ class RoomCounters {
   private:
     std::array<std::array<std::int16_t, edges>, rooms> values_{};
 };
+class RoomCounterPolicy {
+  public:
+    static constexpr std::size_t rows = 4, columns = 16;
+    using ScenarioRows = std::array<std::array<std::uint32_t, columns>, rows>;
+
+    static std::optional<RoomCounterPolicy> select(
+        std::uint8_t row, const std::optional<ScenarioRows>& scenario = {}) noexcept;
+    std::int16_t initial_value() const noexcept;
+    bool has_scenario_row() const noexcept { return scenario_.has_value(); }
+    std::optional<std::int16_t> value(std::int32_t selector) const noexcept;
+
+  private:
+    explicit RoomCounterPolicy(std::uint8_t row) noexcept : row_(row) {}
+    std::uint8_t row_;
+    std::optional<std::array<std::uint32_t, columns>> scenario_;
+};
 class RouteFlags {
   public:
     virtual ~RouteFlags() = default;
@@ -53,9 +69,17 @@ struct ChannelView {
 struct RoomContacts {
     RoomCounters counters;
     std::array<std::int16_t, 24> pending{};
+    bool initialize_counters(std::uint8_t row,
+        const std::optional<RoomCounterPolicy::ScenarioRows>& scenario = {}) noexcept;
+    bool counters_ready(bool needs_scenario) const noexcept {
+        return policy_ && (!needs_scenario || policy_->has_scenario_row());
+    }
+    bool set_from_policy(std::uint32_t room, std::uint32_t edge, std::int32_t selector) noexcept;
     std::int16_t* pending_amount(std::uint32_t edge) noexcept {
         return edge < pending.size() ? &pending[edge] : nullptr;
     }
+  private:
+    std::optional<RoomCounterPolicy> policy_;
 };
 class RouteDamageEffects {
   public:

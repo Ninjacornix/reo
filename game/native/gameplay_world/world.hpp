@@ -6,6 +6,7 @@
 #include "../gameplay_actors/input.hpp"
 #include "../gameplay_collision/actors.hpp"
 #include "../gameplay_collision/contact_component.hpp"
+#include "../gameplay_collision/room_damage.hpp"
 #include "../gameplay_scenario/model_reference.hpp"
 #include "inventory_state.hpp"
 #include "../gameplay_session/room_variants.hpp"
@@ -144,6 +145,7 @@ struct Actor : actors::Entity,actors::HitActor {
 };
 struct Session : actors::HitSession {
     gameplay_session::RoomVariants room_variants;
+    gameplay_collision::delivery::RoomContacts room_contacts;
     gameplay_session::Random random{};
     gameplay_session::Options options;
     std::uint8_t previous_primary{},previous_secondary{};

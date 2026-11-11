@@ -19,6 +19,7 @@ IDS += ['00690AC0','00690B80','00690C40','00690D40','00690DD0','00690E60','006B0
 IDS += ['00691FA0','00692630','0064AE50','006261D0','00626310','006263D0','0057E840','006269B0','00667370']
 IDS += ['00692B10','005D9630','00573890']
 IDS += ['00690490','005DFA90']
+IDS += ['00691D20','005D7CF0']
 
 PINNED={};PIN_COMMITS={}
 def source_bytes(p):
@@ -78,7 +79,8 @@ def main(a):
         'inline constexpr std::array<std::uint32_t,'+str(len(opener))+'> original_opener_table{'+','.join(hex(v) for v in opener)+'};',
         'inline constexpr std::array<std::uint32_t,6> original_counter_comparisons{'+','.join(hex(v) for v in struct.unpack_from('<6I',raw,0x7408d0-0x570000))+'};',
         'inline constexpr std::array<std::uint32_t,864> original_offline_table{'+','.join(hex(v) for v in struct.unpack_from('<864I',raw,0x73cbe0-0x570000))+'};',
-        'inline constexpr std::array<std::uint32_t,4> original_party_channels{'+','.join(hex(v) for v in struct.unpack_from('<4I',raw,0x73cbd0-0x570000))+'};']
+        'inline constexpr std::array<std::uint32_t,4> original_party_channels{'+','.join(hex(v) for v in struct.unpack_from('<4I',raw,0x73cbd0-0x570000))+'};',
+        'inline constexpr std::array<std::int16_t,64> original_room_counter_policy{'+','.join(str(v) for v in struct.unpack_from('<64h',raw,0x717690-0x570000))+'};']
     initialization='inline void owned_model_constants(std::uint8_t* p){\n'
     for at,size in [(0x22fe20,32),(0x241c78,32)]:
         segment=next(p for p in loads if p[2]<=at and at+size<=p[2]+p[4]);chunk=elf[segment[1]+at-segment[2]:segment[1]+at-segment[2]+size];values=struct.unpack('<'+str(size//4)+'I',chunk)
@@ -110,6 +112,7 @@ def main(a):
     shutil.copyfile(HERE/'offline_tests.inc',out/'offline_tests.inc')
     shutil.copyfile(HERE/'actor_request_vm_tests.inc',out/'actor_request_vm_tests.inc')
     shutil.copyfile(HERE/'room_variant_vm_tests.inc',out/'room_variant_vm_tests.inc')
+    shutil.copyfile(HERE/'room_counter_vm_tests.inc',out/'room_counter_vm_tests.inc')
     shutil.copyfile(HERE/'periodic_control_vm_tests.inc',out/'periodic_control_vm_tests.inc')
     shutil.copyfile(HERE/'room_rule_tests.inc',out/'room_rule_tests.inc')
     shutil.copyfile(HERE/'room_object_vm_tests.inc',out/'room_object_vm_tests.inc')
@@ -127,6 +130,7 @@ def main(a):
     units += [('companion_'+n,ROOT/'game/native'/folder/(n+'.cpp'))for folder,n in [('gameplay_effects','resource_companion'),('gameplay_world','resource_models'),('gameplay_world','model_attachments'),('gameplay_scenario','resource_templates')]]
     units += [('animation_'+n,ROOT/'game/native/animation'/(n+'.cpp'))for n in ['model','model_math','curves']]
     units += [('periodic_tasks',ROOT/'game/native/gameplay_scenario/periodic_effects.cpp')]
+    units += [('room_damage',ROOT/'game/native/gameplay_collision/room_damage.cpp')]
     if not a.pin_effects_commit:
         import sys
         sys.path.insert(0,str(ROOT/'tools/native_reconstruction'))
@@ -138,6 +142,7 @@ def main(a):
     source_paths += [path for label,path in units if not path.is_relative_to(ROOT/'build-native-sjuni')]
     source_paths.append(HERE/'periodic_control_vm_tests.inc')
     source_paths.append(HERE/'room_variant_vm_tests.inc')
+    source_paths.append(HERE/'room_counter_vm_tests.inc')
     source_paths += [HERE/'surface_vm_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]
     source_paths += [ROOT/'game/native/transform_math/transform_math.hpp',ROOT/'game/native/transform_math/transform_math.cpp']
@@ -152,6 +157,23 @@ def main(a):
     for p in source_paths:
         target=out/'source'/p.relative_to(ROOT);target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(source_bytes(p))
     corpus=ROOT/'build-native-sjuni/effect-geometry-owned-v1';corpus_receipt=json.loads((corpus/'receipt.json').read_bytes());assert len(corpus_receipt['assets'])==12 and sha(corpus/'owned_effect_geometry.bin')==corpus_receipt['package_sha256'];shutil.copyfile(corpus/'owned_effect_geometry.bin',out/'owned_effect_geometry.bin')
+    index=ROOT/'build-native-sjuni/gameplay-script-content-llvm-v14'
+    index_receipt=json.loads((index/'receipt.json').read_bytes())
+    assert index_receipt['status']=='passed' and sha(index/'inventory.json')==index_receipt['output_sha256']['inventory.json']
+    evbs=[r for r in json.loads((index/'inventory.json').read_bytes()) if r['format']=='E']
+    assert len(evbs)==5
+    policy_path=out/'owned_counter_evbs.bin'
+    with policy_path.open('wb') as package:
+        for evb in evbs:
+            with Path(evb['archive']).open('rb') as stream:
+                stream.seek(evb['archive_offset'])
+                bank=stream.read(evb['bytes'])
+            assert hashlib.sha256(bank).hexdigest()==evb['sha256']
+            obj=next(r for r in evb['declared_objects'] if r['table_index']==13)
+            start=obj['offset']
+            assert obj['upper_bound_bytes']==256 and struct.unpack_from('<I',bank,0x34)[0]==start
+            package.write(struct.pack('<I',len(bank)))
+            package.write(bank)
     os.environ['PATH']=str(cc.parent)+os.pathsep+os.environ.get('PATH','');base=[str(cc),'-std=c++20','-O2','-msse4.1','-pthread','-fno-fast-math','-ffp-contract=off','-I'+str(out/'source'),'-I'+str(out)]
     if a.pin_effects_commit:base+=['-DREO_VM_PINNED_EFFECTS=1']
     checks=[invoke(base+['-w','-c',str(out/'original.cpp'),'-o',str(out/'original.o')],out,'compile-original')]
@@ -159,11 +181,12 @@ def main(a):
         frozen=out/'source'/path.relative_to(ROOT)if not path.is_relative_to(ROOT/'build-native-sjuni')else path
         checks.append(invoke(base+['-Wall','-Wextra','-Wpedantic','-Werror','-c',str(frozen),'-o',str(out/(label+'.o'))],out,'compile-'+label))
     checks.append(invoke([str(cc)]+[str(out/'original.o')]+[str(out/(n+'.o')) for n,p in units]+['-o',str(out/'checks.exe')],out,'link'))
-    checks.append(invoke([str(out/'checks.exe'),str(out/'owned_effect_geometry.bin')],out,'test'));assert all(sha(ROOT/n)==digest for n,digest in before.items())
+    checks.append(invoke([str(out/'checks.exe'),str(out/'owned_effect_geometry.bin'),str(policy_path)],out,'test'));assert all(sha(ROOT/n)==digest for n,digest in before.items())
     receipt=dict(status='passed',compiler=str(cc),compiler_sha256=sha(cc),source_sha256=before,original_sources_sha256=sources,checked_owned_instruction_comments=words,
         pinned_shared_sources={name:dict(commit=PIN_COMMITS[name],sha256=hashlib.sha256(data).hexdigest())for name,data in PINNED.items()},pinned_current_source_drift={name:hashlib.sha256((ROOT/name).read_bytes()).hexdigest()for name,data in PINNED.items()if (ROOT/name).read_bytes()!=data},oracle_profile=dict(reference_sha256=sha(reference),sdk131_sign_extended_word_setter=True,finite_simd=True,transitive_native_headers=True,compiled_private_source_snapshot=True,periodic_scheduler_allocation_declared_port=True,actual_native_periodic_visual_owner=True),periodic_effect_corpus=dict(receipt=str((corpus/'receipt.json').relative_to(ROOT)),sha256=sha(corpus/'receipt.json'),package_sha256=corpus_receipt['package_sha256']),executable_sha256=sha(out/'checks.exe'),generated_fixture_sha256=sha(out/'original_fixture.hpp'),generated_original_sha256=sha(out/'original.cpp'),original_main_elf_sha256=elf_sha,original_main_leaf=dict(address='1B3C30',bytes=8,sha256=hashlib.sha256(body).hexdigest(),instructions=['jr ra','nop'],context_cases=4096),
         original_table_sha256=hashlib.sha256(struct.pack('<432I',*table)).hexdigest(),checks=checks,result=json.loads((out/'test.stdout.txt').read_text()),
         installed_in_game=False,game_launched=False,live_process_access=False,limitations=['Native opcode algorithm coverage is partial; entire programs with unsupported handlers are refused before native install.','Canonical flag storage and offline actor-delta merging are native; actual game caller/content import, notification delivery and message services remain external integration gates.','Actual original dispatcher and handler bodies are used only in the test oracle, with bounded memory/register scaffolding. No MIPS execution ships in native core.'])
+    receipt['room_counter_policy']=dict(index_receipt_sha256=sha(index/'receipt.json'),owned_members={e['name']:e['sha256'] for e in evbs},package_sha256=sha(policy_path))
     (out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps(dict(status='passed',checks=receipt['result']['checks'],original_invocations=receipt['result']['original_dispatch_invocations'],coverage={k:v['count'] for k,v in receipt['result']['coverage'].items()},instruction_comments=words,output=str(out))))
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--compiler',required=True);p.add_argument('--output',required=True,type=Path);p.add_argument('--pin-domain-commit');p.add_argument('--pin-effects-commit');main(p.parse_args())

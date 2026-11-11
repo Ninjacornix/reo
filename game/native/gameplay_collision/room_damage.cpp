@@ -1,6 +1,42 @@
 #include "room_damage.hpp"
 #include <bit>
 namespace reo::native::gameplay_collision::delivery {
+namespace {
+// Four 16-halfword policy rows at 717690 in the File #1 gameplay overlay.
+constexpr std::array<std::array<std::int16_t, RoomCounterPolicy::columns>, RoomCounterPolicy::rows> built_in{{
+    {700, 900, 1100, 1300, 1500, 1700, 1900, 2100, 2300, 2500, 2700, 3000, 3300, 3600, 4000, 4400},
+    {700, 900, 1100, 1300, 1500, 1700, 1900, 2100, 2300, 2500, 2700, 3000, 3300, 3600, 4000, 4400},
+    {1100, 1300, 1500, 1700, 1900, 2100, 2300, 2500, 2700, 2900, 3100, 3400, 3700, 4000, 4400, 4800},
+    {1500, 1700, 1900, 2100, 2300, 2500, 2700, 2900, 3100, 3300, 3500, 3800, 4100, 4400, 4800, 5200}
+}};
+}
+std::optional<RoomCounterPolicy> RoomCounterPolicy::select(
+    std::uint8_t row, const std::optional<ScenarioRows>& scenario) noexcept {
+    if (row >= rows) return {};
+    RoomCounterPolicy policy(row);
+    if (scenario) policy.scenario_ = (*scenario)[row];
+    return policy;
+}
+std::int16_t RoomCounterPolicy::initial_value() const noexcept {
+    return built_in[row_][4];
+}
+std::optional<std::int16_t> RoomCounterPolicy::value(std::int32_t selector) const noexcept {
+    if (selector < 100) return built_in[row_][std::uint32_t(selector) & 15];
+    if (!scenario_) return {};
+    return std::bit_cast<std::int16_t>(std::uint16_t((*scenario_)[(selector - 100) & 15]));
+}
+bool RoomContacts::initialize_counters(std::uint8_t row,
+    const std::optional<RoomCounterPolicy::ScenarioRows>& scenario) noexcept {
+    const auto policy = RoomCounterPolicy::select(row, scenario);
+    if (!policy) return false;
+    counters.reset(policy->initial_value());
+    policy_ = policy;
+    return true;
+}
+bool RoomContacts::set_from_policy(std::uint32_t room, std::uint32_t edge, std::int32_t selector) noexcept {
+    const auto value = policy_ ? policy_->value(selector) : std::nullopt;
+    return value && counters.set(room, edge, *value);
+}
 void RoomCounters::reset(std::int16_t policy) noexcept {
     for (auto& row : values_)
         row.fill(policy);

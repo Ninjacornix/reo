@@ -1,4 +1,5 @@
 #pragma once
+#include "../gameplay_collision/room_damage.hpp"
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -44,4 +45,7 @@ private:
     std::size_t count_{};
     std::array<std::uint32_t,32> offsets_{};
 };
+// The relocated EVB top-level word at +0x34 is object 13.
+std::optional<gameplay_collision::delivery::RoomCounterPolicy::ScenarioRows>
+import_room_counter_rows(const ScriptBank&);
 } // namespace reo::native::gameplay_scenario::content

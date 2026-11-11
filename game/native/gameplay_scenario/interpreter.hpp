@@ -68,6 +68,7 @@ public:
     bool needs_room_object_queries()const noexcept{return room_object_queries_;}
     bool needs_periodic_effects()const noexcept{return periodic_effects_;}
     bool needs_surface_effects()const noexcept{return surface_effects_;}
+    bool admits_room_counters(const gameplay_world::World*)const noexcept;
     std::span<const std::uint8_t> adjusted_models()const noexcept{return adjusted_models_;}
     std::span<const std::uint8_t> visibility_models()const noexcept{return visibility_models_;}
     DispatchProfile profile()const noexcept{return profile_;}
@@ -78,6 +79,7 @@ private:
     std::vector<std::uint8_t> adjusted_models_;
     std::vector<std::uint8_t> visibility_models_;
     bool surface_effects_{};
+    bool room_counters_{},scenario_counter_policy_{};
     DispatchProfile profile_{};
 };
 struct Channel {

@@ -63,4 +63,23 @@ std::span<const std::byte> ScriptBank::view(const ObjectBound& bound)const{
     if(bound.bound.offset>bytes_->size()||bound.bound.bytes>bytes_->size()-bound.bound.offset)throw std::invalid_argument("Unowned script object range");
     return std::span<const std::byte>(*bytes_).subspan(bound.bound.offset,bound.bound.bytes);
 }
+std::optional<gameplay_collision::delivery::RoomCounterPolicy::ScenarioRows>
+import_room_counter_rows(const ScriptBank& bank) {
+    if (bank.format() != BankFormat::scenario_evb)
+        throw std::invalid_argument("Room counter policy requires a scenario EVB");
+    const auto object = bank.object(13);
+    if (!object) return {};
+    const auto bytes = bank.view(*object);
+    gameplay_collision::delivery::RoomCounterPolicy::ScenarioRows rows;
+    if (bytes.size() < rows.size() * rows.front().size() * sizeof(std::uint32_t))
+        throw std::invalid_argument("Truncated EVB room counter policy");
+    std::size_t offset = 0;
+    for (auto& row : rows) {
+        for (auto& entry : row) {
+            entry = word(bytes.data() + offset);
+            offset += sizeof(entry);
+        }
+    }
+    return rows;
+}
 } // namespace reo::native::gameplay_scenario::content
