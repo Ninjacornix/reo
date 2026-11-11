@@ -13,6 +13,14 @@ verification. The latest user instruction is to keep the PC awake afterward.
   P/EP/HP members by exact ROM alias. Paired source comparisons cover327,680
   primary filenames; actual bytes, parts,1,973 skeleton nodes and independent
   instances pass. Primary initialization and scene caller adoption remain open.
+- [Default primary initialization and restore](PRIMARY_ACTOR_INITIALIZATION.md)
+  now pass paired full original comparisons over32,768 default initializations,
+  4,096 restores and65,536 appearance setters, with real primary assets,
+  constraints and shared-bank publication. Custom statistics, saved override,
+  caller adoption and installed-game acceptance remain open. This audit also
+  separates NPC motion-character byte4 from the actual AI-control byteFF0;
+  paired current constructor/scene, World, behavior and shared-bank regression
+  qualification passes.
 - [Shared humanoid motion publication](HUMANOID_MOTION_PUBLICATION.md) adds
   explicit NPC/scripted bank identities, atomic live rebinding, stale-load
   rejection and joined-owner closure. Paired publication, current World,

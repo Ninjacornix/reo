@@ -6,5 +6,6 @@ struct NpcActorState {
     float height_parameter{}; // AA8, literal construction metadata
     std::optional<std::uint8_t> attachment; // FB4; known absent when the four slots are full
     std::uint8_t constructor_marker{}; // FD7
+    std::uint8_t motion_character{}; // byte4; distinct from primary AI control FF0
 };
 }

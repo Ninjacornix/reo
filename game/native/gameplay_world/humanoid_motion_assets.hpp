@@ -22,6 +22,7 @@ private:
     ScriptedMotionBanks scripted_;
     std::shared_ptr<const animation::MotionBank> alternate_style_;
     std::array<std::shared_ptr<const animation::MotionBank>,8> characters_;
+    std::shared_ptr<const animation::MotionBank> primary_;
     bool base_loaded_{};
     std::shared_ptr<const HumanoidMotionRevision> revision_,parent_;
 };

@@ -2,6 +2,7 @@
 #include "material_uv.hpp"
 #include "scripted_actor.hpp"
 #include "npc_actor_state.hpp"
+#include "primary_actor_state.hpp"
 #include "humanoid_motion_bindings.hpp"
 #include "linked_update_state.hpp"
 #include "speech_state.hpp"
@@ -85,6 +86,7 @@ struct Actor : actors::Entity,actors::HitActor {
     std::optional<EnemyState> enemy;
     std::optional<ScriptedActorState> scripted;
     std::optional<NpcActorState> npc;
+    std::optional<PrimaryActorState> primary_state;
     std::optional<LinkedActorFrameState> linked_frame;
     std::uint8_t character{};
     std::optional<std::uint32_t> gauge_value; // original BAC; unknown until its actual owner/import supplies it
@@ -301,6 +303,7 @@ private:
     friend class NpcActorUpdates;
     NpcActorUpdates* npc_update_owner_{};
     friend class HumanoidMotionOwner;
+    friend class PrimaryActorInitialization;
     HumanoidMotionSource* humanoid_motion_source_{};
     bool humanoid_motion_source_closed_{};
     std::unique_ptr<AuxiliaryActorPool> auxiliary_actors_;

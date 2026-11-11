@@ -1,5 +1,12 @@
 # Native NPC actor construction
 
+The [primary initialization audit](PRIMARY_ACTOR_INITIALIZATION.md) corrects a
+separate constructor field identity: NPC motion-character byte4 is not the
+AI-control byte at FF0. The canonical NPC component now retains byte4
+separately, and its reference check validates both locations. Current paired
+`primary-init-npc-{llvm,gcc}-v1` constructor and corresponding scene regressions
+pass. Earlier evidence did not prove the incorrectly shared field identity.
+
 `NpcActorConstruction` composes the original 6837C0 state contract through the
 canonical ten-actor auxiliary pool, immutable owned assets, independent native
 model/animation objects, collision profiles and actor-owned hit definitions.

@@ -4,7 +4,7 @@
 namespace reo::native::animation {class MotionBank;}
 namespace reo::native::gameplay_world {
 class World;
-enum class HumanoidMotionFamily:std::uint8_t {scene_body,scene_face,general,alternate,character};
+enum class HumanoidMotionFamily:std::uint8_t {scene_body,scene_face,general,alternate,character,primary};
 // A native semantic binding to a shared bank owner, not a captured bank version
 // or an original RAM address. Character is meaningful only for that family.
 struct HumanoidMotionAlias {

@@ -43,7 +43,7 @@ void owned(const char* archive,const char* manifest){
             check(definition==1?head_available:normal);
             const auto created=factory.create(*prepared);check(created.status==w::NpcConstructionStatus::completed);const auto actor=world.resolve(created.id);check(actor&&actor->npc&&actor->scripted);
             const auto& metadata=w::npc_actor_definition(std::uint16_t(identity));check(actor->active&&!actor->visible&&actor->category==1&&actor->model_variant==identity&&actor->model_pose_class==definition);
-            check(actor->character==(metadata.motion_style?5:3)&&actor->ai_control==actor->character&&actor->current==metadata.health&&actor->maximum==metadata.health);
+            check(actor->character==(metadata.motion_style?5:3)&&actor->npc->motion_character==actor->character&&actor->ai_control==0&&actor->current==metadata.health&&actor->maximum==metadata.health);
             check(actor->npc->height_parameter==metadata.height_parameter&&actor->npc->constructor_marker==1&&actor->motion_style==metadata.motion_style&&actor->motion_subtype==metadata.motion_subtype);
             check(actor->model_scale.x==metadata.scale&&actor->model_scale.y==metadata.scale&&actor->model_scale.z==metadata.scale&&actor->motion_multiplier==1&&actor->auxiliary_status==2);
             check(actor->model_asset==prepared->asset()&&actor->model&&actor->animation&&actor->animation->model()==actor->model&&actor->animation->resources_known&&actor->animation->channel_count==1);

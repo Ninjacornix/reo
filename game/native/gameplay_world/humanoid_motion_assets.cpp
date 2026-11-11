@@ -21,6 +21,7 @@ std::shared_ptr<const animation::MotionBank> HumanoidMotionBanks::bank(HumanoidM
     case HumanoidMotionFamily::scene_face:return scripted_.track_two;
     case HumanoidMotionFamily::general:return scripted_.other_modes;
     case HumanoidMotionFamily::alternate:return alternate_style_;
+    case HumanoidMotionFamily::primary:return primary_;
     default:return{};
     }
 }
@@ -45,6 +46,9 @@ std::pair<std::vector<std::byte>,std::string> HumanoidMotionAssets::read(std::ui
 std::shared_ptr<const HumanoidMotionBanks> HumanoidMotionAssets::base()const{
     auto result=std::shared_ptr<HumanoidMotionBanks>(new HumanoidMotionBanks);
     result->revision_=std::make_shared<const HumanoidMotionRevision>();
+    //1B2150/1B2130 initially clear this distinct bank. Common/default and
+    // scene loads do not populate it; it is not an alias for scene_body.
+    result->primary_=std::make_shared<const animation::MotionBank>();
     load_defaults(*result);return result;
 }
 void HumanoidMotionAssets::load_defaults(HumanoidMotionBanks& result)const{

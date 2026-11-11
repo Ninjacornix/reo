@@ -22,7 +22,7 @@ void compare_original_npc(const w::Actor& actor,unsigned identity,unsigned defin
     R5900Context context;PS2Runtime runtime;context.pc=0x6837c0;SET_GPR_U32(&context,4,identity);SET_GPR_U32(&context,5,definition);SET_GPR_U32(&context,29,0x1f00000);SET_GPR_U32(&context,31,0xabcdef);
     original_transform_port(memory.data(),&context,&runtime);
     const auto at=npc_reference_actor;check(context.pc==0xabcdef&&GPR_U32(&context,2)==at&&GPR_U32(&context,29)==0x1f00000&&npc_allocations==1&&npc_models==1&&npc_claims==unsigned(actor.model_pose_class==1));
-    check(actor.active==bool(memory[at])&&actor.visible==bool(memory[at+1])&&actor.category==memory[at+2]&&actor.slot==memory[at+3]&&actor.ai_control==memory[at+4]);
+    check(actor.active==bool(memory[at])&&actor.visible==bool(memory[at+1])&&actor.category==memory[at+2]&&actor.slot==memory[at+3]&&actor.npc->motion_character==memory[at+4]&&actor.ai_control==memory[at+0xff0]);
     check(actor.character==memory[at+0xb98]&&actor.motion_style==memory[at+0xb99]&&actor.motion_subtype==memory[at+0xb9a]&&actor.model_pose_class==memory[at+0x54d]);
     check(actor.model_variant==transform_read<std::uint16_t>(memory.data(),at+0xbb4)&&actor.current==transform_read<std::int16_t>(memory.data(),at+0x544)&&actor.maximum==transform_read<std::int16_t>(memory.data(),at+0x546));
     check(std::memcmp(&actor.model_scale,memory.data()+at+0xb4,12)==0&&actor.npc->height_parameter==transform_read<float>(memory.data(),at+0xaa8));
@@ -32,7 +32,7 @@ void compare_original_npc(const w::Actor& actor,unsigned identity,unsigned defin
     check(actor.auxiliary_status==transform_read<std::uint32_t>(memory.data(),at+0xba4)&&actor.room==transform_read<std::uint16_t>(memory.data(),at+0x1e2));
     check(actor.npc->attachment.value_or(255)==memory[at+0xfb4]&&actor.npc->constructor_marker==memory[at+0xfd7]);
     check(actor.animation->channel_count==memory[at+0x524]);
-    check(transform_read<std::uint32_t>(memory.data(),at+0x514)==0x4bc810&&transform_read<std::uint32_t>(memory.data(),at+0x518)==(actor.motion_style?0x4e6a20u:0x4e8970u)&&transform_read<std::uint32_t>(memory.data(),at+0x51c)==0x4d7000u+0x1f44u*actor.ai_control);
+    check(transform_read<std::uint32_t>(memory.data(),at+0x514)==0x4bc810&&transform_read<std::uint32_t>(memory.data(),at+0x518)==(actor.motion_style?0x4e6a20u:0x4e8970u)&&transform_read<std::uint32_t>(memory.data(),at+0x51c)==0x4d7000u+0x1f44u*actor.npc->motion_character);
     for(unsigned part=0;part<actor.scripted->part_visibility.size();++part)check(actor.scripted->part_visibility[part]==memory[at+0xf4+part]);
     ++original_cases;original_models+=npc_models;original_attachments+=npc_claims;observed_npc=nullptr;
 }
