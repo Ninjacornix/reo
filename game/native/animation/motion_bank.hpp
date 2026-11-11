@@ -34,6 +34,9 @@ public:
     // header, preserving type and reserved token slots0..4. A zero header
     // can still resolve those tokens; it does not imply an empty bank.
     void clear_scene_families();
+    //5ED340's table cleanup:1B1BB0 releases exactly1600 tokens, followed
+    // by two zero range stores. It preserves kind, row map and tail slots.
+    void clear_scene_table();
     bool cleared()const noexcept{return cleared_;}
     bool zero_header_known()const noexcept{return zero_header_known_;}
     // Actual1D16C0/1D19D0 sparse construction. table_offset is8 or168 for

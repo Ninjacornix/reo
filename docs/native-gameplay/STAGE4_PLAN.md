@@ -133,6 +133,11 @@ verification. The latest user instruction is to keep the PC awake afterward.
   reinitialization. Both compilers pass64 controlled owned-header compositions
   and96 cleanup guards. Extra bank/object cleanup, sparse primary playback,
   temporary restore and full entry/update/exit adoption remain open.
+- [Scene motion table cleanup](SCENE_MOTION_TABLE_RELEASE.md) now preserves
+  the exact1600-token prefix and composes represented general/body/face cleanup
+  with scoped actor reset and canonical return. Both compiler bank/helper and
+  controlled full-wrapper projections pass. Other bank/object/NPC cleanup and
+  the real full scene lifecycle remain open.
 - The [scene NPC loading-mode correction](CUTSCENE_NPC_CONSTRUCTION.md) separates
   asset-loading mode3243D7 from pause4BADF8. Paired current cohorts pass4,384 scene
   cases with independent inputs; the earlier fixture conflated the two and its

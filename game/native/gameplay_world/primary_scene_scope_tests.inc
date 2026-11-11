@@ -51,6 +51,9 @@ void scene_scopes(const char* archive,const char* manifest){
         temporary->model->local_translation(0,{321,654,987});const auto retained=owner.resident(0);
         check(owner.return_scene_models(*scope)==g::PrimaryModelStatus::unavailable&&owner.release_scene_model(*scope,0,content).status==g::PrimaryModelStatus::unavailable);++scene_scope_refusals;
         check(pool.initialize()==g::ScenePrimaryStatus::model_in_use);
+        const auto tables=content.release_scene_tables(*motions.snapshot());
+        check(motions.publish(tables).status==g::HumanoidPublicationStatus::completed&&temporary->animation->resources[1]->cleared()&&tables->scripted().other_modes->cleared());
+        check(owner.apply(*prepared,{}).status==g::PrimaryModelStatus::stale);++scene_scope_bank_cleanups;
         bool reset_observed{};
         auto reset_token=std::shared_ptr<int>(new int(1),[&](int* p){
             delete p;
@@ -81,6 +84,11 @@ void scene_scopes(const char* archive,const char* manifest){
         check(owner.return_scene_models(*scope)==g::PrimaryModelStatus::completed&&!world.busy());++scene_scope_returns;
         check(owner.return_scene_models(*scope)==g::PrimaryModelStatus::stale&&owner.reset_scene_actors(*scope)==g::PrimaryModelStatus::stale&&owner.release_scene_model(*scope,0,content).status==g::PrimaryModelStatus::stale);++scene_scope_refusals;
         if(!item.model_class){check(main->model&&main->model!=retained.primary&&main->model->local_translation(0).x==321);check(temporary->model==retained.primary&&retained.primary->local_translation(0).x==321);}
+        const auto defaults=content.ensure_base(motions.snapshot());
+        check(motions.publish(defaults).status==g::HumanoidPublicationStatus::completed&&defaults->base_loaded());
+        const std::array<std::uint8_t,1> returning_characters{std::uint8_t(item.character)};
+        const auto returning_banks=content.overlay(1,returning_characters,*defaults);
+        check(motions.publish(returning_banks).status==g::HumanoidPublicationStatus::completed&&!returning_banks->character(item.character)->cleared());++scene_scope_bank_restorations;
         for(unsigned slot:{0u,5u}){
             const auto actor=world.primary(slot);check(actor->animation->channel(a::ModelBank::primary,0).selector==(slot?95:70));
             const auto reinitialize=g::PrimaryActorModels::prepare(owner.capture(world.identity(slot)).value(),assets,content);

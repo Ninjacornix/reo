@@ -10,6 +10,7 @@
 std::string humanoid_original_identity(unsigned);
 struct R5900Context;struct PS2Runtime;
 bool humanoid_loader_original_port(std::uint8_t*,R5900Context*,PS2Runtime*);
+void original_scene_motion_cleanup(std::vector<std::uint8_t>&);
 #include "motion_bank_fixture.hpp"
 #endif
 namespace hm=reo::native::gameplay_world;
@@ -19,6 +20,7 @@ std::uint64_t native_checks{},common_loads{},character_loads{},snapshot_cases{},
 std::uint64_t character_releases{},released_queries{},base_releases{};
 std::uint64_t scene_family_releases{};
 std::uint64_t initial_bank_cases{},initial_bank_queries{},initial_bank_overlays{};
+std::uint64_t scene_table_releases{};
 void verify(bool value,std::source_location at=std::source_location::current()){
     ++native_checks;if(!value)throw std::runtime_error("Humanoid motion check "+std::to_string(at.line()));
 }
@@ -136,6 +138,25 @@ void owned(const char* archive,const char* manifest){
     memory=base_memory;tokens=base_tokens;original_overlay(memory,1,npcs);compare_common(*ready,memory);compare_character(*ready,3,memory);compare_character(*ready,5,memory);
     call(memory.data(),0x1d1cc0,1,2);verify(memory[0x4bae0f]==0);compare_common(*scene.banks,memory);compare(*scene.banks->scripted().mode_one,memory,0x4bc810);
 #endif
+    {
+#ifdef REO_HUMANOID_MOTION_ORIGINAL
+        const auto previous_memory=memory;const auto previous_tokens=tokens;
+#endif
+        auto current_scene=scene.banks;
+        for(unsigned pass=0;pass<2;++pass){
+            const auto cleaned=assets.release_scene_tables(*current_scene);
+            verify(cleaned->follows(*current_scene)&&!cleaned->base_loaded()&&!cleaned->scripted().track_two&&cleaned->bank({hm::HumanoidMotionFamily::primary,0})==current_scene->bank({hm::HumanoidMotionFamily::primary,0}));
+            verify(cleaned->scripted().mode_one->cleared()&&cleaned->scripted().other_modes->cleared()&&cleaned->scripted().mode_one->zero_header_known()&&cleaned->scripted().mode_one->kind()==current_scene->scripted().mode_one->kind());
+            verify(current_scene->scripted().mode_one->kind()==anim::MotionBankKind::strided&&scene.banks->scripted().mode_one->track_count()==1);
+#ifdef REO_HUMANOID_MOTION_ORIGINAL
+            original_scene_motion_cleanup(memory);compare_common(*cleaned,memory);compare(*cleaned->scripted().mode_one,memory,0x4bc810);compare_character(*cleaned,3,memory);compare_character(*cleaned,5,memory);
+#endif
+            current_scene=cleaned;++scene_table_releases;
+        }
+#ifdef REO_HUMANOID_MOTION_ORIGINAL
+        memory=previous_memory;tokens=previous_tokens;
+#endif
+    }
     const auto bindings=scene.banks->npc_bindings();verify(bindings.primary==scene.banks->scripted().mode_one&&bindings.style[0]==scene.banks->scripted().other_modes&&bindings.style[1]==scene.banks->alternate_style());
     verify(scene.banks->scripted().other_modes!=ready->scripted().other_modes&&scene.banks->scripted().other_modes->kind()==anim::MotionBankKind::strided&&ready->scripted().other_modes->kind()==anim::MotionBankKind::sparse);
     verify(bindings.actor_type[3]==ready->character(3)&&bindings.actor_type[5]==ready->character(5)&&scene.banks->alternate_style()==ready->alternate_style());++snapshot_cases;
@@ -196,5 +217,5 @@ int main(int argc,char** argv)try{
 #else
     const auto original_checks=0,original_bank_cases=0,original_calls=0;
 #endif
-    std::cout<<"{\"initial_bank_cases\":"<<initial_bank_cases<<",\"initial_bank_queries\":"<<initial_bank_queries<<",\"initial_bank_overlays\":"<<initial_bank_overlays<<",\"scene_family_releases\":"<<scene_family_releases<<",\"base_releases\":"<<base_releases<<",\"native_checks\":"<<native_checks<<",\"original_checks\":"<<original_checks<<",\"original_bank_cases\":"<<original_bank_cases<<",\"original_calls\":"<<original_calls<<",\"common_loads\":"<<common_loads<<",\"character_loads\":"<<character_loads<<",\"snapshot_cases\":"<<snapshot_cases<<",\"npc_bindings_cases\":"<<npc_bindings_cases<<",\"loader_name_cases\":"<<loader_name_cases<<",\"character_releases\":"<<character_releases<<",\"released_queries\":"<<released_queries<<",\"game_run\":false}\n";
+    std::cout<<"{\"scene_table_releases\":"<<scene_table_releases<<",\"initial_bank_cases\":"<<initial_bank_cases<<",\"initial_bank_queries\":"<<initial_bank_queries<<",\"initial_bank_overlays\":"<<initial_bank_overlays<<",\"scene_family_releases\":"<<scene_family_releases<<",\"base_releases\":"<<base_releases<<",\"native_checks\":"<<native_checks<<",\"original_checks\":"<<original_checks<<",\"original_bank_cases\":"<<original_bank_cases<<",\"original_calls\":"<<original_calls<<",\"common_loads\":"<<common_loads<<",\"character_loads\":"<<character_loads<<",\"snapshot_cases\":"<<snapshot_cases<<",\"npc_bindings_cases\":"<<npc_bindings_cases<<",\"loader_name_cases\":"<<loader_name_cases<<",\"character_releases\":"<<character_releases<<",\"released_queries\":"<<released_queries<<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

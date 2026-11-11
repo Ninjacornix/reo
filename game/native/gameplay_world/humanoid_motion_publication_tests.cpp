@@ -109,7 +109,9 @@ void owned(const char* archive){
     const auto families=assets.release_scene_families(*base_released);const auto families_result=owner.publish(families);
     check(families_result.status==g::HumanoidPublicationStatus::completed&&families_result.actors==4&&families_result.bindings==10&&!families->base_loaded()&&actor->animation->resources[1]->zero_header_known()&&actor->animation->resources[1]->track_count()==0&&resources.resolve(first.id,5)==families->character(3));
     check(actor->animation->resources[2]->zero_header_known()&&actor->animation->resources[2]->track_count()==0&&channel.timing.frame==old_frame&&actor->model==previous_model&&linked->animation->resources[0]==reloaded->scripted().mode_one);++publications;rebindings+=10;
-    const auto restored=assets.ensure_base(families);const auto restored_result=owner.publish(restored);
+    const auto tables=assets.release_scene_tables(*families);const auto table_result=owner.publish(tables);
+    check(table_result.status==g::HumanoidPublicationStatus::completed&&table_result.bindings==10&&tables->scripted().mode_one->cleared()&&tables->scripted().other_modes->cleared()&&actor->animation->resources[0]==tables->scripted().mode_one&&linked->animation->resources[0]==tables->scripted().mode_one&&actor->model==previous_model&&channel.timing.frame==old_frame);++publications;rebindings+=10;
+    const auto restored=assets.ensure_base(tables);const auto restored_result=owner.publish(restored);
     check(restored_result.status==g::HumanoidPublicationStatus::completed&&restored_result.bindings==10&&restored->base_loaded()&&actor->animation->resources[1]->track_count()!=0&&channel.timing.frame==old_frame&&actor->model==previous_model);++publications;rebindings+=10;
     check(owner.close()==g::HumanoidPublicationStatus::completed&&!owner.snapshot());
     failed=false;try{(void)resources.resolve(first.id,0);}catch(const std::runtime_error&){failed=true;}check(failed);++refusals;

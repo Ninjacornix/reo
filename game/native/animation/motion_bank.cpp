@@ -29,6 +29,12 @@ void MotionBank::clear_scene_families(){
     clear_family(0);clear_family(1);clear_family(2);first_=width_=0;zero_header_known_=true;
     cleared_=std::none_of(slots_.begin(),slots_.begin()+5,[](const auto& block){return bool(block);});
 }
+void MotionBank::clear_scene_table(){
+    if(!width_&&!zero_header_known_)throw std::out_of_range("Native scene table header unavailable");
+    std::fill_n(slots_.begin(),1600,std::shared_ptr<const MotionBlock>{});
+    first_=width_=0;zero_header_known_=true;
+    cleared_=std::none_of(slots_.begin(),slots_.end(),[](const auto& block){return bool(block);});
+}
 void MotionBank::load_sparse(std::span<const std::byte> bytes,std::size_t table,std::uint8_t mode,std::string identity){
     if(mode>2||identity.empty())throw std::invalid_argument("Native sparse motion bank mode/identity unavailable");
     std::uint8_t first,width;header(bytes,first,width);const auto limit=read<std::uint32_t>(bytes,table+4);if(limit>bytes.size()||table>=limit)throw std::invalid_argument("Native sparse motion descriptor range unavailable");

@@ -1,5 +1,6 @@
 namespace {
 bool humanoid_names_only{};
+bool humanoid_scene_cleanup{};
 std::vector<std::string> humanoid_original_reads;
 }
 std::string humanoid_original_identity(unsigned ordinal){
@@ -9,6 +10,25 @@ std::string humanoid_original_identity(unsigned ordinal){
     return "File1 ROM member "+std::to_string(ordinal)+": motion/player/"+found->name;
 }
 bool humanoid_loader_original_port(std::uint8_t* memory,R5900Context* context,PS2Runtime*){
+    if(humanoid_scene_cleanup){
+        const auto at=context->pc;
+        if(at==0x107c68){
+            const auto destination=GPR_U32(context,4),length=GPR_U32(context,6);
+            bool known=destination==0x600000&&length==0x10000&&GPR_U32(context,31)==0x5ed3b4;
+            for(unsigned index=0;index<10;++index){
+                const auto bank=index==0?0x4e8970u:index==1?0x4e6a20u:0x4d7000u+0x1f44*(index-2);
+                for(unsigned family=0;family<3;++family){
+                    const auto profile=0x234410+8*family;
+                    known|=GPR_U32(context,31)==0x1b1c74&&destination==bank+0xfa4+2*get<std::uint16_t>(memory,profile)&&length==2u*get<std::uint16_t>(memory,profile+2);
+                }
+            }
+            verify(known&&GPR_U32(context,5)==0);return false;
+        }
+        if(at==0x1cd120){verify(GPR_U32(context,4)==12||GPR_U32(context,4)==16);context->pc=GPR_U32(context,31);return true;}
+        if(at==0x1b14a0){verify(GPR_U32(context,4)==raw_base+0x2ff000);context->pc=GPR_U32(context,31);return true;}
+        if(at==0x6519a0||at==0x5ebb10||at==0x67c250){verify(GPR_U32(context,4)==0);context->pc=GPR_U32(context,31);return true;}
+        if(at==0x5f1290||at==0x1b2c30){context->pc=GPR_U32(context,31);return true;}
+    }
     const auto address=context->pc;
     if(humanoid_names_only&&(address==0x1d19d0||address==0x1d1940)){
         verify(address==0x1d19d0?GPR_U32(context,6)<=1:GPR_U32(context,7)==1);
@@ -32,6 +52,13 @@ bool humanoid_loader_original_port(std::uint8_t* memory,R5900Context* context,PS
         }
     }else return false;
     context->pc=GPR_U32(context,31);return true;
+}
+void original_scene_motion_cleanup(std::vector<std::uint8_t>& memory){
+    put(memory.data(),0x324444,0x600000u);put(memory.data(),raw_base+0x2ff808,0u);
+    put(memory.data(),0x4baea0,0u);put(memory.data(),0x38edcc,0u);put(memory.data(),0x38edd4,0u);
+    put(memory.data(),0x38ecdc,0u);put(memory.data(),0x38ecb8,std::int16_t(0));put(memory.data(),0x38ecb6,std::int16_t(0));put(memory.data(),0x324200,std::int16_t(0));
+    humanoid_scene_cleanup=true;struct Reset{~Reset(){humanoid_scene_cleanup=false;}}reset;
+    call(memory.data(),0x5ed340,0);
 }
 void original_humanoid_names(){
     std::vector<std::uint8_t> memory(0x2000000);constants(memory.data());owned_humanoid_formats(memory.data());put(memory.data(),0x32440c,raw_base);humanoid_names_only=true;

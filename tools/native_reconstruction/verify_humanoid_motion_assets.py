@@ -15,11 +15,13 @@ def main():
     configured=re.search(r'^CMAKE_CXX_COMPILER:[^=]+=([^\n]+)',(build/'CMakeCache.txt').read_text(),re.M)[1];assert Path(configured.strip()).resolve()==compiler.resolve()
     elf=ROOT/'game_data/SLUS_207.65';assert sha(elf)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46'
     read=elf_reader(elf.read_bytes());entries={};proof=[]
-    for at in [0x1d1500,0x1d16c0,0x1d1940,0x1d1960,0x1d1990,0x1d19d0,0x1d1a80,0x1d1b10,0x1d1cc0,0x1b1bc0,0x1b1b40,0x1b2130,0x1b2120,0x1b2140,0x1b2150,0x1b1c20,0x1b1cb0,0x1b1df0,0x1b1e20,0x1b1e50]:
+    for at in [0x1d1500,0x1d16c0,0x1d1940,0x1d1960,0x1d1990,0x1d19d0,0x1d1a80,0x1d1b10,0x1d1cc0,0x1b1bc0,0x1b1bb0,0x1b1b40,0x1b2130,0x1b2120,0x1b2140,0x1b2150,0x1b1c20,0x1b1cb0,0x1b1df0,0x1b1e20,0x1b1e50]:
         source=ROOT/f'recomp/config/output/sub_{at:08X}_0x{at:x}.cpp';begin,end=[int(v,16)for v in re.search(r'// Address: (0x[0-9a-f]+) - (0x[0-9a-f]+)',source.read_text()).groups()];entries[at]=source
         proof.append(compare_source('complete source containing common/character loader and bank construction',source.relative_to(ROOT).as_posix(),begin,end,read))
     overlay=ROOT/'build-function-index/owned-overlays/o2.bin';assert sha(overlay)=='45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226';overlay_raw=overlay.read_bytes();source=ROOT/'recomp/config/output_ovl/o2/o2_005EC0E0_0x5ec0e0.cpp';entries[0x5ec0e0]=source
     proof.append(compare_source('complete primary model-cache character-bank release route',source.relative_to(ROOT).as_posix(),0x5ec0e0,0x5ec0f8,lambda at,n:overlay_raw[at-0x570000:at-0x570000+n]))
+    source=ROOT/'recomp/config/output_ovl/o2/o2_005ED340_0x5ed340.cpp';entries[0x5ed340]=source
+    proof.append(compare_source('complete scene cleanup wrapper with controlled absent object/roster surroundings',source.relative_to(ROOT).as_posix(),0x5ed340,0x5ed76c,lambda at,n:overlay_raw[at-0x570000:at-0x570000+n]))
     profile_path=ROOT/'build-native-sjuni/humanoid-motion-member-profile-v1/receipt.json';profile=json.loads(profile_path.read_bytes());assert profile['status']=='passed'and sha(ROOT/'game/native/gameplay_world/humanoid_motion_members.inc')==profile['output_sha256']
     scripted_path=ROOT/'build-native-sjuni/scripted-motion-member-profile-v1/receipt.json';scripted=json.loads(scripted_path.read_bytes());assert scripted['status']=='passed'and sha(ROOT/'game/native/gameplay_world/scripted_motion_members.inc')==scripted['output_sha256']
     scene_rows=[row for row in scripted['rows']if row['scenario']==1 and row['clip']==2 and row['kind']in [0,2]];assert len(scene_rows)==2

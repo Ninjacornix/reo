@@ -10,6 +10,7 @@ std::uint64_t checks{},calls{},constructed{},releases{},bank_cases{},live_slots{
 std::uint64_t clear_cases{},cleared_queries{};
 std::uint64_t family_clear_cases{};
 std::uint64_t scene_family_cases{},reserved_queries{},reserved_live_cases{};
+std::uint64_t scene_table_cases{},scene_table_queries{},scene_table_tail_cases{};
 void check(bool yes,const std::string& why){++checks;if(!yes)throw std::runtime_error(why);}
 template<class T>T get(const std::uint8_t* p,std::uint32_t at){return transform_read<T>(p,at);}
 template<class T>void put(std::uint8_t* p,std::uint32_t at,T v){transform_write(p,at,v);}
@@ -56,6 +57,31 @@ void scene_family_tests(const std::vector<std::vector<std::byte>>& assets,std::v
  }
  a::MotionBank unknown;bool refused{};try{unknown.clear_scene_families();}catch(const std::out_of_range&){refused=true;}check(refused&&!unknown.zero_header_known(),"scene cleanup refuses unknown source header/type instead of inventing an empty bank");++refusal_cases;
  check(reserved_live_cases>0,"actual owned scene data retains live reserved tokens under a zero header");
+}
+void scene_table_tests(const std::vector<std::vector<std::byte>>& assets,std::vector<std::uint8_t>& ram){
+ constexpr unsigned destination=0x200000;
+ for(unsigned kind=0;kind<3;++kind){
+  std::fill_n(ram.data()+destination,0x1f44,0);a::MotionBank bank;current_asset=kind?2u:0u;
+  const auto& bytes=assets[current_asset];std::memcpy(ram.data()+raw_base,bytes.data(),bytes.size());
+  if(!kind){bank.load_sparse(bytes,8,0,"0");call(ram.data(),0x1d1940,raw_base,destination,unsigned(bytes.size()),0);}
+  else if(kind==1){bank.load_strided(bytes,200,1595,"2");call(ram.data(),0x1d1960,raw_base,destination,unsigned(bytes.size()),200,1595);}
+  else{bank.load_strided(bytes,500,0,"2");call(ram.data(),0x1d1990,raw_base,destination,unsigned(bytes.size()));}
+  compare(bank,ram,destination);const auto previous=bank;const auto old_releases=releases;unsigned expected{};
+  for(unsigned i=0;i<1600;++i)expected+=get<std::uint16_t>(ram.data(),destination+4+2*i)!=0;
+  bank.clear_scene_table();call(ram.data(),0x1b1bb0,destination+4);
+  // These two stores are verified in5ED340's owned complete body. This local
+  // test executes the complete release helper, not the whole scene wrapper.
+  ram[destination]=ram[destination+1]=0;compare(bank,ram,destination);
+  check(releases-old_releases==expected&&bank.kind()==previous.kind()&&bank.zero_header_known(),"scene pointer-table exact release extent and known header");
+  bool live_tail{};
+  for(unsigned i=0;i<2000;++i){check(bank.rows()[i]==previous.rows()[i]&&bank.slots()[i]==(i<1600?nullptr:previous.slots()[i]),"table cleanup preserves row map and slots past1600");if(i>=1600)live_tail|=bool(bank.slots()[i]);}
+  if(live_tail)++scene_table_tail_cases;
+  check(bank.cleared()==!live_tail,"partial pointer table does not invent a fully empty bank");
+  for(unsigned key=0;key<(kind?1000u:2000u);++key)for(unsigned track=0;track<5;++track){const auto slot=kind?200u*(key/100)+track:unsigned(previous.rows()[key])+track;if(slot>=2000)continue;const auto expected_token=get<std::uint16_t>(ram.data(),destination+4+2*slot);check(bank.find(key,std::uint16_t(track))==bank.slots()[slot]&&bool(bank.find(key,std::uint16_t(track)))==bool(expected_token),"post-table-cleanup original lookup formula");++scene_table_queries;}
+  bank.clear_scene_table();call(ram.data(),0x1b1bb0,destination+4);check(releases-old_releases==expected,"repeated table release preserves original counts and retained tail");++scene_table_cases;
+ }
+ check(scene_table_tail_cases>0,"owned block bytes straddle exact token1600 boundary");
+ a::MotionBank unknown;bool refused{};try{unknown.clear_scene_table();}catch(const std::out_of_range&){refused=true;}check(refused&&!unknown.zero_header_known(),"table cleanup does not invent an unknown bank type");++refusal_cases;
 }
 void family_clear_tests(const std::vector<std::vector<std::byte>>& assets,std::vector<std::uint8_t>& ram){
  constexpr unsigned destination=0x200000;
@@ -108,5 +134,6 @@ int main(int argc,char** argv)try{
  clear_tests(assets,ram);
  family_clear_tests(assets,ram);
  scene_family_tests(assets,ram);
- check(constructed>0&&releases>0&&live_slots>0,"real original allocation/memoization/release and native ownership exercised");std::cout<<"{\"reserved_live_cases\":"<<reserved_live_cases<<",\"scene_family_cases\":"<<scene_family_cases<<",\"reserved_queries\":"<<reserved_queries<<",\"family_clear_cases\":"<<family_clear_cases<<",\"checks\":"<<checks<<",\"bank_cases\":"<<bank_cases<<",\"live_slots\":"<<live_slots<<",\"query_cases\":"<<lookup_cases<<",\"cleared_query_cases\":"<<cleared_queries<<",\"clear_cases\":"<<clear_cases<<",\"packed_block_seam_calls\":"<<constructed<<",\"release_seam_calls\":"<<releases<<",\"refusal_cases\":"<<refusal_cases<<",\"lifetime_cases\":"<<lifetime_cases<<",\"original_calls\":"<<calls<<",\"game_run\":false}\n";
+ scene_table_tests(assets,ram);
+ check(constructed>0&&releases>0&&live_slots>0,"real original allocation/memoization/release and native ownership exercised");std::cout<<"{\"scene_table_cases\":"<<scene_table_cases<<",\"scene_table_queries\":"<<scene_table_queries<<",\"scene_table_tail_cases\":"<<scene_table_tail_cases<<",\"reserved_live_cases\":"<<reserved_live_cases<<",\"scene_family_cases\":"<<scene_family_cases<<",\"reserved_queries\":"<<reserved_queries<<",\"family_clear_cases\":"<<family_clear_cases<<",\"checks\":"<<checks<<",\"bank_cases\":"<<bank_cases<<",\"live_slots\":"<<live_slots<<",\"query_cases\":"<<lookup_cases<<",\"cleared_query_cases\":"<<cleared_queries<<",\"clear_cases\":"<<clear_cases<<",\"packed_block_seam_calls\":"<<constructed<<",\"release_seam_calls\":"<<releases<<",\"refusal_cases\":"<<refusal_cases<<",\"lifetime_cases\":"<<lifetime_cases<<",\"original_calls\":"<<calls<<",\"game_run\":false}\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
