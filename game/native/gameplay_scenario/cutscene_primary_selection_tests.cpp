@@ -14,7 +14,7 @@ void check(bool value,std::source_location at=std::source_location::current()){
     ++checks;if(!value)throw std::runtime_error(std::string("Cutscene primary selection check ")+at.file_name()+":"+std::to_string(at.line()));
 }
 s::CutscenePrimaryRoster roster_of(std::span<const std::uint8_t> characters){
-    check(characters.size()<=8);s::CutscenePrimaryRoster result;result.characters.fill(255);std::ranges::copy(characters,result.characters.begin());result.population=std::uint8_t(characters.size());return result;
+    check(characters.size()<=8);s::CutscenePrimaryRoster result;result.characters.fill(255);std::ranges::copy(characters,result.characters.begin());result.eligible_count=std::uint8_t(characters.size());return result;
 }
 #ifdef REO_CUTSCENE_SELECTION_ORIGINAL
 std::vector<std::uint8_t> memory(0x2000000);
@@ -23,7 +23,7 @@ std::vector<std::uint8_t> observed_retirements;
 constexpr unsigned temporary_base=0xb1f000;
 void compare(std::span<const s::CutscenePrimaryHeader> headers,const s::CutscenePrimaryRoster& roster,unsigned preferred,std::array<bool,8> occupied,const s::CutsceneActorReservations& previous,const s::CutscenePrimarySelection& result,std::span<const std::array<std::byte,36>> original_headers){
     auto* m=memory.data();std::memset(m+0x38ec00,0,0x1500);std::memset(m+temporary_base,0,8*0x10e0);
-    transform_write(m,0x38ecb6,std::int16_t(headers.size()));transform_write(m,0x38edcc,unsigned(roster.population));transform_write(m,0x38ecdc,preferred);transform_write(m,0x38edd0,temporary_base);
+    transform_write(m,0x38ecb6,std::int16_t(headers.size()));transform_write(m,0x38edcc,unsigned(roster.eligible_count));transform_write(m,0x38ecdc,preferred);transform_write(m,0x38edd0,temporary_base);
     std::memcpy(m+0x38ed90,roster.characters.data(),8);std::memset(m+0x4a5c30,0,8*0x10e0);
     for(unsigned i=0;i<8;++i){m[0x4a5c30+i*0x10e0+3]=std::uint8_t(i);m[0x4a5c30+i*0x10e0+0xb98]=std::uint8_t(60+i);}
     for(unsigned i=0;i<8;++i){m[temporary_base+0x10e0*i]=occupied[i];m[temporary_base+0x10e0*i+3]=std::uint8_t(i);}
@@ -61,15 +61,15 @@ void generated(){
         std::array<s::CutscenePrimaryHeader,8> headers{};const unsigned count=seed%9;
         for(unsigned i=0;i<count;++i){const auto code=(seed>>(i%5))^i;headers[i].enabled=(code&8)==0;const std::array<std::int16_t,4> kinds{0,3,1,7};headers[i].kind=kinds[code&3];const std::array<std::int16_t,8> characters{0,1,2,3,255,128,-1,-128};headers[i].character=characters[(code>>2)&7];headers[i].encoded_class=std::int16_t((code>>4)&3);}
         std::array<bool,8> occupied{};for(unsigned i=0;i<8;++i)occupied[i]=bool(seed&(1u<<i));
-        for(const auto& roster:rosters)for(unsigned preferred=0;preferred<=4;++preferred)run(std::span(headers).first(count),roster,preferred,occupied);
+        for(const auto& roster:rosters)for(unsigned preferred=0;preferred<=8;++preferred)run(std::span(headers).first(count),roster,preferred,occupied);
     }
     // Source ordering: a later required fallback can prevent an earlier
     // optional fallback, even when a roster character is initially available.
     const std::array<s::CutscenePrimaryHeader,3> order{{{true,3,1,0},{true,3,0,1},{true,3,1,0}}};
     const auto result=s::select_cutscene_primaries(order,roster_of(rosters[0]),2);check(result.count==2&&result.choices[0].group==1&&result.choices[0].character==1&&result.choices[1].group==2&&result.choices[1].character==0);
-    for(unsigned preference:{5u,255u,0xffffffffu}){const auto rejected=s::select_cutscene_primaries(std::span(order).subspan(1,1),roster_of(rosters[0]),preference);check(rejected.status==s::CutscenePrimarySelectionStatus::invalid_preference&&rejected.failed_group==0);++preference_refusals;}
+    for(unsigned preference:{9u,255u,0xffffffffu}){const auto rejected=s::select_cutscene_primaries(std::span(order).subspan(1,1),roster_of(rosters[0]),preference);check(rejected.status==s::CutscenePrimarySelectionStatus::invalid_preference&&rejected.failed_group==0);++preference_refusals;}
     const std::array<s::CutscenePrimaryHeader,33> too_many{};check(s::select_cutscene_primaries(too_many,{},0).status==s::CutscenePrimarySelectionStatus::invalid_count);
-    s::CutscenePrimaryRoster too_many_roster;too_many_roster.population=9;check(s::select_cutscene_primaries({},too_many_roster,0).status==s::CutscenePrimarySelectionStatus::invalid_count);
+    s::CutscenePrimaryRoster too_many_roster;too_many_roster.eligible_count=9;check(s::select_cutscene_primaries({},too_many_roster,0).status==s::CutscenePrimarySelectionStatus::invalid_count);
     // The requested/reserved byte rules deliberately permit repeated128 from
     // an unsigned roster query. Do not silently normalize it into a set.
     const std::array<s::CutscenePrimaryHeader,3> high{{{true,3,0,0},{true,3,0,0},{true,3,0,0}}};const std::array<std::uint8_t,1> signed_roster{128};const auto repeated=s::select_cutscene_primaries(high,roster_of(signed_roster),0);check(repeated.count==1&&repeated.choices[0].character==128&&repeated.roster.characters[0]==255);
@@ -81,8 +81,8 @@ void generated(){
     const auto hidden_result=s::select_cutscene_primaries(hidden_header,hidden,0);check(hidden_result.count==1&&hidden_result.choices[0].cloned_roster_slot==6&&hidden_result.roster.characters[6]==255&&hidden.characters[6]==17);
     const std::array<s::CutscenePrimaryHeader,5> population_headers{{{true,3,1,0},{true,0,2,1},{true,3,0,0},{true,3,1,1},{true,3,0,1}}};
     for(unsigned population=0;population<=8;++population){
-        s::CutscenePrimaryRoster state;state.population=std::uint8_t(population);state.characters={3,2,128,1,255,0,7,128};
-        for(unsigned preferred=0;preferred<=population;++preferred){run_state(population_headers,state,preferred);std::array<bool,8> alternating{true,false,true,false,true,false,true,false};run_state(population_headers,state,preferred,alternating);}
+        s::CutscenePrimaryRoster state;state.eligible_count=std::uint8_t(population);state.characters={3,2,128,1,255,0,7,128};
+        for(unsigned preferred=0;preferred<=8;++preferred){run_state(population_headers,state,preferred);std::array<bool,8> alternating{true,false,true,false,true,false,true,false};run_state(population_headers,state,preferred,alternating);}
     }
 }
 void descriptors(const char* package){
@@ -90,7 +90,7 @@ void descriptors(const char* package){
     for(unsigned n=0;n<count;++n){const auto size=read();check(size<=s::CutsceneDescriptor::maximum_bytes);std::vector<std::byte> bytes(size);stream.read(reinterpret_cast<char*>(bytes.data()),size);check(bool(stream));const auto descriptor=s::CutsceneDescriptor::import(bytes);const auto headers=s::cutscene_primary_headers(*descriptor);
         std::array<std::array<std::byte,36>,32> raw_headers{};
         check(headers.count==descriptor->actor_groups().size());for(unsigned i=0;i<headers.count;++i){const auto raw=descriptor->section(descriptor->actor_groups()[i][7]);check(raw.size()>=36);std::memcpy(raw_headers[i].data(),raw.data(),36);}
-        for(const auto& roster:rosters)for(unsigned preferred=0;preferred<=4;++preferred){run(headers.view(),roster,preferred,{},std::span(raw_headers).first(headers.count));++descriptor_cases;}
+        for(const auto& roster:rosters)for(unsigned preferred=0;preferred<=8;++preferred){run(headers.view(),roster,preferred,{},std::span(raw_headers).first(headers.count));++descriptor_cases;}
     }
     check(stream.peek()==std::char_traits<char>::eof());
 }

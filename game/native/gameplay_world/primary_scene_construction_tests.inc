@@ -18,7 +18,7 @@ void construction_owned(const char* archive){
         auto& pool=world.scene_primary_actors();check(pool.initialize()==g::ScenePrimaryStatus::completed);
         for(unsigned i=0;i<temporary;++i)world.resolve(pool.identity_at(i))->active=true;
         const auto old_id=pool.identity_at(temporary);const auto old_actor=world.resolve(old_id);
-        Roster roster;roster.characters=characters;roster.population=4;const auto before=roster;
+        Roster roster;roster.characters=characters;roster.eligible_count=4;const auto before=roster;
         const Choice choice{3,std::uint8_t(temporary),std::uint8_t(main),std::uint8_t(model_class),std::uint8_t(main)};
         if(main%3==0)world.session().asset_loading_mode.reset();else world.session().asset_loading_mode=std::uint8_t(main%3==1?0:128);
         const auto constructed=owner.construct_scene_primary(choice,roster,content);check(constructed.status==g::PrimaryModelStatus::completed&&constructed.id&&constructed.roster_slot==main&&constructed.release_on_exit==bool(model_class));
@@ -36,7 +36,7 @@ void construction_owned(const char* archive){
     for(unsigned character:{17u,255u}){
         g::World world(profile(),std::make_shared<g::Session>());world.room=87;g::HumanoidMotionOwner motions(world);g::PrimaryActorModels owner(world,motions);auto& pool=world.scene_primary_actors();check(pool.initialize()==g::ScenePrimaryStatus::completed);
         const auto old_id=pool.identity_at(0);const auto old_actor=world.resolve(old_id);old_actor->current=456;old_actor->primary=22;old_actor->scripted.emplace();old_actor->scripted->command_angle_copy=123;
-        const auto old=g::copy_actor_owned(*old_actor);Roster roster;roster.characters=characters;roster.population=4;const auto before=roster;const Choice choice{0,0,std::uint8_t(character),0,{}};
+        const auto old=g::copy_actor_owned(*old_actor);Roster roster;roster.characters=characters;roster.eligible_count=4;const auto before=roster;const Choice choice{0,0,std::uint8_t(character),0,{}};
         const auto made=owner.construct_scene_primary(choice,roster,content);const auto actor=world.resolve(made.id);check(made.status==g::PrimaryModelStatus::completed&&made.release_on_exit&&!made.roster_slot&&!made.retirement_completed&&actor&&actor->current==456&&actor->scripted->command_angle_copy==123&&!actor->model);
         compare_construction(*old.actor,*old.actor,*actor,before,roster,choice,world.room,made);++construction_cases;
     }
@@ -51,7 +51,7 @@ void construction_lifetimes(const char* archive){
     for(unsigned model_class:{0u,1u}){
         g::World world(profile(),std::make_shared<g::Session>());world.session().asset_loading_mode=1;g::HumanoidMotionOwner motions(world);check(motions.publish(banks).status==g::HumanoidPublicationStatus::completed);g::PrimaryActorModels owner(world,motions);reo::native::gameplay_update::State state;
         for(unsigned slot:{0u,5u}){auto initial=std::make_unique<g::Actor>();initial->slot=std::uint8_t(slot);initial->character=std::uint8_t(slot);const auto id=world.spawn_primary(slot,std::move(initial)).id;const auto prepared=g::PrimaryActorModels::prepare(owner.capture(id).value(),assets,content);check(owner.apply(*prepared,state).status==g::PrimaryModelStatus::completed);}
-        auto& pool=world.scene_primary_actors();check(pool.initialize()==g::ScenePrimaryStatus::completed);const auto previous=pool.identity_at(0);Roster roster;roster.characters=characters;roster.population=4;const Choice choice{0,0,0,std::uint8_t(model_class),0};
+        auto& pool=world.scene_primary_actors();check(pool.initialize()==g::ScenePrimaryStatus::completed);const auto previous=pool.identity_at(0);Roster roster;roster.characters=characters;roster.eligible_count=4;const Choice choice{0,0,0,std::uint8_t(model_class),0};
         const auto verify=[&](){const auto next=pool.identity_at(0);const auto actor=world.resolve(next);bool complete=world.busy()&&pool.busy()&&next!=previous&&!world.resolve(previous)&&actor&&actor->active&&actor->model&&actor->animation->model()==actor->model&&roster.characters[0]==(model_class?255:0)&&bool(world.primary(0)->model)==!model_class;
             complete=complete&&owner.construct_scene_primary(choice,roster,content).status==g::PrimaryModelStatus::busy&&owner.close()==g::PrimaryModelStatus::busy&&motions.close()==g::HumanoidPublicationStatus::busy&&pool.close()==g::ScenePrimaryStatus::busy&&world.close()==g::Status::busy;
             if(!complete){std::terminate();}
@@ -64,7 +64,7 @@ void construction_lifetimes(const char* archive){
     // constructed generation is then an explicit prefix, not a ready scene.
     g::World world(profile(),std::make_shared<g::Session>());world.session().asset_loading_mode=1;g::HumanoidMotionOwner motions(world);check(motions.publish(banks).status==g::HumanoidPublicationStatus::completed);g::PrimaryActorModels owner(world,motions);auto main=std::make_unique<g::Actor>();const auto main_id=world.spawn_primary(0,std::move(main)).id;reo::native::gameplay_update::State state;const auto loaded=g::PrimaryActorModels::prepare(owner.capture(main_id).value(),assets,content);check(owner.apply(*loaded,state).status==g::PrimaryModelStatus::completed);
     const auto main_model=world.resolve(main_id)->model;auto malformed=std::make_unique<g::Actor>();malformed->motion_bank_aliases[0]=g::HumanoidMotionAlias{g::HumanoidMotionFamily::general,0};check(world.spawn_linked(std::move(malformed)).status==g::actors::EntityStatus::completed);
-    auto& pool=world.scene_primary_actors();check(pool.initialize()==g::ScenePrimaryStatus::completed);const auto old_id=pool.identity_at(0);Roster roster;roster.characters=characters;roster.population=4;const auto result=owner.construct_scene_primary({0,0,0,1,0},roster,content);
+    auto& pool=world.scene_primary_actors();check(pool.initialize()==g::ScenePrimaryStatus::completed);const auto old_id=pool.identity_at(0);Roster roster;roster.characters=characters;roster.eligible_count=4;const auto result=owner.construct_scene_primary({0,0,0,1,0},roster,content);
     check(result.status==g::PrimaryModelStatus::unavailable&&result.id&&!result.retirement_completed&&!result.main_model_retired&&pool.identity_at(0)==result.id&&!world.resolve(old_id)&&world.resolve(main_id)->model==main_model&&roster.characters[0]==0&&!owner.capture(result.id)&&!world.busy());++construction_refusals;
 }
 }

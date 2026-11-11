@@ -102,6 +102,10 @@ verification. The latest user instruction is to keep the PC awake afterward.
   physical entries. Both compilers now explicitly verify167,969 fresh model-pointer
   stores and4,351 restore preservations. Native roster preparation, broader cleanup
   and physical resource handoff remain open.
+- The selector now names `eligible_count` explicitly and preserves valid physical
+  preferences beyond that count. Both compiler comparisons pass56,686 cases.
+  Exit cleanup resets temporary records before slot retirement, reinforcing the
+  need for independent resident resource ownership.
 - The [scene NPC loading-mode correction](CUTSCENE_NPC_CONSTRUCTION.md) separates
   asset-loading mode3243D7 from pause4BADF8. Paired current cohorts pass4,384 scene
   cases with independent inputs; the earlier fixture conflated the two and its

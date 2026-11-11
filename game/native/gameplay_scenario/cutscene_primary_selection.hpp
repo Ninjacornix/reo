@@ -22,9 +22,11 @@ inline CutscenePrimaryHeaders cutscene_primary_headers(const CutsceneDescriptor&
     return result;
 }
 enum class CutscenePrimarySelectionStatus {completed,invalid_count,invalid_preference,full};
-// Capture all eight physical character entries, even beyond population: the
-// construction routine searches all eight while fallback searches population.
-struct CutscenePrimaryRoster {std::array<std::uint8_t,8> characters{};std::uint8_t population{};};
+// Capture all eight physical character entries, including stale tail bytes.
+//38EDCC is the compact eligible count, distinct from Session.primary_population.
+// Construction searches all eight; fallback searches only the eligible prefix.
+// A nonzero preferred index may address any captured physical entry, even tail.
+struct CutscenePrimaryRoster {std::array<std::uint8_t,8> characters{};std::uint8_t eligible_count{};};
 struct CutscenePrimaryChoice {std::uint8_t group{},temporary_slot{},character{},model_class{};std::optional<std::uint8_t> cloned_roster_slot;friend bool operator==(const CutscenePrimaryChoice&,const CutscenePrimaryChoice&)=default;};
 struct CutscenePrimarySelection {
     CutscenePrimarySelectionStatus status{CutscenePrimarySelectionStatus::completed};
@@ -42,7 +44,7 @@ inline CutscenePrimarySelection select_cutscene_primaries(std::span<const Cutsce
     const CutscenePrimaryRoster& roster,std::uint32_t preferred_roster_one_based,
     std::array<bool,8> occupied={},const CutsceneActorReservations& previous={})noexcept{
     CutscenePrimarySelection result;result.reservations=previous;result.roster=roster;
-    if(headers.size()>32||roster.population>8){result.status=CutscenePrimarySelectionStatus::invalid_count;return result;}
+    if(headers.size()>32||roster.eligible_count>8){result.status=CutscenePrimarySelectionStatus::invalid_count;return result;}
     bool relevant{},fallback_ready=true;std::array<std::uint8_t,32> requested{};unsigned requested_count{};
     for(const auto& h:headers){
         if(!h.enabled)continue;
@@ -57,10 +59,10 @@ inline CutscenePrimarySelection select_cutscene_primaries(std::span<const Cutsce
         if(h.kind==0)character=std::uint8_t(h.character);
         else{
             if(h.character==0){
-                if(preferred_roster_one_based>roster.population){result.status=CutscenePrimarySelectionStatus::invalid_preference;result.failed_group=std::uint8_t(group);return result;}
+                if(preferred_roster_one_based>roster.characters.size()){result.status=CutscenePrimarySelectionStatus::invalid_preference;result.failed_group=std::uint8_t(group);return result;}
                 if(preferred_roster_one_based){const auto preferred=result.roster.characters[preferred_roster_one_based-1];if(!result.reservations.contains(preferred))character=preferred;}
-            }else if(!fallback_ready||roster.population<unsigned(result.count)+1)continue;
-            if(!character)for(const auto candidate:std::span(result.roster.characters).first(roster.population))if(!result.reservations.contains(candidate)){character=candidate;break;}
+            }else if(!fallback_ready||roster.eligible_count<unsigned(result.count)+1)continue;
+            if(!character)for(const auto candidate:std::span(result.roster.characters).first(roster.eligible_count))if(!result.reservations.contains(candidate)){character=candidate;break;}
         }
         if(!character)continue;
         unsigned slot{};while(slot<occupied.size()&&occupied[slot])++slot;

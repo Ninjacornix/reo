@@ -34,8 +34,23 @@ The next native preparation cannot simply copy the authored population into the
 scene roster. It needs the actual eligible filters, mode/room state, companion
 metadata, preference remapping and bounded special branch. The current choice
 and construction APIs accept a captured roster; they do not claim to produce it.
-`CutscenePrimaryRoster.population` denotes the eligible38EDCC count at that
+`CutscenePrimaryRoster.eligible_count` denotes the eligible38EDCC count at that
 boundary, independently of `Session.primary_population`.
+
+The follow-up source read establishes another ownership constraint:5ED340 calls
+5F1290, which clears/reinitializes the temporary player records. When invoked
+from5ED770, this happens before the selected descriptor5EC270 calls. The source
+cache resources therefore outlive that actor-record reset. Native resource rows
+cannot depend solely on resolving the old temporary EntityId. A scoped native
+exit transaction needs independent physical-slot resource ownership and explicit
+retirement authority, rather than a public stale-identity bypass.
+
+The choice API now admits a preference anywhere in the eight captured physical
+entries, including tail entries beyond `eligible_count`. The earlier profile
+required preference<=count and could unnecessarily refuse a bounded source case.
+`cutscene-physical-preference-{llvm,gcc}-v1` passes56,686 original comparisons and
+all548 raw descriptors with every preference0..8. Both current construction/cache
+regressions also pass117,002 checks. Preferences beyond eight remain unadmitted.
 
 5ED340 also calls1B1E50 and pointer-table release helpers. That combines cleanup
 and header resets beyond the already qualified5F0C00 family0 release. Preserve

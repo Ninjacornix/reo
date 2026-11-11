@@ -197,7 +197,7 @@ PrimarySceneConstructed PrimaryActorModels::construct_scene_primary(
     gameplay_scenario::CutscenePrimaryRoster& roster,const HumanoidMotionAssets& content)noexcept{
     if(closed_||world_.closed()||motions_.closed_)return{PrimaryModelStatus::closed};
     if(running_||world_.busy())return{PrimaryModelStatus::busy};
-    if(choice.group>=32||choice.temporary_slot>=8||roster.population>8||world_.humanoid_motion_source_!=&motions_)return{};
+    if(choice.group>=32||choice.temporary_slot>=8||roster.eligible_count>8||world_.humanoid_motion_source_!=&motions_)return{};
     PrimarySceneConstructed result;
     try{
         auto& pool=world_.scene_primary_actors();if(pool.closed_)return{PrimaryModelStatus::closed};if(!pool.initialized())return{};

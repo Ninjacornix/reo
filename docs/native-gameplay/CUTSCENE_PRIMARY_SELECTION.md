@@ -52,6 +52,13 @@ also use normal library linkage.
 The retained qualification seal is
 `native_cutscene_primary_selection_qualification_v1.json`.
 
+The [lifetime follow-up](PRIMARY_SCENE_LIFETIME_AUDIT.md) supersedes that cohort's
+preference<=eligible-count admission. The current input names `eligible_count`
+explicitly and accepts any preference within all eight captured character bytes.
+Both physical-preference cohorts pass56,686 original comparisons and19,728 cases
+from all548 owned descriptors, with72 explicit full-pool refusals. The constructor
+regressions remain current; no temporary model-cache admission was opened.
+
 Typed cloning, model-slot ownership across entry/exit, primary sparse cinematic
 motion, sixteen category10 objects and full scene/game acceptance remain open.
 No game was run or installed and no performance improvement is claimed.
