@@ -94,6 +94,7 @@ struct Result {
     Status status{Status::completed};
     std::size_t worker_calls{},script_operations{};
     world::Result actors;
+    world::LinkedUpdated scenario_actors;
     tasks::PassResult linked,events;
     bool clock_committed{};
     bool completion_checked{};
@@ -114,6 +115,11 @@ public:
     world::World& world()noexcept{return world_;}
     tasks::Scheduler& linked()noexcept{return linked_;}
     MaterialAnimations& material_animations()noexcept{return materials_;}
+    Status bind_linked_actors(world::ScriptedMotionBanks,std::shared_ptr<const gameplay_collision::response::Grid>);
+    Status unbind_linked_actors()noexcept;
+    // Cinematic callers use the same canonical pass without committing the
+    // ordinary gameplay clock or pretending the paused workers ran.
+    world::LinkedUpdated run_linked_actor_updates();
     tasks::EventTasks& events()noexcept{return events_;}
     tasks::FlagTimers& timers()noexcept{return timers_;}
     tasks::SimulationClock& clock()noexcept{return clock_;}
@@ -270,6 +276,7 @@ private:
     scenario::FlagNotifications& notifications_;
     scenario::FlagState flags_;
     StatePublication publication_;
+    std::unique_ptr<world::LinkedActorUpdates> linked_actor_updates_;
     scenario::ActionChoices choices_;
     scenario::Interpreter scripts_;
     scenario::OfflineCoordinator offline_;

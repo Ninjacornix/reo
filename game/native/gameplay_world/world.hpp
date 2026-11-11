@@ -1,6 +1,7 @@
 #pragma once
 #include "material_uv.hpp"
 #include "scripted_actor.hpp"
+#include "linked_update_state.hpp"
 #include "speech_state.hpp"
 #include "../gameplay_actors/entity.hpp"
 #include "../gameplay_actors/reference.hpp"
@@ -79,6 +80,7 @@ struct Actor : actors::Entity,actors::HitActor {
     std::optional<TargetingState> targeting;
     std::optional<EnemyState> enemy;
     std::optional<ScriptedActorState> scripted;
+    std::optional<LinkedActorFrameState> linked_frame;
     std::uint8_t character{};
     std::optional<std::uint32_t> gauge_value; // original BAC; unknown until its actual owner/import supplies it
     std::uint16_t terminal_countdown{}; // original C62, distinct from status/hit recovery timers
@@ -173,6 +175,7 @@ struct Session : actors::HitSession {
     gameplay_scenario::MissingCharacters missing_characters;
     gameplay_scenario::EnemyDescriptors enemy_descriptors;
     gameplay_scenario::EnemyRoutes enemy_routes;
+    LinkedUpdateState linked_updates;
     std::uint8_t script_room_parameter{}; // original4B9D17; exact downstream use is unresolved
     gameplay_collision::delivery::RoomContacts room_contacts;
     gameplay_session::Random random{};
@@ -208,6 +211,7 @@ enum class Stage {
 };
 class World;
 class LinkedModelPool;
+class LinkedActorUpdates;
 class AuxiliaryActorPool;
 class TargetMetricCache;
 class Services {
@@ -276,6 +280,8 @@ private:
     actors::EntityStore entities_;
     std::array<actors::EntityId,8> primary_;
     std::unique_ptr<LinkedModelPool> linked_models_;
+    LinkedActorUpdates* linked_update_owner_{};
+    friend class LinkedActorUpdates;
     std::unique_ptr<AuxiliaryActorPool> auxiliary_actors_;
     std::unique_ptr<gameplay_navigation::Bank> navigation_;
     std::unique_ptr<TargetMetricCache> target_metrics_;

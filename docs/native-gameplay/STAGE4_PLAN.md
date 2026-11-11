@@ -3,10 +3,16 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to keep the PC awake afterward.
 
+- [Native linked actor updates](LINKED_ACTOR_UPDATES.md) now adopt the actual
+  shared fifty-node pool, scripted callbacks, post-callback poses, simulation
+  clock countdown and canonical expiry publication in Update Owner. Both
+  compiler comparisons, owned construction and five parent tests pass.
+  Scene lifecycle callers, other callback families and game installation remain open.
 - [Native cutscene actor callbacks](CUTSCENE_ACTOR.md) now compose counted
   displacement, scripted motion, root integration and real pose ownership.
   Both compiler comparisons, full scenario regression and five parent tests
-  pass. Linked callback scheduling and game installation remain open.
+  pass. The linked callback pass now adopts them; cinematic lifecycle callers
+  and game installation remain open.
 - [Native scripted actor motion](SCRIPTED_ACTOR_MOTION.md) now consumes actual
   scene banks and native poses through the canonical linked Actor. Both
   compiler World comparisons, owned construction and five parent tests pass.

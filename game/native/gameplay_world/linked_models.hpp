@@ -44,6 +44,7 @@ class LinkedModelPool final {
     bool closed_{}, resetting_{}, updating_{};
     LinkedStatus clear(bool close) noexcept;
     friend class LinkedModelPass;
+    friend class LinkedActorUpdates;
 };
 class LinkedPoseRoot final {
   public:

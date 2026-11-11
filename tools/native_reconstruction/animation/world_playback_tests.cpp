@@ -1,5 +1,7 @@
 #include "game/native/gameplay_world/animation.hpp"
 #include <functional>
+struct R5900Context;struct PS2Runtime;
+void linked_actor_original_port(std::uint8_t*,R5900Context*,PS2Runtime*);
 #define PLAYBACK_ACTOR_ADDRESS 0x4a5c30
 #define main standalone_playback_main
 #include "tools/native_reconstruction/animation/playback_tests.cpp"
@@ -76,6 +78,7 @@ void body_equal(const g::Actor& value, const std::vector<std::uint8_t>& ram) {
     ++profile_cases;
 }
 #include "scripted_motion_tests.inc"
+#include "linked_actor_update_tests.inc"
 int main(int argc, char** argv) try {
     check(argc == 4, "owned World animation inputs required");
     const auto old = _mm_getcsr();
@@ -91,6 +94,8 @@ int main(int argc, char** argv) try {
     put(ram.data(), 0x294e00, t::identity());
     const auto skeletons = load(argv[2]), raw_banks = load(argv[3]);
     scripted_motion_tests(raw_banks,skeletons,ram);
+    linked_expiry_tests(ram);
+    linked_full_pool_tests(ram);
     std::shared_ptr<const a::Skeleton> skeleton;
     std::vector<std::byte> raw_skeleton;
     for (const auto& raw : skeletons) {
@@ -687,6 +692,10 @@ int main(int argc, char** argv) try {
               << ",\"cutscene_actor_calls\":" << cutscene_actor_calls
               << ",\"cutscene_actor_gate_calls\":" << cutscene_actor_gate_calls
               << ",\"cutscene_actor_refusals\":" << cutscene_actor_refusals
+              << ",\"linked_actor_cases\":" << linked_actor_cases
+              << ",\"linked_expiry_cases\":" << linked_expiry_cases
+              << ",\"linked_full_pool_cases\":" << linked_full_pool_cases
+              << ",\"linked_update_refusals\":" << linked_update_refusals
               << ",\"required_prelude_cases\":" << prelude_native
               << ",\"refusal_cases\":" << world_refusals << ",\"joint_cases\":" << joint_cases
               << ",\"original_calls\":" << helper_calls << ",\"game_run\":false}\n";

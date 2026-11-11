@@ -26,10 +26,33 @@ Status Owner::close()noexcept{
     if(running_ || !events_.idle() || !linked_.idle())return Status::busy;
     closed_=true;(void)events_.seal();(void)linked_.seal();
     cooperative_.close();
+    if(linked_actor_updates_)(void)linked_actor_updates_->close();
     materials_.close();
     (void)events_.clear();(void)linked_.clear();
     if(world_.session().timing==this)world_.session().timing=nullptr;
     return Status::completed;
+}
+Status Owner::bind_linked_actors(world::ScriptedMotionBanks banks,std::shared_ptr<const gameplay_collision::response::Grid> floors){
+    if(!open())return Status::closed;
+    if(running_||linked_actor_updates_)return Status::busy;
+    if(!floors)return Status::actor_failure;
+    try{linked_actor_updates_=std::make_unique<world::LinkedActorUpdates>(world_,std::move(banks),std::move(floors),&publication_);}
+    catch(const std::bad_alloc&){return Status::actor_failure;}
+    catch(const std::invalid_argument&){return Status::actor_failure;}
+    return Status::completed;
+}
+Status Owner::unbind_linked_actors()noexcept{
+    if(running_)return Status::busy;
+    if(!linked_actor_updates_)return closed_?Status::closed:Status::completed;
+    if(linked_actor_updates_->close()==world::LinkedUpdateStatus::busy)return Status::busy;
+    linked_actor_updates_.reset();return Status::completed;
+}
+world::LinkedUpdated Owner::run_linked_actor_updates(){
+    if(!open())return{world::LinkedUpdateStatus::closed};
+    if(running_)return{world::LinkedUpdateStatus::busy};
+    if(!linked_actor_updates_)return{world::LinkedUpdateStatus::unavailable};
+    running_=true;struct Reset{bool& value;~Reset(){value=false;}}reset{running_};
+    return linked_actor_updates_->run();
 }
 Status Owner::run_script(std::size_t channel,scenario::Providers providers,std::size_t budget,Result& result)noexcept{
     providers.flags=&flags_;providers.canonical_flags=&flags_;providers.timers=&timers_;
@@ -87,7 +110,12 @@ Result Owner::workers(Services& services,world::Services& actors,scenario::Provi
     for(const auto stage:{Worker::auxiliary_actors,Worker::scenario_actors,Worker::actor_collision_shapes,
         Worker::collision_heights,Worker::primary_model_poses,Worker::auxiliary_model_poses,
         Worker::scenario_model_poses,Worker::primary_actor_postprocess,Worker::auxiliary_actor_postprocess,
-        Worker::primary_hit_regions,Worker::auxiliary_hit_regions,Worker::scenario_hit_regions,Worker::camera_modes})work(stage);
+        Worker::primary_hit_regions,Worker::auxiliary_hit_regions,Worker::scenario_hit_regions,Worker::camera_modes}){
+        if(stage==Worker::scenario_actors&&linked_actor_updates_){
+            result.scenario_actors=linked_actor_updates_->run();++result.worker_calls;
+            if(result.scenario_actors.status!=world::LinkedUpdateStatus::completed){result.status=Status::actor_failure;return result;}
+        }else work(stage);
+    }
     auto selected=tasks::OwnerSelection::borrow(world_.selected_actor);
     result.events=events_.run(world_.mode==0?tasks::EventMode::owner_banks:tasks::EventMode::shared_bank,selected);
     if(result.events.status!=tasks::Status::completed){result.status=Status::task_failure;return result;}

@@ -1,4 +1,5 @@
 #pragma once
+#include "../gameplay_world/linked_updates.hpp"
 #include "room_publication.hpp"
 #include "../gameplay_world/world.hpp"
 #include "../gameplay_world/actor_state.hpp"
@@ -104,6 +105,13 @@ struct ActorInventoryMessage {
     MessageRoute route{};std::uint32_t channel{};Kind kind{};std::array<std::uint8_t,4> resources{};
     static constexpr unsigned length=8,options=0,dispatch_mode=4;
 };
+struct ActorExpiryMessage {
+    MessageRoute route{};
+    std::uint8_t ordinal{};
+    static constexpr unsigned channel=8,type=0x49,length=6,options=0,dispatch_mode=4;
+    // Original byte3 is ordinal and byte4 is FF. Uninitialized bytes2/5 are not a native
+    // wire contract; the transport owner supplies its actual framing.
+};
 class GameplayMessageSink : public RoomClaimSink {
 public:
     virtual ~GameplayMessageSink()=default;
@@ -111,6 +119,7 @@ public:
     virtual bool send(const ResourceOperationMessage&)noexcept=0;
     virtual bool send(const ResourcePositionMessage&)noexcept=0;
     virtual bool send(const ActorStatusMessage&)noexcept=0;
+    virtual bool send(const ActorExpiryMessage&)noexcept{return false;}
     virtual bool send(const ActorActionMessage&)noexcept{return false;}
     virtual bool send(const ActorInteractionMessage&)noexcept{return false;}
     virtual bool send(const ActorInteractionRequestMessage&)noexcept{return false;}
@@ -128,9 +137,12 @@ public:
 };
 // Complete admitted67DBD0 control/ownership path. Borrow canonical state once;
 // live networking requires an explicit actual message consumer, with no no-op.
-class StatePublication final {
+class StatePublication final:public gameplay_world::LinkedExpirySink {
 public:
     StatePublication(gameplay_world::World& world,gameplay_scenario::FlagState& flags,GameplayMessageSink* messages=nullptr,const gameplay_collision::room_objects::Owner* objects=nullptr):world_(world),flags_(flags),messages_(messages),objects_(objects){}
+    bool expired(const gameplay_world::LinkedExpiryNotice& notice)noexcept override {
+        return notice.mode<2&&messages_&&messages_->send(ActorExpiryMessage{notice.mode==0?MessageRoute::mode_zero:MessageRoute::mode_one,notice.ordinal});
+    }
     gameplay_world::InteractionTransition consume_interaction_request(const gameplay_world::actors::EntityId& id,std::uint32_t selector)noexcept{return gameplay_world::consume_interaction_request(world_,id,selector,messages_);}
     PublicationStatus release_actor_room(std::uint32_t slot)noexcept{return publish_actor_room_release(world_,slot,messages_);}
     PublicationStatus resource_position(std::uint32_t resource,std::uint32_t actor,std::uint32_t operation,std::optional<gameplay_world::Position> position)noexcept{

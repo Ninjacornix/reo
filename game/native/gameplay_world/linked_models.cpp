@@ -7,6 +7,7 @@ namespace {
 #include "linked_model_profile.inc"
 #include "linked_model_definitions.inc"
 void clear_authored_defaults(Actor& a) {
+    a.linked_frame.emplace();
     a.material_uv = MaterialUv{};
     a.motion_rate = 0;
     a.model_scale = {};

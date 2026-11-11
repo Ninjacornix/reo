@@ -49,6 +49,7 @@ ScriptedConstructed ScriptedActorConstruction::create(const PreparedScriptedActo
         actor->motion_multiplier=1;actor->model_scale={prepared.scale_,prepared.scale_,prepared.scale_};
         actor->model=std::move(model);actor->animation=std::move(animation);actor->model_asset=prepared.asset_;
         actor->scripted=std::move(state);
+        actor->targeting=world::TargetingState{0,false,std::uint8_t(0)};
         ScriptedConstructed result{ScriptedConstructionStatus::completed,created.id,{}};
         if(actor->slot==27)result.material_task=materials_.create(created.id);
         return result;

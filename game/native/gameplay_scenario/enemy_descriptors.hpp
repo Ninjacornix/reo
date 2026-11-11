@@ -49,6 +49,18 @@ public:
         return index<capacity ? &records_[index] : nullptr;
     }
     std::span<const std::uint8_t,capacity> expiry() const noexcept { return expiry_; }
+    bool arm_expiry(std::size_t index,std::uint8_t value)noexcept {
+        if(index>=capacity)return false;
+        expiry_[index]=value;return true;
+    }
+    // Source6BBBA0: zero wraps to disabled FF; one expires and becomes FF.
+    // Visit/dispatch remains with the actual linked update owner.
+    bool decrement_expiry(std::size_t index)noexcept {
+        if(index>=capacity||expiry_[index]==255)return false;
+        expiry_[index]=std::uint8_t(expiry_[index]-1u);
+        if(expiry_[index])return false;
+        expiry_[index]=255;return true;
+    }
     EnemyRoomAssignments& assignments() noexcept { return assignments_; }
     const EnemyRoomAssignments& assignments() const noexcept { return assignments_; }
     const std::array<std::uint8_t,128>& room_counts() const noexcept { return room_counts_; }

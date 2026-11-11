@@ -377,6 +377,73 @@ void check_character_remap_worker(){
     check(session.enemy_descriptors.record(0)->variant==70);
     check(owner.close()==u::Status::completed);
 }
+void check_linked_actor_worker(){
+    namespace w=u::world;
+    w::World world({{{1,2,4}},1,{32,UINT64_MAX}},std::make_shared<w::Session>());
+    Notifications notifications;
+    struct Notices final:u::GameplayMessageSink {
+        u::Owner* owner{};std::array<u::ActorExpiryMessage,4> messages{};unsigned count{};bool fail{};
+        bool send(const u::ScenarioOwnerMessage&)noexcept override{return false;}
+        bool send(const u::ResourceOperationMessage&)noexcept override{return false;}
+        bool send(const u::ResourcePositionMessage&)noexcept override{return false;}
+        bool send(const u::ActorStatusMessage&)noexcept override{return false;}
+        bool send(const u::ActorExpiryMessage& message)noexcept override{
+            if(!owner||count>=messages.size()||owner->close()!=u::Status::busy||
+               owner->world().close()!=w::Status::busy||owner->unbind_linked_actors()!=u::Status::busy||
+               owner->run_linked_actor_updates().status!=w::LinkedUpdateStatus::busy)std::terminate();
+            messages[count++]=message;return !fail;
+        }
+    } notices;
+    u::Owner owner(world,notifications,e::RuleBook::file1(),&notices);notices.owner=&owner;
+    world.mode=1;world.session().scenario=0;world.session().clock_mode=1;
+    check(owner.initialize_completion_statistics()==e::StatisticsStatus::completed);
+    const auto idle=std::make_shared<const s::Program>(std::vector<std::vector<std::byte>>{{std::byte{1},{},{},{},std::byte{0xa},{},{},{}}});
+    check(owner.scripts().install(0,idle)==s::Status::completed&&owner.scripts().install(1,idle)==s::Status::completed);
+    check(owner.run_linked_actor_updates().status==w::LinkedUpdateStatus::unavailable);
+    check(owner.bind_linked_actors({}, {})==u::Status::actor_failure);
+    const auto floors=std::make_shared<const reo::native::gameplay_collision::response::Grid>();
+    check(owner.bind_linked_actors({},floors)==u::Status::completed&&owner.bind_linked_actors({},floors)==u::Status::busy);
+    const auto id=world.linked_models().allocate(true).id,disabled=world.linked_models().allocate(true).id;
+    const auto actor=world.resolve(id),other=world.resolve(disabled);
+    actor->active=true;actor->category=2;actor->character=7;actor->scripted.emplace();actor->linked_frame.emplace();
+    actor->targeting=w::TargetingState{0,false,std::uint8_t(0)};
+    actor->collision.local_center={1,2,3};actor->linked_frame->transient_marker=91;actor->world_impulse={4,5,6};
+    other->linked_frame=w::LinkedActorFrameState{17,99};
+    world.session().enemy_descriptors.record(7)->runtime_flags=255;
+    world.session().linked_updates.work_counters={1,2,3,4};world.session().feedback_phase=213;
+    check(owner.clock().restore({0,0,10,0},100)==u::tasks::Status::completed);
+    Remaining workers;EmptyActors actors;
+    auto result=owner.run_workers(workers,actors);
+    check(result.status==u::Status::completed&&result.scenario_actors.called==1&&result.scenario_actors.visited==2&&result.scenario_actors.poses==1&&result.scenario_actors.center_initializations==1);
+    check(std::find(workers.calls.begin(),workers.calls.end(),u::Worker::scenario_actors)==workers.calls.end());
+    check(world.session().linked_updates.previous_seconds==10&&world.session().linked_updates.expiry_countdown==4&&world.session().linked_updates.clock_factor==2&&world.session().linked_updates.work_counters==std::array<std::uint8_t,4>{});
+    check(actor->position.x==4&&actor->position.y==5&&actor->position.z==6&&actor->collision.previous_center_offset.x==1&&actor->collision.previous_center_offset.y==2&&actor->collision.previous_center_offset.z==3);
+    check(actor->linked_frame->center_cache_state==1&&actor->linked_frame->transient_marker==0&&other->linked_frame->center_cache_state==17&&other->linked_frame->transient_marker==0);
+    check(world.session().enemy_descriptors.record(7)->runtime_flags==239);
+    check(owner.run_workers(workers,actors).scenario_actors.center_initializations==0&&world.session().linked_updates.expiry_countdown==4);
+    world.session().linked_updates.expiry_countdown=1;world.session().message_phase=1;
+    auto& records=world.session().enemy_descriptors;
+    records.record(7)->ordinal=171;records.record(8)->owner_mode=1;
+    check(records.arm_expiry(7,1)&&records.arm_expiry(8,1)&&!records.arm_expiry(256,1));
+    check(owner.clock().restore({0,0,11,0},100)==u::tasks::Status::completed);
+    result=owner.run_workers(workers,actors);
+    check(result.status==u::Status::completed&&result.scenario_actors.periodic&&result.scenario_actors.expired==2&&result.scenario_actors.publication_failures==0);
+    check(records.expiry()[7]==255&&records.expiry()[8]==255&&notices.count==1&&notices.messages[0].ordinal==171&&notices.messages[0].route==u::MessageRoute::mode_one);
+    world.session().linked_updates.expiry_countdown=1;notices.fail=true;check(records.arm_expiry(9,1));
+    check(owner.clock().restore({0,0,12,0},100)==u::tasks::Status::completed);
+    result=owner.run_workers(workers,actors);
+    check(result.status==u::Status::completed&&result.scenario_actors.expired==1&&result.scenario_actors.publication_failures==1&&notices.count==2&&records.expiry()[9]==255);
+    world.paused=1;records.record(7)->runtime_flags=16;
+    result=owner.run_workers(workers,actors);
+    check(result.status==u::Status::completed&&result.scenario_actors.visited==0&&records.record(7)->runtime_flags==16);
+    actor->primary=6;actor->scripted->cue_phase=1;actor->scripted->movement_remaining=1;actor->scripted->forward_step=1;
+    const auto updates=owner.clock().update_counter();const auto cinematic=owner.run_linked_actor_updates();
+    check(cinematic.status==w::LinkedUpdateStatus::completed&&cinematic.called==1&&actor->visible&&actor->scripted->cue_phase==2&&actor->scripted->movement_remaining==0&&records.record(7)->runtime_flags==0);
+    check(owner.clock().update_counter()==updates&&world.session().linked_updates.previous_seconds==12);
+    check(owner.unbind_linked_actors()==u::Status::completed&&owner.run_linked_actor_updates().status==w::LinkedUpdateStatus::unavailable);
+    check(owner.bind_linked_actors({},floors)==u::Status::completed&&world.session().linked_updates.previous_seconds==12);
+    check(owner.close()==u::Status::completed&&owner.run_linked_actor_updates().status==w::LinkedUpdateStatus::closed&&owner.bind_linked_actors({},floors)==u::Status::closed);
+}
 void check_material_animation_worker(){
     using TS=u::tasks::Status;
     u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());
@@ -461,6 +528,7 @@ void check_material_animation_worker(){
     }
 }
 int main()try{
+    check_linked_actor_worker();
     check_material_animation_worker();
     check_actor_status();
     check_automatic_worker();

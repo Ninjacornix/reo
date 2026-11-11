@@ -2,6 +2,7 @@
 #include "game/native/gameplay_world/linked_models.hpp"
 #include "cutscene_actor_tests.inc"
 std::uint64_t scripted_motion_cases{},scripted_motion_ticks{},scripted_motion_refusals{},scripted_positive_tracks{};
+void linked_actor_composition(g::World&,const g::actors::EntityId&,g::ScriptedMotionBanks,unsigned,std::vector<std::uint8_t>&);
 void scripted_motion_tests(const std::vector<std::vector<std::byte>>& banks,
                            const std::vector<std::vector<std::byte>>& skeletons,
                            std::vector<std::uint8_t>& ram){
@@ -133,6 +134,7 @@ void scripted_motion_tests(const std::vector<std::vector<std::byte>>& banks,
                 ++scripted_motion_ticks;
             }
             cutscene_actor_composition(world,id,motion,variant,ram);
+            linked_actor_composition(world,id,{mode_one,other,additive},variant,ram);
             const auto lease=current;const auto flags=current->contact_flags;
             check(world.linked_models().reset()==g::LinkedStatus::completed,"scripted actor retirement");
             bool refused{};try{motion.tick(id);}catch(const std::runtime_error&){refused=true;}
