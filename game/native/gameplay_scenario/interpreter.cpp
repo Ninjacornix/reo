@@ -34,12 +34,12 @@ std::size_t payload_minimum(std::uint32_t op)noexcept{
     case 0x50:case 0x54:case 0x55:case 0xf2:case 0x104:case 0x105:return 12;case 0x57:return 16;
     case 0x51:case 0x52:case 0x58:case 0x5a:case 0x5f:case 0x72:case 0xb5:case 0xf6:return 8;
     case 0x53:case 0x56:case 0x59:case 0x5b:case 0x5c:case 0x5d:case 0x5e:return 4;
-    case 0x70:case 0xa0:case 0xa1:return 4;case 0x20:case 0x23:case 0x24:return 1;case 0x10:case 0x11:case 0x14:return 4;case 0x13:return 6;case 0x15:return 1;case 0x16:return 16;case 0x17:return 8;
+    case 0x70:case 0xa0:case 0xa1:return 4;case 0x20:case 0x23:case 0x24:case 0x65:return 1;case 0x10:case 0x11:case 0x14:return 4;case 0x13:return 6;case 0x15:return 1;case 0x16:return 16;case 0x17:return 8;
     case 3:case 4:case 6:case 0x44:case 0x4c:return 4;case 8:return 5;
     case 0xe3:case 0xe6:case 0xe8:case 0xe9:case 0xec:case 0xed:case 0xef:case 0xf4:case 0xf5:return 8;
     case 0x40:case 0x41:case 0x42:case 0x43:case 0x47:case 0x48:case 0x49:case 0x4d:case 0x110:case 0x111:case 0x112:return 8;
     case 0x30:case 0x31:case 0x32:case 0x33:case 0x34:case 0x35:return 2;case 0x37:return 5;case 0x36:return 10;
-    case 5:case 0xb:return 9;case 0xc:case 0x46:case 0x113:case 0xb7:case 0xb8:return 12;case 0x45:return 16;default:return 0;}
+    case 5:case 0xb:case 0x68:case 0x69:return 9;case 0xc:case 0x46:case 0x113:case 0xb7:case 0xb8:return 12;case 0x45:return 16;default:return 0;}
 }
 std::optional<ControlCommand> control_command(std::uint32_t op)noexcept{
     switch(op){case 0x50:return ControlCommand::zero_two_parameter;case 0x51:return ControlCommand::type_one_parameter;
@@ -117,6 +117,16 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
             if(!noop&&(op==0x10||op==0x11)&&word(b.data()+at+4)>=32)throw std::invalid_argument("Native sequence index profile");
             if(!noop&&(op==0x13||op==0x15)&&std::to_integer<unsigned>(b[at+4])>=32)throw std::invalid_argument("Native sequence selector profile");
             if(!noop&&(op==0x23||op==0x24)&&std::to_integer<unsigned>(b[at+4])>=32)throw std::invalid_argument("Native lighting entry profile");
+            if(!noop&&op==0x69){
+                using gameplay_world::ActorPlacements;
+                const auto actor=std::to_integer<unsigned>(b[at+4]);
+                const auto command=std::to_integer<unsigned>(b[at+8]);
+                const bool immediate=command==0xf0||command==0xf1;
+                if(actor>=gameplay_world::World::primary_capacity||
+                    (!immediate&&actor!=4&&actor>=ActorPlacements::request_count)||
+                    (command==0xf0&&std::to_integer<unsigned>(b[at+12])>=ActorPlacements::position_capacity))
+                    throw std::invalid_argument("Native actor placement profile");
+            }
             if(!noop&&op==0x70&&std::bit_cast<std::int32_t>(word(b.data()+at+4))<0)throw std::invalid_argument("Native stream member profile");
             if(!noop&&op==0xb4){if(word(b.data()+at+8)>=8)throw std::invalid_argument("Native model transform preset profile");adjusted_models_.push_back(std::to_integer<std::uint8_t>(b[at+4]));}
             if(!noop&&(op==0xb0||op==0xb1))visibility_models_.push_back(std::to_integer<std::uint8_t>(b[at+4]));
@@ -163,7 +173,7 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     for(std::size_t i=0;i<out.size();++i)if(control_command(std::uint32_t(i)))out[i]={true,false,false,false,false,false,false,false,false,true};
     for(const auto i:{0x70,0x71})out[i]={true,false,false,false,false,false,false,false,false,false,true};
     for(const auto i:{0x104,0x105})out[i]={true,false,false,false,false,false,false,false,false,true};
-    for(const auto i:{0x5a,0xf2,0x135,0x155,0x180}){out[i].native_algorithm=true;out[i].world_required=true;}
+    for(const auto i:{0x5a,0x65,0x68,0x69,0x6a,0xf2,0x135,0x155,0x180}){out[i].native_algorithm=true;out[i].world_required=true;}
     out[0x135].scene_controls_required=true;out[0x135].action_choices_required=true;
     out[0x135].selected_actor_required=true;out[0x155].selected_actor_required=true;
     for(const auto i:{0xb0,0xb1,0xb4}){out[i].native_algorithm=true;out[i].models_required=true;}
@@ -341,6 +351,18 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
             break;}
         case 0xb0:case 0xb1:if(providers.models->visibility(std::to_integer<std::uint8_t>(payload[0]),opcode==0xb1)!=ModelStatus::completed)return result(Status::provider_unavailable);break;
         case 0xb4:if(providers.models->adjust(std::to_integer<std::uint8_t>(payload[0]),value(4))!=ModelStatus::completed)return result(Status::provider_unavailable);break;
+        case 0x65:providers.world->session().script_room_parameter=std::to_integer<std::uint8_t>(payload[0]);break;
+        case 0x68:
+            if(!gameplay_world::queue_character_placement(*providers.world,std::to_integer<std::uint8_t>(payload[0]),
+                std::to_integer<std::uint8_t>(payload[4]),std::to_integer<std::uint8_t>(payload[8])))
+                return result(Status::provider_unavailable);
+            break;
+        case 0x69:
+            if(!gameplay_world::script_actor_placement(*providers.world,std::to_integer<std::uint8_t>(payload[0]),
+                std::to_integer<std::uint8_t>(payload[4]),std::to_integer<std::uint8_t>(payload[8])))
+                return result(Status::provider_unavailable);
+            break;
+        case 0x6a:providers.world->session().actor_placements.clear_requests();break;
         case 0x70:{const auto audio=providers.streams->request(0,std::bit_cast<std::int32_t>(value(0)),0,*context.stream_tick,*providers.stream_backend);
             if(!stream_accepted(audio.status))return result(Status::provider_unavailable);
             break;}

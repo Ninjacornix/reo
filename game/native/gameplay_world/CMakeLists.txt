@@ -2,6 +2,7 @@ add_library(reo_native_gameplay_world STATIC world.cpp behavior.cpp surfaces.cpp
 target_compile_features(reo_native_gameplay_world PUBLIC cxx_std_20)
 target_sources(reo_native_gameplay_world PRIVATE linked_models.cpp)
 target_sources(reo_native_gameplay_world PRIVATE target_metrics.cpp)
+target_sources(reo_native_gameplay_world PRIVATE actor_placements.cpp)
 target_sources(reo_native_gameplay_world PRIVATE inventory_presence.cpp)
 target_sources(reo_native_gameplay_world PRIVATE interaction_transitions.cpp)
 target_sources(reo_native_gameplay_world PRIVATE color_fade.cpp)

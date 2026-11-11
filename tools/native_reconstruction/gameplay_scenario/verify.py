@@ -20,6 +20,7 @@ IDS += ['00691FA0','00692630','0064AE50','006261D0','00626310','006263D0','0057E
 IDS += ['00692B10','005D9630','00573890']
 IDS += ['00690490','005DFA90']
 IDS += ['00691D20','005D7CF0']
+IDS += ['0068F1D0','0068F1F0','0068F280','0068F3C0','006268D0']
 
 PINNED={};PIN_COMMITS={}
 def source_bytes(p):
@@ -114,6 +115,7 @@ def main(a):
     shutil.copyfile(HERE/'room_variant_vm_tests.inc',out/'room_variant_vm_tests.inc')
     shutil.copyfile(HERE/'room_counter_vm_tests.inc',out/'room_counter_vm_tests.inc')
     shutil.copyfile(HERE/'stock_room_vm_tests.inc',out/'stock_room_vm_tests.inc')
+    shutil.copyfile(HERE/'actor_placement_vm_tests.inc',out/'actor_placement_vm_tests.inc')
     shutil.copyfile(HERE/'periodic_control_vm_tests.inc',out/'periodic_control_vm_tests.inc')
     shutil.copyfile(HERE/'room_rule_tests.inc',out/'room_rule_tests.inc')
     shutil.copyfile(HERE/'room_object_vm_tests.inc',out/'room_object_vm_tests.inc')
@@ -133,6 +135,7 @@ def main(a):
     units += [('periodic_tasks',ROOT/'game/native/gameplay_scenario/periodic_effects.cpp')]
     units += [('room_damage',ROOT/'game/native/gameplay_collision/room_damage.cpp')]
     units += [('script_program',ROOT/'game/native/gameplay_scenario/script_program.cpp')]
+    units += [('actor_placements',ROOT/'game/native/gameplay_world/actor_placements.cpp')]
     if not a.pin_effects_commit:
         import sys
         sys.path.insert(0,str(ROOT/'tools/native_reconstruction'))
@@ -146,6 +149,7 @@ def main(a):
     source_paths.append(HERE/'room_variant_vm_tests.inc')
     source_paths.append(HERE/'room_counter_vm_tests.inc')
     source_paths.append(HERE/'stock_room_vm_tests.inc')
+    source_paths.append(HERE/'actor_placement_vm_tests.inc')
     source_paths += [HERE/'surface_vm_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]
     source_paths += [ROOT/'game/native/transform_math/transform_math.hpp',ROOT/'game/native/transform_math/transform_math.cpp']

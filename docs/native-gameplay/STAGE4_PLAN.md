@@ -3,6 +3,10 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. Put the PC to sleep after Stage 4 passes those checks, as requested.
 
+- [Native actor placement commands](SCENARIO_ACTOR_PLACEMENTS.md) now write
+  the Session placement requests and restore the canonical Actor transforms.
+  Both compiler comparisons pass. Runtime packet and room-transition callers
+  remain open.
 - [Native script setup](SCENARIO_SCRIPT_SETUP.md) binds admitted programs to
   their source channels and runs them through the actual Update Owner.
   A failed admission preserves the previous bindings. The game startup and

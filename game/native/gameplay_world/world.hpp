@@ -9,6 +9,7 @@
 #include "../gameplay_collision/room_damage.hpp"
 #include "../gameplay_scenario/model_reference.hpp"
 #include "inventory_state.hpp"
+#include "actor_placements.hpp"
 #include "../gameplay_session/room_variants.hpp"
 #include "../gameplay_session/activity.hpp"
 #include "../gameplay_navigation/actor_routes.hpp"
@@ -145,6 +146,8 @@ struct Actor : actors::Entity,actors::HitActor {
 };
 struct Session : actors::HitSession {
     gameplay_session::RoomVariants room_variants;
+    ActorPlacements actor_placements;
+    std::uint8_t script_room_parameter{}; // original4B9D17; exact downstream use is unresolved
     gameplay_collision::delivery::RoomContacts room_contacts;
     gameplay_session::Random random{};
     gameplay_session::Options options;
