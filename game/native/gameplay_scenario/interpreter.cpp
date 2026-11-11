@@ -14,6 +14,7 @@
 #include "room_rules.hpp"
 #include "actor_requests.hpp"
 #include "actor_inventory_commands.hpp"
+#include "character_remap.hpp"
 #include "room_object_commands.hpp"
 #include "periodic_effects.hpp"
 #include "surface_effects.hpp"
@@ -124,9 +125,10 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
                 const bool full=op==0x80 || op==0x81 || op==0x88;
                 const auto id=full ? word(b.data()+at+4) :
                     std::to_integer<std::uint32_t>(b[at+4]) | std::to_integer<std::uint32_t>(b[at+5])<<8;
-                if (id>=208) throw std::invalid_argument("Native NPC alias index profile");
+                if (id>=210) throw std::invalid_argument("Native NPC alias index profile");
             }
             actor_roster_|=!noop&&op==0xea;
+            character_remap_|=!noop&&op==0x84;
             forced_terminal_|=!noop&&op==0x61;
             if(!noop&&(op==0x85||op==0x87)&&word(b.data()+at+4)>=RoomActorAssets::room_count)
                 throw std::invalid_argument("Native room actor asset row profile");
@@ -179,6 +181,9 @@ bool Program::admits_room_counters(const gameplay_world::World* world)const noex
     return !room_counters_ || (world && !world->closed() &&
         world->session().room_contacts.counters_ready(scenario_counter_policy_));
 }
+bool Program::admits_character_remap(const gameplay_world::World* world)const noexcept {
+    return !character_remap_ || (world && character_remap_ready(*world));
+}
 bool Program::admits_inventory_grants(const gameplay_world::World* world,const SceneResources* resources,
                                      const ResourceTemplates* templates)const noexcept{
     return (!low_actor_population_&&!full_actor_population_&&!npc_inventory_grants_)||
@@ -212,7 +217,7 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
         out[i].scene_resources_required=true;
         out[i].world_required=true;
     }
-    for (const auto i:{0x80,0x81,0x88,0x89,0x8a,0x8b,0x8c}) {
+    for (const auto i:{0x80,0x81,0x84,0x88,0x89,0x8a,0x8b,0x8c}) {
         out[i].native_algorithm=true;
         out[i].world_required=true;
     }
@@ -306,6 +311,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
     if(!c.program->admits_room_counters(providers.world))return{Status::provider_unavailable,0,{},0};
     if(!c.program->admits_inventory_grants(providers.world,providers.scene_resources,providers.resource_templates))return{Status::provider_unavailable,0,{},0};
     if(!c.program->admits_actor_roster(providers.world))return{Status::provider_unavailable,0,{},0};
+    if(!c.program->admits_character_remap(providers.world))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_selected_actor()&&!providers.world->primary(context.selected_actor))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_action_choices()&&!providers.action_choices)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_scenario()&&!providers.world->scenario)return{Status::provider_unavailable,0,{},0};
@@ -493,9 +499,12 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
                 std::bit_cast<std::int8_t>(std::to_integer<std::uint8_t>(payload[0])),signed_half(4)))
                 return result(Status::provider_unavailable);
             break;
+        case 0x84:
+            if (!remap_missing_characters(*providers.world,selected_)) return result(Status::provider_unavailable);
+            break;
         case 0x80:case 0x88: {
             auto& session=providers.world->session();
-            const auto id=session.missing_characters.resolve(value(0));
+            const auto id=session.missing_characters.resolve(value(0),session.actor_placements.selected_request,selected_);
             if (!id) return result(Status::invalid_program);
             const auto parameters=opcode==0x80 ? std::array<std::uint32_t,3>{} :
                 std::array<std::uint32_t,3>{value(4),value(8),value(12)};
@@ -504,7 +513,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
         }
         case 0x81: {
             auto& session=providers.world->session();
-            const auto id=session.missing_characters.resolve(value(0));
+            const auto id=session.missing_characters.resolve(value(0),session.actor_placements.selected_request,selected_);
             if (!id) return result(Status::invalid_program);
             const auto index=session.npc_descriptors.disable(*id);
             if (index) (void)session.ai_control_requests.unregister_control(1,std::uint32_t(*index));
@@ -512,7 +521,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
         }
         case 0x89:case 0x8a:case 0x8b:case 0x8c: {
             auto& session=providers.world->session();
-            const auto id=session.missing_characters.resolve(std::uint16_t(value(0)));
+            const auto id=session.missing_characters.resolve(std::uint16_t(value(0)),session.actor_placements.selected_request,selected_);
             if (!id) return result(Status::invalid_program);
             switch (opcode) {
             case 0x89:

@@ -7,6 +7,10 @@ verification. Put the PC to sleep after Stage 4 passes those checks, as requeste
   actual native inventory, event, pose and local-player message owners through
   script commands 61 and 62. Both compiler suites and parent tests pass. The
   actual UI close provider, transport and game installation remain open.
+- [Native missing-character mapping](SCENARIO_CHARACTER_REMAP.md) connects the
+  actual roster, NPCs, room asset rows and enemy records. Placement/channel
+  aliases use their canonical owners. Both compiler comparisons, parent worker
+  tests and archive regression pass. Live construction remains open.
 - [Native enemy spawn records](ENEMY_DESCRIPTORS.md) import the ten owned EMD
   files through canonical RNG, control registrations and bounded initialized
   route metadata. Both compiler comparisons, direct archive loading and parent

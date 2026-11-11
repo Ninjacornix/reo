@@ -40,6 +40,9 @@ public:
     const Row* row(std::uint32_t room) const noexcept {
         return room<room_count?&rows_[room]:nullptr;
     }
+    Row* row(std::uint32_t room) noexcept {
+        return room<room_count?&rows_[room]:nullptr;
+    }
     std::optional<bool> allowed(std::uint32_t room,std::uint16_t id) const noexcept {
         const auto entries=row(room);
         if(!entries)return {};

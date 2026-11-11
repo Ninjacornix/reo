@@ -30,6 +30,7 @@ IDS += ['005EB0D0']
 IDS += ['00683A90','00684010','006841E0','006842B0','00684450','00681240','006812B0','0068DBA0','0068DF10']
 IDS += ['0068F8D0','0068F920','0068F970','0068FA40','0068FAC0','0068FB20','0068FB80','00681330']
 IDS += ['006BAA40','006BB010','006BC210','006D45A0','006D4650','005A7BC0']
+IDS += ['0068FC00']
 
 PINNED={};PIN_COMMITS={}
 def source_bytes(p):
@@ -150,6 +151,7 @@ def main(a):
     from qualify_enemy_spawn_profile import generate as spawn_profile, OUTPUT as spawn_output
     assert route_output.read_text()==route_profile() and spawn_output.read_text()==spawn_profile()
     shutil.copyfile(HERE/'enemy_vm_tests.inc',out/'enemy_vm_tests.inc')
+    shutil.copyfile(HERE/'character_remap_vm_tests.inc',out/'character_remap_vm_tests.inc')
     shutil.copyfile(HERE/'periodic_control_vm_tests.inc',out/'periodic_control_vm_tests.inc')
     shutil.copyfile(HERE/'room_rule_tests.inc',out/'room_rule_tests.inc')
     shutil.copyfile(HERE/'room_object_vm_tests.inc',out/'room_object_vm_tests.inc')
@@ -176,6 +178,7 @@ def main(a):
     units += [('launch',ROOT/'game/native/gameplay_session/launch.cpp'),('launch_roster',ROOT/'game/native/gameplay_world/launch_roster.cpp')]
     units += [('npc_descriptors',ROOT/'game/native/gameplay_scenario/npc_descriptors.cpp')]
     units += [(name,ROOT/'game/native/gameplay_scenario'/(name+'.cpp')) for name in ('enemy_descriptors','enemy_routes')]
+    units += [('character_remap',ROOT/'game/native/gameplay_scenario/character_remap.cpp')]
     if not a.pin_effects_commit:
         import sys
         sys.path.insert(0,str(ROOT/'tools/native_reconstruction'))
@@ -197,6 +200,7 @@ def main(a):
     source_paths.append(HERE/'launch_roster_vm_tests.inc')
     source_paths += [HERE/'npc_vm_tests.inc',HERE/'npc_fixtures.py']
     source_paths += [HERE/'enemy_vm_tests.inc',HERE/'qualify_enemy_route_profile.py',HERE/'qualify_enemy_spawn_profile.py']
+    source_paths.append(HERE/'character_remap_vm_tests.inc')
     source_paths += [HERE/'surface_vm_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]
     source_paths += [ROOT/'game/native/transform_math/transform_math.hpp',ROOT/'game/native/transform_math/transform_math.cpp']

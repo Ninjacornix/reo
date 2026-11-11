@@ -19,7 +19,7 @@ void actor_placement_vm_tests() {
         ActorFixture actors(trial, selected, offline);
         auto& placements = actors.session->actor_placements;
         actors.session->script_room_parameter = 0xaa;
-        placements.selected_request = (trial & 0x80) != 0;
+        placements.selected_request = std::uint8_t(trial*17u);
         ram[0x4b9d17] = 0xaa;
         ram[flag] = placements.selected_request;
         ram[queue + 12] = 0xa5;
@@ -135,7 +135,7 @@ void actor_placement_vm_tests() {
             check(entry.state==ram[queue+3*i]&&entry.room==ram[queue+3*i+1]&&entry.position==ram[queue+3*i+2]);
         }
         check(ram[queue+12]==0xa5);
-        check(placements.selected_request==bool(ram[flag]));
+        check(placements.selected_request==ram[flag]);
         check(actors.session->script_room_parameter==ram[0x4b9d17]);
         ++actor_placement_dispatches;
     }

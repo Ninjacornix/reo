@@ -30,7 +30,7 @@ void cutscene_commands() {
         actor->status=((trial>>3)&7)*0x20u;
         actors.world.paused=pauses[(trial>>5)%pauses.size()];
         state.limit_override=(trial&0x100)!=0;
-        actors.session->actor_placements.selected_request=(trial&0x200)!=0;
+        actors.session->actor_placements.selected_request=std::uint8_t(trial*17u);
         for(unsigned i=0;i<(trial>>2)%16;++i) {
             vm::CutsceneRequests::Record record;
             for(unsigned j=0;j<record.size();++j)record[j]=std::uint16_t(trial+257*i+j);
@@ -66,7 +66,7 @@ void cutscene_commands() {
         if(terminal.calls)check(terminal.last_mode==0);
         check(state.limit_override==bool(ram[0x4bae77]));
         check(std::uint8_t(actors.world.paused)==ram[0x4badf8]);
-        check(actors.session->actor_placements.selected_request==bool(ram[0x4badc0]));
+        check(actors.session->actor_placements.selected_request==ram[0x4badc0]);
         check(fixture_read<std::uint16_t>(ram.data(),0x3b27d0)==state.write_index());
         check(fixture_read<std::uint16_t>(ram.data(),0x3b27d8)==state.read_index());
         check(std::memcmp(ram.data()+0x3b26d0,state.records().data(),256)==0);
@@ -305,7 +305,7 @@ void scene_boot_dispatch() {
         check(fixture_read<std::uint16_t>(ram.data(),0x3b27d0)==queue.write_index());
         check(std::uint8_t(actors.world.paused)==ram[0x4badf8]);
         check(queue.limit_override==bool(ram[0x4bae77]));
-        check(actors.session->actor_placements.selected_request==bool(ram[0x4badc0]));
+        check(actors.session->actor_placements.selected_request==ram[0x4badc0]);
         check(terminal.calls==original_terminal_calls);
         check(auxiliary.row()==ram[0x4b9d15] && auxiliary.loaded_index()==ram[0x4b9d14]);
         for(const auto i:{slot,(slot+1)%512}) {

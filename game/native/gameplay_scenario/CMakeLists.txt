@@ -6,6 +6,7 @@ target_sources(reo_native_gameplay_scenario PRIVATE actor_inventory_commands.cpp
 target_sources(reo_native_gameplay_scenario PRIVATE scenario_archive.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE npc_descriptors.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE enemy_descriptors.cpp enemy_routes.cpp)
+target_sources(reo_native_gameplay_scenario PRIVATE character_remap.cpp)
 target_link_libraries(reo_native_gameplay_scenario PUBLIC reo_native_gameplay_ai_controls)
 target_sources(reo_native_gameplay_scenario PRIVATE cutscene_cues.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE resource_collisions.cpp)

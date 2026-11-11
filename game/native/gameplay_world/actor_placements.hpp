@@ -29,7 +29,7 @@ public:
     void clear_requests() noexcept;
     bool queue(std::size_t actor, std::uint8_t room, std::uint8_t position) noexcept;
     const auto& requests() const noexcept { return requests_; }
-    bool selected_request{};
+    std::uint8_t selected_request{};
 
 private:
     std::array<ActorPlacementRequest, request_count> requests_{};

@@ -321,8 +321,9 @@ void npc_command_vm_tests() {
         session.scenario=std::uint16_t(trial%3);
         for(unsigned index=0;index<8;++index)
             session.missing_characters.values[index]=std::uint8_t(trial/7+index*31);
-        const auto id=std::array<std::uint32_t,16>{0,0x64,0x1d,127,128,199,1,7,200,201,202,203,204,205,206,207}[(trial/7)%16];
-        const auto resolved=session.missing_characters.resolve(id);
+        session.actor_placements.selected_request=std::uint8_t(trial*17u);
+        const auto id=std::array<std::uint32_t,18>{0,0x64,0x1d,127,128,199,1,7,200,201,202,203,204,205,206,207,208,209}[(trial/7)%18];
+        const auto resolved=session.missing_characters.resolve(id,session.actor_placements.selected_request,0);
         check(resolved.has_value());
         descriptors.record(trial%64)->template_id=*resolved;
         // Registration removal, duplicates, full tables and preserved payloads
@@ -340,6 +341,7 @@ void npc_command_vm_tests() {
         export_npcs(descriptors,ram);
         export_npc_controls(session.ai_control_requests,ram);
         std::memcpy(ram.data()+0x4badb8,session.missing_characters.values.data(),8);
+        ram[0x4badc0]=session.actor_placements.selected_request;
         fixture_write(ram.data(),0x3243da,*session.scenario);
         fixture_write(ram.data(),0x75a4b0,category);
         fixture_write(ram.data(),0x75a4c0,relation);
@@ -378,7 +380,7 @@ void npc_command_vm_tests() {
         ++npc_command_dispatches;
     }
     for(const auto opcode:opcodes) {
-        for(const auto id:{208u,65535u}) {
+        for(const auto id:{210u,65535u}) {
             std::vector<std::byte> script;
             emit(script,opcode,{id,0,0,0,0,0});
             bool refused=false;

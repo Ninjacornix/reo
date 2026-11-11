@@ -76,6 +76,7 @@ public:
     bool admits_room_counters(const gameplay_world::World*)const noexcept;
     bool admits_inventory_grants(const gameplay_world::World*,const SceneResources*,const ResourceTemplates*)const noexcept;
     bool admits_actor_roster(const gameplay_world::World*)const noexcept;
+    bool admits_character_remap(const gameplay_world::World*)const noexcept;
     std::span<const std::uint8_t> adjusted_models()const noexcept{return adjusted_models_;}
     std::span<const std::uint8_t> visibility_models()const noexcept{return visibility_models_;}
     DispatchProfile profile()const noexcept{return profile_;}
@@ -90,6 +91,7 @@ private:
     bool room_counters_{},scenario_counter_policy_{};
     bool low_actor_population_{},full_actor_population_{},actor_roster_{},npc_inventory_grants_{};
     bool forced_terminal_{};
+    bool character_remap_{};
     DispatchProfile profile_{};
 };
 struct Channel {

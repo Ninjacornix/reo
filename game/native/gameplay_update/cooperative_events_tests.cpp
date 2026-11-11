@@ -343,6 +343,39 @@ void check_npc_startup_commands(){
     check(!world.session().ai_control_requests.registered(1,1)&&aliased.flags==0x10);
     check(owner.close()==u::Status::completed);
 }
+void check_character_remap_worker(){
+    u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());
+    Notifications notifications;
+    u::Owner owner(world,notifications);
+    world.mode=1;
+    auto& session=world.session();
+    session.scenario=2;
+    session.primary_population=0;
+    session.actor_placements.selected_request=255;
+    session.npc_descriptors.record(0)->active=1;
+    session.npc_descriptors.record(0)->template_id=201;
+    session.enemy_descriptors.record(0)->family=1;
+    session.enemy_descriptors.record(0)->variant=68;
+    (*session.room_actor_assets.row(0))[0]={209,17};
+    check(owner.initialize_completion_statistics()==e::StatisticsStatus::completed);
+    const auto program=std::make_shared<const s::Program>(std::vector<std::vector<std::byte>>{
+        {std::byte{1},{},{},{},std::byte{0x84},{},{},{},std::byte{0xa},{},{},{}}});
+    const auto idle=std::make_shared<const s::Program>(
+        std::vector<std::vector<std::byte>>{{std::byte{1},{},{},{},std::byte{0xa},{},{},{}}});
+    check(owner.scripts().install(0,program)==s::Status::completed);
+    check(owner.scripts().install(1,idle)==s::Status::completed);
+    Remaining workers;
+    EmptyActors actors;
+    check(owner.run_workers(workers,actors).status==u::Status::completed);
+    check(session.missing_characters.values==std::array<std::uint8_t,8>{0,1,2,3,4,5,6,7});
+    check(session.npc_descriptors.record(0)->template_id==201);
+    check(session.enemy_descriptors.record(0)->variant==69&&session.actor_placements.selected_request==255);
+    check((*session.room_actor_assets.row(0))[0]==s::RoomActorAsset{200,17});
+    check(owner.scripts().selected_channel()==1);
+    check(owner.run_workers(workers,actors).status==u::Status::completed);
+    check(session.enemy_descriptors.record(0)->variant==70);
+    check(owner.close()==u::Status::completed);
+}
 int main()try{
     check_actor_status();
     check_automatic_worker();
@@ -352,6 +385,7 @@ int main()try{
     check_transition_inputs();
     check_launch_roster_initialization();
     check_npc_startup_commands();
+    check_character_remap_worker();
     u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());Notifications notifications;u::Owner owner(world,notifications);check(owner.open());
     world.room=0x1234;check(owner.clock().restore({0,0,0,0},UINT32_MAX)==u::tasks::Status::completed);
     const auto first=owner.record_event(0xabcd0013,0x12345678,0xabcdef90);check(first.status==e::Status::completed);

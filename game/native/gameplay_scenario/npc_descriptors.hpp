@@ -18,6 +18,12 @@ struct MissingCharacters {
         if (id-200>=values.size()) return {};
         return std::uint16_t(200+values[id-200]);
     }
+    std::optional<std::uint16_t> resolve(std::uint32_t id,std::uint8_t placement_request,
+                                       std::uint8_t script_channel) const noexcept {
+        if (id==208) return std::uint16_t(200u+placement_request);
+        if (id==209) return std::uint16_t(200u+script_channel);
+        return resolve(id);
+    }
 };
 
 // Persistent scenario descriptors have a lifetime independent of live actors.
