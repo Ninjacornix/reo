@@ -216,6 +216,7 @@ PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
 #include "actor_placement_vm_tests.inc"
 #include "actor_inventory_vm_tests.inc"
 #include "scene_boot_vm_tests.inc"
+#include "room_actor_assets_vm_tests.inc"
 int main(int argc,char** argv)try{
     check(argc==4);
     no_model_vm_tests();
@@ -229,6 +230,7 @@ int main(int argc,char** argv)try{
     auxiliary_timers();
     roster_conditions();
     scene_boot_dispatch();
+    room_actor_asset_tests();
     {std::vector<std::byte> b;emit(b,1);const auto a=emit(b,0xa);run({b},{0,a},4);}
     for(unsigned delay:{0u,1u,2u,7u}){std::vector<std::byte> a,b;emit(a,4,{delay});emit(a,0xd);emit(b,0xa);run({a,b},{1,0},delay+3,delay%6);}
     {std::vector<std::byte> b;emit(b,3,{2});emit(b,0xe5);const auto end=emit(b,0xa);run({b},{0,end},2);}
@@ -377,5 +379,6 @@ int main(int argc,char** argv)try{
     }
     std::cout<<"},\"room_variant_handlers\":"<<room_variant_handlers<<",\"room_variant_dispatches\":"<<room_variant_dispatches<<",\"room_variant_refusals\":"<<room_variant_refusals<<",\"room_variant_world_cases\":"<<room_variant_world_cases<<",\"room_counter_handler_calls\":"<<room_counter_handler_calls<<",\"room_counter_dispatches\":"<<room_counter_dispatches<<",\"room_counter_resets\":"<<room_counter_resets<<",\"stock_room_dispatches\":"<<stock_room_dispatches<<",\"actor_placement_dispatches\":"<<actor_placement_dispatches<<",\"actor_inventory_dispatches\":"<<actor_inventory_dispatches
              <<",\"cutscene_command_calls\":"<<cutscene_command_calls<<",\"scene_auxiliary_cells\":"<<scene_auxiliary_cells<<",\"auxiliary_timer_checks\":"<<auxiliary_timer_checks<<",\"roster_dispatches\":"<<roster_dispatches<<",\"scene_boot_dispatches\":"<<scene_boot_dispatches
+             <<",\"room_actor_asset_dispatches\":"<<room_actor_asset_dispatches<<",\"room_actor_asset_queries\":"<<room_actor_asset_queries
              <<",\"original_numeric_handler_invocations\":65536,\"game_launched\":false}\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

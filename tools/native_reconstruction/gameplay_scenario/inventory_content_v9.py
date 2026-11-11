@@ -119,6 +119,11 @@ def prefix_graph(data,kind,table,declared,mask,profile,filters):
             if op in [0x120,0x121] and 512<=payload(0)<0xffffffe1:
                 raise ValueError('native_auxiliary_timer_index_profile_refused')
             if op==0x122:payload(0)
+            if op in [0x85,0x87] and payload(0)>=128:
+                raise ValueError('native_room_actor_asset_row_profile_refused')
+            if op==0x85:payload(8)
+            if op==0x86:payload(0)
+            if op==0x87:payload(4)
             if op==0x180:payload(0)
             if op in [5,6] and profile=='ordinary' and payload(0)>=4:raise ValueError('native_actor_event_slot_profile_refused')
             if op==1:add(next_pc,new_saved=next_pc)

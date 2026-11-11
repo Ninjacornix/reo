@@ -3,6 +3,14 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. Put the PC to sleep after Stage 4 passes those checks, as requested.
 
+- [Room actor asset requests](SCENARIO_ROOM_ACTOR_ASSETS.md) now share one
+  Session owner across script updates and descriptor allowance queries.
+  Both compiler comparisons pass. Actual descriptor/model loading callers
+  still need to adopt it.
+- [Direct native scenario archive loading](SCENARIO_ARCHIVE.md) now reads all
+  171 owned scenario/room members from the host archive. Both compiler tests
+  bind the 51 admitted ordinary/offline room programs through the actual Update
+  Owner. Whole-scene construction and game installation remain open.
 - [Scenario startup scene state](SCENARIO_SCENE_BOOT.md) supplies the cutscene
   request producer, roster condition, auxiliary room rows and timers through
   the Session and update owners. The original comparisons pass. Actual scene

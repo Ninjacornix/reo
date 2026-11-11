@@ -10,6 +10,7 @@
 #include "../gameplay_scenario/model_reference.hpp"
 #include "../gameplay_scenario/auxiliary_room_rows.hpp"
 #include "../gameplay_scenario/cutscene_requests.hpp"
+#include "../gameplay_scenario/room_actor_assets.hpp"
 #include "inventory_state.hpp"
 #include "actor_placements.hpp"
 #include "../gameplay_session/room_variants.hpp"
@@ -151,6 +152,7 @@ struct Session : actors::HitSession {
     ActorPlacements actor_placements;
     gameplay_scenario::CutsceneRequests cutscene_requests;
     gameplay_scenario::AuxiliaryScene auxiliary_scene;
+    gameplay_scenario::RoomActorAssets room_actor_assets;
     std::uint8_t script_room_parameter{}; // original4B9D17; exact downstream use is unresolved
     gameplay_collision::delivery::RoomContacts room_contacts;
     gameplay_session::Random random{};

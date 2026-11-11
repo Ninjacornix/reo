@@ -1,5 +1,6 @@
 #include "update.hpp"
 #include "../gameplay_scenario/script_program.hpp"
+#include "../gameplay_scenario/scenario_archive.hpp"
 #include <stdexcept>
 
 namespace reo::native::gameplay_update {
@@ -49,6 +50,7 @@ Status Owner::bind_scenario_scripts(const scenario::content::ScriptBank& bank,st
     // The row was checked and the channel swap ran synchronously on this owner.
     (void)world_.session().room_contacts.initialize_counters(policy_row,rows);
     world_.session().auxiliary_scene.bind(std::move(auxiliary_rows));
+    world_.session().room_actor_assets.reset();
     (void)scripts_.restore_counters({});
     return Status::completed;
 }
@@ -63,5 +65,25 @@ Status Owner::bind_room_scripts(const scenario::content::ScriptBank& bank,std::s
     const auto script = scenario::content::admit_script_program(bank,profile);
     if (script.program && !script.program->admits_room_counters(&world_)) return Status::script_failure;
     return bind(scripts_,script,room_channel,5);
+}
+
+Status Owner::load_scenario_scripts(const scenario::content::ScenarioArchive& archive,
+                                    std::uint16_t scenario,std::uint8_t policy_row) {
+    if (!open()) return Status::closed;
+    if (running_) return Status::busy;
+    const auto bank=archive.scenario_scripts(scenario);
+    return bank ? bind_scenario_scripts(*bank,policy_row) : Status::script_failure;
+}
+
+Status Owner::load_room_scripts(const scenario::content::ScenarioArchive& archive,
+                                scenario::content::RoomId id,std::size_t room_channel) {
+    if (!open()) return Status::closed;
+    if (running_) return Status::busy;
+    const auto room=archive.room(id);
+    if (!room) return Status::script_failure;
+    const auto bytes=room->section(1);
+    if (!bytes) return Status::script_failure;
+    auto backing=std::make_shared<const std::vector<std::byte>>(bytes->begin(),bytes->end());
+    return bind_room_scripts(scenario::content::ScriptBank(std::move(backing),BankFormat::room_section),room_channel);
 }
 }
