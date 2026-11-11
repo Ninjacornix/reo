@@ -3,6 +3,12 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to keep the PC awake afterward.
 
+- [Native NPC updates](NPC_UPDATES.md) now compose the shared callback, actual
+  root/pose work, camera and inhibition gates, the ten-slot pool and its actual
+  Update worker position. Both compiler World and current owned/parent cohorts
+  pass. The actual native behavior composition and all32,768 behavior
+  comparisons also pass on both compilers. Actual scene/content/attachment
+  providers and game installation remain open.
 - The NPC model association has been corrected: the resident auxiliary loader
   uses raw low-byte N/HN identities, independently of primary-character
   substitution. [Asset evidence](NPC_ACTOR_ASSETS.md) covers 233 actual members

@@ -16,7 +16,7 @@ public:
     AuxiliaryStatus release(const actors::EntityId&)noexcept;
     AuxiliaryStatus reset()noexcept;
     AuxiliaryStatus close()noexcept;
-    bool busy()const noexcept{return mutating_;}
+    bool busy()const noexcept{return mutating_||updating_;}
     unsigned remaining()const noexcept{return remaining_;}
     actors::EntityId head()const noexcept;
     actors::EntityId tail()const noexcept;
@@ -30,6 +30,7 @@ public:
 private:
     friend class World;
     friend class NpcActorConstruction;
+    friend class NpcActorUpdates;
     explicit AuxiliaryActorPool(World&)noexcept;
     struct Slot {actors::EntityId id;std::optional<std::uint8_t> previous,next;std::uint8_t byte_on_reuse{};};
     World& world_;
@@ -38,7 +39,7 @@ private:
     std::array<bool,4> attachments_{};
     unsigned remaining_{capacity};
     std::optional<std::uint8_t> head_,tail_;
-    bool closed_{},mutating_{};
+    bool closed_{},mutating_{},updating_{};
     AuxiliaryStatus clear(bool seal)noexcept;
 };
 }

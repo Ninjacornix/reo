@@ -20,7 +20,7 @@ def main():
   read=main_read if begin<0x570000 else lambda at,n:raw[at-0x570000:at-0x570000+n]
   proof.append(compare_source('complete canonical actor behavior orchestration',src,begin,end,read))
  units=['game/native/'+n for n in ['gameplay_world/world.cpp','gameplay_world/behavior.cpp','gameplay_world/motion.cpp','gameplay_world/surfaces.cpp','gameplay_collision/response.cpp','gameplay_collision/collision.cpp','gameplay_actors/entity.cpp','gameplay_actors/input.cpp','gameplay_actors/health.cpp','gameplay_actors/status.cpp','gameplay_actors/hit.cpp','gameplay_session/session.cpp','animation/model.cpp','animation/model_math.cpp','animation/curves.cpp','transform_math/transform_math.cpp']]
- units=list(dict.fromkeys(units+SURFACE_WORLD_UNITS))
+ units=list(dict.fromkeys(units+SURFACE_WORLD_UNITS+['game/native/gameplay_scenario/scene_resources.cpp','game/native/gameplay_scenario/resource_templates.cpp']+['game/native/gameplay_world/'+n+'.cpp'for n in ['common_actor_frame','npc_updates','motion_transforms','surface_orientation','surface_orientation_math']]))
  native=units+['game/native/gameplay_world/'+n for n in ['world.hpp','behavior.hpp','surfaces.hpp','motion.hpp']]
  native += [p.relative_to(ROOT).as_posix() for d in ['gameplay_actors','gameplay_session'] for p in (ROOT/'game/native'/d).glob('*') if p.suffix in ['.hpp','.cpp']]
  fixture=['tools/native_reconstruction/gameplay_world_oracle/behavior_tests.cpp','tools/native_reconstruction/gameplay_world_oracle/hit_fixture.hpp','tools/native_reconstruction/gameplay_actor_oracle/status_runtime.hpp','tools/native_reconstruction/verify_gameplay_behavior.py']

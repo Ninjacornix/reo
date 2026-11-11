@@ -1,4 +1,6 @@
 #include "game/native/gameplay_world/behavior.hpp"
+#include "game/native/gameplay_world/npc_updates.hpp"
+#include "game/native/gameplay_world/surface_orientation.hpp"
 #include "hit_fixture.hpp"
 #include <algorithm>
 #include <string>
@@ -171,6 +173,19 @@ int main()try{
     const auto result=composed.update_primary(composed_ports);
     if(result.status!=gw::Status::completed || result.updated!=1 || frame.behavior_forwarded || frame.forwarded!=9 || actor->action_elapsed!=1 || actor->control_elapsed!=1 || behavior.core.trace.empty())
         throw std::runtime_error("Native frame/behavior composition");
-    std::cout<<"{\"status\":\"passed\",\"cases\":"<<cases<<",\"trace_words\":"<<trace_words<<"}\n";
+    // The actual native NPC pass consumes the actual shared behavior core.
+    // Action/effect providers remain declared; root/pose work is concrete.
+    gw::World npc_world(profile,std::make_shared<gw::Session>());npc_world.mode=1;
+    const auto npc_id=npc_world.auxiliary_actors().allocate(1).id;const auto npc=npc_world.resolve(npc_id);
+    npc->active=npc->visible=true;npc->category=1;npc->npc.emplace();npc->primary=1;npc->current=npc->maximum=100;
+    npc->position={1000,0,0};npc->model_scale={1,1,1};npc->motion_multiplier=1;npc->root_motion_delta={1,0,0};
+    BehaviorPorts npc_behavior;npc_behavior.core.current=npc.get();npc_behavior.core.seed=23;FramePorts npc_frame;
+    gw::BehaviorFrameServices npc_bound(npc_frame,npc_behavior,floors,timer_amounts);gw::GridSurfaceOrientation npc_pose(floors);
+    const gw::Position camera{};const std::uint8_t inhibition{};gw::NpcActorUpdates npc_updates(npc_world,npc_bound,npc_pose,camera,inhibition);
+    const auto npc_result=npc_updates.run();
+    if(npc_result.status!=gw::NpcUpdateStatus::completed||npc_result.visited!=1||npc_result.called!=1||npc_frame.forwarded||npc_behavior.core.trace.empty()||npc->previous_position.x!=1000||npc->position.x!=1001||npc->action_elapsed||npc->control_elapsed||!npc->collision.pose_ready)
+        throw std::runtime_error("Native NPC pool/callback/behavior/root/pose composition");
+    if(npc_updates.close()!=gw::NpcUpdateStatus::completed||npc_world.close()!=gw::Status::completed)throw std::runtime_error("Native NPC behavior joined closure");
+    std::cout<<"{\"status\":\"passed\",\"cases\":"<<cases<<",\"trace_words\":"<<trace_words<<",\"npc_behavior_compositions\":1}\n";
     return 0;
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

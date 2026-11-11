@@ -607,7 +607,9 @@ void check_material_animation_worker(){
         check(temporary.create(replacement).status==TS::closed);
     }
 }
+#include "npc_actor_workers_tests.inc"
 int main()try{
+    check_npc_actor_workers();
     check_cutscene_actor_tracks();
     check_linked_actor_worker();
     check_material_animation_worker();

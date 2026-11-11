@@ -1,6 +1,8 @@
 #include "game/native/gameplay_world/animation.hpp"
 #include <functional>
 struct R5900Context;struct PS2Runtime;
+void npc_update_original_port(std::uint8_t*,R5900Context*,PS2Runtime*);
+void common_actor_original_port(std::uint8_t*,R5900Context*,PS2Runtime*);
 void linked_actor_original_port(std::uint8_t*,R5900Context*,PS2Runtime*);
 void cutscene_command_original_port(std::uint8_t*,R5900Context*,PS2Runtime*);
 #define PLAYBACK_ACTOR_ADDRESS 0x4a5c30
@@ -84,6 +86,8 @@ void body_equal(const g::Actor& value, const std::vector<std::uint8_t>& ram) {
 #include "cutscene_actor_track_tests.inc"
 #include "cutscene_descriptor_tests.inc"
 #include "npc_skeleton_tests.inc"
+#include "common_actor_frame_tests.inc"
+#include "npc_update_tests.inc"
 int main(int argc, char** argv) try {
     check(argc >= 4 && argc <= 6, "owned World animation inputs required");
     const auto old = _mm_getcsr();
@@ -98,8 +102,13 @@ int main(int argc, char** argv) try {
     owned_constants(ram.data());
     put(ram.data(), 0x294e00, t::identity());
     const auto skeletons = load(argv[2]), raw_banks = load(argv[3]);
+    common_actor_frame_tests(ram);
+    npc_update_tests(ram);
+    npc_update_failure_tests();
+    std::fill(ram.begin(),ram.end(),0);owned_constants(ram.data());put(ram.data(),0x294e00,t::identity());
     scripted_motion_tests(raw_banks,skeletons,ram);
     linked_expiry_tests(ram);
+
     cutscene_command_tests(ram);
     cutscene_track_tests(ram);
     linked_full_pool_tests(ram);
@@ -723,6 +732,13 @@ int main(int argc, char** argv) try {
               << ",\"cutscene_descriptor_partial\":" << cutscene_descriptor_partial
               << ",\"cutscene_parameter_groups\":" << cutscene_parameter_groups
               << ",\"cutscene_parameters\":" << cutscene_parameters
+              << ",\"npc_update_refusals\":" << npc_update_refusals
+              << ",\"npc_distance_cases\":" << npc_distance_cases
+              << ",\"npc_pool_cases\":" << npc_pool_cases
+              << ",\"npc_pool_actors\":" << npc_pool_actors
+              << ",\"npc_attachment_cases\":" << npc_attachment_cases
+              << ",\"common_actor_cases\":" << common_actor_cases
+              << ",\"common_actor_refusals\":" << common_actor_refusals
               << ",\"npc_skeleton_cases\":" << npc_skeleton_cases
               << ",\"npc_skeleton_nodes\":" << npc_skeleton_nodes
               << ",\"npc_stale_lengths\":" << npc_stale_lengths

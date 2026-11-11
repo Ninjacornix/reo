@@ -216,6 +216,7 @@ enum class Stage {
 class World;
 class LinkedModelPool;
 class LinkedActorUpdates;
+class NpcActorUpdates;
 class AuxiliaryActorPool;
 class TargetMetricCache;
 class Services {
@@ -292,6 +293,9 @@ private:
     gameplay_scenario::CutsceneActorTracks* cutscene_tracks_owner_{};
     friend class gameplay_scenario::CutsceneActorTracks;
     friend class NpcActorConstruction;
+    friend class CommonActorFrame;
+    friend class NpcActorUpdates;
+    NpcActorUpdates* npc_update_owner_{};
     std::unique_ptr<AuxiliaryActorPool> auxiliary_actors_;
     std::unique_ptr<gameplay_navigation::Bank> navigation_;
     std::unique_ptr<TargetMetricCache> target_metrics_;

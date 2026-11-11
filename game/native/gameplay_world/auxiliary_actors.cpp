@@ -15,7 +15,7 @@ void cleared_fields(Actor& actor){
 }
 }
 AuxiliaryActorPool::AuxiliaryActorPool(World& world)noexcept:world_(world){for(unsigned i=0;i<capacity;++i){free_[i]=std::uint8_t(i);slots_[i].byte_on_reuse=std::uint8_t(i);}}
-AuxiliaryActorPool::~AuxiliaryActorPool(){if(mutating_)std::terminate();(void)close();}
+AuxiliaryActorPool::~AuxiliaryActorPool(){if(mutating_||updating_)std::terminate();(void)close();}
 std::optional<std::uint8_t> AuxiliaryActorPool::physical_slot(const actors::EntityId& id)const noexcept{
     if(closed_||world_.closed()||!id)return{};
     for(unsigned i=0;i<capacity;++i)if(slots_[i].id==id)return std::uint8_t(i);
@@ -63,7 +63,7 @@ AuxiliaryStatus AuxiliaryActorPool::release(const actors::EntityId& id)noexcept{
 }
 AuxiliaryStatus AuxiliaryActorPool::clear(bool seal)noexcept{
     if(closed_)return seal?AuxiliaryStatus::completed:AuxiliaryStatus::closed;
-    if(mutating_)return AuxiliaryStatus::busy;
+    if(mutating_||updating_)return AuxiliaryStatus::busy;
     if(world_.closed()&&!seal)return AuxiliaryStatus::world_unavailable;
     mutating_=true;closed_=seal;auto previous=std::move(slots_);slots_={};head_.reset();tail_.reset();remaining_=capacity;attachments_.fill(false);
     for(unsigned i=0;i<capacity;++i){free_[i]=std::uint8_t(i);slots_[i].byte_on_reuse=std::uint8_t(i);}
