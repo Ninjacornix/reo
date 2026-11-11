@@ -52,6 +52,7 @@ void advance(World& world,Actor& actor,const animation::MotionBank& resource,flo
 }
 }
 void ScriptedActorMotion::tick(const actors::EntityId& id){
+    if(world_.humanoid_motion_source_closed())throw std::runtime_error("Native scripted motion content owner closed");
     const auto actor=world_.resolve(id);
     if(!actor||!actor->scripted||actor->category!=2)
         throw std::runtime_error("Native scripted linked actor unavailable");
@@ -60,7 +61,9 @@ void ScriptedActorMotion::tick(const actors::EntityId& id){
     if(actor->phase==0){
         actor->phase=1;actor->motion_class=0x14;actor->motion_rate=1;
         auto& state=playback(*actor);
-        state.resources[0]=control.motion_rate_mode==1?banks_.mode_one:banks_.other_modes;
+        const HumanoidMotionAlias alias{control.motion_rate_mode==1?HumanoidMotionFamily::scene_body:HumanoidMotionFamily::general,0};
+        actor->motion_bank_aliases[0]=alias;
+        state.resources[0]=resolve_humanoid_motion_bank(world_,alias,control.motion_rate_mode==1?banks_.mode_one:banks_.other_modes);
         actor->root_motion_delta={};
         const float duration=control.motion_blend_duration*(control.motion_rate_mode==0?1.f:2.f);
         if(!std::isfinite(duration))throw std::domain_error("Native scripted motion finite blend duration required");
@@ -69,12 +72,14 @@ void ScriptedActorMotion::tick(const actors::EntityId& id){
     }else if(actor->phase==1){
         auto& state=playback(*actor);
         if(!state.resources_known)throw std::runtime_error("Native scripted motion bank bindings unavailable");
+        if(actor->motion_bank_aliases[0])state.resources[0]=resolve_humanoid_motion_bank(world_,*actor->motion_bank_aliases[0],state.resources[0]);
         advance(world_,*actor,bank(state.resources[0]),control.motion_rate_mode==0?1.f:.5f);
     }
     if(control.track_two_motion!=0&&actor->model_pose_class!=1){
         auto& state=playback(*actor);
         const animation::MotionClock clock{world_.session().clock_mode,actor->category,actor->motion_rate};
-        (void)state.configure(bank(banks_.track_two),control.track_two_motion,2,0,0,clock,root(*actor));
+        const auto face=resolve_humanoid_motion_bank(world_,{HumanoidMotionFamily::scene_face,0},banks_.track_two);
+        (void)state.configure(bank(face),control.track_two_motion,2,0,0,clock,root(*actor));
         control.track_two_motion=0;
     }
 }

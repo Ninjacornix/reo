@@ -9,6 +9,12 @@ verification. The latest user instruction is to keep the PC awake afterward.
   Both compiler919-bank comparisons, actual NPC binding examples and twelve
   parent tests pass. Live publication, remaining scene/action/curve consumers
   and installed native gameplay remain open.
+- [Shared humanoid motion publication](HUMANOID_MOTION_PUBLICATION.md) adds
+  explicit NPC/scripted bank identities, atomic live rebinding, stale-load
+  rejection and joined-owner closure. Paired publication, current World,
+  behavior, constructor, scene and thirteen-parent checks pass;
+  actual scene lifecycle adoption, primary bindings and remaining sparse
+  scripted playback remain open.
 - [Native NPC updates](NPC_UPDATES.md) now compose the shared callback, actual
   root/pose work, camera and inhibition gates, the ten-slot pool and its actual
   Update worker position. Both compiler World and current owned/parent cohorts

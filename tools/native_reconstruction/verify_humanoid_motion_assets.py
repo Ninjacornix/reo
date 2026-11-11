@@ -10,6 +10,7 @@ sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
     p=argparse.ArgumentParser();p.add_argument('--compiler',choices=COMPILERS,required=True)
     for name in ['cmake','build','data-root','output']:p.add_argument('--'+name,type=Path,required=True)
+    p.add_argument('--publication',action='store_true')
     a=p.parse_args();out=a.output.resolve();build=a.build.resolve();compiler=COMPILERS[a.compiler];assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
     configured=re.search(r'^CMAKE_CXX_COMPILER:[^=]+=([^\n]+)',(build/'CMakeCache.txt').read_text(),re.M)[1];assert Path(configured.strip()).resolve()==compiler.resolve()
     elf=ROOT/'game_data/SLUS_207.65';assert sha(elf)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46'
@@ -53,12 +54,15 @@ def main():
     result=dict(schema=1,status='failed',source_sha256=before,compiler_sha256=sha(compiler),member_profile=dict(path=str(profile_path),sha256=sha(profile_path)),original_owned_bodies=proof,scripted_member_profile=dict(path=str(scripted_path),sha256=sha(scripted_path)),owned_assets=assets,commands=[],game_run=False,installed_in_game=False,stage4_complete=False,declared_ports=['1CC8F0 path acquisition observed with pinned raw member bytes','1B1DF0/1B2CE0 work-buffer preparation/release observations','1D3550 raw block provenance,192500 token identity,1925A0 release observations','name-only failed reads bypass constructors explicitly'])
     targets=['humanoid_motion_assets_tests','cutscene_npc_construction_tests','npc_actor_construction_tests','npc_actor_assets_tests','cutscene_scripted_construction_tests','cutscene_descriptor_assets_tests','gameplay_actor_assets_tests','scripted_motion_assets_tests','gameplay_target_metrics_tests','gameplay_cooperative_events_tests','gameplay_collision_workers_tests','gameplay_ai_owner_tests'];regex='^(native_humanoid_motion_assets|native_cutscene_npc_construction|native_npc_actor_construction|native_npc_actor_assets|native_cutscene_scripted_construction|native_cutscene_descriptor_assets|native_gameplay_actor_assets|native_scripted_motion_assets|native_gameplay_target_metrics|native_gameplay_cooperative_events|native_gameplay_collision_workers|native_gameplay_ai_owner)$'
     env=dict(os.environ);env['PATH']=str(compiler.parent)+os.pathsep+str(a.cmake.parent)+os.pathsep+env.get('PATH','')
+    if a.publication:
+        targets.append('humanoid_motion_publication_tests');regex=regex[:-2]+'|native_humanoid_motion_publication)$'
     commands=[('configure',[str(a.cmake),'-S',str(ROOT/'game/native'),'-B',str(build),'-DREO_HUMANOID_MOTION_REFERENCE_DIR='+str(out)]),('build',[str(a.cmake),'--build',str(build),'--parallel','2','--target',*targets]),('owned',[str(build/'gameplay_world/humanoid_motion_assets_tests.exe'),str(archive),str(out/'members.txt')]),('parents',[str(a.cmake.parent/'ctest.exe'),'--test-dir',str(build),'-R',regex,'--output-on-failure'])]
+    if a.publication:commands.insert(-1,('publication',[str(build/'gameplay_world/humanoid_motion_publication_tests.exe'),str(archive)]))
     try:
         for name,command in commands:
             done=subprocess.run(command,env=env,capture_output=True,timeout=240);(out/(name+'.stdout.txt')).write_bytes(done.stdout);(out/(name+'.stderr.txt')).write_bytes(done.stderr);result['commands'].append(dict(command=command,exit_code=done.returncode));assert done.returncode==0,name+' '+(done.stdout+done.stderr).decode(errors='replace')[-2200:]
-            if name=='owned':result['owned']=json.loads(done.stdout)
-            if name=='parents':assert b'100% tests passed, 0 tests failed out of 12'in done.stdout
+            if name in ['owned','publication']:result[name]=json.loads(done.stdout)
+            if name=='parents':assert ('100% tests passed, 0 tests failed out of '+str(13 if a.publication else 12)).encode()in done.stdout
         assert (archive.stat().st_size,archive.stat().st_mtime_ns)==stamp and all(sha(ROOT/name)==digest for name,digest in before.items());result.update(status='passed',source_unchanged=True)
     finally:
         result['output_sha256']={p.relative_to(out).as_posix():sha(p)for p in out.rglob('*')if p.is_file()};(out/'receipt.json').write_text(json.dumps(result,indent=2)+'\n')

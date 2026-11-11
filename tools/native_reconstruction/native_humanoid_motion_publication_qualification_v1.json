@@ -1,0 +1,293 @@
+{
+  "schema": 1,
+  "status": "qualified_partial_native_humanoid_motion_publication",
+  "source_sha256": {
+    "game/native/gameplay_world/CMakeLists.txt": "9e10c035cc04436a283d3c28b6a838c2db501c5c92bca4d95be0c5ee8e399be9",
+    "game/native/gameplay_world/world.hpp": "ac66f4d23e50e4935ffca64282d30e7162582fac4d66f3a84d75fca801a2c87a",
+    "game/native/gameplay_world/humanoid_motion_bindings.hpp": "a1968df6b7e227b1bd91cbda58b404364d8ba6c877861cba03ce3f2240f89ccd",
+    "game/native/gameplay_world/humanoid_motion_bindings.cpp": "5bdfd4a9e4ccfc3d78bf82dc711fc6fd65f910e3b7dce916740814cdcfe13ae3",
+    "game/native/gameplay_world/humanoid_motion_owner.hpp": "bb72b072578e07170e3e60ad8bd3d9f69a4ac3b6fb1c4dc202b79102a6e1c1fe",
+    "game/native/gameplay_world/humanoid_motion_owner.cpp": "c30288b14891c0c98c329b03a322520aca336f30085895a243e45cb0523ddbd2",
+    "game/native/gameplay_world/humanoid_motion_assets.hpp": "2d5eb3655248ebfbee068581d5f6b199e9f0f27ccf9b4ecdf1237d290b59634d",
+    "game/native/gameplay_world/humanoid_motion_assets.cpp": "3d2d04dca17a2dcf571fa7ab1aefb84416d5cf6b8436213e4edcf5a94abe6c00",
+    "game/native/gameplay_world/humanoid_motion_publication_tests.cpp": "0f88976e768e84c89f37c55bdd014c439139d3951a064508df32dd0f71e4c7a7",
+    "game/native/gameplay_world/motion_resources.cpp": "59123f4a07d5fe6371aa151331b7e58f13332a400e347ac9eb8c2d0030fda843",
+    "game/native/gameplay_world/npc_actor_construction.cpp": "5ebcee638c9a2d6d4185771e57b747d7cc3cdf98544e8b75ca5579f81841f8e6",
+    "game/native/gameplay_world/scripted_motion.cpp": "8addcb3cb8a13230c4d6c6d51584c97975d05342ae8e3a12ee1f3790d65d1309",
+    "tools/native_reconstruction/effect_work_sources.py": "fac6c21b8ed8631056b169d3d111a325298222ac0de9c52f3765fc37e34d3064",
+    "tools/native_reconstruction/verify_humanoid_motion_assets.py": "352edf7d00c1ecc5b132c269de926f72d2c311409c29f12961b6c32b60bbf859",
+    "docs/native-gameplay/HUMANOID_MOTION_PUBLICATION.md": "00b718b42c54cc89ec756a1488eba382525cefb0d86d9f9340216db816a76096",
+    "docs/native-gameplay/HUMANOID_MOTION_ASSETS.md": "70de77ffb1c6a6148acadeb931dfd1c536cb858ae88a03a4dee99f16df049813",
+    "docs/native-gameplay/STAGE4_PLAN.md": "a22aaa45a1bba5f4fe3f8ab760fca43665d246faca03e3acaf21c13524fb4973"
+  },
+  "cohorts": {
+    "llvm": {
+      "publication_and_assets": {
+        "receipt": "build-native-sjuni/humanoid-motion-publication-llvm-v1/receipt.json",
+        "sha256": "aac08ba35375982f400961b0606d883a37fa20f1b557e849a893a37f24fa72e0",
+        "observed": {
+          "native_checks": 267802,
+          "original_checks": 13350478,
+          "original_bank_cases": 919,
+          "original_calls": 427296,
+          "common_loads": 90,
+          "character_loads": 720,
+          "snapshot_cases": 94,
+          "npc_bindings_cases": 2,
+          "loader_name_cases": 66048,
+          "game_run": false
+        },
+        "publication": {
+          "checks": 30,
+          "publications": 4,
+          "rebindings": 25,
+          "refusals": 8,
+          "scripted_bindings": 2,
+          "busy_checks": 1,
+          "retirements": 1,
+          "game_run": false
+        }
+      },
+      "world": {
+        "receipt": "build-native-sjuni/humanoid-publication-world-llvm-v1/receipt.json",
+        "sha256": "8e7e920774d7de2052876f6d6844ef1a0c4417aaf31f3a93c67774669638b1a7",
+        "observed": {
+          "checks": 2799371,
+          "lifetime_cases": 5,
+          "world_application_cases": 128,
+          "special_frame_cases": 64,
+          "resource_routing_cases": 40,
+          "selection_cases": 933,
+          "dual_application_cases": 74,
+          "metadata_observations": 1263,
+          "scripted_motion_cases": 768,
+          "scripted_motion_ticks": 3840,
+          "scripted_motion_refusals": 776,
+          "scripted_positive_tracks": 86,
+          "cutscene_actor_calls": 2304,
+          "cutscene_actor_gate_calls": 3072,
+          "cutscene_actor_refusals": 3,
+          "linked_actor_cases": 768,
+          "linked_expiry_cases": 512,
+          "linked_full_pool_cases": 8,
+          "cutscene_command_cases": 71163,
+          "cutscene_degree_cases": 65536,
+          "cutscene_speech_cases": 257,
+          "cutscene_command_refusals": 7,
+          "cutscene_command_mutations": 1,
+          "cutscene_track_cases": 257,
+          "cutscene_track_ticks": 2056,
+          "cutscene_track_original_commands": 9067,
+          "cutscene_terminal_streams": 1915,
+          "linked_update_refusals": 3,
+          "required_prelude_cases": 101,
+          "refusal_cases": 130,
+          "joint_cases": 774235,
+          "cutscene_descriptors": 550,
+          "cutscene_descriptor_sections": 24458,
+          "cutscene_descriptor_streams": 10283,
+          "cutscene_descriptor_refusals": 50,
+          "cutscene_descriptor_partial": 2,
+          "cutscene_parameter_groups": 1469,
+          "cutscene_parameters": 77,
+          "npc_update_refusals": 2,
+          "npc_distance_cases": 8192,
+          "npc_pool_cases": 256,
+          "npc_pool_actors": 1404,
+          "npc_attachment_cases": 560,
+          "common_actor_cases": 4096,
+          "common_actor_refusals": 4,
+          "npc_skeleton_cases": 233,
+          "npc_skeleton_nodes": 12475,
+          "npc_stale_lengths": 7,
+          "npc_skeleton_refusals": 466,
+          "original_calls": 8216138,
+          "game_run": false
+        }
+      },
+      "native_behavior": {
+        "receipt": "build-native-sjuni/humanoid-publication-behavior-llvm-v1/receipt.json",
+        "sha256": "75929588353bce95d2355b6bc59ff081043311b2d92c5495cb2e1a825b5fe30f",
+        "observed": {
+          "status": "passed",
+          "cases": 32768,
+          "trace_words": 2572551,
+          "npc_behavior_compositions": 1
+        }
+      },
+      "construction": {
+        "receipt": "build-native-sjuni/humanoid-publication-npc-llvm-v1/receipt.json",
+        "sha256": "55a51bf37ac46a3f49c6db2036dd8ee00a34dbfe507126fd4992d6c803c94d0d",
+        "observed": {
+          "checks": 20023,
+          "constructors": 483,
+          "unavailable": 113,
+          "original_cases": 483,
+          "original_models": 483,
+          "original_attachments": 108,
+          "busy_cases": 1,
+          "full_cases": 1,
+          "retirements": 48,
+          "game_run": false
+        }
+      },
+      "scene": {
+        "receipt": "build-native-sjuni/humanoid-publication-scene-llvm-v1/receipt.json",
+        "sha256": "a1db9973102946c162dc0fbf9ddf010eb4ea9d402d3a5c85b86485df417f170b",
+        "observed": {
+          "checks": 37640,
+          "scenes": 1096,
+          "created_npcs": 490,
+          "full_scenes": 2,
+          "original_cases": 1094,
+          "original_npcs": 470,
+          "shadow_calls": 245,
+          "partial_cases": 1,
+          "parameter_entries": 128,
+          "game_run": false
+        }
+      }
+    },
+    "gcc": {
+      "publication_and_assets": {
+        "receipt": "build-native-sjuni/humanoid-motion-publication-gcc-v1/receipt.json",
+        "sha256": "e13ee933083861e6d05980ae7a644e22fe03e99e66de19a9c90710e3cb97767b",
+        "observed": {
+          "native_checks": 267802,
+          "original_checks": 13350478,
+          "original_bank_cases": 919,
+          "original_calls": 427296,
+          "common_loads": 90,
+          "character_loads": 720,
+          "snapshot_cases": 94,
+          "npc_bindings_cases": 2,
+          "loader_name_cases": 66048,
+          "game_run": false
+        },
+        "publication": {
+          "checks": 30,
+          "publications": 4,
+          "rebindings": 25,
+          "refusals": 8,
+          "scripted_bindings": 2,
+          "busy_checks": 1,
+          "retirements": 1,
+          "game_run": false
+        }
+      },
+      "world": {
+        "receipt": "build-native-sjuni/humanoid-publication-world-gcc-v1/receipt.json",
+        "sha256": "2d497f5eb60ddb7c0c00403683fc60ea47e758c8f3cd2228381d4d0e51d14b82",
+        "observed": {
+          "checks": 2799371,
+          "lifetime_cases": 5,
+          "world_application_cases": 128,
+          "special_frame_cases": 64,
+          "resource_routing_cases": 40,
+          "selection_cases": 933,
+          "dual_application_cases": 74,
+          "metadata_observations": 1263,
+          "scripted_motion_cases": 768,
+          "scripted_motion_ticks": 3840,
+          "scripted_motion_refusals": 776,
+          "scripted_positive_tracks": 86,
+          "cutscene_actor_calls": 2304,
+          "cutscene_actor_gate_calls": 3072,
+          "cutscene_actor_refusals": 3,
+          "linked_actor_cases": 768,
+          "linked_expiry_cases": 512,
+          "linked_full_pool_cases": 8,
+          "cutscene_command_cases": 71163,
+          "cutscene_degree_cases": 65536,
+          "cutscene_speech_cases": 257,
+          "cutscene_command_refusals": 7,
+          "cutscene_command_mutations": 1,
+          "cutscene_track_cases": 257,
+          "cutscene_track_ticks": 2056,
+          "cutscene_track_original_commands": 9067,
+          "cutscene_terminal_streams": 1915,
+          "linked_update_refusals": 3,
+          "required_prelude_cases": 101,
+          "refusal_cases": 130,
+          "joint_cases": 774235,
+          "cutscene_descriptors": 550,
+          "cutscene_descriptor_sections": 24458,
+          "cutscene_descriptor_streams": 10283,
+          "cutscene_descriptor_refusals": 50,
+          "cutscene_descriptor_partial": 2,
+          "cutscene_parameter_groups": 1469,
+          "cutscene_parameters": 77,
+          "npc_update_refusals": 2,
+          "npc_distance_cases": 8192,
+          "npc_pool_cases": 256,
+          "npc_pool_actors": 1404,
+          "npc_attachment_cases": 560,
+          "common_actor_cases": 4096,
+          "common_actor_refusals": 4,
+          "npc_skeleton_cases": 233,
+          "npc_skeleton_nodes": 12475,
+          "npc_stale_lengths": 7,
+          "npc_skeleton_refusals": 466,
+          "original_calls": 8216138,
+          "game_run": false
+        }
+      },
+      "native_behavior": {
+        "receipt": "build-native-sjuni/humanoid-publication-behavior-gcc-v1/receipt.json",
+        "sha256": "473bbb1686c388e9f43878b4e22e89db2fbe9503164f9b566628cad919b3884f",
+        "observed": {
+          "status": "passed",
+          "cases": 32768,
+          "trace_words": 2572551,
+          "npc_behavior_compositions": 1
+        }
+      },
+      "construction": {
+        "receipt": "build-native-sjuni/humanoid-publication-npc-gcc-v1/receipt.json",
+        "sha256": "0a5b72f15a84d9d25318dd56545467ec558b1c6db3a1213db0b4e5160acb2bd3",
+        "observed": {
+          "checks": 20023,
+          "constructors": 483,
+          "unavailable": 113,
+          "original_cases": 483,
+          "original_models": 483,
+          "original_attachments": 108,
+          "busy_cases": 1,
+          "full_cases": 1,
+          "retirements": 48,
+          "game_run": false
+        }
+      },
+      "scene": {
+        "receipt": "build-native-sjuni/humanoid-publication-scene-gcc-v1/receipt.json",
+        "sha256": "11642d4272104acc10b3aa7a5e4cf4ee55fee9b699bcd4ea50fb96725b54b445",
+        "observed": {
+          "checks": 37640,
+          "scenes": 1096,
+          "created_npcs": 490,
+          "full_scenes": 2,
+          "original_cases": 1094,
+          "original_npcs": 470,
+          "shadow_calls": 245,
+          "partial_cases": 1,
+          "parameter_entries": 128,
+          "game_run": false
+        }
+      }
+    }
+  },
+  "game_launched": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "declared_boundaries": [
+    "Owner-thread only publication; immutable preparation is off-thread, not a concurrent source registry",
+    "Original behavior action providers and renderer attachment observations remain declared ports",
+    "Invalid scripted selector only proves binding selection, not successful curve playback"
+  ],
+  "remaining": [
+    "Actual scene lifecycle adoption and joined preparation ownership",
+    "Primary actor bindings and remaining sparse scripted wrappers",
+    "All action/curve/event consumers and the 11-NPC conflict",
+    "Coherent native gameplay installation and every Stage4 gate"
+  ]
+}

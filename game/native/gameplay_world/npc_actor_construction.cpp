@@ -32,8 +32,13 @@ NpcConstructed NpcActorConstruction::create(const PreparedNpcActor& prepared)noe
     if(world_.busy())return{NpcConstructionStatus::busy,{}};
     try{
         auto& pool=world_.auxiliary_actors();if(!pool.remaining())return{NpcConstructionStatus::full,{}};
+        const std::array<HumanoidMotionAlias,3> aliases{{{HumanoidMotionFamily::scene_body,0},
+            {prepared.definition_.motion_style?HumanoidMotionFamily::alternate:HumanoidMotionFamily::general,0},
+            {HumanoidMotionFamily::character,prepared.character_}}};
+        auto banks=prepared.banks_;
+        for(unsigned index=0;index<aliases.size();++index){banks[index]=resolve_humanoid_motion_bank(world_,aliases[index],banks[index]);if(!banks[index])return{};}
         auto model=prepared.asset_->make_instance();auto playback=std::make_shared<animation::Playback>(model);
-        playback->resources=prepared.banks_;playback->resources_known=true;playback->channel_count=1;
+        playback->resources=std::move(banks);playback->resources_known=true;playback->channel_count=1;
         ScriptedActorState scripted;scripted.part_visibility.assign(prepared.asset_->part_count(),1);
         if(prepared.model_class_!=1&&scripted.part_visibility.size()>1)scripted.part_visibility[1]=0;
         gameplay_collision::hit_regions::Regions regions;regions.set(std::vector(npc_hit_definitions.begin(),npc_hit_definitions.end()));
@@ -48,6 +53,7 @@ NpcConstructed NpcActorConstruction::create(const PreparedNpcActor& prepared)noe
         actor->current=actor->maximum=definition.health;actor->motion_style=definition.motion_style;actor->motion_subtype=definition.motion_subtype;
         actor->model_scale={definition.scale,definition.scale,definition.scale};actor->motion_multiplier=1;
         actor->model_asset=prepared.asset_;actor->model=std::move(model);actor->animation=std::move(playback);
+        actor->motion_bank_aliases={aliases[0],aliases[1],aliases[2]};
         actor->scripted=std::move(scripted);actor->npc=NpcActorState{definition.height_parameter,{},1};
         if(prepared.model_class_==1)actor->npc->attachment=pool.claim_attachment().slot;
         actor->collision.body_definition=body;actor->collision.local_center=actor->collision.previous_local_center=shape.center;

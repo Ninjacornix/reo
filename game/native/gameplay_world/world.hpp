@@ -2,6 +2,7 @@
 #include "material_uv.hpp"
 #include "scripted_actor.hpp"
 #include "npc_actor_state.hpp"
+#include "humanoid_motion_bindings.hpp"
 #include "linked_update_state.hpp"
 #include "speech_state.hpp"
 #include "../gameplay_actors/entity.hpp"
@@ -161,6 +162,7 @@ struct Actor : actors::Entity,actors::HitActor {
     std::shared_ptr<const ActorModelAsset> model_asset;
     std::shared_ptr<animation::Constraints> constraints;
     std::shared_ptr<animation::Playback> animation;
+    std::array<std::optional<HumanoidMotionAlias>,3> motion_bank_aliases;
     std::shared_ptr<const animation::WeaponProgramBank> weapon_programs;
     ControlRequest control_request;
     // BD0 is inherited response_lock, also used by script/control cleanup.
@@ -264,6 +266,8 @@ public:
     const Session& session()const noexcept{return *session_;}
     bool closed()const noexcept{return closed_;}
     bool busy()const noexcept;
+    const HumanoidMotionSource* humanoid_motion_source()const noexcept{return humanoid_motion_source_;}
+    bool humanoid_motion_source_closed()const noexcept{return humanoid_motion_source_closed_;}
     // Complete1B0340 predicate over this canonical session and actor state.
     // Callers holding capabilities resolve them in this World before querying.
     bool locally_controlled(const Actor& actor)const noexcept{return actor.category==0&&actor.slot==(mode==0?0:selected_actor);}
@@ -296,6 +300,9 @@ private:
     friend class CommonActorFrame;
     friend class NpcActorUpdates;
     NpcActorUpdates* npc_update_owner_{};
+    friend class HumanoidMotionOwner;
+    HumanoidMotionSource* humanoid_motion_source_{};
+    bool humanoid_motion_source_closed_{};
     std::unique_ptr<AuxiliaryActorPool> auxiliary_actors_;
     std::unique_ptr<gameplay_navigation::Bank> navigation_;
     std::unique_ptr<TargetMetricCache> target_metrics_;

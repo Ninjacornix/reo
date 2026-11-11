@@ -63,17 +63,20 @@ source filename checks cover all 16-bit common indices, all byte character
 indices and all byte startup-flag values. Native content admission remains the
 98 known File 1 aliases; other combinations fail explicitly.
 
-All twelve current parent tests pass on both compilers. The previously qualified
-native World and behavior cohorts still match their captured current production
-sources; their source hashes are checked by this seal rather than rerunning
-unchanged code. No game was launched and no performance change is claimed.
+All twelve parent tests passed on both compilers at this checkpoint. The seal
+checked the then-unchanged World and behavior production hashes. Subsequent
+[live publication work](HUMANOID_MOTION_PUBLICATION.md) changes those consumers
+and requires its own current-source regression evidence. Historical receipts
+remain evidence for their captured sources. No game was launched and no
+performance change is claimed.
 
 Reproduce with `generate_humanoid_motion_members.py` and
 `verify_humanoid_motion_assets.py`, explicit compiler/CMake/build/data-root paths
 and fresh output folders. Receipts are `humanoid-motion-assets-{llvm,gcc}-v3`;
 the combined seal is `native_humanoid_motion_assets_qualification_v1.json`.
 
-Live publication into existing actor bindings, scene loading/caller ownership,
+The live-publication follow-up supplies explicit NPC/scripted binding updates.
+Scene loading/caller ownership,
 remaining actions, every curve/event consumer, the 11-NPC capacity conflict,
 coherent native game installation and full Step 4 acceptance remain open. The
 installed game is still V39. Preparing a bank does not migrate its live callers.

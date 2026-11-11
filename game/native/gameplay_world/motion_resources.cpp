@@ -100,6 +100,12 @@ WorldMotionResources::resolve(const actors::EntityId& owner, std::uint32_t suppl
     auto& selected = playback(*source);
     if (!selected.resources_known)
         throw std::runtime_error("Native motion bank loading/absence has not been admitted");
+    if(source->motion_bank_aliases[bank]){
+        const auto resource=resolve_humanoid_motion_bank(world_,*source->motion_bank_aliases[bank],selected.resources[bank]);
+        if(!resource&&(world_.humanoid_motion_source()||world_.humanoid_motion_source_closed()))
+            throw std::runtime_error("Native humanoid motion content owner unavailable or closed");
+        return resource;
+    }
     return selected.resources[bank];
 }
 } // namespace reo::native::gameplay_world

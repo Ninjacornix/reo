@@ -2,6 +2,7 @@
 #include "npc_actor_construction.hpp"
 #include "scripted_motion_assets.hpp"
 namespace reo::native::gameplay_world {
+struct HumanoidMotionRevision;
 struct HumanoidMotionMember {std::uint16_t index{};std::uint8_t character{255};std::uint16_t member{};std::string_view name;};
 std::span<const HumanoidMotionMember> file1_humanoid_motion_members()noexcept;
 // One immutable publication keeps shared source bank identities coherent.
@@ -10,6 +11,8 @@ class HumanoidMotionBanks final {
 public:
     const ScriptedMotionBanks& scripted()const noexcept{return scripted_;}
     bool base_loaded()const noexcept{return base_loaded_;}
+    bool follows(const HumanoidMotionBanks& current)const noexcept{return revision_&&(revision_==current.revision_||parent_==current.revision_);}
+    std::shared_ptr<const animation::MotionBank> bank(HumanoidMotionAlias)const noexcept;
     const std::shared_ptr<const animation::MotionBank>& alternate_style()const noexcept{return alternate_style_;}
     const std::shared_ptr<const animation::MotionBank>& character(std::size_t index)const{return characters_.at(index);}
     NpcMotionBindings npc_bindings()const;
@@ -20,6 +23,7 @@ private:
     std::shared_ptr<const animation::MotionBank> alternate_style_;
     std::array<std::shared_ptr<const animation::MotionBank>,8> characters_;
     bool base_loaded_{};
+    std::shared_ptr<const HumanoidMotionRevision> revision_,parent_;
 };
 struct HumanoidSceneMotionLoad {
     std::shared_ptr<const HumanoidMotionBanks> banks;
