@@ -23,7 +23,10 @@ void enemy_initialization_tests() {
         }
         if (pointer) end = std::max(end,pointer+16*declared);
         for (unsigned variant = 0; variant < 256; ++variant) {
-            const bool available = type < 62 && pointer && variant < (end-pointer)/16;
+            bool witnessed=false;
+            for(const auto& row:owned_cutscene_definition_admissions)
+                witnessed|=directory==0x387e90u&&row[0]==type&&row[1]==variant;
+            const bool available = type < 62 && pointer && (variant < (end-pointer)/16 || witnessed);
             bool admitted = false;
             try {
                 const auto bank = directory == 0x387e90u ? world::ModelDefinitionBank::ordinary : world::ModelDefinitionBank::alternate;

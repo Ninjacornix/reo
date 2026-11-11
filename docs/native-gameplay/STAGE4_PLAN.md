@@ -3,6 +3,12 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to keep the PC awake afterward.
 
+- [Native scene scripted construction](CUTSCENE_SCRIPTED_CONSTRUCTION.md) now
+  prepares actual header requests and creates all729 kind2 actors across548
+  owned0950 scenes through the canonical factory, including seven witnessed
+  model-index admissions. Both compiler source/asset compositions, current
+  World comparisons and eight parent tests pass. Primary/NPC construction,
+  full scene lifecycle and installed native gameplay remain open.
 - [Native retained cutscene descriptors](CUTSCENE_DESCRIPTORS.md) now read actual
   named archive members and retain all bounded0950 sections and actor programs.
   Both compiler comparisons cover548 owned files; both actual archive cohorts

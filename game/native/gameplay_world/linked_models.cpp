@@ -6,6 +6,7 @@ namespace reo::native::gameplay_world {
 namespace {
 #include "linked_model_profile.inc"
 #include "linked_model_definitions.inc"
+#include "cutscene_model_definitions.inc"
 void clear_authored_defaults(Actor& a) {
     a.linked_frame.emplace();
     a.material_uv = MaterialUv{};
@@ -152,6 +153,9 @@ bool File1LinkedModelProfiles::skip_type1_correction(std::uint16_t variant) cons
 const LinkedModelDefinition& File1LinkedModelProfiles::definition(std::uint8_t type,std::uint16_t variant,
     ModelDefinitionBank bank) const {
     const auto& definitions = bank == ModelDefinitionBank::alternate ? alternate_model_definitions : model_definitions;
+    if(bank==ModelDefinitionBank::ordinary)
+        for(const auto& row:cutscene_model_definitions)
+            if(row.type==type&&row.variant==variant)return row.value;
     if (type>=definitions.size() || variant>=definitions[type].size())
         throw std::out_of_range("Native linked model definition unavailable");
     return definitions[type][variant];

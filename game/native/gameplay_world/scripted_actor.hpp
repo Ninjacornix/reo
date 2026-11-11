@@ -32,6 +32,7 @@ struct ScriptedActorState {
     float forward_step{}; // B70
     std::uint32_t yaw_step{},movement_remaining{}; // B74/B78
     std::uint8_t model_group{}; // source31, logical resource group identity
+    std::uint8_t scene_marker{}; // BA6, set by5F0610's kind2 construction
     std::array<std::uint8_t,4> color{}; // CCC..CCF, distinct from primary fades
     std::int8_t alpha_mode{}; // CA0
     std::uint8_t alpha{}; // CA1

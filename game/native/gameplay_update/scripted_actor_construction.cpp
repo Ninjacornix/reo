@@ -26,7 +26,7 @@ std::shared_ptr<const PreparedScriptedActor> ScriptedActorConstruction::prepare(
     return prepared;
 }
 ScriptedConstructed ScriptedActorConstruction::create(const PreparedScriptedActor& prepared)noexcept {
-    if(!materials_.bound_to(world_))return{};
+    if(!materials_.bound_to(world_)||world_.busy())return{};
     try {
         // Prepare allocations before admitting a live actor. Missing content
         // already failed prepare, preserving the current World and task pool.

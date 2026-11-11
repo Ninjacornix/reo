@@ -123,6 +123,11 @@ def main(a):
     assert hashlib.sha256(zero).hexdigest()=='bfac1906d63d585736e46573295cff12e308720af6b49914e1ad8695dfcf50c2'
     chunk=zero[0x3872b0-0x370000:0x3889e0-0x370000]
     declarations.append('inline void owned_linked_definition_constants(std::uint8_t* p){const std::array<std::uint8_t,'+str(len(chunk))+'> b{'+','.join(map(str,chunk))+'};std::memcpy(p+0x3872b0,b.data(),b.size());}\n')
+    admission_path=ROOT/'build-native-sjuni/cutscene-model-admission-v1/receipt.json';admission=json.loads(admission_path.read_bytes());assert admission['status']=='passed' and sha(ROOT/'game/native/gameplay_world/cutscene_model_definitions.inc')==admission['output_sha256']
+    assert {(row['type'],row['variant'])for row in admission['rows']}=={(0,i)for i in [10,14,48,49,50,51,52]}
+    for row in admission['rows']:
+        offset=int(row['address'],16)-0x370000;assert zero[offset:offset+16].hex()==row['bytes']
+    declarations.append('constexpr std::array<std::array<unsigned,2>,7> owned_cutscene_definition_admissions{{'+','.join('{{'+str(row['type'])+','+str(row['variant'])+'}}'for row in admission['rows'])+'}};')
     initialization='inline void owned_enemy_binding_constants(std::uint8_t* p){\n'
     for address,size in [(0x72b170,0x60),(0x72bc20,0x100),(0x72be20,62),(0x734640,0xa0)]:
         chunk=raw[address-0x570000:address-0x570000+size]
@@ -233,7 +238,7 @@ def main(a):
     source_paths += [HERE/'npc_vm_tests.inc',HERE/'npc_fixtures.py']
     source_paths += [HERE/'enemy_vm_tests.inc',HERE/'qualify_enemy_route_profile.py',HERE/'qualify_enemy_spawn_profile.py']
     source_paths.append(HERE/'character_remap_vm_tests.inc')
-    source_paths += [HERE/'enemy_initialization_vm_tests.inc',HERE/'qualify_enemy_initialization_profiles.py']
+    source_paths += [HERE/'enemy_initialization_vm_tests.inc',HERE/'qualify_enemy_initialization_profiles.py',ROOT/'tools/native_reconstruction/generate_cutscene_model_admission.py']
     source_paths += [HERE/'enemy_binding_vm_tests.inc',HERE/'qualify_enemy_binding_profiles.py']
     source_paths.append(HERE/'model_parts_vm_tests.inc')
     source_paths.append(HERE/'material_uv_vm_tests.inc')
@@ -293,6 +298,7 @@ def main(a):
         installed_in_game=False,game_launched=False,live_process_access=False,limitations=['Native opcode algorithm coverage is partial; entire programs with unsupported handlers are refused before native install.','Canonical flag storage and offline actor-delta merging are native; actual game caller/content import, notification delivery and message services remain external integration gates.','Actual original dispatcher and handler bodies are used only in the test oracle, with bounded memory/register scaffolding. No MIPS execution ships in native core.'])
     receipt['room_counter_policy']=dict(index_receipt_sha256=sha(index/'receipt.json'),owned_members={e['name']:e['sha256'] for e in evbs},package_sha256=sha(policy_path))
     receipt['stock_room']=dict(name=stock['name'],sha256=sha(stock_path),installed_in_game=False)
+    receipt['cutscene_model_admission']=dict(path=str(admission_path),sha256=sha(admission_path))
     (out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps(dict(status='passed',checks=receipt['result']['checks'],original_invocations=receipt['result']['original_dispatch_invocations'],coverage={k:v['count'] for k,v in receipt['result']['coverage'].items()},instruction_comments=words,output=str(out))))
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--compiler',required=True);p.add_argument('--output',required=True,type=Path);p.add_argument('--pin-domain-commit');p.add_argument('--pin-effects-commit');main(p.parse_args())
