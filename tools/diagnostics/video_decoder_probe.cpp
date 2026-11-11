@@ -4,10 +4,12 @@
 // Build: clang++ -O2 -std=c++17 video_decoder_probe.cpp -ld3d11 -ldxgi -lole32 -o video-decoder-probe.exe
 #include <initguid.h>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <d3d11.h>
 #include <dxgi.h>
 #include <windows.h>
+#include "../../runtime/media/movie_decoder_support.h"
 
 namespace {
 // Profile GUIDs from d3d11.h; named here so the report is readable without a lookup.
@@ -54,9 +56,13 @@ void probeAdapter(FILE* out, IDXGIAdapter1* adapter) {
     std::fprintf(out, "\nAdapter: %s\n  vendor=0x%04X device=0x%04X LUID=%08lX:%08lX%s\n", name,
                  desc.VendorId, desc.DeviceId, desc.AdapterLuid.HighPart, desc.AdapterLuid.LowPart,
                  (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) ? " (software)" : "");
+    if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) {
+        std::fprintf(out, "  => hardware MPEG-2: NO (software adapter)\n");
+        return;
+    }
     ID3D11Device* device = nullptr;
     HRESULT hr = D3D11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr,
-                                   D3D11_CREATE_DEVICE_VIDEO_SUPPORT, nullptr, 0,
+                                   D3D11_CREATE_DEVICE_VIDEO_SUPPORT | D3D11_CREATE_DEVICE_BGRA_SUPPORT, nullptr, 0,
                                    D3D11_SDK_VERSION, &device, nullptr, nullptr);
     if (FAILED(hr)) {
         std::fprintf(out, "  D3D11 video device: FAILED hr=0x%08lX\n", hr);
@@ -85,10 +91,13 @@ void probeAdapter(FILE* out, IDXGIAdapter1* adapter) {
         BOOL nv12 = FALSE;
         hr = video->CheckVideoDecoderFormat(&profile, DXGI_FORMAT_NV12, &nv12);
         std::fprintf(out, "      NV12 output: %s (hr=0x%08lX)\n", nv12 ? "yes" : "no", hr);
+        const bool formatSupported = SUCCEEDED(hr) && nv12;
         D3D11_VIDEO_DECODER_DESC dd{profile, 640, 448, DXGI_FORMAT_NV12};
         UINT configs = 0;
         hr = video->GetVideoDecoderConfigCount(&dd, &configs);
         std::fprintf(out, "      configs at 640x448: %u (hr=0x%08lX)\n", configs, hr);
+        if (FAILED(hr))
+            continue;
         for (UINT c = 0; c < configs; ++c) {
             D3D11_VIDEO_DECODER_CONFIG config{};
             if (FAILED(video->GetVideoDecoderConfig(&dd, c, &config)))
@@ -100,18 +109,30 @@ void probeAdapter(FILE* out, IDXGIAdapter1* adapter) {
             std::fprintf(out, "        config %u: BitstreamRaw=%u MinRenderTargets=%u create=0x%08lX encryption=",
                          c, config.ConfigBitstreamRaw, config.ConfigMinRenderTargetBuffCount, created);
             printGuid(out, config.guidConfigBitstreamEncryption);
+            std::fprintf(out, " mbEncryption=");
+            printGuid(out, config.guidConfigMBcontrolEncryption);
+            std::fprintf(out, " residualEncryption=");
+            printGuid(out, config.guidConfigResidDiffEncryption);
             std::fprintf(out, "\n");
-            if (nv12 && config.ConfigBitstreamRaw == 1 && SUCCEEDED(created))
+            if (formatSupported && reo_movie_probe::usableMpeg2Config(config) && SUCCEEDED(created))
                 mpeg2Usable = true;
         }
     }
-    std::fprintf(out, "  => usable for REO GPU movies: %s\n", mpeg2Usable ? "YES" : "NO");
+    const char* any = std::getenv("REO_GPU_MOVIES_ANY_VENDOR");
+    const char* blocked = reo_movie_probe::interopBlockReason(
+        desc.VendorId, any && std::strcmp(any, "1") == 0);
+    std::fprintf(out, "  => compatible hardware MPEG-2 VLD: %s\n", mpeg2Usable ? "YES" : "NO");
+    std::fprintf(out, "  => REO movie default: %s\n",
+                 !mpeg2Usable ? "CPU (no compatible decoder)" : blocked ? blocked : "GPU");
+    std::fprintf(out, "     The launcher checkbox always allows a manual CPU/GPU choice.\n");
+    std::fprintf(out, "     The launcher also requires this adapter to be the selected Vulkan GPU.\n");
     video->Release();
     device->Release();
 }
 } // namespace
 
-int main() {
+int main(int argc, char** argv) {
+    const bool noWait = argc == 2 && std::strcmp(argv[1], "--no-wait") == 0;
     char path[MAX_PATH]{};
     GetModuleFileNameA(nullptr, path, MAX_PATH);
     char* slash = std::strrchr(path, '\\');
@@ -138,8 +159,11 @@ int main() {
     factory->Release();
     if (out) {
         std::fclose(out);
-        std::printf("\nSaved: %s\nPress Enter to close.", path);
+        std::printf("\nSaved: %s\n", path);
     }
-    std::getchar();
+    if (!noWait) {
+        std::printf("Press Enter to close.");
+        std::getchar();
+    }
     return 0;
 }
