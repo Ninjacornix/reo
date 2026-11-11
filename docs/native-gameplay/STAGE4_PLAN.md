@@ -3,6 +3,11 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to keep the PC awake afterward.
 
+- [Native linked model workers](LINKED_MODEL_WORKERS.md) now adopt the real
+  pose pass at its actual Update position, with unique World registration,
+  concrete floors/scales, root state and current pass evidence. Both compiler
+  owned compositions, original models/order and six parent tests pass.
+  Cinematic lifecycle callers and game installation remain open.
 - [Native scripted motion assets](SCRIPTED_MOTION_ASSETS.md) now load all89
   mapped body/head members by verified full-path alias ordinal. Both compiler
   cohorts cover actual blocks, constructors, Update callbacks and model poses,

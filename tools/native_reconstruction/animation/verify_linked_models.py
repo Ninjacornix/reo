@@ -28,13 +28,16 @@ def main():
  for n in originals:
   begin,end=[int(v,16)for v in re.search(r'// Address: (0x[0-9a-f]+) - (0x[0-9a-f]+)',(ROOT/n).read_text()).groups()];proof.append(compare_source('complete original skeleton/model/frame/root or math body',n,begin,end,read if begin<0x370000 else (lambda at,size:o0raw[at-0x370000:at-0x370000+size])if begin<0x570000 else lambda at,size:overlay[at-0x570000:at-0x570000+size]))
  native_cpp=['game/native/'+n for n in ['animation/playback.cpp','animation/model_blend.cpp','animation/motion_bank.cpp','animation/motion_descriptors.cpp','gameplay_world/animation.cpp','gameplay_world/motion_selection.cpp','gameplay_world/motion_resources.cpp','gameplay_world/motion_profiles.cpp','animation/constraints.cpp','animation/constraint_math.cpp','animation/model.cpp','animation/model_math.cpp','animation/curves.cpp','transform_math/transform_math.cpp','gameplay_world/model_poses.cpp','gameplay_world/model_constraints.cpp','gameplay_world/world.cpp','gameplay_world/bodies.cpp','gameplay_actors/entity.cpp','gameplay_actors/input.cpp','gameplay_actors/health.cpp','gameplay_collision/collision.cpp','gameplay_collision/response.cpp','gameplay_collision/actors.cpp','gameplay_collision/actor_views.cpp','gameplay_world/model_attachments.cpp','gameplay_scenario/scene_resources.cpp','gameplay_scenario/resource_templates.cpp','gameplay_world/linked_models.cpp','gameplay_world/auxiliary_actors.cpp','gameplay_navigation/bank.cpp']]
+ from effect_work_sources import SURFACE_WORLD_UNITS
+ for name in SURFACE_WORLD_UNITS+['game/native/gameplay_session/session.cpp']:
+  if name not in native_cpp:native_cpp.append(name)
  native=set(native_cpp);pending=list(native_cpp)
  while pending:
   n=pending.pop()
   for rel in re.findall(r'^#include "([^"]+)"',(ROOT/n).read_text(),re.M):
    dep=((ROOT/n).parent/rel).resolve();dep=dep if dep.is_file()else(ROOT/rel).resolve();assert dep.is_relative_to(ROOT/'game/native')and dep.is_file();key=dep.relative_to(ROOT).as_posix()
    if key not in native:native.add(key);pending.append(key)
- native=sorted(native);helpers=['tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp','tools/native_reconstruction/animation/linked_model_tests.cpp','tools/native_reconstruction/animation/verify_linked_models.py'];files=native+helpers+originals;before={n:sha(ROOT/n)for n in files};out.mkdir(parents=True)
+ native=sorted(native);helpers=['tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp','tools/native_reconstruction/animation/linked_model_tests.cpp','tools/native_reconstruction/animation/verify_linked_models.py','tools/native_reconstruction/effect_work_sources.py','third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h'];files=native+helpers+originals;before={n:sha(ROOT/n)for n in files};out.mkdir(parents=True)
  record=dict(schema=1,status='failed',source_sha256=before,compiler_sha256=sha(a.compiler),corpus=dict(path=str(corpus_receipt),sha256=sha(corpus_receipt)),original_owned_bodies=proof,game_run=False)
  try:
   for n in files:

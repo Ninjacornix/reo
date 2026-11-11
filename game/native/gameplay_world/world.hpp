@@ -32,6 +32,7 @@
 
 namespace reo::native::animation {class Instance;class Constraints;class Playback;class WeaponProgramBank;}
 namespace reo::native::gameplay_navigation {class Bank;}
+namespace reo::native::gameplay_update {class LinkedModelWorkers;}
 namespace reo::native::gameplay_world {
 namespace actors=gameplay_actors;
 namespace input=gameplay_actors::input;
@@ -282,6 +283,8 @@ private:
     std::unique_ptr<LinkedModelPool> linked_models_;
     LinkedActorUpdates* linked_update_owner_{};
     friend class LinkedActorUpdates;
+    gameplay_update::LinkedModelWorkers* linked_model_owner_{};
+    friend class gameplay_update::LinkedModelWorkers;
     std::unique_ptr<AuxiliaryActorPool> auxiliary_actors_;
     std::unique_ptr<gameplay_navigation::Bank> navigation_;
     std::unique_ptr<TargetMetricCache> target_metrics_;

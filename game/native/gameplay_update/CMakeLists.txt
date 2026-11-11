@@ -1,5 +1,6 @@
 add_library(reo_native_gameplay_update STATIC update.cpp material_animation.cpp collision_workers.cpp actor_gauge.cpp navigation.cpp ai.cpp ai_observation.cpp ai_waypoints.cpp script_setup.cpp)
 target_compile_features(reo_native_gameplay_update PUBLIC cxx_std_20)
+target_sources(reo_native_gameplay_update PRIVATE linked_model_workers.cpp)
 target_link_libraries(reo_native_gameplay_update PUBLIC reo_native_gameplay_world reo_native_gameplay_tasks reo_native_gameplay_scenario reo_native_gameplay_events reo_native_navigation_visibility reo_native_gameplay_ai)
 target_include_directories(reo_native_gameplay_update PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")

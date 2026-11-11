@@ -2,6 +2,7 @@
 #include "actor_assets.hpp"
 #include "../gameplay_update/scripted_actor_construction.hpp"
 #include "../gameplay_update/update.hpp"
+#include "../gameplay_update/linked_model_workers.hpp"
 #include "runtime/assets/virtual_afs.h"
 #include <fstream>
 #include <iostream>
@@ -15,7 +16,7 @@ namespace w=reo::native::gameplay_world;
 namespace a=reo::native::animation;
 namespace u=reo::native::gameplay_update;
 namespace {
-std::uint64_t checks{},owned_members{},owned_blocks{},consumer_updates{},original_loader_cases{};
+std::uint64_t checks{},owned_members{},owned_blocks{},consumer_updates{},original_loader_cases{},ordinary_model_workers{};
 void check(bool value,std::source_location at=std::source_location::current()){
     ++checks;if(!value)throw std::runtime_error("Scripted motion asset check line "+std::to_string(at.line()));
 }
@@ -99,6 +100,49 @@ struct Notifications final:reo::native::gameplay_scenario::FlagNotifications {
     bool changed(const reo::native::gameplay_scenario::ScenarioFlagChange&)noexcept override{std::terminate();}
     bool changed(const reo::native::gameplay_scenario::StridedFlagChange&)noexcept override{std::terminate();}
 };
+struct Remaining final:u::PhaseServices {
+    std::vector<u::Worker> stages;
+    unsigned buttons{},transitions{},effects{};
+    void run(u::Worker stage,u::Owner&)override{check(stage!=u::Worker::scenario_model_poses);stages.push_back(stage);}
+    bool button(u::Button,u::Owner&)override{++buttons;return false;}
+    bool transition_request(u::Owner&)override{++transitions;return false;}
+    void effect(u::PhaseEffect,u::Owner&,std::uint32_t)override{++effects;}
+};
+struct EmptyActors final:w::Services {
+    void begin_offline_frame(w::World&)override{}
+    void run(w::Stage,w::World&,w::Actor&)override{std::terminate();}
+    bool remote_motion(w::World&,w::Actor&)override{std::terminate();}
+    bool find_grid(w::World&,w::Actor&,std::int8_t&)override{std::terminate();}
+    void switch_grid(w::World&,std::int32_t,std::int32_t)override{std::terminate();}
+    float grid_response(w::World&,std::uint8_t)override{std::terminate();}
+};
+void worker_contracts(){
+    w::Profile profile;profile.layouts.push_back({});w::World world(profile,std::make_shared<w::Session>()),foreign(profile,std::make_shared<w::Session>());
+    Notifications notices;u::Owner owner(world,notices),other(foreign,notices);Remaining remaining;
+    const auto floors=std::make_shared<const reo::native::gameplay_collision::response::Grid>();
+    refused([&]{u::LinkedModelWorkers invalid(world,remaining,{});});
+    u::LinkedModelWorkers workers(world,remaining,floors);
+    refused([&]{u::LinkedModelWorkers duplicate(world,remaining,floors);});
+    check(workers.progress()==u::LinkedModelProgress::never_run&&!workers.last_models());
+    refused([&]{workers.run(u::Worker::scenario_model_poses,other);});
+    workers.run(u::Worker::scenario_model_poses,owner);
+    check(workers.progress()==u::LinkedModelProgress::completed&&workers.last_models()->visited==0&&remaining.stages.empty());
+    workers.run(u::Worker::reset_entity_queues,owner);
+    check(workers.progress()==u::LinkedModelProgress::never_run&&!workers.last_models()&&remaining.stages.size()==1);
+    check(!workers.button(u::Button::primary,owner)&&!workers.transition_request(owner));
+    workers.effect(u::PhaseEffect::finish_request,owner,123);check(remaining.buttons==1&&remaining.transitions==1&&remaining.effects==1);
+    const auto stale=world.linked_models().allocate(true).id;
+    world.resolve(stale)->visible=true;
+    refused([&]{workers.run(u::Worker::scenario_model_poses,owner);});
+    check(workers.progress()==u::LinkedModelProgress::failed&&!workers.last_models());
+    check(world.linked_models().reset()==w::LinkedStatus::completed);
+    refused([&]{workers.select_root(stale);});
+    check(workers.close()==u::Status::completed);refused([&]{workers.run(u::Worker::scenario_model_poses,owner);});
+    refused([&]{workers.select_root({});});
+    u::LinkedModelWorkers replacement(world,remaining,floors);
+    replacement.run(u::Worker::scenario_model_poses,owner);
+    check(replacement.progress()==u::LinkedModelProgress::completed);
+}
 void owned(const char* archive,const char* manifest){
     const auto source=std::make_shared<reo::assets::Source>(archive);w::ScriptedMotionAssets assets(source);
     std::ifstream rows(manifest),raw(archive,std::ios::binary);check(bool(rows)&&bool(raw));
@@ -136,14 +180,24 @@ void owned(const char* archive,const char* manifest){
     world.paused=1;
     const auto floors=std::make_shared<const reo::native::gameplay_collision::response::Grid>();
     check(owner.bind_linked_actors(loaded.banks,floors)==u::Status::completed);
-    w::LinkedPoseRoot root(world);w::File1ModelCorrectionScales scales;
-    w::LinkedModelPass poses(world,world.linked_models(),root,scales,floors.get());
+    Remaining remaining;u::LinkedModelWorkers poses(world,remaining,floors);
     for(unsigned tick=0;tick<16;++tick){const auto result=owner.run_linked_actor_updates();
         check(result.status==w::LinkedUpdateStatus::completed&&result.called==1&&actor->phase==1&&actor->visible);
-        check(poses.run().updated==1);
+        poses.run(u::Worker::scenario_model_poses,owner);
+        check(poses.progress()==u::LinkedModelProgress::completed&&poses.last_models()->updated==1);
         check(actor->animation->resources[0]==loaded.banks.mode_one&&actor->model->retain()&&actor->model->retain()->joints.size()==node_count);
         ++consumer_updates;
     }
+    const auto idle=std::make_shared<const reo::native::gameplay_scenario::Program>(std::vector<std::vector<std::byte>>{{std::byte{1},{},{},{},std::byte{0xa},{},{},{}}});
+    check(owner.scripts().install(0,idle)==reo::native::gameplay_scenario::Status::completed&&owner.scripts().install(1,idle)==reo::native::gameplay_scenario::Status::completed);
+    EmptyActors no_primary;world.mode=1;world.scenario=0;
+    check(owner.initialize_completion_statistics()==reo::native::gameplay_events::StatisticsStatus::completed);
+    // The actual ordinary worker pause gate resets evidence but skips this pass.
+    check(owner.run_workers(poses,no_primary).status==u::Status::completed);
+    check(poses.progress()==u::LinkedModelProgress::never_run&&!poses.last_models());
+    world.paused=0;const auto ordinary=owner.run_workers(poses,no_primary);
+    check(ordinary.status==u::Status::completed&&poses.progress()==u::LinkedModelProgress::completed&&poses.last_models()->updated==1);
+    ++ordinary_model_workers;
     check(owner.close()==u::Status::completed&&world.close()==w::Status::completed);
 }
 }
@@ -151,9 +205,9 @@ void owned(const char* archive,const char* manifest){
 #include "scripted_motion_loader_reference_tests.inc"
 #endif
 int main(int argc,char** argv)try{
-    contracts();if(argc==3)owned(argv[1],argv[2]);else check(argc==1);
+    contracts();worker_contracts();if(argc==3)owned(argv[1],argv[2]);else check(argc==1);
 #ifdef REO_SCRIPTED_MOTION_ORIGINAL
     original_loader_routes();
 #endif
-    std::cout<<"{\"checks\":"<<checks<<",\"owned_members\":"<<owned_members<<",\"owned_blocks\":"<<owned_blocks<<",\"consumer_updates\":"<<consumer_updates<<",\"original_loader_cases\":"<<original_loader_cases<<"}\n";
+    std::cout<<"{\"checks\":"<<checks<<",\"owned_members\":"<<owned_members<<",\"owned_blocks\":"<<owned_blocks<<",\"consumer_updates\":"<<consumer_updates<<",\"original_loader_cases\":"<<original_loader_cases<<",\"ordinary_model_workers\":"<<ordinary_model_workers<<"}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

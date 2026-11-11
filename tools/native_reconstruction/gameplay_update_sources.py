@@ -25,3 +25,10 @@ UPDATE_UNITS += ['game/native/gameplay_scenario/npc_descriptors.cpp']
 UPDATE_UNITS += ['game/native/gameplay_scenario/enemy_descriptors.cpp','game/native/gameplay_scenario/enemy_routes.cpp']
 UPDATE_UNITS += ['game/native/gameplay_scenario/character_remap.cpp']
 UPDATE_UNITS += ['game/native/gameplay_world/enemy_initialization.cpp']
+UPDATE_UNITS += ['game/native/gameplay_update/material_animation.cpp',
+                 'game/native/gameplay_update/linked_model_workers.cpp']
+UPDATE_UNITS += ['game/native/gameplay_world/'+name+'.cpp' for name in
+                 ['linked_updates','scripted_motion','cutscene_actor','motion_transforms',
+                  'surface_orientation','surface_orientation_math']]
+UPDATE_UNITS += ['game/native/animation/'+name+'.cpp' for name in
+                 ['playback','model_blend','motion_bank','motion_descriptors']]
