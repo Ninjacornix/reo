@@ -1,5 +1,19 @@
 # Actor slot initialization, custom statistics and fresh-session modifiers
 
+Update, 2026-11-11: the earlier unavailable-table conclusion below inspected
+only the main ELF's empty load segment. The retained owned **o0 overlay**
+contains the initialized table at 3898E0: 90 distinct 12-byte entries followed
+by the 999 terminal. Table SHA-256 is
+`2be3e97fb80da715687f72ad8de2af119a987289cad6a5cd6438b4a934c16f1b`;
+o0 SHA-256 is
+`bfac1906d63d585736e46573295cff12e308720af6b49914e1ad8695dfcf50c2`.
+`generate_primary_custom_statistics.py` reproduces these initialized bytes,
+the owned health/fraction/multiplier tables and 149 admitted substitution masks.
+The table order is not sorted. Original669860 uses the terminal's values when
+an identity is absent; this is an actual fallback, not an inferred default.
+This corrects the initial-data availability claim, without proving that every
+possible runtime writer or alternate build preserves the initialized table.
+
 Static File #1 US, 2026-11-04. Four complete original o2 bodies; owned default/category tables decoded. Hexadecimal addresses/fields/masks; health/statistical values decimal. High mechanics confidence; original actor roster/custom-record names unrecovered. No execution, builds, attachment, live data or performance claims.
 
 | Guest entry / source | Proposed label | Confidence | Evidence and remaining uncertainty |

@@ -21,6 +21,11 @@ verification. The latest user instruction is to keep the PC awake afterward.
   separates NPC motion-character byte4 from the actual AI-control byteFF0;
   paired current constructor/scene, World, behavior and shared-bank regression
   qualification passes.
+- [Custom primary statistics](PRIMARY_CUSTOM_STATISTICS.md) now recover the
+  actual initialized o0 table and preserve its terminal fallback. Paired
+  comparisons pass468,289 statistic cases,65,536 lookups and4,384 real N/HP
+  initialization cases, with all15 parents passing. Saved-state override and
+  actual initialization/scene caller ownership remain open.
 - [Shared humanoid motion publication](HUMANOID_MOTION_PUBLICATION.md) adds
   explicit NPC/scripted bank identities, atomic live rebinding, stale-load
   rejection and joined-owner closure. Paired publication, current World,

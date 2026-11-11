@@ -63,6 +63,8 @@ regressions also pass: 2,799,371 World checks / 8,216,138 original calls,
 The combined source/evidence seal is
 `native_primary_actor_initialization_qualification_v1.json`.
 
-Custom statistics, saved-state override, complete primary model reuse/release,
+The [custom-statistics follow-up](PRIMARY_CUSTOM_STATISTICS.md) now admits actual
+substitution metadata and original fallback behavior in the fresh constructor.
+Saved-state override, complete primary model reuse/release,
 scene lifecycle ownership and installation remain open. The installed game is
 still V39. No game was launched and Step 4 remains incomplete.

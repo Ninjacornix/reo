@@ -13,6 +13,10 @@ enum class PrimaryInitializationStatus {completed,unavailable,busy,closed,no_mem
 // Existing channels and unrelated actor fields are retained in source order.
 PrimaryInitializationStatus initialize_primary_defaults(World&,actors::EntityId,
     std::uint8_t character,const HumanoidMotionBanks&)noexcept;
+// Fresh initialization including the admitted File1 BB4 substitution profiles.
+// Imported saved-state override remains a separate required caller contract.
+PrimaryInitializationStatus initialize_primary_slot(World&,actors::EntityId,
+    std::uint8_t character,const HumanoidMotionBanks&)noexcept;
 // Complete restore branch for a caller that selected notification_pending!=0
 // and paused==0. This operation consults the canonical exit request and pose.
 PrimaryInitializationStatus restore_primary_slot(World&,actors::EntityId)noexcept;

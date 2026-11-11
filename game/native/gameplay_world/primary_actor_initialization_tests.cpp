@@ -1,4 +1,5 @@
 #include "primary_actor_initialization.hpp"
+#include "primary_custom_statistics.hpp"
 #include "humanoid_motion_owner.hpp"
 #include "runtime/assets/virtual_afs.h"
 #include <bit>
@@ -13,6 +14,7 @@ namespace g=reo::native::gameplay_world;
 namespace a=reo::native::animation;
 namespace {
 std::uint64_t checks{},initializations{},restores{},setters{},refusals{},original_calls{},constraints{},bank_publications{};
+std::uint64_t custom_initializations{},custom_missing_models{};
 void check(bool value,std::source_location at=std::source_location::current()){++checks;if(!value)throw std::runtime_error("Native primary initialization check "+std::to_string(at.line()));}
 g::Profile profile(){g::Profile result;result.layouts.push_back({});return result;}
 void compare_original(g::World&,const g::Actor&,const g::Actor&,unsigned,bool);
@@ -45,6 +47,25 @@ void owned(const char* archive){
         compare_original(world,*actor,before,character,false);++initializations;
     }
     const auto asset=models.read_primary(0,0,0);
+#if !defined(REO_PRIMARY_INITIALIZATION_ORIGINAL)||defined(REO_PRIMARY_CUSTOM_INITIALIZATION_ORIGINAL)
+    for(unsigned variant=1;variant<256;++variant){
+        try{(void)g::primary_substitution_definition(std::uint16_t(variant));}catch(const std::out_of_range&){continue;}
+        const auto character=std::uint8_t(g::npc_actor_definition(std::uint16_t(variant-1)).motion_style?5:3);
+        for(unsigned model_class:{0u,1u}){
+            std::shared_ptr<const g::ActorModelAsset> custom_asset;
+            try{custom_asset=models.read_substituted_model(std::uint16_t(variant),std::uint8_t(model_class),character);}catch(const std::invalid_argument&){++custom_missing_models;continue;}
+            for(unsigned sample=0;sample<16;++sample){
+                g::World custom_world(profile(),std::make_shared<g::Session>());custom_world.paused=sample%2?std::int8_t(-1):std::int8_t(0);custom_world.session().random.restore({123,std::uint16_t(sample*4369),77});
+                auto value=std::make_unique<g::Actor>();value->slot=std::uint8_t(sample%8);value->model_variant=std::uint16_t(variant);value->model_pose_class=std::uint8_t(model_class);value->character=255;value->ai_control=std::uint8_t(sample%2);value->status=std::array{0u,2u,8u,10u}[sample%4];value->auxiliary_status=0x89abcdefu;
+                value->current=-123;value->maximum=456;value->class_marker=77;value->previous_motion_class=88;value->model_asset=custom_asset;value->model=custom_asset->make_instance();value->animation=std::make_shared<a::Playback>(value->model);value->appearance_variant=1;value->pending_notice=99;
+                const auto before=*value;const auto slot=value->slot;const auto random_before=custom_world.session().random.state();const auto created=custom_world.spawn_primary(slot,std::move(value));const auto actor=custom_world.resolve(created.id);check(bool(actor));
+                check(g::initialize_primary_slot(custom_world,created.id,character,*banks)==g::PrimaryInitializationStatus::completed&&custom_world.session().random.state()==random_before);compare_original(custom_world,*actor,before,character,false);
+                check(actor->motion_bank_aliases[1]->family==(actor->motion_style?g::HumanoidMotionFamily::alternate:g::HumanoidMotionFamily::general));++custom_initializations;
+            }
+        }
+    }
+    check(custom_initializations>4000&&custom_missing_models>0);
+#endif
     for(unsigned value=0;value<256;++value)for(unsigned pose=0;pose<16;++pose){
         g::World world(profile(),std::make_shared<g::Session>());world.session().exit_requested=std::uint8_t(value);auto initial=std::make_unique<g::Actor>();initial->slot=0;initial->category=0;initial->active=true;initial->character=0;
         initial->model_asset=asset;initial->model=asset->make_instance();initial->animation=std::make_shared<a::Playback>(initial->model);initial->position={11,22,33};initial->orientation={4,5,6,7};
@@ -72,5 +93,5 @@ namespace {void compare_original(g::World&,const g::Actor&,const g::Actor&,unsig
 #endif
 int main(int argc,char** argv)try{
     contracts();if(argc==2)owned(argv[1]);else check(argc==1);
-    std::cout<<"{\"checks\":"<<checks<<",\"initializations\":"<<initializations<<",\"restores\":"<<restores<<",\"setters\":"<<setters<<",\"constraints\":"<<constraints<<",\"bank_publications\":"<<bank_publications<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<original_calls<<",\"game_run\":false}\n";
+    std::cout<<"{\"checks\":"<<checks<<",\"initializations\":"<<initializations<<",\"custom_initializations\":"<<custom_initializations<<",\"custom_missing_models\":"<<custom_missing_models<<",\"restores\":"<<restores<<",\"setters\":"<<setters<<",\"constraints\":"<<constraints<<",\"bank_publications\":"<<bank_publications<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<original_calls<<",\"game_run\":false}\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

@@ -1,4 +1,5 @@
 #include "primary_actor_initialization.hpp"
+#include "primary_custom_statistics.hpp"
 #include "model_constraints.hpp"
 #include "motion_profiles.hpp"
 #include "enemy_initialization.hpp"
@@ -19,27 +20,33 @@ const PrimaryDefaultDefinition& primary_actor_default(std::uint8_t character){
 }
 class PrimaryActorInitialization final {
 public:
-    static PrimaryInitializationStatus defaults(World& world,actors::EntityId id,std::uint8_t character,const HumanoidMotionBanks& banks)noexcept{
+    static PrimaryInitializationStatus defaults(World& world,actors::EntityId id,std::uint8_t character,const HumanoidMotionBanks& banks,bool custom=false)noexcept{
         if(world.closed())return PrimaryInitializationStatus::closed;
         if(world.busy())return PrimaryInitializationStatus::busy;
         const auto actor=world.resolve(id);
-        if(!actor||actor->model_variant||character>=8||actor->slot>=World::primary_capacity||world.primary(actor->slot)!=actor||!actor->model_asset||!actor->model||!actor->animation||actor->animation->model()!=actor->model)return PrimaryInitializationStatus::unavailable;
+        if(!actor||(!custom&&actor->model_variant)||character>=8||actor->slot>=World::primary_capacity||world.primary(actor->slot)!=actor||!actor->model_asset||!actor->model||!actor->animation||actor->animation->model()!=actor->model)return PrimaryInitializationStatus::unavailable;
         world.updating_=true;struct Reset{bool& value;~Reset(){value=false;}}reset{world.updating_};
         try{
             const auto& definition=primary_actor_default(character);
-            const std::array<HumanoidMotionAlias,3> aliases{{{HumanoidMotionFamily::primary,0},{definition.motion_style?HumanoidMotionFamily::alternate:HumanoidMotionFamily::general,0},{HumanoidMotionFamily::character,character}}};
+            const auto substitution=actor->model_variant?&primary_substitution_definition(actor->model_variant):nullptr;
+            const auto style=substitution?npc_actor_definition(std::uint16_t(actor->model_variant-1)).motion_style:std::bit_cast<std::uint8_t>(definition.motion_style);
+            const std::array<HumanoidMotionAlias,3> aliases{{{HumanoidMotionFamily::primary,0},{style?HumanoidMotionFamily::alternate:HumanoidMotionFamily::general,0},{HumanoidMotionFamily::character,character}}};
             std::array<std::shared_ptr<const animation::MotionBank>,3> resources;
             for(unsigned i=0;i<aliases.size();++i){resources[i]=resolve_humanoid_motion_bank(world,aliases[i],banks.bank(aliases[i]));if(!resources[i])return PrimaryInitializationStatus::unavailable;}
             PrimaryActorState state;state.model_group=character;state.default_motion_aliases=aliases;state.part_visibility.assign(actor->model_asset->part_count(),1);
             if(actor->model_pose_class!=1&&state.part_visibility.size()>1)state.part_visibility[1]=0;
+            if(actor->model_pose_class!=1&&substitution)for(unsigned part=0;part<std::min<std::size_t>(32,state.part_visibility.size());++part)if(substitution->hidden_parts&(1u<<part))state.part_visibility[part]=0;
             gameplay_collision::hit_regions::Regions regions;regions.set(std::vector(definition.hit_regions.begin(),definition.hit_regions.end()));
             const File1MotionProfiles profiles;const auto body=profiles.body(character,0);const auto shape=profiles.shape(character,0).target;
             // Old leases retire after all observable stores, while World is busy.
             const auto previous_resources=actor->animation->resources;auto previous_state=std::move(actor->primary_state);
             (void)previous_resources;(void)previous_state;
             actor->primary_state=std::move(state);actor->active=true;actor->contact.authored_id=actor->slot;actor->category=0;actor->character=character;
-            actor->motion_style=std::bit_cast<std::uint8_t>(definition.motion_style);actor->motion_subtype=definition.motion_subtype;
-            actor->current=actor->maximum=definition.health;actor->model_scale=definition.scale;actor->model_height_correction=definition.height_correction;actor->primary_state->statistic_multiplier=1;actor->contact.damage_scale=1;
+            if(substitution){const auto status=apply_primary_custom_statistics(*actor,world.session().random);if(status!=PrimaryInitializationStatus::completed)return status;}
+            else{
+                actor->motion_style=std::bit_cast<std::uint8_t>(definition.motion_style);actor->motion_subtype=definition.motion_subtype;
+                actor->current=actor->maximum=definition.health;actor->model_scale=definition.scale;actor->model_height_correction=definition.height_correction;actor->primary_state->statistic_multiplier=1;actor->contact.damage_scale=1;
+            }
             const std::array<float,2> thresholds{50,25};
             if(actors::derive_health_class(*actor,thresholds)==actors::ClassResult::invalid_maximum)return PrimaryInitializationStatus::unavailable;
             actor->previous_motion_class=actor->class_marker;actor->primary_state->model_adjustment={};
@@ -69,6 +76,7 @@ public:
     }
 };
 PrimaryInitializationStatus initialize_primary_defaults(World& world,actors::EntityId id,std::uint8_t character,const HumanoidMotionBanks& banks)noexcept{return PrimaryActorInitialization::defaults(world,std::move(id),character,banks);}
+PrimaryInitializationStatus initialize_primary_slot(World& world,actors::EntityId id,std::uint8_t character,const HumanoidMotionBanks& banks)noexcept{return PrimaryActorInitialization::defaults(world,std::move(id),character,banks,true);}
 PrimaryInitializationStatus restore_primary_slot(World& world,actors::EntityId id)noexcept{return PrimaryActorInitialization::restore(world,std::move(id));}
 bool select_primary_appearance(World& world,actors::EntityId id,std::uint8_t character,std::uint8_t model_class)noexcept{
     if(world.closed()||world.busy())return false;

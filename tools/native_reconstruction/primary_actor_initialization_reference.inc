@@ -1,5 +1,8 @@
 namespace {
 unsigned primary_constraint_calls{};
+#ifdef REO_PRIMARY_CUSTOM_INITIALIZATION_ORIGINAL
+std::uint16_t primary_custom_random{};unsigned primary_custom_random_reads{};
+#endif
 constexpr unsigned primary_reference_actor=0x70000;
 }
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
@@ -9,6 +12,10 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
     case 0x663170:o2_00663170_0x663170(memory,context,runtime);return;
     case 0x65fab0:o2_0065FAB0_0x65fab0(memory,context,runtime);return;
     case 0x6efaf0:o2_006EFAF0_0x6efaf0(memory,context,runtime);return;
+#ifdef REO_PRIMARY_CUSTOM_INITIALIZATION_ORIGINAL
+    case 0x669860:o2_00669860_0x669860(memory,context,runtime);return;
+    case 0x1aec80:check(GPR_U32(context,4)==0);SET_GPR_U32(context,2,primary_custom_random);++primary_custom_random_reads;break;
+#endif
     case 0x5d6850:check(GPR_U32(context,4)==primary_reference_actor);++primary_constraint_calls;break;
     default:throw std::runtime_error("Undeclared primary initialization port "+std::to_string(context->pc));
     }
@@ -30,8 +37,14 @@ void compare_original(g::World& world,const g::Actor& actor,const g::Actor& befo
     put(0xb4,before.model_scale);put(0xaa8,before.model_height_correction);put(0xf0,before.motion_multiplier);
     const auto work=0x4ae330+0x1468u*before.slot;put(0x34,work);transform_write(memory.data(),work+0x812,before.model_asset->part_count());
     memory[0x4badf8]=std::bit_cast<std::uint8_t>(world.paused);memory[0x4badfb]=restore?1:0;memory[0x3243d8]=world.session().exit_requested;memory[0x3166a0]=0;primary_constraint_calls=0;
+#ifdef REO_PRIMARY_CUSTOM_INITIALIZATION_ORIGINAL
+    primary_custom_random=world.session().random.state().secondary;primary_custom_random_reads=0;
+#endif
     R5900Context context;PS2Runtime runtime;context.pc=0x66a750;SET_GPR_U32(&context,4,at);SET_GPR_U32(&context,5,character);SET_GPR_U32(&context,29,0x1f00000);SET_GPR_U32(&context,31,0xabcdef);
     original_transform_port(memory.data(),&context,&runtime);check(context.pc==0xabcdef&&GPR_U32(&context,29)==0x1f00000);
+#ifdef REO_PRIMARY_CUSTOM_INITIALIZATION_ORIGINAL
+    check(primary_custom_random_reads==unsigned(!restore&&before.model_variant!=0));
+#endif
     check(actor.active==bool(memory[at])&&actor.visible==bool(memory[at+1])&&actor.category==memory[at+2]&&actor.slot==memory[at+3]&&actor.ai_control==memory[at+0xff0]&&actor.character==memory[at+0xb98]);
     check(actor.current==transform_read<std::int16_t>(memory.data(),at+0x544)&&actor.maximum==transform_read<std::int16_t>(memory.data(),at+0x546)&&actor.status==transform_read<std::uint32_t>(memory.data(),at+0xba0));
     check(actor.class_marker==memory[at+0xb9b]&&actor.previous_motion_class==memory[at+0xb9c]&&actor.auxiliary_status==transform_read<std::uint32_t>(memory.data(),at+0xba4));
