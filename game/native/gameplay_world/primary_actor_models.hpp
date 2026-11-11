@@ -58,6 +58,12 @@ struct PrimarySceneConstructed {
     std::optional<std::uint8_t> roster_slot{};
     bool release_on_exit{},retirement_completed{},main_model_retired{};
 };
+// Read-only resource lease for a physical model slot. Actor channels and
+// constraints remain Actor-owned; the resident pose survives binding teardown.
+struct PrimaryModelResources {
+    std::shared_ptr<const ActorModelAsset> asset;
+    std::shared_ptr<const animation::Instance> primary,secondary;
+};
 // Canonical simulation-owner cache for the admitted archive-bundle5EC100 path.
 // Capture on the simulation owner; prepare uses only retained immutable request
 // inputs and content providers, so asset I/O need not run on that owner.
@@ -90,12 +96,13 @@ public:
     PrimaryModelStatus close()noexcept;
     struct CacheKey {std::uint8_t character{255},model_class{255};friend bool operator==(const CacheKey&,const CacheKey&)=default;};
     CacheKey key(std::size_t slot)const{return rows_.at(slot).key;}
+    PrimaryModelResources resident(std::size_t slot)const{return rows_.at(slot).resources;}
 private:
     std::optional<PrimaryModelRequest> capture(actors::EntityId,bool retirement,bool nested=false)const noexcept;
     static std::shared_ptr<const PreparedPrimaryModel> prepare_release(const PrimaryModelRequest&,const HumanoidMotionAssets&);
     PrimaryModelApplied apply(const PreparedPrimaryModel&,const gameplay_update::State&,const PrimaryEquipmentContext*,bool nested)noexcept;
     std::vector<std::array<std::shared_ptr<const animation::MotionBank>,3>> retain_resources()const;
-    struct Row {CacheKey key;actors::EntityId actor;};
+    struct Row {CacheKey key;actors::EntityId actor;PrimaryModelResources resources;};
     World& world_;HumanoidMotionOwner& motions_;
     std::shared_ptr<const PrimaryModelDomain> domain_;
     std::array<Row,8> rows_{};

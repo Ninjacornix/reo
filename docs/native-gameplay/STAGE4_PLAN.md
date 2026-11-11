@@ -122,6 +122,11 @@ verification. The latest user instruction is to keep the PC awake afterward.
   gate. Paired complete initializer/default/overlay/cleanup comparisons and live
   publication pass. This grants no unprepared clip data; full scene ownership
   and physical model-resource handoff remain open.
+- [Resident primary resources](PRIMARY_RESIDENT_RESOURCES.md) now own physical
+  model payloads independently of Actor generations, including failed initializer
+  prefixes. Paired cache/scene comparisons and retained-resource lifetime guards
+  pass. Explicit scene binding authority, post-reset retirement and return to
+  main bindings remain open.
 - The [scene NPC loading-mode correction](CUTSCENE_NPC_CONSTRUCTION.md) separates
   asset-loading mode3243D7 from pause4BADF8. Paired current cohorts pass4,384 scene
   cases with independent inputs; the earlier fixture conflated the two and its

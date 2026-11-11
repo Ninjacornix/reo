@@ -19,8 +19,11 @@ PrimaryActorModels::PrimaryActorModels(World& world,HumanoidMotionOwner& motions
 PrimaryActorModels::~PrimaryActorModels(){if(running_||world_.busy())std::terminate();(void)close();}
 PrimaryModelStatus PrimaryActorModels::close()noexcept{
     if(running_||world_.busy())return PrimaryModelStatus::busy;
+    running_=world_.updating_=true;
+    struct Reset{bool& running;bool& world;~Reset(){world=false;running=false;}}reset{running_,world_.updating_};
     closed_=true;if(world_.primary_model_owner_==this)world_.primary_model_owner_=nullptr;
-    rows_={};return PrimaryModelStatus::completed;
+    const auto previous=std::move(rows_);rows_={};(void)previous;
+    return PrimaryModelStatus::completed;
 }
 std::optional<PrimaryModelRequest> PrimaryActorModels::capture(actors::EntityId id)const noexcept{
     return capture(std::move(id),false);
@@ -33,7 +36,9 @@ std::optional<PrimaryModelRequest> PrimaryActorModels::capture(actors::EntityId 
     const auto actor=world_.resolve(id);
     if(!actor||actor->slot>=8||world_.primary(actor->slot)!=actor||(!retirement&&actor->character>=8)||(actor->model&&!actor->animation)||(actor->animation&&actor->animation->model()!=actor->model))return{};
     const auto& row=rows_[actor->slot];
-    if(row.key.character!=255&&row.actor!=id)return{};
+    if((row.key.character!=255||row.resources.primary)&&row.actor!=id)return{};
+    if(row.resources.primary&&(row.resources.primary!=actor->model||row.resources.asset!=actor->model_asset||
+       !actor->animation||row.resources.secondary!=actor->animation->secondary_model()))return{};
     PrimaryModelRequest result;result.domain_=domain_;result.revision_=revision_;result.actor_=std::move(id);
     result.playback_=actor->animation;result.model_=actor->model;result.asset_=actor->model_asset;result.banks_=motions_.snapshot();
     result.secondary_policy_=!actor->animation||actor->animation->secondary_bank_enabled();
@@ -145,13 +150,19 @@ PrimaryModelApplied PrimaryActorModels::apply(const PreparedPrimaryModel& prepar
             if(actor->animation)actor->animation->replace_model_prepared(prepared.model_,prepared.secondary_);
             else actor->animation=prepared.first_playback_;
             actor->model=prepared.model_;actor->model_asset=prepared.asset_;
+            // Physical resources are resident independently of the Actor ID.
+            // Even a later initializer refusal leaves this committed prefix
+            // owned; an invalid cache key must not discard allocated work.
+            rows_[request.slot_].actor=request.actor_;
+            rows_[request.slot_].resources={actor->model_asset,actor->model,actor->animation->secondary_model()};
             actor->collision.joint_two_position.reset();actor->collision.pose_ready=false;
             result.replaced=true;
         }
         const auto initialized=PrimaryActorInitialization::select(world_,state,request.actor_,request.character_,*prepared.banks_,equipment,true);
         if(initialized!=PrimaryInitializationStatus::completed){result.status=initialized==PrimaryInitializationStatus::no_memory?PrimaryModelStatus::no_memory:PrimaryModelStatus::unavailable;return result;}
         result.initialized=true;
-        rows_[request.slot_]={CacheKey{actor->character,actor->model_pose_class},request.actor_};
+        rows_[request.slot_]={CacheKey{actor->character,actor->model_pose_class},request.actor_,
+            {actor->model_asset,actor->model,actor->animation->secondary_model()}};
         if(request.scene_){
             if(!actor->primary_state)return result;
             if(!actor->scripted)actor->scripted.emplace();
