@@ -88,7 +88,7 @@ float motion_complement(float weight) {
         result = std::nextafter(result, 0.f);
     return finite(result);
 }
-Playback::Playback(std::shared_ptr<Instance> primary, bool second) : primary_(std::move(primary)) {
+Playback::Playback(std::shared_ptr<Instance> primary, bool second) : primary_(std::move(primary)),secondary_policy_(second) {
     if (!primary_)
         throw std::invalid_argument("Native Playback requires its exact canonical primary model");
     if (second)
@@ -101,18 +101,26 @@ void Playback::replace_model(std::shared_ptr<Instance> model) {
         return;
     // Secondary presence is the original owner's policy, independent of the
     // replacement Skeleton's size. Do not copy old model-node clip bindings.
-    auto secondary = secondary_ ? PoseBlend::create_sibling(*model) : nullptr;
+    auto secondary = secondary_policy_ ? PoseBlend::create_sibling(*model) : nullptr;
     replace_model_prepared(std::move(model),std::move(secondary));
 }
 void Playback::replace_model_prepared(std::shared_ptr<Instance> model,std::shared_ptr<Instance> secondary) {
-    if(!model||bool(secondary)!=bool(secondary_)||(secondary&&&secondary->skeleton()!=&model->skeleton()))
+    if(!model||bool(secondary)!=secondary_policy_||(secondary&&&secondary->skeleton()!=&model->skeleton()))
         throw std::invalid_argument("Native Playback prepared replacement has incompatible model banks");
-    PoseBlend::root_reference(*model, PoseBlend::root_reference(*primary_));
+    PoseBlend::root_reference(*model, root_reference());
     auto previous_primary = std::move(primary_);
     auto previous_secondary = std::move(secondary_);
     primary_ = std::move(model);
     secondary_ = std::move(secondary);
+    detached_root_reference_={};
     // Previous owners retire only after both corresponding banks are visible.
+}
+void Playback::retire_model()noexcept{
+    if(primary_)detached_root_reference_=PoseBlend::root_reference(*primary_);
+    primary_.reset();secondary_.reset();
+}
+void Playback::require_model()const{
+    if(!primary_)throw std::runtime_error("Native Playback model retired; reconstruction required");
 }
 MotionChannel& Playback::channel(ModelBank bank, std::size_t track) {
     return channels_[bank == ModelBank::primary ? 0 : 1].at(track);
@@ -122,6 +130,7 @@ const MotionChannel& Playback::channel(ModelBank bank, std::size_t track) const 
 }
 MotionBound Playback::bind_plain(ModelBank bank, const MotionBank& resource, std::uint32_t key,
                                  std::uint16_t track, float frame) {
+    require_model();
     auto& record = channel(bank, track);
     auto& model = bank == ModelBank::primary ? primary_ : secondary_;
     const auto block = resource.find(key, track);
@@ -146,6 +155,7 @@ MotionBound Playback::bind_plain(ModelBank bank, const MotionBank& resource, std
 }
 int Playback::configure(const MotionBank& resource, std::int32_t key, std::uint16_t track,
                         float frame, float blend, MotionClock clock, RootMotionRef root) {
+    require_model();
     auto& record = channel(ModelBank::primary, track);
     if ((std::uint32_t(key) & 0x4000) || key >= 2000)
         return 1;
@@ -200,6 +210,7 @@ int Playback::configure(const MotionBank& resource, std::int32_t key, std::uint1
 }
 MotionBound Playback::configure_whole(const MotionBank& resource,std::int32_t key,float frame,
                                      float blend,MotionClock clock,RootMotionRef root) {
+    require_model();
     if(resource.kind()==MotionBankKind::sparse||resource.first_track()!=0||resource.track_count()!=1)
         throw std::domain_error("Native whole-model motion requires a single-track strided bank");
     if(key<0)throw std::domain_error("Native whole-model motion negative source row unavailable");
@@ -237,6 +248,7 @@ MotionBound Playback::configure_whole(const MotionBank& resource,std::int32_t ke
     return MotionBound::prepared;
 }
 std::int8_t Playback::advance_whole(float step,std::uint8_t mode,RootMotionRef root) {
+    require_model();
     auto& record=channel(ModelBank::primary,0);
     const float before=record.timing.frame;
     if(mode)step=times(step,2);
@@ -255,6 +267,7 @@ std::int8_t Playback::advance_whole(float step,std::uint8_t mode,RootMotionRef r
 }
 std::int8_t Playback::advance_plain(ModelBank bank, std::uint16_t track, float step,
                                     std::uint8_t mode) {
+    require_model();
     auto& model = bank == ModelBank::primary ? primary_ : secondary_;
     if (!model)
         return -1;
@@ -266,6 +279,7 @@ std::int8_t Playback::advance_plain(ModelBank bank, std::uint16_t track, float s
     return result;
 }
 std::uint8_t Playback::blend_transition(std::uint16_t track, RootMotionRef root) {
+    require_model();
     auto& record = channel(ModelBank::primary, track);
     if (!(record.timing.flags & 8) || record.blend_remaining == 0)
         return 0;
@@ -284,6 +298,8 @@ std::uint8_t Playback::blend_transition(std::uint16_t track, RootMotionRef root)
 }
 std::int8_t Playback::advance_primary(std::uint16_t track, float step, std::uint8_t mode,
                                       RootMotionRef root) {
+    require_model();
+    require_model();
     auto& record = channel(ModelBank::primary, track);
     const float before = record.timing.frame;
     if (mode)
@@ -307,6 +323,7 @@ std::int8_t Playback::advance_primary(std::uint16_t track, float step, std::uint
     return result;
 }
 void Playback::blend_banks(std::uint16_t track, float p, float s) {
+    require_model();
     if (secondary_)
         PoseBlend::blend(*primary_, *secondary_, track, p, s);
 }
@@ -324,6 +341,7 @@ void Playback::or_packed_primary_flags(std::uint8_t value) noexcept {
     channels_[0][1].timing.flags |= value >> 4;
 }
 void Playback::clear_primary(std::uint16_t track) {
+    require_model();
     primary_->clear(track);
     channel(ModelBank::primary, track) = {};
 }
@@ -353,6 +371,7 @@ std::int8_t Playback::advance_channels_after_prelude(std::uint8_t count, float s
 std::int8_t Playback::advance_four_after_prelude(float step, float weight, std::uint8_t mode,
                                                  std::uint8_t category, bool selected,
                                                  std::uint32_t buttons) {
+    require_model();
     (void)advance_plain(ModelBank::secondary, 1, step, mode);
     (void)advance_plain(ModelBank::secondary, 0, step, mode);
     (void)advance_plain(ModelBank::primary, 1, step, mode);

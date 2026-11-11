@@ -21,6 +21,7 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
         context->pc=GPR_U32(context,31);return;
     }
     if(at==0x5ec100){o2_005EC100_0x5ec100(memory,context,runtime);return;}
+    if(at==0x5ec270){o2_005EC270_0x5ec270(memory,context,runtime);return;}
     if(at==0x5ec010){cache_trace.push_back(at);check(GPR_U32(context,4)==reference_slot&&GPR_U32(context,5)==reference_actor);o2_005EC010_0x5ec010(memory,context,runtime);return;}
     if(at==0x5ebfe0){cache_trace.push_back(at);check(GPR_U32(context,4)==reference_actor);o2_005EBFE0_0x5ebfe0(memory,context,runtime);return;}
     if(at==0x1d1c40){sub_001D1C40_0x1d1c40(memory,context,runtime);return;}
@@ -34,6 +35,16 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
     context->pc=GPR_U32(context,31);
 }
 namespace {
+void compare_release(const Keys& before,const Keys& after,unsigned slot,const g::PrimaryModelApplied& result){
+    auto* memory=cache_memory.data();reference_slot=slot;
+    for(unsigned i=0;i<8;++i){memory[0x7434b4+2*i]=before[i].character;memory[0x7434b5+2*i]=before[i].model_class;}
+    std::memset(memory+reference_actor,0,0x10e0);memory[reference_actor+1]=1;cache_trace.clear();reference_releases=0;
+    R5900Context context;PS2Runtime runtime;context.pc=0x5ec270;SET_GPR_U32(&context,4,slot);SET_GPR_U32(&context,5,reference_actor);SET_GPR_U32(&context,29,0x1f00000);SET_GPR_U32(&context,31,0xabcdef);
+    original_transform_port(memory,&context,&runtime);check(context.pc==0xabcdef&&GPR_U32(&context,29)==0x1f00000);
+    for(unsigned i=0;i<8;++i)check(after[i].character==memory[0x7434b4+2*i]&&after[i].model_class==memory[0x7434b5+2*i]);
+    check(result.retired==(memory[reference_actor+1]==0)&&result.character_released==(reference_releases!=0));
+    check(cache_trace==(result.retired?std::vector<std::uint32_t>{0x5ec010,0x5ec0e0}:std::vector<std::uint32_t>{}));++retirement_original_cases;
+}
 void compare_primary_scene(const reo::native::gameplay_scenario::CutsceneDescriptor& descriptor,std::size_t group,const g::Actor& actor,std::span<const reo::native::gameplay_scenario::CutsceneActorParameter> parameters,std::uint16_t room,std::int8_t pause){
     auto* memory=cache_memory.data();std::memset(memory+0x38ec00,0,0x1700);std::memset(memory+reference_actor,0,0x10e0);
     const auto header=descriptor.section(descriptor.actor_groups()[group][7]);const auto stream=descriptor.section(descriptor.actor_groups()[group][3]);check(header.size()<0x10000&&stream.size()>=4&&stream.size()<0x10000);

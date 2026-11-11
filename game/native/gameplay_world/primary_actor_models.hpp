@@ -21,8 +21,9 @@ class PrimaryModelRequest final {
     std::uint16_t variant_{};
     std::uint8_t slot_{},character_{},model_class_{},appearance_{},loading_mode_{},previous_character_{255};
     std::uint8_t expected_appearance_{};
+    std::uint8_t previous_model_class_{255};
     std::optional<PrimarySceneActorProfile> scene_;
-    bool rebuild_{},secondary_policy_{};
+    bool rebuild_{},secondary_policy_{},retirement_{};
 };
 class PreparedPrimaryModel final {
 public:
@@ -42,6 +43,7 @@ enum class PrimaryModelStatus {completed,unavailable,stale,busy,closed,no_memory
 struct PrimaryModelApplied {
     PrimaryModelStatus status{PrimaryModelStatus::unavailable};
     bool replaced{},character_released{},initialized{};
+    bool retired{};
 };
 // Canonical simulation-owner cache for the admitted archive-bundle5EC100 path.
 // Capture on the simulation owner; prepare uses only retained immutable request
@@ -54,6 +56,7 @@ public:
     PrimaryActorModels(const PrimaryActorModels&)=delete;
     PrimaryActorModels& operator=(const PrimaryActorModels&)=delete;
     std::optional<PrimaryModelRequest> capture(actors::EntityId)const noexcept;
+    std::optional<PrimaryModelRequest> capture_release(actors::EntityId)const noexcept;
     // Kind0 adapter after the scene owner has assigned a real primary ID to
     // this group. Preparation projects663170's appearance reset without
     // changing the live actor; application commits its prefix and postlude.
@@ -65,6 +68,7 @@ public:
     struct CacheKey {std::uint8_t character{255},model_class{255};friend bool operator==(const CacheKey&,const CacheKey&)=default;};
     CacheKey key(std::size_t slot)const{return rows_.at(slot).key;}
 private:
+    std::optional<PrimaryModelRequest> capture(actors::EntityId,bool retirement)const noexcept;
     struct Row {CacheKey key;actors::EntityId actor;};
     World& world_;HumanoidMotionOwner& motions_;
     std::shared_ptr<const PrimaryModelDomain> domain_;

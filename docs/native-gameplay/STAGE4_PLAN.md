@@ -56,6 +56,11 @@ verification. The latest user instruction is to keep the PC awake afterward.
   parameters for kind0 groups. Paired cohorts pass1,196 real-header applications
   with controlled primary bindings. Earlier roster assignment/cloning, cache
   teardown, primary cinematic playback and full scene ownership remain open.
+- [Primary model retirement](PRIMARY_MODEL_RETIREMENT.md) now preserves actor
+  playback across detached CPU models, compares513 original release cases and
+  verifies explicit generation handoff. Current initialization/playback/World
+  regressions pass. Complete scene-entry ownership and real partial-family
+  bank release remain open; the old1B1DF0 work-buffer port must be corrected.
 - The [scene NPC loading-mode correction](CUTSCENE_NPC_CONSTRUCTION.md) separates
   asset-loading mode3243D7 from pause4BADF8. Paired current cohorts pass4,384 scene
   cases with independent inputs; the earlier fixture conflated the two and its

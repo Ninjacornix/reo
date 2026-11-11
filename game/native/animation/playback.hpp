@@ -41,6 +41,8 @@ class Playback final {
     const std::shared_ptr<Instance>& secondary_model() const noexcept {
         return secondary_;
     }
+    bool secondary_bank_enabled()const noexcept{return secondary_policy_;}
+    Vector root_reference()const noexcept{return primary_?PoseBlend::root_reference(*primary_):detached_root_reference_;}
     // Simulation-owner operation for resident model reconstruction. The caller
     // supplies a fresh primary Instance; actor-owned channels, resources, root
     // history and progress survive. Corresponding secondary poses start fresh.
@@ -89,9 +91,13 @@ class Playback final {
   private:
     friend class gameplay_world::PrimaryActorModels;
     void replace_model_prepared(std::shared_ptr<Instance>,std::shared_ptr<Instance>);
+    void retire_model()noexcept;
+    void require_model()const;
     std::shared_ptr<Instance> primary_, secondary_;
     std::array<std::array<MotionChannel, 5>, 2> channels_{};
     Vector saved_delta_{}, unblended_delta_{};
+    Vector detached_root_reference_{};
+    bool secondary_policy_{};
     void progress(std::uint8_t category, bool selected, std::uint32_t buttons);
 };
 float transition_weight(float progress);
