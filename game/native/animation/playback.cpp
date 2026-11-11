@@ -94,6 +94,21 @@ Playback::Playback(std::shared_ptr<Instance> primary, bool second) : primary_(st
     if (second)
         secondary_ = PoseBlend::create_sibling(*primary_);
 }
+void Playback::replace_model(std::shared_ptr<Instance> model) {
+    if (!model)
+        throw std::invalid_argument("Native Playback replacement requires a canonical model");
+    if (model == primary_)
+        return;
+    // Secondary presence is the original owner's policy, independent of the
+    // replacement Skeleton's size. Do not copy old model-node clip bindings.
+    auto secondary = secondary_ ? PoseBlend::create_sibling(*model) : nullptr;
+    PoseBlend::root_reference(*model, PoseBlend::root_reference(*primary_));
+    auto previous_primary = std::move(primary_);
+    auto previous_secondary = std::move(secondary_);
+    primary_ = std::move(model);
+    secondary_ = std::move(secondary);
+    // Previous owners retire only after both corresponding banks are visible.
+}
 MotionChannel& Playback::channel(ModelBank bank, std::size_t track) {
     return channels_[bank == ModelBank::primary ? 0 : 1].at(track);
 }

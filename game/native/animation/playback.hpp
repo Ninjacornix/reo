@@ -40,6 +40,11 @@ class Playback final {
     const std::shared_ptr<Instance>& secondary_model() const noexcept {
         return secondary_;
     }
+    // Simulation-owner operation for resident model reconstruction. The caller
+    // supplies a fresh primary Instance; actor-owned channels, resources, root
+    // history and progress survive. Corresponding secondary poses start fresh.
+    // Allocation/validation finishes before either visible model is replaced.
+    void replace_model(std::shared_ptr<Instance>);
     MotionChannel& channel(ModelBank, std::size_t);
     const MotionChannel& channel(ModelBank, std::size_t) const;
     MotionBound bind_plain(ModelBank, const MotionBank&, std::uint32_t key, std::uint16_t track,

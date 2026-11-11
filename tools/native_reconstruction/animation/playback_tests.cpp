@@ -19,6 +19,7 @@ void(*prelude_hook)(std::uint8_t*,R5900Context*){};
 std::vector<std::uint32_t> resources{0,0x800000};
 std::uint64_t config_cases{},plain_cases{},tick_cases{},transition_cases{},four_cases{},whole_model_cases{},orchestration_cases{},prelude_calls{};
 std::uint64_t whole_configuration_cases{},whole_tick_cases{},whole_missing_cases{},whole_boundary_refusals{};
+std::uint64_t model_replacement_cases{},replacement_continuations{},replacement_refusals{};
 std::uint64_t capture_cases{},blend_cases{},link_cases{},checks{},helper_calls{},model_cases{},joint_cases{},root_cases{},nonzero_root{},difference_cases{},frame_cases{},binding_refusals{},snapshot_cases{},math_cases{},constructor_cases{},callback_cases{};
 void check(bool yes,const std::string& why){++checks;if(!yes)throw std::runtime_error(why);}
 template<class T>T get(const std::uint8_t* p,std::uint32_t at){return transform_read<T>(p,at);}
@@ -71,12 +72,93 @@ int main(int argc,char** argv)try{
   for(unsigned tick=0;tick<4;++tick){const float weight=float(tick)*.25f;const auto result=player.advance_four_after_prelude(1,weight,clock.mode,clock.category,false,0);const auto original=call(ram.data(),0x5d57d0,actor,0,0,0,1,weight);check(result==std::int8_t(GPR_U32(&original,2)),"full four-channel blend return");records(player,ram,root);++four_cases;}
   for(unsigned tick=0;tick<8;++tick){const auto count=std::uint8_t((tick+variant)%6);player.progress_threshold=std::uint8_t(variant%7);put(ram.data(),actor+0xce3,player.progress_threshold);put(ram.data(),actor+0x524,count);put(ram.data(),actor+0xf80,std::uint32_t(tick%2?0xf3f:0));for(unsigned track=0;track<5;++track){player.channel(a::ModelBank::primary,track).skip_flags=std::uint8_t((tick+track)%3==0);export_channel(ram.data(),0,track,player.channel(a::ModelBank::primary,track));}const auto result=player.advance_channels_after_prelude(count,1,clock.mode,clock.category,true,tick%2?0xf3f:0,root_ref);const auto original=call(ram.data(),0x58c300,actor,0,0,0,1);check(result==std::int8_t(GPR_U32(&original,2)),"complete original ordered primary channel/skip/progress orchestration");records(player,ram,root);++orchestration_cases;}
 
+
+  // Resident model reconstruction replaces node allocations, not actor-owned
+  // channels/root fields. Recreate the original node banks with the complete
+  // owned pack/constructor bodies. Resource/archive selection is outside this
+  // focused case; the full5EC100 cache caller is qualified separately.
+  location="model replacement variant="+std::to_string(variant);
+  const auto held_primary=player.model(),held_secondary=player.secondary_model();
+  held_primary->rebuild(t::identity());const auto held_pose=held_primary->retain();
+  const auto held_joints=held_pose->joints;
+  const a::Vector history{float(variant)+.25f,-2.5f,7.75f};
+  a::PoseBlend::root_reference(*held_primary,history);put(ram.data(),actor+0x508,history);
+  player.resources={std::make_shared<const a::MotionBank>(resource),nullptr,nullptr};
+  player.resources_known=true;player.channel_count=std::uint8_t(variant%6);
+  player.motion=std::int16_t(variant*17);player.source_kind=std::uint8_t(variant);
+  player.source_slot=std::uint8_t(variant+3);const auto held_resources=player.resources;
+  auto fresh=std::make_shared<a::Instance>(skeleton);
+  player.replace_model(fresh);
+  check(player.model()==fresh&&player.secondary_model()!=held_secondary&&
+        &player.secondary_model()->skeleton()==&fresh->skeleton(),"new corresponding mutable model banks");
+  check(player.resources==held_resources&&player.resources_known&&player.channel_count==variant%6&&
+        player.motion==std::int16_t(variant*17)&&player.source_kind==variant&&player.source_slot==variant+3,
+        "resident reconstruction retains actor resource/progress selectors");
+  check(held_pose->joints==held_joints&&held_primary->retain()==nullptr,
+        "retained published pose survives old model root invalidation");
+  std::fill_n(ram.data()+nodes,skeleton->nodes().size()*400,0);
+  std::fill_n(ram.data()+second,skeleton->nodes().size()*400,0);
+  call(ram.data(),0x193380,nodes,1);call(ram.data(),0x193380,second,1);
+  records(player,ram,root);
+  const auto same_secondary=player.secondary_model();player.replace_model(fresh);
+  check(player.secondary_model()==same_secondary,"same canonical model retains secondary pose owner");
+  bool rejected{};try{player.replace_model({});}catch(const std::invalid_argument&){rejected=true;}
+  check(rejected&&player.model()==fresh&&player.secondary_model()==same_secondary,
+        "absent model refuses before channel/model publication");++replacement_refusals;
+  records(player,ram,root);
+  // Old clips must not leak into either fresh node bank. The original sampler
+  // runs on the independently reconstructed, initially unbound node records.
+  (void)player.advance_primary(0,1,clock.mode,root_ref);
+  call(ram.data(),0x58c130,actor,0,0,0,1);records(player,ram,root);
+  for(unsigned track=0;track<2;++track){
+   const float frame=float(variant%5)*.5f;
+   const auto result=player.configure(resource,std::int32_t(key),std::uint16_t(track),frame,4,clock,root_ref);
+   const auto original=call(ram.data(),0x58b9a0,actor,bank_at,key,track,frame,4);
+   check(result==std::int32_t(GPR_U32(&original,2)),"replacement rebind full original return");records(player,ram,root);
+  }
+  for(unsigned tick=0;tick<4;++tick){
+   const auto result=player.advance_primary(0,1,clock.mode,root_ref);
+   const auto original=call(ram.data(),0x58c130,actor,0,0,0,1);
+   check(result==std::int8_t(GPR_U32(&original,2)),"replacement continuation full original return");records(player,ram,root);
+   ++replacement_continuations;
+  }
+  check(held_pose->joints==held_joints&&held_primary!=player.model(),"old published pose and model lease remain independent");
+  ++model_replacement_cases;
+
  }
+
+ // Cross-size, independently authored Skeletons and the no-secondary policy.
+ for(const auto& initial_bytes:skeletons)for(const auto& replacement_bytes:skeletons)for(bool secondary_policy:{false,true}){
+  location="cross-skeleton replacement";
+  auto initial=std::make_shared<a::Instance>(a::Skeleton::import_raw(initial_bytes));
+  auto replacement=std::make_shared<a::Instance>(a::Skeleton::import_raw(replacement_bytes));
+  a::Playback owner(initial,secondary_policy);a::Vector delta{3,4,5};a::RootMotionRef root_ref{delta.x,delta.y,delta.z};
+  const a::Vector history{2,4,8};a::PoseBlend::root_reference(*initial,history);
+  std::fill_n(ram.data()+actor,0x10e0,0);std::fill_n(ram.data()+work,0x1468,0);
+  std::fill_n(ram.data()+nodes,replacement->nodes().size()*400,0);std::fill_n(ram.data()+second,replacement->nodes().size()*400,0);
+  std::memcpy(ram.data()+0x400000,replacement_bytes.data(),replacement_bytes.size());
+  call(ram.data(),0x1a2e00,0x10000,skeleton_resource,0x400000);call(ram.data(),0x193380,nodes,1);call(ram.data(),0x193380,second,1);
+  put(ram.data(),actor+0x34,work);put(ram.data(),work,work+0x820);put(ram.data(),work+4,work+0xa20);
+  put(ram.data(),work+0x816,std::uint16_t(replacement->nodes().size()));
+  for(unsigned i=0;i<replacement->nodes().size();++i){put(ram.data(),work+0x820+4*i,nodes+400*i);put(ram.data(),work+0xa20+4*i,second+400*i);}
+  put(ram.data(),actor+0x4e4,delta);put(ram.data(),actor+0x508,history);put(ram.data(),0x3243cc,std::uint8_t(0));
+  for(unsigned bank=0;bank<2;++bank)for(unsigned track=0;track<5;++track){auto& channel=owner.channel(bank?a::ModelBank::secondary:a::ModelBank::primary,track);
+   channel.timing.frame=float(track)+.5f;channel.timing.end=40;channel.timing.restart=2;channel.timing.loop=1;
+   channel.selector=std::uint16_t(123+track);channel.mode=std::uint8_t(bank+7);channel.auxiliary=0x12345600+track;
+   export_channel(ram.data(),bank,track,channel);
+  }
+  owner.replace_model(replacement);check(bool(owner.secondary_model())==secondary_policy,"cross-skeleton replacement preserves secondary policy");
+  records(owner,ram,delta);
+  const auto result=owner.advance_primary(0,1,0,root_ref);const auto original=call(ram.data(),0x58c130,actor,0,0,0,1);
+  check(result==std::int8_t(GPR_U32(&original,2)),"cross-skeleton unbound continuation return");records(owner,ram,delta);
+  ++model_replacement_cases;++replacement_continuations;
+ }
+
  for(unsigned asset=2;asset<banks.size();++asset){a::MotionBank whole;whole.load_strided(banks[asset],200,0,"actual-whole");unsigned used{};for(unsigned key=0;key<100&&used<4;++key){const auto block=whole.find(key,0);if(!block)continue;location="whole import asset="+std::to_string(asset)+" key="+std::to_string(key);std::shared_ptr<const a::Clip> clip;try{clip=block->clip();}catch(const std::invalid_argument&){continue;}std::shared_ptr<const a::Skeleton> definition;std::vector<std::byte> raw;for(const auto& bytes:skeletons){auto candidate=a::Skeleton::import_raw(bytes);if(candidate->nodes().size()==clip->tracks().size()){definition=candidate;raw=bytes;break;}}if(!definition)continue;location="whole asset="+std::to_string(asset)+" key="+std::to_string(key);std::fill_n(ram.data()+nodes,definition->nodes().size()*400,0);std::memcpy(ram.data()+0x400000,raw.data(),raw.size());call(ram.data(),0x1a2e00,0x10000,skeleton_resource,0x400000);call(ram.data(),0x193380,nodes,1);resources={0,skeleton_resource,0x900000};std::memcpy(ram.data()+0x500000,block->bytes().data(),block->bytes().size());call(ram.data(),0x1a1fd0,0x18000,resources[2],0x500000);call(ram.data(),0x192a00,nodes,2);a::Instance model(definition);a::PoseBlend::bind_all(model,clip);for(float frame:{0.f,.5f,clip->last_frame()*.5f,clip->last_frame()}){location="whole asset="+std::to_string(asset)+" key="+std::to_string(key)+" frame="+std::to_string(frame);call(ram.data(),0x193220,nodes,0,0,0,frame);try{model.sample_all(frame);}catch(const std::exception&){unsigned nonfinite{};for(unsigned j=0;j<definition->nodes().size();++j)for(unsigned c=0;c<10;++c)if(!std::isfinite(get<float>(ram.data(),nodes+400*j+0x104+4*c)))++nonfinite;std::cerr<<"actual original nonfinite parameters="<<nonfinite<<"\n";throw;}compare_nodes(model,ram,false);model.rebuild(t::identity());put(ram.data(),0x270000,t::identity());call(ram.data(),0x193240,nodes,0x270000);compare_nodes(model,ram,true);++whole_model_cases;}++used;}check(used>0,"real whole-model cutscene motion is admitted for actual matching skeleton");}
  check(whole_model_cases>=8,"actual whole-model bind/sample/publication source path exercised");
 #ifdef REO_WHOLE_PLAYBACK_TESTS
  whole_playback_tests(banks,skeletons,ram);
 #endif
  std::uint32_t random=0x19d42u;for(unsigned i=0;i<4096;++i){random=random*1664525u+1013904223u;auto raw=random;if((raw&0x7f800000u)==0x7f800000u)raw^=0x00800000u;const float weight=std::bit_cast<float>(raw);const auto cast=call(ram.data(),0x1118b8,0,0,0,0,weight);R5900Context c;c.pc=0x111d48;SET_GPR_U64(&c,4,0x3ff0000000000000ull);SET_GPR_U64(&c,5,GPR_U64(&cast,2));SET_GPR_U32(&c,29,0x1f00000);SET_GPR_U32(&c,31,0xabcdef);PS2Runtime rt;original_transform_port(ram.data(),&c,&rt);check(c.pc==0xabcdef,"full software-double complement body");R5900Context narrow;narrow.pc=0x112470;SET_GPR_U64(&narrow,4,GPR_U64(&c,2));SET_GPR_U32(&narrow,29,0x1f00000);SET_GPR_U32(&narrow,31,0xabcdef);original_transform_port(ram.data(),&narrow,&rt);check(narrow.pc==0xabcdef&&bits(a::motion_complement(weight))==bits(narrow.f[0]),"full original complement conversion weight="+std::to_string(raw)+" native="+std::to_string(bits(a::motion_complement(weight)))+" actual="+std::to_string(bits(narrow.f[0])));++transition_cases;}
- std::cout<<"{\"checks\":"<<checks<<",\"configuration_cases\":"<<config_cases<<",\"plain_bind_cases\":"<<plain_cases<<",\"primary_tick_cases\":"<<tick_cases<<",\"four_channel_cases\":"<<four_cases<<",\"joint_cases\":"<<joint_cases<<",\"whole_model_cases\":"<<whole_model_cases<<",\"whole_configuration_cases\":"<<whole_configuration_cases<<",\"whole_tick_cases\":"<<whole_tick_cases<<",\"whole_missing_cases\":"<<whole_missing_cases<<",\"whole_boundary_refusals\":"<<whole_boundary_refusals<<",\"orchestration_cases\":"<<orchestration_cases<<",\"complement_cases\":"<<transition_cases<<",\"original_prelude_calls\":"<<prelude_calls<<",\"original_calls\":"<<helper_calls<<",\"game_run\":false}\n";return 0;
+ std::cout<<"{\"model_replacement_cases\":"<<model_replacement_cases<<",\"replacement_continuations\":"<<replacement_continuations<<",\"replacement_refusals\":"<<replacement_refusals<<",\"checks\":"<<checks<<",\"configuration_cases\":"<<config_cases<<",\"plain_bind_cases\":"<<plain_cases<<",\"primary_tick_cases\":"<<tick_cases<<",\"four_channel_cases\":"<<four_cases<<",\"joint_cases\":"<<joint_cases<<",\"whole_model_cases\":"<<whole_model_cases<<",\"whole_configuration_cases\":"<<whole_configuration_cases<<",\"whole_tick_cases\":"<<whole_tick_cases<<",\"whole_missing_cases\":"<<whole_missing_cases<<",\"whole_boundary_refusals\":"<<whole_boundary_refusals<<",\"orchestration_cases\":"<<orchestration_cases<<",\"complement_cases\":"<<transition_cases<<",\"original_prelude_calls\":"<<prelude_calls<<",\"original_calls\":"<<helper_calls<<",\"game_run\":false}\n";return 0;
 }catch(const std::exception& e){std::cerr<<location<<" "<<e.what()<<'\n';return 1;}
