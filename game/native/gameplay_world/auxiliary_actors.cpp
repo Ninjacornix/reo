@@ -1,19 +1,9 @@
 #include "auxiliary_actors.hpp"
+#include "actor_initial_state.hpp"
 #include <new>
 #include <exception>
 #include <utility>
 namespace reo::native::gameplay_world {
-namespace {
-void cleared_fields(Actor& actor){
-    actor.motion_rate=0;actor.model_scale={};actor.motion_multiplier=0;
-    actor.surface_kind=actor.surface_material=0;actor.surface_normal={};
-    actor.collision.basis.x={};actor.collision.basis.y={};actor.collision.basis.z={};actor.collision.basis.translation={};
-    actor.contact.recipient={0,0};actor.contact.related_recipient={0,0};actor.contact.source_related={0,0};actor.contact.damage_scale=0;
-    actor.gauge_value=0;actor.interaction_resource=0;actor.aim_pitch_adjustment=0;actor.aim_target_pitch=0;actor.aim_target_index=0;
-    // Resolved scene/model resources and a phase-qualified alignment target
-    // remain unavailable until their actual constructors/producers supply them.
-}
-}
 AuxiliaryActorPool::AuxiliaryActorPool(World& world)noexcept:world_(world){for(unsigned i=0;i<capacity;++i){free_[i]=std::uint8_t(i);slots_[i].byte_on_reuse=std::uint8_t(i);}}
 AuxiliaryActorPool::~AuxiliaryActorPool(){if(mutating_||updating_)std::terminate();(void)close();}
 std::optional<std::uint8_t> AuxiliaryActorPool::physical_slot(const actors::EntityId& id)const noexcept{
@@ -41,7 +31,7 @@ AuxiliaryCreated AuxiliaryActorPool::allocate(std::uint32_t at_tail){
     if(world_.closed())return{AuxiliaryStatus::world_unavailable,{}};
     if(!remaining_)return{AuxiliaryStatus::full,{}};
     std::unique_ptr<Actor> actor;try{actor=std::make_unique<Actor>();}catch(const std::bad_alloc&){return{AuxiliaryStatus::no_memory,{}};}
-    const auto index=free_[remaining_-1];cleared_fields(*actor);actor->slot=slots_[index].byte_on_reuse;actor->contact.authored_id=index;
+    const auto index=free_[remaining_-1];initialize_cleared_actor_defaults(*actor);actor->slot=slots_[index].byte_on_reuse;actor->contact.authored_id=index;
     const auto created=world_.spawn_linked(std::move(actor));if(created.status!=actors::EntityStatus::completed)return{created.status==actors::EntityStatus::no_memory?AuxiliaryStatus::no_memory:AuxiliaryStatus::world_unavailable,{}};
     --remaining_;auto& slot=slots_[index];slot.id=created.id;slot.previous.reset();slot.next.reset();
     if(!head_)head_=tail_=index;

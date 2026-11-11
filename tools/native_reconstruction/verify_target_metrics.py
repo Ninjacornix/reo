@@ -23,7 +23,7 @@ def main():
             name=path.relative_to(ROOT).as_posix();entries[address]=name;audits.append(compare_source('Complete target-metric native comparison body',name,address,end,read))
     helper='tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp';fixture='game/native/gameplay_world/target_metrics_tests.cpp'
     units=['game/native/'+group+'/'+name+'.cpp' for group,names in [
-        ('gameplay_world',['target_metrics','world','linked_models','auxiliary_actors','model_poses','model_constraints']),
+        ('gameplay_world',['target_metrics','world','linked_models','auxiliary_actors','scene_primary_actors','model_poses','model_constraints']),
         ('gameplay_actors',['entity','input','health']),('gameplay_navigation',['navigation','bank']),
         ('gameplay_collision',['collision','response','trace']),
         ('animation',['model','model_math','curves','constraints','constraint_math']),('transform_math',['transform_math','heading'])] for name in names]

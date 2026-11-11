@@ -28,7 +28,7 @@ def main():
         originals.append(source); bodies.append(text[text.index('// Function:'):])
     units=[ROOT/'game/native'/n for n in [
         'gameplay_world/resource_frames.cpp','gameplay_world/resource_models.cpp','gameplay_world/resource_programs.cpp',
-        'gameplay_world/world.cpp','gameplay_world/linked_models.cpp','gameplay_world/auxiliary_actors.cpp','gameplay_world/bodies.cpp',
+        'gameplay_world/world.cpp','gameplay_world/linked_models.cpp','gameplay_world/auxiliary_actors.cpp','gameplay_world/scene_primary_actors.cpp','gameplay_world/bodies.cpp',
         'gameplay_world/model_poses.cpp','gameplay_world/model_constraints.cpp',
         'gameplay_actors/entity.cpp','gameplay_actors/input.cpp','gameplay_actors/health.cpp',
         'gameplay_collision/contact_packets.cpp','gameplay_collision/contact_content.cpp','gameplay_collision/collision.cpp','gameplay_collision/response.cpp',

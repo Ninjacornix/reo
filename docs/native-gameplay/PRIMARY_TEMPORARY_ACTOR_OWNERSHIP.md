@@ -41,8 +41,10 @@ proof that the source continues using the copied main actor's model. The eight
 physical work slots still need an explicit native ownership/pose handoff across
 the distinct actor identities and the complete entry/exit selector conditions.
 
-Next implementation work is the separate eight-slot temporary owner and sixteen
-object-work owner, typed actor/control cloning with explicit model/channel rules,
+The [separate eight-slot temporary owner](SCENE_PRIMARY_ACTOR_POOL.md) now supplies
+native Actor storage and original first-inactive selection. It does not admit
+assignment or model handoff. Next work is the sixteen-object owner and typed
+actor/control cloning with explicit model/channel rules,
 complete0/3 header assignment and its reservation-list policy, temporary traversal,
 then entry/exit reconstruction through the existing bank/cache owners. Each must
 use actual model/clip inputs and preserve explicit full/unsupported results.

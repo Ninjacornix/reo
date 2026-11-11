@@ -231,6 +231,7 @@ class NpcActorUpdates;
 class AuxiliaryActorPool;
 class TargetMetricCache;
 class PrimaryActorModels;
+class ScenePrimaryActorPool;
 class Services {
 public:
     virtual ~Services()=default;
@@ -260,6 +261,7 @@ public:
     actors::EntityStatus retire_linked(const actors::EntityId&)noexcept;
     LinkedModelPool& linked_models();
     AuxiliaryActorPool& auxiliary_actors();
+    ScenePrimaryActorPool& scene_primary_actors();
     gameplay_navigation::Bank& navigation();
     TargetMetricCache& target_metrics();
     std::shared_ptr<Actor> primary(std::size_t)const noexcept;
@@ -297,6 +299,7 @@ public:
     std::uint16_t& frame_shared_counter;
 private:
     friend class AuxiliaryActorPool;
+    friend class ScenePrimaryActorPool;
     actors::EntityStore entities_;
     std::array<actors::EntityId,8> primary_;
     std::unique_ptr<LinkedModelPool> linked_models_;
@@ -317,6 +320,7 @@ private:
     HumanoidMotionSource* humanoid_motion_source_{};
     bool humanoid_motion_source_closed_{};
     std::unique_ptr<AuxiliaryActorPool> auxiliary_actors_;
+    std::unique_ptr<ScenePrimaryActorPool> scene_primary_actors_;
     std::unique_ptr<gameplay_navigation::Bank> navigation_;
     std::unique_ptr<TargetMetricCache> target_metrics_;
     std::vector<input::Remap> layouts_;

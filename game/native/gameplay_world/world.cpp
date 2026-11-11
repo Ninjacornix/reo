@@ -1,6 +1,7 @@
 #include "world.hpp"
 #include "linked_models.hpp"
 #include "auxiliary_actors.hpp"
+#include "scene_primary_actors.hpp"
 #include "target_metrics.hpp"
 #include "../gameplay_navigation/bank.hpp"
 #include <bit>
@@ -60,6 +61,7 @@ actors::EntityStatus World::retire_linked(const actors::EntityId& id)noexcept{
     if(closed_)return actors::EntityStatus::closed;
     for(const auto& primary:primary_)if(primary==id)return actors::EntityStatus::invalid;
     if(auxiliary_actors_&&auxiliary_actors_->physical_slot(id))return actors::EntityStatus::invalid;
+    if(scene_primary_actors_&&scene_primary_actors_->physical_slot(id))return actors::EntityStatus::invalid;
     return entities_.retire(id);
 }
 LinkedModelPool& World::linked_models(){
@@ -71,6 +73,11 @@ AuxiliaryActorPool& World::auxiliary_actors(){
     if(closed_)throw std::runtime_error("Native auxiliary actor owner is closed");
     if(!auxiliary_actors_)auxiliary_actors_.reset(new AuxiliaryActorPool(*this));
     return *auxiliary_actors_;
+}
+ScenePrimaryActorPool& World::scene_primary_actors(){
+    if(closed_)throw std::runtime_error("Native scene primary actor owner is closed");
+    if(!scene_primary_actors_)scene_primary_actors_.reset(new ScenePrimaryActorPool(*this));
+    return *scene_primary_actors_;
 }
 std::shared_ptr<Actor> World::resolve(const actors::EntityId& id)const noexcept{
     if(closed_)return{};
@@ -107,13 +114,14 @@ actors::EntityId World::identity(std::size_t index)const noexcept{
     return index<primary_.size()?primary_[index]:actors::EntityId{};
 }
 bool World::busy()const noexcept{
-    return updating_||(linked_models_&&linked_models_->busy())||(auxiliary_actors_&&auxiliary_actors_->busy());
+    return updating_||(linked_models_&&linked_models_->busy())||(auxiliary_actors_&&auxiliary_actors_->busy())||(scene_primary_actors_&&scene_primary_actors_->busy());
 }
 Status World::close()noexcept{
     if(busy())return Status::busy;
     closed_=true;primary_.fill({});
     if(linked_models_)(void)linked_models_->close();
     if(auxiliary_actors_)(void)auxiliary_actors_->close();
+    if(scene_primary_actors_)(void)scene_primary_actors_->close();
     if(navigation_)navigation_->close();
     if(target_metrics_)target_metrics_->close();
     entities_.shutdown();return Status::completed;

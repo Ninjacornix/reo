@@ -12,7 +12,7 @@ complete native replacement. Stage 3 is complete for its selected stock File #1 
 profile; see [final validation](native-media/STAGE3_FINAL_VALIDATION.md).
 [Stage 4](native-gameplay/STAGE4_PLAN.md) is in progress and incomplete. Stages 4-6
 are required before PS2 runtime removal can be claimed. The current user instruction
-is to put the PC to sleep after Stage 4 is complete and verified.
+is to keep the PC awake after Stage 4 is complete and verified.
 
 ## Historical checkpoints
 
