@@ -28,7 +28,9 @@ Point model_point(const Actor& actor,std::size_t node){
 }
 Point linked_point(const Actor& actor){
     if(!actor.targeting)throw std::runtime_error("Native linked targeting state unavailable");
-    return actor.targeting->selected_model_point?model_point(actor,actor.motion_style):point(actor.position);
+    if(!actor.targeting->selected_model_point)return point(actor.position);
+    if(!actor.targeting->model_point)throw std::runtime_error("Native linked target model point index unavailable");
+    return model_point(actor,*actor.targeting->model_point);
 }
 template<class Rows>void reset_order(Rows& rows){for(auto& row:rows)row.fill(255);}
 template<std::size_t N>void order(Work& work,unsigned row,unsigned count,std::array<std::uint8_t,N>& ids,TargetMetricReport& report){

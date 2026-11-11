@@ -3,6 +3,10 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to keep the PC awake afterward.
 
+- [Target model-point selection](TARGET_METRICS.md) now owns the linked551
+  index independently of motion style. Both compiler comparisons and four
+  parent tests pass, including unknown/out-of-range index refusal. Actual
+  model-point construction and game acceptance remain open.
 - [Expanded enemy record binding](ENEMY_BINDING.md) now uses the actual shared
   fifty-node pool, canonical status words and Session RNG. Both compiler
   comparisons, parent tests and archive regression pass. Model/resource

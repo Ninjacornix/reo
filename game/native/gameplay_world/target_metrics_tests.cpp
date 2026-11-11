@@ -45,7 +45,7 @@ void populate(g::Actor& actor,unsigned family,unsigned slot,unsigned variant,con
     actor.active=true;actor.slot=std::uint8_t(slot);actor.room=std::uint16_t((variant&1)&&slot%5==4?8:7);
     actor.position={float(500+100*slot+40*family),float(family==2?40+int(slot%7)*30:120+int(slot%3)*15),float(800+13*slot+55*family)};
     actor.orientation[1]=std::bit_cast<std::int16_t>(std::uint16_t(701*slot+32000*family));actor.motion_style=std::uint8_t(slot%12);
-    if(family==2)actor.targeting=g::TargetingState{(variant&2)&&slot%7==6?0x100u:0u,(slot&1)!=0};
+    if(family==2)actor.targeting=g::TargetingState{(variant&2)&&slot%7==6?0x100u:0u,(slot&1)!=0,std::uint8_t((slot*7+variant)%12)};
     model(actor,data);
 }
 #ifdef REO_TARGET_METRICS_ORIGINAL
@@ -55,7 +55,8 @@ std::uint64_t unknown_reads{},original_walls{},original_floors{},reference_sorts
 bool tracking{};const g::TargetMetricRoom* active_room{};
 c::Vec3 original_point(unsigned at){return transform_read<c::Vec3>(memory.data(),at);}
 void project_actor(const g::Actor& actor,unsigned at,unsigned model_at){
-    memory[at]=actor.active;memory[at+3]=actor.slot;put(memory,at+0x1e2,actor.room);put(memory,at+0x38,actor.position);put(memory,at+0x92,actor.orientation[1]);memory[at+0x551]=actor.motion_style;
+    memory[at]=actor.active;memory[at+3]=actor.slot;put(memory,at+0x1e2,actor.room);put(memory,at+0x38,actor.position);put(memory,at+0x92,actor.orientation[1]);memory[at+0xb99]=actor.motion_style;
+    if(actor.targeting&&actor.targeting->model_point)memory[at+0x551]=*actor.targeting->model_point;
     if(actor.targeting)put(memory,at+0xc94,actor.targeting->flags);
     put(memory,at+0x34,model_at);
     if(actor.model&&(!actor.targeting||actor.targeting->selected_model_point))for(unsigned i=0;i<actor.model->nodes().size();++i){
@@ -119,6 +120,14 @@ void lifetime(const std::shared_ptr<const a::Skeleton>& data,const g::TargetMetr
     for(unsigned i=0;i<8;++i){auto actor=std::make_unique<g::Actor>();populate(*actor,0,i,0,data);actor->active=i==0;check(bool(world.spawn_primary(i,std::move(actor)).id));}
     auto id=world.linked_models().allocate(false).id;auto linked=world.resolve(id);check(bool(linked));const auto slot=world.linked_models().physical_slot(id).value();populate(*linked,2,slot,0,data);
     linked->targeting.reset();check(cache.rebuild(room).status==g::TargetMetricStatus::unavailable&&!cache.state());++refusals;
+    linked->targeting=g::TargetingState{0,true};
+    check(cache.rebuild(room).status==g::TargetMetricStatus::unavailable&&!cache.state());++refusals;
+    linked->targeting->model_point=255;
+    check(cache.rebuild(room).status==g::TargetMetricStatus::unavailable&&!cache.state());++refusals;
+    linked->targeting->model_point=0;
+    check(cache.rebuild(room).status==g::TargetMetricStatus::completed&&cache.state()->primary_linked[0][slot]);
+    linked->motion_style=255;
+    check(cache.rebuild(room).status==g::TargetMetricStatus::completed&&cache.state()->primary_linked[0][slot]);
     linked->targeting=g::TargetingState{};check(cache.rebuild(room).status==g::TargetMetricStatus::completed&&cache.state()->primary_linked[0][slot]);
     const auto prior=cache.state()->primary_linked[0][slot]->pair.distance;linked->targeting->flags=0x100;linked->position.x+=20;
     check(cache.rebuild(room).status==g::TargetMetricStatus::completed&&cache.state()->primary_linked[0][slot]->pair.distance==prior&&cache.state()->primary_linked_order[0][0]==255);

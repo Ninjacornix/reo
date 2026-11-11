@@ -45,7 +45,11 @@ struct ControlRequest {std::uint8_t kind{};std::uint16_t parameter{};};
 struct ProjectileContact {gameplay_collision::Vec3 point,normal;};
 // Linked-family C94 belongs to targeting, not the primary inventory bytes at
 // the same original layout offsets. Presence requires its actual producer.
-struct TargetingState {std::uint32_t flags{};bool selected_model_point{};};
+struct TargetingState {
+    std::uint32_t flags{};
+    bool selected_model_point{};
+    std::optional<std::uint8_t> model_point{}; // linked-family551, supplied by its actual producer
+};
 struct ActorCollision {
     gameplay_collision::Vec3 local_center,previous_center_offset,displacement;
     gameplay_collision::Vec3 previous_local_center,interpolation_step;

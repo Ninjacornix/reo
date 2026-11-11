@@ -1,5 +1,20 @@
 # Native World target metrics
 
+2026-11-11 field correction. Linked model-point selection now owns its551
+index in TargetingState. The earlier implementation and fixture reused the
+motion-style value atB99 for that index. This review corrected that field
+association before native game installation. Selected-point queries require a
+known in-range index. The position fallback has its existing source admission.
+
+The revised original comparison varies551 independently ofB99 and tests a
+valid model point with motion style255, an unknown index and an out-of-range
+index. Both compilers pass5,781,403 checks across192 profiles, including75
+strict source profiles and192 comparisons with the explicit scratch policy.
+The fixture observes333 floor hits. Four current parent tests pass per compiler,
+including target metrics and the real collision worker. Evidence is sealed in
+`native_target_model_point_qualification_v1.json`. Earlier target-metric receipts
+retain their historical source identities and do not cover this correction.
+
 2026-11-10: complete admitted6D6240 cache rebuild now has a native World owner.
 It borrows the actual eight primary, ten auxiliary and fifty linked physical
 slots, canonical model poses, room walls and floors. The installed game remains
