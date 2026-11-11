@@ -48,19 +48,27 @@ std::shared_ptr<const Skeleton> Skeleton::import_raw(std::span<const std::byte> 
 }
 Instance::Instance(std::shared_ptr<const Skeleton> skeleton):skeleton_(std::move(skeleton)){
     if(!skeleton_||skeleton_->nodes().empty())throw std::invalid_argument("Native model requires owned skeleton");
-    nodes_.resize(skeleton_->nodes().size());bindings_.resize(nodes_.size());for(std::size_t i=0;i<nodes_.size();++i){nodes_[i].parameters=skeleton_->nodes()[i].defaults;nodes_[i].local=unscaled_pose(nodes_[i].parameters);nodes_[i].world=transform_math::identity();}
+    nodes_.resize(skeleton_->nodes().size());bindings_.resize(nodes_.size());track_ids_.resize(nodes_.size());for(std::size_t i=0;i<nodes_.size();++i){track_ids_[i]=skeleton_->nodes()[i].track;nodes_[i].parameters=skeleton_->nodes()[i].defaults;nodes_[i].local=unscaled_pose(nodes_[i].parameters);nodes_[i].world=transform_math::identity();}
+}
+void Instance::relabel_prefix(std::size_t count,std::uint16_t track){
+    if(count>track_ids_.size())throw std::out_of_range("Native model track prefix extent unavailable");
+    std::fill_n(track_ids_.begin(),count,track);
+}
+void Instance::relabel_prefix(std::span<const std::uint16_t> tracks){
+    if(tracks.size()>track_ids_.size())throw std::out_of_range("Native model track layout extent unavailable");
+    std::copy(tracks.begin(),tracks.end(),track_ids_.begin());
 }
 void Instance::bind(std::uint16_t track,std::shared_ptr<const Clip> clip){
     if(!clip)throw std::invalid_argument("Native model requires owned motion clip");
-    std::size_t count=0;for(auto i:skeleton_->traversal())count+=skeleton_->nodes()[i].track==track;
+    std::size_t count=0;for(auto i:skeleton_->traversal())count+=track_ids_[i]==track;
     if(!count||clip->tracks().size()!=count)throw std::invalid_argument("Native motion/model track cardinality mismatch");
-    invalidate();std::size_t ordinal=0;for(auto i:skeleton_->traversal())if(skeleton_->nodes()[i].track==track)bindings_[i]=Binding{clip,ordinal++};
+    invalidate();std::size_t ordinal=0;for(auto i:skeleton_->traversal())if(track_ids_[i]==track)bindings_[i]=Binding{clip,ordinal++};
 }
-void Instance::clear(std::uint16_t track){invalidate();for(std::size_t i=0;i<nodes_.size();++i)if(skeleton_->nodes()[i].track==track)bindings_[i].reset();}
+void Instance::clear(std::uint16_t track){invalidate();for(std::size_t i=0;i<nodes_.size();++i)if(track_ids_[i]==track)bindings_[i].reset();}
 void Instance::sample_node(std::size_t i,float frame){
     auto& node=nodes_[i];node.parameters=skeleton_->nodes()[i].defaults;if(bindings_[i])sample_parameters(bindings_[i]->clip->tracks()[bindings_[i]->track],frame,node.parameters,node.caches);node.local=unscaled_pose(node.parameters);
 }
-void Instance::sample(std::uint16_t track,float frame){invalidate();bool found=false;for(auto i:skeleton_->traversal())if(skeleton_->nodes()[i].track==track){sample_node(i,frame);found=true;}if(!found)throw std::invalid_argument("Native animation track absent from skeleton");}
+void Instance::sample(std::uint16_t track,float frame){invalidate();bool found=false;for(auto i:skeleton_->traversal())if(track_ids_[i]==track){sample_node(i,frame);found=true;}if(!found)throw std::invalid_argument("Native animation track absent from skeleton");}
 void Instance::sample_all(float frame){invalidate();for(auto i:skeleton_->traversal())sample_node(i,frame);}
 void Instance::root_scale(Vector scale){invalidate();nodes_[0].local=transform_math::scale(scale);}
 Vector Instance::local_translation(std::size_t node)const{return translation(nodes_.at(node).local);}

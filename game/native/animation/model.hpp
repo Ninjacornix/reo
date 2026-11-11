@@ -33,6 +33,11 @@ public:
     explicit Instance(std::shared_ptr<const Skeleton>);
     const Skeleton& skeleton()const noexcept{return *skeleton_;}
     std::span<const NodePose> nodes()const noexcept{return nodes_;}
+    std::span<const std::uint16_t> track_ids()const noexcept{return track_ids_;}
+    // Runtime node routing is instance-owned. Temporary cinematic relabels
+    // never mutate the shared authored Skeleton or another model bank.
+    void relabel_prefix(std::size_t count,std::uint16_t track);
+    void relabel_prefix(std::span<const std::uint16_t> tracks);
     // Bind matches the selected subtree's track IDs in original DFS order.
     // Admission requires one clip track for each matching model node.
     void bind(std::uint16_t track,std::shared_ptr<const Clip>);
@@ -55,6 +60,7 @@ private:
     struct Binding {std::shared_ptr<const Clip> clip;std::size_t track{};};
     std::shared_ptr<const Skeleton> skeleton_;
     std::vector<NodePose> nodes_;
+    std::vector<std::uint16_t> track_ids_;
     std::vector<std::optional<Binding>> bindings_;
     Vector previous_root_translation_{};
     std::shared_ptr<const JointSnapshot> snapshot_;
