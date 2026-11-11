@@ -2,6 +2,7 @@
 #include <functional>
 struct R5900Context;struct PS2Runtime;
 void linked_actor_original_port(std::uint8_t*,R5900Context*,PS2Runtime*);
+void cutscene_command_original_port(std::uint8_t*,R5900Context*,PS2Runtime*);
 #define PLAYBACK_ACTOR_ADDRESS 0x4a5c30
 #define main standalone_playback_main
 #include "tools/native_reconstruction/animation/playback_tests.cpp"
@@ -79,6 +80,7 @@ void body_equal(const g::Actor& value, const std::vector<std::uint8_t>& ram) {
 }
 #include "scripted_motion_tests.inc"
 #include "linked_actor_update_tests.inc"
+#include "cutscene_actor_command_tests.inc"
 int main(int argc, char** argv) try {
     check(argc == 4, "owned World animation inputs required");
     const auto old = _mm_getcsr();
@@ -95,6 +97,7 @@ int main(int argc, char** argv) try {
     const auto skeletons = load(argv[2]), raw_banks = load(argv[3]);
     scripted_motion_tests(raw_banks,skeletons,ram);
     linked_expiry_tests(ram);
+    cutscene_command_tests(ram);
     linked_full_pool_tests(ram);
     std::shared_ptr<const a::Skeleton> skeleton;
     std::vector<std::byte> raw_skeleton;
@@ -695,6 +698,11 @@ int main(int argc, char** argv) try {
               << ",\"linked_actor_cases\":" << linked_actor_cases
               << ",\"linked_expiry_cases\":" << linked_expiry_cases
               << ",\"linked_full_pool_cases\":" << linked_full_pool_cases
+              << ",\"cutscene_command_cases\":" << cutscene_command_cases
+              << ",\"cutscene_degree_cases\":" << cutscene_degree_cases
+              << ",\"cutscene_speech_cases\":" << cutscene_speech_cases
+              << ",\"cutscene_command_refusals\":" << cutscene_command_refusals
+              << ",\"cutscene_command_mutations\":" << cutscene_command_mutations
               << ",\"linked_update_refusals\":" << linked_update_refusals
               << ",\"required_prelude_cases\":" << prelude_native
               << ",\"refusal_cases\":" << world_refusals << ",\"joint_cases\":" << joint_cases

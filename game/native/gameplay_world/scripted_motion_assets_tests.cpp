@@ -3,6 +3,7 @@
 #include "../gameplay_update/scripted_actor_construction.hpp"
 #include "../gameplay_update/update.hpp"
 #include "../gameplay_update/linked_model_workers.hpp"
+#include "../gameplay_scenario/cutscene_actor_commands.hpp"
 #include "runtime/assets/virtual_afs.h"
 #include <fstream>
 #include <iostream>
@@ -16,7 +17,7 @@ namespace w=reo::native::gameplay_world;
 namespace a=reo::native::animation;
 namespace u=reo::native::gameplay_update;
 namespace {
-std::uint64_t checks{},owned_members{},owned_blocks{},consumer_updates{},original_loader_cases{},ordinary_model_workers{};
+std::uint64_t checks{},owned_members{},owned_blocks{},consumer_updates{},original_loader_cases{},ordinary_model_workers{},authored_command_consumers{};
 void check(bool value,std::source_location at=std::source_location::current()){
     ++checks;if(!value)throw std::runtime_error("Scripted motion asset check line "+std::to_string(at.line()));
 }
@@ -175,9 +176,15 @@ void owned(const char* archive,const char* manifest){
         }catch(const std::out_of_range&){}catch(const std::invalid_argument&){}
     }
     check(bool(prepared));const auto created=constructor.create(*prepared);check(created.status==u::ScriptedConstructionStatus::completed);
-    const auto actor=world.resolve(created.id);actor->active=true;actor->primary=6;actor->scripted->cue_phase=1;
-    actor->scripted->request_flags=2;actor->scripted->motion_rate_mode=1;actor->scripted->motion_selector=std::int8_t(key);
-    world.paused=1;
+    const auto actor=world.resolve(created.id);world.paused=1;
+    std::array<std::byte,36> event{};
+    const auto write_event=[&](unsigned at,auto value){std::memcpy(event.data()+at,&value,sizeof value);};
+    event[1]=std::byte{0};write_event(4,10.f);write_event(8,20.f);write_event(12,30.f);
+    check(reo::native::gameplay_scenario::apply_cutscene_actor_command(world,created.id,event)==reo::native::gameplay_scenario::CutsceneCommandStatus::completed);++authored_command_consumers;
+    event.fill(std::byte{});event[1]=std::byte{1};write_event(4,1u);write_event(8,key);
+    check(reo::native::gameplay_scenario::apply_cutscene_actor_command(world,created.id,event)==reo::native::gameplay_scenario::CutsceneCommandStatus::completed);++authored_command_consumers;
+    event.fill(std::byte{});event[1]=std::byte{6};write_event(4,2.f);write_event(24,2u);
+    check(reo::native::gameplay_scenario::apply_cutscene_actor_command(world,created.id,event)==reo::native::gameplay_scenario::CutsceneCommandStatus::completed);++authored_command_consumers;
     const auto floors=std::make_shared<const reo::native::gameplay_collision::response::Grid>();
     check(owner.bind_linked_actors(loaded.banks,floors)==u::Status::completed);
     Remaining remaining;u::LinkedModelWorkers poses(world,remaining,floors);
@@ -188,6 +195,7 @@ void owned(const char* archive,const char* manifest){
         check(actor->animation->resources[0]==loaded.banks.mode_one&&actor->model->retain()&&actor->model->retain()->joints.size()==node_count);
         ++consumer_updates;
     }
+    check(actor->scripted->movement_remaining==0&&actor->scripted->forward_step==0&&!(actor->scripted->request_flags&2));
     const auto idle=std::make_shared<const reo::native::gameplay_scenario::Program>(std::vector<std::vector<std::byte>>{{std::byte{1},{},{},{},std::byte{0xa},{},{},{}}});
     check(owner.scripts().install(0,idle)==reo::native::gameplay_scenario::Status::completed&&owner.scripts().install(1,idle)==reo::native::gameplay_scenario::Status::completed);
     EmptyActors no_primary;world.mode=1;world.scenario=0;
@@ -209,5 +217,5 @@ int main(int argc,char** argv)try{
 #ifdef REO_SCRIPTED_MOTION_ORIGINAL
     original_loader_routes();
 #endif
-    std::cout<<"{\"checks\":"<<checks<<",\"owned_members\":"<<owned_members<<",\"owned_blocks\":"<<owned_blocks<<",\"consumer_updates\":"<<consumer_updates<<",\"original_loader_cases\":"<<original_loader_cases<<",\"ordinary_model_workers\":"<<ordinary_model_workers<<"}\n";
+    std::cout<<"{\"checks\":"<<checks<<",\"owned_members\":"<<owned_members<<",\"owned_blocks\":"<<owned_blocks<<",\"consumer_updates\":"<<consumer_updates<<",\"original_loader_cases\":"<<original_loader_cases<<",\"ordinary_model_workers\":"<<ordinary_model_workers<<",\"authored_command_consumers\":"<<authored_command_consumers<<"}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

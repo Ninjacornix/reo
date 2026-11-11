@@ -1,5 +1,6 @@
 add_library(reo_native_gameplay_scenario STATIC interpreter.cpp flags.cpp offline.cpp scene_resources.cpp scene_controls.cpp content.cpp sequence_control.cpp lighting.cpp stream_channels.cpp stream_instances.cpp scene_models.cpp scene_model_bindings.cpp periodic_effects.cpp room_rules.cpp room_object_commands.cpp actor_requests.cpp scene_control_routes.cpp scene_matrix_programs.cpp scene_matrix_tables.cpp scene_matrix_playback.cpp)
 target_compile_features(reo_native_gameplay_scenario PUBLIC cxx_std_20)
+target_sources(reo_native_gameplay_scenario PRIVATE cutscene_actor_commands.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE resource_templates.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE script_program.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE actor_inventory_commands.cpp auxiliary_room_rows.cpp cutscene_requests.cpp)

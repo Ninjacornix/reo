@@ -1,4 +1,5 @@
 #pragma once
+#include "../gameplay_actors/entity.hpp"
 #include <array>
 #include <cstdint>
 #include <vector>
@@ -20,6 +21,13 @@ struct ScriptedActorState {
     std::int8_t motion_rate_mode{},motion_selector{}; // B40/B43
     float motion_blend_duration{}; // B44, duration rather than initial frame
     std::int16_t track_two_motion{}; // B7C
+    std::uint8_t scale_profile{}; // B8B
+    std::int32_t relation_mode{}; // B48
+    gameplay_actors::EntityId related_actor; // B4C, canonical identity
+    std::uint32_t relation_options{},relation_parameter{}; // B50/B60
+    std::array<float,3> relation_offset{}; // B54/B58/B5C
+    std::array<std::int16_t,3> command_angles{}; // B64/B66/B68
+    std::int16_t command_angle_copy{}; // C50
     std::array<std::int16_t,2> movement_angles{}; // B6C/B6E
     float forward_step{}; // B70
     std::uint32_t yaw_step{},movement_remaining{}; // B74/B78

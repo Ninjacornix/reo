@@ -3,6 +3,11 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to keep the PC awake afterward.
 
+- [Native cutscene actor commands](CUTSCENE_ACTOR_COMMANDS.md) now supply actual
+  position, motion, scale, relation and movement requests to the native actor
+  chain. Both compiler comparisons, actual asset/worker compositions, full
+  scenario regression and six parent tests pass. Stream cadence, descriptor
+  import, real speech/facial providers and game installation remain open.
 - [Native linked model workers](LINKED_MODEL_WORKERS.md) now adopt the real
   pose pass at its actual Update position, with unique World registration,
   concrete floors/scales, root state and current pass evidence. Both compiler
