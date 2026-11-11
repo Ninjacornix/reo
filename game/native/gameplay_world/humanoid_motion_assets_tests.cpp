@@ -17,6 +17,7 @@ namespace anim=reo::native::animation;
 namespace {
 std::uint64_t native_checks{},common_loads{},character_loads{},snapshot_cases{},npc_bindings_cases{},loader_name_cases{};
 std::uint64_t character_releases{},released_queries{},base_releases{};
+std::uint64_t scene_family_releases{};
 void verify(bool value,std::source_location at=std::source_location::current()){
     ++native_checks;if(!value)throw std::runtime_error("Humanoid motion check "+std::to_string(at.line()));
 }
@@ -70,6 +71,23 @@ void owned(const char* archive,const char* manifest){
 #ifdef REO_HUMANOID_MOTION_ORIGINAL
     memory=base_memory;tokens=base_tokens;original_overlay(memory,1,release_all);call(memory.data(),0x1b1df0,0);compare_common(*all_released,memory);for(auto character:release_all)compare_character(*all_released,character,memory);
 #endif
+    const auto family_cleared=assets.release_scene_families(*all_ready);verify(family_cleared->follows(*all_ready)&&!family_cleared->base_loaded()&&all_ready->base_loaded());
+    const auto verify_scene_bank=[&](const auto& bank,const auto& previous){
+        verify(bank&&previous&&bank!=previous&&bank->zero_header_known()&&bank->first_track()==0&&bank->track_count()==0&&bank->kind()==previous->kind());
+        for(unsigned i=0;i<2000;++i){verify(bank->rows()[i]==0);verify(bank->slots()[i]==(i<5?previous->slots()[i]:nullptr));}
+    };
+    verify_scene_bank(family_cleared->scripted().other_modes,all_ready->scripted().other_modes);verify_scene_bank(family_cleared->alternate_style(),all_ready->alternate_style());for(auto character:release_all)verify_scene_bank(family_cleared->character(character),all_ready->character(character));++scene_family_releases;
+#ifdef REO_HUMANOID_MOTION_ORIGINAL
+    memory=base_memory;tokens=base_tokens;original_overlay(memory,1,release_all);call(memory.data(),0x1b1e50,0);compare_common(*family_cleared,memory);for(auto character:release_all)compare_character(*family_cleared,character,memory);
+#endif
+    const auto twice_cleared=assets.release_scene_families(*family_cleared);verify(twice_cleared->follows(*family_cleared)&&!twice_cleared->base_loaded());++scene_family_releases;
+#ifdef REO_HUMANOID_MOTION_ORIGINAL
+    call(memory.data(),0x1b1e50,0);compare_common(*twice_cleared,memory);for(auto character:release_all)compare_character(*twice_cleared,character,memory);
+#endif
+    const auto unknown_cleared=assets.release_scene_families(*base);verify(!unknown_cleared->character(0)&&unknown_cleared->follows(*base)&&unknown_cleared->bank({hm::HumanoidMotionFamily::primary,0})==base->bank({hm::HumanoidMotionFamily::primary,0}));++scene_family_releases;
+#ifdef REO_HUMANOID_MOTION_ORIGINAL
+    memory=base_memory;tokens=base_tokens;call(memory.data(),0x1b1e50,0);compare_common(*unknown_cleared,memory);
+#endif
     const std::array<std::uint8_t,2> npcs{3,5};const auto ready=assets.overlay(1,npcs,*base);
     refused=false;try{(void)ready->npc_bindings();}catch(const std::runtime_error&){refused=true;}verify(refused);
     const auto scene=assets.scene(1,2,*ready);verify(scene.status[0]==hm::ScriptedMotionLoadStatus::loaded&&scene.status[2]==hm::ScriptedMotionLoadStatus::loaded&&scene.status[1]==hm::ScriptedMotionLoadStatus::not_found);
@@ -101,6 +119,10 @@ void owned(const char* archive,const char* manifest){
     const auto base_released=assets.release_base(*missing.banks);verify(base_released->follows(*missing.banks)&&!base_released->base_loaded()&&base_released->scripted().mode_one==missing.banks->scripted().mode_one&&base_released->scripted().track_two==missing.banks->scripted().track_two&&base_released->bank({hm::HumanoidMotionFamily::primary,0})==missing.banks->bank({hm::HumanoidMotionFamily::primary,0}));++base_releases;
 #ifdef REO_HUMANOID_MOTION_ORIGINAL
     call(memory.data(),0x1b1df0,0);verify(memory[0x4bae0f]==0);compare_common(*base_released,memory);compare_character(*base_released,3,memory);compare_character(*base_released,5,memory);
+#endif
+    const auto scene_families=assets.release_scene_families(*base_released);verify(scene_families->follows(*base_released)&&scene_families->scripted().mode_one==base_released->scripted().mode_one&&scene_families->scripted().track_two==base_released->scripted().track_two&&!scene_families->character(0)&&!scene_families->base_loaded());++scene_family_releases;
+#ifdef REO_HUMANOID_MOTION_ORIGINAL
+    {const auto held_memory=memory;const auto held_tokens=tokens;call(memory.data(),0x1b1e50,0);compare_common(*scene_families,memory);compare_character(*scene_families,3,memory);compare_character(*scene_families,5,memory);compare(*scene_families->scripted().mode_one,memory,0x4bc810);memory=held_memory;tokens=held_tokens;}
 #endif
     auto current=base_released;
     for(unsigned character=0;character<8;++character){
@@ -134,5 +156,5 @@ int main(int argc,char** argv)try{
 #else
     const auto original_checks=0,original_bank_cases=0,original_calls=0;
 #endif
-    std::cout<<"{\"base_releases\":"<<base_releases<<",\"native_checks\":"<<native_checks<<",\"original_checks\":"<<original_checks<<",\"original_bank_cases\":"<<original_bank_cases<<",\"original_calls\":"<<original_calls<<",\"common_loads\":"<<common_loads<<",\"character_loads\":"<<character_loads<<",\"snapshot_cases\":"<<snapshot_cases<<",\"npc_bindings_cases\":"<<npc_bindings_cases<<",\"loader_name_cases\":"<<loader_name_cases<<",\"character_releases\":"<<character_releases<<",\"released_queries\":"<<released_queries<<",\"game_run\":false}\n";
+    std::cout<<"{\"scene_family_releases\":"<<scene_family_releases<<",\"base_releases\":"<<base_releases<<",\"native_checks\":"<<native_checks<<",\"original_checks\":"<<original_checks<<",\"original_bank_cases\":"<<original_bank_cases<<",\"original_calls\":"<<original_calls<<",\"common_loads\":"<<common_loads<<",\"character_loads\":"<<character_loads<<",\"snapshot_cases\":"<<snapshot_cases<<",\"npc_bindings_cases\":"<<npc_bindings_cases<<",\"loader_name_cases\":"<<loader_name_cases<<",\"character_releases\":"<<character_releases<<",\"released_queries\":"<<released_queries<<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

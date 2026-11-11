@@ -54,6 +54,10 @@ public:
     // Complete1B1DF0: release family0 in common/alternate and all prepared
     // character banks, then invalidate the common-default-loaded gate.
     std::shared_ptr<const HumanoidMotionBanks> release_base(const HumanoidMotionBanks& previous)const;
+    //1B1E50: release all three families and zero range headers in prepared
+    // general/alternate/character banks. Reserved tokens and kinds survive;
+    // unknown character banks remain unavailable, not fabricated empty data.
+    std::shared_ptr<const HumanoidMotionBanks> release_scene_families(const HumanoidMotionBanks& previous)const;
 private:
     struct Member {std::uint64_t offset{};std::uint32_t bytes{};std::string name;};
     std::shared_ptr<const reo::assets::Source> source_;

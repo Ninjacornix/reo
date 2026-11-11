@@ -30,7 +30,12 @@ public:
     // Complete1B1C20 with owned234410 profiles0/1/2. Partial retirement
     // preserves the header/type and all rows/tokens outside that family.
     void clear_family(std::uint8_t);
+    //1B1E50's per-bank effect: release families0,1,2 and zero the range
+    // header, preserving type and reserved token slots0..4. A zero header
+    // can still resolve those tokens; it does not imply an empty bank.
+    void clear_scene_families();
     bool cleared()const noexcept{return cleared_;}
+    bool zero_header_known()const noexcept{return zero_header_known_;}
     // Actual1D16C0/1D19D0 sparse construction. table_offset is8 or168 for
     // the two adjacent player banks. modes0/1/2 retain original5/1000/5 cursors.
     void load_sparse(std::span<const std::byte>,std::size_t table_offset,
@@ -48,7 +53,7 @@ public:
 private:
     std::uint8_t first_{},width_{};
     MotionBankKind kind_{MotionBankKind::sparse};
-    bool cleared_{};
+    bool cleared_{},zero_header_known_{};
     std::array<std::shared_ptr<const MotionBlock>,capacity> slots_{};
     std::array<std::uint16_t,capacity> rows_{};
 };

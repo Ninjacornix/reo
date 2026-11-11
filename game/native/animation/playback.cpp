@@ -217,10 +217,16 @@ int Playback::configure(const MotionBank& resource, std::int32_t key, std::uint1
 MotionBound Playback::configure_whole(const MotionBank& resource,std::int32_t key,float frame,
                                      float blend,MotionClock clock,RootMotionRef root) {
     require_model();
-    if(resource.kind()==MotionBankKind::sparse||resource.first_track()!=0||resource.track_count()!=1)
+    if(resource.kind()==MotionBankKind::sparse||resource.first_track()!=0||
+       (resource.track_count()!=1&&!resource.zero_header_known()))
         throw std::domain_error("Native whole-model motion requires a single-track strided bank");
     if(key<0)throw std::domain_error("Native whole-model motion negative source row unavailable");
-    const auto block=resource.find(std::uint32_t(key),0);
+    //58C970 receives the token table directly. Unlike58CE60 it never uses
+    // the bank range header, including after1B1E50 zeroes that header while
+    // retaining slots0..4. Generic bank lookup would collapse these rows.
+    const auto slot=200ull*(std::uint32_t(key)/100)+std::uint32_t(key)%100;
+    if(slot>=MotionBank::capacity)throw std::out_of_range("Native whole-model motion row unavailable");
+    const auto block=resource.slots()[slot];
     if(!block)return MotionBound::unchanged;
     const auto clip=block->clip();
     auto& record=channel(ModelBank::primary,0);

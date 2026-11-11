@@ -111,6 +111,12 @@ verification. The latest user instruction is to keep the PC awake afterward.
   preference remapping. Both compilers pass396,845 original projections and
   365 World-backed comparisons. Complete cleanup, physical resource ownership
   and scene entry/exit adoption remain open.
+- [Scene motion-family release](SCENE_MOTION_FAMILY_RELEASE.md) now preserves
+  reserved tokens beneath known-zero range headers and publishes the complete
+  general/alternate/prepared-character family cleanup. Whole-model playback
+  uses its distinct fixed token-table rule through cleanup. Paired bank,
+  shared-publication, playback and primary-model comparisons cover this path;
+  the remaining5ED340 cleanup and physical resource handoff remain open.
 - The [scene NPC loading-mode correction](CUTSCENE_NPC_CONSTRUCTION.md) separates
   asset-loading mode3243D7 from pause4BADF8. Paired current cohorts pass4,384 scene
   cases with independent inputs; the earlier fixture conflated the two and its

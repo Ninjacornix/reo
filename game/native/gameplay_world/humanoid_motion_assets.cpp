@@ -73,6 +73,11 @@ std::shared_ptr<const HumanoidMotionBanks> HumanoidMotionAssets::release_base(co
     auto result=std::shared_ptr<HumanoidMotionBanks>(new HumanoidMotionBanks(previous));result->parent_=previous.revision_;result->revision_=std::make_shared<const HumanoidMotionRevision>();
     clear_base_family(*result);result->base_loaded_=false;return result;
 }
+std::shared_ptr<const HumanoidMotionBanks> HumanoidMotionAssets::release_scene_families(const HumanoidMotionBanks& previous)const{
+    auto result=std::shared_ptr<HumanoidMotionBanks>(new HumanoidMotionBanks(previous));result->parent_=previous.revision_;result->revision_=std::make_shared<const HumanoidMotionRevision>();
+    const auto clear=[](std::shared_ptr<const animation::MotionBank>& bank){if(bank){auto next=std::make_shared<animation::MotionBank>(*bank);next->clear_scene_families();bank=std::move(next);}};
+    clear(result->scripted_.other_modes);clear(result->alternate_style_);for(auto& bank:result->characters_)clear(bank);result->base_loaded_=false;return result;
+}
 std::shared_ptr<const HumanoidMotionBanks> HumanoidMotionAssets::ensure_base(std::shared_ptr<const HumanoidMotionBanks> previous)const{
     if(!previous)throw std::invalid_argument("Native humanoid motion publication unavailable");
     if(previous->base_loaded_)return previous;

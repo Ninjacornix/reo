@@ -32,7 +32,10 @@ void whole_playback_tests(const std::vector<std::vector<std::byte>>& banks,
                 if(candidate->nodes().size()==clip->tracks().size()){skeleton=candidate;raw=bytes;break;}
             }
             if(!skeleton)continue;
+            auto released=resource;released.clear_scene_families();
             for(unsigned variant=0;variant<128;++variant){
+                const bool reserved=key<5&&variant>=64;
+                const auto& configured=reserved?released:resource;
                 location="whole playback asset="+std::to_string(asset)+" key="+std::to_string(key)+" variant="+std::to_string(variant);
                 std::fill_n(ram.data()+nodes,skeleton->nodes().size()*400,0);
                 std::fill_n(ram.data()+second,skeleton->nodes().size()*400,0);
@@ -67,9 +70,16 @@ void whole_playback_tests(const std::vector<std::vector<std::byte>>& banks,
                 put(ram.data(),0x3243cc,clock.mode);put(ram.data(),actor+2,clock.category);put(ram.data(),actor+0xba8,clock.rate);
                 const float frame=std::array{0.f,.5f,3.5f,clip->last_frame()}[variant/32];
                 const float duration=std::array{0.f,-6.f,10.f,.5f}[(variant/8)%4];
-                check(owner.configure_whole(resource,std::int32_t(key),frame,duration,clock,root_ref)==a::MotionBound::prepared,"whole configuration binds real clip");
+                check(owner.configure_whole(configured,std::int32_t(key),frame,duration,clock,root_ref)==a::MotionBound::prepared,"whole configuration binds real clip");
                 call(ram.data(),0x58c970,actor,bank_at,key,0,frame,duration);
                 records(owner,ram,root);++whole_configuration_cases;
+                if(reserved){
+                    ++whole_reserved_configurations;
+                    if(asset<banks.size()){
+                        ++whole_reserved_owned_configurations;
+                        if(key)++whole_reserved_nonzero_rows;
+                    }
+                }
                 owner.activate(5);put(ram.data(),actor+0x524,std::uint8_t(5));call(ram.data(),0x58c7b0,actor);
                 for(unsigned tick=0;tick<12;++tick){
                     const float step=std::array{-1.f,0.f,1.f,5.f,clip->last_frame()+1.f,1.f}[tick%6];
@@ -77,13 +87,14 @@ void whole_playback_tests(const std::vector<std::vector<std::byte>>& banks,
                     const auto original=call(ram.data(),0x58cc80,actor,0,0,0,step);
                     check(actual==std::int8_t(GPR_U32(&original,2)),"whole advancement boundary result");
                     records(owner,ram,root);++whole_tick_cases;
+                    if(reserved)++whole_reserved_ticks;
                 }
                 // A zero original token preserves every channel, pose and
                 // root output. Use an actual absent row in this owned bank.
                 unsigned missing=999;
-                while(missing&&resource.find(missing,0))--missing;
-                check(!resource.find(missing,0),"owned whole bank includes an absent row");
-                check(owner.configure_whole(resource,std::int32_t(missing),7,6,clock,root_ref)==a::MotionBound::unchanged,"missing whole token preserves state");
+                while(missing&&configured.slots()[200*(missing/100)+missing%100])--missing;
+                check(!configured.slots()[200*(missing/100)+missing%100],"owned whole bank includes an absent row");
+                check(owner.configure_whole(configured,std::int32_t(missing),7,6,clock,root_ref)==a::MotionBound::unchanged,"missing whole token preserves state");
                 call(ram.data(),0x58c970,actor,bank_at,missing,0,7,6);records(owner,ram,root);++whole_missing_cases;
                 bool refused{};
                 try{(void)owner.configure_whole(resource,-1,0,0,clock,root_ref);}catch(const std::domain_error&){refused=true;}
@@ -93,4 +104,6 @@ void whole_playback_tests(const std::vector<std::vector<std::byte>>& banks,
         }
         check(used!=0,"actual whole-model bank has matching skeleton clips");
     }
+    check(whole_reserved_owned_configurations&&whole_reserved_ticks&&whole_reserved_nonzero_rows,
+          "retained real clips continue after scene cleanup, including a nonzero reserved row");
 }
