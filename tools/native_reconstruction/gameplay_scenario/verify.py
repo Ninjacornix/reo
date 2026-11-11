@@ -33,6 +33,7 @@ IDS += ['006BAA40','006BB010','006BC210','006D45A0','006D4650','005A7BC0']
 IDS += ['0068FC00']
 IDS += ['006BB9F0']
 IDS += ['006BBDA0','006EFAF0']
+IDS += ['005D0C90']
 
 PINNED={};PIN_COMMITS={}
 def source_bytes(p):
@@ -173,6 +174,7 @@ def main(a):
     assert binding_output.read_text()==binding_profile()
     shutil.copyfile(HERE/'enemy_binding_vm_tests.inc',out/'enemy_binding_vm_tests.inc')
     shutil.copyfile(HERE/'model_parts_vm_tests.inc',out/'model_parts_vm_tests.inc')
+    shutil.copyfile(HERE/'material_uv_vm_tests.inc',out/'material_uv_vm_tests.inc')
     shutil.copyfile(HERE/'periodic_control_vm_tests.inc',out/'periodic_control_vm_tests.inc')
     shutil.copyfile(HERE/'room_rule_tests.inc',out/'room_rule_tests.inc')
     shutil.copyfile(HERE/'room_object_vm_tests.inc',out/'room_object_vm_tests.inc')
@@ -227,6 +229,7 @@ def main(a):
     source_paths += [HERE/'enemy_initialization_vm_tests.inc',HERE/'qualify_enemy_initialization_profiles.py']
     source_paths += [HERE/'enemy_binding_vm_tests.inc',HERE/'qualify_enemy_binding_profiles.py']
     source_paths.append(HERE/'model_parts_vm_tests.inc')
+    source_paths.append(HERE/'material_uv_vm_tests.inc')
     source_paths += [HERE/'surface_vm_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]
     source_paths += [ROOT/'game/native/transform_math/transform_math.hpp',ROOT/'game/native/transform_math/transform_math.cpp']

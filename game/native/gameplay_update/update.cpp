@@ -17,7 +17,7 @@ struct FlagExpiry final:tasks::FlagSink {
 };
 bool script_ok(scenario::Status s){return s==scenario::Status::completed || s==scenario::Status::yielded || s==scenario::Status::disabled;}
 }
-Owner::Owner(world::World& world,scenario::FlagNotifications& notifications,std::shared_ptr<const gameplay_events::RuleBook> rules,GameplayMessageSink* messages,const gameplay_collision::room_objects::Owner* objects):world_(world),statistics_(std::move(rules)),notifications_(notifications),flags_(this),publication_(world_,flags_,messages,objects){
+Owner::Owner(world::World& world,scenario::FlagNotifications& notifications,std::shared_ptr<const gameplay_events::RuleBook> rules,GameplayMessageSink* messages,const gameplay_collision::room_objects::Owner* objects):world_(world),materials_(world_,linked_),statistics_(std::move(rules)),notifications_(notifications),flags_(this),publication_(world_,flags_,messages,objects){
     if(world_.session().timing)throw std::invalid_argument("Native world already has a timing owner");
     world_.session().timing=this;
 }
@@ -26,6 +26,7 @@ Status Owner::close()noexcept{
     if(running_ || !events_.idle() || !linked_.idle())return Status::busy;
     closed_=true;(void)events_.seal();(void)linked_.seal();
     cooperative_.close();
+    materials_.close();
     (void)events_.clear();(void)linked_.clear();
     if(world_.session().timing==this)world_.session().timing=nullptr;
     return Status::completed;

@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 
 namespace reo::native::gameplay_tasks {
 
@@ -53,6 +54,7 @@ public:
     Created create(std::shared_ptr<Task>, TaskPolicy = {}, Placement = Placement::newest) noexcept;
     Status erase(const Handle&) noexcept;
     Status policy(const Handle&, TaskPolicy) noexcept;
+    std::optional<TaskPolicy> policy(const Handle&) const noexcept;
     bool contains(const Handle&) const noexcept;
     std::size_t size() const noexcept { return size_; }
     // Read each predecessor after the callback: head-created children and

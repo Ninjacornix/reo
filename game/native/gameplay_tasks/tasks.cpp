@@ -66,6 +66,10 @@ Status Scheduler::policy(const Handle& handle, TaskPolicy value) noexcept {
     if (!node) return Status::foreign_or_stale;
     node->policy = value; return Status::completed;
 }
+std::optional<TaskPolicy> Scheduler::policy(const Handle& handle)const noexcept {
+    const auto node=find(handle);
+    return node?std::optional<TaskPolicy>(node->policy):std::nullopt;
+}
 PassResult Scheduler::run(Pass pass, std::size_t maximum_visits) noexcept {
     if (closed_) return {Status::closed};
     if (running_ || clearing_) return {Status::busy};

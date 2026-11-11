@@ -1,5 +1,6 @@
 #include "update.hpp"
 #include "../gameplay_scenario/content.hpp"
+#include "../gameplay_world/linked_models.hpp"
 #include <iostream>
 #include <stdexcept>
 #include <source_location>
@@ -376,7 +377,91 @@ void check_character_remap_worker(){
     check(session.enemy_descriptors.record(0)->variant==70);
     check(owner.close()==u::Status::completed);
 }
+void check_material_animation_worker(){
+    using TS=u::tasks::Status;
+    u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());
+    u::world::World foreign({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());
+    Notifications notifications;u::Owner owner(world,notifications);
+    world.mode=1;world.session().scenario=0;
+    check(owner.initialize_completion_statistics()==e::StatisticsStatus::completed);
+    const auto idle=std::make_shared<const s::Program>(
+        std::vector<std::vector<std::byte>>{{std::byte{1},{},{},{},std::byte{0xa},{},{},{}}});
+    check(owner.scripts().install(0,idle)==s::Status::completed);
+    check(owner.scripts().install(1,idle)==s::Status::completed);
+    const auto id=world.linked_models().allocate(true).id;
+    const auto other=foreign.linked_models().allocate(true).id;
+    auto actor=world.resolve(id);check(actor&&actor->material_uv);
+    actor->material_uv=u::world::MaterialUv{7,-9};actor->control_elapsed=0x12345678;
+    check(owner.material_animations().create(other).status==TS::invalid);
+    const auto primary=world.spawn_primary(0,std::make_unique<u::world::Actor>()).id;
+    check(owner.material_animations().create(primary).status==TS::invalid);
+    const auto first=owner.material_animations().create(id);check(first.status==TS::completed);
+    check(owner.linked().policy(first.handle,{0x80,0xab,false})==TS::completed);
+    Remaining workers;EmptyActors actors;
+    // Pausing prevents the actual linked pass from running.
+    world.paused=true;
+    check(owner.run_workers(workers,actors).status==u::Status::completed);
+    check(owner.material_animations().snapshot(first.handle)->phase==0);
+    world.paused=false;
+    auto result=owner.run_workers(workers,actors);
+    check(result.status==u::Status::completed&&result.linked.called==1);
+    check(actor->material_uv->u==7&&actor->material_uv->v==-9&&actor->control_elapsed==0x12345678);
+    check(owner.material_animations().snapshot(first.handle)->first==450);
+    check(owner.linked().policy(first.handle)->active_flags==0x80&&owner.linked().policy(first.handle)->presentation_mask==1);
+    check(owner.linked().policy(first.handle,{0x42,0xcd,false})==TS::completed);
+    check(owner.run_workers(workers,actors).status==u::Status::completed);
+    check(owner.linked().policy(first.handle)->active_flags==0x42&&owner.linked().policy(first.handle)->presentation_mask==0xcd);
+    check(actor->material_uv->u==449.f/450.f&&actor->material_uv->v==89.f/90.f);
+    check(owner.linked().run(u::tasks::Pass::presentation).called==0);
+    // A newly installed duplicate initializes last; the older work publishes
+    // its next UVs first. Both consume the existing common task capacity.
+    const auto second=owner.material_animations().create(id);check(second.status==TS::completed);
+    check(owner.run_workers(workers,actors).status==u::Status::completed);
+    check(actor->material_uv->u==448.f/450.f&&owner.material_animations().snapshot(second.handle)->first==450);
+    check(owner.run_workers(workers,actors).status==u::Status::completed);
+    check(actor->material_uv->u==449.f/450.f);
+    for(unsigned index=2;index<32;++index)check(owner.material_animations().create(id).status==TS::completed);
+    check(owner.linked().size()==32&&owner.material_animations().create(id).status==TS::full);
+    check(world.linked_models().reset()==u::world::LinkedStatus::completed);
+    const auto replacement=world.linked_models().allocate(true).id;
+    check(replacement!=id&&world.resolve(replacement)->material_uv->u==0);
+    check(owner.material_animations().create(id).status==TS::invalid);
+    result=owner.run_workers(workers,actors);
+    check(result.status==u::Status::completed&&result.linked.called==32&&owner.linked().size()==0);
+    check(world.resolve(replacement)->material_uv->u==0);
+    check(!owner.material_animations().snapshot(first.handle));
+    check(owner.material_animations().create(replacement).status==TS::completed);
+    check(owner.close()==u::Status::completed&&owner.linked().size()==0);
+    check(owner.material_animations().create(replacement).status==TS::closed);
+    check(owner.close()==u::Status::completed);
+    // Destruction of a standalone component erases only its own tasks.
+    u::tasks::Scheduler scheduler;
+    struct Unrelated final:u::tasks::Task {
+        unsigned calls{};
+        void update(u::tasks::Scheduler&,const u::tasks::Handle&)noexcept override{++calls;}
+    };
+    const auto unrelated=std::make_shared<Unrelated>();
+    const auto unrelated_task=scheduler.create(unrelated);check(unrelated_task.status==TS::completed);
+    {u::MaterialAnimations temporary(world,scheduler);check(temporary.create(replacement).status==TS::completed);}
+    check(scheduler.size()==1&&scheduler.contains(unrelated_task.handle));
+    check(scheduler.run(u::tasks::Pass::update).called==1&&unrelated->calls==1);
+    {u::MaterialAnimations temporary(world,scheduler);
+        const auto task=temporary.create(replacement);check(task.status==TS::completed);
+        world.resolve(replacement)->material_uv.reset();
+        check(scheduler.run(u::tasks::Pass::update).called==2&&!scheduler.contains(task.handle));
+        check(temporary.create(replacement).status==TS::invalid);
+        world.resolve(replacement)->material_uv=u::world::MaterialUv{};
+    }
+    check(scheduler.erase(unrelated_task.handle)==TS::completed);
+    {u::MaterialAnimations temporary(world,scheduler);
+        check(temporary.create(replacement).status==TS::completed);
+        check(world.close()==u::world::Status::completed);
+        check(scheduler.run(u::tasks::Pass::update).status==TS::completed&&scheduler.size()==0);
+        check(temporary.create(replacement).status==TS::closed);
+    }
+}
 int main()try{
+    check_material_animation_worker();
     check_actor_status();
     check_automatic_worker();
     check_session_script_binding();

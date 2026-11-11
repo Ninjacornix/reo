@@ -8,6 +8,7 @@
 #include "completion_conditions.hpp"
 #include "scenario_publication.hpp"
 #include "actor_gauge.hpp"
+#include "material_animation.hpp"
 #include "../gameplay_world/behavior.hpp"
 #include "../gameplay_world/alignment.hpp"
 #include "../gameplay_world/interaction_transitions.hpp"
@@ -112,6 +113,7 @@ public:
     Status close()noexcept;
     world::World& world()noexcept{return world_;}
     tasks::Scheduler& linked()noexcept{return linked_;}
+    MaterialAnimations& material_animations()noexcept{return materials_;}
     tasks::EventTasks& events()noexcept{return events_;}
     tasks::FlagTimers& timers()noexcept{return timers_;}
     tasks::SimulationClock& clock()noexcept{return clock_;}
@@ -259,6 +261,7 @@ private:
         const gameplay_navigation::VisibilityRoom*, std::optional<std::uint16_t> camera_heading);
     world::World& world_;
     tasks::Scheduler linked_;
+    MaterialAnimations materials_;
     tasks::EventTasks events_;
     tasks::FlagTimers timers_;
     tasks::SimulationClock clock_;

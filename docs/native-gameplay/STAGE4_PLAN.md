@@ -3,11 +3,15 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to keep the PC awake afterward.
 
+- [Native material animation](MATERIAL_ANIMATION.md) now runs the complete
+  callback through the actual Update Owner and shared32-entry scheduler.
+  Both compiler comparisons and four parent tests pass, including pause,
+  capacity, stale actors and closure. Constructor adoption remains open.
 - [Native actor model binding](ACTOR_MODEL_BINDING.md) publishes prepared
   assets through canonical Actor ownership, with fresh mutable instances and
   generation-safe retirement. Both compiler comparisons and five parent tests
   pass. The [shadow dependency](ACTOR_CONSTRUCTION_RENDER_BOUNDARY.md) is
-  rendering work for Step5. Constructor and material-task work remains open.
+  rendering work for Step5. Constructor adoption remains open.
 - [Native actor model assets](ACTOR_MODEL_ASSETS.md) load406 definition
   combinations from180 owned bundles and produce native skeleton instances.
   Both compiler comparisons and five parent tests pass. One named model is

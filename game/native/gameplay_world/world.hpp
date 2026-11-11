@@ -1,4 +1,5 @@
 #pragma once
+#include "material_uv.hpp"
 #include "speech_state.hpp"
 #include "../gameplay_actors/entity.hpp"
 #include "../gameplay_actors/reference.hpp"
@@ -147,6 +148,7 @@ struct Actor : actors::Entity,actors::HitActor {
     ActorCollision collision;
     ProjectileContact projectile_contact;
     gameplay_collision::delivery::Component contact;
+    std::optional<MaterialUv> material_uv;
     std::shared_ptr<animation::Instance> model;
     std::shared_ptr<const ActorModelAsset> model_asset;
     std::shared_ptr<animation::Constraints> constraints;

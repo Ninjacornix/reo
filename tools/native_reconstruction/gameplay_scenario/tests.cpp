@@ -232,6 +232,7 @@ PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
 #include "enemy_initialization_vm_tests.inc"
 #include "enemy_binding_vm_tests.inc"
 #include "model_parts_vm_tests.inc"
+#include "material_uv_vm_tests.inc"
 int main(int argc,char** argv)try{
     check(argc==5);
     no_model_vm_tests();
@@ -262,6 +263,7 @@ int main(int argc,char** argv)try{
     enemy_initialization_tests();
     enemy_binding_tests();
     model_parts_tests();
+    material_uv_tests();
     {std::vector<std::byte> b;emit(b,1);const auto a=emit(b,0xa);run({b},{0,a},4);}
     for(unsigned delay:{0u,1u,2u,7u}){std::vector<std::byte> a,b;emit(a,4,{delay});emit(a,0xd);emit(b,0xa);run({a,b},{1,0},delay+3,delay%6);}
     {std::vector<std::byte> b;emit(b,3,{2});emit(b,0xe5);const auto end=emit(b,0xa);run({b},{0,end},2);}
@@ -423,5 +425,6 @@ int main(int argc,char** argv)try{
              <<",\"enemy_priority_calls\":"<<enemy_priority_calls<<",\"enemy_priority_refusals\":"<<enemy_priority_refusals<<",\"linked_definition_cases\":"<<linked_definition_cases
              <<",\"enemy_binding_calls\":"<<enemy_binding_calls<<",\"enemy_binding_refusals\":"<<enemy_binding_refusals<<",\"body_priority_calls\":"<<body_priority_calls<<",\"body_priority_refusals\":"<<body_priority_refusals
              <<",\"model_part_queries\":"<<model_part_queries<<",\"model_part_refusals\":"<<model_part_refusals
+             <<",\"material_uv_calls\":"<<material_uv_calls
              <<",\"original_numeric_handler_invocations\":65536,\"game_launched\":false}\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

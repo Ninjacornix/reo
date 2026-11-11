@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "status": "qualified_native_material_animation_component_and_update_consumer",
+  "game_launched": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_world/material_uv.hpp": "61264daaf4ed066276d9dac616820111a4af078136e8036b8b52be5b88c6eb9d",
+    "game/native/gameplay_world/world.hpp": "e961b2cb02884395059335f29c9ec2b737e2b984dd81ac6ad5389ec2c4a4ac13",
+    "game/native/gameplay_world/linked_models.cpp": "3adf0f1da03c8b0250c7b8d81dc6f9622c94ced3690f9f2a34e212afbeef6ab7",
+    "game/native/gameplay_tasks/tasks.hpp": "24e5e79aa30c4120389b964814914d2257c4ae28a545c1034c6265f49744f2f6",
+    "game/native/gameplay_tasks/tasks.cpp": "b814823239c893599eaa3dd0c66271ea68ff628ee404e0138ab34c791ae96775",
+    "game/native/gameplay_update/material_animation.hpp": "d0c8d7107b313a2fbd2f51ae4d499ea87e5d80eab56776685cf331dc5236f6bc",
+    "game/native/gameplay_update/material_animation.cpp": "64f860f64dc84d13d50aac51b2162b34a5f557b8131da0bf763086f2aae68e80",
+    "game/native/gameplay_update/update.hpp": "45e30a151c57dee000abc8e16e305e05754adb407d4ae63d65888184a150bb9f",
+    "game/native/gameplay_update/update.cpp": "046109bc2a5e81aa88aca83ed9b809f8faa44f3eeb27cba1cc40a18ec00aaefe",
+    "game/native/gameplay_update/CMakeLists.txt": "1238dbb2227a89901f210d64e7ae92b1a132f99f372428b23c02b8da99748c31",
+    "game/native/gameplay_update/cooperative_events_tests.cpp": "ad781e91e13df1d721bcbafe97ff8cf495decaee3aa0457ad99c84b1aebeb3f7",
+    "tools/native_reconstruction/gameplay_scenario/material_uv_vm_tests.inc": "26460bd485126b3f92bb79aeabd1d1798b92f9acfe5a11a60399f13cf8cea408",
+    "tools/native_reconstruction/gameplay_scenario/verify.py": "ae15141a472d65a4a1ab4dc32901515a15183fd5f304ad7157a8090249fdca52",
+    "tools/native_reconstruction/gameplay_scenario/tests.cpp": "9559474c4ce458677b1660cf61516374b12e830a938000403afc027e4da64872"
+  },
+  "comparisons": {
+    "llvm": {
+      "receipt": "build-native-sjuni\\material-animation-llvm-v2\\receipt.json",
+      "sha256": "ee3a6977e70a50f34c3cac87c7bc62a5ab02ff63a0b605adc4f4e1bd059eead8",
+      "checks": 425298670,
+      "material_uv_calls": 67594,
+      "instruction_comments": 10803
+    },
+    "gcc": {
+      "receipt": "build-native-sjuni\\material-animation-gcc-v2\\receipt.json",
+      "sha256": "5ab36493a40f169041ad43abeecd50d09ccbfcc80c0a0863efe0c14572145a7c",
+      "checks": 425298670,
+      "material_uv_calls": 67594,
+      "instruction_comments": 10803
+    }
+  },
+  "parent_tests": {
+    "llvm": {
+      "log": "build-native-sjuni\\material-animation-tests-llvm-v4.log",
+      "sha256": "0ba8e28117b49f3b756780128e004cb2254ca2394458081ba9a94b5bcb53148b",
+      "passed": 4
+    },
+    "gcc": {
+      "log": "build-native-sjuni\\material-animation-tests-gcc-v4.log",
+      "sha256": "33986439fabe989b06bda6e0a233fe56f1976bb4ccb850377bfde9485906a915",
+      "passed": 4
+    }
+  },
+  "limits": [
+    "The actual reviewed constructor has not adopted this native task yet.",
+    "The installed game remains V39; this does not qualify coherent native gameplay.",
+    "Actor UVs are native linked-family state; rendering submission remains Step5.",
+    "The fixture alone contains original execution and byte projections."
+  ]
+}
