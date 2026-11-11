@@ -87,6 +87,11 @@ verification. The latest user instruction is to keep the PC awake afterward.
   animation snapshots with separate mutable model banks. Both compilers pass
   1,288 original continuation comparisons,64 isolation cases and256 detached
   copies. Typed Actor cloning, constraint/cache handoff and scene adoption remain open.
+- [Typed Actor ownership snapshots](ACTOR_OWNERSHIP_COPIES.md) now preserve native
+  value state and independent model/playback/constraint ownership, including old
+  constraint models during detachment. Both compilers pass515 Actor copies and
+  512 copied original solver continuations. Live scene-specific construction,
+  cache-row transfer and complete entry/exit adoption remain open.
 - The [scene NPC loading-mode correction](CUTSCENE_NPC_CONSTRUCTION.md) separates
   asset-loading mode3243D7 from pause4BADF8. Paired current cohorts pass4,384 scene
   cases with independent inputs; the earlier fixture conflated the two and its

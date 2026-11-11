@@ -24,6 +24,11 @@ std::shared_ptr<Constraints> Constraints::replacement(std::shared_ptr<Instance> 
     for(unsigned i=2;i<context_count;++i)if(contexts_[i].enabled)throw std::invalid_argument("Additional active constraint recreation requires its original creator");
     auto next=std::make_shared<Constraints>(std::move(model));next->contexts_=contexts_;next->floor_heights_=floor_heights_;return next;
 }
+std::shared_ptr<Constraints> Constraints::clone_for_model(std::shared_ptr<Instance> model)const{
+    if(!model||&model->skeleton()!=&model_->skeleton())throw std::invalid_argument("Native constraint copy requires the same authored topology");
+    auto next=std::make_shared<Constraints>(std::move(model));
+    next->contexts_=contexts_;next->bindings_=bindings_;next->floor_heights_=floor_heights_;return next;
+}
 void Constraints::reference(std::size_t index,Vector v){finite(v.x);finite(v.y);finite(v.z);contexts_.at(index).reference=v;}
 void Constraints::target(std::size_t index,Vector v){finite(v.x);finite(v.y);finite(v.z);contexts_.at(index).target=v;}
 void Constraints::floor_height(std::size_t index,float value){floor_heights_.at(index)=finite(value);}

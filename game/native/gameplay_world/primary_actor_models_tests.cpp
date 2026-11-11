@@ -1,4 +1,5 @@
 #include "primary_actor_models.hpp"
+#include "actor_ownership_copy.hpp"
 #include "../animation/constraints.hpp"
 #include "../gameplay_update/update.hpp"
 #include "../gameplay_scenario/scenario_archive.hpp"
@@ -17,6 +18,7 @@ std::uint64_t retirements{},retirement_noops{},reloads{},detached_refusals{},ret
 std::uint64_t entry_cases{},entry_retirements{},entry_original_cases{},entry_guard_checks{},entry_refusals{};
 std::uint64_t direct_guard_checks{};
 std::uint64_t independent_detached_copies{};
+std::uint64_t owned_actor_copies{},actor_copy_refusals{};
 void check(bool value,std::source_location at=std::source_location::current()){
     ++checks;if(!value)throw std::runtime_error(std::string("Primary model check ")+at.file_name()+":"+std::to_string(at.line()));
 }
@@ -28,6 +30,9 @@ void compare_primary_scene(const reo::native::gameplay_scenario::CutsceneDescrip
 void compare_release(const Keys&,const Keys&,unsigned,const g::PrimaryModelApplied&);
 void compare_entry(const Keys&,const Keys&,const std::array<std::uint8_t,8>&,const std::array<std::uint8_t,8>&,const g::PrimarySceneEntryReleased&);
 void basic(){
+    g::Actor fresh;fresh.current=123;fresh.position={4,5,6};fresh.primary_state.emplace();fresh.primary_state->part_visibility={1,0,1};
+    const auto copied=g::copy_actor_owned(fresh);check(copied.status==g::ActorCopyStatus::completed&&copied.actor&&copied.actor->current==123&&copied.actor->position.y==5&&!copied.actor->animation&&!copied.actor->model&&!copied.actor->constraints&&!copied.actor->scripted);
+    copied.actor->primary_state->part_visibility[0]=0;check(fresh.primary_state->part_visibility[0]==1);++owned_actor_copies;
     g::World world(profile(),std::make_shared<g::Session>());g::HumanoidMotionOwner motions(world);g::PrimaryActorModels owner(world,motions);
     bool rejected{};try{g::PrimaryActorModels duplicate(world,motions);}catch(const std::invalid_argument&){rejected=true;}
     check(rejected&&!owner.capture({})&&owner.close()==g::PrimaryModelStatus::completed);
@@ -52,6 +57,18 @@ void owned(const char* archive){
         const auto loaded=owner.apply(*prepared,state);check(loaded.status==g::PrimaryModelStatus::completed&&loaded.replaced&&!loaded.character_released&&loaded.initialized);
         compare_cache(before,keys(owner),slot,std::uint8_t(character),0,std::uint8_t(loading),world.paused,loaded);++loads;
         check(actor->model&&actor->animation&&actor->animation->model()==actor->model&&actor->visible&&actor->primary_state&&actor->animation->resources_known&&!world.busy());
+        const auto owned_copy=g::copy_actor_owned(*actor);check(owned_copy.status==g::ActorCopyStatus::completed&&owned_copy.actor&&!world.identity_of(*owned_copy.actor));
+        const auto& clone=*owned_copy.actor;
+        check(clone.model!=actor->model&&clone.animation!=actor->animation&&clone.animation->model()==clone.model&&clone.model_asset==actor->model_asset&&clone.motion_bank_aliases==actor->motion_bank_aliases&&clone.primary_state->part_visibility==actor->primary_state->part_visibility);
+        check(bool(clone.constraints)==bool(actor->constraints)&&(!clone.constraints||(clone.constraints!=actor->constraints&&clone.constraints->model()==clone.model)));
+        const auto old_translation=actor->model->local_translation(0);owned_copy.actor->model->local_translation(0,{111,222,333});const auto unchanged_translation=actor->model->local_translation(0);check(std::memcmp(&old_translation,&unchanged_translation,sizeof old_translation)==0);++owned_actor_copies;
+        const auto canonical_model=actor->model;actor->model.reset();const auto refused_copy=g::copy_actor_owned(*actor);check(refused_copy.status==g::ActorCopyStatus::inconsistent_model&&!refused_copy.actor&&actor->animation->model()==canonical_model);actor->model=canonical_model;++actor_copy_refusals;
+        if(slot==0&&character==0&&loading==1&&paused==0){
+            g::Actor unbound=*actor;unbound.animation.reset();const auto unbound_copy=g::copy_actor_owned(unbound);
+            check(unbound_copy.status==g::ActorCopyStatus::completed&&unbound_copy.actor->model!=unbound.model&&!unbound_copy.actor->animation&&unbound_copy.actor->constraints->model()==unbound_copy.actor->model);++owned_actor_copies;
+            g::Actor secondary=*actor;secondary.constraints=std::make_shared<a::Constraints>(secondary.animation->secondary_model());const auto secondary_copy=g::copy_actor_owned(secondary);
+            check(secondary_copy.status==g::ActorCopyStatus::completed&&secondary_copy.actor->constraints->model()==secondary_copy.actor->animation->secondary_model()&&secondary_copy.actor->constraints->model()!=secondary.constraints->model());++owned_actor_copies;
+        }
         check(owner.apply(*prepared,state).status==g::PrimaryModelStatus::stale);++refusals;
         auto& channel=actor->animation->channel(a::ModelBank::primary,0);channel.timing.frame=3.25f;channel.selector=17;channel.blend_remaining=9;
         a::PoseBlend::root_reference(*actor->model,{12,34,56});actor->root_motion_delta={7,8,9};
@@ -111,6 +128,8 @@ void owned(const char* archive){
         detached_copy->channel(a::ModelBank::primary,0).selector=111;check(channel.selector==17);
         bool copy_rejected{};try{(void)detached_copy->advance_primary(0,1,0,{actor->root_motion_delta.x,actor->root_motion_delta.y,actor->root_motion_delta.z});}catch(const std::runtime_error&){copy_rejected=true;}
         check(copy_rejected&&detached_copy->channel(a::ModelBank::primary,0).timing.frame==3.25f);++independent_detached_copies;
+        const auto detached_actor=g::copy_actor_owned(*actor);check(detached_actor.status==g::ActorCopyStatus::completed&&detached_actor.actor&&!detached_actor.actor->model&&detached_actor.actor->animation!=release_playback&&!detached_actor.actor->animation->model());
+        check(bool(detached_actor.actor->constraints)==bool(actor->constraints)&&(!actor->constraints||(detached_actor.actor->constraints!=actor->constraints&&detached_actor.actor->constraints->model()!=actor->constraints->model()&&&detached_actor.actor->constraints->model()->skeleton()==&actor->constraints->model()->skeleton())));++owned_actor_copies;
         world.session().asset_loading_mode=std::uint8_t(loading);
         const auto reconstruction=g::PrimaryActorModels::prepare(owner.capture(id).value(),assets,content);const auto before_reload=keys(owner);const auto reloaded=owner.apply(*reconstruction,state);
         check(reloaded.status==g::PrimaryModelStatus::completed&&reloaded.replaced&&!reloaded.character_released&&actor->model!=release_model&&actor->animation==release_playback&&actor->animation->secondary_model());
@@ -156,5 +175,5 @@ namespace {void compare_entry(const Keys&,const Keys&,const std::array<std::uint
 #endif
 int main(int argc,char** argv)try{
     basic();if(argc>=2){owned(argv[1]);owned_entry(argv[1]);}else check(argc==1);if(argc==3)owned_scenes(argv[1],argv[2]);else check(argc<=2);
-    std::cout<<"{\"independent_detached_copies\":"<<independent_detached_copies<<",\"direct_guard_checks\":"<<direct_guard_checks<<",\"entry_cases\":"<<entry_cases<<",\"entry_retirements\":"<<entry_retirements<<",\"entry_original_cases\":"<<entry_original_cases<<",\"entry_guard_checks\":"<<entry_guard_checks<<",\"entry_refusals\":"<<entry_refusals<<",\"retirements\":"<<retirements<<",\"retirement_noops\":"<<retirement_noops<<",\"reloads\":"<<reloads<<",\"detached_refusals\":"<<detached_refusals<<",\"retirement_original_cases\":"<<retirement_original_cases<<",\"generation_handoffs\":"<<generation_handoffs<<",\"checks\":"<<checks<<",\"loads\":"<<loads<<",\"reuses\":"<<reuses<<",\"replacements\":"<<replacements<<",\"shared_releases\":"<<shared_releases<<",\"refusals\":"<<refusals<<",\"original_cases\":"<<original_cases<<",\"original_calls\":"<<original_calls<<",\"scene_cases\":"<<scene_cases<<",\"scene_parameters\":"<<scene_parameters<<",\"scene_original_cases\":"<<scene_original_cases<<",\"game_run\":false}\n";
+    std::cout<<"{\"owned_actor_copies\":"<<owned_actor_copies<<",\"actor_copy_refusals\":"<<actor_copy_refusals<<",\"independent_detached_copies\":"<<independent_detached_copies<<",\"direct_guard_checks\":"<<direct_guard_checks<<",\"entry_cases\":"<<entry_cases<<",\"entry_retirements\":"<<entry_retirements<<",\"entry_original_cases\":"<<entry_original_cases<<",\"entry_guard_checks\":"<<entry_guard_checks<<",\"entry_refusals\":"<<entry_refusals<<",\"retirements\":"<<retirements<<",\"retirement_noops\":"<<retirement_noops<<",\"reloads\":"<<reloads<<",\"detached_refusals\":"<<detached_refusals<<",\"retirement_original_cases\":"<<retirement_original_cases<<",\"generation_handoffs\":"<<generation_handoffs<<",\"checks\":"<<checks<<",\"loads\":"<<loads<<",\"reuses\":"<<reuses<<",\"replacements\":"<<replacements<<",\"shared_releases\":"<<shared_releases<<",\"refusals\":"<<refusals<<",\"original_cases\":"<<original_cases<<",\"original_calls\":"<<original_calls<<",\"scene_cases\":"<<scene_cases<<",\"scene_parameters\":"<<scene_parameters<<",\"scene_original_cases\":"<<scene_original_cases<<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

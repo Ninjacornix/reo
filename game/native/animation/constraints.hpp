@@ -21,6 +21,10 @@ public:
     std::span<const ConstraintBinding> bindings()const noexcept{return bindings_;}
     bool any_enabled()const noexcept;
     std::shared_ptr<Constraints> replacement(std::shared_ptr<Instance>)const;
+    // Copy an existing constraint snapshot to an independently copied model
+    // with the exact same authored topology. Unlike reconstruction, preserve
+    // every context, callback binding and solved state, including contexts2..6.
+    std::shared_ptr<Constraints> clone_for_model(std::shared_ptr<Instance>)const;
     void reference(std::size_t context,Vector);
     void target(std::size_t context,Vector);
     std::span<const float,2> floor_heights()const noexcept{return floor_heights_;}
