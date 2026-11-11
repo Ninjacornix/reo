@@ -24,6 +24,7 @@ public:
     bool busy()const noexcept{return mutating_;}
     ScenePrimaryStatus close()noexcept;
 private:
+    ScenePrimaryStatus initialize(bool retained_models,bool nested)noexcept;
     friend class World;
     friend class PrimaryActorModels;
     explicit ScenePrimaryActorPool(World& world)noexcept:world_(world){}

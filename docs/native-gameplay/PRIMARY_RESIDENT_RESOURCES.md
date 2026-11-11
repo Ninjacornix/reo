@@ -18,7 +18,7 @@ the cache and clears every visible row, then destroys its old resource reference
 under the World guard. External retained leases remain independently valid.
 
 Both `primary-resident-resources-{llvm,gcc}-v1` cohorts pass124598 checks, all
-existing original cache/scene/roster comparisons and four parents. New lifetime
+existing original cache/scene/roster comparisons and the native-only parent test. New lifetime
 cases cover all eight slots with and without an external lease, seventeen stale
 binding refusals, eight real-clip destructor guard observations, eight surviving
 leases and one actual initializer-refusal prefix. Real assets and native model

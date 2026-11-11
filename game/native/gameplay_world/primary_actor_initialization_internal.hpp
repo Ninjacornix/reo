@@ -9,8 +9,8 @@ class PrimaryActorInitialization final {
     friend PrimaryInitializationStatus initialize_primary_slot(World&,actors::EntityId,std::uint8_t,const HumanoidMotionBanks&,const PrimaryEquipmentContext*)noexcept;
     friend PrimaryInitializationStatus restore_primary_slot(World&,actors::EntityId)noexcept;
     friend PrimaryInitializationStatus initialize_primary_actor(World&,const gameplay_update::State&,actors::EntityId,std::uint8_t,const HumanoidMotionBanks&,const PrimaryEquipmentContext*)noexcept;
-    static PrimaryInitializationStatus defaults(World&,actors::EntityId,std::uint8_t,const HumanoidMotionBanks&,bool custom=false,const PrimaryEquipmentContext* = nullptr,bool nested=false)noexcept;
+    static PrimaryInitializationStatus defaults(World&,actors::EntityId,std::uint8_t,const HumanoidMotionBanks&,bool custom=false,const PrimaryEquipmentContext* = nullptr,bool nested=false,bool temporary=false)noexcept;
     static PrimaryInitializationStatus restore(World&,actors::EntityId,bool nested=false)noexcept;
-    static PrimaryInitializationStatus select(World&,const gameplay_update::State&,actors::EntityId,std::uint8_t,const HumanoidMotionBanks&,const PrimaryEquipmentContext*,bool nested=false)noexcept;
+    static PrimaryInitializationStatus select(World&,const gameplay_update::State&,actors::EntityId,std::uint8_t,const HumanoidMotionBanks&,const PrimaryEquipmentContext*,bool nested=false,bool temporary=false)noexcept;
 };
 }

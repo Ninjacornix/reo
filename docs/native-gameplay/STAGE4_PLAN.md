@@ -1,6 +1,6 @@
 # Stage 4: native gameplay and scheduling
 
-Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
+Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to keep the PC awake afterward.
 
 - [Shared humanoid motion preparation](HUMANOID_MOTION_ASSETS.md) now reads
@@ -127,6 +127,12 @@ verification. The latest user instruction is to keep the PC awake afterward.
   prefixes. Paired cache/scene comparisons and retained-resource lifetime guards
   pass. Explicit scene binding authority, post-reset retirement and return to
   main bindings remain open.
+- [Scoped primary scene models](PRIMARY_SCENE_MODEL_SCOPE.md) now compose
+  validated temporary fresh initialization, physical cache reuse/rebuild, actor
+  reset before selected retirement, and return followed by canonical
+  reinitialization. Both compilers pass64 controlled owned-header compositions
+  and96 cleanup guards. Extra bank/object cleanup, sparse primary playback,
+  temporary restore and full entry/update/exit adoption remain open.
 - The [scene NPC loading-mode correction](CUTSCENE_NPC_CONSTRUCTION.md) separates
   asset-loading mode3243D7 from pause4BADF8. Paired current cohorts pass4,384 scene
   cases with independent inputs; the earlier fixture conflated the two and its

@@ -14,17 +14,20 @@ std::optional<std::uint8_t> ScenePrimaryActorPool::physical_slot(const actors::E
     return{};
 }
 ScenePrimaryStatus ScenePrimaryActorPool::initialize()noexcept{
+    return initialize(false,false);
+}
+ScenePrimaryStatus ScenePrimaryActorPool::initialize(bool retained_models,bool nested)noexcept{
     if(closed_||world_.closed())return ScenePrimaryStatus::closed;
-    if(mutating_||world_.busy())return ScenePrimaryStatus::busy;
+    if(mutating_||(world_.busy()&&!nested)||(nested&&!world_.updating_))return ScenePrimaryStatus::busy;
     std::array<std::shared_ptr<Actor>,capacity> old;
     for(unsigned slot=0;slot<capacity;++slot){
         if(!slots_[slot])continue;
         old[slot]=world_.resolve(slots_[slot]);
         if(!old[slot])return ScenePrimaryStatus::invalid_identity;
-        if(old[slot]->model||(old[slot]->animation&&old[slot]->animation->model()))return ScenePrimaryStatus::model_in_use;
+        if(!retained_models&&(old[slot]->model||(old[slot]->animation&&old[slot]->animation->model())))return ScenePrimaryStatus::model_in_use;
     }
-    mutating_=world_.updating_=true;
-    struct Reset{bool& busy;bool& world;~Reset(){world=false;busy=false;}}reset{mutating_,world_.updating_};
+    const bool previous_busy=world_.updating_;mutating_=world_.updating_=true;
+    struct Reset{bool& busy;bool& world;bool previous;~Reset(){world=previous;busy=false;}}reset{mutating_,world_.updating_,previous_busy};
     // Keep old Actor destructors under the guard and after complete publication.
     const auto previous=std::move(old);(void)previous;
     std::array<actors::EntityId,capacity> next{};
