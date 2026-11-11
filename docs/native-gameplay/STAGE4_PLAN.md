@@ -26,6 +26,12 @@ verification. The latest user instruction is to keep the PC awake afterward.
   comparisons pass468,289 statistic cases,65,536 lookups and4,384 real N/HP
   initialization cases, with all15 parents passing. Saved-state override and
   actual initialization/scene caller ownership remain open.
+- [Saved primary initialization override](PRIMARY_SAVED_INITIALIZATION.md) now
+  decodes typed actor-start fields from the legacy save section and consumes
+  the canonical descriptor/template action query. Paired comparison covers
+  every signed health value and action byte, save-codec round trip and all15
+  parents. Actual resume enabling, the branch-selector/model lifecycle and
+  complete semantic World snapshots remain open.
 - [Shared humanoid motion publication](HUMANOID_MOTION_PUBLICATION.md) adds
   explicit NPC/scripted bank identities, atomic live rebinding, stale-load
   rejection and joined-owner closure. Paired publication, current World,

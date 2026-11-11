@@ -58,6 +58,8 @@ private build/data-root paths and fresh output folders. Receipts are
 while extending a list inside a tuple; no tests ran in that attempt. The harness
 was corrected without changing the passing native statistic policy.
 
-Saved-state override, complete model reuse/release, actual initialization/scene
+The [saved-state follow-up](PRIMARY_SAVED_INITIALIZATION.md) now supplies the
+bounded primary override and native equipment-action query. Complete model
+reuse/release, actual initialization/scene
 callers and coherent native game acceptance remain open. The installed game is
 still V39. No game was launched and no performance improvement is claimed.

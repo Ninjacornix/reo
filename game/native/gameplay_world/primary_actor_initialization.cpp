@@ -4,6 +4,8 @@
 #include "motion_profiles.hpp"
 #include "enemy_initialization.hpp"
 #include "../gameplay_actors/health_class.hpp"
+#include "../gameplay_scenario/scene_resources.hpp"
+#include "../gameplay_scenario/resource_templates.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -20,11 +22,11 @@ const PrimaryDefaultDefinition& primary_actor_default(std::uint8_t character){
 }
 class PrimaryActorInitialization final {
 public:
-    static PrimaryInitializationStatus defaults(World& world,actors::EntityId id,std::uint8_t character,const HumanoidMotionBanks& banks,bool custom=false)noexcept{
+    static PrimaryInitializationStatus defaults(World& world,actors::EntityId id,std::uint8_t character,const HumanoidMotionBanks& banks,bool custom=false,const PrimaryEquipmentContext* equipment=nullptr)noexcept{
         if(world.closed())return PrimaryInitializationStatus::closed;
         if(world.busy())return PrimaryInitializationStatus::busy;
         const auto actor=world.resolve(id);
-        if(!actor||(!custom&&actor->model_variant)||character>=8||actor->slot>=World::primary_capacity||world.primary(actor->slot)!=actor||!actor->model_asset||!actor->model||!actor->animation||actor->animation->model()!=actor->model)return PrimaryInitializationStatus::unavailable;
+        if(!actor||(!custom&&(actor->model_variant||world.session().primary_initialization_snapshot))||character>=8||actor->slot>=World::primary_capacity||world.primary(actor->slot)!=actor||!actor->model_asset||!actor->model||!actor->animation||actor->animation->model()!=actor->model)return PrimaryInitializationStatus::unavailable;
         world.updating_=true;struct Reset{bool& value;~Reset(){value=false;}}reset{world.updating_};
         try{
             const auto& definition=primary_actor_default(character);
@@ -46,6 +48,13 @@ public:
             else{
                 actor->motion_style=std::bit_cast<std::uint8_t>(definition.motion_style);actor->motion_subtype=definition.motion_subtype;
                 actor->current=actor->maximum=definition.health;actor->model_scale=definition.scale;actor->model_height_correction=definition.height_correction;actor->primary_state->statistic_multiplier=1;actor->contact.damage_scale=1;
+            }
+            if(world.session().primary_initialization_snapshot){
+                const auto& saved=(*world.session().primary_initialization_snapshot)[actor->slot];
+                actor->current=saved.health;actor->class_marker=saved.class_marker;actor->selected_resource=saved.selected_resource;
+                if(actor->selected_resource&&!equipment)return PrimaryInitializationStatus::unavailable;
+                const auto action=actor->selected_resource?equipment->resources.action_kind(actor->selected_resource,equipment->templates):std::int8_t(0);
+                actor->resource_action=std::uint16_t(std::int16_t(action));
             }
             const std::array<float,2> thresholds{50,25};
             if(actors::derive_health_class(*actor,thresholds)==actors::ClassResult::invalid_maximum)return PrimaryInitializationStatus::unavailable;
@@ -76,7 +85,7 @@ public:
     }
 };
 PrimaryInitializationStatus initialize_primary_defaults(World& world,actors::EntityId id,std::uint8_t character,const HumanoidMotionBanks& banks)noexcept{return PrimaryActorInitialization::defaults(world,std::move(id),character,banks);}
-PrimaryInitializationStatus initialize_primary_slot(World& world,actors::EntityId id,std::uint8_t character,const HumanoidMotionBanks& banks)noexcept{return PrimaryActorInitialization::defaults(world,std::move(id),character,banks,true);}
+PrimaryInitializationStatus initialize_primary_slot(World& world,actors::EntityId id,std::uint8_t character,const HumanoidMotionBanks& banks,const PrimaryEquipmentContext* equipment)noexcept{return PrimaryActorInitialization::defaults(world,std::move(id),character,banks,true,equipment);}
 PrimaryInitializationStatus restore_primary_slot(World& world,actors::EntityId id)noexcept{return PrimaryActorInitialization::restore(world,std::move(id));}
 bool select_primary_appearance(World& world,actors::EntityId id,std::uint8_t character,std::uint8_t model_class)noexcept{
     if(world.closed()||world.busy())return false;

@@ -89,6 +89,10 @@ public:
     std::optional<SceneDescriptor> get(const SceneResourceId&)const noexcept;
     // Complete5F2210 read of the canonical inventory and descriptor+6 content.
     std::uint8_t find_inventory_content(const gameplay_world::InventorySlots&,std::uint32_t)const noexcept;
+    // Complete5B4D50 read over the same canonical descriptor/template owners.
+    // Inactive and FF-template entries return zero; invalid template metadata
+    // refuses through ResourceTemplates rather than reading adjacent storage.
+    std::int8_t action_kind(std::uint32_t slot,const ResourceTemplates&)const;
     SceneStatus replace(const SceneResourceId&,SceneDescriptor)noexcept;
     // Complete591BE0. Count is a derived view of this same canonical table.
     SceneStatus deactivate(const SceneResourceId&)noexcept;

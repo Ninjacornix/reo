@@ -6,6 +6,10 @@
 namespace reo::native::gameplay_scenario {
 struct SceneResourceDomain {};
 SceneResources::SceneResources():domain_(std::make_shared<SceneResourceDomain>()) {generations_.fill(1);}
+std::int8_t SceneResources::action_kind(std::uint32_t slot,const ResourceTemplates& templates)const{
+    const auto& descriptor=descriptors_[std::uint8_t(slot)];
+    return descriptor.active&&descriptor.template_index!=255?templates.action_kind(descriptor.template_index):std::int8_t(0);
+}
 std::uint8_t SceneResources::find_inventory_content(const gameplay_world::InventorySlots& slots,std::uint32_t content)const noexcept{
     const auto narrowed=std::uint16_t(content);
     for(auto id:slots.carried)if(id&&descriptors_[id].attachment_id==narrowed)return id;

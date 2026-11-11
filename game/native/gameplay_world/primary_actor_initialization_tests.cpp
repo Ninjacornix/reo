@@ -1,5 +1,8 @@
 #include "primary_actor_initialization.hpp"
 #include "primary_custom_statistics.hpp"
+#include "../gameplay_save/primary_start.hpp"
+#include "../gameplay_scenario/scene_resources.hpp"
+#include "../gameplay_scenario/resource_templates.hpp"
 #include "humanoid_motion_owner.hpp"
 #include "runtime/assets/virtual_afs.h"
 #include <bit>
@@ -15,10 +18,14 @@ namespace a=reo::native::animation;
 namespace {
 std::uint64_t checks{},initializations{},restores{},setters{},refusals{},original_calls{},constraints{},bank_publications{};
 std::uint64_t custom_initializations{},custom_missing_models{};
+std::uint64_t saved_decodes{},saved_initializations{},saved_query_cases{},saved_refusals{};
 void check(bool value,std::source_location at=std::source_location::current()){++checks;if(!value)throw std::runtime_error("Native primary initialization check "+std::to_string(at.line()));}
 g::Profile profile(){g::Profile result;result.layouts.push_back({});return result;}
 void compare_original(g::World&,const g::Actor&,const g::Actor&,unsigned,bool);
 void compare_setter(const g::Actor&,unsigned,unsigned);
+#if !defined(REO_PRIMARY_INITIALIZATION_ORIGINAL)||defined(REO_PRIMARY_SAVED_INITIALIZATION_ORIGINAL)
+#include "tools/native_reconstruction/primary_saved_initialization_tests.inc"
+#endif
 void contracts(){
     g::World world(profile(),std::make_shared<g::Session>());
     check(g::restore_primary_slot(world,{})==g::PrimaryInitializationStatus::unavailable&&!g::select_primary_appearance(world,{},0,0));++refusals;
@@ -84,6 +91,9 @@ void owned(const char* archive){
     actor->model_variant=1;const auto health=actor->current;check(g::initialize_primary_defaults(world,created.id,0,*next)==g::PrimaryInitializationStatus::unavailable&&actor->current==health);++refusals;actor->model_variant=0;
     check(g::initialize_primary_defaults(world,created.id,255,*next)==g::PrimaryInitializationStatus::unavailable);++refusals;
     check(owner.close()==g::HumanoidPublicationStatus::completed&&g::initialize_primary_defaults(world,created.id,0,*next)==g::PrimaryInitializationStatus::unavailable);++refusals;
+#if !defined(REO_PRIMARY_INITIALIZATION_ORIGINAL)||defined(REO_PRIMARY_SAVED_INITIALIZATION_ORIGINAL)
+    saved_initialization_tests(models,*banks);
+#endif
 }
 }
 #ifdef REO_PRIMARY_INITIALIZATION_ORIGINAL
@@ -93,5 +103,5 @@ namespace {void compare_original(g::World&,const g::Actor&,const g::Actor&,unsig
 #endif
 int main(int argc,char** argv)try{
     contracts();if(argc==2)owned(argv[1]);else check(argc==1);
-    std::cout<<"{\"checks\":"<<checks<<",\"initializations\":"<<initializations<<",\"custom_initializations\":"<<custom_initializations<<",\"custom_missing_models\":"<<custom_missing_models<<",\"restores\":"<<restores<<",\"setters\":"<<setters<<",\"constraints\":"<<constraints<<",\"bank_publications\":"<<bank_publications<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<original_calls<<",\"game_run\":false}\n";
+    std::cout<<"{\"checks\":"<<checks<<",\"initializations\":"<<initializations<<",\"custom_initializations\":"<<custom_initializations<<",\"custom_missing_models\":"<<custom_missing_models<<",\"restores\":"<<restores<<",\"setters\":"<<setters<<",\"constraints\":"<<constraints<<",\"bank_publications\":"<<bank_publications<<",\"refusals\":"<<refusals<<",\"saved_decodes\":"<<saved_decodes<<",\"saved_initializations\":"<<saved_initializations<<",\"saved_query_cases\":"<<saved_query_cases<<",\"saved_refusals\":"<<saved_refusals<<",\"original_calls\":"<<original_calls<<",\"game_run\":false}\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

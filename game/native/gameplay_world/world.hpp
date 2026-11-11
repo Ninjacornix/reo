@@ -3,6 +3,7 @@
 #include "scripted_actor.hpp"
 #include "npc_actor_state.hpp"
 #include "primary_actor_state.hpp"
+#include "primary_saved_state.hpp"
 #include "humanoid_motion_bindings.hpp"
 #include "linked_update_state.hpp"
 #include "speech_state.hpp"
@@ -203,6 +204,9 @@ struct Session : actors::HitSession {
     // Authored primary population count, source4BAEA0. Unknown is not zero;
     // storage/registration and the active byte remain independent concepts.
     std::optional<std::uint32_t> primary_population;
+    // Presence selects the real imported primary-initialization override.
+    // Fresh sessions have none; parsing a save does not enable it implicitly.
+    std::optional<PrimarySavedActors> primary_initialization_snapshot;
     std::uint8_t single_roster_setup{}; // original4BAE32, set by mode-zero roster initialization
     gameplay_ai::ControlRequests ai_control_requests;
     gameplay_session::ActivityState activity;
