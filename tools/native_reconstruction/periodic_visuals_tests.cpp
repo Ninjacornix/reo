@@ -38,6 +38,10 @@ template<class T>void put(std::uint8_t* memory,std::uint32_t at,T value){transfo
 constexpr std::uint32_t model=0x3b85b0,heap=0x800000,parts=0x900000,child_pool=0xb00000;
 bool allocated{};
 bool task_retired{};
+#ifdef REO_ACTOR_FORCED_TERMINAL
+bool actor_forced_terminal_capture{};
+bool actor_forced_terminal_port(std::uint8_t*,R5900Context*);
+#endif
 #ifdef REO_ACTOR_RECEPTION
 bool actor_reception_capture{};
 bool actor_reception_port(std::uint8_t*,R5900Context*);
@@ -59,6 +63,9 @@ struct CompanionPolicyCapture {unsigned children{},released{},retired{},spawned{
 #endif
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
     ++calls;const auto done=[&](){context->pc=GPR_U32(context,31);};
+#ifdef REO_ACTOR_FORCED_TERMINAL
+    if(actor_forced_terminal_capture&&actor_forced_terminal_port(memory,context)){done();return;}
+#endif
 #ifdef REO_ACTOR_RECEPTION
     if(actor_reception_capture&&actor_reception_port(memory,context)){done();return;}
 #endif
@@ -292,6 +299,9 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_ACTOR_RECOVERY
 #include "tools/native_reconstruction/actor_recovery_tests.inc"
 #endif
+#ifdef REO_ACTOR_FORCED_TERMINAL
+#include "tools/native_reconstruction/actor_forced_terminal_tests.inc"
+#endif
 #ifdef REO_ACTOR_ZERO_HEALTH
 #include "tools/native_reconstruction/actor_zero_health_tests.inc"
 #endif
@@ -313,6 +323,15 @@ int main(int argc,char** argv)try{
         2
 #endif
     );const auto corpus=load(argv[1]);std::vector<std::uint8_t> ram(0x2000000);auto* memory=ram.data();
+#ifdef REO_FORCED_TERMINAL_ONLY
+    owned_constants(memory);
+    compare_actor_forced_terminal(argv[2],argv[3],ram);
+    std::cout<<"{\"checks\":"<<checks<<",\"forced_terminal_cases\":"<<forced_terminal_cases
+             <<",\"forced_terminal_messages\":"<<forced_terminal_messages<<",\"forced_terminal_refusals\":"<<forced_terminal_refusals
+             <<",\"local_player_message_cases\":"<<local_player_message_cases
+             <<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"game_run\":false}\n";
+    return 0;
+#endif
 #ifdef REO_RECEPTION_ONLY
     owned_constants(memory);compare_actor_reception(argv[4],argv[2],ram);compare_actor_message_queue();
     std::cout<<"{\"checks\":"<<checks<<",\"reception_cases\":"<<reception_cases<<",\"reception_equipment\":"<<reception_equipment<<",\"reception_refusals\":"<<reception_refusals<<",\"reception_queue_cases\":"<<reception_queue_cases<<",\"reception_auxiliary_cases\":"<<reception_auxiliary_cases<<",\"reception_speech_cases\":"<<reception_speech_cases<<",\"reception_presence_cases\":"<<reception_presence_cases<<",\"reception_speech_refusals\":"<<reception_speech_refusals<<",\"game_run\":false}\n";return 0;
@@ -501,6 +520,9 @@ int main(int argc,char** argv)try{
 #ifdef REO_ACTOR_RECOVERY
     compare_actor_recovery(argv[2],argv[3],ram);
 #endif
+#ifdef REO_ACTOR_FORCED_TERMINAL
+    compare_actor_forced_terminal(argv[2],argv[3],ram);
+#endif
 #ifdef REO_ACTOR_ZERO_HEALTH
     compare_actor_zero_health(argv[2],argv[3],ram);
 #endif
@@ -602,6 +624,10 @@ int main(int argc,char** argv)try{
 #endif
 #ifdef REO_ACTOR_RECOVERY
     <<",\"actor_recovery_cases\":"<<actor_recovery_cases<<",\"actor_recovery_animation\":"<<actor_recovery_animation<<",\"actor_recovery_ui\":"<<actor_recovery_ui<<",\"actor_recovery_refusals\":"<<actor_recovery_refusals<<",\"actor_recovery_messages\":"<<actor_recovery_messages<<",\"actor_recovery_compositions\":"<<actor_recovery_compositions
+#endif
+#ifdef REO_ACTOR_FORCED_TERMINAL
+    <<",\"forced_terminal_cases\":"<<forced_terminal_cases<<",\"forced_terminal_messages\":"<<forced_terminal_messages
+    <<",\"forced_terminal_refusals\":"<<forced_terminal_refusals<<",\"local_player_message_cases\":"<<local_player_message_cases
 #endif
 #ifdef REO_ACTOR_ZERO_HEALTH
     <<",\"zero_health_cases\":"<<zero_health_cases<<",\"zero_health_parent_cases\":"<<zero_health_parent_cases<<",\"zero_health_messages\":"<<zero_health_messages<<",\"zero_health_models\":"<<zero_health_models<<",\"zero_health_compositions\":"<<zero_health_compositions<<",\"zero_health_refusals\":"<<zero_health_refusals

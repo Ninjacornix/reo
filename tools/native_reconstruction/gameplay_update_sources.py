@@ -19,3 +19,4 @@ UPDATE_UNITS=[
     ] for name in names
 ]
 UPDATE_UNITS.append('game/native/gameplay_scenario/scenario_archive.cpp')
+UPDATE_UNITS.append('game/native/gameplay_scenario/cutscene_cues.cpp')

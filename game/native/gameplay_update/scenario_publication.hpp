@@ -143,6 +143,27 @@ public:
     }
     PublicationStatus actor_status(const gameplay_world::actors::EntityId& id)noexcept{return actor_message(id,ActorMessageSelector::status);}
     PublicationStatus actor_action(const gameplay_world::actors::EntityId& id)noexcept{return actor_message(id,ActorMessageSelector::action);}
+    // Complete admitted67EB60 local-player path. This entry has its own gates
+    // and does not write the shared67DBD0 snapshot suppression state.
+    PublicationStatus local_actor_message(const gameplay_world::actors::EntityId& id,ActorMessageSelector selector)noexcept {
+        if(world_.closed())return PublicationStatus::unavailable;
+        const auto phase=world_.session().message_phase;
+        if(phase!=1&&phase!=2)return PublicationStatus::completed;
+        const auto actor=world_.resolve(id);
+        if(!actor)return PublicationStatus::unavailable;
+        if(actor->category!=0||actor->slot!=world_.selected_actor)return PublicationStatus::completed;
+        switch(selector) {
+        case ActorMessageSelector::none:return PublicationStatus::completed;
+        case ActorMessageSelector::snapshot:{
+            actor->status&=~0x08000000u;
+            ActorSnapshotMessage message;
+            if(!capture_snapshot(*actor,message))return PublicationStatus::unavailable;
+            return dispatch_actor(*actor,message);
+        }
+        case ActorMessageSelector::action:return dispatch_actor(*actor,capture_action(*actor));
+        default:return PublicationStatus::unavailable;
+        }
+    }
     PublicationStatus periodic_actor_state(const gameplay_world::actors::EntityId& id)noexcept{
         if(world_.closed())return PublicationStatus::unavailable;
         if(world_.paused||world_.session().timer_subseconds()%30)return PublicationStatus::completed;
@@ -158,17 +179,8 @@ public:
         case ActorMessageSelector::snapshot:{
             if(gameplay_world::state_message_classified(*actor))actor->status|=0x08000000u;
             else actor->status&=~0x08000000u;
-            ActorSnapshotMessage message;message.action={actor->primary,actor->secondary,actor->phase,actor->subphase};
-            message.room=std::uint8_t(actor->room);message.position=actor->position;
-            message.yaw=actor->orientation[1];message.health=actor->current;message.status=actor->status;
-            message.selected_resource=actor->selected_resource;message.equipment=actor->equipment_slot;
-            if(!actor->interaction_resource||!actor->aim_pitch_adjustment||!actor->aim_target_pitch||!actor->aim_target_index)return PublicationStatus::unavailable;
-            message.interaction_resource=*actor->interaction_resource;message.grid=actor->grid;
-            message.aim_pitch_adjustment=*actor->aim_pitch_adjustment;message.aim_target_pitch=*actor->aim_target_pitch;message.aim_target_index=*actor->aim_target_index;
-            const auto band=gameplay_world::selected_gauge_band(world_);if(!band)return PublicationStatus::unavailable;
-            message.gauge_band=*band;message.resource_pair=actor->explicit_resource_pair;
-            message.auxiliary_flag=bool(actor->auxiliary_status&0x20000000u);
-            if(actor->category==1)message.model_variant=std::uint8_t(actor->model_variant);
+            ActorSnapshotMessage message;
+            if(!capture_snapshot(*actor,message))return PublicationStatus::unavailable;
             // This is the same744638 word reset by the World frame. Capture is
             // complete before suppression commits, and before any room lookup.
             world_.session().actor_message_suppression=1;
@@ -247,8 +259,7 @@ public:
             return dispatch_actor(*actor,message);
         }
         case ActorMessageSelector::action:{
-            ActorActionMessage message;message.flags=actor->pending_notice;
-            message.values={actor->equipment_notice_slot,actor->equipment_notice_peer,actor->equipment_notice_parameter,actor->equipment_notice_detail};message.equipment=actor->equipment_slot;
+            auto message=capture_action(*actor);
             // Complete1B02D0 is raw-mode==0. Capture precedes peer writes.
             if(world_.mode==0){
                 const auto request=[&](std::uint8_t owner,std::uint8_t mode,bool copy_resource){
@@ -289,6 +300,28 @@ public:
         return PublicationStatus::completed;
     }
 private:
+    bool capture_snapshot(const gameplay_world::Actor& actor,ActorSnapshotMessage& message)const noexcept {
+        message.action={actor.primary,actor.secondary,actor.phase,actor.subphase};
+        message.room=std::uint8_t(actor.room);message.position=actor.position;
+        message.yaw=actor.orientation[1];message.health=actor.current;message.status=actor.status;
+        message.selected_resource=actor.selected_resource;message.equipment=actor.equipment_slot;
+        if(!actor.interaction_resource||!actor.aim_pitch_adjustment||!actor.aim_target_pitch||!actor.aim_target_index)return false;
+        message.interaction_resource=*actor.interaction_resource;message.grid=actor.grid;
+        message.aim_pitch_adjustment=*actor.aim_pitch_adjustment;message.aim_target_pitch=*actor.aim_target_pitch;
+        message.aim_target_index=*actor.aim_target_index;
+        const auto band=gameplay_world::selected_gauge_band(world_);if(!band)return false;
+        message.gauge_band=*band;message.resource_pair=actor.explicit_resource_pair;
+        message.auxiliary_flag=bool(actor.auxiliary_status&0x20000000u);
+        if(actor.category==1)message.model_variant=std::uint8_t(actor.model_variant);
+        return true;
+    }
+    static ActorActionMessage capture_action(const gameplay_world::Actor& actor)noexcept {
+        ActorActionMessage message;
+        message.flags=actor.pending_notice;
+        message.values={actor.equipment_notice_slot,actor.equipment_notice_peer,actor.equipment_notice_parameter,actor.equipment_notice_detail};
+        message.equipment=actor.equipment_slot;
+        return message;
+    }
     struct ActorAdmission {PublicationStatus status{PublicationStatus::completed};std::shared_ptr<gameplay_world::Actor> actor;};
     ActorAdmission message_actor(const gameplay_world::actors::EntityId& id,std::uint8_t selector)noexcept{
         if(world_.closed())return{PublicationStatus::unavailable,{}};

@@ -1,6 +1,7 @@
 #pragma once
 #include "../gameplay_world/world.hpp"
 #include "../gameplay_scenario/offline.hpp"
+#include "../gameplay_scenario/cutscene_cues.hpp"
 #include "../gameplay_tasks/events.hpp"
 #include "../gameplay_events/events.hpp"
 #include "../gameplay_events/statistics.hpp"
@@ -140,6 +141,10 @@ public:
         if(!open())return PublicationStatus::unavailable;
         return publication_.actor_message(actor,selector);
     }
+    PublicationStatus record_local_actor_message(const world::actors::EntityId& actor,ActorMessageSelector selector)noexcept {
+        if(!open())return PublicationStatus::unavailable;
+        return publication_.local_actor_message(actor,selector);
+    }
     std::optional<bool> prepare_actor_contact_alignment(const world::actors::EntityId& id,std::uint32_t limit,float offset){
         if(!open())return std::nullopt;
         const auto actor=world_.resolve(id);if(!actor)return std::nullopt;
@@ -199,6 +204,15 @@ public:
     Status bind_room_scripts(const scenario::content::ScriptBank&,std::size_t room_channel=1);
     Status load_scenario_scripts(const scenario::content::ScenarioArchive&,std::uint16_t scenario,std::uint8_t policy_row);
     Status load_room_scripts(const scenario::content::ScenarioArchive&,scenario::content::RoomId,std::size_t room_channel=1);
+    std::optional<scenario::CutsceneBatch> take_cutscene_requests()noexcept {
+        return open()?scenario::collect_cutscene_cues(world_,flags_):std::nullopt;
+    }
+    bool apply_actor_placement_packet(std::span<const std::byte> packet)noexcept {
+        return open()&&world_.session().actor_placements.apply_packet(world_,packet);
+    }
+    bool complete_room_placement()noexcept {
+        return open()&&world_.session().actor_placements.finish_room_transition(world_);
+    }
     scenario::OfflineCoordinator& offline()noexcept{return offline_;}
     scenario::FlagState& flags()noexcept{return flags_;}
     gameplay_navigation::ConditionResult applicable_navigation_condition(const world::actors::EntityId&,std::uint32_t room,std::int32_t index);

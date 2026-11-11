@@ -23,6 +23,8 @@ public:
     // Counted 32-byte records from the placement packet. Only coordinates and
     // yaw are consumed by the current placement commands.
     bool load_positions(std::span<const std::byte>) noexcept;
+    bool apply_packet(World&,std::span<const std::byte>) noexcept;
+    bool finish_room_transition(World&) const noexcept;
     std::optional<ActorPlacement> position(std::uint8_t index) const noexcept;
     void clear_requests() noexcept;
     bool queue(std::size_t actor, std::uint8_t room, std::uint8_t position) noexcept;

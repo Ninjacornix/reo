@@ -35,7 +35,7 @@ std::size_t payload_minimum(std::uint32_t op)noexcept{
     case 0x50:case 0x54:case 0x55:case 0xf2:case 0x104:case 0x105:return 12;case 0x57:return 16;
     case 0x51:case 0x52:case 0x58:case 0x5a:case 0x5f:case 0x72:case 0xb5:case 0xf6:case 0x173:return 8;
     case 0x53:case 0x56:case 0x59:case 0x5b:case 0x5c:case 0x5d:case 0x5e:return 4;
-    case 0x70:case 0xa0:case 0xa1:return 4;case 0x20:case 0x23:case 0x24:case 0x65:return 1;case 0x10:case 0x11:case 0x14:return 4;case 0x13:return 6;case 0x15:return 1;case 0x16:return 16;case 0x17:return 8;
+    case 0x61:case 0x70:case 0xa0:case 0xa1:return 4;case 0x20:case 0x23:case 0x24:case 0x65:return 1;case 0x10:case 0x11:case 0x14:return 4;case 0x13:return 6;case 0x15:return 1;case 0x16:return 16;case 0x17:return 8;
     case 3:case 4:case 6:case 0x44:case 0x4c:return 4;case 8:return 5;
     case 0xe3:case 0xe6:case 0xe8:case 0xe9:case 0xec:case 0xed:case 0xef:case 0xf4:case 0xf5:return 8;
     case 0x40:case 0x41:case 0x42:case 0x43:case 0x47:case 0x48:case 0x49:case 0x4d:case 0x110:case 0x111:case 0x112:return 8;
@@ -111,6 +111,7 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
             low_actor_population_|=!noop&&(op==0x38||op==0x39);
             full_actor_population_|=!noop&&op==0x173;
             actor_roster_|=!noop&&op==0xea;
+            forced_terminal_|=!noop&&op==0x61;
             if(!noop&&(op==0x85||op==0x87)&&word(b.data()+at+4)>=RoomActorAssets::room_count)
                 throw std::invalid_argument("Native room actor asset row profile");
             if(!noop&&(op==0x120||op==0x121)){
@@ -198,7 +199,7 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     for(std::size_t i=0;i<out.size();++i)if(control_command(std::uint32_t(i)))out[i]={true,false,false,false,false,false,false,false,false,true};
     for(const auto i:{0x70,0x71})out[i]={true,false,false,false,false,false,false,false,false,false,true};
     for(const auto i:{0x104,0x105})out[i]={true,false,false,false,false,false,false,false,false,true};
-    for(const auto i:{0x5a,0x62,0x65,0x68,0x69,0x6a,0x85,0x86,0x87,0xea,0xf2,0x120,0x121,0x122,0x135,0x155,0x180}){out[i].native_algorithm=true;out[i].world_required=true;}
+    for(const auto i:{0x5a,0x61,0x62,0x65,0x68,0x69,0x6a,0x85,0x86,0x87,0xea,0xf2,0x120,0x121,0x122,0x135,0x155,0x180}){out[i].native_algorithm=true;out[i].world_required=true;}
     out[0x62].selected_actor_required=true;
     out[0x135].scene_controls_required=true;out[0x135].action_choices_required=true;
     out[0x135].selected_actor_required=true;out[0x155].selected_actor_required=true;
@@ -266,6 +267,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
     if(c.program->needs_actor_events()&&context.selected_actor>=4)return{Status::invalid_program,0,{},0};
     if((c.program->needs_flags()&&!providers.flags)||(c.program->needs_timers()&&!providers.timers))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_signals()&&!providers.signals)return{Status::provider_unavailable,0,{},0};
+    if(c.program->needs_forced_terminal()&&!providers.forced_terminal)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_scene_resources()&&!providers.scene_resources)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_session_counters()&&!providers.session_counters)return{Status::provider_unavailable,0,{},0};
     if(offline&&c.program->needs_session_counters()&&context.selected_actor>=3)return{Status::invalid_program,0,{},0};
@@ -511,6 +513,9 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
             if(!queue_cutscene(*providers.world,arguments,providers.forced_terminal))return result(Status::provider_unavailable);
             break;
         }
+        case 0x61:
+            if(!providers.forced_terminal->apply(*providers.world,value(0)))return result(Status::provider_unavailable);
+            break;
         case 0x120:case 0x121:
             if(!providers.world->session().auxiliary_scene.set_timer(std::bit_cast<std::int32_t>(value(0)),opcode==0x120))
                 return result(Status::provider_unavailable);

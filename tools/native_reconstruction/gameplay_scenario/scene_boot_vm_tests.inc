@@ -3,12 +3,16 @@
 
 namespace {
 std::size_t cutscene_command_calls{}, scene_auxiliary_cells{}, auxiliary_timer_checks{}, roster_dispatches{}, scene_boot_dispatches{};
+std::size_t forced_terminal_adapter_dispatches{};
 unsigned original_terminal_calls{};
+std::uint32_t original_terminal_mode{};
 
 struct TerminalFixture final : vm::ForcedActorTerminal {
     unsigned calls{};
+    std::uint32_t last_mode{};
     bool apply(reo::native::gameplay_world::World& world,std::uint32_t mode) noexcept override {
-        if (mode || world.paused != 1 || !world.session().cutscene_requests.limit_override) std::terminate();
+        if (world.paused != 1 || !world.session().cutscene_requests.limit_override) std::terminate();
+        last_mode=mode;
         ++calls;
         return true;
     }
@@ -59,6 +63,7 @@ void cutscene_commands() {
         TerminalFixture terminal;
         check(vm::queue_cutscene(actors.world,args,&terminal));
         check(terminal.calls==original_terminal_calls);
+        if(terminal.calls)check(terminal.last_mode==0);
         check(state.limit_override==bool(ram[0x4bae77]));
         check(std::uint8_t(actors.world.paused)==ram[0x4badf8]);
         check(actors.session->actor_placements.selected_request==bool(ram[0x4badc0]));
@@ -311,10 +316,69 @@ void scene_boot_dispatch() {
     }
     assertion_context.clear();
 }
+
+void forced_terminal_adapter_tests() {
+    std::vector<std::uint8_t> ram(0x900000);
+    install_original_tables(ram);
+    vm::FlagState flags;
+    for(unsigned trial=0;trial<512;++trial) {
+        assertion_context="forced terminal adapter trial="+std::to_string(trial);
+        const bool offline=(trial&1)!=0;
+        const auto category=(trial>>4)%5;
+        const auto relation=(trial>>6)%3;
+        ActorFixture actors(trial,0,offline);
+        actors.world.paused=1;
+        actors.session->cutscene_requests.limit_override=true;
+        actors.export_original(ram);
+        ram[0x4badf8]=ram[0x4bae77]=1;
+        ram[0x3243e8]=1;
+        fixture_write(ram.data(),0x75a4b0,category);
+        fixture_write(ram.data(),0x75a4c0,relation);
+        const auto mode=trial<3?trial:trial*1664525u;
+        std::vector<std::byte> script;
+        emit(script,1);emit(script,0x61,{mode});emit(script,0xa);
+        std::memcpy(ram.data()+0x10000,script.data(),script.size());
+        fixture_write(ram.data(),0x4bace0,0x10000u);
+        fixture_write(ram.data(),0x4bacf8,0u);
+        fixture_write(ram.data(),0x4bad28,0u);
+        vm::Interpreter native;
+        const auto profile=offline?vm::DispatchProfile::offline_actor:vm::DispatchProfile::ordinary;
+        check(native.install(0,std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{script},profile))==vm::Status::completed);
+        vm::Providers providers;
+        providers.world=&actors.world;
+        providers.flags=&flags;
+        providers.canonical_flags=&flags;
+        const auto refused=offline?native.tick_offline_channel(0,{},{category,relation,0},providers):native.tick(0,{},providers);
+        check(refused.status==vm::Status::provider_unavailable&&native.channels()[0].current==vm::Position{0,0});
+        TerminalFixture terminal;
+        providers.forced_terminal=&terminal;
+        original_terminal_calls=0;
+        vm::TickResult result;
+        if(offline) {
+            original_offline_call(ram,0,false);
+            result=native.tick_offline_channel(0,{},{category,relation,0},providers);
+        } else {
+            R5900Context original;
+            PS2Runtime runtime;
+            SET_GPR_U32(&original,29,0x7f0000u);
+            SET_GPR_U32(&original,31,0xdeadbeefu);
+            o2_0068C660_0x68c660(ram.data(),&original,&runtime);
+            check(original.pc==0xdeadbeef);
+            ++invocations;
+            result=native.tick(0,{},providers);
+        }
+        check(result.status==vm::Status::yielded&&terminal.calls==original_terminal_calls);
+        if(terminal.calls)check(terminal.last_mode==original_terminal_mode&&terminal.last_mode==mode);
+        check(native.channels()[0].current.offset+0x10000u==fixture_read<std::uint32_t>(ram.data(),0x4bace0));
+        ++forced_terminal_adapter_dispatches;
+    }
+    assertion_context.clear();
+}
 }
 
 void o2_006671D0_0x6671d0(std::uint8_t* ram,R5900Context* context,PS2Runtime*) {
-    check(GPR_U32(context,4)==0 && ram[0x4badf8]==1 && ram[0x4bae77]);
+    check(ram[0x4badf8]==1 && ram[0x4bae77]);
+    original_terminal_mode=GPR_U32(context,4);
     ++original_terminal_calls;
     done(context);
 }

@@ -71,6 +71,7 @@ public:
     bool needs_room_object_queries()const noexcept{return room_object_queries_;}
     bool needs_periodic_effects()const noexcept{return periodic_effects_;}
     bool needs_surface_effects()const noexcept{return surface_effects_;}
+    bool needs_forced_terminal()const noexcept{return forced_terminal_;}
     bool needs_scenario_counter_policy()const noexcept{return scenario_counter_policy_;}
     bool admits_room_counters(const gameplay_world::World*)const noexcept;
     bool admits_inventory_grants(const gameplay_world::World*,const SceneResources*,const ResourceTemplates*)const noexcept;
@@ -88,6 +89,7 @@ private:
     bool surface_effects_{};
     bool room_counters_{},scenario_counter_policy_{};
     bool low_actor_population_{},full_actor_population_{},actor_roster_{};
+    bool forced_terminal_{};
     DispatchProfile profile_{};
 };
 struct Channel {

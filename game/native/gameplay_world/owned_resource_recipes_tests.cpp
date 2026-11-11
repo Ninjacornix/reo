@@ -4,6 +4,7 @@
 #include "resource_deployment.hpp"
 #include "resource_effects.hpp"
 #include "../gameplay_update/update.hpp"
+#include "actor_forced_terminal.hpp"
 #include <cstring>
 #include <iostream>
 #include <stdexcept>
@@ -65,7 +66,48 @@ int main()try{
     live->room=7;check(resources.replace(*resources.slot(4),item)==s::SceneStatus::completed);session->message_phase=1;messages.position_callback=[&](const u::ResourcePositionMessage& value){check(value.resource==4&&value.actor==0&&value.operation==3&&value.position.y==-3);return true;};
     check(deployment.effect(4,id).status==g::ResourceModelStatus::unavailable);placed=*resources.get(*resources.slot(4));check(placed.attachment_id==0x3200&&placed.room==7&&placed.ownership_tag==0&&!placed.primary&&models.available()==64);
     session->message_phase=0;for(unsigned i=0;i<64;++i)check(models.create().status==g::ResourceModelStatus::completed);check(resources.replace(*resources.slot(4),item)==s::SceneStatus::completed);const auto full_deployment=deployment.effect(4,id);check(full_deployment.status==g::ResourceModelStatus::completed&&full_deployment.value==4&&models.available()==0&&!resources.get(*resources.slot(4))->primary&&resources.get(*resources.slot(4))->parameter==17);put(encoded,56,std::uint32_t(8));check(templates.load(encoded));check(resources.replace(*resources.slot(4),item)==s::SceneStatus::completed);const auto full_effect=effects.apply(4,id);check(full_effect.status==g::ResourceEffectStatus::completed&&full_effect.value==2&&resources.get(*resources.slot(4))->parameter==17&&models.available()==0);while(auto current=models.head())check(models.retire(current)==g::ResourceModelStatus::completed);
+    struct Ui final:g::RecoveryUi {
+        g::World& world;unsigned calls{};
+        explicit Ui(g::World& source):world(source){}
+        bool bound_to(const g::World& source)const noexcept override{return &source==&world;}
+        bool close()override{++calls;check(world.session().inventory_owner==0&&world.session().cutscene_requests.limit_override);return true;}
+    } ui(world);
+    g::ActorResourceOperations actor_operations(primitives);
+    g::ActorForcedTerminal terminal(update,actor_operations,ui);
+    world.mode=1;world.selected_actor=0;session->message_phase=0;session->inventory_owner=1;
+    live->current=100;live->status=0;live->auxiliary_status=0;live->inventory={};
+    live->primary=1;live->secondary=2;live->phase=3;live->subphase=4;live->motion_class=9;
+    terminal.force(1);
+    check(ui.calls==1&&live->current==100&&live->status==0&&live->primary==1&&live->secondary==2&&
+          live->phase==3&&live->subphase==4&&live->motion_class==9&&(live->auxiliary_status&0x02000000u));
+    terminal.force(0);
+    check(ui.calls==2&&live->current==0&&live->primary==4&&live->secondary==7&&
+          live->phase==0&&live->subphase==0&&live->motion_class==0xa0);
+    check(update.cooperative_events().snapshot().back().value.id==0x26);
+    std::vector<std::byte> forced_script(16);
+    put(std::span(forced_script),0,1u);
+    put(std::span(forced_script),4,0x01000061u);
+    put(std::span(forced_script),8,1u);
+    put(std::span(forced_script),12,0xau);
+    s::Interpreter interpreter;
+    check(interpreter.install(0,std::make_shared<const s::Program>(std::vector<std::vector<std::byte>>{forced_script}))==s::Status::completed);
+    s::Providers providers;providers.world=&world;providers.forced_terminal=&terminal;
+    live->current=80;
+    check(interpreter.tick(0,{},providers).status==s::Status::yielded&&ui.calls==3&&live->current==80);
+    std::vector<std::byte> scene_script(40);
+    put(std::span(scene_script),0,1u);
+    put(std::span(scene_script),4,0x03000062u);
+    put(std::span(scene_script),8,1u);
+    put(std::span(scene_script),12,12u);
+    put(std::span(scene_script),16,13u);
+    put(std::span(scene_script),36,0xau);
+    live->status=0;
+    check(interpreter.install(0,std::make_shared<const s::Program>(std::vector<std::vector<std::byte>>{scene_script}))==s::Status::completed);
+    check(interpreter.tick(0,{},providers).status==s::Status::yielded&&ui.calls==4&&world.paused==1&&live->current==0);
+    const auto queued=update.take_cutscene_requests();
+    check(queued&&queued->current.area==12&&queued->current.scene==13);
     g::World other({{g::input::Remap{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<g::Session>());u::Owner other_update(other,notifications);bool refused{};try{g::OwnedResourceRecipes wrong(primitives,other_update);}catch(const std::invalid_argument&){refused=true;}check(refused);
+    check(!terminal.apply(other,0));
     check(world.retire_primary(0)==g::actors::EntityStatus::completed);refused=false;try{recipes.publish(0xf,0x136,42,id);}catch(const std::runtime_error&){refused=true;}check(refused);check(update.close()==u::Status::completed);refused=false;try{recipes.apply(3,4);}catch(const std::runtime_error&){refused=true;}check(refused);check(world.close()==g::Status::completed);
     std::cout<<checks<<" owned recipe model/event/update composition checks passed.\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

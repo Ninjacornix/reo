@@ -233,12 +233,37 @@ void check_auxiliary_timer_order(){
     check(owner.run_workers(workers,actors).status==u::Status::completed);
     check(workers.at_sequence==1&&workers.at_occupancy==0&&auxiliary.timer(91)==0);
 }
+void check_transition_inputs(){
+    const u::world::Profile profile{{{1,2,4}},1,{16,UINT64_MAX}};
+    u::world::World world(profile,std::make_shared<u::world::Session>());
+    Notifications notifications;
+    u::Owner owner(world,notifications);
+    world.session().primary_population=4;
+    for(unsigned index=0;index<4;++index)
+        check(bool(world.spawn_primary(index,std::make_unique<u::world::Actor>()).id));
+    world.primary(0)->active=true;
+    auto& placements=world.session().actor_placements;
+    check(placements.queue(0,7,0));
+    std::array<std::uint32_t,9> packet{1,10,20,123,0,0,30,0,0};
+    const auto bytes=std::as_bytes(std::span(packet));
+    check(owner.apply_actor_placement_packet(bytes));
+    check(world.primary(0)->position.x==10&&world.primary(0)->position.y==30&&
+          world.primary(0)->position.z==20&&world.primary(0)->orientation[1]==123);
+    check(world.session().room_variants.store(7,2)&&owner.complete_room_placement());
+    check(world.room==7&&world.session().room_variant==2&&world.primary(0)->room==7);
+    world.session().cutscene_requests.append({1,12,13,0,0,0,0,0});
+    const auto batch=owner.take_cutscene_requests();
+    check(batch&&batch->audio_count==1&&batch->current.area==12&&batch->current.scene==13);
+    check(owner.close()==u::Status::completed);
+    check(!owner.apply_actor_placement_packet(bytes)&&!owner.complete_room_placement()&&!owner.take_cutscene_requests());
+}
 int main()try{
     check_actor_status();
     check_automatic_worker();
     check_session_script_binding();
     check_content_script_binding();
     check_auxiliary_timer_order();
+    check_transition_inputs();
     u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());Notifications notifications;u::Owner owner(world,notifications);check(owner.open());
     world.room=0x1234;check(owner.clock().restore({0,0,0,0},UINT32_MAX)==u::tasks::Status::completed);
     const auto first=owner.record_event(0xabcd0013,0x12345678,0xabcdef90);check(first.status==e::Status::completed);

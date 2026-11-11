@@ -116,6 +116,7 @@ def prefix_graph(data,kind,table,declared,mask,profile,filters):
             if op==0x135:payload(16)
             if op==0x155:payload(4)
             if op==0x62:payload(16)
+            if op==0x61:payload(0)
             if op in [0x120,0x121] and 512<=payload(0)<0xffffffe1:
                 raise ValueError('native_auxiliary_timer_index_profile_refused')
             if op==0x122:payload(0)

@@ -3,6 +3,14 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. Put the PC to sleep after Stage 4 passes those checks, as requested.
 
+- [Forced actor terminal transition](ACTOR_FORCED_TERMINAL.md) now composes the
+  actual native inventory, event, pose and local-player message owners through
+  script commands 61 and 62. Both compiler suites and parent tests pass. The
+  actual UI close provider, transport and game installation remain open.
+- [Native scene transition inputs](SCENARIO_TRANSITION_INPUTS.md) supply the
+  cutscene cue collector, placement packet consumer, and room placement
+  completion through the canonical Update Owner. Both compiler comparisons
+  pass. Scene preparation, media/UI, and installed game acceptance remain open.
 - [Room actor asset requests](SCENARIO_ROOM_ACTOR_ASSETS.md) now share one
   Session owner across script updates and descriptor allowance queries.
   Both compiler comparisons pass. Actual descriptor/model loading callers

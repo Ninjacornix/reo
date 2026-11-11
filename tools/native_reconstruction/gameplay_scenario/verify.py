@@ -24,6 +24,8 @@ IDS += ['0068F1D0','0068F1F0','0068F280','0068F3C0','006268D0']
 IDS += ['0068D920','0068DA50','00694BC0','00592A90','00591AE0','005B42B0','005F2810','005F2330','005B43F0']
 IDS += ['0068F010','005F0150','006B73F0','00692A00','006BA230','006B7480','006B74D0','006B80A0','00691720','006929A0','006929D0']
 IDS += ['0068FDC0','0068FE40','0068FEB0','00684770']
+IDS += ['005F0380','005F0230','00662C90','006040A0']
+IDS += ['0068EFF0']
 
 PINNED={};PIN_COMMITS={}
 def source_bytes(p):
@@ -127,6 +129,7 @@ def main(a):
     shutil.copyfile(HERE/'actor_inventory_vm_tests.inc',out/'actor_inventory_vm_tests.inc')
     shutil.copyfile(HERE/'scene_boot_vm_tests.inc',out/'scene_boot_vm_tests.inc')
     shutil.copyfile(HERE/'room_actor_assets_vm_tests.inc',out/'room_actor_assets_vm_tests.inc')
+    shutil.copyfile(HERE/'transition_input_vm_tests.inc',out/'transition_input_vm_tests.inc')
     shutil.copyfile(HERE/'periodic_control_vm_tests.inc',out/'periodic_control_vm_tests.inc')
     shutil.copyfile(HERE/'room_rule_tests.inc',out/'room_rule_tests.inc')
     shutil.copyfile(HERE/'room_object_vm_tests.inc',out/'room_object_vm_tests.inc')
@@ -149,6 +152,7 @@ def main(a):
     units += [('actor_placements',ROOT/'game/native/gameplay_world/actor_placements.cpp')]
     units += [('actor_inventory_commands',ROOT/'game/native/gameplay_scenario/actor_inventory_commands.cpp')]
     units += [(name,ROOT/'game/native/gameplay_scenario'/(name+'.cpp')) for name in ['auxiliary_room_rows','cutscene_requests']]
+    units += [('cutscene_cues',ROOT/'game/native/gameplay_scenario/cutscene_cues.cpp')]
     if not a.pin_effects_commit:
         import sys
         sys.path.insert(0,str(ROOT/'tools/native_reconstruction'))
@@ -166,6 +170,7 @@ def main(a):
     source_paths.append(HERE/'actor_inventory_vm_tests.inc')
     source_paths.append(HERE/'scene_boot_vm_tests.inc')
     source_paths.append(HERE/'room_actor_assets_vm_tests.inc')
+    source_paths.append(HERE/'transition_input_vm_tests.inc')
     source_paths += [HERE/'surface_vm_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]
     source_paths += [ROOT/'game/native/transform_math/transform_math.hpp',ROOT/'game/native/transform_math/transform_math.cpp']

@@ -149,6 +149,7 @@ struct Actor : actors::Entity,actors::HitActor {
 };
 struct Session : actors::HitSession {
     gameplay_session::RoomVariants room_variants;
+    std::optional<std::uint16_t> room_variant;
     ActorPlacements actor_placements;
     gameplay_scenario::CutsceneRequests cutscene_requests;
     gameplay_scenario::AuxiliaryScene auxiliary_scene;

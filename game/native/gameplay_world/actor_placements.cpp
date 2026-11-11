@@ -35,6 +35,64 @@ std::optional<ActorPlacement> ActorPlacements::position(std::uint8_t index) cons
     return positions_[index];
 }
 
+bool ActorPlacements::apply_packet(World& world,std::span<const std::byte> packet) noexcept {
+    if(world.closed() || this!=&world.session().actor_placements || !world.actor_roster_ready())return false;
+    auto updated=*this;
+    if(!updated.load_positions(packet))return false;
+    std::array<std::shared_ptr<Actor>,request_count> actors;
+    std::array<std::optional<ActorPlacement>,request_count> targets;
+    const auto population=*world.session().primary_population;
+    for(std::size_t index=0;index<population;++index) {
+        const auto actor=world.primary(index);
+        if(!actor->active)continue;
+        if(index>=request_count)return false;
+        const auto& request=requests_[index];
+        if(request.state!=0 || (actor->status&0x5e0))continue;
+        targets[index]=updated.position(request.position);
+        if(!targets[index])return false;
+        actors[index]=actor;
+    }
+    *this=updated;
+    for(std::size_t index=0;index<actors.size();++index) {
+        if(!actors[index])continue;
+        auto& actor=*actors[index];
+        const auto& target=*targets[index];
+        actor.position={float(target.x),float(target.y),float(target.z)};
+        actor.orientation[0]=actor.orientation[2]=0;
+        actor.orientation[1]=target.yaw;
+        actor.auxiliary_status|=1;
+        requests_[index].state=1;
+    }
+    return true;
+}
+
+bool ActorPlacements::finish_room_transition(World& world) const noexcept {
+    if(world.closed() || this!=&world.session().actor_placements)return false;
+    auto room=world.room;
+    std::array<std::shared_ptr<Actor>,request_count> actors;
+    bool selected_room=false;
+    if(world.session().session_state==0) {
+        if(world.selected_actor>=request_count)return false;
+        for(std::size_t index=0;index<actors.size();++index) {
+            actors[index]=world.primary(index);
+            if(!actors[index])return false;
+        }
+        selected_room=requests_[world.selected_actor].room!=0;
+        if(selected_room)room=requests_[world.selected_actor].room;
+    }
+    const auto variant=world.session().room_variants.get(room);
+    if(!variant)return false;
+    if(world.session().session_state==0) {
+        world.room=room;
+        for(std::size_t count=actors.size();count>0;--count) {
+            const auto index=count-1;
+            actors[index]->room=selected_room?requests_[index].room:room;
+        }
+    }
+    world.session().room_variant=*variant;
+    return true;
+}
+
 void ActorPlacements::clear_requests() noexcept {
     for (auto& request : requests_) request.state = 255;
 }
