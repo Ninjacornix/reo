@@ -79,6 +79,10 @@ verification. The latest user instruction is to keep the PC awake afterward.
   the separate32-byte requested/assigned sets and signed membership rules.
   Both compiler full-body comparisons and native-only tests pass. Complete
   roster selection/cloning and model handoff remain open.
+- [Primary cinematic choice preparation](CUTSCENE_PRIMARY_SELECTION.md) now
+  preserves the complete required/optional fallback and roster-preference policy.
+  Both compilers pass31,494 source-body comparisons, including all548 owned0950
+  raw headers. Cloning, live binding/model handoff and full scene ownership remain open.
 - The [scene NPC loading-mode correction](CUTSCENE_NPC_CONSTRUCTION.md) separates
   asset-loading mode3243D7 from pause4BADF8. Paired current cohorts pass4,384 scene
   cases with independent inputs; the earlier fixture conflated the two and its

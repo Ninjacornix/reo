@@ -11,7 +11,7 @@ Observed boundaries:
 | --- | --- |
 | 5F1290 | Clears scratch space, publishes a separate temporary actor base from the resource workspace, clears eight10E0-byte actor records and assigns indices0..7. Calls571010 after those eight records. |
 | 5F1330 | Searches that temporary base for an inactive record. Returns the first free slot without marking it active; null base/full returns null. |
-| 5F1400 | May copy an entire canonical roster actor into the temporary record, preserving the temporary slot index. Then applies active/visibility/action/BB4/character/class stores and clears the authored control region. The copy includes original model pointers. |
+| 5F1400 | Searches all eight physical roster entries and may copy a canonical actor into the temporary record, preserving the temporary slot index. Then applies active/visibility/action/BB4/character/class stores and clears authored control. Matched class1 retires that main slot's model and changes its scene-roster byte toFF, affecting later selection. The copy includes original model pointers. |
 | 5F0DC0 | Assigns primary/fallback groups using reservation and roster state. Header6 alone does not determine every selected actor. |
 | 5ECAE0 /5ECB80 /5ECBE0 | Traverse the separate temporary set and linked actors under their respective activity/visibility gates. The first pass calls61A6A0 then the already studied66A2E0 callback. |
 | o0 375550 | Traverses the supplemental temporary set under pause and another gate. It supplements the ordinary traversal. |
@@ -45,9 +45,12 @@ The [separate eight-slot temporary owner](SCENE_PRIMARY_ACTOR_POOL.md) now suppl
 native Actor storage and original first-inactive selection. It does not admit
 assignment or model handoff. Next work is the sixteen-object owner and typed
 actor/control cloning with explicit model/channel rules,
-complete0/3 header assignment and its reservation-list policy, temporary traversal,
+live0/3 header binding, temporary traversal,
 then entry/exit reconstruction through the existing bank/cache owners. Each must
 use actual model/clip inputs and preserve explicit full/unsupported results.
+The [choice preparation](CUTSCENE_PRIMARY_SELECTION.md) now qualifies the full
+required/optional fallback policy, reservation lists and constructor-induced
+roster changes. Its typed plan does not publish Actors or transfer model ownership.
 Primary sparse cinematic motion/retargeting and category10 object timelines are
 also separate consumers; enabling the linked-only scripted path for every actor
 would not establish their behavior.
