@@ -41,6 +41,7 @@ struct Record {std::uint32_t opcode{},bytes{};std::span<const std::byte> payload
 class Program {
 public:
     explicit Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile=DispatchProfile::ordinary);
+    static Program from_script_blocks(std::vector<std::vector<std::byte>>,DispatchProfile);
     std::optional<Record> record(Position)const noexcept;
     std::size_t blocks()const noexcept{return blocks_.size();}
     static std::uint32_t record_bytes(std::uint32_t header)noexcept;
@@ -73,6 +74,7 @@ public:
     std::span<const std::uint8_t> visibility_models()const noexcept{return visibility_models_;}
     DispatchProfile profile()const noexcept{return profile_;}
 private:
+    Program(std::vector<std::vector<std::byte>>,DispatchProfile,bool allow_missing_blocks);
     std::vector<std::vector<std::byte>> blocks_;
     std::vector<std::vector<std::uint32_t>> boundaries_;
     bool unsupported_{},flags_{},timers_{},actor_events_{},signals_{},scene_resources_{},session_counters_{},sequences_{},lighting_{},scene_channels_{},scene_controls_{},streams_{},saved_controls_{},world_{},selected_actor_{},action_choices_{},models_{},scenario_{},canonical_flags_{},room_objects_{},room_object_lifetime_{},room_object_queries_{},periodic_effects_{};

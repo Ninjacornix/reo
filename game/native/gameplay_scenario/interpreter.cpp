@@ -1,4 +1,5 @@
 #include "interpreter.hpp"
+#include "script_flow.hpp"
 #include "flags.hpp"
 #include "scene_resources.hpp"
 #include "session_counters.hpp"
@@ -54,12 +55,49 @@ bool opener(std::uint32_t op)noexcept{
     return std::find(values.begin(),values.end(),op)!=values.end();
 }
 }
+detail::ScriptFlowBinding detail::script_flow_binding(std::uint32_t opcode,DispatchProfile profile)noexcept {
+    ScriptFlowBinding binding;
+    binding.opens_condition=opener(opcode);
+    const bool offline=profile==DispatchProfile::offline_actor;
+    if(offline){
+        const auto& entry=offline_bindings[opcode];
+        binding.context_dependent=entry.restricted||entry.relation_one||entry.relation_two;
+        if(entry.noop)return binding;
+    }else if(original_noops[opcode])return binding;
+    binding.minimum_payload=payload_minimum(opcode);
+    switch(opcode){
+    case 1:binding.flow=ScriptFlow::remember;break;
+    case 2:binding.flow=ScriptFlow::resume;break;
+    case 0xa:binding.flow=ScriptFlow::resume_yield;break;
+    case 7:binding.flow=ScriptFlow::next_block;break;
+    case 0xd:binding.flow=ScriptFlow::next_block_yield;break;
+    case 3:binding.flow=ScriptFlow::skip;break;
+    case 4:binding.flow=ScriptFlow::delay;break;
+    case 8:case 0x14:case 0x17:case 0x34:case 0x47:case 0x48:case 0x49:case 0x4d:
+    case 0xb7:case 0xb8:case 0xc2:case 0xc3:case 0xe3:case 0xe6:case 0xe9:
+    case 0xec:case 0xed:case 0xef:case 0x113:case 0x155:case 0x180:
+        binding.flow=ScriptFlow::if_test;break;
+    case 0x36:binding.flow=ScriptFlow::if_test_without_open;break;
+    case 0xe4:binding.flow=ScriptFlow::else_scan;break;
+    case 0xe5:binding.flow=ScriptFlow::end_if;break;
+    default:break;
+    }
+    return binding;
+}
 std::uint32_t Program::record_bytes(std::uint32_t header)noexcept{return (std::uint32_t(1)<<((header>>24)&31))*4u;}
-Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile profile):blocks_(std::move(blocks)),profile_(profile){
+Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile profile)
+    :Program(std::move(blocks),profile,false){}
+Program Program::from_script_blocks(std::vector<std::vector<std::byte>> blocks,DispatchProfile profile){
+    return Program(std::move(blocks),profile,true);
+}
+Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile profile,bool allow_missing_blocks)
+    :blocks_(std::move(blocks)),profile_(profile){
     if(blocks_.empty()||blocks_.size()>UINT32_MAX)throw std::invalid_argument("Bounded native script blocks required");
     boundaries_.resize(blocks_.size());const auto coverage=Interpreter::coverage(profile);
     for(std::size_t i=0;i<blocks_.size();++i){
-        const auto& b=blocks_[i];if(b.empty()||b.size()>UINT32_MAX)throw std::invalid_argument("Native script block extent");
+        const auto& b=blocks_[i];
+        if(b.empty()&&allow_missing_blocks)continue;
+        if(b.empty()||b.size()>UINT32_MAX)throw std::invalid_argument("Native script block extent");
         std::size_t at=0;
         while(at<b.size()){
             if(b.size()-at<4)throw std::invalid_argument("Truncated script header");

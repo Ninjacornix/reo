@@ -1,14 +1,18 @@
 # Stage 4: native gameplay and scheduling
 
-Status, 2026-11-10: implementation started; **Stage 4 is incomplete**. The user
-requested the whole stage. Their latest instruction revokes the earlier
-conditional sleep request: continue the work and do not put the PC to sleep.
+Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
+verification. Put the PC to sleep after Stage 4 passes those checks, as requested.
 
+- [Stock room script admission](SCENARIO_STOCK_PROGRAMS.md) builds immutable
+  native programs from checked stock bytecode. The dual-compiler admission
+  probe installs 25 ordinary and 20 offline room programs. One stock room
+  script passes 36 comparisons against the original dispatchers with
+  controlled providers. All five scenario EVBs and actual game installation
+  remain open.
 - [Native scenario room counters](SCENARIO_ROOM_COUNTERS.md) now compare the
   complete F2 handler and room-counter reset through the Session owner on both
-  compilers. The policy importer uses all five owned scenario EVBs. Stock
-  program construction, runtime scenario installation and game acceptance
-  remain open.
+  compilers. The policy importer uses all five owned scenario EVBs. Runtime
+  scenario installation and game acceptance remain open.
 
 The current resource and inventory implementation includes:
 

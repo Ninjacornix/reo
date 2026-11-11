@@ -83,6 +83,9 @@ def prefix_graph(data,kind,table,declared,mask,profile,filters):
             return word(data,pc+4+at)
         try:
             if op in [0xe8,0xe9] and payload(0)>=2:raise ValueError('native_counter_index_profile_refused')
+            if op==0xf2:
+                if payload(0)>=128 or payload(4)>=24:raise ValueError('native_room_counter_destination_refused')
+                payload(8)
             if op in [0x10,0x11] and payload(0)>=32:raise ValueError('native_sequence_index_profile_refused')
             if op in [0x13,0x15] and (payload(0)&255)>=32:raise ValueError('native_sequence_selector_profile_refused')
             if op in [0x23,0x24] and (payload(0)&255)>=32:raise ValueError('native_lighting_index_profile_refused')
