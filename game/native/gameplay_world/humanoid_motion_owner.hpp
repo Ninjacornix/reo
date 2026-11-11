@@ -16,6 +16,8 @@ public:
     std::shared_ptr<const HumanoidMotionBanks> snapshot()const noexcept{return current_;}
     HumanoidPublicationStatus close()noexcept;
 private:
+    friend class PrimaryActorModels;
+    HumanoidPublished publish_nested(std::shared_ptr<const HumanoidMotionBanks>,bool nested)noexcept;
     World& world_;std::shared_ptr<const HumanoidMotionBanks> current_;
     bool closed_{},running_{};
 };

@@ -46,6 +46,11 @@ verification. The latest user instruction is to keep the PC awake afterward.
   channels, root history and resource ownership while rebuilding both mutable
   node banks. Both compilers pass72 replacements and264 original continuation
   cases. Actual primary model-cache caller adoption remains open.
+- [Primary CPU model cache](PRIMARY_ACTOR_MODELS.md) connects admitted archive
+  loading, same-key reuse, shared character-bank retirement, actual instance
+  replacement and initialization. Paired focused comparisons cover1,024 cache
+  cases with real native assets. Actual scene/resume caller adoption, renderer
+  interfaces, generation teardown and installed native gameplay remain open.
 - The [scene NPC loading-mode correction](CUTSCENE_NPC_CONSTRUCTION.md) separates
   asset-loading mode3243D7 from pause4BADF8. Paired current cohorts pass4,384 scene
   cases with independent inputs; the earlier fixture conflated the two and its

@@ -102,6 +102,11 @@ void Playback::replace_model(std::shared_ptr<Instance> model) {
     // Secondary presence is the original owner's policy, independent of the
     // replacement Skeleton's size. Do not copy old model-node clip bindings.
     auto secondary = secondary_ ? PoseBlend::create_sibling(*model) : nullptr;
+    replace_model_prepared(std::move(model),std::move(secondary));
+}
+void Playback::replace_model_prepared(std::shared_ptr<Instance> model,std::shared_ptr<Instance> secondary) {
+    if(!model||bool(secondary)!=bool(secondary_)||(secondary&&&secondary->skeleton()!=&model->skeleton()))
+        throw std::invalid_argument("Native Playback prepared replacement has incompatible model banks");
     PoseBlend::root_reference(*model, PoseBlend::root_reference(*primary_));
     auto previous_primary = std::move(primary_);
     auto previous_secondary = std::move(secondary_);

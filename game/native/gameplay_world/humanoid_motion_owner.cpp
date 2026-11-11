@@ -18,12 +18,15 @@ HumanoidPublicationStatus HumanoidMotionOwner::close()noexcept{
     current_.reset();return HumanoidPublicationStatus::completed;
 }
 HumanoidPublished HumanoidMotionOwner::publish(std::shared_ptr<const HumanoidMotionBanks> candidate)noexcept{
+    return publish_nested(std::move(candidate),false);
+}
+HumanoidPublished HumanoidMotionOwner::publish_nested(std::shared_ptr<const HumanoidMotionBanks> candidate,bool nested)noexcept{
     if(closed_||world_.closed())return{HumanoidPublicationStatus::closed};
-    if(running_||world_.busy())return{HumanoidPublicationStatus::busy};
+    if(running_||(world_.busy()&&!nested)||(nested&&!world_.updating_))return{HumanoidPublicationStatus::busy};
     if(!candidate)return{};
     if(current_&&!candidate->follows(*current_))return{HumanoidPublicationStatus::stale};
-    running_=true;world_.updating_=true;
-    struct Reset{bool& running;bool& world;~Reset(){world=false;running=false;}}reset{running_,world_.updating_};
+    const bool previous_busy=world_.updating_;running_=true;world_.updating_=true;
+    struct Reset{bool& running;bool& world;bool previous;~Reset(){world=previous;running=false;}}reset{running_,world_.updating_,previous_busy};
     try{
         struct Plan {
             std::shared_ptr<Actor> actor;std::shared_ptr<animation::Playback> playback;

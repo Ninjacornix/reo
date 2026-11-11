@@ -230,6 +230,7 @@ class LinkedActorUpdates;
 class NpcActorUpdates;
 class AuxiliaryActorPool;
 class TargetMetricCache;
+class PrimaryActorModels;
 class Services {
 public:
     virtual ~Services()=default;
@@ -311,6 +312,8 @@ private:
     NpcActorUpdates* npc_update_owner_{};
     friend class HumanoidMotionOwner;
     friend class PrimaryActorInitialization;
+    friend class PrimaryActorModels;
+    PrimaryActorModels* primary_model_owner_{};
     HumanoidMotionSource* humanoid_motion_source_{};
     bool humanoid_motion_source_closed_{};
     std::unique_ptr<AuxiliaryActorPool> auxiliary_actors_;

@@ -1,4 +1,4 @@
-#include "primary_actor_initialization.hpp"
+#include "primary_actor_initialization_internal.hpp"
 #include "primary_custom_statistics.hpp"
 #include "model_constraints.hpp"
 #include "motion_profiles.hpp"
@@ -21,14 +21,12 @@ const PrimaryDefaultDefinition& primary_actor_default(std::uint8_t character){
     if(character>=primary_default_definitions.size())throw std::out_of_range("Native primary character profile unavailable");
     return primary_default_definitions[character];
 }
-class PrimaryActorInitialization final {
-public:
-    static PrimaryInitializationStatus defaults(World& world,actors::EntityId id,std::uint8_t character,const HumanoidMotionBanks& banks,bool custom=false,const PrimaryEquipmentContext* equipment=nullptr)noexcept{
+PrimaryInitializationStatus PrimaryActorInitialization::defaults(World& world,actors::EntityId id,std::uint8_t character,const HumanoidMotionBanks& banks,bool custom,const PrimaryEquipmentContext* equipment,bool nested)noexcept{
         if(world.closed())return PrimaryInitializationStatus::closed;
-        if(world.busy())return PrimaryInitializationStatus::busy;
+        if((world.busy()&&!nested)||(nested&&!world.updating_))return PrimaryInitializationStatus::busy;
         const auto actor=world.resolve(id);
         if(!actor||(!custom&&(actor->model_variant||world.session().primary_initialization_snapshot))||character>=8||actor->slot>=World::primary_capacity||world.primary(actor->slot)!=actor||!actor->model_asset||!actor->model||!actor->animation||actor->animation->model()!=actor->model)return PrimaryInitializationStatus::unavailable;
-        world.updating_=true;struct Reset{bool& value;~Reset(){value=false;}}reset{world.updating_};
+        const bool previous_busy=world.updating_;world.updating_=true;struct Reset{bool& value;bool previous;~Reset(){value=previous;}}reset{world.updating_,previous_busy};
         try{
             const auto& definition=primary_actor_default(character);
             const auto substitution=actor->model_variant?&primary_substitution_definition(actor->model_variant):nullptr;
@@ -69,11 +67,11 @@ public:
             finish(*actor);return PrimaryInitializationStatus::completed;
         }catch(const std::bad_alloc&){return PrimaryInitializationStatus::no_memory;}catch(...){return PrimaryInitializationStatus::unavailable;}
     }
-    static PrimaryInitializationStatus restore(World& world,actors::EntityId id)noexcept{
+PrimaryInitializationStatus PrimaryActorInitialization::restore(World& world,actors::EntityId id,bool nested)noexcept{
         if(world.closed())return PrimaryInitializationStatus::closed;
-        if(world.busy())return PrimaryInitializationStatus::busy;
+        if((world.busy()&&!nested)||(nested&&!world.updating_))return PrimaryInitializationStatus::busy;
         const auto actor=world.resolve(id);if(!actor||world.paused!=0||actor->slot>=World::primary_capacity||world.primary(actor->slot)!=actor)return PrimaryInitializationStatus::unavailable;
-        world.updating_=true;struct Reset{bool& value;~Reset(){value=false;}}reset{world.updating_};
+        const bool previous_busy=world.updating_;world.updating_=true;struct Reset{bool& value;bool previous;~Reset(){value=previous;}}reset{world.updating_,previous_busy};
         try{
             if(!world.session().exit_requested){
                 initialize_model_constraints(world,*actor);
@@ -84,13 +82,15 @@ public:
             finish(*actor);return PrimaryInitializationStatus::completed;
         }catch(const std::bad_alloc&){return PrimaryInitializationStatus::no_memory;}catch(...){return PrimaryInitializationStatus::unavailable;}
     }
-};
 PrimaryInitializationStatus initialize_primary_defaults(World& world,actors::EntityId id,std::uint8_t character,const HumanoidMotionBanks& banks)noexcept{return PrimaryActorInitialization::defaults(world,std::move(id),character,banks);}
 PrimaryInitializationStatus initialize_primary_slot(World& world,actors::EntityId id,std::uint8_t character,const HumanoidMotionBanks& banks,const PrimaryEquipmentContext* equipment)noexcept{return PrimaryActorInitialization::defaults(world,std::move(id),character,banks,true,equipment);}
 PrimaryInitializationStatus restore_primary_slot(World& world,actors::EntityId id)noexcept{return PrimaryActorInitialization::restore(world,std::move(id));}
 PrimaryInitializationStatus initialize_primary_actor(World& world,const gameplay_update::State& state,actors::EntityId id,std::uint8_t character,const HumanoidMotionBanks& banks,const PrimaryEquipmentContext* equipment)noexcept{
-    if(state.notification_pending&&world.paused==0)return restore_primary_slot(world,std::move(id));
-    return initialize_primary_slot(world,std::move(id),character,banks,equipment);
+    return PrimaryActorInitialization::select(world,state,std::move(id),character,banks,equipment);
+}
+PrimaryInitializationStatus PrimaryActorInitialization::select(World& world,const gameplay_update::State& state,actors::EntityId id,std::uint8_t character,const HumanoidMotionBanks& banks,const PrimaryEquipmentContext* equipment,bool nested)noexcept{
+    if(state.notification_pending&&world.paused==0)return restore(world,std::move(id),nested);
+    return defaults(world,std::move(id),character,banks,true,equipment,nested);
 }
 bool select_primary_appearance(World& world,actors::EntityId id,std::uint8_t character,std::uint8_t model_class)noexcept{
     if(world.closed()||world.busy())return false;
