@@ -12,9 +12,12 @@ struct NodeDefinition {
     std::optional<std::size_t> child,sibling,parent;
     Parameters defaults{};
 };
+enum class SkeletonExtent {declared,bounded_records};
 class Skeleton {
 public:
-    static std::shared_ptr<const Skeleton> import_raw(std::span<const std::byte>,std::size_t root_ordinal=0);
+    // File1 NPC records can have stale redundant length metadata. The explicit
+    // record profile walks the count in the bounded section, never pads data.
+    static std::shared_ptr<const Skeleton> import_raw(std::span<const std::byte>,std::size_t root_ordinal=0,SkeletonExtent=SkeletonExtent::declared);
     std::span<const NodeDefinition> nodes()const noexcept{return nodes_;}
     std::span<const std::size_t> traversal()const noexcept{return traversal_;}
 private:

@@ -3,11 +3,13 @@
 #include "runtime/assets/virtual_afs.h"
 #include <algorithm>
 #include <cstring>
+#include <cstdio>
 #include <stdexcept>
 
 namespace reo::native::gameplay_world {
 namespace {
 #include "actor_asset_names.inc"
+#include "npc_actor_members.inc"
 
 std::string lower_name(std::string_view input) {
     std::string result(input);
@@ -33,8 +35,11 @@ ActorAssets::ActorAssets(std::shared_ptr<const reo::assets::Source> source) : so
         throw std::invalid_argument("Native File #1 actor archive missing or ambiguous");
     const auto directory = reo::assets::table(*source_,common->offset,common->size);
     members_.reserve(directory.entries.size());
-    for (const auto& entry : directory.entries)
-        if (!entry.name.empty()) members_.push_back({lower_name(entry.name),std::uint64_t(common->offset)+entry.offset,entry.size});
+    common_count_=directory.entries.size();
+    for (std::size_t ordinal=0;ordinal<directory.entries.size();++ordinal){
+        const auto& entry=directory.entries[ordinal];
+        if (!entry.name.empty()) members_.push_back({lower_name(entry.name),std::uint64_t(common->offset)+entry.offset,entry.size,std::uint32_t(ordinal)});
+    }
     std::stable_sort(members_.begin(),members_.end(),[](const Member& first,const Member& second) { return first.name < second.name; });
 }
 
@@ -49,7 +54,25 @@ std::shared_ptr<const ActorModelAsset> ActorAssets::read(std::uint8_t type,std::
     ModelDefinitionBank bank) const {
     const auto& definition = File1LinkedModelProfiles{}.definition(type,variant,bank);
     if (definition.model == 255) return {};
-    const auto name = model_name(definition.model,bank);
+    return read_named(model_name(definition.model,bank));
+}
+
+std::string ActorAssets::npc_model_name(std::uint16_t variant,std::uint8_t definition,std::uint8_t character){
+    if(!variant)throw std::invalid_argument("Native NPC zeroBB4 primary filename route unavailable");
+    std::array<char,24> name{};
+    if(definition==1)std::snprintf(name.data(),name.size(),"HP%02u.NBD",unsigned(character));
+    else std::snprintf(name.data(),name.size(),"N%02u.NBD",unsigned(variant)-1u);
+    return name.data();
+}
+std::shared_ptr<const ActorModelAsset> ActorAssets::read_npc(std::uint16_t variant,std::uint8_t definition,std::uint8_t character)const{
+    const auto name=npc_model_name(variant,definition,character);
+    const auto alias=std::find_if(npc_actor_members.begin(),npc_actor_members.end(),[&](const auto& entry){return entry.name==name;});
+    if(alias==npc_actor_members.end()||common_count_!=1342)throw std::invalid_argument("Native NPC ROM member profile unavailable");
+    const auto member=std::find_if(members_.begin(),members_.end(),[&](const auto& entry){return entry.ordinal==alias->ordinal;});
+    if(member==members_.end()||member->name!=lower_name(name))throw std::invalid_argument("Native NPC ROM member identity unavailable");
+    return read_entry(*member,name,true);
+}
+std::shared_ptr<const ActorModelAsset> ActorAssets::read_named(std::string_view name)const{
     const auto key = lower_name(name);
     const auto member = std::lower_bound(members_.begin(),members_.end(),key,
         [](const Member& entry,const std::string& key) { return entry.name < key; });
@@ -57,16 +80,19 @@ std::shared_ptr<const ActorModelAsset> ActorAssets::read(std::uint8_t type,std::
         throw std::invalid_argument("Native actor model asset missing");
     if (member+1 != members_.end() && (member+1)->name == key)
         throw std::invalid_argument("Native actor model asset ambiguous");
-    if (member->bytes > 32u*1024u*1024u)
+    return read_entry(*member,name);
+}
+std::shared_ptr<const ActorModelAsset> ActorAssets::read_entry(const Member& member,std::string_view name,bool bounded_records)const{
+    if (!member.bytes||member.bytes > 32u*1024u*1024u)
         throw std::invalid_argument("Native actor model asset exceeds limit");
-    const auto cache_key = std::size_t(member-members_.begin());
+    const auto cache_key = std::size_t(&member-members_.data());
     {
         std::lock_guard guard(cache_mutex_);
         const auto retained = cache_.find(cache_key);
         if (retained != cache_.end()) return retained->second;
     }
-    auto bytes = std::make_shared<std::vector<std::byte>>(member->bytes);
-    source_->read(member->offset,bytes->size(),bytes->data());
+    auto bytes = std::make_shared<std::vector<std::byte>>(member.bytes);
+    source_->read(member.offset,bytes->size(),bytes->data());
     const auto offset = word(*bytes,0x24),length = word(*bytes,0x28);
     if (offset && (!length || offset > bytes->size() || length > bytes->size()-offset))
         throw std::invalid_argument("Native actor skeleton section unavailable");
@@ -79,7 +105,8 @@ std::shared_ptr<const ActorModelAsset> ActorAssets::read(std::uint8_t type,std::
         result->part_count_ = std::uint16_t(model_part_count(std::span<const std::byte>(*bytes).subspan(model_offset,model_length)));
     }
     if (offset)
-        result->skeleton_ = animation::Skeleton::import_raw(std::span<const std::byte>(*bytes).subspan(offset,length));
+        result->skeleton_ = animation::Skeleton::import_raw(std::span<const std::byte>(*bytes).subspan(offset,length),0,
+            bounded_records?animation::SkeletonExtent::bounded_records:animation::SkeletonExtent::declared);
     result->bytes_ = std::move(bytes);
     std::lock_guard guard(cache_mutex_);
     return cache_.try_emplace(cache_key,std::move(result)).first->second;

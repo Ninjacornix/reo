@@ -20,13 +20,14 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def skeleton_nodes(payload):
+def skeleton_nodes(payload,bounded_records=False):
     offset,length = struct.unpack_from('<II',payload,0x24)
     if not offset:
         return 0
     assert 0 < length <= len(payload)-offset
     raw = payload[offset:offset+length]
     count,extent = struct.unpack_from('<II',raw,4)
+    if bounded_records:extent=len(raw)
     assert 12 <= extent <= len(raw)
     at = 12
     roots = []

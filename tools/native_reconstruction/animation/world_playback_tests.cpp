@@ -83,8 +83,9 @@ void body_equal(const g::Actor& value, const std::vector<std::uint8_t>& ram) {
 #include "cutscene_actor_command_tests.inc"
 #include "cutscene_actor_track_tests.inc"
 #include "cutscene_descriptor_tests.inc"
+#include "npc_skeleton_tests.inc"
 int main(int argc, char** argv) try {
-    check(argc == 4 || argc == 5, "owned World animation inputs required");
+    check(argc >= 4 && argc <= 6, "owned World animation inputs required");
     const auto old = _mm_getcsr();
     struct Reset {
         unsigned old;
@@ -102,7 +103,8 @@ int main(int argc, char** argv) try {
     cutscene_command_tests(ram);
     cutscene_track_tests(ram);
     linked_full_pool_tests(ram);
-    if(argc==5)cutscene_descriptor_tests(argv[4],ram);
+    if(argc>=5)cutscene_descriptor_tests(argv[4],ram);
+    if(argc==6)npc_skeleton_tests(argv[5],ram);
     std::shared_ptr<const a::Skeleton> skeleton;
     std::vector<std::byte> raw_skeleton;
     for (const auto& raw : skeletons) {
@@ -719,6 +721,10 @@ int main(int argc, char** argv) try {
               << ",\"cutscene_descriptor_streams\":" << cutscene_descriptor_streams
               << ",\"cutscene_descriptor_refusals\":" << cutscene_descriptor_refusals
               << ",\"cutscene_descriptor_partial\":" << cutscene_descriptor_partial
+              << ",\"npc_skeleton_cases\":" << npc_skeleton_cases
+              << ",\"npc_skeleton_nodes\":" << npc_skeleton_nodes
+              << ",\"npc_stale_lengths\":" << npc_stale_lengths
+              << ",\"npc_skeleton_refusals\":" << npc_skeleton_refusals
               << ",\"original_calls\":" << helper_calls << ",\"game_run\":false}\n";
 } catch (const std::exception& e) {
     std::cerr << location << " " << e.what() << '\n';

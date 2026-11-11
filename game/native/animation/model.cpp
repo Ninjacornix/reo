@@ -13,9 +13,10 @@ float finite(float v){if(!std::isfinite(v))throw std::domain_error("Native model
 Vector translation(const Matrix& m){return{m[3][0],m[3][1],m[3][2]};}
 Vector difference(Vector a,Vector b){return{finite(a.x-b.x),finite(a.y-b.y),finite(a.z-b.z)};}
 }
-std::shared_ptr<const Skeleton> Skeleton::import_raw(std::span<const std::byte> bytes,std::size_t root_ordinal){
+std::shared_ptr<const Skeleton> Skeleton::import_raw(std::span<const std::byte> bytes,std::size_t root_ordinal,SkeletonExtent extent){
     if(bytes.size()<12)throw std::invalid_argument("Truncated raw skeleton header");
-    const auto count=read<std::uint32_t>(bytes,4),length=read<std::uint32_t>(bytes,8);
+    const auto count=read<std::uint32_t>(bytes,4);
+    const auto length=extent==SkeletonExtent::bounded_records?bytes.size():std::size_t(read<std::uint32_t>(bytes,8));
     if(!count||count>1153||length<12||length>bytes.size())throw std::invalid_argument("Invalid skeleton count/extent");
     bytes=bytes.first(length);std::vector<std::size_t> raw_nodes;std::vector<std::uint32_t> roots;
     std::size_t at=12;

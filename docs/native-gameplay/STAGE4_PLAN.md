@@ -3,6 +3,11 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to keep the PC awake afterward.
 
+- [Native NPC/HP actor assets](NPC_ACTOR_ASSETS.md) now read all133 exact ROM
+  members through the shared asset cache and handle the bounded record profile
+  of seven NPC skeletons. Both compiler asset/name/pose comparisons, existing
+  owned constructor checks and nine parent tests pass. NPC construction,
+  motion/attachment ownership, scene assignment and game installation remain open.
 - [Native scene scripted construction](CUTSCENE_SCRIPTED_CONSTRUCTION.md) now
   prepares actual header requests and creates all729 kind2 actors across548
   owned0950 scenes through the canonical factory, including seven witnessed
