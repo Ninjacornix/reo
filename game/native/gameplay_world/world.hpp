@@ -8,6 +8,8 @@
 #include "../gameplay_collision/contact_component.hpp"
 #include "../gameplay_collision/room_damage.hpp"
 #include "../gameplay_scenario/model_reference.hpp"
+#include "../gameplay_scenario/auxiliary_room_rows.hpp"
+#include "../gameplay_scenario/cutscene_requests.hpp"
 #include "inventory_state.hpp"
 #include "actor_placements.hpp"
 #include "../gameplay_session/room_variants.hpp"
@@ -147,6 +149,8 @@ struct Actor : actors::Entity,actors::HitActor {
 struct Session : actors::HitSession {
     gameplay_session::RoomVariants room_variants;
     ActorPlacements actor_placements;
+    gameplay_scenario::CutsceneRequests cutscene_requests;
+    gameplay_scenario::AuxiliaryScene auxiliary_scene;
     std::uint8_t script_room_parameter{}; // original4B9D17; exact downstream use is unresolved
     gameplay_collision::delivery::RoomContacts room_contacts;
     gameplay_session::Random random{};
@@ -215,6 +219,8 @@ public:
     gameplay_navigation::Bank& navigation();
     TargetMetricCache& target_metrics();
     std::shared_ptr<Actor> primary(std::size_t)const noexcept;
+    bool actor_roster_ready()const noexcept;
+    std::optional<bool> contains_character(std::uint8_t)const noexcept;
     std::shared_ptr<Actor> resolve(const actors::EntityId&)const noexcept;
     std::shared_ptr<Actor> referenced_actor(const actors::ActorReference&)const noexcept;
     actors::EntityId identity_of(const Actor&)const noexcept;

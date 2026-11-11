@@ -65,7 +65,6 @@ public:
     virtual void effect(PhaseEffect,Owner&,std::uint32_t argument=0)=0;
 };
 struct State {
-    bool limit_override{};
     bool scripts_enabled{true};
     std::int16_t session_work_gate{};
     std::uint8_t control_armed{},control_state{},short_exit_adjustment{};

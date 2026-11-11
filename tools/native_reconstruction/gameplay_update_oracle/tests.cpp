@@ -71,7 +71,7 @@ template<class T>T get(const std::uint8_t* r,std::uint32_t at){return oracle_rea
 template<class T>void put(std::uint8_t* r,std::uint32_t at,T value){oracle_write<T>(r,at,value);}
 void read(std::uint8_t* r,u::Owner& o){
     o.world().mode=r[0x3243f2];o.world().paused=std::bit_cast<std::int8_t>(r[0x4badf8]);o.world().selected_actor=r[0x4baded];
-    o.state.limit_override=r[0x4bae77]!=0;o.state.session_work_gate=get<std::int16_t>(r,0x3241f8);
+    o.world().session().cutscene_requests.limit_override=r[0x4bae77]!=0;o.state.session_work_gate=get<std::int16_t>(r,0x3241f8);
     auto& state=o.state;state.control_armed=r[0x4bae94];state.control_state=r[0x4bae97];o.world().session().exit_requested=r[0x3243d8];state.short_exit_adjustment=r[0x324477];
     state.notification_pending=r[0x4badfb];state.transition_gate=r[0x4bae76];state.pause_latched=r[0x4badf9];state.request_flags=get<std::uint32_t>(r,0x324330);state.control_flags=get<std::uint32_t>(r,0x324300);
     o.world().session().session_state=get<std::int16_t>(r,0x324200);o.world().session().clock_mode=r[0x3243cc];
@@ -79,7 +79,7 @@ void read(std::uint8_t* r,u::Owner& o){
 }
 void write(std::uint8_t* r,u::Owner& o){
     r[0x3243f2]=o.world().mode;r[0x4badf8]=std::bit_cast<std::uint8_t>(o.world().paused);r[0x4baded]=o.world().selected_actor;
-    r[0x4bae77]=o.state.limit_override?1:0;put(r,0x3241f8,o.state.session_work_gate);put(r,0x4bade8,o.clock().update_counter());
+    r[0x4bae77]=o.world().session().cutscene_requests.limit_override?1:0;put(r,0x3241f8,o.state.session_work_gate);put(r,0x4bade8,o.clock().update_counter());
     const auto& state=o.state;r[0x4bae94]=state.control_armed;r[0x4bae97]=state.control_state;r[0x3243d8]=o.world().session().exit_requested;r[0x324477]=state.short_exit_adjustment;
     r[0x4badfb]=state.notification_pending;r[0x4bae76]=state.transition_gate;r[0x4badf9]=state.pause_latched;put(r,0x324330,state.request_flags);put(r,0x324300,state.control_flags);
     put(r,0x324200,o.world().session().session_state);r[0x3243cc]=o.world().session().clock_mode;
@@ -221,7 +221,7 @@ int main()try{
     canonical_inactive_primaries(native);canonical_inactive_primaries(reference);
     for(std::uint32_t seed=0;seed<2048;++seed){
         native_world.mode=std::uint8_t(seed%3);native_world.paused=std::bit_cast<std::int8_t>(std::uint8_t(seed));native_world.selected_actor=std::uint8_t(seed%4);
-        native.state.limit_override=seed%5==0;native.state.session_work_gate=std::int16_t(seed%2);
+        native.world().session().cutscene_requests.limit_override=seed%5==0;native.state.session_work_gate=std::int16_t(seed%2);
         const std::uint32_t counters[]{0,0x83d5f,0x83d60,0x83d61,UINT32_MAX,0x80000000};native.clock().restore({},counters[(seed/4)%6]);
         write(ram.data(),native);read(ram.data(),reference);reference.state=native.state;
         const auto dispatch=native_world.mode==0?s::DispatchProfile::offline_actor:s::DispatchProfile::ordinary;install(native,dispatch);install(reference,dispatch);

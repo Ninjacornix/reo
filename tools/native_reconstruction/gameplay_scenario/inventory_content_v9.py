@@ -9,7 +9,7 @@ INDEX=ROOT/'build-native-sjuni/audio-asset-inventory/file1-v1'
 ELF_SHA='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46'
 OVERLAY_SHA='45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226'
 OPENERS={0xe6,8,0xe3,0x34,0xe9,0xea,0xec,0xed,0x14,0x113,0x150,0x151,0x152,0x153,0x155,0x156,0xc2,0xc3,0xee,0x36,0x47,0x48,0x49,0x4d,0xb7,0xb8,0x158,0x180,0x159,0x17,0x1aa,0x1ac}
-CONDITIONS={0xc2,0xc3,8,0x14,0x17,0x34,0x36,0x47,0x48,0x49,0x4d,0xe3,0xe6,0xe9,0xec,0xed,0xef,0x113,0xb7,0xb8,0x155,0x180}
+CONDITIONS={0xc2,0xc3,8,0x14,0x17,0x34,0x36,0x47,0x48,0x49,0x4d,0xe3,0xe6,0xe9,0xea,0xec,0xed,0xef,0x113,0xb7,0xb8,0x155,0x180}
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def write(p,d):p.write_text(json.dumps(d,indent=2)+'\n')
 def word(b,at):return struct.unpack_from('<I',b,at)[0]
@@ -115,6 +115,10 @@ def prefix_graph(data,kind,table,declared,mask,profile,filters):
                 if not stop&0x8000 and stop>=128:raise ValueError('native_periodic_byte_flag_profile_refused')
             if op==0x135:payload(16)
             if op==0x155:payload(4)
+            if op==0x62:payload(16)
+            if op in [0x120,0x121] and 512<=payload(0)<0xffffffe1:
+                raise ValueError('native_auxiliary_timer_index_profile_refused')
+            if op==0x122:payload(0)
             if op==0x180:payload(0)
             if op in [5,6] and profile=='ordinary' and payload(0)>=4:raise ValueError('native_actor_event_slot_profile_refused')
             if op==1:add(next_pc,new_saved=next_pc)
@@ -140,6 +144,7 @@ def prefix_graph(data,kind,table,declared,mask,profile,filters):
                 nesting=(condition+(op!=0x36))&0xffffffff
                 if (op!=0x17 or payload(4) in [0,1]) and (op!=0x180 or payload(0) in [0,1]):add(next_pc,new_condition=nesting)
                 if op==0x113 and payload(8)>=6:continue
+                if op==0xea and payload(4)&255>1:continue
                 target,nesting=scan(pc,nesting,True);add(target,new_condition=nesting)
             else:add(next_pc)
         except ValueError as error:frontier(str(error),pc,block,op)

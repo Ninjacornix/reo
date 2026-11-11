@@ -46,7 +46,8 @@ Status Owner::run_script(std::size_t channel,scenario::Providers providers,std::
     result.script_operations+=step.operations;return script_ok(step.status)?Status::completed:Status::script_failure;
 }
 Status Owner::script_service(Services& services,scenario::Providers providers,std::size_t budget,Result& result){
-    if(std::bit_cast<std::int32_t>(clock_.update_counter())>=0x83d60 && !state.limit_override){
+    if(std::bit_cast<std::int32_t>(clock_.update_counter())>=0x83d60 &&
+       !world_.session().cutscene_requests.limit_override){
         services.run(Worker::limit_action,*this);++result.worker_calls;return Status::completed;
     }
     if(providers.world&&providers.world!=&world_)return Status::script_failure;
@@ -94,6 +95,8 @@ Result Owner::workers(Services& services,world::Services& actors,scenario::Provi
     if(result.linked.status!=tasks::Status::completed){result.status=Status::task_failure;return result;}
     for(const auto stage:{Worker::render_work_banks,Worker::large_callbacks,Worker::gameplay_ui,
                          Worker::room_sound_callbacks,Worker::sequences})work(stage);
+    // 6B80A0 is the final child of the 6B7E40 sequence worker.
+    world_.session().auxiliary_scene.advance_timers();
     if(state.session_work_gate==0){
         for(const auto stage:{Worker::room_occupancy,Worker::contact_candidates,Worker::contact_packets,
                              Worker::room_entity_ownership,Worker::actor_action_publication,Worker::transition_control})work(stage);

@@ -31,7 +31,7 @@ std::uint32_t word(const std::byte* p)noexcept{
         (std::to_integer<std::uint32_t>(p[2])<<16)|(std::to_integer<std::uint32_t>(p[3])<<24);
 }
 std::size_t payload_minimum(std::uint32_t op)noexcept{
-    switch(op){case 0xa8:return 4;case 0x131:return 14;case 0x100:return 4;case 0x109:return 8;case 0xc2:case 0xc3:return 5;case 0xc4:return 9;case 0xc5:case 0xc6:case 0xc7:return 1;case 0xb0:case 0xb1:return 1;case 0xb4:return 8;case 0x135:return 20;case 0x155:return 8;case 0x180:return 4;
+    switch(op){case 0xa8:return 4;case 0x131:return 14;case 0x100:return 4;case 0x109:return 8;case 0xc2:case 0xc3:case 0xea:return 5;case 0xc4:return 9;case 0xc5:case 0xc6:case 0xc7:return 1;case 0xb0:case 0xb1:return 1;case 0xb4:return 8;case 0x62:case 0x135:return 20;case 0x155:return 8;case 0x120:case 0x121:case 0x122:case 0x180:return 4;
     case 0x50:case 0x54:case 0x55:case 0xf2:case 0x104:case 0x105:return 12;case 0x57:return 16;
     case 0x51:case 0x52:case 0x58:case 0x5a:case 0x5f:case 0x72:case 0xb5:case 0xf6:case 0x173:return 8;
     case 0x53:case 0x56:case 0x59:case 0x5b:case 0x5c:case 0x5d:case 0x5e:return 4;
@@ -75,7 +75,7 @@ detail::ScriptFlowBinding detail::script_flow_binding(std::uint32_t opcode,Dispa
     case 3:binding.flow=ScriptFlow::skip;break;
     case 4:binding.flow=ScriptFlow::delay;break;
     case 8:case 0x14:case 0x17:case 0x34:case 0x47:case 0x48:case 0x49:case 0x4d:
-    case 0xb7:case 0xb8:case 0xc2:case 0xc3:case 0xe3:case 0xe6:case 0xe9:
+    case 0xb7:case 0xb8:case 0xc2:case 0xc3:case 0xe3:case 0xe6:case 0xe9:case 0xea:
     case 0xec:case 0xed:case 0xef:case 0x113:case 0x155:case 0x180:
         binding.flow=ScriptFlow::if_test;break;
     case 0x36:binding.flow=ScriptFlow::if_test_without_open;break;
@@ -110,6 +110,12 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
             if(!noop&&(op==0xe8||op==0xe9)&&word(b.data()+at+4)>=2)throw std::invalid_argument("Native session counter profile");
             low_actor_population_|=!noop&&(op==0x38||op==0x39);
             full_actor_population_|=!noop&&op==0x173;
+            actor_roster_|=!noop&&op==0xea;
+            if(!noop&&(op==0x120||op==0x121)){
+                const auto index=std::bit_cast<std::int32_t>(word(b.data()+at+4));
+                if(index < -31 || index >= std::int32_t(AuxiliaryScene::timer_count))
+                    throw std::invalid_argument("Native auxiliary timer index profile");
+            }
             if(!noop&&op==0xf2){
                 using gameplay_collision::delivery::RoomCounters;
                 if(word(b.data()+at+4)>=RoomCounters::rooms||word(b.data()+at+8)>=RoomCounters::edges)
@@ -160,6 +166,9 @@ bool Program::admits_inventory_grants(const gameplay_world::World* world,const S
         (world&&resources&&templates&&(!low_actor_population_||actor_inventory_population_ready(*world))&&
          (!full_actor_population_||actor_inventory_population_ready(*world,true)));
 }
+bool Program::admits_actor_roster(const gameplay_world::World* world)const noexcept {
+    return !actor_roster_ || (world && world->actor_roster_ready());
+}
 std::optional<Record> Program::record(Position p)const noexcept{
     if(p.block>=blocks_.size())return{};
     const auto& indices=boundaries_[p.block];if(!std::binary_search(indices.begin(),indices.end(),p.offset))return{};
@@ -187,7 +196,8 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     for(std::size_t i=0;i<out.size();++i)if(control_command(std::uint32_t(i)))out[i]={true,false,false,false,false,false,false,false,false,true};
     for(const auto i:{0x70,0x71})out[i]={true,false,false,false,false,false,false,false,false,false,true};
     for(const auto i:{0x104,0x105})out[i]={true,false,false,false,false,false,false,false,false,true};
-    for(const auto i:{0x5a,0x65,0x68,0x69,0x6a,0xf2,0x135,0x155,0x180}){out[i].native_algorithm=true;out[i].world_required=true;}
+    for(const auto i:{0x5a,0x62,0x65,0x68,0x69,0x6a,0xea,0xf2,0x120,0x121,0x122,0x135,0x155,0x180}){out[i].native_algorithm=true;out[i].world_required=true;}
+    out[0x62].selected_actor_required=true;
     out[0x135].scene_controls_required=true;out[0x135].action_choices_required=true;
     out[0x135].selected_actor_required=true;out[0x155].selected_actor_required=true;
     for(const auto i:{0xb0,0xb1,0xb4}){out[i].native_algorithm=true;out[i].models_required=true;}
@@ -266,6 +276,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
     if(c.program->needs_world()&&(!providers.world||providers.world->closed()||providers.world->selected_actor!=context.selected_actor))return{Status::provider_unavailable,0,{},0};
     if(!c.program->admits_room_counters(providers.world))return{Status::provider_unavailable,0,{},0};
     if(!c.program->admits_inventory_grants(providers.world,providers.scene_resources,providers.resource_templates))return{Status::provider_unavailable,0,{},0};
+    if(!c.program->admits_actor_roster(providers.world))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_selected_actor()&&!providers.world->primary(context.selected_actor))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_action_choices()&&!providers.action_choices)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_scenario()&&!providers.world->scenario)return{Status::provider_unavailable,0,{},0};
@@ -482,6 +493,29 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
         case 0xe9:{++c.condition;const auto matches=providers.session_counters->consume(offline?context.selected_actor:0,value(0),value(4)!=0);
             if(!matches)return result(Status::provider_unavailable);
             if(!*matches){const auto status=scan(true);if(status!=Status::completed)return result(status);flow=2;}break;}
+        case 0xea:{
+            ++c.condition;
+            const auto present=providers.world->contains_character(std::to_integer<std::uint8_t>(payload[0]));
+            if(!present)return result(Status::provider_unavailable);
+            const auto wanted=std::to_integer<std::uint8_t>(payload[4]);
+            if(wanted<=1 && *present!=(wanted==1)){
+                const auto status=scan(true);if(status!=Status::completed)return result(status);flow=2;
+            }
+            break;
+        }
+        case 0x62:{
+            std::array<std::uint16_t,5> arguments;
+            for(std::size_t i=0;i<arguments.size();++i)arguments[i]=std::uint16_t(value(4*i));
+            if(!queue_cutscene(*providers.world,arguments,providers.forced_terminal))return result(Status::provider_unavailable);
+            break;
+        }
+        case 0x120:case 0x121:
+            if(!providers.world->session().auxiliary_scene.set_timer(std::bit_cast<std::int32_t>(value(0)),opcode==0x120))
+                return result(Status::provider_unavailable);
+            break;
+        case 0x122:
+            providers.world->session().auxiliary_scene.select(value(0));
+            break;
         case 0x5a:if(providers.world->closed()||!providers.world->session().room_variants.store(value(0),value(4)))return result(Status::provider_unavailable);break;
         case 0x44:if(value(0)<128&&!providers.flags->write(FlagBank::bounded_byte,value(0),true))return result(Status::provider_unavailable);break;
         case 0x40:case 0x41:case 0x42:case 0x43:

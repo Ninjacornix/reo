@@ -35,7 +35,11 @@ Status Owner::bind_scenario_scripts(const scenario::content::ScriptBank& bank,st
     if (bank.format() != BankFormat::scenario_evb || policy_row >= RoomCounterPolicy::rows)
         return Status::script_failure;
     std::optional<RoomCounterPolicy::ScenarioRows> rows;
-    try { rows = scenario::content::import_room_counter_rows(bank); }
+    std::optional<scenario::AuxiliaryRoomRows> auxiliary_rows;
+    try {
+        rows = scenario::content::import_room_counter_rows(bank);
+        auxiliary_rows = scenario::AuxiliaryRoomRows::import(bank);
+    }
     catch (const std::invalid_argument&) { return Status::script_failure; }
     const auto script = scenario::content::admit_script_program(bank,dispatch_profile(world_));
     if (script.program && script.program->needs_scenario_counter_policy() && !rows)
@@ -44,6 +48,7 @@ Status Owner::bind_scenario_scripts(const scenario::content::ScriptBank& bank,st
     if (status != Status::completed) return status;
     // The row was checked and the channel swap ran synchronously on this owner.
     (void)world_.session().room_contacts.initialize_counters(policy_row,rows);
+    world_.session().auxiliary_scene.bind(std::move(auxiliary_rows));
     (void)scripts_.restore_counters({});
     return Status::completed;
 }

@@ -90,6 +90,19 @@ actors::EntityId World::identity_of(const Actor& actor)const noexcept{
 std::shared_ptr<Actor> World::primary(std::size_t index)const noexcept{
     return index<primary_.size()?resolve(primary_[index]):nullptr;
 }
+bool World::actor_roster_ready()const noexcept {
+    const auto population = session_->primary_population;
+    if (closed_ || !population || *population > primary_capacity) return false;
+    for (std::size_t index=0; index<*population; ++index)
+        if (!primary(index)) return false;
+    return true;
+}
+std::optional<bool> World::contains_character(std::uint8_t character)const noexcept {
+    if (!actor_roster_ready()) return {};
+    for (std::size_t index=0; index<*session_->primary_population; ++index)
+        if (primary(index)->character == character) return true;
+    return false;
+}
 actors::EntityId World::identity(std::size_t index)const noexcept{
     return index<primary_.size()?primary_[index]:actors::EntityId{};
 }

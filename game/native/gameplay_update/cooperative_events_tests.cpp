@@ -135,7 +135,7 @@ void check_content_script_binding(){
     const auto put=[](std::vector<std::byte>& data,std::size_t at,std::uint32_t word){
         for(unsigned byte=0;byte<4;++byte)data.at(at+byte)=std::byte((word>>(8*byte))&255);
     };
-    auto scenario=std::make_shared<std::vector<std::byte>>(448);
+    auto scenario=std::make_shared<std::vector<std::byte>>(512);
     put(*scenario,0,128);
     put(*scenario,128,1);
     put(*scenario,132,0x020000f2);
@@ -150,9 +150,23 @@ void check_content_script_binding(){
     put(*scenario,0x34,192);
     put(*scenario,192+2*64,0x1234fedcu);
     check(load_scenario(4)==u::Status::script_failure&&!owner.scripts().channels()[0].program);
+    put(*scenario,0x60,492);
+    put(*scenario,492,484);
+    put(*scenario,496,488);
+    put(*scenario,500,UINT32_MAX);
+    (*scenario)[490]=std::byte{37};
     check(owner.scripts().restore_counters({1,2,3,4})==s::Status::completed);
     check(load_scenario(2)==u::Status::completed&&owner.scripts().counters()==std::array<std::uint32_t,4>{});
     check(owner.scripts().channels()[0].current==s::Position{0,0}&&!owner.scripts().channels()[4].program);
+    auto& auxiliary=world.session().auxiliary_scene;
+    auxiliary.select(1);
+    check(auxiliary.index(2)==37);
+    const auto previous_scenario=owner.scripts().channels()[0].program;
+    auto malformed=std::make_shared<std::vector<std::byte>>(*scenario);
+    put(*malformed,492,256);
+    check(owner.bind_scenario_scripts(content::ScriptBank(malformed,content::BankFormat::scenario_evb),2)==u::Status::script_failure);
+    check(owner.scripts().channels()[0].program==previous_scenario);
+    check(auxiliary.index(2)==37);
     auto room=std::make_shared<std::vector<std::byte>>(88);
     put(*room,32,64);
     put(*room,48,80);
@@ -181,11 +195,45 @@ void check_content_script_binding(){
     check(owner.scripts().channels()[3].program->profile()==s::DispatchProfile::offline_actor);
     check(owner.close()==u::Status::completed&&load_room()==u::Status::closed);
 }
+void check_auxiliary_timer_order(){
+    const u::world::Profile profile{{{1,2,4}},1,{16,UINT64_MAX}};
+    u::world::World world(profile,std::make_shared<u::world::Session>());
+    Notifications notifications;
+    u::Owner owner(world,notifications);
+    world.mode=1;
+    world.session().scenario=0;
+    check(owner.initialize_completion_statistics()==e::StatisticsStatus::completed);
+    const auto program=std::make_shared<const s::Program>(
+        std::vector<std::vector<std::byte>>{{std::byte{1},{},{},{},std::byte{0xa},{},{},{}}});
+    check(owner.scripts().install(0,program)==s::Status::completed);
+    check(owner.scripts().install(1,program)==s::Status::completed);
+    auto& auxiliary=world.session().auxiliary_scene;
+    check(auxiliary.set_timer(91,true));
+    struct Workers final : u::Services {
+        std::optional<std::uint32_t> at_sequence,at_occupancy;
+        void run(u::Worker stage,u::Owner& owner) override {
+            auto& auxiliary=owner.world().session().auxiliary_scene;
+            if(stage==u::Worker::sequences)at_sequence=auxiliary.timer(91);
+            if(stage==u::Worker::room_occupancy)at_occupancy=auxiliary.timer(91);
+        }
+    } workers;
+    EmptyActors actors;
+    world.paused=1;
+    check(owner.run_workers(workers,actors).status==u::Status::completed);
+    check(auxiliary.timer(91)==0&&!workers.at_sequence&&!workers.at_occupancy);
+    world.paused=0;
+    check(owner.run_workers(workers,actors).status==u::Status::completed);
+    check(workers.at_sequence==0&&workers.at_occupancy==1&&auxiliary.timer(91)==1);
+    check(auxiliary.set_timer(91,false));
+    check(owner.run_workers(workers,actors).status==u::Status::completed);
+    check(workers.at_sequence==1&&workers.at_occupancy==0&&auxiliary.timer(91)==0);
+}
 int main()try{
     check_actor_status();
     check_automatic_worker();
     check_session_script_binding();
     check_content_script_binding();
+    check_auxiliary_timer_order();
     u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());Notifications notifications;u::Owner owner(world,notifications);check(owner.open());
     world.room=0x1234;check(owner.clock().restore({0,0,0,0},UINT32_MAX)==u::tasks::Status::completed);
     const auto first=owner.record_event(0xabcd0013,0x12345678,0xabcdef90);check(first.status==e::Status::completed);

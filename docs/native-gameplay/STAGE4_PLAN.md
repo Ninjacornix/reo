@@ -3,6 +3,10 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. Put the PC to sleep after Stage 4 passes those checks, as requested.
 
+- [Scenario startup scene state](SCENARIO_SCENE_BOOT.md) supplies the cutscene
+  request producer, roster condition, auxiliary room rows and timers through
+  the Session and update owners. The original comparisons pass. Actual scene
+  playback and the forced terminal effect providers remain open.
 - [Scenario actor inventory grants](SCENARIO_ACTOR_INVENTORY.md) use the same
   canonical Actor inventories, resource pool, and inventory compaction as the
   native World. Both compiler comparisons pass. Live startup still needs to

@@ -156,7 +156,9 @@ private:
             if (record.opcode == 0x113 && read_word(record.payload) >= 4) break;
             if (binding.flow == ScriptFlow::if_test) ++state.condition;
             next.condition = state.condition;
-            if (record.opcode != 0x113 || read_word(record.payload.subspan(8)) < 6)
+            const bool can_fail = (record.opcode != 0x113 || read_word(record.payload.subspan(8)) < 6) &&
+                (record.opcode != 0xea || std::to_integer<std::uint8_t>(record.payload[4]) <= 1);
+            if (can_fail)
                 enqueue(scan(state, true));
             if ((record.opcode == 0x17 && read_word(record.payload.subspan(4)) > 1) ||
                 (record.opcode == 0x180 && read_word(record.payload) > 1)) return;
