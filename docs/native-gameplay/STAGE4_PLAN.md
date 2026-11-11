@@ -132,7 +132,9 @@ verification. The latest user instruction is to keep the PC awake afterward.
   reset before selected retirement, and return followed by canonical
   reinitialization. Both compilers pass64 controlled owned-header compositions
   and96 cleanup guards. Extra bank/object cleanup, sparse primary playback,
-  temporary restore and full entry/update/exit adoption remain open.
+  temporary restore and full entry/update/exit adoption remain open. The current
+  kind3 follow-up also passes772 additional full source applications and48
+  scoped cases; selection and the actual scene caller remain separate work.
 - [Scene motion table cleanup](SCENE_MOTION_TABLE_RELEASE.md) now preserves
   the exact1600-token prefix and composes represented general/body/face cleanup
   with scoped actor reset and canonical return. Both compiler bank/helper and

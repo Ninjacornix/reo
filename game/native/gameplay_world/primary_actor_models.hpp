@@ -83,7 +83,7 @@ public:
     PrimaryActorModels& operator=(const PrimaryActorModels&)=delete;
     std::optional<PrimaryModelRequest> capture(actors::EntityId)const noexcept;
     std::optional<PrimaryModelRequest> capture_release(actors::EntityId)const noexcept;
-    // Kind0 adapter after the scene owner has assigned a real primary ID to
+    // Kind0/3 adapter after the scene owner has assigned a real primary ID to
     // this group. Preparation projects663170's appearance reset without
     // changing the live actor; application commits its prefix and postlude.
     std::optional<PrimaryModelRequest> capture_scene(actors::EntityId,

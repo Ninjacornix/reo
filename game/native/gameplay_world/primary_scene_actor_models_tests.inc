@@ -11,7 +11,7 @@ void owned_scenes(const char* archive,const char* manifest){
             const auto bytes=descriptor->section(descriptor->actor_groups()[group][7]);check(bytes.size()>=36);
             std::uint16_t active,identity;std::int16_t kind,definition;std::uint32_t scale,mask;
             std::memcpy(&active,bytes.data()+2,2);std::memcpy(&kind,bytes.data()+4,2);std::memcpy(&identity,bytes.data()+6,2);std::memcpy(&definition,bytes.data()+10,2);std::memcpy(&scale,bytes.data()+20,4);std::memcpy(&mask,bytes.data()+24,4);
-            if(active==65535||kind!=0)continue;
+            if(active==65535||(kind!=0&&kind!=3))continue;
             // The earlier roster-assignment phase is outside this adapter.
             // Bind one controlled canonical primary; do not claim that header6
             // alone determines the actor chosen by complete5F0DC0.
@@ -34,7 +34,7 @@ void owned_scenes(const char* archive,const char* manifest){
                     const auto expected=std::uint8_t(scale)?g::primary_actor_default(character).scale:g::Position{1,1,1};check(std::memcmp(&actor->model_scale,&expected,sizeof expected)==0);
                     const auto parameters=descriptor->actor_parameters(group);check(prepared->scene_parameters().size()==parameters.size());
                     for(std::size_t i=0;i<parameters.size();++i)check(parameters[i].key==prepared->scene_parameters()[i].key&&parameters[i].value==prepared->scene_parameters()[i].value);
-                    compare_primary_scene(*descriptor,group,*actor,prepared->scene_parameters(),world.room,pause);scene_parameters+=parameters.size();++scene_cases;
+                    compare_primary_scene(*descriptor,group,*actor,prepared->scene_parameters(),world.room,pause);scene_parameters+=parameters.size();++scene_cases;if(kind==3)++scene_kind_three_cases;
                 }
                 check(models.close()==g::PrimaryModelStatus::completed&&motions.close()==g::HumanoidPublicationStatus::completed&&world.close()==g::Status::completed);
             }

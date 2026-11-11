@@ -52,7 +52,17 @@ The earlier static lifetime audit verifies5ED340/5ED770's reset-before-retiremen
 order. Existing original resource/I/O/renderer ports retain their stated limits;
 the complete5ED770 body is not newly executed as one integrated native exit here.
 
+The kind3 follow-up now admits the same model/scale/visibility/parameter path
+after selection has assigned a primary Actor. The full5F0610 comparisons cover
+all owned admitted kind0/3 headers:772 additional kind3 applications,1968 total.
+Both `primary-scene-kind-three-{llvm,gcc}-v1` cohorts pass150122 checks. Their
+112 scoped compositions include48 kind3 cases,160 cleanup guards and224 actual
+canonical reinitializations. The same current scope, header-class, fresh-only,
+capacity and reset/release rules apply. Selection remains a separate producer;
+the fixture supplies controlled valid bindings. The follow-up seal is
+`native_primary_scene_kind_three_qualification_v1.json`.
+
 Remaining cinematic work includes the extra5ED340 bank/object cleanup, all sixteen
-category10 objects, sparse primary retargeting, kind3 and other scene consumers,
+category10 objects, sparse primary retargeting and other scene consumers,
 restore ownership and the real entry/update/exit caller. Installed gameplay, save,
 co-op and shutdown acceptance remain open.

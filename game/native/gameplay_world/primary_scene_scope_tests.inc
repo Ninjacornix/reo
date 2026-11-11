@@ -3,8 +3,8 @@ void scene_scopes(const char* archive,const char* manifest){
     namespace s=reo::native::gameplay_scenario;
     auto source=std::make_shared<reo::assets::Source>(archive);g::ActorAssets assets(source);g::HumanoidMotionAssets content(source);s::content::ScenarioArchive input(source);
     const auto base=content.ensure_base(content.initial_banks(false));const std::array<std::uint8_t,8> characters{0,1,2,3,4,5,6,7};const auto banks=content.overlay(1,characters,*base);
-    struct Case {std::shared_ptr<const s::CutsceneDescriptor> descriptor;std::size_t group;unsigned character,model_class;};
-    std::vector<Case> cases;std::array<unsigned,2> counts{};std::ifstream rows(manifest);check(bool(rows));unsigned scenario,sequence,variant,suffix,version;
+    struct Case {std::shared_ptr<const s::CutsceneDescriptor> descriptor;std::size_t group;unsigned character,model_class,kind;};
+    std::vector<Case> cases;std::array<std::array<unsigned,2>,2> counts{};std::ifstream rows(manifest);check(bool(rows));unsigned scenario,sequence,variant,suffix,version;
     while(rows>>scenario>>sequence>>variant>>suffix>>version){
         if(version!=950)continue;
         const auto descriptor=s::read_cutscene_descriptor(input,std::uint16_t(scenario),std::uint8_t(sequence),std::uint8_t(variant),std::uint8_t(suffix));check(bool(descriptor));
@@ -12,11 +12,11 @@ void scene_scopes(const char* archive,const char* manifest){
             const auto header=descriptor->section(descriptor->actor_groups()[group][7]);std::uint16_t active,identity;std::int16_t kind,definition;
             std::memcpy(&active,header.data()+2,2);std::memcpy(&kind,header.data()+4,2);std::memcpy(&identity,header.data()+6,2);std::memcpy(&definition,header.data()+10,2);
             const auto model_class=unsigned(std::uint8_t(definition^1));
-            if(active==65535||kind!=0||model_class>1||counts[model_class]>=8)continue;
-            cases.push_back({descriptor,group,identity<8?unsigned(identity):0u,model_class});++counts[model_class];
+            if(active==65535||(kind!=0&&kind!=3)||model_class>1||counts[kind==3][model_class]>=8)continue;
+            cases.push_back({descriptor,group,identity<8?unsigned(identity):0u,model_class,unsigned(kind)});++counts[kind==3][model_class];
         }
     }
-    check(rows.eof()&&counts[0]==8&&counts[1]==8);
+    check(rows.eof()&&counts[0][0]==8&&counts[0][1]==8&&counts[1][0]>0);
     for(const auto& item:cases)for(unsigned source_slot:{0u,5u})for(unsigned paused:{0u,1u}){
         g::World world(profile(),std::make_shared<g::Session>());world.room=0x1234;world.paused=std::int8_t(paused);world.session().asset_loading_mode=1;
         g::HumanoidMotionOwner motions(world);check(motions.publish(banks).status==g::HumanoidPublicationStatus::completed);g::PrimaryActorModels owner(world,motions);
@@ -95,6 +95,7 @@ void scene_scopes(const char* archive,const char* manifest){
             check(owner.apply(*reinitialize,{}).status==g::PrimaryModelStatus::completed&&actor->model&&actor->primary_state);++scene_scope_reinitializations;
         }
         check(owner.close()==g::PrimaryModelStatus::completed&&world.close()==g::Status::completed);
+        if(item.kind==3)++scene_scope_kind_three;
     }
     const auto& sample=cases.front();
     // Insufficient spare generations cannot reset or partially retire the old

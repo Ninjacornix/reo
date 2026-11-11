@@ -64,7 +64,7 @@ std::optional<PrimaryModelRequest> PrimaryActorModels::capture_scene(actors::Ent
     const auto bytes=descriptor.section(descriptor.actor_groups()[group][7]);
     if(bytes.size()<36)throw std::invalid_argument("Native primary scene header unavailable");
     std::uint16_t active;std::int16_t kind;std::memcpy(&active,bytes.data()+2,2);std::memcpy(&kind,bytes.data()+4,2);
-    if(active==65535||kind!=0)return{};
+    if(active==65535||(kind!=0&&kind!=3))return{};
     auto request=capture(std::move(id),false,false,temporary);if(!request)return{};
     if(temporary){std::int16_t definition;std::memcpy(&definition,bytes.data()+10,2);if(std::uint8_t(definition^1)!=request->model_class_)return{};}
     const auto actor=world_.resolve(request->actor_);if(!actor||actor->category!=0)return{};
