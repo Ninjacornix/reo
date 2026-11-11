@@ -75,6 +75,7 @@ void body_equal(const g::Actor& value, const std::vector<std::uint8_t>& ram) {
           "actual current/previous motion classification");
     ++profile_cases;
 }
+#include "scripted_motion_tests.inc"
 int main(int argc, char** argv) try {
     check(argc == 4, "owned World animation inputs required");
     const auto old = _mm_getcsr();
@@ -89,6 +90,7 @@ int main(int argc, char** argv) try {
     owned_constants(ram.data());
     put(ram.data(), 0x294e00, t::identity());
     const auto skeletons = load(argv[2]), raw_banks = load(argv[3]);
+    scripted_motion_tests(raw_banks,skeletons,ram);
     std::shared_ptr<const a::Skeleton> skeleton;
     std::vector<std::byte> raw_skeleton;
     for (const auto& raw : skeletons) {
@@ -678,6 +680,10 @@ int main(int argc, char** argv) try {
               << ",\"selection_cases\":" << selection_cases
               << ",\"dual_application_cases\":" << dual_cases
               << ",\"metadata_observations\":" << profile_cases
+              << ",\"scripted_motion_cases\":" << scripted_motion_cases
+              << ",\"scripted_motion_ticks\":" << scripted_motion_ticks
+              << ",\"scripted_motion_refusals\":" << scripted_motion_refusals
+              << ",\"scripted_positive_tracks\":" << scripted_positive_tracks
               << ",\"required_prelude_cases\":" << prelude_native
               << ",\"refusal_cases\":" << world_refusals << ",\"joint_cases\":" << joint_cases
               << ",\"original_calls\":" << helper_calls << ",\"game_run\":false}\n";

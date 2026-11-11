@@ -32,6 +32,9 @@ ScriptedConstructed ScriptedActorConstruction::create(const PreparedScriptedActo
         // already failed prepare, preserving the current World and task pool.
         auto model=prepared.asset_?prepared.asset_->make_instance():nullptr;
         auto animation=model?std::make_shared<animation::Playback>(model):nullptr;
+        // Fresh6BA300 actors have zero524 and three known null bank bindings.
+        // A later scene motion owner supplies their actual resources/count.
+        if(animation){animation->channel_count=0;animation->resources_known=true;}
         world::ScriptedActorState state;
         state.model_group=prepared.group_;state.color.fill(255);state.alpha_mode=-1;state.alpha=255;
         state.part_visibility.assign(prepared.asset_?prepared.asset_->part_count():0,1);

@@ -5,6 +5,7 @@ target_sources(reo_native_gameplay_world PRIVATE target_metrics.cpp)
 target_sources(reo_native_gameplay_world PRIVATE actor_placements.cpp)
 target_sources(reo_native_gameplay_world PRIVATE launch_roster.cpp)
 target_sources(reo_native_gameplay_world PRIVATE enemy_initialization.cpp)
+  target_sources(reo_native_gameplay_world PRIVATE scripted_motion.cpp)
 
 add_library(reo_native_actor_assets STATIC actor_assets.cpp actor_model_binding.cpp model_parts.cpp)
 target_compile_features(reo_native_actor_assets PUBLIC cxx_std_20)

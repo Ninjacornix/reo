@@ -14,6 +14,9 @@ struct ActorRenderRequest {
     std::int16_t shadow_asset{};
 };
 struct ScriptedActorState {
+    std::int8_t motion_rate_mode{},motion_selector{}; // B40/B43
+    float motion_blend_duration{}; // B44, duration rather than initial frame
+    std::int16_t track_two_motion{}; // B7C
     std::uint8_t model_group{}; // source31, logical resource group identity
     std::array<std::uint8_t,4> color{}; // CCC..CCF, distinct from primary fades
     std::int8_t alpha_mode{}; // CA0

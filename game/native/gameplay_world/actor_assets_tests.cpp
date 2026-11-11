@@ -156,6 +156,7 @@ void constructors() {
     check(first.status==u::ScriptedConstructionStatus::completed&&second.status==u::ScriptedConstructionStatus::completed);
     const auto a=owner.resolve(first.id),b=owner.resolve(second.id);
     check(a->model&&b->model&&a->model!=b->model&&a->animation&&a->animation!=b->animation);
+    check(a->animation->channel_count==0&&a->animation->resources_known&&!a->animation->resources[0]&&!a->animation->resources[1]&&!a->animation->resources[2]);
     check(a->model_asset==prepared->asset()&&a->scripted&&a->scripted->model_group==0x34);
     check(a->scripted->part_visibility==std::vector<std::uint8_t>({1,1,1}));
     check(a->scripted->color==std::array<std::uint8_t,4>{255,255,255,255}&&a->scripted->alpha_mode==-1&&a->scripted->alpha==255);

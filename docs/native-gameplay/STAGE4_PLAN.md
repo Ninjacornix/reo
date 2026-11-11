@@ -3,18 +3,23 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to keep the PC awake afterward.
 
+- [Native scripted actor motion](SCRIPTED_ACTOR_MOTION.md) now consumes actual
+  scene banks and native poses through the canonical linked Actor. Both
+  compiler World comparisons, owned construction and five parent tests pass.
+  Outer cutscene movement, scheduling and game installation remain open.
 - [Whole-model scripted playback](WHOLE_MODEL_PLAYBACK.md) now has native
   configuration, root-motion advancement and full owned/synthetic comparisons
   on both compilers. Caller tracing corrects B44 to blend duration. Actual
-  scripted actor consumption and game installation remain open.
+  outer cutscene scheduling and game installation remain open.
 - [Native scripted actor construction](SCRIPTED_ACTOR_CONSTRUCTION.md) now
   composes prepared models, canonical actor state and material tasks through
   the existing owners. Both compiler comparisons,330 owned constructions and
-  five parent tests pass. Scripted motion and game installation remain open.
+  five parent tests pass. Scene orchestration and game installation remain open.
 - [Native material animation](MATERIAL_ANIMATION.md) now runs the complete
   callback through the actual Update Owner and shared32-entry scheduler.
   Both compiler comparisons and four parent tests pass, including pause,
-  capacity, stale actors and closure. Constructor adoption remains open.
+  capacity, stale actors and closure. Native scripted construction adopts it;
+  scene orchestration and game installation remain open.
 - [Native actor model binding](ACTOR_MODEL_BINDING.md) publishes prepared
   assets through canonical Actor ownership, with fresh mutable instances and
   generation-safe retirement. Both compiler comparisons and five parent tests
