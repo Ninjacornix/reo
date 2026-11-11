@@ -11,6 +11,15 @@ namespace reo::native::gameplay_scenario {
 class SceneResources;
 class ResourceTemplates;
 
+struct MissingCharacters {
+    std::array<std::uint8_t,8> values{};
+    std::optional<std::uint16_t> resolve(std::uint32_t id) const noexcept {
+        if (id<200) return std::uint16_t(id);
+        if (id-200>=values.size()) return {};
+        return std::uint16_t(200+values[id-200]);
+    }
+};
+
 // Persistent scenario descriptors have a lifetime independent of live actors.
 // Parameter names retain their literal role where the content meaning is open.
 struct NpcDescriptor {
@@ -37,12 +46,12 @@ public:
     // Complete1D45F0 decoding after successful file acquisition. Bounded input
     // is staged so malformed content preserves the previous descriptors.
     std::optional<std::size_t> import(std::span<const std::byte>) noexcept;
-    void enable(gameplay_world::Session&,std::int32_t template_id,
+    bool enable(gameplay_world::Session&,std::int32_t template_id,
                 std::array<std::uint32_t,3> parameters) noexcept; //684010
     void position(std::int32_t template_id,std::uint8_t room,
                   transform_math::Vector,std::uint16_t yaw) noexcept; //6841E0
     void health_flags(std::int32_t template_id,std::int32_t health,std::uint32_t mask) noexcept; //6842B0
-    void disable(std::int32_t template_id) noexcept; //684450
+    std::optional<std::size_t> disable(std::int32_t template_id) noexcept; //684450
     bool grant(SceneResources&,const ResourceTemplates&,std::int16_t template_id,
                std::int16_t content,std::int16_t quantity) noexcept; //68DBA0
     bool select(SceneResources&,std::int8_t template_id,std::int16_t content) noexcept; //68DF10

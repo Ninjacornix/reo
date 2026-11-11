@@ -250,6 +250,7 @@ int main(int argc,char** argv)try{
     npc_import_tests();
     npc_primitive_tests();
     npc_inventory_vm_tests();
+    npc_command_vm_tests();
     {std::vector<std::byte> b;emit(b,1);const auto a=emit(b,0xa);run({b},{0,a},4);}
     for(unsigned delay:{0u,1u,2u,7u}){std::vector<std::byte> a,b;emit(a,4,{delay});emit(a,0xd);emit(b,0xa);run({a,b},{1,0},delay+3,delay%6);}
     {std::vector<std::byte> b;emit(b,3,{2});emit(b,0xe5);const auto end=emit(b,0xa);run({b},{0,end},2);}
@@ -404,5 +405,6 @@ int main(int argc,char** argv)try{
              <<",\"launch_roster_cases\":"<<launch_roster_cases<<",\"launch_roster_refusals\":"<<launch_roster_refusals
              <<",\"npc_imports\":"<<npc_imports<<",\"npc_import_refusals\":"<<npc_import_refusals
              <<",\"npc_primitive_calls\":"<<npc_primitive_calls<<",\"npc_inventory_dispatches\":"<<npc_inventory_dispatches
+             <<",\"npc_command_dispatches\":"<<npc_command_dispatches<<",\"npc_command_refusals\":"<<npc_command_refusals
              <<",\"original_numeric_handler_invocations\":65536,\"game_launched\":false}\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

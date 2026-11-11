@@ -293,6 +293,56 @@ void check_launch_roster_initialization(){
     }
     check(owner.close()==u::Status::completed&&owner.initialize_launch_roster(launch)==u::Status::closed);
 }
+void check_npc_startup_commands(){
+    u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());
+    Notifications notifications;
+    u::Owner owner(world,notifications);
+    world.mode=1;
+    world.session().scenario=2;
+    check(owner.initialize_completion_statistics()==e::StatisticsStatus::completed);
+    auto& descriptor=*world.session().npc_descriptors.record(0);
+    descriptor.template_id=0x64;
+    descriptor.control_mode=1;
+    world.session().missing_characters.values[0]=3;
+    auto& aliased=*world.session().npc_descriptors.record(1);
+    aliased.template_id=203;
+    aliased.flags=0x11;
+    check(world.session().ai_control_requests.register_control(1,1)==reo::native::gameplay_ai::RegistrationStatus::created);
+    std::vector<std::byte> script;
+    const auto command=[&](std::uint32_t opcode,std::initializer_list<std::uint32_t> payload) {
+        unsigned exponent=0;
+        while((4u<<exponent)<4+4*payload.size())++exponent;
+        const auto begin=script.size();
+        const auto put=[&](std::uint32_t value) {
+            for(unsigned byte=0;byte<4;++byte)script.push_back(std::byte((value>>(8*byte))&255));
+        };
+        put(opcode|(exponent<<24));
+        for(const auto value:payload)put(value);
+        script.resize(begin+(4u<<exponent));
+    };
+    command(1,{});
+    command(0x89,{0x64,7,10,0xffffffecu,30,0xabcd});
+    command(0x8a,{0x64,500});
+    command(0x8b,{0x64});
+    command(0x8c,{0x64,0});
+    command(0x88,{0x64,7,8,9});
+    command(0x81,{200});
+    command(0xa,{});
+    check(owner.scripts().install(0,std::make_shared<const s::Program>(std::vector<std::vector<std::byte>>{script}))==s::Status::completed);
+    const auto idle=std::make_shared<const s::Program>(
+        std::vector<std::vector<std::byte>>{{std::byte{1},{},{},{},std::byte{0xa},{},{},{}}});
+    check(owner.scripts().install(1,idle)==s::Status::completed);
+    Remaining workers;
+    EmptyActors actors;
+    check(owner.run_workers(workers,actors).status==u::Status::completed);
+    check(descriptor.room==7&&descriptor.yaw==0xabcd&&descriptor.health==500);
+    check(descriptor.position.x==10&&descriptor.position.y==-20&&descriptor.position.z==30);
+    check(descriptor.flags==0x19&&descriptor.behavior_flags==0x10);
+    check(descriptor.control_parameters==std::array<std::uint32_t,3>{7,8,9});
+    check(world.session().ai_control_requests.registered(1,0));
+    check(!world.session().ai_control_requests.registered(1,1)&&aliased.flags==0x10);
+    check(owner.close()==u::Status::completed);
+}
 int main()try{
     check_actor_status();
     check_automatic_worker();
@@ -301,6 +351,7 @@ int main()try{
     check_auxiliary_timer_order();
     check_transition_inputs();
     check_launch_roster_initialization();
+    check_npc_startup_commands();
     u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());Notifications notifications;u::Owner owner(world,notifications);check(owner.open());
     world.room=0x1234;check(owner.clock().restore({0,0,0,0},UINT32_MAX)==u::tasks::Status::completed);
     const auto first=owner.record_event(0xabcd0013,0x12345678,0xabcdef90);check(first.status==e::Status::completed);

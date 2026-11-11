@@ -31,6 +31,14 @@ std::uint32_t word(const std::byte* p)noexcept{
         (std::to_integer<std::uint32_t>(p[2])<<16)|(std::to_integer<std::uint32_t>(p[3])<<24);
 }
 std::size_t payload_minimum(std::uint32_t op)noexcept{
+    switch(op) {
+    case 0x80:case 0x81:return 4;
+    case 0x88:return 16;
+    case 0x89:return 22;
+    case 0x8a:case 0x8c:return 8;
+    case 0x8b:return 2;
+    default:break;
+    }
     switch(op){case 0xa8:return 4;case 0x131:return 14;case 0x100:return 4;case 0x109:return 8;case 0xc2:case 0xc3:case 0xea:return 5;case 0xc4:return 9;case 0xc5:case 0xc6:case 0xc7:return 1;case 0xb0:case 0xb1:return 1;case 0xb4:return 8;case 0x62:case 0x135:return 20;case 0x155:return 8;case 0x120:case 0x121:case 0x122:case 0x180:return 4;
     case 0x50:case 0x54:case 0x55:case 0xf2:case 0x104:case 0x105:return 12;case 0x57:return 16;
     case 0x51:case 0x52:case 0x58:case 0x5a:case 0x5f:case 0x72:case 0xb5:case 0xf6:case 0x173:return 8;
@@ -111,6 +119,13 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
             low_actor_population_|=!noop&&(op==0x38||op==0x39);
             full_actor_population_|=!noop&&op==0x173;
             npc_inventory_grants_|=!noop&&op==0x3a;
+            if (!noop && (op==0x80 || op==0x81 || op==0x88 || op==0x89 ||
+                          op==0x8a || op==0x8b || op==0x8c)) {
+                const bool full=op==0x80 || op==0x81 || op==0x88;
+                const auto id=full ? word(b.data()+at+4) :
+                    std::to_integer<std::uint32_t>(b[at+4]) | std::to_integer<std::uint32_t>(b[at+5])<<8;
+                if (id>=208) throw std::invalid_argument("Native NPC alias index profile");
+            }
             actor_roster_|=!noop&&op==0xea;
             forced_terminal_|=!noop&&op==0x61;
             if(!noop&&(op==0x85||op==0x87)&&word(b.data()+at+4)>=RoomActorAssets::room_count)
@@ -195,6 +210,10 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     for (const auto i:{0x3a,0x3d}) {
         out[i].native_algorithm=true;
         out[i].scene_resources_required=true;
+        out[i].world_required=true;
+    }
+    for (const auto i:{0x80,0x81,0x88,0x89,0x8a,0x8b,0x8c}) {
+        out[i].native_algorithm=true;
         out[i].world_required=true;
     }
     for(const auto i:{0xe8,0xe9})out[i]={true,false,false,false,false,true};
@@ -474,6 +493,40 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
                 std::bit_cast<std::int8_t>(std::to_integer<std::uint8_t>(payload[0])),signed_half(4)))
                 return result(Status::provider_unavailable);
             break;
+        case 0x80:case 0x88: {
+            auto& session=providers.world->session();
+            const auto id=session.missing_characters.resolve(value(0));
+            if (!id) return result(Status::invalid_program);
+            const auto parameters=opcode==0x80 ? std::array<std::uint32_t,3>{} :
+                std::array<std::uint32_t,3>{value(4),value(8),value(12)};
+            if (!session.npc_descriptors.enable(session,*id,parameters)) return result(Status::provider_unavailable);
+            break;
+        }
+        case 0x81: {
+            auto& session=providers.world->session();
+            const auto id=session.missing_characters.resolve(value(0));
+            if (!id) return result(Status::invalid_program);
+            const auto index=session.npc_descriptors.disable(*id);
+            if (index) (void)session.ai_control_requests.unregister_control(1,std::uint32_t(*index));
+            break;
+        }
+        case 0x89:case 0x8a:case 0x8b:case 0x8c: {
+            auto& session=providers.world->session();
+            const auto id=session.missing_characters.resolve(std::uint16_t(value(0)));
+            if (!id) return result(Status::invalid_program);
+            switch (opcode) {
+            case 0x89:
+                session.npc_descriptors.position(*id,std::uint8_t(value(4)),
+                    {float(std::bit_cast<std::int32_t>(value(8))),float(std::bit_cast<std::int32_t>(value(12))),
+                     float(std::bit_cast<std::int32_t>(value(16)))},std::uint16_t(value(20)));
+                break;
+            case 0x8a:session.npc_descriptors.health_flags(*id,std::bit_cast<std::int32_t>(value(4)),0x40000000u);break;
+            case 0x8b:session.npc_descriptors.health_flags(*id,-1,0x40000008u);break;
+            case 0x8c:session.npc_descriptors.health_flags(*id,-1,value(4)?0x80000010u:0x40000010u);break;
+            default:break;
+            }
+            break;
+        }
         case 0x173:
             if(!grant_special_inventory(*providers.world,*providers.scene_resources,*providers.resource_templates,
                 std::uint16_t(value(0)),std::bit_cast<std::int32_t>(value(4))))return result(Status::provider_unavailable);

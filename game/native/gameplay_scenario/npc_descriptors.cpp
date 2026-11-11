@@ -77,20 +77,22 @@ std::optional<std::size_t> NpcDescriptors::import(std::span<const std::byte> byt
     return written;
 }
 
-void NpcDescriptors::enable(gameplay_world::Session& session,std::int32_t id,
+bool NpcDescriptors::enable(gameplay_world::Session& session,std::int32_t id,
                             std::array<std::uint32_t,3> parameters) noexcept {
     for (std::size_t index=0;index<capacity;++index) {
         auto& descriptor=records_[index];
         const bool eligible=descriptor.random_policy==0 ||
             std::int32_t(descriptor.random_policy)-1==std::int32_t(session.random.request(2)&3u);
         if (id!=descriptor.template_id || !eligible) continue;
+        if (descriptor.control_mode && descriptor.template_id==0x64 && !session.scenario) return false;
         descriptor.flags|=1;
         descriptor.control_parameters=parameters;
         clear_transition(descriptor);
         if (descriptor.control_mode && !(descriptor.template_id==0x64 && session.scenario==1))
             (void)session.ai_control_requests.register_control(1,std::uint32_t(index));
-        return;
+        return true;
     }
+    return true;
 }
 
 void NpcDescriptors::position(std::int32_t id,std::uint8_t room,transform_math::Vector value,
@@ -119,12 +121,14 @@ void NpcDescriptors::health_flags(std::int32_t id,std::int32_t health,std::uint3
     }
 }
 
-void NpcDescriptors::disable(std::int32_t id) noexcept {
-    for (auto& descriptor:records_) {
+std::optional<std::size_t> NpcDescriptors::disable(std::int32_t id) noexcept {
+    for (std::size_t index=0;index<capacity;++index) {
+        auto& descriptor=records_[index];
         if (id!=descriptor.template_id) continue;
         descriptor.flags&=std::uint8_t(~1u);
-        return;
+        return index;
     }
+    return {};
 }
 
 bool NpcDescriptors::grant(SceneResources& resources,const ResourceTemplates& templates,

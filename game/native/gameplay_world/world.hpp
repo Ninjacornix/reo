@@ -156,6 +156,7 @@ struct Session : actors::HitSession {
     gameplay_scenario::AuxiliaryScene auxiliary_scene;
     gameplay_scenario::RoomActorAssets room_actor_assets;
     gameplay_scenario::NpcDescriptors npc_descriptors;
+    gameplay_scenario::MissingCharacters missing_characters;
     std::uint8_t script_room_parameter{}; // original4B9D17; exact downstream use is unresolved
     gameplay_collision::delivery::RoomContacts room_contacts;
     gameplay_session::Random random{};

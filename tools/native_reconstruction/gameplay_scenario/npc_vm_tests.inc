@@ -2,6 +2,7 @@
 
 namespace {
 std::size_t npc_imports{},npc_import_refusals{},npc_primitive_calls{},npc_inventory_dispatches{};
+std::size_t npc_command_dispatches{},npc_command_refusals{};
 
 template<class Visitor> void visit_npc(const vm::NpcDescriptor& descriptor,Visitor visit) {
     visit(0,descriptor.active);visit(1,descriptor.room);visit(2,descriptor.category);visit(3,descriptor.variant);
@@ -60,6 +61,27 @@ void seed_npcs(vm::NpcDescriptors& descriptors,unsigned trial) {
         descriptor.mode_parameter=std::uint8_t(seed>>4);
         descriptor.mode2_value=seed*65537u;
         descriptor.mode2_parameter=seed*65539u;
+    }
+}
+
+void export_npc_controls(const reo::native::gameplay_ai::ControlRequests& controls,std::vector<std::uint8_t>& ram) {
+    for(unsigned index=0;index<64;++index) {
+        const auto& entry=controls.registrations()[index];
+        const auto at=0x744af8+28*index;
+        ram[at]=entry.active;ram[at+1]=entry.kind;ram[at+2]=entry.phase;ram[at+3]=entry.owner_tag;
+        fixture_write(ram.data(),at+4,entry.target);
+        std::memcpy(ram.data()+at+8,entry.payload.data(),4);
+        std::memcpy(ram.data()+at+16,entry.counters.data(),8);
+    }
+}
+void compare_npc_controls(const reo::native::gameplay_ai::ControlRequests& controls,const std::vector<std::uint8_t>& ram) {
+    for(unsigned index=0;index<64;++index) {
+        const auto& entry=controls.registrations()[index];
+        const auto at=0x744af8+28*index;
+        check(entry.active==ram[at]&&entry.kind==ram[at+1]&&entry.phase==ram[at+2]&&entry.owner_tag==ram[at+3]);
+        check(entry.target==fixture_read<std::int16_t>(ram.data(),at+4));
+        check(std::memcmp(entry.payload.data(),ram.data()+at+8,4)==0);
+        check(std::memcmp(entry.counters.data(),ram.data()+at+16,8)==0);
     }
 }
 
@@ -180,7 +202,7 @@ void npc_primitive_tests() {
         const auto id=std::array<std::int32_t,9>{0,0x64,0x1d,127,128,32767,65535,-1,0x10064}[trial%9];
         const std::array<std::uint32_t,3> parameters{trial*65537u,0xffff0000u+trial,trial^0x89abcdefu};
         invoke_npc_original(ram,o2_00684010_0x684010,{std::uint32_t(id),parameters[0],parameters[1],parameters[2]});
-        descriptors.enable(session,id,parameters);
+        check(descriptors.enable(session,id,parameters));
         compare_npcs(descriptors,ram);
         actors.compare_original(ram);
         for(unsigned index=0;index<64;++index) {
@@ -278,6 +300,117 @@ void npc_inventory_vm_tests() {
             check(descriptor->template_index==ram[at+0x2b]);
         }
         ++npc_inventory_dispatches;
+    }
+    assertion_context.clear();
+}
+
+void npc_command_vm_tests() {
+    std::vector<std::uint8_t> ram(0x900000);
+    install_original_tables(ram);
+    vm::FlagState flags;
+    constexpr std::array<std::uint32_t,7> opcodes{0x80,0x81,0x88,0x89,0x8a,0x8b,0x8c};
+    for(unsigned trial=0;trial<3584;++trial) {
+        const auto opcode=opcodes[trial%7];
+        assertion_context="NPC command trial="+std::to_string(trial);
+        const bool offline=(trial&1)!=0;
+        const auto category=(trial/14)%5,relation=(trial/70)%3;
+        ActorFixture actors(trial,0,offline);
+        auto& session=*actors.session;
+        auto& descriptors=session.npc_descriptors;
+        seed_npcs(descriptors,trial);
+        session.scenario=std::uint16_t(trial%3);
+        for(unsigned index=0;index<8;++index)
+            session.missing_characters.values[index]=std::uint8_t(trial/7+index*31);
+        const auto id=std::array<std::uint32_t,16>{0,0x64,0x1d,127,128,199,1,7,200,201,202,203,204,205,206,207}[(trial/7)%16];
+        const auto resolved=session.missing_characters.resolve(id);
+        check(resolved.has_value());
+        descriptors.record(trial%64)->template_id=*resolved;
+        // Registration removal, duplicates, full tables and preserved payloads
+        // all use the same actual Session registration storage.
+        for(unsigned index=0;index<64;++index) {
+            auto& entry=*session.ai_control_requests.registration(index);
+            entry.active=std::uint8_t((trial+index)%5!=0);
+            entry.kind=std::uint8_t(index%3);
+            entry.target=std::int16_t(index);
+            entry.phase=std::uint8_t(index+trial);
+            entry.owner_tag=std::uint8_t(index*7);
+            entry.payload={1,3,5,7};entry.counters={2,4,6,8};
+        }
+        actors.export_original(ram);
+        export_npcs(descriptors,ram);
+        export_npc_controls(session.ai_control_requests,ram);
+        std::memcpy(ram.data()+0x4badb8,session.missing_characters.values.data(),8);
+        fixture_write(ram.data(),0x3243da,*session.scenario);
+        fixture_write(ram.data(),0x75a4b0,category);
+        fixture_write(ram.data(),0x75a4c0,relation);
+        ram[0x3243e8]=1;
+        const bool half_id=opcode>=0x89;
+        const auto encoded_id=half_id ? id|(trial*65521u<<16) : id;
+        const auto argument=std::array{0u,1u,0xffffffffu,0x7fffffffu,0x80000000u}[(trial/112)%5];
+        std::vector<std::byte> script;
+        emit(script,1);
+        if(opcode==0x88)emit(script,opcode,{encoded_id,argument,trial*65537u,trial^0xffffffffu});
+        else if(opcode==0x89)emit(script,opcode,{encoded_id,argument,trial*65521u,0u-trial*65537u,trial*31337u,trial*65519u});
+        else if(opcode==0x8a||opcode==0x8c)emit(script,opcode,{encoded_id,argument});
+        else emit(script,opcode,{encoded_id});
+        emit(script,0xa);
+        std::memcpy(ram.data()+0x10000,script.data(),script.size());
+        fixture_write(ram.data(),0x4bace0,0x10000u);
+        fixture_write(ram.data(),0x4bacf8,0u);
+        fixture_write(ram.data(),0x4bad28,0u);
+        vm::Interpreter native;
+        const auto profile=offline?vm::DispatchProfile::offline_actor:vm::DispatchProfile::ordinary;
+        check(native.install(0,std::make_shared<const vm::Program>(std::vector<std::vector<std::byte>>{script},profile))==vm::Status::completed);
+        vm::Providers providers;
+        providers.world=&actors.world;providers.flags=&flags;providers.canonical_flags=&flags;
+        const vm::TickContext context{true,false,0};
+        if(offline) {
+            original_offline_call(ram,0,false);
+            check(native.tick_offline_channel(0,context,{category,relation,0},providers).status==vm::Status::yielded);
+        } else {
+            invoke_npc_original(ram,o2_0068C660_0x68c660);
+            ++invocations;
+            check(native.tick(0,context,providers).status==vm::Status::yielded);
+        }
+        compare_npcs(descriptors,ram);
+        compare_npc_controls(session.ai_control_requests,ram);
+        actors.compare_original(ram);
+        ++npc_command_dispatches;
+    }
+    for(const auto opcode:opcodes) {
+        for(const auto id:{208u,65535u}) {
+            std::vector<std::byte> script;
+            emit(script,opcode,{id,0,0,0,0,0});
+            bool refused=false;
+            try { (void)vm::Program({script}); }
+            catch(const std::invalid_argument&) { refused=true; }
+            check(refused);
+            ++npc_command_refusals;
+        }
+    }
+    for(const auto opcode:{0x80u,0x81u,0x88u}) {
+        std::vector<std::byte> script;
+        emit(script,opcode,{0x800000c8u,0,0,0});
+        bool refused=false;
+        try { (void)vm::Program({script}); }
+        catch(const std::invalid_argument&) { refused=true; }
+        check(refused);
+        ++npc_command_refusals;
+    }
+    {
+        ActorFixture actors;
+        auto& session=*actors.session;
+        auto& descriptor=*session.npc_descriptors.record(0);
+        descriptor.template_id=0x64;descriptor.control_mode=1;descriptor.flags=0x10;
+        descriptor.control_parameters={1,2,3};
+        session.scenario.reset();
+        const auto baseline=session.npc_descriptors;
+        check(!session.npc_descriptors.enable(session,0x64,{4,5,6}));
+        export_npcs(baseline,ram);
+        compare_npcs(session.npc_descriptors,ram);
+        ++npc_command_refusals;
+        check(!session.missing_characters.resolve(0xffffffffu));
+        ++npc_command_refusals;
     }
     assertion_context.clear();
 }

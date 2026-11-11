@@ -7,6 +7,10 @@ verification. Put the PC to sleep after Stage 4 passes those checks, as requeste
   actual native inventory, event, pose and local-player message owners through
   script commands 61 and 62. Both compiler suites and parent tests pass. The
   actual UI close provider, transport and game installation remain open.
+- [Native NPC startup commands](SCENARIO_NPC_COMMANDS.md) enable, disable, place
+  and modify the shared descriptors through the real registration owner. Both
+  compiler comparisons and the actual Update worker test pass. Enemy ownership,
+  alias production and live construction remain open.
 - [Native scenario NPC descriptors](SCENARIO_NPC_DESCRIPTORS.md) import all five
   owned NPC files and supply canonical descriptor primitives and startup
   inventory commands. Both compiler comparisons, direct archive loading and
