@@ -1,0 +1,98 @@
+{
+  "schema": 1,
+  "status": "qualified_partial_native_npc_actor_construction",
+  "game_launched": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_world/CMakeLists.txt": "5a0033e9ae267dda19180f3a421e1479ceeb1bef79d6c166a55d7b5d89efdf21",
+    "game/native/gameplay_world/world.hpp": "61d2f1970ae8074ab6806d431d23f12b569a4d1d66829d67d9218a640928d71a",
+    "game/native/gameplay_world/npc_actor_state.hpp": "c1c77fd2e4f8dac6e8c215dd15d140654dbddce7ea52356b3e6edd19792af92b",
+    "game/native/gameplay_world/npc_actor_construction.hpp": "f6192cc7c02969f485c139dca5921a77707e582b2d44afa5fd654b4e0a601577",
+    "game/native/gameplay_world/npc_actor_construction.cpp": "c4dbc3cb2a06aaffb406c71e2741fbca946b394e2eab2b61a8d81709afbffc76",
+    "game/native/gameplay_world/npc_actor_construction_tests.cpp": "851bb696d7b01cdaeecda27caa50ed2e37921e89050aaec8676e26039c30d89f",
+    "game/native/gameplay_world/npc_actor_definitions.inc": "584e9df9d283d578b617ef6ebe83daacf5cf1065c68cb94fa703f72e9fd83ded",
+    "game/native/gameplay_world/npc_actor_hit_definitions.inc": "4f68e91bae65157b8fa0987d5fed726dc1981e976094e8da657cb65bd1e70574",
+    "tools/native_reconstruction/generate_npc_actor_members.py": "ea61fe00f3254f86451e49a4eda442a99ec610c10c7865f48bc833e969c3e193",
+    "tools/native_reconstruction/generate_npc_actor_definitions.py": "a797b78f1cae606473eac0e6cd4a16f3f9f69d38b2e5fbafe956751a23011553",
+    "tools/native_reconstruction/verify_npc_actor_construction.py": "c440d93c47cde82baeec8ec75ca7e6a9375fb1b23cb713938d40e946c9b47f55",
+    "tools/native_reconstruction/npc_actor_construction_reference_tests.inc": "386d90dd5f508158b8a8357a3a4142a5bf99fe78b0fe5bfbd13d213752a6d546",
+    "docs/native-gameplay/NPC_ACTOR_CONSTRUCTION.md": "8d68f979b3b6c3af5ae897d743f34256485f86f8a4a9073457d1db6ff2a2dc34",
+    "docs/native-gameplay/STAGE4_PLAN.md": "6a643980215873bad9057b29e683b96f9d9b26e648402730415ea6614a9e5fd2"
+  },
+  "cohorts": {
+    "llvm": {
+      "receipt": "build-native-sjuni/npc-actor-construction-llvm-v2/receipt.json",
+      "sha256": "0df3898021d42f60954d6a29b8c1470f78f98a823347acd5c5456eea90b7bbaf",
+      "observed": {
+        "checks": 19964,
+        "constructors": 505,
+        "unavailable": 15,
+        "original_cases": 505,
+        "original_models": 505,
+        "original_attachments": 130,
+        "busy_cases": 1,
+        "full_cases": 1,
+        "retirements": 50,
+        "game_run": false
+      },
+      "baseline": {
+        "checks": 5681,
+        "refusals": 18,
+        "owned_models": 406,
+        "owned_skeletons": 406,
+        "owned_absent_skeletons": 0,
+        "owned_absent_models": 3,
+        "model_bindings": 4,
+        "binding_refusals": 4,
+        "scripted_constructions": 52,
+        "owned_scripted_constructions": 330,
+        "constructor_profile_refusals": 76,
+        "owned_missing": 1
+      }
+    },
+    "gcc": {
+      "receipt": "build-native-sjuni/npc-actor-construction-gcc-v2/receipt.json",
+      "sha256": "57cd0c4977c7434af04ad95c51b8b202d824f5050d70eebc06dc4a0dd7b251a5",
+      "observed": {
+        "checks": 19964,
+        "constructors": 505,
+        "unavailable": 15,
+        "original_cases": 505,
+        "original_models": 505,
+        "original_attachments": 130,
+        "busy_cases": 1,
+        "full_cases": 1,
+        "retirements": 50,
+        "game_run": false
+      },
+      "baseline": {
+        "checks": 5681,
+        "refusals": 18,
+        "owned_models": 406,
+        "owned_skeletons": 406,
+        "owned_absent_skeletons": 0,
+        "owned_absent_models": 3,
+        "model_bindings": 4,
+        "binding_refusals": 4,
+        "scripted_constructions": 52,
+        "owned_scripted_constructions": 330,
+        "constructor_profile_refusals": 76,
+        "owned_missing": 1
+      }
+    }
+  },
+  "definition_profile": {
+    "receipt": "build-native-sjuni/npc-actor-definition-profile-v2/receipt.json",
+    "sha256": "3c76c75382ac66217b287a3a8fd54bf7d4273163cad238a3157c916a7566d7f6",
+    "definitions": 130,
+    "scene_headers": 246,
+    "hit_regions": 4
+  },
+  "remaining": [
+    "Actual motion-bank content ownership and callers",
+    "NPC scene assignment and callbacks",
+    "Remaining pointer-consumer/rendering audit",
+    "Native game installation and full Step4 acceptance"
+  ]
+}

@@ -3,6 +3,11 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to keep the PC awake afterward.
 
+- [Native NPC actor construction](NPC_ACTOR_CONSTRUCTION.md) now composes the
+  actual ten-actor pool, owned assets, model/animation, health, collision and
+  four-slot attachment ownership. Both compiler505-case comparisons, existing
+  owned constructors and ten parent tests pass. Real motion bindings/callbacks,
+  scene assignment, remaining pointer-consumer audit and game installation remain open.
 - [Native NPC/HP actor assets](NPC_ACTOR_ASSETS.md) now read all133 exact ROM
   members through the shared asset cache and handle the bounded record profile
   of seven NPC skeletons. Both compiler asset/name/pose comparisons, existing

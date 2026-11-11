@@ -20,7 +20,7 @@ def main():
     text='// Exact owned File1 ROM aliases; duplicate display names are not identities.\n'
     text+='struct NpcActorMember {std::string_view name;std::uint16_t ordinal;};\nconstexpr std::array<NpcActorMember,133> npc_actor_members{{\n'+''.join('    {"'+r['name']+'",'+str(r['member'])+'},\n'for r in rows)+'}};\n'
     target=ROOT/'game/native/gameplay_world/npc_actor_members.inc'
-    if target.exists():assert target.read_bytes()==text.encode()
+    if target.exists():assert target.read_text()==text
     else:target.write_text(text)
     out.mkdir();receipt=dict(schema=1,status='passed',source_sha256={Path(__file__).relative_to(ROOT).as_posix():sha(Path(__file__))},elf_sha256=sha(elf),rows=rows,aliases_sha256=hashlib.sha256('\n'.join(aliases).encode()).hexdigest(),output_sha256=sha(target),game_run=False)
     (out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps(dict(status='passed',members=len(rows),output_sha256=sha(target))))
