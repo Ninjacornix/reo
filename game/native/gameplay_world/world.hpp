@@ -173,6 +173,7 @@ struct Session : actors::HitSession {
     // Authored primary population count, source4BAEA0. Unknown is not zero;
     // storage/registration and the active byte remain independent concepts.
     std::optional<std::uint32_t> primary_population;
+    std::uint8_t single_roster_setup{}; // original4BAE32, set by mode-zero roster initialization
     gameplay_ai::ControlRequests ai_control_requests;
     gameplay_session::ActivityState activity;
 };

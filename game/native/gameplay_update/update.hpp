@@ -203,6 +203,7 @@ public:
     Status bind_scenario_scripts(const scenario::content::ScriptBank&,std::uint8_t policy_row);
     Status bind_room_scripts(const scenario::content::ScriptBank&,std::size_t room_channel=1);
     Status load_scenario_scripts(const scenario::content::ScenarioArchive&,std::uint16_t scenario,std::uint8_t policy_row);
+    Status initialize_launch_roster(std::span<const std::byte>);
     Status load_room_scripts(const scenario::content::ScenarioArchive&,scenario::content::RoomId,std::size_t room_channel=1);
     std::optional<scenario::CutsceneBatch> take_cutscene_requests()noexcept {
         return open()?scenario::collect_cutscene_cues(world_,flags_):std::nullopt;

@@ -257,6 +257,42 @@ void check_transition_inputs(){
     check(owner.close()==u::Status::completed);
     check(!owner.apply_actor_placement_packet(bytes)&&!owner.complete_room_placement()&&!owner.take_cutscene_requests());
 }
+void check_launch_roster_initialization(){
+    const u::world::Profile profile{{{1,2,4}},1,{16,UINT64_MAX}};
+    u::world::World world(profile,std::make_shared<u::world::Session>());
+    Notifications notifications;
+    u::Owner owner(world,notifications);
+    std::array<std::byte,32> launch{};
+    launch[1]=std::byte{0x5a};launch[2]=std::byte{2};launch[3]=std::byte{1};
+    launch[4]=std::byte{4};launch[5]=std::byte{2};
+    for(unsigned index=0;index<4;++index) {
+        launch[8+index]=std::byte(index);
+        launch[12+index]=std::byte(index+10);
+        launch[16+2*index]=std::byte(index+0x80);
+        launch[17+2*index]=std::byte{0x80};
+    }
+    for(unsigned index=0;index<2;++index) {
+        launch[24+index]=std::byte(index+4);
+        launch[26+index]=std::byte(index+14);
+        launch[28+2*index]=std::byte(index+0x90);
+        launch[29+2*index]=std::byte{0xfe};
+    }
+    const auto random=world.session().random.state();
+    for(unsigned index=0;index<5;++index)
+        check(bool(world.spawn_primary(index,std::make_unique<u::world::Actor>()).id));
+    check(owner.initialize_launch_roster(launch)==u::Status::actor_failure);
+    check(!world.session().primary_population&&world.session().random.state()==random&&!world.scenario);
+    check(bool(world.spawn_primary(5,std::make_unique<u::world::Actor>()).id));
+    check(owner.initialize_launch_roster(launch)==u::Status::completed);
+    check(world.session().primary_population==6&&world.scenario==1&&world.session().single_roster_setup==1);
+    check(world.session().gameplay_flags==0x5a&&owner.action_choices().state().table_row==2);
+    for(unsigned index=0;index<6;++index) {
+        const auto actor=world.primary(index);
+        check(actor->character==index&&actor->appearance_variant==index+10&&actor->ai_control==(index>=4));
+        check(actor->model_variant==(index<4?0x8080+index:0xfe90+index-4));
+    }
+    check(owner.close()==u::Status::completed&&owner.initialize_launch_roster(launch)==u::Status::closed);
+}
 int main()try{
     check_actor_status();
     check_automatic_worker();
@@ -264,6 +300,7 @@ int main()try{
     check_content_script_binding();
     check_auxiliary_timer_order();
     check_transition_inputs();
+    check_launch_roster_initialization();
     u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());Notifications notifications;u::Owner owner(world,notifications);check(owner.open());
     world.room=0x1234;check(owner.clock().restore({0,0,0,0},UINT32_MAX)==u::tasks::Status::completed);
     const auto first=owner.record_event(0xabcd0013,0x12345678,0xabcdef90);check(first.status==e::Status::completed);

@@ -1,6 +1,7 @@
 #include "update.hpp"
 #include "../gameplay_scenario/script_program.hpp"
 #include "../gameplay_scenario/scenario_archive.hpp"
+#include "../gameplay_world/launch_roster.hpp"
 #include <stdexcept>
 
 namespace reo::native::gameplay_update {
@@ -73,6 +74,14 @@ Status Owner::load_scenario_scripts(const scenario::content::ScenarioArchive& ar
     if (running_) return Status::busy;
     const auto bank=archive.scenario_scripts(scenario);
     return bank ? bind_scenario_scripts(*bank,policy_row) : Status::script_failure;
+}
+
+Status Owner::initialize_launch_roster(std::span<const std::byte> bytes) {
+    if (!open()) return Status::closed;
+    if (running_) return Status::busy;
+    const auto roster=gameplay_session::parse_launch_roster(bytes);
+    if (!roster || !world::apply_launch_roster(world_,choices_,*roster)) return Status::actor_failure;
+    return Status::completed;
 }
 
 Status Owner::load_room_scripts(const scenario::content::ScenarioArchive& archive,

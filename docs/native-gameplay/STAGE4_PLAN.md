@@ -7,6 +7,10 @@ verification. Put the PC to sleep after Stage 4 passes those checks, as requeste
   actual native inventory, event, pose and local-player message owners through
   script commands 61 and 62. Both compiler suites and parent tests pass. The
   actual UI close provider, transport and game installation remain open.
+- [Native launch roster initialization](LAUNCH_ROSTER.md) imports player/AI
+  selections through the real Update owner and shared RNG. Both compiler
+  comparisons and seven parent integration tests pass. Actor/model creation
+  and actual launch caller installation remain open.
 - [Native scene transition inputs](SCENARIO_TRANSITION_INPUTS.md) supply the
   cutscene cue collector, placement packet consumer, and room placement
   completion through the canonical Update Owner. Both compiler comparisons
