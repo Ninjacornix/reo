@@ -51,7 +51,11 @@ void compare_original(g::World& world,const g::Actor& actor,const g::Actor& befo
     put(0xd94,before.saved_action_position);put(0xda0,before.saved_action_yaw);put(0xd8,before.local_impulse);put(0xe4,before.world_impulse);put(0x4e4,before.root_motion_delta);put(0xd92,before.pending_notice);put(0xd90,std::uint16_t(0x1234));
     put(0xb4,before.model_scale);put(0xaa8,before.model_height_correction);put(0xf0,before.motion_multiplier);
     put(0xc7c,before.selected_resource);put(0xca8,before.resource_action);
-    const auto work=0x4ae330+0x1468u*before.slot;put(0x34,work);transform_write(memory.data(),work+0x812,before.model_asset->part_count());
+    // Distinguish the actor's prior model from its physical work slot. The
+    // old fixture prefilled the same value that fresh66A750 is meant to store,
+    // so it could not witness repointing versus restore pointer preservation.
+    const auto work=0x4ae330+0x1468u*before.slot;constexpr unsigned previous_work=0x280000;
+    put(0x34,previous_work);transform_write(memory.data(),work+0x812,before.model_asset->part_count());transform_write(memory.data(),previous_work+0x812,before.model_asset->part_count());
     memory[0x4badf8]=std::bit_cast<std::uint8_t>(world.paused);memory[0x4badfb]=primary_reference_notification.value_or(restore?1:0);memory[0x3243d8]=world.session().exit_requested;memory[0x3166a0]=0;primary_constraint_calls=0;
 #ifdef REO_PRIMARY_SAVED_INITIALIZATION_ORIGINAL
     if(world.session().primary_initialization_snapshot){
@@ -65,6 +69,7 @@ void compare_original(g::World& world,const g::Actor& actor,const g::Actor& befo
 #endif
     R5900Context context;PS2Runtime runtime;context.pc=0x66a750;SET_GPR_U32(&context,4,at);SET_GPR_U32(&context,5,character);SET_GPR_U32(&context,29,0x1f00000);SET_GPR_U32(&context,31,0xabcdef);
     original_transform_port(memory.data(),&context,&runtime);check(context.pc==0xabcdef&&GPR_U32(&context,29)==0x1f00000);
+    check(transform_read<unsigned>(memory.data(),at+0x34)==(restore?previous_work:work));
 #ifdef REO_PRIMARY_CUSTOM_INITIALIZATION_ORIGINAL
     check(primary_custom_random_reads==unsigned(!restore&&before.model_variant!=0));
 #endif

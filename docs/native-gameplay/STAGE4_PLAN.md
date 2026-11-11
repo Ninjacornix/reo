@@ -97,6 +97,11 @@ verification. The latest user instruction is to keep the PC awake afterward.
   publication and matched main-model retirement. Both compilers pass258 complete
   source comparisons and explicit failure/lifetime checks. Temporary model-cache
   admission, playback, objects and full scene entry/exit remain open.
+- The [scene lifetime follow-up](PRIMARY_SCENE_LIFETIME_AUDIT.md) distinguishes
+  authored population from filtered scene rosters, preference remapping and stale
+  physical entries. Both compilers now explicitly verify167,969 fresh model-pointer
+  stores and4,351 restore preservations. Native roster preparation, broader cleanup
+  and physical resource handoff remain open.
 - The [scene NPC loading-mode correction](CUTSCENE_NPC_CONSTRUCTION.md) separates
   asset-loading mode3243D7 from pause4BADF8. Paired current cohorts pass4,384 scene
   cases with independent inputs; the earlier fixture conflated the two and its
