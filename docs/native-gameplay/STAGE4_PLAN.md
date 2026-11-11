@@ -3,6 +3,10 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to keep the PC awake afterward.
 
+- [Expanded enemy record binding](ENEMY_BINDING.md) now uses the actual shared
+  fifty-node pool, canonical status words and Session RNG. Both compiler
+  comparisons, parent tests and archive regression pass. Model/resource
+  construction, behavior and room orchestration remain open.
 - [Enemy priorities and model definitions](ENEMY_INITIALIZATION.md) reproduce
   the owned metadata and use canonical actor status fields. Both compiler
   comparisons and the existing linked-model regression pass. Full enemy

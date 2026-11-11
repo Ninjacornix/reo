@@ -85,7 +85,7 @@ void compare_npc_controls(const reo::native::gameplay_ai::ControlRequests& contr
     }
 }
 
-void invoke_npc_original(std::vector<std::uint8_t>& ram,PS2Runtime::Function function,
+std::uint32_t invoke_npc_original(std::vector<std::uint8_t>& ram,PS2Runtime::Function function,
                          std::array<std::uint32_t,4> arguments={}) {
     R5900Context original;
     PS2Runtime runtime;
@@ -94,6 +94,7 @@ void invoke_npc_original(std::vector<std::uint8_t>& ram,PS2Runtime::Function fun
     SET_GPR_U32(&original,31,0xdeadbeef);
     function(ram.data(),&original,&runtime);
     check(original.pc==0xdeadbeef);
+    return GPR_U32(&original,2);
 }
 
 std::vector<std::byte> synthetic_npcs(unsigned trial) {

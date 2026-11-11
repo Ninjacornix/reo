@@ -6,11 +6,11 @@ std::size_t enemy_route_queries{},enemy_route_refusals{},enemy_imports{},enemy_o
 template<class Visitor> void visit_enemy(const vm::EnemyDescriptor& descriptor,Visitor visit) {
     visit(0,descriptor.ordinal);visit(1,descriptor.actor_slot);visit(2,descriptor.family);
     visit(3,descriptor.variant);visit(4,descriptor.condition);visit(5,descriptor.parameter4);
-    visit(6,descriptor.spawned);
+    visit(6,descriptor.spawned);visit(7,descriptor.target_selector);
     for(unsigned index=0;index<2;++index)visit(8+4*index,descriptor.orientation[index]);
     for(unsigned index=0;index<3;++index)visit(0x10+4*index,descriptor.position[index]);
     visit(0x1c,descriptor.health);visit(0x1e,descriptor.maximum);
-    visit(0x20,descriptor.parameters34_to40[6]);
+    visit(0x20,descriptor.parameters34_to40[6]);visit(0x21,descriptor.actor_marker);
     visit(0x22,descriptor.room);visit(0x26,descriptor.owner_mode);visit(0x27,descriptor.ordinal);
     visit(0x29,descriptor.parameter1f);visit(0x2a,descriptor.parameter20);visit(0x2b,descriptor.parameter5);
     visit(0x2d,descriptor.parameter23);
@@ -24,6 +24,7 @@ template<class Visitor> void visit_enemy(const vm::EnemyDescriptor& descriptor,V
         visit(index<6?0x48+index:0x47+index,descriptor.parameters34_to40[index]);
     }
     for(unsigned index=0;index<2;++index)visit(0x55+index,descriptor.parameters42_to43[index]);
+    visit(0x54,descriptor.timing_profile);
     for(unsigned index=0;index<3;++index)visit(0x57+index,descriptor.linked_ids[index]);
     visit(0x5a,descriptor.parameter48);visit(0x5b,descriptor.choice_mask);
     visit(0x5c,descriptor.mapped_parameter);visit(0x5d,descriptor.route_selector);

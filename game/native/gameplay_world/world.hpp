@@ -15,6 +15,7 @@
 #include "../gameplay_scenario/enemy_descriptors.hpp"
 #include "../gameplay_scenario/enemy_routes.hpp"
 #include "inventory_state.hpp"
+#include "enemy_state.hpp"
 #include "actor_placements.hpp"
 #include "../gameplay_session/room_variants.hpp"
 #include "../gameplay_session/activity.hpp"
@@ -69,6 +70,7 @@ struct Actor : actors::Entity,actors::HitActor {
     std::optional<gameplay_navigation::ActorRouteState> navigation_route;
     std::optional<gameplay_ai::ExecutionState> ai_execution;
     std::optional<TargetingState> targeting;
+    std::optional<EnemyState> enemy;
     std::uint8_t character{};
     std::optional<std::uint32_t> gauge_value; // original BAC; unknown until its actual owner/import supplies it
     std::uint16_t terminal_countdown{}; // original C62, distinct from status/hit recovery timers

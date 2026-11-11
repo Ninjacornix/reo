@@ -10,15 +10,18 @@ namespace reo::native::gameplay_scenario {
 // individual consumers establish a more specific role.
 struct EnemyDescriptor {
     std::uint8_t ordinal{},actor_slot{},family{},variant{},condition{},parameter4{},spawned{};
+    std::uint8_t target_selector{}; // expanded record7, initialized by later runtime producers
     std::array<std::uint32_t,2> orientation{};
     std::array<std::int32_t,3> position{};
     std::int16_t health{},maximum{};
+    std::int8_t actor_marker{}; // expanded record21
     std::uint8_t room{},owner_mode{},parameter1f{},parameter20{},parameter5{},parameter23{};
     std::array<std::uint8_t,10> auxiliary_ids{};
     std::int8_t parameter21{},route_position{};
     std::uint16_t route_wait{};
     std::uint8_t parameter24{},route_seed{},parameter25{},parameter26{},runtime_flags{},parameter31{},parameter32{};
     std::array<std::uint8_t,13> parameters34_to40{};
+    std::uint8_t timing_profile{}; // expanded record54
     std::array<std::uint8_t,2> parameters42_to43{};
     std::array<std::uint8_t,3> linked_ids{};
     std::uint8_t parameter48{},choice_mask{},mapped_parameter{},route_selector{};
