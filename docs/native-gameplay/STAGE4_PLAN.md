@@ -3,6 +3,12 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to keep the PC awake afterward.
 
+- [Shared humanoid motion preparation](HUMANOID_MOTION_ASSETS.md) now reads
+  all90 common and eight character-base files, preserves the actual shared
+  ordinary/head bank, and reproduces default reload after scene attempts.
+  Both compiler919-bank comparisons, actual NPC binding examples and twelve
+  parent tests pass. Live publication, remaining scene/action/curve consumers
+  and installed native gameplay remain open.
 - [Native NPC updates](NPC_UPDATES.md) now compose the shared callback, actual
   root/pose work, camera and inhibition gates, the ten-slot pool and its actual
   Update worker position. Both compiler World and current owned/parent cohorts
