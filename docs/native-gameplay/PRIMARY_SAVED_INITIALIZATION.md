@@ -54,7 +54,9 @@ is `primary-saved-world-{llvm,gcc}-v1`, and the combined seal is
 fixture failed to compile because adjacent hexadecimal `e+` text formed one
 preprocessing number; adding operator whitespace fixed that fixture.
 
-Actual resume selection, primary model reuse/
+The [branch-selector follow-up](PRIMARY_INITIALIZATION_SELECTOR.md) now supplies
+the actual notification/pause decision over native Update state.
+Actual resume enabling, primary model reuse/
 release, scene lifecycle adoption, a semantic snapshot for the rest of the
 World, coherent game installation and every other Step 4 gate remain open.
 The installed game is still V39. No game was launched.

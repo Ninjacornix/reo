@@ -1,5 +1,6 @@
 #pragma once
 #include "humanoid_motion_assets.hpp"
+namespace reo::native::gameplay_update {struct State;}
 namespace reo::native::gameplay_world {
 struct PrimaryEquipmentContext {
     const gameplay_scenario::SceneResources& resources;
@@ -24,6 +25,10 @@ PrimaryInitializationStatus initialize_primary_slot(World&,actors::EntityId,
 // Complete restore branch for a caller that selected notification_pending!=0
 // and paused==0. This operation consults the canonical exit request and pose.
 PrimaryInitializationStatus restore_primary_slot(World&,actors::EntityId)noexcept;
+// Complete66A750 selector over the actual native outer-update state and shared
+// signed pause byte. The selected admitted branch runs synchronously once.
+PrimaryInitializationStatus initialize_primary_actor(World&,const gameplay_update::State&,
+    actors::EntityId,std::uint8_t character,const HumanoidMotionBanks&,const PrimaryEquipmentContext* = nullptr)noexcept;
 // Complete663170 setter. Does not select an asset or invent model bindings.
 bool select_primary_appearance(World&,actors::EntityId,std::uint8_t character,std::uint8_t model_class)noexcept;
 }

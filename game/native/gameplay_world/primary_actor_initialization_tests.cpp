@@ -3,6 +3,7 @@
 #include "../gameplay_save/primary_start.hpp"
 #include "../gameplay_scenario/scene_resources.hpp"
 #include "../gameplay_scenario/resource_templates.hpp"
+#include "../gameplay_update/update.hpp"
 #include "humanoid_motion_owner.hpp"
 #include "runtime/assets/virtual_afs.h"
 #include <bit>
@@ -19,6 +20,10 @@ namespace {
 std::uint64_t checks{},initializations{},restores{},setters{},refusals{},original_calls{},constraints{},bank_publications{};
 std::uint64_t custom_initializations{},custom_missing_models{};
 std::uint64_t saved_decodes{},saved_initializations{},saved_query_cases{},saved_refusals{};
+std::uint64_t selector_cases{},selector_restores{};
+#ifdef REO_PRIMARY_INITIALIZATION_ORIGINAL
+std::optional<std::uint8_t> primary_reference_notification;
+#endif
 void check(bool value,std::source_location at=std::source_location::current()){++checks;if(!value)throw std::runtime_error("Native primary initialization check "+std::to_string(at.line()));}
 g::Profile profile(){g::Profile result;result.layouts.push_back({});return result;}
 void compare_original(g::World&,const g::Actor&,const g::Actor&,unsigned,bool);
@@ -31,6 +36,23 @@ void contracts(){
     check(g::restore_primary_slot(world,{})==g::PrimaryInitializationStatus::unavailable&&!g::select_primary_appearance(world,{},0,0));++refusals;
     bool failed=false;try{(void)g::primary_actor_default(255);}catch(const std::out_of_range&){failed=true;}check(failed);++refusals;
     check(world.close()==g::Status::completed&&g::restore_primary_slot(world,{})==g::PrimaryInitializationStatus::closed);
+}
+void selector_tests(g::ActorAssets& models,const g::HumanoidMotionBanks& banks){
+    g::World world(profile(),std::make_shared<g::Session>());reo::native::gameplay_update::State state;
+    const auto asset=models.read_primary(0,0,0);auto initial=std::make_unique<g::Actor>();initial->slot=0;initial->active=true;initial->model_asset=asset;initial->model=asset->make_instance();initial->animation=std::make_shared<a::Playback>(initial->model);const auto created=world.spawn_primary(0,std::move(initial));const auto actor=world.resolve(created.id);
+    for(unsigned pending=0;pending<256;++pending)for(unsigned pause=0;pause<256;++pause){
+        state.notification_pending=std::uint8_t(pending);world.paused=std::bit_cast<std::int8_t>(std::uint8_t(pause));world.session().exit_requested=std::uint8_t((pending+pause)%3==0);
+        actor->current=-123;actor->maximum=456;actor->status=std::array{0u,2u,8u,10u}[pause%4];actor->auxiliary_status=0x89abcdef;actor->class_marker=77;actor->previous_motion_class=88;actor->position={11,22,33};actor->orientation={4,5,6,7};actor->saved_action_position={100,-50,25};actor->saved_action_yaw=-12345;actor->pending_notice=99;actor->selected_resource=99;actor->resource_action=123;actor->constraints.reset();
+        const auto before=*actor;const bool restore=pending!=0&&pause==0;
+#ifdef REO_PRIMARY_INITIALIZATION_ORIGINAL
+        primary_reference_notification=std::uint8_t(pending);
+#endif
+        check(g::initialize_primary_actor(world,state,created.id,0,banks)==g::PrimaryInitializationStatus::completed);compare_original(world,*actor,before,0,restore);check(state.notification_pending==pending&&std::bit_cast<std::uint8_t>(world.paused)==pause);++selector_cases;selector_restores+=restore;
+    }
+#ifdef REO_PRIMARY_INITIALIZATION_ORIGINAL
+    primary_reference_notification.reset();
+#endif
+    check(selector_cases==65536&&selector_restores==255);
 }
 void owned(const char* archive){
     auto source=std::make_shared<reo::assets::Source>(archive);g::ActorAssets models(source);g::HumanoidMotionAssets motions(source);
@@ -91,6 +113,7 @@ void owned(const char* archive){
     actor->model_variant=1;const auto health=actor->current;check(g::initialize_primary_defaults(world,created.id,0,*next)==g::PrimaryInitializationStatus::unavailable&&actor->current==health);++refusals;actor->model_variant=0;
     check(g::initialize_primary_defaults(world,created.id,255,*next)==g::PrimaryInitializationStatus::unavailable);++refusals;
     check(owner.close()==g::HumanoidPublicationStatus::completed&&g::initialize_primary_defaults(world,created.id,0,*next)==g::PrimaryInitializationStatus::unavailable);++refusals;
+    selector_tests(models,*banks);
 #if !defined(REO_PRIMARY_INITIALIZATION_ORIGINAL)||defined(REO_PRIMARY_SAVED_INITIALIZATION_ORIGINAL)
     saved_initialization_tests(models,*banks);
 #endif
@@ -103,5 +126,5 @@ namespace {void compare_original(g::World&,const g::Actor&,const g::Actor&,unsig
 #endif
 int main(int argc,char** argv)try{
     contracts();if(argc==2)owned(argv[1]);else check(argc==1);
-    std::cout<<"{\"checks\":"<<checks<<",\"initializations\":"<<initializations<<",\"custom_initializations\":"<<custom_initializations<<",\"custom_missing_models\":"<<custom_missing_models<<",\"restores\":"<<restores<<",\"setters\":"<<setters<<",\"constraints\":"<<constraints<<",\"bank_publications\":"<<bank_publications<<",\"refusals\":"<<refusals<<",\"saved_decodes\":"<<saved_decodes<<",\"saved_initializations\":"<<saved_initializations<<",\"saved_query_cases\":"<<saved_query_cases<<",\"saved_refusals\":"<<saved_refusals<<",\"original_calls\":"<<original_calls<<",\"game_run\":false}\n";
+    std::cout<<"{\"checks\":"<<checks<<",\"initializations\":"<<initializations<<",\"custom_initializations\":"<<custom_initializations<<",\"custom_missing_models\":"<<custom_missing_models<<",\"restores\":"<<restores<<",\"setters\":"<<setters<<",\"constraints\":"<<constraints<<",\"bank_publications\":"<<bank_publications<<",\"refusals\":"<<refusals<<",\"saved_decodes\":"<<saved_decodes<<",\"saved_initializations\":"<<saved_initializations<<",\"saved_query_cases\":"<<saved_query_cases<<",\"saved_refusals\":"<<saved_refusals<<",\"selector_cases\":"<<selector_cases<<",\"selector_restores\":"<<selector_restores<<",\"original_calls\":"<<original_calls<<",\"game_run\":false}\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

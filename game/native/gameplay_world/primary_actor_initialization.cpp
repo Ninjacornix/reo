@@ -6,6 +6,7 @@
 #include "../gameplay_actors/health_class.hpp"
 #include "../gameplay_scenario/scene_resources.hpp"
 #include "../gameplay_scenario/resource_templates.hpp"
+#include "../gameplay_update/update.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -87,6 +88,10 @@ public:
 PrimaryInitializationStatus initialize_primary_defaults(World& world,actors::EntityId id,std::uint8_t character,const HumanoidMotionBanks& banks)noexcept{return PrimaryActorInitialization::defaults(world,std::move(id),character,banks);}
 PrimaryInitializationStatus initialize_primary_slot(World& world,actors::EntityId id,std::uint8_t character,const HumanoidMotionBanks& banks,const PrimaryEquipmentContext* equipment)noexcept{return PrimaryActorInitialization::defaults(world,std::move(id),character,banks,true,equipment);}
 PrimaryInitializationStatus restore_primary_slot(World& world,actors::EntityId id)noexcept{return PrimaryActorInitialization::restore(world,std::move(id));}
+PrimaryInitializationStatus initialize_primary_actor(World& world,const gameplay_update::State& state,actors::EntityId id,std::uint8_t character,const HumanoidMotionBanks& banks,const PrimaryEquipmentContext* equipment)noexcept{
+    if(state.notification_pending&&world.paused==0)return restore_primary_slot(world,std::move(id));
+    return initialize_primary_slot(world,std::move(id),character,banks,equipment);
+}
 bool select_primary_appearance(World& world,actors::EntityId id,std::uint8_t character,std::uint8_t model_class)noexcept{
     if(world.closed()||world.busy())return false;
     const auto actor=world.resolve(id);if(!actor)return false;

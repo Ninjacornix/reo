@@ -52,7 +52,7 @@ void compare_original(g::World& world,const g::Actor& actor,const g::Actor& befo
     put(0xb4,before.model_scale);put(0xaa8,before.model_height_correction);put(0xf0,before.motion_multiplier);
     put(0xc7c,before.selected_resource);put(0xca8,before.resource_action);
     const auto work=0x4ae330+0x1468u*before.slot;put(0x34,work);transform_write(memory.data(),work+0x812,before.model_asset->part_count());
-    memory[0x4badf8]=std::bit_cast<std::uint8_t>(world.paused);memory[0x4badfb]=restore?1:0;memory[0x3243d8]=world.session().exit_requested;memory[0x3166a0]=0;primary_constraint_calls=0;
+    memory[0x4badf8]=std::bit_cast<std::uint8_t>(world.paused);memory[0x4badfb]=primary_reference_notification.value_or(restore?1:0);memory[0x3243d8]=world.session().exit_requested;memory[0x3166a0]=0;primary_constraint_calls=0;
 #ifdef REO_PRIMARY_SAVED_INITIALIZATION_ORIGINAL
     if(world.session().primary_initialization_snapshot){
         memory[0x3166a0]=1;check(primary_saved_context!=nullptr);export_primary_equipment(memory,*primary_saved_context);
@@ -75,7 +75,7 @@ void compare_original(g::World& world,const g::Actor& actor,const g::Actor& befo
     check(actor.pending_notice==transform_read<std::uint16_t>(memory.data(),at+0xd92)&&actor.room==transform_read<std::uint16_t>(memory.data(),at+0x1e2)&&actor.appearance_variant==memory[at+0xbbc]);
     check(actor.selected_resource==memory[at+0xc7c]&&actor.resource_action==transform_read<std::uint16_t>(memory.data(),at+0xca8));
     check(actor.color_fade&&actor.color_fade->rgba==transform_read<std::uint32_t>(memory.data(),at+0xce8)&&actor.color_fade->step==transform_read<std::uint32_t>(memory.data(),at+0xcec)&&actor.color_fade->updates_left==transform_read<std::uint32_t>(memory.data(),at+0xcf0));
-    if(restore){check(primary_constraint_calls==unsigned(!world.session().exit_requested)&&bool(actor.constraints)==!world.session().exit_requested);return;}
+    if(restore){check(primary_constraint_calls==unsigned(!world.session().exit_requested)&&bool(actor.constraints)==(bool(before.constraints)||!world.session().exit_requested));return;}
     check(primary_constraint_calls==1&&actor.contact.authored_id==memory[at+6]&&actor.primary_state->model_group==memory[at+0x30]);
     check(actor.motion_style==memory[at+0xb99]&&actor.motion_subtype==memory[at+0xb9a]&&std::memcmp(&actor.model_scale,memory.data()+at+0xb4,12)==0&&actor.model_height_correction==transform_read<float>(memory.data(),at+0xaa8));
     check(actor.primary_state->statistic_multiplier==transform_read<float>(memory.data(),at+0xbc0)&&actor.contact.damage_scale==transform_read<float>(memory.data(),at+0xbc4)&&std::memcmp(actor.primary_state->model_adjustment.data(),memory.data()+at+0xa8,12)==0);

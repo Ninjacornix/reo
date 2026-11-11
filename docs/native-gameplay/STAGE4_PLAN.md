@@ -32,6 +32,11 @@ verification. The latest user instruction is to keep the PC awake afterward.
   every signed health value and action byte, save-codec round trip and all15
   parents. Actual resume enabling, the branch-selector/model lifecycle and
   complete semantic World snapshots remain open.
+- [Primary initialization selector](PRIMARY_INITIALIZATION_SELECTOR.md) now
+  consumes native Update notification state and the canonical pause byte.
+  Paired complete66A750 comparisons cover all65,536 flag pairs and exactly255
+  restore selections, with all15 parents passing. Actual model reuse/retirement,
+  character-bank release and scene/resume caller adoption remain open.
 - [Shared humanoid motion publication](HUMANOID_MOTION_PUBLICATION.md) adds
   explicit NPC/scripted bank identities, atomic live rebinding, stale-load
   rejection and joined-owner closure. Paired publication, current World,
