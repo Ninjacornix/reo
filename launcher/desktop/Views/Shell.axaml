@@ -375,7 +375,7 @@
                       <StackPanel>
                         <CheckBox x:Name="PerformanceOverlay" IsCheckedChanged="SaveSettings" Content="FPS counter" FontSize="14" ToolTip.Tip="Shows the in-game FPS counter. Applies on the next launch." />
                         <CheckBox x:Name="AsyncVif" IsCheckedChanged="SaveSettings" Content="Parallel geometry worker" FontSize="14" />
-                        <CheckBox x:Name="GpuMovies" IsCheckedChanged="SaveSettings" Content="Decode movies on the graphics card" FontSize="14" IsEnabled="False" />
+                        <CheckBox x:Name="GpuMovies" IsCheckedChanged="SaveSettings" Content="Decode movies on the graphics card" FontSize="14" />
                       </StackPanel>
                     </Expander>
                   </StackPanel>

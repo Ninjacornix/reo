@@ -5,6 +5,7 @@ namespace Outbreak.Launcher;
 
 internal static class GraphicsOptionsTests {
     internal static void Run(Action<bool, string> check) {
+        MovieDefaults(check);
         var culture = CultureInfo.CurrentCulture;
         try {
             CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("hr-HR");
@@ -77,5 +78,37 @@ internal static class GraphicsOptionsTests {
                   && invalid.Environment["REO_DISPLAY_ASPECT"] == "4:3"
                   && invalid.Environment["REO_DISPLAY_FIT"] == "fit", "Invalid graphics values have safe renderer defaults");
         } finally { CultureInfo.CurrentCulture = culture; }
+    }
+    static void MovieDefaults(Action<bool, string> check) {
+        var verified = new MovieDecoderChoice(true, "Verified GPU", "Hardware MPEG-2 decoder available");
+        var cpuDefaults = new[] {
+            new MovieDecoderChoice(false, "NVIDIA", "REO GPU movies can crash"),
+            new MovieDecoderChoice(false, "Intel", "REO GPU movies are untested"),
+            new MovieDecoderChoice(false, "", "Movie decoder check is missing"),
+            new MovieDecoderChoice(false, "GPU", "No compatible MPEG-2 decoder")
+        };
+        var legacyOn = JsonSerializer.Deserialize<Settings>("{\"GpuMovies\":true}")!;
+        var legacyOff = JsonSerializer.Deserialize<Settings>("{\"GpuMovies\":false}")!;
+        check(legacyOn.GpuMoviesChoice == null && verified.UseGpu(legacyOn.GpuMovies, legacyOn.GpuMoviesChoice),
+              "Verified GPUs keep the checked legacy default");
+        check(!verified.UseGpu(legacyOff.GpuMovies, legacyOff.GpuMoviesChoice),
+              "Saved CPU choices are not automatically upgraded to GPU");
+        foreach (var cpu in cpuDefaults) {
+            check(!cpu.UseGpu(legacyOn.GpuMovies, legacyOn.GpuMoviesChoice),
+                  cpu.GpuName + " previously gated CPU playback stays on CPU after migration");
+            check(cpu.UseGpu(false, true), cpu.GpuName + " can be explicitly opted into GPU decoding");
+        }
+        foreach (var probe in cpuDefaults.Append(verified)) {
+            check(!probe.UseGpu(true, false), "Explicit CPU decoding wins over every probe result");
+            var selected = JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(
+                new Settings { GpuMovies = true, GpuMoviesChoice = true }))!;
+            var launch = GraphicsOptions.From(selected);
+            selected.GpuMoviesChoice = false;
+            check(probe.UseGpu(launch.GpuMovies, launch.GpuMoviesChoice),
+                  "Explicit GPU choice round-trips and is captured before asynchronous launch setup");
+        }
+        var unrelatedSave = JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(legacyOn))!;
+        check(unrelatedSave.GpuMoviesChoice == null,
+              "Saving unrelated settings does not turn the legacy default into an explicit GPU choice");
     }
 }

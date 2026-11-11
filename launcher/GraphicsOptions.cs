@@ -4,7 +4,7 @@ namespace Outbreak.Launcher;
 
 // Both editions consume the same renderer options. Capture before asynchronous
 // disc setup so edits made for the next launch cannot change this launch halfway.
-internal sealed record GraphicsOptions(bool Fullscreen, OutputSize Output, bool GpuMovies,
+internal sealed record GraphicsOptions(bool Fullscreen, OutputSize Output, bool GpuMovies, bool? GpuMoviesChoice,
                                         IReadOnlyDictionary<string, string> Environment) {
     internal static GraphicsOptions From(Settings settings) {
         var size = DisplayOptions.Size(settings.WindowSize);
@@ -29,6 +29,6 @@ internal sealed record GraphicsOptions(bool Fullscreen, OutputSize Output, bool 
             ["REO_GAMMA"] = Decimal(
                 double.IsFinite(settings.Gamma) ? Math.Clamp(settings.Gamma, 0.5, 2.0) : 1.0)
         };
-        return new(settings.Fullscreen, size, settings.GpuMovies, environment);
+        return new(settings.Fullscreen, size, settings.GpuMovies, settings.GpuMoviesChoice, environment);
     }
 }
