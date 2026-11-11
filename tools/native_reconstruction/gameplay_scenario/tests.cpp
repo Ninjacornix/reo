@@ -227,8 +227,9 @@ PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
 #include "transition_input_vm_tests.inc"
 #include "launch_roster_vm_tests.inc"
 #include "npc_vm_tests.inc"
+#include "enemy_vm_tests.inc"
 int main(int argc,char** argv)try{
-    check(argc==4);
+    check(argc==5);
     no_model_vm_tests();
     surface_vm_tests(argv[1]);
     room_counter_vm_tests(argv[2]);
@@ -251,6 +252,8 @@ int main(int argc,char** argv)try{
     npc_primitive_tests();
     npc_inventory_vm_tests();
     npc_command_vm_tests();
+    enemy_route_tests();
+    enemy_import_tests(argv[4]);
     {std::vector<std::byte> b;emit(b,1);const auto a=emit(b,0xa);run({b},{0,a},4);}
     for(unsigned delay:{0u,1u,2u,7u}){std::vector<std::byte> a,b;emit(a,4,{delay});emit(a,0xd);emit(b,0xa);run({a,b},{1,0},delay+3,delay%6);}
     {std::vector<std::byte> b;emit(b,3,{2});emit(b,0xe5);const auto end=emit(b,0xa);run({b},{0,end},2);}
@@ -406,5 +409,7 @@ int main(int argc,char** argv)try{
              <<",\"npc_imports\":"<<npc_imports<<",\"npc_import_refusals\":"<<npc_import_refusals
              <<",\"npc_primitive_calls\":"<<npc_primitive_calls<<",\"npc_inventory_dispatches\":"<<npc_inventory_dispatches
              <<",\"npc_command_dispatches\":"<<npc_command_dispatches<<",\"npc_command_refusals\":"<<npc_command_refusals
+             <<",\"enemy_route_queries\":"<<enemy_route_queries<<",\"enemy_route_refusals\":"<<enemy_route_refusals
+             <<",\"enemy_imports\":"<<enemy_imports<<",\"enemy_owned_imports\":"<<enemy_owned_imports<<",\"enemy_import_refusals\":"<<enemy_import_refusals
              <<",\"original_numeric_handler_invocations\":65536,\"game_launched\":false}\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

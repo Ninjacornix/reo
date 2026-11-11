@@ -7,13 +7,14 @@
 #include <source_location>
 #include <sstream>
 #include <stdexcept>
+#include <algorithm>
 
 namespace scenario=reo::native::gameplay_scenario;
 namespace content=scenario::content;
 namespace update=reo::native::gameplay_update;
 namespace world=reo::native::gameplay_world;
 namespace {
-std::size_t checks{},loaded_members{},admitted_rooms{},refused_rooms{},npc_banks{};
+std::size_t checks{},loaded_members{},admitted_rooms{},refused_rooms{},npc_banks{},enemy_banks{},enemy_boundary_cases{};
 void check(bool condition,std::source_location location=std::source_location::current()) {
     ++checks;
     if (!condition) throw std::runtime_error("Native archive check at "+std::to_string(location.line()));
@@ -32,7 +33,43 @@ struct Memory final:reo::assets::PositionedSource {
         return length;
     }
 };
+void enemy_boundaries() {
+    std::vector<std::byte> bytes(16+96*258);
+    const std::uint32_t start=16;
+    std::memcpy(bytes.data(),&start,4);
+    for(unsigned index=0;index<257;++index) {
+        const auto base=16+96*index;
+        bytes[base+2]=std::byte{1};
+        bytes[base+0x33]=std::byte{8};
+        bytes[base+0x49]=std::byte{1};
+    }
+    bytes[16+96*256+2]=std::byte{255};
+    world::Session session;
+    session.scenario=1;
+    auto& descriptors=session.enemy_descriptors;
+    const auto full=descriptors.import(bytes,session,false,0);
+    check(full.status==scenario::EnemyImportStatus::completed&&full.count==256);
+    check(descriptors.count()==0&&descriptors.room_counts()[0]==0);
+    check(descriptors.record(255)->ordinal==255&&descriptors.record(255)->health==32767);
+    ++enemy_boundary_cases;
+    const auto random=session.random.state();
+    descriptors.record(0)->variant=0xfe;
+    descriptors.assignments().counts={17,19};
+    bytes[16+96*256+2]=std::byte{1};
+    bytes[16+96*257+2]=std::byte{255};
+    const auto exceeded=descriptors.import(bytes,session,false,0);
+    check(exceeded.status==scenario::EnemyImportStatus::full&&exceeded.count==256);
+    check(descriptors.record(0)->variant==0xfe&&descriptors.assignments().counts==std::array<std::uint16_t,2>{17,19});
+    check(session.random.state()==random);
+    ++enemy_boundary_cases;
+    bytes.resize(16+96*256+2);
+    const auto truncated=descriptors.import(bytes,session,false,0);
+    check(truncated.status==scenario::EnemyImportStatus::malformed);
+    check(descriptors.record(0)->variant==0xfe&&session.random.state()==random);
+    ++enemy_boundary_cases;
+}
 void fixtures() {
+    enemy_boundaries();
     std::vector<std::uint8_t> bytes(6*4096);
     const auto table=[&](std::size_t base,const std::vector<std::string>& names) {
         std::memcpy(bytes.data()+base,"AFS\0",4);
@@ -71,8 +108,12 @@ void fixtures() {
     check(world.session().npc_descriptors.record(0)->health==313);
     check(owner.load_scenario_npcs(archive,0)==update::Status::actor_failure);
     check(world.session().npc_descriptors.record(0)->health==313);
+    check(owner.load_scenario_enemies(archive)==update::Status::actor_failure);
+    world.session().scenario=1;
+    check(owner.load_scenario_enemies(archive)==update::Status::actor_failure);
     check(owner.close()==update::Status::completed);
     check(owner.load_scenario_npcs(archive,1)==update::Status::closed);
+    check(owner.load_scenario_enemies(archive)==update::Status::closed);
     table(4096,{"r001.evb","R001.EVB"});
     const content::ScenarioArchive duplicate(source());
     bool refused=false;
@@ -123,6 +164,38 @@ void owned(const std::filesystem::path& archive_path,const std::filesystem::path
         source->read(offset,length,expected.data());
         check(*bytes==expected);
         ++loaded_members;
+        if(row[0]=="M") {
+            world.mode=name.starts_with("sgl_")?0:1;
+            world.session().scenario=scenario_id;
+            auto expected_descriptors=world.session().enemy_descriptors;
+            // The direct importer has independent original-body comparisons.
+            // This check exercises normal archive naming and Update ownership.
+            auto expected_session=std::make_shared<world::Session>();
+            expected_session->scenario=scenario_id;
+            expected_session->random=world.session().random;
+            expected_session->enemy_routes=world.session().enemy_routes;
+            expected_session->ai_control_requests=world.session().ai_control_requests;
+            const auto imported=expected_descriptors.import(expected,*expected_session,world.mode==0,
+                                                            owner.action_choices().state().table_row);
+            check(imported.status==scenario::EnemyImportStatus::completed);
+            check(owner.load_scenario_enemies(archive)==update::Status::completed);
+            const auto& actual=world.session().enemy_descriptors;
+            check(actual.count()==expected_descriptors.count());
+            for(unsigned index=0;index<256;++index) {
+                const auto& value=actual.records()[index];
+                const auto& wanted=expected_descriptors.records()[index];
+                check(value.family==wanted.family&&value.variant==wanted.variant);
+                check(value.health==wanted.health&&value.maximum==wanted.maximum);
+                check(value.position==wanted.position&&value.orientation==wanted.orientation);
+                check(value.room==wanted.room&&value.route_position==wanted.route_position);
+            }
+            check(world.session().random.state()==expected_session->random.state());
+            const auto controls=world.session().ai_control_requests.registrations();
+            const auto wanted_controls=expected_session->ai_control_requests.registrations();
+            check(std::equal(controls.begin(),controls.end(),wanted_controls.begin()));
+            ++enemy_banks;
+            continue;
+        }
         if(row[0]=="N") {
             auto expected_descriptors=world.session().npc_descriptors;
             const auto count=expected_descriptors.import(expected);
@@ -177,13 +250,15 @@ void owned(const std::filesystem::path& archive_path,const std::filesystem::path
             }
         }
     }
-    check(loaded_members==176&&npc_banks==5);
+    check(loaded_members==186&&npc_banks==5&&enemy_banks==10);
     check(owner.close()==update::Status::completed);
     check(owner.load_room_scripts(archive,{1,1,0})==update::Status::closed);
     check(owner.load_scenario_scripts(archive,1,0)==update::Status::closed);
     std::cout<<"{\"status\":\"passed\",\"checks\":"<<checks<<",\"members\":"<<loaded_members
              <<",\"room_bindings\":"<<admitted_rooms<<",\"refused_room_bindings\":"<<refused_rooms
              <<",\"npc_banks\":"<<npc_banks
+             <<",\"enemy_banks\":"<<enemy_banks
+             <<",\"enemy_boundary_cases\":"<<enemy_boundary_cases
              <<",\"game_launched\":false}\n";
 }
 }

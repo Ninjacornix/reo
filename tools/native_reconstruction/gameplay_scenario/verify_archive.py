@@ -30,11 +30,14 @@ def main(args):
         assert sha(index / name) == digest
     members = json.loads((index / 'inventory.json').read_bytes())
     assert len(members) == 171
-    from npc_fixtures import read_owned_npcs
+    from npc_fixtures import read_owned_npcs, read_owned_actor_content
     npc_members=read_owned_npcs()
     for member in npc_members:
         member.pop('payload')
         members.append(dict(member,format='N'))
+    for member in read_owned_actor_content('.emd',10):
+        member.pop('payload')
+        members.append(dict(member,format='M'))
     archives = {Path(row['archive']).resolve() for row in members}
     assert len(archives) == 1
     archive = archives.pop()
@@ -46,8 +49,13 @@ def main(args):
             source.seek(row['archive_offset'])
             assert hashlib.sha256(source.read(row['bytes'])).hexdigest() == row['sha256']
             name = row['name']
-            assert name.startswith('r')
-            scenario = int(name[1:4])
+            if row['format']=='M':
+                assert re.fullmatch(r'(sgl_)?e[0-9]{3}\.emd',name)
+                stem=name.removeprefix('sgl_')
+                scenario=int(stem[1:4])
+            else:
+                assert name.startswith('r')
+                scenario = int(name[1:4])
             lines.append('\t'.join(map(str, (row['format'], scenario, name, row['archive_offset'],
                                               row['bytes'], row['sha256']))))
     source_names = subprocess.check_output(['rg', '--files', 'game/native'], cwd=ROOT, text=True).splitlines()
@@ -73,7 +81,8 @@ def main(args):
     stamp = archive.stat()
     assert (stamp.st_size, stamp.st_mtime_ns) == identity
     observed = json.loads(run.stdout)
-    assert observed['status'] == 'passed' and observed['members'] == 176 and observed['npc_banks'] == 5
+    assert observed['status'] == 'passed' and observed['members'] == 186
+    assert observed['npc_banks'] == 5 and observed['enemy_banks'] == 10
     receipt = dict(schema='reo.native.scenario.archive.v1', status='passed',
                    compiler=str(compiler), compiler_sha256=sha(compiler), source_sha256=before,
                    index_receipt_sha256=sha(index / 'receipt.json'),

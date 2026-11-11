@@ -98,6 +98,23 @@ Status Owner::load_scenario_npcs(const scenario::content::ScenarioArchive& archi
     return Status::actor_failure;
 }
 
+Status Owner::load_scenario_enemies(const scenario::content::ScenarioArchive& archive) {
+    if (!open()) return Status::closed;
+    if (running_) return Status::busy;
+    auto& session=world_.session();
+    if (!session.scenario) return Status::actor_failure;
+    const bool offline=world_.mode==0;
+    std::array<char,20> name{};
+    std::snprintf(name.data(),name.size(),offline?"sgl_e%03u.emd":"e%03u.emd",unsigned(*session.scenario));
+    try {
+        const auto bytes=archive.read_member(*session.scenario,name.data());
+        if (bytes && session.enemy_descriptors.import(*bytes,session,offline,choices_.state().table_row).status==
+                     scenario::EnemyImportStatus::completed) return Status::completed;
+    }
+    catch (const std::invalid_argument&) { return Status::actor_failure; }
+    return Status::actor_failure;
+}
+
 Status Owner::load_room_scripts(const scenario::content::ScenarioArchive& archive,
                                 scenario::content::RoomId id,std::size_t room_channel) {
     if (!open()) return Status::closed;

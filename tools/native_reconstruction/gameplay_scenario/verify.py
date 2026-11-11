@@ -29,6 +29,7 @@ IDS += ['0068EFF0']
 IDS += ['005EB0D0']
 IDS += ['00683A90','00684010','006841E0','006842B0','00684450','00681240','006812B0','0068DBA0','0068DF10']
 IDS += ['0068F8D0','0068F920','0068F970','0068FA40','0068FAC0','0068FB20','0068FB80','00681330']
+IDS += ['006BAA40','006BB010','006BC210','006D45A0','006D4650','005A7BC0']
 
 PINNED={};PIN_COMMITS={}
 def source_bytes(p):
@@ -67,7 +68,7 @@ def main(a):
     segment=next(p for p in loads if p[2]<=0x1b3c30 and 0x1b3c38<=p[2]+p[4]);body=elf[segment[1]+0x1b3c30-segment[2]:segment[1]+0x1b3c38-segment[2]]
     assert struct.unpack('<II',body)==(0x03e00008,0);texts.append('\n'.join(l for l in main_text.splitlines() if not l.startswith('#include')))
     previous_names=set(re.findall(r'\b((?:o2|sub)_[A-Za-z0-9_]+)\(','\n'.join(texts)))|{'sub_00107AB0_0x107ab0'}
-    stream_main=['001BA170','001ADA20','001ADFD0','001ADF50','001AE2E0','001AE3F0','001AE190','001B0340','001B02D0','001B0300','001AEC80','0018F570','0018FDF0','00190A10','001913E0','00191530','001919D0','001B3C40','001D45F0'];stream_functions=set()
+    stream_main=['001BA170','001ADA20','001ADFD0','001ADF50','001AE2E0','001AE3F0','001AE190','001B0340','001B02D0','001B0300','001AEC80','0018F570','0018FDF0','00190A10','001913E0','00191530','001919D0','001B3C40','001D45F0','001B2D80'];stream_functions=set()
     for ident in stream_main:
         p=next((ROOT/'recomp/config/output').glob('sub_'+ident+'_*'));source=p.read_text();sources[p.relative_to(ROOT).as_posix()]=sha(p);shutil.copyfile(p,out/p.name)
         for pc,opcode in re.findall(r'// (0x[0-9a-f]+): (0x[0-9a-f]+)\s',source):
@@ -105,6 +106,12 @@ def main(a):
     request_table=struct.unpack_from('<43I',raw,0x711960-0x570000);assert request_table[0x28]==0x6269b0 and struct.unpack_from('<I',raw,0x711960-0x570000+43*4)[0]==0
     initialization+='inline void owned_request_constants(std::uint8_t* p){const std::array<std::uint32_t,43> b{'+','.join(hex(x)+'u' for x in request_table)+'};std::memcpy(p+0x711960,b.data(),sizeof(b));}\n'
     declarations.append(initialization)
+    initialization='inline void owned_enemy_constants(std::uint8_t* p){\n'
+    for address,size in [(0x729270,0x1f00),(0x72f820,256),(0x7318c0,0x280)]:
+        chunk=raw[address-0x570000:address-0x570000+size]
+        assert len(chunk)==size
+        initialization+='const std::array<std::uint8_t,'+str(size)+'> bytes_'+str(address)+'{'+','.join(str(byte) for byte in chunk)+'};std::memcpy(p+'+str(address)+',bytes_'+str(address)+'.data(),'+str(size)+');\n'
+    declarations.append(initialization+'}\n')
     (out/'original_declarations.inc').write_text('\n'.join(declarations)+'\n')
     actual_definitions=set(re.findall(r'^void ((?:o2|sub)_[A-Za-z0-9_]+)\(','\n'.join(texts),re.M));lookup={}
     for n in names:
@@ -137,6 +144,12 @@ def main(a):
     shutil.copyfile(HERE/'npc_vm_tests.inc',out/'npc_vm_tests.inc')
     from npc_fixtures import write_fixture
     npc_members=write_fixture(out)
+    from npc_fixtures import write_enemy_fixture
+    enemy_members=write_enemy_fixture(out)
+    from qualify_enemy_route_profile import generate as route_profile, OUTPUT as route_output
+    from qualify_enemy_spawn_profile import generate as spawn_profile, OUTPUT as spawn_output
+    assert route_output.read_text()==route_profile() and spawn_output.read_text()==spawn_profile()
+    shutil.copyfile(HERE/'enemy_vm_tests.inc',out/'enemy_vm_tests.inc')
     shutil.copyfile(HERE/'periodic_control_vm_tests.inc',out/'periodic_control_vm_tests.inc')
     shutil.copyfile(HERE/'room_rule_tests.inc',out/'room_rule_tests.inc')
     shutil.copyfile(HERE/'room_object_vm_tests.inc',out/'room_object_vm_tests.inc')
@@ -162,6 +175,7 @@ def main(a):
     units += [('cutscene_cues',ROOT/'game/native/gameplay_scenario/cutscene_cues.cpp')]
     units += [('launch',ROOT/'game/native/gameplay_session/launch.cpp'),('launch_roster',ROOT/'game/native/gameplay_world/launch_roster.cpp')]
     units += [('npc_descriptors',ROOT/'game/native/gameplay_scenario/npc_descriptors.cpp')]
+    units += [(name,ROOT/'game/native/gameplay_scenario'/(name+'.cpp')) for name in ('enemy_descriptors','enemy_routes')]
     if not a.pin_effects_commit:
         import sys
         sys.path.insert(0,str(ROOT/'tools/native_reconstruction'))
@@ -182,6 +196,7 @@ def main(a):
     source_paths.append(HERE/'transition_input_vm_tests.inc')
     source_paths.append(HERE/'launch_roster_vm_tests.inc')
     source_paths += [HERE/'npc_vm_tests.inc',HERE/'npc_fixtures.py']
+    source_paths += [HERE/'enemy_vm_tests.inc',HERE/'qualify_enemy_route_profile.py',HERE/'qualify_enemy_spawn_profile.py']
     source_paths += [HERE/'surface_vm_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]
     source_paths += [ROOT/'game/native/transform_math/transform_math.hpp',ROOT/'game/native/transform_math/transform_math.cpp']
@@ -228,11 +243,12 @@ def main(a):
         frozen=out/'source'/path.relative_to(ROOT)if not path.is_relative_to(ROOT/'build-native-sjuni')else path
         checks.append(invoke(base+['-Wall','-Wextra','-Wpedantic','-Werror','-c',str(frozen),'-o',str(out/(label+'.o'))],out,'compile-'+label))
     checks.append(invoke([str(cc)]+[str(out/'original.o')]+[str(out/(n+'.o')) for n,p in units]+['-o',str(out/'checks.exe')],out,'link'))
-    checks.append(invoke([str(out/'checks.exe'),str(out/'owned_effect_geometry.bin'),str(policy_path),str(stock_path)],out,'test'));assert all(sha(ROOT/n)==digest for n,digest in before.items())
+    checks.append(invoke([str(out/'checks.exe'),str(out/'owned_effect_geometry.bin'),str(policy_path),str(stock_path),str(out/'owned_enemy_members.bin')],out,'test'));assert all(sha(ROOT/n)==digest for n,digest in before.items())
     receipt=dict(status='passed',compiler=str(cc),compiler_sha256=sha(cc),source_sha256=before,original_sources_sha256=sources,checked_owned_instruction_comments=words,
         pinned_shared_sources={name:dict(commit=PIN_COMMITS[name],sha256=hashlib.sha256(data).hexdigest())for name,data in PINNED.items()},pinned_current_source_drift={name:hashlib.sha256((ROOT/name).read_bytes()).hexdigest()for name,data in PINNED.items()if (ROOT/name).read_bytes()!=data},oracle_profile=dict(reference_sha256=sha(reference),sdk131_sign_extended_word_setter=True,finite_simd=True,transitive_native_headers=True,compiled_private_source_snapshot=True,periodic_scheduler_allocation_declared_port=True,actual_native_periodic_visual_owner=True),periodic_effect_corpus=dict(receipt=str((corpus/'receipt.json').relative_to(ROOT)),sha256=sha(corpus/'receipt.json'),package_sha256=corpus_receipt['package_sha256']),executable_sha256=sha(out/'checks.exe'),generated_fixture_sha256=sha(out/'original_fixture.hpp'),generated_original_sha256=sha(out/'original.cpp'),original_main_elf_sha256=elf_sha,original_main_leaf=dict(address='1B3C30',bytes=8,sha256=hashlib.sha256(body).hexdigest(),instructions=['jr ra','nop'],context_cases=4096),
         original_table_sha256=hashlib.sha256(struct.pack('<432I',*table)).hexdigest(),npc_members=npc_members,
         npc_fixture_sha256=sha(out/'owned_npc_fixtures.inc'),checks=checks,result=json.loads((out/'test.stdout.txt').read_text()),
+        enemy_members=enemy_members,enemy_fixture_sha256=sha(out/'owned_enemy_members.bin'),
         installed_in_game=False,game_launched=False,live_process_access=False,limitations=['Native opcode algorithm coverage is partial; entire programs with unsupported handlers are refused before native install.','Canonical flag storage and offline actor-delta merging are native; actual game caller/content import, notification delivery and message services remain external integration gates.','Actual original dispatcher and handler bodies are used only in the test oracle, with bounded memory/register scaffolding. No MIPS execution ships in native core.'])
     receipt['room_counter_policy']=dict(index_receipt_sha256=sha(index/'receipt.json'),owned_members={e['name']:e['sha256'] for e in evbs},package_sha256=sha(policy_path))
     receipt['stock_room']=dict(name=stock['name'],sha256=sha(stock_path),installed_in_game=False)

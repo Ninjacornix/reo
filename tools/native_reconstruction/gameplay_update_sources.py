@@ -22,3 +22,4 @@ UPDATE_UNITS.append('game/native/gameplay_scenario/scenario_archive.cpp')
 UPDATE_UNITS.append('game/native/gameplay_scenario/cutscene_cues.cpp')
 UPDATE_UNITS += ['game/native/gameplay_session/launch.cpp','game/native/gameplay_world/launch_roster.cpp']
 UPDATE_UNITS += ['game/native/gameplay_scenario/npc_descriptors.cpp']
+UPDATE_UNITS += ['game/native/gameplay_scenario/enemy_descriptors.cpp','game/native/gameplay_scenario/enemy_routes.cpp']

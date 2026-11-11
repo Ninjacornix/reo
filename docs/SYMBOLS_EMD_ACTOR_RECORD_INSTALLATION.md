@@ -7,7 +7,7 @@ unresolved. Noexecution,build,replay,networkoperationorenginechanges.
 
 | Guest entry / source | Proposed label | Confidence | Evidence and remaining uncertainty |
 | --- | --- | --- | --- |
-| [o2 0x6BAA40](../recomp/config/output_ovl/o2/o2_006BAA40_0x6baa40.cpp) | `load_scenario_emd_records_and_expand_selected_spawn_group_candidate` | High mechanics; filename identity verified | Clears74F250size6000,256bytes3B5050=FF,pathbuffer0. Sessionmode1usesownedsgl_e%03d.emd,otherse%03d.emd,scenario3243DA;read1CC8F0flags10001totemp32440C,nonzeroadmitted. Advancesinputby4*trunc(headerword0/4),zeros128bytes755250/7552D0. RNGstream0&7seedrotation;stream2&3group,mode1overridesgroup=4BAE8A&3. Sequential60-byteinputrecordsendsbyte2FF;filtersbyte1Egroupand49bit(1<<4BAE8A). Emits60-byteruntime74F250recordswithoutlocalcapacitybound,fieldsbelow;publishescountbyte4BAE8E,1B2D80. Noactorsconstructedhere. |
+| [o2 0x6BAA40](../recomp/config/output_ovl/o2/o2_006BAA40_0x6baa40.cpp) | `load_scenario_emd_records_and_expand_selected_spawn_group_candidate` | High mechanics; filename identity verified | Clears74F250size6000,256bytes3B5050=FF,pathbuffer0. 1B02D0==1(rawmode0)usesownedsgl_e%03d.emd,otherse%03d.emd,scenario3243DA;read1CC8F0flags10001totemp32440C,nonzeroadmitted. Advancesinputby4*trunc(headerword0/4),zeros128bytes755250/7552D0. RNGstream0&7seedrotation;stream2&3group,rawmode0overridesgroup=4BAE8A&3. Sequential60-byteinputrecordsendsbyte2FF;filtersbyte1Egroupand49bit(1<<4BAE8A). Emits60-byteruntime74F250recordswithoutlocalcapacitybound,fieldsbelow;publishescountbyte4BAE8E,1B2D80. Noactorsconstructedhere. |
 | [o2 0x6BB040](../recomp/config/output_ovl/o2/o2_006BB040_0x6bb040.cpp) | `instantiate_current_room_and_admitted_remote_emd_actor_nodes_and_sound_set_candidate` | High mechanics; filename identity verified | Global4BADF8nonzeroreturns. Clears74F240byte;currentroomuses7552D0[room]startindexand755250[room]countinto74F250;zeros256soundclassbytesstack70. Firstloopcurrentroomrecordswithbyte26zeroandeligibility;secondloopallcount4BAE8Erecordswith26nonzero,allowedclass4BA820/A822,flagbitsand1B32F0admission. BothA300(1)nodes,allocationfailureendsearly;constructionbelow. CompressesnonzerosoundIDsbyclassintoeight-bytearrayspecialclass1routing,calls1D3D40. Nocompleteallassets/successaggregation. |
 
 AA40 runtimeR/inputS fieldconversion afterfilters:
@@ -35,11 +35,11 @@ AA40 runtimeR/inputS fieldconversion afterfilters:
 R45cleared0. GroupbyS1C:7552D0[group]=firstoutputindexonchange,
 755250[group]++foreachadmittedrecord;sourceorderingisacaller/assetcontract.
 IfR26nonzero,6812B0(2,index),6BC210(R). R42isrotatingRNGseed0..7.
-Healthnormalbase729270,mode1base72A1F0,stride40perclass,10perdifficulty,
+Healthnormalbase729270,rawmode0base72A1F0,stride40perclass,10perdifficulty,
 2perselector. Ownedfirstclassfourrows(decimal):normal
 [500,550,600,650,700,750,800,850]/[800,850,900,950,1000,1050,1100,1150]/
 [900,950,1000,1050,1100,1150,1200,1250]/[1000,1150,1200,1300,1400,1500,1600,1700];
-mode1firstrow[600,650,700,750,800,850,900,950],otherfirstclassrowsmatch.
+rawmode0firstrow[600,650,700,750,800,850,900,950],otherfirstclassrowsmatch.
 Owned72F820firstfourbytes[1,4,8,10hex];remainingindexedextentunknown.
 
 BB040 commonnodeinitialization NfromR:

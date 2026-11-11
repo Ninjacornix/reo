@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+import struct
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[3]
@@ -12,7 +13,7 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def read_owned_npcs():
+def read_owned_actor_content(suffix,count):
     receipt=json.loads((INDEX/'receipt.json').read_bytes())
     assert receipt['status']=='passed'
     for name,expected in receipt['output_sha256'].items():
@@ -24,8 +25,8 @@ def read_owned_npcs():
     containers={entry['path']:entry for entry in json.loads((INDEX/'containers.json').read_bytes())}
     assets={entry['path']:entry for entry in json.loads((data.parent/'assets.json').read_bytes())['entries']}
     selected=[entry for entry in json.loads((INDEX/'members.json').read_bytes())
-              if entry['names'] and entry['names'][-1].lower().endswith('.npc')]
-    assert len(selected)==5
+              if entry['names'] and entry['names'][-1].lower().endswith(suffix)]
+    assert len(selected)==count
     records=[]
     for entry in selected:
         archive=data/entry['container']
@@ -47,6 +48,10 @@ def read_owned_npcs():
     return records
 
 
+def read_owned_npcs():
+    return read_owned_actor_content('.npc',5)
+
+
 def write_fixture(output):
     records=read_owned_npcs()
     lines=[]
@@ -57,4 +62,18 @@ def write_fixture(output):
     lines.append('const std::array<std::span<const std::byte>,5> owned_npc_inputs{'+
                  ','.join('std::as_bytes(std::span(owned_npc_'+str(index)+'))' for index in range(5))+'};')
     (output/'owned_npc_fixtures.inc').write_text('\n'.join(lines)+'\n')
+    return records
+
+
+def write_enemy_fixture(output):
+    records=read_owned_actor_content('.emd',10)
+    with (output/'owned_enemy_members.bin').open('wb') as target:
+        target.write(struct.pack('<I',len(records)))
+        for entry in records:
+            payload=entry.pop('payload')
+            name=entry['name']
+            offline=name.startswith('sgl_')
+            scenario=int(name[5:8] if offline else name[1:4])
+            target.write(struct.pack('<III',scenario,int(offline),len(payload)))
+            target.write(payload)
     return records

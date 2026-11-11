@@ -12,6 +12,8 @@
 #include "../gameplay_scenario/cutscene_requests.hpp"
 #include "../gameplay_scenario/room_actor_assets.hpp"
 #include "../gameplay_scenario/npc_descriptors.hpp"
+#include "../gameplay_scenario/enemy_descriptors.hpp"
+#include "../gameplay_scenario/enemy_routes.hpp"
 #include "inventory_state.hpp"
 #include "actor_placements.hpp"
 #include "../gameplay_session/room_variants.hpp"
@@ -157,6 +159,8 @@ struct Session : actors::HitSession {
     gameplay_scenario::RoomActorAssets room_actor_assets;
     gameplay_scenario::NpcDescriptors npc_descriptors;
     gameplay_scenario::MissingCharacters missing_characters;
+    gameplay_scenario::EnemyDescriptors enemy_descriptors;
+    gameplay_scenario::EnemyRoutes enemy_routes;
     std::uint8_t script_room_parameter{}; // original4B9D17; exact downstream use is unresolved
     gameplay_collision::delivery::RoomContacts room_contacts;
     gameplay_session::Random random{};
