@@ -1,9 +1,11 @@
 #include "linked_models.hpp"
 #include <stdexcept>
 #include <utility>
+#include <bit>
 namespace reo::native::gameplay_world {
 namespace {
 #include "linked_model_profile.inc"
+#include "linked_model_definitions.inc"
 void clear_authored_defaults(Actor& a) {
     a.motion_rate = 0;
     a.model_scale = {};
@@ -144,6 +146,11 @@ bool File1LinkedModelProfiles::skip_type1_correction(std::uint16_t variant) cons
     if (variant >= type1_flags.size())
         throw std::out_of_range("Native linked type1 definition variant unavailable");
     return type1_flags[variant] == 1;
+}
+const LinkedModelDefinition& File1LinkedModelProfiles::definition(std::uint8_t type,std::uint16_t variant) const {
+    if (type>=model_definitions.size() || variant>=model_definitions[type].size())
+        throw std::out_of_range("Native linked model definition unavailable");
+    return model_definitions[type][variant];
 }
 LinkedModelReport LinkedModelPass::run() {
     if (&pool_.world_ != &world_ || &root_.world_ != &world_ || pool_.closed_)

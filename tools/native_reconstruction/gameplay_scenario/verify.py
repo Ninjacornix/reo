@@ -31,6 +31,7 @@ IDS += ['00683A90','00684010','006841E0','006842B0','00684450','00681240','00681
 IDS += ['0068F8D0','0068F920','0068F970','0068FA40','0068FAC0','0068FB20','0068FB80','00681330']
 IDS += ['006BAA40','006BB010','006BC210','006D45A0','006D4650','005A7BC0']
 IDS += ['0068FC00']
+IDS += ['006BB9F0']
 
 PINNED={};PIN_COMMITS={}
 def source_bytes(p):
@@ -113,6 +114,10 @@ def main(a):
         assert len(chunk)==size
         initialization+='const std::array<std::uint8_t,'+str(size)+'> bytes_'+str(address)+'{'+','.join(str(byte) for byte in chunk)+'};std::memcpy(p+'+str(address)+',bytes_'+str(address)+'.data(),'+str(size)+');\n'
     declarations.append(initialization+'}\n')
+    zero=(ROOT/'build-function-index/owned-overlays/o0.bin').read_bytes()
+    assert hashlib.sha256(zero).hexdigest()=='bfac1906d63d585736e46573295cff12e308720af6b49914e1ad8695dfcf50c2'
+    chunk=zero[0x3872b0-0x370000:0x388080-0x370000]
+    declarations.append('inline void owned_linked_definition_constants(std::uint8_t* p){const std::array<std::uint8_t,'+str(len(chunk))+'> b{'+','.join(map(str,chunk))+'};std::memcpy(p+0x3872b0,b.data(),b.size());}\n')
     (out/'original_declarations.inc').write_text('\n'.join(declarations)+'\n')
     actual_definitions=set(re.findall(r'^void ((?:o2|sub)_[A-Za-z0-9_]+)\(','\n'.join(texts),re.M));lookup={}
     for n in names:
@@ -152,6 +157,10 @@ def main(a):
     assert route_output.read_text()==route_profile() and spawn_output.read_text()==spawn_profile()
     shutil.copyfile(HERE/'enemy_vm_tests.inc',out/'enemy_vm_tests.inc')
     shutil.copyfile(HERE/'character_remap_vm_tests.inc',out/'character_remap_vm_tests.inc')
+    from qualify_enemy_initialization_profiles import generate as initialization_profiles, MODELS, PRIORITIES
+    for path,expected in zip((MODELS,PRIORITIES),initialization_profiles()):
+        assert path.read_text()==expected
+    shutil.copyfile(HERE/'enemy_initialization_vm_tests.inc',out/'enemy_initialization_vm_tests.inc')
     shutil.copyfile(HERE/'periodic_control_vm_tests.inc',out/'periodic_control_vm_tests.inc')
     shutil.copyfile(HERE/'room_rule_tests.inc',out/'room_rule_tests.inc')
     shutil.copyfile(HERE/'room_object_vm_tests.inc',out/'room_object_vm_tests.inc')
@@ -179,6 +188,7 @@ def main(a):
     units += [('npc_descriptors',ROOT/'game/native/gameplay_scenario/npc_descriptors.cpp')]
     units += [(name,ROOT/'game/native/gameplay_scenario'/(name+'.cpp')) for name in ('enemy_descriptors','enemy_routes')]
     units += [('character_remap',ROOT/'game/native/gameplay_scenario/character_remap.cpp')]
+    units += [('enemy_initialization',ROOT/'game/native/gameplay_world/enemy_initialization.cpp')]
     if not a.pin_effects_commit:
         import sys
         sys.path.insert(0,str(ROOT/'tools/native_reconstruction'))
@@ -201,6 +211,7 @@ def main(a):
     source_paths += [HERE/'npc_vm_tests.inc',HERE/'npc_fixtures.py']
     source_paths += [HERE/'enemy_vm_tests.inc',HERE/'qualify_enemy_route_profile.py',HERE/'qualify_enemy_spawn_profile.py']
     source_paths.append(HERE/'character_remap_vm_tests.inc')
+    source_paths += [HERE/'enemy_initialization_vm_tests.inc',HERE/'qualify_enemy_initialization_profiles.py']
     source_paths += [HERE/'surface_vm_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]
     source_paths += [ROOT/'game/native/transform_math/transform_math.hpp',ROOT/'game/native/transform_math/transform_math.cpp']

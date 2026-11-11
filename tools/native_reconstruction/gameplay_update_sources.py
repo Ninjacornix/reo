@@ -24,3 +24,4 @@ UPDATE_UNITS += ['game/native/gameplay_session/launch.cpp','game/native/gameplay
 UPDATE_UNITS += ['game/native/gameplay_scenario/npc_descriptors.cpp']
 UPDATE_UNITS += ['game/native/gameplay_scenario/enemy_descriptors.cpp','game/native/gameplay_scenario/enemy_routes.cpp']
 UPDATE_UNITS += ['game/native/gameplay_scenario/character_remap.cpp']
+UPDATE_UNITS += ['game/native/gameplay_world/enemy_initialization.cpp']

@@ -1,8 +1,12 @@
 # Stage 4: native gameplay and scheduling
 
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
-verification. Put the PC to sleep after Stage 4 passes those checks, as requested.
+verification. The latest user instruction is to keep the PC awake afterward.
 
+- [Enemy priorities and model definitions](ENEMY_INITIALIZATION.md) reproduce
+  the owned metadata and use canonical actor status fields. Both compiler
+  comparisons and the existing linked-model regression pass. Full enemy
+  record binding, construction and room orchestration remain open.
 - [Forced actor terminal transition](ACTOR_FORCED_TERMINAL.md) now composes the
   actual native inventory, event, pose and local-player message owners through
   script commands 61 and 62. Both compiler suites and parent tests pass. The

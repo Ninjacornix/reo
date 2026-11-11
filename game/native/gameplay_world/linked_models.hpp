@@ -62,9 +62,15 @@ class LinkedPoseRoot final {
     actors::EntityId selected_, observed_;
     friend class LinkedModelPass;
 };
+struct LinkedModelDefinition {
+    std::uint8_t model{},texture{},sound{};
+    float scale{};
+    std::int8_t visibility_selector{};
+};
 class File1LinkedModelProfiles final {
   public:
     bool skip_type1_correction(std::uint16_t variant) const;
+    const LinkedModelDefinition& definition(std::uint8_t type,std::uint16_t variant) const;
 };
 struct LinkedModelReport {
     std::size_t visited{}, updated{}, root_copies{}, floor_queries{};
