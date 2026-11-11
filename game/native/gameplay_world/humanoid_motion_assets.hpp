@@ -37,6 +37,10 @@ struct HumanoidSceneMotionLoad {
 class HumanoidMotionAssets final {
 public:
     explicit HumanoidMotionAssets(std::shared_ptr<const reo::assets::Source>);
+    // Cold1B2150 projection for primary/general/alternate and eight character
+    // banks. No files read; the separate default-loaded gate is explicit
+    // because1B2150 does not write it. Body/face profiles remain unavailable.
+    static std::shared_ptr<const HumanoidMotionBanks> initial_banks(bool default_loaded_gate);
     // Initial1D1A80/1D19D0 profile, with independently absent character/demo banks.
     std::shared_ptr<const HumanoidMotionBanks> base()const;
     // Complete default-load gate: a scene load invalidates it, including a

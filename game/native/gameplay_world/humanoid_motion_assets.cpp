@@ -51,6 +51,14 @@ std::shared_ptr<const HumanoidMotionBanks> HumanoidMotionAssets::base()const{
     result->primary_=std::make_shared<const animation::MotionBank>(animation::MotionBank::cleared_bank());
     load_defaults(*result);return result;
 }
+std::shared_ptr<const HumanoidMotionBanks> HumanoidMotionAssets::initial_banks(bool default_loaded_gate){
+    auto result=std::shared_ptr<HumanoidMotionBanks>(new HumanoidMotionBanks);
+    result->revision_=std::make_shared<const HumanoidMotionRevision>();
+    const auto empty=[](){return std::make_shared<const animation::MotionBank>(animation::MotionBank::cleared_bank());};
+    result->primary_=empty();result->scripted_.other_modes=empty();result->alternate_style_=empty();
+    for(auto& bank:result->characters_)bank=empty();
+    result->base_loaded_=default_loaded_gate;return result;
+}
 void HumanoidMotionAssets::load_defaults(HumanoidMotionBanks& result)const{
     const auto [bytes,identity]=read(0,255);
     //1D1A80 first executes1B1DF0. This is a real partial bank release,

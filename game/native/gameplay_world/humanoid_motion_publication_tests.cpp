@@ -29,6 +29,16 @@ void contracts(){
 }
 void owned(const char* archive){
     auto source=std::make_shared<reo::assets::Source>(archive);g::HumanoidMotionAssets assets(source);g::ActorAssets models(source);
+    {
+        g::World cold_world(profile(),std::make_shared<g::Session>());g::HumanoidMotionOwner cold_owner(cold_world);
+        const auto cold=g::HumanoidMotionAssets::initial_banks(false);
+        check(cold_owner.publish(cold).status==g::HumanoidPublicationStatus::completed&&cold_owner.snapshot()==cold);++publications;
+        check(cold_owner.bank({g::HumanoidMotionFamily::character,7})->cleared()&&!cold_owner.bank({g::HumanoidMotionFamily::scene_body,0}));
+        const auto defaults=assets.ensure_base(cold);
+        check(cold_owner.publish(defaults).status==g::HumanoidPublicationStatus::completed&&defaults->base_loaded()&&defaults->character(7)->cleared());++publications;
+        check(cold_owner.publish(g::HumanoidMotionAssets::initial_banks(false)).status==g::HumanoidPublicationStatus::stale&&cold_owner.snapshot()==defaults);++refusals;
+        check(cold_owner.close()==g::HumanoidPublicationStatus::completed&&cold_world.close()==g::Status::completed);
+    }
     const auto base=assets.base();const std::array<std::uint8_t,2> characters{3,5};const auto common=assets.overlay(1,characters,*base);const auto ready=assets.scene(1,2,*common).banks;
     const auto next=assets.scene(1,1,*ready).banks;const auto later=assets.scene(1,0,*next).banks;const auto stale=assets.overlay(2,characters,*ready);
     check(next->follows(*ready)&&later->follows(*next)&&!later->follows(*ready)&&!stale->follows(*next));

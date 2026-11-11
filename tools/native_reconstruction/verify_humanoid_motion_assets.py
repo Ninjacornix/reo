@@ -15,7 +15,7 @@ def main():
     configured=re.search(r'^CMAKE_CXX_COMPILER:[^=]+=([^\n]+)',(build/'CMakeCache.txt').read_text(),re.M)[1];assert Path(configured.strip()).resolve()==compiler.resolve()
     elf=ROOT/'game_data/SLUS_207.65';assert sha(elf)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46'
     read=elf_reader(elf.read_bytes());entries={};proof=[]
-    for at in [0x1d1500,0x1d16c0,0x1d1940,0x1d1960,0x1d1990,0x1d19d0,0x1d1a80,0x1d1b10,0x1d1cc0,0x1b1bc0,0x1b1b40,0x1b2130,0x1b1c20,0x1b1cb0,0x1b1df0,0x1b1e20,0x1b1e50]:
+    for at in [0x1d1500,0x1d16c0,0x1d1940,0x1d1960,0x1d1990,0x1d19d0,0x1d1a80,0x1d1b10,0x1d1cc0,0x1b1bc0,0x1b1b40,0x1b2130,0x1b2120,0x1b2140,0x1b2150,0x1b1c20,0x1b1cb0,0x1b1df0,0x1b1e20,0x1b1e50]:
         source=ROOT/f'recomp/config/output/sub_{at:08X}_0x{at:x}.cpp';begin,end=[int(v,16)for v in re.search(r'// Address: (0x[0-9a-f]+) - (0x[0-9a-f]+)',source.read_text()).groups()];entries[at]=source
         proof.append(compare_source('complete source containing common/character loader and bank construction',source.relative_to(ROOT).as_posix(),begin,end,read))
     overlay=ROOT/'build-function-index/owned-overlays/o2.bin';assert sha(overlay)=='45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226';overlay_raw=overlay.read_bytes();source=ROOT/'recomp/config/output_ovl/o2/o2_005EC0E0_0x5ec0e0.cpp';entries[0x5ec0e0]=source

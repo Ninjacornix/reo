@@ -117,6 +117,11 @@ verification. The latest user instruction is to keep the PC awake afterward.
   uses its distinct fixed token-table rule through cleanup. Paired bank,
   shared-publication, playback and primary-model comparisons cover this path;
   the remaining5ED340 cleanup and physical resource handoff remain open.
+- [Cold humanoid banks](COLD_HUMANOID_BANKS.md) now supply an explicit1B2150
+  projection with known-empty unused character banks and a caller-owned default
+  gate. Paired complete initializer/default/overlay/cleanup comparisons and live
+  publication pass. This grants no unprepared clip data; full scene ownership
+  and physical model-resource handoff remain open.
 - The [scene NPC loading-mode correction](CUTSCENE_NPC_CONSTRUCTION.md) separates
   asset-loading mode3243D7 from pause4BADF8. Paired current cohorts pass4,384 scene
   cases with independent inputs; the earlier fixture conflated the two and its
