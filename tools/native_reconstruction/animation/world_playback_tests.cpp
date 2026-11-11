@@ -81,6 +81,7 @@ void body_equal(const g::Actor& value, const std::vector<std::uint8_t>& ram) {
 #include "scripted_motion_tests.inc"
 #include "linked_actor_update_tests.inc"
 #include "cutscene_actor_command_tests.inc"
+#include "cutscene_actor_track_tests.inc"
 int main(int argc, char** argv) try {
     check(argc == 4, "owned World animation inputs required");
     const auto old = _mm_getcsr();
@@ -98,6 +99,7 @@ int main(int argc, char** argv) try {
     scripted_motion_tests(raw_banks,skeletons,ram);
     linked_expiry_tests(ram);
     cutscene_command_tests(ram);
+    cutscene_track_tests(ram);
     linked_full_pool_tests(ram);
     std::shared_ptr<const a::Skeleton> skeleton;
     std::vector<std::byte> raw_skeleton;
@@ -703,6 +705,10 @@ int main(int argc, char** argv) try {
               << ",\"cutscene_speech_cases\":" << cutscene_speech_cases
               << ",\"cutscene_command_refusals\":" << cutscene_command_refusals
               << ",\"cutscene_command_mutations\":" << cutscene_command_mutations
+              << ",\"cutscene_track_cases\":" << cutscene_track_cases
+              << ",\"cutscene_track_ticks\":" << cutscene_track_ticks
+              << ",\"cutscene_track_original_commands\":" << cutscene_track_original_commands
+              << ",\"cutscene_terminal_streams\":" << cutscene_terminal_streams
               << ",\"linked_update_refusals\":" << linked_update_refusals
               << ",\"required_prelude_cases\":" << prelude_native
               << ",\"refusal_cases\":" << world_refusals << ",\"joint_cases\":" << joint_cases

@@ -106,8 +106,11 @@ std::optional<bool> World::contains_character(std::uint8_t character)const noexc
 actors::EntityId World::identity(std::size_t index)const noexcept{
     return index<primary_.size()?primary_[index]:actors::EntityId{};
 }
+bool World::busy()const noexcept{
+    return updating_||(linked_models_&&linked_models_->busy())||(auxiliary_actors_&&auxiliary_actors_->busy());
+}
 Status World::close()noexcept{
-    if(updating_||(linked_models_&&linked_models_->busy())||(auxiliary_actors_&&auxiliary_actors_->busy()))return Status::busy;
+    if(busy())return Status::busy;
     closed_=true;primary_.fill({});
     if(linked_models_)(void)linked_models_->close();
     if(auxiliary_actors_)(void)auxiliary_actors_->close();

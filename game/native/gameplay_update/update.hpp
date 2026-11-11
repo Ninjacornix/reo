@@ -1,4 +1,5 @@
 #pragma once
+#include "../gameplay_scenario/cutscene_actor_tracks.hpp"
 #include "../gameplay_world/world.hpp"
 #include "../gameplay_scenario/offline.hpp"
 #include "../gameplay_scenario/cutscene_cues.hpp"
@@ -120,6 +121,10 @@ public:
     // Cinematic callers use the same canonical pass without committing the
     // ordinary gameplay clock or pretending the paused workers ran.
     world::LinkedUpdated run_linked_actor_updates();
+    scenario::CutsceneTrackStatus bind_cutscene_actor_tracks(std::span<const scenario::CutsceneActorTrackGroup>);
+    scenario::CutsceneTrackStatus unbind_cutscene_actor_tracks()noexcept;
+    scenario::CutsceneTracksUpdated run_cutscene_actor_tracks(const std::uint32_t& frame,const std::uint8_t& scene,scenario::CutsceneSpeech* = nullptr);
+    const scenario::CutsceneActorTracks* cutscene_actor_tracks()const noexcept{return cutscene_actor_tracks_.get();}
     tasks::EventTasks& events()noexcept{return events_;}
     tasks::FlagTimers& timers()noexcept{return timers_;}
     tasks::SimulationClock& clock()noexcept{return clock_;}
@@ -277,6 +282,7 @@ private:
     scenario::FlagState flags_;
     StatePublication publication_;
     std::unique_ptr<world::LinkedActorUpdates> linked_actor_updates_;
+    std::unique_ptr<scenario::CutsceneActorTracks> cutscene_actor_tracks_;
     scenario::ActionChoices choices_;
     scenario::Interpreter scripts_;
     scenario::OfflineCoordinator offline_;

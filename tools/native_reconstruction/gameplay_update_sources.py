@@ -32,3 +32,5 @@ UPDATE_UNITS += ['game/native/gameplay_world/'+name+'.cpp' for name in
                   'surface_orientation','surface_orientation_math']]
 UPDATE_UNITS += ['game/native/animation/'+name+'.cpp' for name in
                  ['playback','model_blend','motion_bank','motion_descriptors']]
+UPDATE_UNITS += ['game/native/gameplay_scenario/cutscene_actor_commands.cpp',
+                 'game/native/gameplay_scenario/cutscene_actor_tracks.cpp']

@@ -45,6 +45,7 @@ class LinkedModelPool final {
     LinkedStatus clear(bool close) noexcept;
     friend class LinkedModelPass;
     friend class LinkedActorUpdates;
+    friend class gameplay_scenario::CutsceneActorTracks;
 };
 class LinkedPoseRoot final {
   public:

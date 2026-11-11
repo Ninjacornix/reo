@@ -177,14 +177,21 @@ void owned(const char* archive,const char* manifest){
     }
     check(bool(prepared));const auto created=constructor.create(*prepared);check(created.status==u::ScriptedConstructionStatus::completed);
     const auto actor=world.resolve(created.id);world.paused=1;
-    std::array<std::byte,36> event{};
+    std::array<std::byte,72> event{};
     const auto write_event=[&](unsigned at,auto value){std::memcpy(event.data()+at,&value,sizeof value);};
+    write_event(38,std::uint16_t(65535));
+    reo::native::gameplay_scenario::CutsceneActorTrackGroup tracks;tracks.kind=2;tracks.actor=created.id;
     event[1]=std::byte{0};write_event(4,10.f);write_event(8,20.f);write_event(12,30.f);
-    check(reo::native::gameplay_scenario::apply_cutscene_actor_command(world,created.id,event)==reo::native::gameplay_scenario::CutsceneCommandStatus::completed);++authored_command_consumers;
-    event.fill(std::byte{});event[1]=std::byte{1};write_event(4,1u);write_event(8,key);
-    check(reo::native::gameplay_scenario::apply_cutscene_actor_command(world,created.id,event)==reo::native::gameplay_scenario::CutsceneCommandStatus::completed);++authored_command_consumers;
-    event.fill(std::byte{});event[1]=std::byte{6};write_event(4,2.f);write_event(24,2u);
-    check(reo::native::gameplay_scenario::apply_cutscene_actor_command(world,created.id,event)==reo::native::gameplay_scenario::CutsceneCommandStatus::completed);++authored_command_consumers;
+    tracks.streams[0]=reo::native::gameplay_scenario::CutsceneActorStream::import(event);
+    event.fill(std::byte{});write_event(38,std::uint16_t(65535));event[1]=std::byte{1};write_event(4,1u);write_event(8,key);
+    tracks.streams[1]=reo::native::gameplay_scenario::CutsceneActorStream::import(event);
+    event.fill(std::byte{});write_event(38,std::uint16_t(65535));event[1]=std::byte{6};write_event(4,2.f);write_event(24,2u);
+    tracks.streams[6]=reo::native::gameplay_scenario::CutsceneActorStream::import(event);
+    check(owner.bind_cutscene_actor_tracks(std::span(&tracks,1))==reo::native::gameplay_scenario::CutsceneTrackStatus::completed);
+    const auto timeline=owner.run_cutscene_actor_tracks(0,0);
+    check(timeline.status==reo::native::gameplay_scenario::CutsceneTrackStatus::completed&&timeline.commands==3&&timeline.ended==3&&owner.clock().update_counter()==0);
+    authored_command_consumers+=timeline.commands;
+    check(owner.run_cutscene_actor_tracks(0,0).matched==0&&!owner.cutscene_actor_tracks()->cursor(0,6));
     const auto floors=std::make_shared<const reo::native::gameplay_collision::response::Grid>();
     check(owner.bind_linked_actors(loaded.banks,floors)==u::Status::completed);
     Remaining remaining;u::LinkedModelWorkers poses(world,remaining,floors);

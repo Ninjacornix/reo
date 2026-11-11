@@ -23,10 +23,11 @@ Owner::Owner(world::World& world,scenario::FlagNotifications& notifications,std:
 }
 Owner::~Owner(){if(running_)std::terminate();(void)close();}
 Status Owner::close()noexcept{
-    if(running_ || !events_.idle() || !linked_.idle())return Status::busy;
+    if(running_ || world_.busy() || !events_.idle() || !linked_.idle())return Status::busy;
     closed_=true;(void)events_.seal();(void)linked_.seal();
     cooperative_.close();
     if(linked_actor_updates_)(void)linked_actor_updates_->close();
+    if(cutscene_actor_tracks_)(void)cutscene_actor_tracks_->close();
     materials_.close();
     (void)events_.clear();(void)linked_.clear();
     if(world_.session().timing==this)world_.session().timing=nullptr;
@@ -53,6 +54,32 @@ world::LinkedUpdated Owner::run_linked_actor_updates(){
     if(!linked_actor_updates_)return{world::LinkedUpdateStatus::unavailable};
     running_=true;struct Reset{bool& value;~Reset(){value=false;}}reset{running_};
     return linked_actor_updates_->run();
+}
+scenario::CutsceneTrackStatus Owner::bind_cutscene_actor_tracks(std::span<const scenario::CutsceneActorTrackGroup> groups){
+    if(!open())return scenario::CutsceneTrackStatus::closed;
+    if(running_)return scenario::CutsceneTrackStatus::busy;
+    if(cutscene_actor_tracks_)return cutscene_actor_tracks_->install(groups);
+    try{
+        auto prepared=std::make_unique<scenario::CutsceneActorTracks>(world_);
+        const auto status=prepared->install(groups);
+        if(status==scenario::CutsceneTrackStatus::completed)cutscene_actor_tracks_=std::move(prepared);
+        return status;
+    }catch(const std::bad_alloc&){return scenario::CutsceneTrackStatus::no_memory;}
+    catch(const std::invalid_argument&){return scenario::CutsceneTrackStatus::unavailable;}
+}
+scenario::CutsceneTrackStatus Owner::unbind_cutscene_actor_tracks()noexcept{
+    if(running_||world_.busy())return scenario::CutsceneTrackStatus::busy;
+    if(!cutscene_actor_tracks_)return closed_?scenario::CutsceneTrackStatus::closed:scenario::CutsceneTrackStatus::completed;
+    const auto status=cutscene_actor_tracks_->close();
+    if(status==scenario::CutsceneTrackStatus::completed)cutscene_actor_tracks_.reset();
+    return status;
+}
+scenario::CutsceneTracksUpdated Owner::run_cutscene_actor_tracks(const std::uint32_t& frame,const std::uint8_t& scene,scenario::CutsceneSpeech* speech){
+    if(!open())return{scenario::CutsceneTrackStatus::closed};
+    if(running_)return{scenario::CutsceneTrackStatus::busy};
+    if(!cutscene_actor_tracks_)return{scenario::CutsceneTrackStatus::unavailable};
+    running_=true;struct Reset{bool& value;~Reset(){value=false;}}reset{running_};
+    return cutscene_actor_tracks_->tick(frame,scene,speech);
 }
 Status Owner::run_script(std::size_t channel,scenario::Providers providers,std::size_t budget,Result& result)noexcept{
     providers.flags=&flags_;providers.canonical_flags=&flags_;providers.timers=&timers_;

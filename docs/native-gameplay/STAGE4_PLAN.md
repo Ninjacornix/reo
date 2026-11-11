@@ -3,6 +3,13 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to keep the PC awake afterward.
 
+- [Native cutscene actor tracks](CUTSCENE_ACTOR_TRACKS.md) now drive those
+  commands through the actual Update owner with exact/halved frame matching,
+  one event per stream, terminal handling, checked lifetimes and failure latching.
+  Both compiler comparisons, owned chain, phase/scenario regressions and six
+  parent tests pass. The [owned descriptor inventory](CUTSCENE_DESCRIPTOR_INVENTORY.md)
+  identifies32-group inputs and legacy formats for the next importer work.
+  Full scene lifecycle and game installation remain open.
 - [Native cutscene actor commands](CUTSCENE_ACTOR_COMMANDS.md) now supply actual
   position, motion, scale, relation and movement requests to the native actor
   chain. Both compiler comparisons, actual asset/worker compositions, full

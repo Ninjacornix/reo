@@ -32,6 +32,7 @@
 
 namespace reo::native::animation {class Instance;class Constraints;class Playback;class WeaponProgramBank;}
 namespace reo::native::gameplay_navigation {class Bank;}
+namespace reo::native::gameplay_scenario {class CutsceneActorTracks;}
 namespace reo::native::gameplay_update {class LinkedModelWorkers;}
 namespace reo::native::gameplay_world {
 namespace actors=gameplay_actors;
@@ -259,6 +260,7 @@ public:
     Session& session()noexcept{return *session_;}
     const Session& session()const noexcept{return *session_;}
     bool closed()const noexcept{return closed_;}
+    bool busy()const noexcept;
     // Complete1B0340 predicate over this canonical session and actor state.
     // Callers holding capabilities resolve them in this World before querying.
     bool locally_controlled(const Actor& actor)const noexcept{return actor.category==0&&actor.slot==(mode==0?0:selected_actor);}
@@ -285,6 +287,8 @@ private:
     friend class LinkedActorUpdates;
     gameplay_update::LinkedModelWorkers* linked_model_owner_{};
     friend class gameplay_update::LinkedModelWorkers;
+    gameplay_scenario::CutsceneActorTracks* cutscene_tracks_owner_{};
+    friend class gameplay_scenario::CutsceneActorTracks;
     std::unique_ptr<AuxiliaryActorPool> auxiliary_actors_;
     std::unique_ptr<gameplay_navigation::Bank> navigation_;
     std::unique_ptr<TargetMetricCache> target_metrics_;

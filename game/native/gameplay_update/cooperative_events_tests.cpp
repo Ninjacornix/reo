@@ -4,6 +4,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <source_location>
+#include <cstring>
 namespace u=reo::native::gameplay_update;
 namespace e=reo::native::gameplay_events;
 namespace s=reo::native::gameplay_scenario;
@@ -444,6 +445,85 @@ void check_linked_actor_worker(){
     check(owner.bind_linked_actors({},floors)==u::Status::completed&&world.session().linked_updates.previous_seconds==12);
     check(owner.close()==u::Status::completed&&owner.run_linked_actor_updates().status==w::LinkedUpdateStatus::closed&&owner.bind_linked_actors({},floors)==u::Status::closed);
 }
+void check_cutscene_actor_tracks(){
+    namespace w=u::world;
+    w::World world({{{1,2,4}},1,{32,UINT64_MAX}},std::make_shared<w::Session>());
+    Notifications notifications;u::Owner owner(world,notifications);world.scenario=1;
+    const auto id=world.linked_models().allocate(true).id;const auto actor=world.resolve(id);actor->scripted.emplace();
+    const auto write=[](std::vector<std::byte>& bytes,unsigned at,auto value){std::memcpy(bytes.data()+at,&value,sizeof value);};
+    const auto stream=[&](std::uint8_t kind,std::uint16_t at,std::uint32_t value,bool duplicate=false){
+        std::vector<std::byte> bytes(36*(duplicate?3:2));bytes[1]=std::byte(kind);write(bytes,2,at);write(bytes,20,value);
+        if(duplicate){bytes[37]=std::byte(kind);write(bytes,38,at);write(bytes,56,value+1);}
+        write(bytes,unsigned(bytes.size()-34),std::uint16_t(65535));
+        const auto result=s::CutsceneActorStream::import(bytes);bytes[20]=std::byte{99};
+        check(std::to_integer<unsigned>(result->record(0)[20])==(value&255));return result;
+    };
+    const auto bad=[&](std::span<const std::byte> bytes){bool refused{};try{(void)s::CutsceneActorStream::import(bytes);}catch(const std::invalid_argument&){refused=true;}check(refused);};
+    std::array<std::byte,72> malformed{};bad(std::span(malformed).first(35));bad(std::span(malformed).first(36));bad(malformed);
+    check(s::CutsceneActorStream::import({})->size()==0);
+    std::array<std::byte,36> terminal{};const std::uint16_t end=65535;std::memcpy(terminal.data()+2,&end,2);
+    const auto empty_authored=s::CutsceneActorStream::import(terminal);check(empty_authored->size()==1);
+    s::CutsceneActorTrackGroup group;group.kind=2;group.actor=id;group.streams[0]=stream(4,4,1,true);
+    check(owner.run_cutscene_actor_tracks(4,0).status==s::CutsceneTrackStatus::unavailable);
+    check(owner.bind_cutscene_actor_tracks(std::span(&group,1))==s::CutsceneTrackStatus::completed);
+    bool duplicate{};try{s::CutsceneActorTracks second(world);}catch(const std::invalid_argument&){duplicate=true;}check(duplicate);
+    auto result=owner.run_cutscene_actor_tracks(4,0);
+    check(result.commands==1&&result.ended==0&&actor->movement_enabled==1&&owner.cutscene_actor_tracks()->cursor(0,0)==1&&!world.busy());
+    check(owner.run_cutscene_actor_tracks(5,0).matched==0&&actor->movement_enabled==1);
+    result=owner.run_cutscene_actor_tracks(0x10004,0);
+    check(result.commands==1&&result.ended==1&&actor->movement_enabled==2&&!owner.cutscene_actor_tracks()->cursor(0,0));
+    check(owner.bind_cutscene_actor_tracks(std::span(&group,1))==s::CutsceneTrackStatus::completed);
+    world.session().clock_mode=255;
+    check(owner.run_cutscene_actor_tracks(5,0).commands==1&&owner.run_cutscene_actor_tracks(5,0).commands==1);
+    group.streams={};group.streams[0]=empty_authored;
+    check(owner.bind_cutscene_actor_tracks(std::span(&group,1))==s::CutsceneTrackStatus::completed);
+    check(owner.run_cutscene_actor_tracks(4,0).matched==0&&owner.cutscene_actor_tracks()->cursor(0,0)==0);
+    const auto before_terminal=actor->movement_enabled;
+    check(owner.run_cutscene_actor_tracks(65534,0).status==s::CutsceneTrackStatus::unavailable&&actor->movement_enabled==before_terminal);
+    group.streams={};group.streams[0]=stream(3,4,0);group.streams[1]=stream(4,10,9);
+    check(owner.bind_cutscene_actor_tracks(std::span(&group,1))==s::CutsceneTrackStatus::completed);
+    struct Speech final:s::CutsceneSpeech {
+        u::Owner& owner;std::uint32_t& frame;std::uint8_t& scene;unsigned queued{},animated{};
+        Speech(u::Owner& o,std::uint32_t& f,std::uint8_t& s):owner(o),frame(f),scene(s){}
+        bool queue_voice(const s::CutsceneSpeechRequest&)override{
+            EmptyActors actors;
+            check(owner.close()==u::Status::busy&&owner.world().close()==w::Status::busy&&owner.world().linked_models().reset()==w::LinkedStatus::busy);
+            check(owner.bind_cutscene_actor_tracks({})==s::CutsceneTrackStatus::busy&&owner.unbind_cutscene_actor_tracks()==s::CutsceneTrackStatus::busy);
+            check(owner.run_cutscene_actor_tracks(frame,scene,this).status==s::CutsceneTrackStatus::busy&&owner.run_linked_actor_updates().status==w::LinkedUpdateStatus::busy);
+            check(owner.world().update_primary(actors).status==w::Status::busy);
+            frame=10;scene=7;owner.world().session().clock_mode=0;++queued;return true;
+        }
+        bool animate_face(const s::CutsceneSpeechRequest& request)override{check(request.scene==7);++animated;return true;}
+    };
+    std::uint32_t frame=4;std::uint8_t scene=219;Speech speech(owner,frame,scene);
+    result=owner.run_cutscene_actor_tracks(frame,scene,&speech);
+    check(result.commands==2&&result.ended==2&&actor->movement_enabled==9&&speech.queued==1&&speech.animated==1&&frame==10&&!world.busy());
+    check(owner.clock().update_counter()==0);
+    group.kind=-1;group.actor={};group.streams={};group.streams[6]=stream(4,10,77);
+    check(owner.bind_cutscene_actor_tracks(std::span(&group,1))==s::CutsceneTrackStatus::completed);
+    result=owner.run_cutscene_actor_tracks(10,0);
+    check(result.skipped==1&&result.commands==0&&result.ended==1&&actor->movement_enabled==9);
+    group.kind=2;group.actor=id;group.streams={};group.streams[0]=stream(3,0,0);
+    check(owner.bind_cutscene_actor_tracks(std::span(&group,1))==s::CutsceneTrackStatus::completed);
+    check(owner.run_cutscene_actor_tracks(0,0).status==s::CutsceneTrackStatus::unavailable&&owner.cutscene_actor_tracks()->failed()&&owner.cutscene_actor_tracks()->cursor(0,0)==0);
+    check(owner.run_cutscene_actor_tracks(0,0,&speech).status==s::CutsceneTrackStatus::failed&&speech.queued==1);
+    std::array<s::CutsceneActorTrackGroup,33> excessive{};
+    check(owner.bind_cutscene_actor_tracks(excessive)==s::CutsceneTrackStatus::invalid_input&&owner.cutscene_actor_tracks()->failed());
+    w::World foreign({{{1,2,4}},1,{32,UINT64_MAX}},std::make_shared<w::Session>());
+    group.actor=foreign.linked_models().allocate(true).id;
+    check(owner.bind_cutscene_actor_tracks(std::span(&group,1))==s::CutsceneTrackStatus::unavailable&&owner.cutscene_actor_tracks()->failed());
+    group.actor={};group.streams[0]=stream(4,0,33);
+    check(owner.bind_cutscene_actor_tracks(std::span(&group,1))==s::CutsceneTrackStatus::completed&&!owner.cutscene_actor_tracks()->failed());
+    check(owner.run_cutscene_actor_tracks(0,0).commands==1&&actor->movement_enabled==9);
+    std::array<s::CutsceneActorTrackGroup,32> full{};
+    for(auto& binding:full){binding.kind=2;binding.actor=id;binding.streams[0]=stream(4,0,55);}
+    check(owner.bind_cutscene_actor_tracks(full)==s::CutsceneTrackStatus::completed&&owner.cutscene_actor_tracks()->size()==32);
+    result=owner.run_cutscene_actor_tracks(0,0);
+    check(result.commands==32&&result.ended==32&&actor->movement_enabled==55);
+    check(owner.unbind_cutscene_actor_tracks()==s::CutsceneTrackStatus::completed&&!owner.cutscene_actor_tracks());
+    check(owner.bind_cutscene_actor_tracks({})==s::CutsceneTrackStatus::completed&&owner.run_cutscene_actor_tracks(0,0).visited==0);
+    check(owner.close()==u::Status::completed&&owner.run_cutscene_actor_tracks(0,0).status==s::CutsceneTrackStatus::closed);
+}
 void check_material_animation_worker(){
     using TS=u::tasks::Status;
     u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());
@@ -528,6 +608,7 @@ void check_material_animation_worker(){
     }
 }
 int main()try{
+    check_cutscene_actor_tracks();
     check_linked_actor_worker();
     check_material_animation_worker();
     check_actor_status();
