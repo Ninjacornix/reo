@@ -3,12 +3,16 @@ using System.IO;
 using System.Text.Json;
 
 namespace Outbreak.Launcher;
-public sealed record MovieDecoderChoice(bool Gpu, string GpuName, string Reason);
+public sealed record MovieDecoderChoice(bool Gpu, string GpuName, string Reason) {
+    // The probe recommends a default. An explicit user choice always wins,
+    // including on unverified GPUs or when the check is missing/unsuccessful.
+    public bool UseGpu(bool legacyEnabled, bool? userChoice) => userChoice ?? (legacyEnabled && Gpu);
+}
 
 // GPU movies need a hardware MPEG-2 decoder on the GPU the game renders with; some GPUs
 // (AMD RDNA 4, for example) have none, and the GPU route then stops at the first movie.
 // reo-movie-check.exe repeats the game's own device choice and decoder test. Without a
-// clear yes the original CPU decoder plays the movies.
+// clear yes CPU decoding is the default; users can still opt into GPU decoding.
 public static class MovieDecoder {
     public static async Task<MovieDecoderChoice> Choose(CancellationToken cancel) {
         string check = Path.Combine(AppContext.BaseDirectory, "reo-movie-check.exe");
