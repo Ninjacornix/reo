@@ -1,4 +1,3 @@
-std::uint64_t whole_configuration_cases{},whole_tick_cases{},whole_missing_cases{},whole_boundary_refusals{};
 void whole_playback_tests(const std::vector<std::vector<std::byte>>& banks,
                           const std::vector<std::vector<std::byte>>& skeletons,
                           std::vector<std::uint8_t>& ram){

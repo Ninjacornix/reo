@@ -6,8 +6,8 @@
   "stage4_complete": false,
   "cohorts": {
     "llvm": {
-      "receipt": "build-native-sjuni\\whole-playback-llvm-v2\\receipt.json",
-      "sha256": "db225604118b92f00a12df68da2b7e901ad6699fba8bd51f72cda0faf94d7a18",
+      "receipt": "build-native-sjuni\\whole-playback-llvm-v3\\receipt.json",
+      "sha256": "badc4aa3837b9736efac6560411cc5f4f363435fe54abce5020209e1fce87314",
       "observed": {
         "checks": 2873829,
         "configuration_cases": 320,
@@ -33,8 +33,8 @@
       }
     },
     "gcc": {
-      "receipt": "build-native-sjuni\\whole-playback-gcc-v2\\receipt.json",
-      "sha256": "7641fb31100ece2505da91e1e743499ab528a52c4c420d8daab11780016d4a69",
+      "receipt": "build-native-sjuni\\whole-playback-gcc-v3\\receipt.json",
+      "sha256": "a82e04b6562519cd8845670651ee2772f4e9d908a82e09da48eb7d0113fb12b8",
       "observed": {
         "checks": 2873829,
         "configuration_cases": 320,
@@ -79,11 +79,11 @@
     "game/native/animation/curves.cpp": "143289127bf911e7f9726ab13e6761b893ad222f4066445c3a1f267ac56cd55b",
     "game/native/transform_math/transform_math.hpp": "04cc24b68e06088f627ab287ab61290ed3991fb541406548790e50609356970c",
     "game/native/transform_math/transform_math.cpp": "9f639f8b5003bf30ec6e9b8c35e869cc98f2026c58496c71d44d5a95700bfc16",
-    "tools/native_reconstruction/animation/whole_playback_tests.inc": "00f7cf9af2e0aa3efb034672904b6aedc2a29a7f972338ddfd999075d19c86a0",
+    "tools/native_reconstruction/animation/whole_playback_tests.inc": "df3e9b5aff06fa11d2444e0f1dd40febe664dae43672147dfce01f8defda7994",
     "third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
     "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f",
-    "tools/native_reconstruction/animation/playback_tests.cpp": "339825e42bee1c45ae1d83a51b4edce9de17277c9cfd235efaae9358ca5f3d48",
-    "tools/native_reconstruction/animation/verify_playback.py": "c9b8af3b4c13eb0cc50b5400391fe11d8df95d20b915d273838d78e726d085be",
+    "tools/native_reconstruction/animation/playback_tests.cpp": "60cbc78d141c3ac83c4247236f2c082642a092b93ebff70530ddfc1408471546",
+    "tools/native_reconstruction/animation/verify_playback.py": "bf5db1a4e65e4577be2ddeb268b72085bd7c48f19cc1396c59d37f420798aa6c",
     "recomp/config/output/sub_00192A00_0x192a00.cpp": "b3690c2b9d6139e86d0422f38cdbd8b8b77fa5f16c4c4a12602514962d18d0d0",
     "recomp/config/output/sub_00192A60_0x192a60.cpp": "772f006ee72f7e768efe3cc67974b7e5effe12e522a07b8db91cc71fce7fec3a",
     "recomp/config/output/sub_00192B70_0x192b70.cpp": "919cfe0a739ea9fc6481b1b6239591b430ae99c94948359e6b4c988cebf429e5",
@@ -2386,5 +2386,6 @@
     "Positive/negative restart and odd-end clips are independent synthetic fixtures; they are not new game captures.",
     "Original contexts, token maps and memory projections exist only in the comparison fixture.",
     "B44 supplies blend duration to5D1F20, which starts animation at zero; no game-speed change is introduced."
-  ]
+  ],
+  "fixture_composition": "Whole-model additions are enabled only in the dedicated standalone cohort; existing shared World playback fixtures remain independently usable."
 }
