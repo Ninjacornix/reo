@@ -1,5 +1,5 @@
 #include "game/native/gameplay_scenario/cutscene_descriptor.hpp"
-std::uint64_t cutscene_descriptors{},cutscene_descriptor_sections{},cutscene_descriptor_streams{},cutscene_descriptor_refusals{},cutscene_descriptor_partial{};
+std::uint64_t cutscene_descriptors{},cutscene_descriptor_sections{},cutscene_descriptor_streams{},cutscene_descriptor_refusals{},cutscene_descriptor_partial{},cutscene_parameter_groups{},cutscene_parameters{};
 void descriptor_equal(const std::vector<std::byte>& bytes,std::vector<std::uint8_t>& ram){
     constexpr std::uint32_t base=0x1000000;
     check(bytes.size()+4<0x1000000,"descriptor fits independent original arena");
@@ -51,6 +51,15 @@ void descriptor_equal(const std::vector<std::byte>& bytes,std::vector<std::uint8
     for(unsigned group=0;group<tracks.size();++group)for(unsigned stream=0;stream<7;++stream){
         const auto raw=d.section(d.actor_groups()[group][stream]);
         check(tracks[group].streams[stream]&&tracks[group].streams[stream]->size()==raw.size()/36,"actual empty versus retained stream");++cutscene_descriptor_streams;
+    }
+    for(unsigned group=0;group<d.actor_groups().size();++group){
+        // Each data reducer is compared at original slot0, avoiding unrelated
+        // output-array aliases when an asset declares more than16 actors.
+        put(ram.data(),0x38fb60+12,base+d.actor_groups()[group][3].offset);
+        call(ram.data(),0x5f0b50,0);const auto parameters=d.actor_parameters(group);
+        check(parameters.size()==get<std::uint32_t>(ram.data(),0x38ede0),"original actor parameter count");
+        for(unsigned index=0;index<parameters.size();++index){check(parameters[index].key==get<std::int32_t>(ram.data(),0x38ede4+4*index)&&parameters[index].value==get<std::uint32_t>(ram.data(),0x38ee24+4*index),"original signed key and parameter value");++cutscene_parameters;}
+        ++cutscene_parameter_groups;
     }
     ++cutscene_descriptors;
 }

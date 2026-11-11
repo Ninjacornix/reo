@@ -38,8 +38,12 @@ public:
         ModelDefinitionBank bank = ModelDefinitionBank::ordinary) const;
     // Actual1AA740 nonzeroBB4 routes: NPC indexBB4-1, or HP character for
     // definition1. Primary BB4==0 has different appearance paths.
-    static std::string npc_model_name(std::uint16_t variant,std::uint8_t definition,std::uint8_t character);
-    std::shared_ptr<const ActorModelAsset> read_npc(std::uint16_t variant,std::uint8_t definition,std::uint8_t character)const;
+    static std::string substituted_model_name(std::uint16_t variant,std::uint8_t definition,std::uint8_t character);
+    std::shared_ptr<const ActorModelAsset> read_substituted_model(std::uint16_t variant,std::uint8_t definition,std::uint8_t character)const;
+    // Auxiliary NPC loader1D0800 uses the low-byte identity directly. Class1
+    // selects HN; other classes select N. This is independent of primary BB4.
+    static std::string npc_model_name(std::uint16_t identity,std::uint8_t model_class);
+    std::shared_ptr<const ActorModelAsset> read_npc(std::uint16_t identity,std::uint8_t model_class)const;
 private:
     struct Member {std::string name;std::uint64_t offset{};std::uint32_t bytes{},ordinal{};};
     std::shared_ptr<const reo::assets::Source> source_;

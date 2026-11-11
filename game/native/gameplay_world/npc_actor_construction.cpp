@@ -23,7 +23,7 @@ std::shared_ptr<const PreparedNpcActor> NpcActorConstruction::prepare(std::uint3
     if(result->definition_.contact_selector!=0)throw std::out_of_range("Native NPC construction contact profile unavailable");
     result->banks_={bindings.primary,bindings.style[result->definition_.motion_style?1:0],bindings.actor_type[result->character_]};
     if(std::any_of(result->banks_.begin(),result->banks_.end(),[](const auto& bank){return !bank;}))throw std::invalid_argument("Native NPC construction motion bindings unavailable");
-    result->asset_=assets.read_npc(std::uint16_t(identity),result->model_class_,result->character_);
+    result->asset_=assets.read_npc(std::uint16_t(identity),result->model_class_);
     if(!result->asset_||!result->asset_->skeleton()||result->asset_->part_count()>255)throw std::invalid_argument("Native NPC construction model profile unavailable");
     return result;
 }

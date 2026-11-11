@@ -17,26 +17,26 @@ def main():
     proof=compare_source('complete NPC constructor',original.relative_to(ROOT).as_posix(),0x6837c0,0x683a88,lambda at,n:two[at-0x570000:at-0x570000+n])
     inventory=ROOT/'build-native-sjuni/audio-asset-inventory/file1-v1/members.json';assert sha(inventory)=='276264fd0f5d14e8e0ef1e17f008560d611c6ca30c2ad811259a004b7a54fbc2';members={r['member']:r for r in json.loads(inventory.read_bytes())}
     archive=a.data_root/'NETBIO00.DAT';stamp=archive.stat().st_size,archive.stat().st_mtime_ns;lines=[];assets=[]
-    profile_path=ROOT/'build-native-sjuni/npc-actor-member-profile-v1/receipt.json';profile=json.loads(profile_path.read_bytes());assert profile['status']=='passed' and sha(ROOT/'game/native/gameplay_world/npc_actor_members.inc')==profile['output_sha256']
+    profile_path=ROOT/'build-native-sjuni/auxiliary-actor-member-profile-v1/receipt.json';profile=json.loads(profile_path.read_bytes());assert profile['status']=='passed' and sha(ROOT/'game/native/gameplay_world/auxiliary_actor_members.inc')==profile['output_sha256']
     skeletons=[];stale=[]
     with archive.open('rb')as f:
         outer=read_toc(f,0);common=[i for i,(name,_)in enumerate(outer[2])if name.lower()=='romdata_usa.afs'];assert len(common)==1;base=outer[0][common[0]][0];directory=read_toc(f,base);assert len(directory[0])==1342
         for row in profile['rows']:
-            name=row['name'];index=row['member'];assert directory[2][index][0].lower()==name.lower();match=re.fullmatch(r'(n|hp)(\d+)\.nbd',name.lower());assert match
-            hp=match[1]=='hp';number=int(match[2]);offset,length=directory[0][index];f.seek(base+offset);raw=f.read(length);expected=members[f'NETBIO00.DAT/{common[0]}/{index}'];assert len(raw)==expected['bytes'] and hashlib.sha256(raw).hexdigest()==expected['sha256']
-            lines.append(f"{1 if hp else number+1} {1 if hp else 0} {number if hp else 0} {name} {base+offset} {length} {skeleton_nodes(raw,True)} {model_parts(raw)}");assets.append(dict(name=name,member=expected['member'],sha256=expected['sha256']))
+            name=row['name'];index=row['member'];assert directory[2][index][0].lower()==name.lower();match=re.fullmatch(r'(n|hn)(\d+)\.nbd',name.lower());assert match
+            hp=match[1]=='hn';number=int(match[2]);offset,length=directory[0][index];f.seek(base+offset);raw=f.read(length);expected=members[f'NETBIO00.DAT/{common[0]}/{index}'];assert len(raw)==expected['bytes'] and hashlib.sha256(raw).hexdigest()==expected['sha256']
+            lines.append(f"{number} {1 if hp else 0} 0 {name} {base+offset} {length} {skeleton_nodes(raw,True)} {model_parts(raw)}");assets.append(dict(name=name,member=expected['member'],sha256=expected['sha256']))
             pos,size=struct.unpack_from('<II',raw,0x24)
             if pos:
                 block=raw[pos:pos+size];assert len(block)==size;skeletons.append(block)
                 if struct.unpack_from('<I',block,8)[0]!=len(block):stale.append(dict(name=name,member=expected['member'],actual=len(block),declared=struct.unpack_from('<I',block,8)[0]))
-    assert len(assets)==133 and sum(x['name'].lower().startswith('hp')for x in assets)==8 and len(stale)==7
-    definitions_path=ROOT/'build-native-sjuni/npc-actor-definition-profile-v2/receipt.json';definitions=json.loads(definitions_path.read_bytes());assert definitions['status']=='passed' and sha(ROOT/'game/native/gameplay_world/npc_actor_definitions.inc')==definitions['output_sha256'] and sha(ROOT/'game/native/gameplay_world/npc_actor_hit_definitions.inc')==definitions['hit_output_sha256']
+    assert len(assets)==233 and sum(x['name'].lower().startswith('hn')for x in assets)==108 and len(stale)==7
+    definitions_path=ROOT/'build-native-sjuni/npc-actor-definition-profile-v3/receipt.json';definitions=json.loads(definitions_path.read_bytes());assert definitions['status']=='passed' and sha(ROOT/'game/native/gameplay_world/npc_actor_definitions.inc')==definitions['output_sha256'] and sha(ROOT/'game/native/gameplay_world/npc_actor_hit_definitions.inc')==definitions['hit_output_sha256']
     files=[p for p in (ROOT/'game/native').rglob('*')if p.is_file()and(p.suffix in ['.cpp','.hpp','.h','.inc']or p.name=='CMakeLists.txt')]+[Path(__file__),original,ROOT/'runtime/assets/virtual_afs.h',ROOT/'tools/native_reconstruction/verify_actor_assets.py',ROOT/'tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp',ROOT/'tools/native_reconstruction/npc_actor_construction_reference_tests.inc',ROOT/'tools/native_reconstruction/generate_npc_actor_members.py',ROOT/'tools/native_reconstruction/generate_npc_actor_definitions.py']
     before={p.relative_to(ROOT).as_posix():sha(p)for p in files};out.mkdir()
     for name in before:target=out/'source'/name;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes((ROOT/name).read_bytes())
     (out/'owned_npc_skeletons.bin').write_bytes(struct.pack('<I',len(skeletons))+b''.join(struct.pack('<I',len(raw))+raw for raw in skeletons))
     (out/'members.txt').write_text('\n'.join(lines)+'\n');_,models,model_rows=owned_manifest(a.data_root,out)
-    (out/'definitions.txt').write_text('\n'.join(str(row['id'])for row in definitions['rows'])+'\n')
+    (out/'definitions.txt').write_text('\n'.join(f"{row['id']} {int(row['normal_model'])} {int(row['head_model'])}"for row in definitions['rows'])+'\n')
     body=original.read_text();reference=(ROOT/'tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp').read_text().replace('Register r[32];','std::uint64_t lo{},hi{};Register r[32];')+'\n#define GPR_S32(c,n) (std::bit_cast<std::int32_t>(GPR_U32(c,n)))\n';reference+='\nvoid o2_006837C0_0x6837c0(std::uint8_t*,R5900Context*,PS2Runtime*);\n'
     for name in sorted(set(re.findall(r'\b((?:sub|o0|o2)_[0-9A-Fa-f]+_0x[0-9a-f]+)\(rdram',body))):reference+='inline void '+name+'(std::uint8_t* m,R5900Context* c,PS2Runtime* r){original_transform_port(m,c,r); }\n'
     reference+='inline void owned_npc_construction_constants(std::uint8_t* memory){\n'

@@ -721,6 +721,8 @@ int main(int argc, char** argv) try {
               << ",\"cutscene_descriptor_streams\":" << cutscene_descriptor_streams
               << ",\"cutscene_descriptor_refusals\":" << cutscene_descriptor_refusals
               << ",\"cutscene_descriptor_partial\":" << cutscene_descriptor_partial
+              << ",\"cutscene_parameter_groups\":" << cutscene_parameter_groups
+              << ",\"cutscene_parameters\":" << cutscene_parameters
               << ",\"npc_skeleton_cases\":" << npc_skeleton_cases
               << ",\"npc_skeleton_nodes\":" << npc_skeleton_nodes
               << ",\"npc_stale_lengths\":" << npc_stale_lengths

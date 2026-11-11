@@ -21,7 +21,7 @@ void check(bool value,std::source_location at=std::source_location::current()){
 }
 w::Profile profile(){w::Profile value;value.layouts.push_back({});return value;}
 void contracts(){
-    for(unsigned id:{0u,209u,65535u}){bool refused=false;try{(void)w::npc_actor_definition(std::uint16_t(id));}catch(const std::out_of_range&){refused=true;}check(refused);}
+    for(unsigned id:{208u,209u,65535u}){bool refused=false;try{(void)w::npc_actor_definition(std::uint16_t(id));}catch(const std::out_of_range&){refused=true;}check(refused);}
     const auto& sample=w::npc_actor_definition(103);check(sample.id==103&&sample.health==2000&&sample.motion_style==0);
 }
 void owned(const char* archive,const char* manifest){
@@ -31,15 +31,16 @@ void owned(const char* archive,const char* manifest){
     w::NpcMotionBindings bindings;bindings.primary=std::make_shared<a::MotionBank>();
     for(auto& bank:bindings.style)bank=std::make_shared<a::MotionBank>();
     for(auto& bank:bindings.actor_type)bank=std::make_shared<a::MotionBank>();
-    std::ifstream rows(manifest);check(bool(rows));unsigned identity{},count{};std::shared_ptr<const w::PreparedNpcActor> retained;
-    while(rows>>identity){
+    std::ifstream rows(manifest);check(bool(rows));unsigned identity{},normal{},head_available{},count{};std::shared_ptr<const w::PreparedNpcActor> retained;
+    while(rows>>identity>>normal>>head_available){
         ++count;
         for(unsigned definition:{0u,1u,2u,255u}){
             if(!world.auxiliary_actors().remaining()){const auto prior=world.auxiliary_actors().head();check(world.auxiliary_actors().reset()==w::AuxiliaryStatus::completed&&!world.resolve(prior));++retirements;}
             const auto before=world.auxiliary_actors().remaining();const auto attachments=world.auxiliary_actors().attachment_flags();
             std::shared_ptr<const w::PreparedNpcActor> prepared;
             try{prepared=factory.prepare(identity+0x10000u,definition+0x10000u,assets,bindings);}
-            catch(const std::invalid_argument&){check(definition!=1&&(identity==72||identity==88||identity==89||identity==90||identity==119));check(world.auxiliary_actors().remaining()==before&&world.auxiliary_actors().attachment_flags()==attachments);++unavailable;continue;}
+            catch(const std::invalid_argument&){check(!(definition==1?head_available:normal));check(world.auxiliary_actors().remaining()==before&&world.auxiliary_actors().attachment_flags()==attachments);++unavailable;continue;}
+            check(definition==1?head_available:normal);
             const auto created=factory.create(*prepared);check(created.status==w::NpcConstructionStatus::completed);const auto actor=world.resolve(created.id);check(actor&&actor->npc&&actor->scripted);
             const auto& metadata=w::npc_actor_definition(std::uint16_t(identity));check(actor->active&&!actor->visible&&actor->category==1&&actor->model_variant==identity&&actor->model_pose_class==definition);
             check(actor->character==(metadata.motion_style?5:3)&&actor->ai_control==actor->character&&actor->current==metadata.health&&actor->maximum==metadata.health);
@@ -58,7 +59,7 @@ void owned(const char* archive,const char* manifest){
             ++constructors;
         }
     }
-    check(rows.eof()&&count==130&&constructors==505&&unavailable==15&&retained);
+    check(rows.eof()&&count==149&&constructors==483&&unavailable==113&&retained);
     check(world.auxiliary_actors().reset()==w::AuxiliaryStatus::completed);
     // Actual four-slot claim owner, followed by an admitted FF/no-attachment.
     const auto head=factory.prepare(103,1,assets,bindings);

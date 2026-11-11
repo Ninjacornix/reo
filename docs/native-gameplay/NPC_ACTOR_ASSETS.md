@@ -1,10 +1,18 @@
-# Native NPC and HP actor assets
+# Primary substitution and auxiliary NPC actor assets
 
-ActorAssets now supplies actual File1 NPC and HP model bundles through its
+The original v1 evidence below qualifies **primary-character substitution**
+through 1AA740, not auxiliary NPC construction. Connecting that route to
+6837C0 in the first constructor implementation was incorrect. The corrected
+API names it `read_substituted_model`; actual NPCs use `read_npc` with the
+resident 1D0800 / 1CD710 / 1CD340 route described below. Historical v1 receipts
+remain valid for their filename and payload comparisons, but do not establish
+the mistaken NPC-constructor association.
+
+ActorAssets supplies actual File1 substituted N and HP model bundles through its
 existing immutable asset/skeleton cache. Source1AA740's nonzeroBB4 filename
 routes select N(BB4-1), with minimum two decimal digits, or HP(character) for
 definition1. The BB4==0 primary/appearance path remains a separate owner and
-is explicitly refused by this NPC API.
+is explicitly refused by the primary substitution API.
 
 The full owned ROM alias table identifies133 actual members:125 NPC bundles
 and eight HP character bundles. Lookup uses their exact AFS ordinals and checks
@@ -52,3 +60,39 @@ NPC state construction through the ten-actor pool, actual motion/head/attachment
 ownership, scene assignment/callback scheduling, installed native gameplay and
 complete Step4 acceptance remain open. No game was launched, and this asset
 qualification does not establish a measured performance improvement.
+
+The corrected auxiliary route uses the low byte of the NPC model identity
+without subtracting one. Model class 1 selects `HN%02u.NBD`; other classes
+select `N%02u.NBD`. Width is a minimum, including three-digit identities.
+Class 1 therefore does not select a primary `HP` character bundle. Full resident
+source-word audits cover 1D0800, 1CF300, 1CF090, 1CF320, 1CD710 and 1CD340.
+The resident loader distinguishes model and texture prefixes. Only model content
+is admitted here; texture/material submission remains part of the renderer
+boundary. Alternate `_N` model selection is not enabled by this default
+constructor profile.
+
+`generate_auxiliary_actor_members.py` reproduces 233 exact auxiliary aliases:
+125 N members and 108 HN members. Their union contains 149 model identities.
+The native reader checks exact ROM ordinal, archive cardinality and display
+name, then uses the same retained immutable cache and bounded skeleton reader.
+All 246 kind-1 headers in the supported scene inventory select an existing
+member. Missing combinations fail explicitly; N88 does not fall back to HN88.
+
+Both corrected compiler asset cohorts pass 988,863 checks. They compare 262,144
+auxiliary filename selections against complete original 1CD710/1CD340, across
+the 16-bit input domain, four model classes and ten slot namespaces. The low-byte
+narrowing is independently source-audited in 1D0800. All 233 actual auxiliary
+payloads, skeleton counts, model parts, independent instances and initial poses
+are verified. The previous 66,815 primary substitution filename comparisons and
+133 payload checks also run in the same executable. Nine parent tests and the
+existing 406-model / 330-constructor regression pass on both compilers.
+
+Corrected receipts are `auxiliary-actor-assets-{llvm,gcc}-v1`. Native construction
+uses definition profile v3 and is described in NPC_ACTOR_CONSTRUCTION.md. Full
+scene ownership, motion content, native game installation and Step 4 acceptance
+remain open. These are offline checks, not measured gameplay improvements.
+
+Current corrected World cohorts additionally compare all 233 auxiliary forests
+and 12,475 nodes against original initialization/rebuilding: 2,687,826 checks,
+7,989,320 original calls and 466 truncated-input refusals on each compiler.
+See CUTSCENE_NPC_CONSTRUCTION.md for scene composition and its remaining gates.

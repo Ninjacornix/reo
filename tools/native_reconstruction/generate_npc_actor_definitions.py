@@ -5,9 +5,9 @@ from audit_retail_effect_descriptors import compare_source
 ROOT=Path(__file__).resolve().parents[2]
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);a=p.parse_args();out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
-    aliases=ROOT/'build-native-sjuni/npc-actor-member-profile-v1/receipt.json';profile=json.loads(aliases.read_bytes());assert profile['status']=='passed'and sha(ROOT/'game/native/gameplay_world/npc_actor_members.inc')==profile['output_sha256']
-    identifiers={int(row['name'][1:-4])+1 for row in profile['rows']if row['name'].startswith('N')};assert len(identifiers)==125
+    p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);p.add_argument('--write-generated',action='store_true');a=p.parse_args();out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
+    aliases=ROOT/'build-native-sjuni/auxiliary-actor-member-profile-v1/receipt.json';profile=json.loads(aliases.read_bytes());assert profile['status']=='passed'and sha(ROOT/'game/native/gameplay_world/auxiliary_actor_members.inc')==profile['output_sha256']
+    identifiers={row['id']for row in profile['rows']};assert len(identifiers)==149
     inventory=ROOT/'build-native-sjuni/cutscene-descriptor-inventory-v2/receipt.json';receipt=json.loads(inventory.read_bytes());package=inventory.parent/'owned_descriptors.bin';assert sha(package)==receipt['package_sha256']=='047d14cca0b28ad1f4335660db09389a525679c313f1841bfda1779c2c49629c'
     raw=package.read_bytes();at=4;blocks=[]
     for _ in range(struct.unpack_from('<I',raw)[0]):length=struct.unpack_from('<I',raw,at)[0];at+=4;blocks.append(raw[at:at+length]);at+=length
@@ -24,9 +24,9 @@ def main():
         at=0x716450+20*identifier-0x570000;block=raw[at:at+20];assert len(block)==20
         model_id=struct.unpack_from('<H',block)[0];style,subtype,contact=block[2:5];health=struct.unpack_from('<h',block,6)[0];scale,height=struct.unpack_from('<II',block,8)
         lines.append('    {'+','.join(map(str,(identifier,model_id,style,subtype,contact,health)))+',std::bit_cast<float>('+hex(scale)+'u),std::bit_cast<float>('+hex(height)+'u)},')
-        rows.append(dict(id=identifier,address=hex(at+0x570000),bytes=block.hex(),filename_witness=any(row['name']=='N'+str(identifier-1).zfill(2)+'.NBD' for row in profile['rows'])))
+        rows.append(dict(id=identifier,address=hex(at+0x570000),bytes=block.hex(),normal_model=any(row['id']==identifier and row['model_class']==0 for row in profile['rows']),head_model=any(row['id']==identifier and row['model_class']==1 for row in profile['rows'])))
     lines.append('}};');target=ROOT/'game/native/gameplay_world/npc_actor_definitions.inc'
-    if target.exists():assert target.read_text()=='\n'.join(lines)+'\n'
+    if target.exists()and not a.write_generated:assert target.read_text()=='\n'.join(lines)+'\n'
     else:target.write_text('\n'.join(lines)+'\n')
     root=struct.unpack_from('<I',raw,0x716440-0x570000)[0];hit_rows=[];hit_text=[]
     for index in range(16):

@@ -10,6 +10,7 @@ namespace reo::native::gameplay_world {
 namespace {
 #include "actor_asset_names.inc"
 #include "npc_actor_members.inc"
+#include "auxiliary_actor_members.inc"
 
 std::string lower_name(std::string_view input) {
     std::string result(input);
@@ -57,19 +58,32 @@ std::shared_ptr<const ActorModelAsset> ActorAssets::read(std::uint8_t type,std::
     return read_named(model_name(definition.model,bank));
 }
 
-std::string ActorAssets::npc_model_name(std::uint16_t variant,std::uint8_t definition,std::uint8_t character){
+std::string ActorAssets::substituted_model_name(std::uint16_t variant,std::uint8_t definition,std::uint8_t character){
     if(!variant)throw std::invalid_argument("Native NPC zeroBB4 primary filename route unavailable");
     std::array<char,24> name{};
     if(definition==1)std::snprintf(name.data(),name.size(),"HP%02u.NBD",unsigned(character));
     else std::snprintf(name.data(),name.size(),"N%02u.NBD",unsigned(variant)-1u);
     return name.data();
 }
-std::shared_ptr<const ActorModelAsset> ActorAssets::read_npc(std::uint16_t variant,std::uint8_t definition,std::uint8_t character)const{
-    const auto name=npc_model_name(variant,definition,character);
+std::shared_ptr<const ActorModelAsset> ActorAssets::read_substituted_model(std::uint16_t variant,std::uint8_t definition,std::uint8_t character)const{
+    const auto name=substituted_model_name(variant,definition,character);
     const auto alias=std::find_if(npc_actor_members.begin(),npc_actor_members.end(),[&](const auto& entry){return entry.name==name;});
     if(alias==npc_actor_members.end()||common_count_!=1342)throw std::invalid_argument("Native NPC ROM member profile unavailable");
     const auto member=std::find_if(members_.begin(),members_.end(),[&](const auto& entry){return entry.ordinal==alias->ordinal;});
     if(member==members_.end()||member->name!=lower_name(name))throw std::invalid_argument("Native NPC ROM member identity unavailable");
+    return read_entry(*member,name,true);
+}
+std::string ActorAssets::npc_model_name(std::uint16_t identity,std::uint8_t model_class){
+    std::array<char,24> name{};
+    std::snprintf(name.data(),name.size(),model_class==1?"HN%02u.NBD":"N%02u.NBD",unsigned(std::uint8_t(identity)));
+    return name.data();
+}
+std::shared_ptr<const ActorModelAsset> ActorAssets::read_npc(std::uint16_t identity,std::uint8_t model_class)const{
+    const auto name=npc_model_name(identity,model_class);
+    const auto alias=std::find_if(auxiliary_actor_members.begin(),auxiliary_actor_members.end(),[&](const auto& entry){return entry.name==name;});
+    if(alias==auxiliary_actor_members.end()||common_count_!=1342)throw std::invalid_argument("Native auxiliary NPC ROM member profile unavailable");
+    const auto member=std::find_if(members_.begin(),members_.end(),[&](const auto& entry){return entry.ordinal==alias->ordinal;});
+    if(member==members_.end()||member->name!=lower_name(name))throw std::invalid_argument("Native auxiliary NPC ROM member identity unavailable");
     return read_entry(*member,name,true);
 }
 std::shared_ptr<const ActorModelAsset> ActorAssets::read_named(std::string_view name)const{

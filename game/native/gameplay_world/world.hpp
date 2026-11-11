@@ -291,6 +291,7 @@ private:
     friend class gameplay_update::LinkedModelWorkers;
     gameplay_scenario::CutsceneActorTracks* cutscene_tracks_owner_{};
     friend class gameplay_scenario::CutsceneActorTracks;
+    friend class NpcActorConstruction;
     std::unique_ptr<AuxiliaryActorPool> auxiliary_actors_;
     std::unique_ptr<gameplay_navigation::Bank> navigation_;
     std::unique_ptr<TargetMetricCache> target_metrics_;

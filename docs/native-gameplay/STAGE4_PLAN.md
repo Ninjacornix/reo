@@ -3,16 +3,19 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to keep the PC awake afterward.
 
-- [Native NPC actor construction](NPC_ACTOR_CONSTRUCTION.md) now composes the
-  actual ten-actor pool, owned assets, model/animation, health, collision and
-  four-slot attachment ownership. Both compiler505-case comparisons, existing
-  owned constructors and ten parent tests pass. Real motion bindings/callbacks,
-  scene assignment, remaining pointer-consumer audit and game installation remain open.
-- [Native NPC/HP actor assets](NPC_ACTOR_ASSETS.md) now read all133 exact ROM
-  members through the shared asset cache and handle the bounded record profile
-  of seven NPC skeletons. Both compiler asset/name/pose comparisons, existing
-  owned constructor checks and nine parent tests pass. NPC construction,
-  motion/attachment ownership, scene assignment and game installation remain open.
+- The NPC model association has been corrected: the resident auxiliary loader
+  uses raw low-byte N/HN identities, independently of primary-character
+  substitution. [Asset evidence](NPC_ACTOR_ASSETS.md) covers 233 actual members
+  and 262,144 filename comparisons on both compilers. The
+  [corrected constructor](NPC_ACTOR_CONSTRUCTION.md) covers 149 identities,
+  483 supported constructions and 113 explicit absent-model refusals. Historical
+  505-case state checks did not prove the mistaken asset association and are
+  superseded for that claim. [NPC scene assignment](CUTSCENE_NPC_CONSTRUCTION.md)
+  now passes both compiler comparisons over all548 supported descriptors with
+  actual native construction, constraints and track bindings. One11-NPC input
+  remains explicitly full under the original ten-slot contract. Actual motion
+  owners/callbacks, full scene lifecycle, remaining consumer audit and game
+  installation remain open.
 - [Native scene scripted construction](CUTSCENE_SCRIPTED_CONSTRUCTION.md) now
   prepares actual header requests and creates all729 kind2 actors across548
   owned0950 scenes through the canonical factory, including seven witnessed

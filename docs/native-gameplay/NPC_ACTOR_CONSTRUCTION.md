@@ -1,62 +1,55 @@
 # Native NPC actor construction
 
-NpcActorConstruction now implements the admitted6837C0 construction contract
-through the canonical ten-actor AuxiliaryActorPool, ActorAssets, native model/
-animation objects, collision profiles and actor-owned hit definitions. The
-factory prepares allocations/content before publishing a live actor. World
-busy/closed state, pool exhaustion and missing input bindings are explicit.
+`NpcActorConstruction` composes the original 6837C0 state contract through the
+canonical ten-actor auxiliary pool, immutable owned assets, independent native
+model/animation objects, collision profiles and actor-owned hit definitions.
+Preparation completes content reads and allocations before publishing an actor.
+Closed/busy owners, absent banks/models and capacity exhaustion are explicit.
 
-The generated profile contains130 NPC identities witnessed by owned model
-aliases or246 actual0950 NPC scene headers. It decodes the actual716450+20*id
-construction metadata: character/style selection, subtype, signed health,
-scale and height parameter. It preserves the source's low-halfword identity
-and low-byte model-class arguments. Four actual hit-region definitions come
-from the owned contact-selector0 table; other selectors remain unadmitted.
+The initial implementation incorrectly used 1AA740's primary substitution
+filename route for NPC construction. Its 505-case v1 state comparisons used an
+observed model/part-count port and did not prove that association. The corrected
+implementation uses the distinct resident 1D0800 route: raw low-byte model ID,
+N for ordinary model classes and HN for class 1. It never substitutes HP based
+on character or subtracts one from an auxiliary model identity. Historical
+receipts and failed scene tests are retained; the corrected cohorts below
+supersede the earlier NPC asset-association claim.
 
-Construction creates the actual model and independent Playback, supplies the
-three required native motion-bank references, sets the one-channel contract,
-initializes the source state/health/scale/room, and adopts the real body/local
-collision profiles. Part visibility starts enabled except part1 for classes
-other than1. Class1 claims from the actual four-slot attachment owner; full
-attachment capacity is an admitted absent/FF result. No original callback,
-model-work address or guest-addressed contact buffer is retained in production.
+Definition profile v3 contains 149 identities from the exact N/HN alias union
+and 246 actual supported scene headers. It decodes 716450 + 20*id: model identity,
+style/subtype, signed health, scale and height parameter. Metadata identity is
+the low halfword of the constructor argument; model loading separately narrows
+to the low byte. The model class is narrowed to one byte. All admitted rows have
+contact selector 0 and use the four owned hit definitions from its actual table.
+Other profiles are refused.
 
-Motion bindings must be supplied by their real owners. Their content selection
-and actual NPC animation callback are still open; an absent bank is refused.
-The constructor test uses distinct known bank identities and does not animate
-them. This qualifies reference selection/binding, not a common-motion loader.
-The old model/work, attachment and AB0 pointer consumers still require their
-corresponding native/rendering migration audit before game installation. Their
-addresses are not recreated as native gameplay state.
+Creation adopts the actual body/local collision profiles, binds three required
+motion-bank references and a single animation channel, initializes source
+state/health/scale/room, and starts part visibility enabled except part 1 for
+classes other than 1. Class 1 claims the actual four-slot attachment owner;
+exhaustion produces the source's admitted absent/FF attachment. Native code does
+not retain guest model-work, callback or contact-buffer addresses.
 
-Both compiler cohorts pass19,964 checks with505 supported constructor cases
-compared against complete, source-word-audited6837C0. They use all130 admitted
-identities across classes0/1/2/255 with argument wrapping. Five identities lack
-ordinary N bundles, producing15 explicit preparation refusals for non-HP
-classes; all130 class1 HP preparations succeed. Source model and allocation
-requests are declared observations while actual native asset/model/animation
-construction and pool behavior run separately in the same executable. The130
-original attachment calls are observed; the native four-slot owner is tested
-through exhaustion independently.
+Both corrected compiler cohorts pass 20,023 checks: 483 supported constructors
+and 113 absent-model refusals across all 149 identities and classes 0/1/2/255,
+including wrapped arguments. Complete source-word-audited 6837C0 comparisons
+cover state, scale, health, styles, collision, visibility, room, bank references
+and attachment requests. Allocation/model ports are declared observations;
+actual native assets, model/animation objects and pool operations run separately
+in the same executable. The independent asset cohort verifies filename routing.
 
-The comparisons include initial state, room, health, styles, scale, height,
-part visibility, bank selection, collision center/radius and markers. The
-composition also covers50 pool retirements, full actor capacity, missing bank
-inputs, and a real NPC-targeted cutscene voice callback that attempts reentrant
-construction/closure and verifies busy refusal. Voice/facial providers are test
-ports; no sound device or game is opened. Existing406-model/330-construction
-owned tests still pass5,681 checks; all ten current parent CTest entries pass
-on both compilers.
+Checks include 48 pool retirements, actual actor/attachment exhaustion, missing
+banks, closed owners and reentrant construction/closure from a cutscene voice
+callback. All ten parent tests and the existing 5,681-check owned constructor
+regression pass on each compiler. Receipts are
+`npc-actor-construction-{llvm,gcc}-v3`; reproduce with
+`generate_auxiliary_actor_members.py`, `generate_npc_actor_definitions.py` and
+`verify_npc_actor_construction.py`, explicit build/data-root/compiler paths and
+fresh output folders.
 
-The initial compiler attempt caught a signedness error in the test scaffolding,
-and the first LLVM comparison caught an omitted pointed-to local-shape constant
-in that fixture. The corrected fixture copies the independently verified owned
-target bytes and passes both compilers. No production solver change was needed.
-Historical failed receipts remain preserved.
-
-Reproduce with generate_npc_actor_definitions.py and
-verify_npc_actor_construction.py, explicit compiler/CMake/build/data-root paths
-and fresh output folders. The evidence seal is
-native_npc_actor_construction_qualification_v1.json. NPC scene assignment,
-actual bank/content callers, NPC callbacks, native gameplay installation and
-full Step4 acceptance remain open. No new performance result is claimed.
+The motion bindings currently come from required external owners. Tests use
+distinct known bank identities and do not prove actual motion content selection
+or run the NPC animation callback. Attachment/model/AB0 consumers still require
+their native ownership audit. Scene assignment is a separate adapter documented
+in CUTSCENE_NPC_CONSTRUCTION.md. Game installation and full Step 4 acceptance
+remain open. No game or sound device was opened for these comparisons.

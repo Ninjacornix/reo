@@ -4,6 +4,7 @@ namespace reo::native::gameplay_scenario::content {class ScenarioArchive;}
 namespace reo::native::gameplay_scenario {
 struct CutsceneSection {std::uint32_t offset{},count{};std::uint16_t stride{};};
 struct CutsceneActorBinding {std::int8_t kind{};gameplay_actors::EntityId actor;};
+struct CutsceneActorParameter {std::int16_t key{};std::uint32_t value{};};
 enum class CutsceneTail {complete,explicit_terminal,caller_terminal};
 // Immutable0950 asset ownership. Sections are bounded asset offsets, not
 // relocated pointers into a simulated address space or mutable scene state.
@@ -32,6 +33,9 @@ public:
     // Actor construction supplies real native bindings. This preparation
     // copies the seven command streams; the eighth remains a header view.
     std::vector<CutsceneActorTrackGroup> actor_tracks(std::span<const CutsceneActorBinding>)const;
+    //5F0B50's bounded first15 entries in stream3. Their gameplay role is
+    // deliberately left numeric until the downstream consumer owns it.
+    std::vector<CutsceneActorParameter> actor_parameters(std::size_t group)const;
 private:
     std::vector<std::byte> bytes_;
     std::array<std::uint8_t,3> identity_;

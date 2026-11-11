@@ -70,4 +70,13 @@ std::vector<CutsceneActorTrackGroup> CutsceneDescriptor::actor_tracks(std::span<
     }
     return result;
 }
+std::vector<CutsceneActorParameter> CutsceneDescriptor::actor_parameters(std::size_t group)const{
+    const auto value=actors_.at(group)[3];const auto bytes=section(value);std::vector<CutsceneActorParameter> result;
+    for(unsigned index=0;index<15;++index){
+        if(index>=value.count)throw std::invalid_argument("Native cutscene actor parameters lack bounded terminal");
+        std::uint16_t frame;std::memcpy(&frame,bytes.data()+36*index+2,2);if(frame==65535)return result;
+        CutsceneActorParameter parameter;std::memcpy(&parameter.key,bytes.data()+36*index+6,2);parameter.value=word(bytes,36*index+8);result.push_back(parameter);
+    }
+    return result;
+}
 }
