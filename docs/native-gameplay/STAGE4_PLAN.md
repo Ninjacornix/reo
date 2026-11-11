@@ -3,6 +3,10 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to keep the PC awake afterward.
 
+- [Native actor model assets](ACTOR_MODEL_ASSETS.md) load406 definition
+  combinations from180 owned bundles and produce native skeleton instances.
+  Both compiler comparisons and five parent tests pass. One named model is
+  absent from owned content. Constructor orchestration remains open.
 - [Target model-point selection](TARGET_METRICS.md) now owns the linked551
   index independently of motion style. Both compiler comparisons and four
   parent tests pass, including unknown/out-of-range index refusal. Actual

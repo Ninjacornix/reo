@@ -147,10 +147,12 @@ bool File1LinkedModelProfiles::skip_type1_correction(std::uint16_t variant) cons
         throw std::out_of_range("Native linked type1 definition variant unavailable");
     return type1_flags[variant] == 1;
 }
-const LinkedModelDefinition& File1LinkedModelProfiles::definition(std::uint8_t type,std::uint16_t variant) const {
-    if (type>=model_definitions.size() || variant>=model_definitions[type].size())
+const LinkedModelDefinition& File1LinkedModelProfiles::definition(std::uint8_t type,std::uint16_t variant,
+    ModelDefinitionBank bank) const {
+    const auto& definitions = bank == ModelDefinitionBank::alternate ? alternate_model_definitions : model_definitions;
+    if (type>=definitions.size() || variant>=definitions[type].size())
         throw std::out_of_range("Native linked model definition unavailable");
-    return model_definitions[type][variant];
+    return definitions[type][variant];
 }
 LinkedModelReport LinkedModelPass::run() {
     if (&pool_.world_ != &world_ || &root_.world_ != &world_ || pool_.closed_)

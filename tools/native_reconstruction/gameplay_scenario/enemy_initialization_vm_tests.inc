@@ -10,32 +10,40 @@ void enemy_initialization_tests() {
     owned_enemy_constants(ram.data());
     owned_linked_definition_constants(ram.data());
     world::File1LinkedModelProfiles profiles;
-    for (unsigned type = 0; type < 64; ++type) {
-        const auto pointer = type < 62 ? fixture_read<std::uint32_t>(ram.data(),0x387e90+8*type) : 0u;
-        auto end = 0x387e90u;
+    for (const auto directory : {0x387e90u,0x3887f0u}) {
+      for (unsigned type = 0; type < 64; ++type) {
+        const auto pointer = type < 62 ? fixture_read<std::uint32_t>(ram.data(),directory+8*type) : 0u;
+        auto end = directory;
+        unsigned declared = 0;
         for (unsigned next = 0; next < 62; ++next) {
-            const auto candidate = fixture_read<std::uint32_t>(ram.data(),0x387e90+8*next);
+            const auto candidate = fixture_read<std::uint32_t>(ram.data(),directory+8*next);
             if (candidate > pointer && candidate < end) end = candidate;
+            if (candidate == pointer)
+                declared = std::max(declared,fixture_read<std::uint32_t>(ram.data(),directory+8*next+4));
         }
+        if (pointer) end = std::max(end,pointer+16*declared);
         for (unsigned variant = 0; variant < 256; ++variant) {
-            const bool available = type < 62 && variant < (end-pointer)/16;
+            const bool available = type < 62 && pointer && variant < (end-pointer)/16;
             bool admitted = false;
             try {
-                const auto& definition = profiles.definition(std::uint8_t(type),std::uint16_t(variant));
+                const auto bank = directory == 0x387e90u ? world::ModelDefinitionBank::ordinary : world::ModelDefinitionBank::alternate;
+                const auto& definition = profiles.definition(std::uint8_t(type),std::uint16_t(variant),bank);
                 admitted = true;
                 check(available);
                 const auto at = pointer+16*variant;
                 check(definition.model == ram[at]);
                 check(definition.texture == ram[at+1]);
                 check(definition.sound == ram[at+2]);
+                check(definition.construction_mode == ram[at+4]);
                 check(std::bit_cast<std::uint32_t>(definition.scale) == fixture_read<std::uint32_t>(ram.data(),at+8));
                 check(definition.visibility_selector == fixture_read<std::int8_t>(ram.data(),at+12));
             } catch (const std::out_of_range&) {}
             check(admitted == available);
-            if (type == 1 && variant < 100)
+            if (directory == 0x387e90u && type == 1 && variant < 100)
                 check(profiles.skip_type1_correction(std::uint16_t(variant)) == (ram[pointer+16*variant+5] == 1));
             ++linked_definition_cases;
         }
+      }
     }
     ActorFixture actors;
     const auto actor = actors.world.primary(0);

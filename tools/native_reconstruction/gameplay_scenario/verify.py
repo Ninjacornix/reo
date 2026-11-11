@@ -117,7 +117,7 @@ def main(a):
     declarations.append(initialization+'}\n')
     zero=(ROOT/'build-function-index/owned-overlays/o0.bin').read_bytes()
     assert hashlib.sha256(zero).hexdigest()=='bfac1906d63d585736e46573295cff12e308720af6b49914e1ad8695dfcf50c2'
-    chunk=zero[0x3872b0-0x370000:0x388080-0x370000]
+    chunk=zero[0x3872b0-0x370000:0x3889e0-0x370000]
     declarations.append('inline void owned_linked_definition_constants(std::uint8_t* p){const std::array<std::uint8_t,'+str(len(chunk))+'> b{'+','.join(map(str,chunk))+'};std::memcpy(p+0x3872b0,b.data(),b.size());}\n')
     initialization='inline void owned_enemy_binding_constants(std::uint8_t* p){\n'
     for address,size in [(0x72b170,0x60),(0x72bc20,0x100),(0x72be20,62),(0x734640,0xa0)]:
