@@ -30,6 +30,11 @@ def main(args):
         assert sha(index / name) == digest
     members = json.loads((index / 'inventory.json').read_bytes())
     assert len(members) == 171
+    from npc_fixtures import read_owned_npcs
+    npc_members=read_owned_npcs()
+    for member in npc_members:
+        member.pop('payload')
+        members.append(dict(member,format='N'))
     archives = {Path(row['archive']).resolve() for row in members}
     assert len(archives) == 1
     archive = archives.pop()
@@ -47,7 +52,7 @@ def main(args):
                                               row['bytes'], row['sha256']))))
     source_names = subprocess.check_output(['rg', '--files', 'game/native'], cwd=ROOT, text=True).splitlines()
     sources = [ROOT / name for name in source_names]
-    sources += [ROOT / 'runtime/assets/virtual_afs.h', Path(__file__)]
+    sources += [ROOT / 'runtime/assets/virtual_afs.h', Path(__file__), Path(__file__).with_name('npc_fixtures.py')]
     before = {path.relative_to(ROOT).as_posix(): sha(path) for path in sources}
     output.mkdir(parents=True)
     manifest = output / 'owned-members.tsv'
@@ -68,7 +73,7 @@ def main(args):
     stamp = archive.stat()
     assert (stamp.st_size, stamp.st_mtime_ns) == identity
     observed = json.loads(run.stdout)
-    assert observed['status'] == 'passed' and observed['members'] == 171
+    assert observed['status'] == 'passed' and observed['members'] == 176 and observed['npc_banks'] == 5
     receipt = dict(schema='reo.native.scenario.archive.v1', status='passed',
                    compiler=str(compiler), compiler_sha256=sha(compiler), source_sha256=before,
                    index_receipt_sha256=sha(index / 'receipt.json'),

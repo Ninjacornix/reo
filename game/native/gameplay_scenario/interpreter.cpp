@@ -39,7 +39,7 @@ std::size_t payload_minimum(std::uint32_t op)noexcept{
     case 3:case 4:case 6:case 0x44:case 0x4c:return 4;case 8:return 5;
     case 0xe3:case 0xe6:case 0xe8:case 0xe9:case 0xec:case 0xed:case 0xef:case 0xf4:case 0xf5:return 8;
     case 0x40:case 0x41:case 0x42:case 0x43:case 0x47:case 0x48:case 0x49:case 0x4d:case 0x110:case 0x111:case 0x112:return 8;
-    case 0x30:case 0x31:case 0x32:case 0x33:case 0x34:case 0x35:case 0x86:return 2;case 0x37:return 5;case 0x36:case 0x38:case 0x39:case 0x85:return 10;case 0x87:return 6;
+    case 0x30:case 0x31:case 0x32:case 0x33:case 0x34:case 0x35:case 0x86:return 2;case 0x37:return 5;case 0x3d:return 6;case 0x36:case 0x38:case 0x39:case 0x3a:case 0x85:return 10;case 0x87:return 6;
     case 5:case 0xb:case 0x68:case 0x69:return 9;case 0xc:case 0x46:case 0x113:case 0xb7:case 0xb8:return 12;case 0x45:return 16;default:return 0;}
 }
 std::optional<ControlCommand> control_command(std::uint32_t op)noexcept{
@@ -110,6 +110,7 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
             if(!noop&&(op==0xe8||op==0xe9)&&word(b.data()+at+4)>=2)throw std::invalid_argument("Native session counter profile");
             low_actor_population_|=!noop&&(op==0x38||op==0x39);
             full_actor_population_|=!noop&&op==0x173;
+            npc_inventory_grants_|=!noop&&op==0x3a;
             actor_roster_|=!noop&&op==0xea;
             forced_terminal_|=!noop&&op==0x61;
             if(!noop&&(op==0x85||op==0x87)&&word(b.data()+at+4)>=RoomActorAssets::room_count)
@@ -165,7 +166,7 @@ bool Program::admits_room_counters(const gameplay_world::World* world)const noex
 }
 bool Program::admits_inventory_grants(const gameplay_world::World* world,const SceneResources* resources,
                                      const ResourceTemplates* templates)const noexcept{
-    return (!low_actor_population_&&!full_actor_population_)||
+    return (!low_actor_population_&&!full_actor_population_&&!npc_inventory_grants_)||
         (world&&resources&&templates&&(!low_actor_population_||actor_inventory_population_ready(*world))&&
          (!full_actor_population_||actor_inventory_population_ready(*world,true)));
 }
@@ -187,6 +188,11 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     out[0x45]={true,false,true,false};
     for(std::size_t i=0x30;i<=0x37;++i)out[i]={true,false,false,false,true};
     for(const auto i:{0x38,0x39,0x173}){
+        out[i].native_algorithm=true;
+        out[i].scene_resources_required=true;
+        out[i].world_required=true;
+    }
+    for (const auto i:{0x3a,0x3d}) {
         out[i].native_algorithm=true;
         out[i].scene_resources_required=true;
         out[i].world_required=true;
@@ -456,6 +462,16 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
         case 0x39:
             if(!grant_character_resource(*providers.world,*providers.scene_resources,*providers.resource_templates,
                 std::bit_cast<std::int8_t>(std::to_integer<std::uint8_t>(payload[0])),signed_half(4),signed_half(8)))
+                return result(Status::provider_unavailable);
+            break;
+        case 0x3a:
+            if (!providers.world->session().npc_descriptors.grant(*providers.scene_resources,
+                *providers.resource_templates,signed_half(0),signed_half(4),signed_half(8)))
+                return result(Status::provider_unavailable);
+            break;
+        case 0x3d:
+            if (!providers.world->session().npc_descriptors.select(*providers.scene_resources,
+                std::bit_cast<std::int8_t>(std::to_integer<std::uint8_t>(payload[0])),signed_half(4)))
                 return result(Status::provider_unavailable);
             break;
         case 0x173:

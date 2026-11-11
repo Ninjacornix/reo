@@ -88,7 +88,7 @@ private:
     std::vector<std::uint8_t> visibility_models_;
     bool surface_effects_{};
     bool room_counters_{},scenario_counter_policy_{};
-    bool low_actor_population_{},full_actor_population_{},actor_roster_{};
+    bool low_actor_population_{},full_actor_population_{},actor_roster_{},npc_inventory_grants_{};
     bool forced_terminal_{};
     DispatchProfile profile_{};
 };

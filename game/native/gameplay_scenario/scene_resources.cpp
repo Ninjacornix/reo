@@ -37,6 +37,19 @@ std::optional<SceneResourceId> SceneResources::slot(std::size_t index)const noex
     if(index>=capacity)return{};
     return identity(index);
 }
+SceneAllocated SceneResources::allocate_owned(std::uint16_t owner,std::uint16_t content,
+    std::int16_t quantity,const ResourceTemplates& templates) noexcept {
+    auto result=allocate(0,0,content,templates);
+    if (result.status!=SceneStatus::completed) return result;
+    auto descriptor=get(*result.id);
+    if (!descriptor) return {SceneStatus::invalid_identity,{},0};
+    descriptor->flags=1;
+    descriptor->kind=0;
+    descriptor->parameter=quantity;
+    descriptor->ownership_tag=std::uint16_t(owner+1u);
+    result.status=replace(*result.id,std::move(*descriptor));
+    return result;
+}
 std::optional<SceneResourceId> SceneResources::lookup(std::int16_t authored)const noexcept{
     if(authored<=0)return{};
     for(std::size_t i=0;i<capacity;++i)if(descriptors_[i].authored_id==std::uint16_t(authored))return identity(i);

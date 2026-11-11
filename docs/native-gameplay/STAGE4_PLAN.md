@@ -7,6 +7,11 @@ verification. Put the PC to sleep after Stage 4 passes those checks, as requeste
   actual native inventory, event, pose and local-player message owners through
   script commands 61 and 62. Both compiler suites and parent tests pass. The
   actual UI close provider, transport and game installation remain open.
+- [Native scenario NPC descriptors](SCENARIO_NPC_DESCRIPTORS.md) import all five
+  owned NPC files and supply canonical descriptor primitives and startup
+  inventory commands. Both compiler comparisons, direct archive loading and
+  seven parent integration tests pass. Live construction and model/AI
+  preparation remain open.
 - [Native launch roster initialization](LAUNCH_ROSTER.md) imports player/AI
   selections through the real Update owner and shared RNG. Both compiler
   comparisons and seven parent integration tests pass. Actor/model creation

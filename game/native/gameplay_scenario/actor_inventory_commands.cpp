@@ -20,20 +20,6 @@ std::int32_t full_population(const World& world) noexcept {
     return std::bit_cast<std::int32_t>(world.session().primary_population.value_or(0));
 }
 
-SceneAllocated allocate_owned(SceneResources& resources,const ResourceTemplates& templates,
-                              std::uint16_t actor,std::uint16_t content,std::int16_t quantity) noexcept {
-    auto result = resources.allocate(0, 0, content, templates);
-    if (result.status != SceneStatus::completed) return result;
-    auto descriptor = resources.get(*result.id);
-    if (!descriptor) return {SceneStatus::invalid_identity, {}, 0};
-    descriptor->flags = 1;
-    descriptor->kind = 0;
-    descriptor->parameter = quantity;
-    descriptor->ownership_tag = std::uint16_t(actor + 1u);
-    result.status = resources.replace(*result.id, std::move(*descriptor));
-    return result;
-}
-
 bool insert_first(Actor& actor, std::int16_t content, std::uint8_t resource) noexcept {
     const auto slots = content >= 400 && content <= 420 ?
         std::span<std::uint8_t>(actor.inventory.storage) : std::span<std::uint8_t>(actor.inventory.carried);
@@ -53,7 +39,7 @@ bool grant_actor_resource(World& world,SceneResources& resources,const ResourceT
                           std::int16_t index,std::int16_t content,std::int16_t quantity) noexcept {
     if (!actor_inventory_population_ready(world)) return false;
     if (index < 0 || content < 0) return true;
-    const auto allocation = allocate_owned(resources,templates,std::uint16_t(index),std::uint16_t(content),quantity);
+    const auto allocation = resources.allocate_owned(std::uint16_t(index),std::uint16_t(content),quantity,templates);
     if (allocation.status != SceneStatus::completed) return allocation.status == SceneStatus::full;
     if (index < population(world)) {
         const auto actor = world.primary(std::uint16_t(index));
@@ -70,7 +56,7 @@ bool grant_character_resource(World& world,SceneResources& resources,const Resou
     for (std::int16_t i = 0; i < count; ++i) {
         const auto actor = world.primary(std::uint16_t(i));
         if (!actor || !actor->active || actor->character != std::uint8_t(character)) continue;
-        const auto allocation = allocate_owned(resources,templates,std::uint16_t(i),std::uint16_t(content),quantity);
+        const auto allocation = resources.allocate_owned(std::uint16_t(i),std::uint16_t(content),quantity,templates);
         if (allocation.status != SceneStatus::completed) return allocation.status == SceneStatus::full;
         if (insert_first(*actor,content,allocation.slot)) break;
     }
@@ -98,7 +84,7 @@ bool grant_special_inventory(World& world,SceneResources& resources,const Resour
         const auto total = std::bit_cast<std::int32_t>(std::uint32_t(quantity) + matching);
         const auto grants = total < 4 ? quantity : 3 - std::int32_t(matching);
         for (std::int32_t n = 0; n < grants; ++n) {
-            const auto allocation = allocate_owned(resources,templates,std::uint16_t(i),content,1);
+            const auto allocation = resources.allocate_owned(std::uint16_t(i),content,1,templates);
             if (allocation.status != SceneStatus::completed) return allocation.status == SceneStatus::full;
             auto storage = std::span<std::uint8_t>(actor->inventory.storage);
             auto bucket = storage.subspan(1 + 9 * (content - 300),9);

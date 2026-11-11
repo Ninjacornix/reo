@@ -3,6 +3,7 @@
 #include "../gameplay_scenario/scenario_archive.hpp"
 #include "../gameplay_world/launch_roster.hpp"
 #include <stdexcept>
+#include <cstdio>
 
 namespace reo::native::gameplay_update {
 namespace {
@@ -82,6 +83,19 @@ Status Owner::initialize_launch_roster(std::span<const std::byte> bytes) {
     const auto roster=gameplay_session::parse_launch_roster(bytes);
     if (!roster || !world::apply_launch_roster(world_,choices_,*roster)) return Status::actor_failure;
     return Status::completed;
+}
+
+Status Owner::load_scenario_npcs(const scenario::content::ScenarioArchive& archive,std::uint16_t scenario) {
+    if (!open()) return Status::closed;
+    if (running_) return Status::busy;
+    std::array<char,16> name{};
+    std::snprintf(name.data(),name.size(),"r%03u.npc",unsigned(scenario));
+    try {
+        const auto bytes=archive.read_member(scenario,name.data());
+        if (bytes && world_.session().npc_descriptors.import(*bytes)) return Status::completed;
+    }
+    catch (const std::invalid_argument&) { return Status::actor_failure; }
+    return Status::actor_failure;
 }
 
 Status Owner::load_room_scripts(const scenario::content::ScenarioArchive& archive,

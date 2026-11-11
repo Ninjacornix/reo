@@ -80,6 +80,8 @@ public:
     // Complete591AE0 scans1..255, preserving slot0 and the255-active gate.
     SceneAllocated allocate(std::uint8_t room,std::uint16_t authored_id,
         std::uint16_t attachment_id,const ResourceTemplates&);
+    SceneAllocated allocate_owned(std::uint16_t owner,std::uint16_t content,
+        std::int16_t quantity,const ResourceTemplates&) noexcept; //592A90
     // Exact resource-table slot, including inactive descriptors. No authored-ID search.
     std::optional<SceneResourceId> slot(std::size_t)const noexcept;
     std::optional<SceneResourceId> lookup(std::int16_t authored_id)const noexcept;

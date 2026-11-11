@@ -26,6 +26,7 @@ std::size_t checks{},invocations{};
 unsigned original_periodic_used{};
 std::vector<std::uint32_t> original_periodic_tasks;
 unsigned original_surface_used{},original_surface_attempts{};
+unsigned npc_file_loads{};
 std::vector<std::uint32_t> original_surface_nodes;
 std::string assertion_context;
 std::vector<std::tuple<std::uint32_t,std::uint8_t,std::uint8_t>> notifications;
@@ -193,6 +194,10 @@ void sub_001B82A0_0x1b82a0(std::uint8_t*,R5900Context* c,PS2Runtime*){SET_GPR_U3
 void sub_0012BEF8_0x12bef8(std::uint8_t*,R5900Context*,PS2Runtime*){throw std::runtime_error("Unexpected VM stream service");}
 void original_scene_mode_port(std::uint8_t*,R5900Context*,PS2Runtime*);
 PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
+    if(at==0x10a830)return +[](std::uint8_t*,R5900Context* c,PS2Runtime*){SET_GPR_U32(c,2,0);done(c);};
+    if(at==0x1cc8f0||at==0x1aa3e0)return +[](std::uint8_t*,R5900Context* c,PS2Runtime*){
+        check(GPR_U32(c,5)==0x90000);++npc_file_loads;SET_GPR_U32(c,2,1);done(c);
+    };
     if(at==0x371ad0||at==0x371b70)return original_scene_mode_port;
     if(at==0x107ab0||at==0x18dbb0)return +[](std::uint8_t* r,R5900Context* c,PS2Runtime*){const auto d=GPR_U32(c,4),s=GPR_U32(c,5),n=GPR_U32(c,6);check(d<=0x800000&&n<=0x800000-d&&s<=0x800000&&n<=0x800000-s);std::memmove(r+d,r+s,n);done(c);};
     if(at==0x107c68)return +[](std::uint8_t* r,R5900Context* c,PS2Runtime*){const auto d=GPR_U32(c,4),n=GPR_U32(c,6);check(d<=0x800000&&n<=0x800000-d);std::memset(r+d,int(GPR_U32(c,5)&255),n);done(c);};
@@ -221,6 +226,7 @@ PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
 #include "room_actor_assets_vm_tests.inc"
 #include "transition_input_vm_tests.inc"
 #include "launch_roster_vm_tests.inc"
+#include "npc_vm_tests.inc"
 int main(int argc,char** argv)try{
     check(argc==4);
     no_model_vm_tests();
@@ -241,6 +247,9 @@ int main(int argc,char** argv)try{
     room_placement_tests();
     transition_input_refusals();
     launch_roster_tests();
+    npc_import_tests();
+    npc_primitive_tests();
+    npc_inventory_vm_tests();
     {std::vector<std::byte> b;emit(b,1);const auto a=emit(b,0xa);run({b},{0,a},4);}
     for(unsigned delay:{0u,1u,2u,7u}){std::vector<std::byte> a,b;emit(a,4,{delay});emit(a,0xd);emit(b,0xa);run({a,b},{1,0},delay+3,delay%6);}
     {std::vector<std::byte> b;emit(b,3,{2});emit(b,0xe5);const auto end=emit(b,0xa);run({b},{0,end},2);}
@@ -393,5 +402,7 @@ int main(int argc,char** argv)try{
              <<",\"cutscene_batches\":"<<cutscene_batches<<",\"placement_packets\":"<<placement_packets<<",\"room_placement_finishes\":"<<room_placement_finishes
              <<",\"forced_terminal_adapter_dispatches\":"<<forced_terminal_adapter_dispatches
              <<",\"launch_roster_cases\":"<<launch_roster_cases<<",\"launch_roster_refusals\":"<<launch_roster_refusals
+             <<",\"npc_imports\":"<<npc_imports<<",\"npc_import_refusals\":"<<npc_import_refusals
+             <<",\"npc_primitive_calls\":"<<npc_primitive_calls<<",\"npc_inventory_dispatches\":"<<npc_inventory_dispatches
              <<",\"original_numeric_handler_invocations\":65536,\"game_launched\":false}\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

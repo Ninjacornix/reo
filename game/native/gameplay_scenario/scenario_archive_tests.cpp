@@ -13,7 +13,7 @@ namespace content=scenario::content;
 namespace update=reo::native::gameplay_update;
 namespace world=reo::native::gameplay_world;
 namespace {
-std::size_t checks{},loaded_members{},admitted_rooms{},refused_rooms{};
+std::size_t checks{},loaded_members{},admitted_rooms{},refused_rooms{},npc_banks{};
 void check(bool condition,std::source_location location=std::source_location::current()) {
     ++checks;
     if (!condition) throw std::runtime_error("Native archive check at "+std::to_string(location.line()));
@@ -50,7 +50,9 @@ void fixtures() {
     for(std::size_t i=0;i<scenarios.size();++i) {
         std::array<char,16> name;
         std::snprintf(name.data(),name.size(),"r%03u.evb",scenarios[i]);
-        table(4096*(i+1),{name.data()});
+        std::array<char,16> npc_name{};
+        std::snprintf(npc_name.data(),npc_name.size(),"r%03u.npc",scenarios[i]);
+        table(4096*(i+1),{name.data(),npc_name.data()});
     }
     const auto source=[&] {
         return std::make_shared<reo::assets::Source>("memory",std::make_shared<Memory>(bytes));
@@ -61,6 +63,16 @@ void fixtures() {
     check(!archive.read_member(1,"r002.evb"));
     check(!archive.read_member(0,"r001.evb"));
     check(!archive.room({1,0,0}));
+    world::World world({{{}},1,{16,UINT64_MAX}},std::make_shared<world::Session>());
+    Notifications notifications;
+    update::Owner owner(world,notifications);
+    world.session().npc_descriptors.record(0)->health=313;
+    check(owner.load_scenario_npcs(archive,1)==update::Status::completed);
+    check(world.session().npc_descriptors.record(0)->health==313);
+    check(owner.load_scenario_npcs(archive,0)==update::Status::actor_failure);
+    check(world.session().npc_descriptors.record(0)->health==313);
+    check(owner.close()==update::Status::completed);
+    check(owner.load_scenario_npcs(archive,1)==update::Status::closed);
     table(4096,{"r001.evb","R001.EVB"});
     const content::ScenarioArchive duplicate(source());
     bool refused=false;
@@ -111,6 +123,24 @@ void owned(const std::filesystem::path& archive_path,const std::filesystem::path
         source->read(offset,length,expected.data());
         check(*bytes==expected);
         ++loaded_members;
+        if(row[0]=="N") {
+            auto expected_descriptors=world.session().npc_descriptors;
+            const auto count=expected_descriptors.import(expected);
+            check(count.has_value());
+            check(owner.load_scenario_npcs(archive,scenario_id)==update::Status::completed);
+            const auto actual=world.session().npc_descriptors.records();
+            for(unsigned index=0;index<64;++index) {
+                const auto& wanted=expected_descriptors.records()[index];
+                check(actual[index].template_id==wanted.template_id&&actual[index].active==wanted.active);
+                check(actual[index].health==wanted.health&&actual[index].control_mode==wanted.control_mode);
+                check(actual[index].room==wanted.room&&actual[index].yaw==wanted.yaw);
+                check(std::bit_cast<std::uint32_t>(actual[index].position.x)==std::bit_cast<std::uint32_t>(wanted.position.x));
+                check(std::bit_cast<std::uint32_t>(actual[index].position.y)==std::bit_cast<std::uint32_t>(wanted.position.y));
+                check(std::bit_cast<std::uint32_t>(actual[index].position.z)==std::bit_cast<std::uint32_t>(wanted.position.z));
+            }
+            ++npc_banks;
+            continue;
+        }
         if(row[0]=="E") {
             const auto bank=archive.scenario_scripts(scenario_id);
             check(bank&&*bank->backing()==expected);
@@ -147,12 +177,13 @@ void owned(const std::filesystem::path& archive_path,const std::filesystem::path
             }
         }
     }
-    check(loaded_members==171);
+    check(loaded_members==176&&npc_banks==5);
     check(owner.close()==update::Status::completed);
     check(owner.load_room_scripts(archive,{1,1,0})==update::Status::closed);
     check(owner.load_scenario_scripts(archive,1,0)==update::Status::closed);
     std::cout<<"{\"status\":\"passed\",\"checks\":"<<checks<<",\"members\":"<<loaded_members
              <<",\"room_bindings\":"<<admitted_rooms<<",\"refused_room_bindings\":"<<refused_rooms
+             <<",\"npc_banks\":"<<npc_banks
              <<",\"game_launched\":false}\n";
 }
 }
