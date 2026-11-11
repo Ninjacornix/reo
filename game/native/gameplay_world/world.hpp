@@ -1,5 +1,6 @@
 #pragma once
 #include "material_uv.hpp"
+#include "scripted_actor.hpp"
 #include "speech_state.hpp"
 #include "../gameplay_actors/entity.hpp"
 #include "../gameplay_actors/reference.hpp"
@@ -77,6 +78,7 @@ struct Actor : actors::Entity,actors::HitActor {
     std::optional<gameplay_ai::ExecutionState> ai_execution;
     std::optional<TargetingState> targeting;
     std::optional<EnemyState> enemy;
+    std::optional<ScriptedActorState> scripted;
     std::uint8_t character{};
     std::optional<std::uint32_t> gauge_value; // original BAC; unknown until its actual owner/import supplies it
     std::uint16_t terminal_countdown{}; // original C62, distinct from status/hit recovery timers

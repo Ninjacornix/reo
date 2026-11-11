@@ -193,7 +193,9 @@ void sub_00133490_0x133490(std::uint8_t* r,R5900Context* c,PS2Runtime*){stream_o
 void sub_001B82A0_0x1b82a0(std::uint8_t*,R5900Context* c,PS2Runtime*){SET_GPR_U32(c,2,0);done(c);}
 void sub_0012BEF8_0x12bef8(std::uint8_t*,R5900Context*,PS2Runtime*){throw std::runtime_error("Unexpected VM stream service");}
 void original_scene_mode_port(std::uint8_t*,R5900Context*,PS2Runtime*);
+namespace {PS2Runtime::Function constructor_port(std::uint32_t);}
 PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
+    if(const auto port=constructor_port(at))return port;
     if(at==0x10a830)return +[](std::uint8_t*,R5900Context* c,PS2Runtime*){SET_GPR_U32(c,2,0);done(c);};
     if(at==0x1cc8f0||at==0x1aa3e0)return +[](std::uint8_t*,R5900Context* c,PS2Runtime*){
         check(GPR_U32(c,5)==0x90000);++npc_file_loads;SET_GPR_U32(c,2,1);done(c);
@@ -233,6 +235,7 @@ PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
 #include "enemy_binding_vm_tests.inc"
 #include "model_parts_vm_tests.inc"
 #include "material_uv_vm_tests.inc"
+#include "scripted_actor_vm_tests.inc"
 int main(int argc,char** argv)try{
     check(argc==5);
     no_model_vm_tests();
@@ -264,6 +267,7 @@ int main(int argc,char** argv)try{
     enemy_binding_tests();
     model_parts_tests();
     material_uv_tests();
+    scripted_actor_constructor_tests();
     {std::vector<std::byte> b;emit(b,1);const auto a=emit(b,0xa);run({b},{0,a},4);}
     for(unsigned delay:{0u,1u,2u,7u}){std::vector<std::byte> a,b;emit(a,4,{delay});emit(a,0xd);emit(b,0xa);run({a,b},{1,0},delay+3,delay%6);}
     {std::vector<std::byte> b;emit(b,3,{2});emit(b,0xe5);const auto end=emit(b,0xa);run({b},{0,end},2);}
@@ -426,5 +430,6 @@ int main(int argc,char** argv)try{
              <<",\"enemy_binding_calls\":"<<enemy_binding_calls<<",\"enemy_binding_refusals\":"<<enemy_binding_refusals<<",\"body_priority_calls\":"<<body_priority_calls<<",\"body_priority_refusals\":"<<body_priority_refusals
              <<",\"model_part_queries\":"<<model_part_queries<<",\"model_part_refusals\":"<<model_part_refusals
              <<",\"material_uv_calls\":"<<material_uv_calls
+             <<",\"scripted_constructor_calls\":"<<scripted_constructor_calls<<",\"scripted_constructor_refusals\":"<<scripted_constructor_refusals
              <<",\"original_numeric_handler_invocations\":65536,\"game_launched\":false}\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

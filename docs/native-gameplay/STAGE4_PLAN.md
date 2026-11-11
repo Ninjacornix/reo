@@ -3,6 +3,10 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to keep the PC awake afterward.
 
+- [Native scripted actor construction](SCRIPTED_ACTOR_CONSTRUCTION.md) now
+  composes prepared models, canonical actor state and material tasks through
+  the existing owners. Both compiler comparisons,330 owned constructions and
+  five parent tests pass. Scripted motion and game installation remain open.
 - [Native material animation](MATERIAL_ANIMATION.md) now runs the complete
   callback through the actual Update Owner and shared32-entry scheduler.
   Both compiler comparisons and four parent tests pass, including pause,

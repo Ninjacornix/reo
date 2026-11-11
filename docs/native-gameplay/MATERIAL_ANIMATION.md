@@ -4,7 +4,8 @@ The complete File #1 callback5D0C90 now has a native implementation and a real
 consumer in `gameplay_update::Owner`. `MaterialAnimations` borrows the World's
 actual linked actors and the existing32-entry `Scheduler`. It creates no extra
 actor or task pool. The reviewed6BA5C0 constructor requests this callback for
-class27. Migrating that constructor and installing native gameplay remain open.
+class27. [Native scripted construction](SCRIPTED_ACTOR_CONSTRUCTION.md) now
+adopts this task. Installing native gameplay remains open.
 
 The first callback sets phase1, clears the secondary phase, initializes450/90
 timers and sets presentation mask1. It leaves the actor's UVs untouched. Later

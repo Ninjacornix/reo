@@ -37,6 +37,9 @@ public:
 };
 MaterialAnimations::MaterialAnimations(world::World& world,tasks::Scheduler& tasks):shared_(std::make_shared<Shared>(world,tasks)){}
 MaterialAnimations::~MaterialAnimations(){close();}
+bool MaterialAnimations::bound_to(const world::World& world)const noexcept {
+    return &shared_->world==&world&&!shared_->closed&&!world.closed()&&!shared_->tasks.closed();
+}
 tasks::Created MaterialAnimations::create(const world::actors::EntityId& id)noexcept {
     auto& owner=*shared_;
     if(owner.closed||owner.world.closed()||owner.tasks.closed())return{tasks::Status::closed,{}};

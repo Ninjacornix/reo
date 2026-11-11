@@ -1,6 +1,7 @@
 #include "actor_assets.hpp"
 #include "../animation/playback.hpp"
 #include "../animation/constraints.hpp"
+#include "../gameplay_update/scripted_actor_construction.hpp"
 #include "runtime/assets/virtual_afs.h"
 #include <atomic>
 #include <fstream>
@@ -13,6 +14,7 @@ namespace world = reo::native::gameplay_world;
 namespace {
 std::size_t checks{},refusals{},owned_models{},owned_skeletons{},owned_absent_skeletons{},owned_absent_models{},owned_missing{};
 std::size_t model_bindings{},binding_refusals{};
+std::size_t scripted_constructions{},owned_scripted_constructions{},constructor_profile_refusals{};
 
 void check(bool condition,std::source_location at = std::source_location::current()) {
     ++checks;
@@ -135,7 +137,64 @@ void bindings(const std::shared_ptr<const world::ActorModelAsset>& asset) {
     model_bindings += 4;binding_refusals += 4;
 }
 
+void constructors() {
+    namespace u=reo::native::gameplay_update;namespace tasks=reo::native::gameplay_tasks;
+    world::Profile profile;profile.layouts.push_back({});
+    world::World owner(profile,std::make_shared<world::Session>()),foreign(profile,std::make_shared<world::Session>());
+    tasks::Scheduler scheduler,other_scheduler;
+    u::MaterialAnimations materials(owner,scheduler),other(foreign,other_scheduler);
+    refused([&]{u::ScriptedActorConstruction invalid(owner,other);});
+    u::ScriptedActorConstruction factory(owner,materials);
+    const auto model27=world::File1LinkedModelProfiles{}.definition(27,0).model;
+    const auto memory=std::make_shared<Memory>(afs({{"romdata_usa.afs",afs({
+        {"e00_00.nbd",bundle()},{std::string(world::ActorAssets::model_name(model27,world::ModelDefinitionBank::ordinary)),bundle()}})}}));
+    world::ActorAssets assets(std::make_shared<reo::assets::Source>("native constructor fixture",memory));
+    const auto prepared=factory.prepare({0x1234,0x10000,0x10000,0x10000},assets);
+    const auto animated=factory.prepare({7,27,0,0},assets);
+    const auto reads=memory->reads.load();
+    const auto first=factory.create(*prepared),second=factory.create(*prepared);
+    check(first.status==u::ScriptedConstructionStatus::completed&&second.status==u::ScriptedConstructionStatus::completed);
+    const auto a=owner.resolve(first.id),b=owner.resolve(second.id);
+    check(a->model&&b->model&&a->model!=b->model&&a->animation&&a->animation!=b->animation);
+    check(a->model_asset==prepared->asset()&&a->scripted&&a->scripted->model_group==0x34);
+    check(a->scripted->part_visibility==std::vector<std::uint8_t>({1,1,1}));
+    check(a->scripted->color==std::array<std::uint8_t,4>{255,255,255,255}&&a->scripted->alpha_mode==-1&&a->scripted->alpha==255);
+    const auto uv=factory.create(*animated);check(uv.status==u::ScriptedConstructionStatus::completed&&uv.material_task.status==tasks::Status::completed);
+    check(memory->reads==reads&&scheduler.size()==1);
+    check(scheduler.run(tasks::Pass::update).called==1&&materials.snapshot(uv.material_task.handle)->first==450);
+    check(scheduler.run(tasks::Pass::update).called==1&&owner.resolve(uv.id)->material_uv->u==449.f/450.f);
+    while(owner.linked_models().remaining())check(factory.create(*prepared).status==u::ScriptedConstructionStatus::completed);
+    check(factory.create(*animated).status==u::ScriptedConstructionStatus::full&&scheduler.size()==1);
+    scripted_constructions+=50;
+    check(owner.linked_models().reset()==world::LinkedStatus::completed);
+    check(scheduler.run(tasks::Pass::update).status==tasks::Status::completed&&scheduler.size()==0);
+    struct Idle final:tasks::Task{void update(tasks::Scheduler&,const tasks::Handle&)noexcept override{}};
+    const auto idle=std::make_shared<Idle>();
+    for(unsigned i=0;i<32;++i)check(scheduler.create(idle).status==tasks::Status::completed);
+    const auto dropped=factory.create(*animated);
+    check(dropped.status==u::ScriptedConstructionStatus::completed&&dropped.id&&dropped.material_task.status==tasks::Status::full);
+    check(owner.resolve(dropped.id)->scripted&&scheduler.size()==32);
+    const auto absent=factory.prepare({0,60,0,0},assets);
+    const auto empty=factory.create(*absent);
+    check(empty.status==u::ScriptedConstructionStatus::completed&&!owner.resolve(empty.id)->model_asset&&owner.resolve(empty.id)->scripted->part_visibility.empty());
+    scripted_constructions+=2;
+    const auto remaining=owner.linked_models().remaining();
+    refused([&]{(void)factory.prepare({0,62,0,0},assets);});
+    refused([&]{(void)factory.prepare({0,0,255,0},assets);});
+    refused([&]{(void)factory.prepare({0,0,0,255},assets);});
+    auto excessive=bundle();put(excessive,176,33u);
+    refused([&]{(void)factory.prepare({0,0,0,0},world::ActorAssets(source({{"e00_00.nbd",excessive}})));});
+    check(owner.linked_models().remaining()==remaining&&scheduler.size()==32);
+    materials.close();
+    check(factory.create(*prepared).status==u::ScriptedConstructionStatus::unavailable);
+    check(owner.linked_models().remaining()==remaining&&scheduler.size()==32);
+    check(owner.close()==world::Status::completed);
+    check(a->model&&a->scripted&&a->model_asset==prepared->asset());
+    check(factory.create(*prepared).status==u::ScriptedConstructionStatus::unavailable);
+}
+
 void fixtures() {
+    constructors();
     const auto payload = bundle();
     auto memory = std::make_shared<Memory>(afs({{"romdata_usa.afs",afs({{"e00_00.nbd",payload}})}}));
     const auto input = std::make_shared<reo::assets::Source>("native actor asset fixture",memory);
@@ -189,6 +248,11 @@ void fixtures() {
 
 void owned(const std::filesystem::path& archive,const std::filesystem::path& manifest) {
     world::ActorAssets assets(std::make_shared<reo::assets::Source>(archive));
+    namespace u=reo::native::gameplay_update;namespace tasks=reo::native::gameplay_tasks;
+    world::Profile profile;profile.layouts.push_back({});
+    world::World actors(profile,std::make_shared<world::Session>());
+    tasks::Scheduler scheduler;u::MaterialAnimations materials(actors,scheduler);
+    u::ScriptedActorConstruction factory(actors,materials);
     std::ifstream rows(manifest),raw(archive,std::ios::binary);
     check(bool(rows) && bool(raw));
     std::string line;
@@ -224,6 +288,26 @@ void owned(const std::filesystem::path& archive,const std::filesystem::path& man
             check(instance->retain() && instance->retain()->joints.size() == nodes);
             ++owned_skeletons;
         } else ++owned_absent_skeletons;
+        bool constructor_profile=true;
+        try{(void)world::File1LinkedModelProfiles{}.definition(std::uint8_t(type),bank?1:0);}
+        catch(const std::out_of_range&){constructor_profile=false;++constructor_profile_refusals;}
+        if(constructor_profile){
+            const auto prepared=factory.prepare({std::uint32_t(owned_models),type,variant,bank?1u:0u},assets);
+            check(prepared->asset()==asset);
+            const auto made=factory.create(*prepared);
+            check(made.status==u::ScriptedConstructionStatus::completed);
+            const auto actor=actors.resolve(made.id);
+            check(actor&&actor->model_asset==asset&&actor->model&&actor->model->nodes().size()==nodes);
+            check(actor->scripted&&actor->scripted->part_visibility.size()==parts);
+            check(actor->scripted->render.bank==selected&&actor->model!=instance);
+            actor->model->rebuild(reo::native::transform_math::identity());
+            check(actor->model->retain()&&actor->model->retain()->joints.size()==nodes);
+            ++owned_scripted_constructions;
+            if(actors.linked_models().remaining()==0){
+                check(actors.linked_models().reset()==world::LinkedStatus::completed);
+                check(scheduler.run(tasks::Pass::update).status==tasks::Status::completed&&scheduler.size()==0);
+            }
+        }
         ++owned_models;
     }
     check(rows.eof());
@@ -238,5 +322,7 @@ int main(int argc,char** argv) try {
              <<",\"owned_skeletons\":"<<owned_skeletons<<",\"owned_absent_skeletons\":"<<owned_absent_skeletons
              <<",\"owned_absent_models\":"<<owned_absent_models
              <<",\"model_bindings\":"<<model_bindings<<",\"binding_refusals\":"<<binding_refusals
+             <<",\"scripted_constructions\":"<<scripted_constructions<<",\"owned_scripted_constructions\":"<<owned_scripted_constructions
+             <<",\"constructor_profile_refusals\":"<<constructor_profile_refusals
              <<",\"owned_missing\":"<<owned_missing<<"}\n";
 } catch (const std::exception& error) { std::cerr<<error.what()<<'\n';return 1; }

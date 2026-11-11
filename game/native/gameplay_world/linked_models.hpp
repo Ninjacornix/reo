@@ -67,6 +67,8 @@ struct LinkedModelDefinition {
     float scale{};
     std::int8_t visibility_selector{};
     std::uint8_t construction_mode{};
+    std::int8_t shadow_enabled{};
+    std::int16_t shadow_asset{};
 };
 enum class ModelDefinitionBank { ordinary, alternate };
 class File1LinkedModelProfiles final {

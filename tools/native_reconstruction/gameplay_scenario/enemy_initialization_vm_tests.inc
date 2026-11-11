@@ -35,6 +35,8 @@ void enemy_initialization_tests() {
                 check(definition.texture == ram[at+1]);
                 check(definition.sound == ram[at+2]);
                 check(definition.construction_mode == ram[at+4]);
+                check(definition.shadow_enabled == fixture_read<std::int8_t>(ram.data(),at+13));
+                check(definition.shadow_asset == fixture_read<std::int16_t>(ram.data(),at+14));
                 check(std::bit_cast<std::uint32_t>(definition.scale) == fixture_read<std::uint32_t>(ram.data(),at+8));
                 check(definition.visibility_selector == fixture_read<std::int8_t>(ram.data(),at+12));
             } catch (const std::out_of_range&) {}

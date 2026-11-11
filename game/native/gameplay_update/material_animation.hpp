@@ -12,6 +12,7 @@ public:
     MaterialAnimations(const MaterialAnimations&)=delete;
     MaterialAnimations& operator=(const MaterialAnimations&)=delete;
     gameplay_tasks::Created create(const gameplay_world::actors::EntityId&)noexcept;
+    bool bound_to(const gameplay_world::World&)const noexcept;
     std::optional<gameplay_world::MaterialAnimationState> snapshot(const gameplay_tasks::Handle&)const noexcept;
     void close()noexcept;
 private:

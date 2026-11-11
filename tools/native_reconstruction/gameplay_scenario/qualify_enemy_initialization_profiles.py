@@ -25,7 +25,8 @@ def append_model_bank(models,raw,directory,prefix):
             scale=struct.unpack_from('<I',raw,at+8)[0]
             visibility=struct.unpack_from('<b',raw,at+12)[0]
             construction=raw[at+4]
-            models.append('    {'+','.join(map(str,(model,texture,sound)))+',std::bit_cast<float>('+hex(scale)+'u),'+str(visibility)+','+str(construction)+'},')
+            shadow,shadow_asset=struct.unpack_from('<bh',raw,at+13)
+            models.append('    {'+','.join(map(str,(model,texture,sound)))+',std::bit_cast<float>('+hex(scale)+'u),'+str(visibility)+','+str(construction)+','+str(shadow)+','+str(shadow_asset)+'},')
         models.append('}};')
     models.append('constexpr std::array<std::span<const LinkedModelDefinition>,62> '+prefix+'definitions{{')
     for pointer,declared in roots:
