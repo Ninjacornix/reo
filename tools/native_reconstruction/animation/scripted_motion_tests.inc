@@ -1,5 +1,6 @@
 #include "game/native/gameplay_world/scripted_motion.hpp"
 #include "game/native/gameplay_world/linked_models.hpp"
+#include "cutscene_actor_tests.inc"
 std::uint64_t scripted_motion_cases{},scripted_motion_ticks{},scripted_motion_refusals{},scripted_positive_tracks{};
 void scripted_motion_tests(const std::vector<std::vector<std::byte>>& banks,
                            const std::vector<std::vector<std::byte>>& skeletons,
@@ -131,6 +132,7 @@ void scripted_motion_tests(const std::vector<std::vector<std::byte>>& banks,
                 if(pending>0&&current->model_pose_class!=1)++scripted_positive_tracks;
                 ++scripted_motion_ticks;
             }
+            cutscene_actor_composition(world,id,motion,variant,ram);
             const auto lease=current;const auto flags=current->contact_flags;
             check(world.linked_models().reset()==g::LinkedStatus::completed,"scripted actor retirement");
             bool refused{};try{motion.tick(id);}catch(const std::runtime_error&){refused=true;}
@@ -139,6 +141,7 @@ void scripted_motion_tests(const std::vector<std::vector<std::byte>>& banks,
         }
     }
     check(scripted_positive_tracks!=0,"actual owned positive track-two animation consumed");
+    cutscene_actor_gate_tests(ram);
     for(unsigned failure=0;failure<8;++failure){
         location="scripted actor refusal="+std::to_string(failure);
         g::World world(world_profile(),std::make_shared<g::Session>());

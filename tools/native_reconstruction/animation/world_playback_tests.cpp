@@ -684,6 +684,9 @@ int main(int argc, char** argv) try {
               << ",\"scripted_motion_ticks\":" << scripted_motion_ticks
               << ",\"scripted_motion_refusals\":" << scripted_motion_refusals
               << ",\"scripted_positive_tracks\":" << scripted_positive_tracks
+              << ",\"cutscene_actor_calls\":" << cutscene_actor_calls
+              << ",\"cutscene_actor_gate_calls\":" << cutscene_actor_gate_calls
+              << ",\"cutscene_actor_refusals\":" << cutscene_actor_refusals
               << ",\"required_prelude_cases\":" << prelude_native
               << ",\"refusal_cases\":" << world_refusals << ",\"joint_cases\":" << joint_cases
               << ",\"original_calls\":" << helper_calls << ",\"game_run\":false}\n";

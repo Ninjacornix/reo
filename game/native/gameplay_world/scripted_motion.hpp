@@ -11,6 +11,7 @@ class ScriptedActorMotion final {
 public:
     // The World is borrowed and must outlive this synchronous consumer.
     ScriptedActorMotion(World& world,ScriptedMotionBanks banks):world_(world),banks_(std::move(banks)){}
+    bool bound_to(const World& world)const noexcept{return &world_==&world&&!world_.closed();}
     // Complete admitted67BFF0 linked-family policy through real native
     // configuration/advancement. Missing required resources throw visibly;
     // effects preceding a failure are retained, with no legacy retry.

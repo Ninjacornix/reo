@@ -53,8 +53,8 @@ and a fresh output directory, then the native actor asset, target metrics,
 collision worker, cooperative Update and AI owner CTest entries. The verifier
 uses the current SDK header and actual current World/resource dependencies.
 
-The outer6BA880 cutscene displacement, pose composition, scene bank-loading
-caller, native cutscene scheduling and game installation remain open. Source
+The [outer6BA880 callback](CUTSCENE_ACTOR.md) now adopts this consumer.
+Scene bank loading, native cutscene scheduling and game installation remain open. Source
 6BBBA0 owns the linked callback pass and also performs a further65E4A0 unless
 the actor's C94 mask4 suppresses it. The renderer's linked traversal is a
 different pass. Those caller boundaries need their own composition checks.

@@ -3,10 +3,14 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to keep the PC awake afterward.
 
+- [Native cutscene actor callbacks](CUTSCENE_ACTOR.md) now compose counted
+  displacement, scripted motion, root integration and real pose ownership.
+  Both compiler comparisons, full scenario regression and five parent tests
+  pass. Linked callback scheduling and game installation remain open.
 - [Native scripted actor motion](SCRIPTED_ACTOR_MOTION.md) now consumes actual
   scene banks and native poses through the canonical linked Actor. Both
   compiler World comparisons, owned construction and five parent tests pass.
-  Outer cutscene movement, scheduling and game installation remain open.
+  Linked cutscene scheduling and game installation remain open.
 - [Whole-model scripted playback](WHOLE_MODEL_PLAYBACK.md) now has native
   configuration, root-motion advancement and full owned/synthetic comparisons
   on both compilers. Caller tracing corrects B44 to blend duration. Actual
