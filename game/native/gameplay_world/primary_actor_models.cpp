@@ -2,6 +2,8 @@
 #include "primary_actor_initialization_internal.hpp"
 #include "../gameplay_update/update.hpp"
 #include "model_constraints.hpp"
+#include "scene_primary_actors.hpp"
+#include "actor_ownership_copy.hpp"
 #include <cstring>
 #include <limits>
 #include <new>
@@ -188,6 +190,61 @@ PrimarySceneEntryReleased PrimaryActorModels::release_scene_entry(const Humanoid
         const auto banks=content.release_base(*motions_.snapshot());const auto published=motions_.publish_nested(banks,true);
         if(published.status!=HumanoidPublicationStatus::completed){result.status=published.status==HumanoidPublicationStatus::no_memory?PrimaryModelStatus::no_memory:PrimaryModelStatus::unavailable;return result;}
         result.base_released=true;result.status=PrimaryModelStatus::completed;return result;
+    }catch(const std::bad_alloc&){result.status=PrimaryModelStatus::no_memory;return result;}catch(...){return result;}
+}
+PrimarySceneConstructed PrimaryActorModels::construct_scene_primary(
+    const gameplay_scenario::CutscenePrimaryChoice& choice,
+    gameplay_scenario::CutscenePrimaryRoster& roster,const HumanoidMotionAssets& content)noexcept{
+    if(closed_||world_.closed()||motions_.closed_)return{PrimaryModelStatus::closed};
+    if(running_||world_.busy())return{PrimaryModelStatus::busy};
+    if(choice.group>=32||choice.temporary_slot>=8||roster.population>8||world_.humanoid_motion_source_!=&motions_)return{};
+    PrimarySceneConstructed result;
+    try{
+        auto& pool=world_.scene_primary_actors();if(pool.closed_)return{PrimaryModelStatus::closed};if(!pool.initialized())return{};
+        actors::EntityId old_id;std::shared_ptr<Actor> destination;
+        for(unsigned slot=0;slot<8;++slot){
+            const auto actor=world_.resolve(pool.slots_[slot]);if(!actor)return{};
+            if(actor->active)continue;
+            if(slot!=choice.temporary_slot)return{PrimaryModelStatus::stale};
+            old_id=pool.slots_[slot];destination=actor;break;
+        }
+        if(!destination)return{PrimaryModelStatus::full};
+        std::optional<std::uint8_t> matched;
+        for(unsigned i=0;i<8;++i)if(roster.characters[i]==choice.character){matched=std::uint8_t(i);break;}
+        if(matched!=choice.cloned_roster_slot)return{PrimaryModelStatus::stale};
+        auto source=matched?world_.primary(*matched):destination;if(!source)return{};
+        auto copied=copy_actor_owned(*source);
+        if(copied.status!=ActorCopyStatus::completed)return{copied.status==ActorCopyStatus::no_memory?PrimaryModelStatus::no_memory:PrimaryModelStatus::unavailable};
+        auto& actor=*copied.actor;actor.slot=choice.temporary_slot;
+        actor.active=true;actor.visible=false;actor.primary=6;actor.secondary=actor.phase=actor.subphase=0;
+        actor.model_variant=0;actor.character=choice.character;actor.room=world_.room;actor.model_pose_class=choice.model_class;
+        if(!actor.scripted)actor.scripted.emplace();
+        auto& script=*actor.scripted;script.cue_phase=0;script.request_flags=0;
+        script.motion_rate_mode=script.scale_lock=script.motion_selector=0;script.request_phase=0;script.motion_blend_duration=0;
+        script.relation_mode=0;script.related_actor={};script.relation_options=script.relation_parameter=0;script.relation_offset={};
+        script.command_angles={};script.movement_angles={};script.forward_step=0;script.yaw_step=script.movement_remaining=0;
+        script.track_two_motion=0;script.scale_profile=0;
+        std::shared_ptr<const PreparedPrimaryModel> prepared_retirement;
+        if(matched&&choice.model_class==1){
+            const auto request=capture_release(world_.identity(*matched));if(!request)return{};
+            prepared_retirement=prepare_release(*request,content);
+        }
+        running_=world_.updating_=pool.mutating_=true;
+        struct Reset{bool& running;bool& world;bool& pool;~Reset(){pool=false;world=false;running=false;}}reset{running_,world_.updating_,pool.mutating_};
+        const auto previous_destination=std::move(destination),previous_source=std::move(source);
+        const auto retirement=std::move(prepared_retirement);const auto previous_resources=retain_resources();
+        (void)previous_destination;(void)previous_source;(void)previous_resources;
+        const auto created=world_.entities_.create(std::move(copied.actor));
+        if(created.status!=actors::EntityStatus::completed)return{created.status==actors::EntityStatus::no_memory?PrimaryModelStatus::no_memory:PrimaryModelStatus::full};
+        pool.slots_[choice.temporary_slot]=created.id;(void)world_.entities_.retire(old_id);
+        result.id=created.id;result.roster_slot=matched;result.release_on_exit=!matched||choice.model_class==1;
+        if(retirement){
+            const gameplay_update::State unused{};const auto released=apply(*retirement,unused,nullptr,true);
+            result.retirement_completed=released.status==PrimaryModelStatus::completed;result.main_model_retired=released.retired;
+            if(!result.retirement_completed){result.status=released.status;return result;}
+            roster.characters[*matched]=255;
+        }
+        result.status=PrimaryModelStatus::completed;return result;
     }catch(const std::bad_alloc&){result.status=PrimaryModelStatus::no_memory;return result;}catch(...){return result;}
 }
 }

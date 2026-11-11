@@ -92,6 +92,11 @@ verification. The latest user instruction is to keep the PC awake afterward.
   constraint models during detachment. Both compilers pass515 Actor copies and
   512 copied original solver continuations. Live scene-specific construction,
   cache-row transfer and complete entry/exit adoption remain open.
+- [Cinematic player construction](PRIMARY_SCENE_CONSTRUCTION.md) now composes
+  choice validation, independent typed copying, scene resets, generation
+  publication and matched main-model retirement. Both compilers pass258 complete
+  source comparisons and explicit failure/lifetime checks. Temporary model-cache
+  admission, playback, objects and full scene entry/exit remain open.
 - The [scene NPC loading-mode correction](CUTSCENE_NPC_CONSTRUCTION.md) separates
   asset-loading mode3243D7 from pause4BADF8. Paired current cohorts pass4,384 scene
   cases with independent inputs; the earlier fixture conflated the two and its

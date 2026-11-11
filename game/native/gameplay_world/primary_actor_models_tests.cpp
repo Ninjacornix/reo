@@ -1,5 +1,6 @@
 #include "primary_actor_models.hpp"
 #include "actor_ownership_copy.hpp"
+#include "scene_primary_actors.hpp"
 #include "../animation/constraints.hpp"
 #include "../gameplay_update/update.hpp"
 #include "../gameplay_scenario/scenario_archive.hpp"
@@ -19,6 +20,7 @@ std::uint64_t entry_cases{},entry_retirements{},entry_original_cases{},entry_gua
 std::uint64_t direct_guard_checks{};
 std::uint64_t independent_detached_copies{};
 std::uint64_t owned_actor_copies{},actor_copy_refusals{};
+std::uint64_t construction_cases{},construction_original_cases{},construction_refusals{},construction_guards{};
 void check(bool value,std::source_location at=std::source_location::current()){
     ++checks;if(!value)throw std::runtime_error(std::string("Primary model check ")+at.file_name()+":"+std::to_string(at.line()));
 }
@@ -29,6 +31,7 @@ void compare_cache(const Keys&,const Keys&,unsigned,std::uint8_t,std::uint8_t,st
 void compare_primary_scene(const reo::native::gameplay_scenario::CutsceneDescriptor&,std::size_t,const g::Actor&,std::span<const reo::native::gameplay_scenario::CutsceneActorParameter>,std::uint16_t,std::int8_t);
 void compare_release(const Keys&,const Keys&,unsigned,const g::PrimaryModelApplied&);
 void compare_entry(const Keys&,const Keys&,const std::array<std::uint8_t,8>&,const std::array<std::uint8_t,8>&,const g::PrimarySceneEntryReleased&);
+void compare_construction(const g::Actor&,const g::Actor&,const g::Actor&,const reo::native::gameplay_scenario::CutscenePrimaryRoster&,const reo::native::gameplay_scenario::CutscenePrimaryRoster&,const reo::native::gameplay_scenario::CutscenePrimaryChoice&,std::uint16_t,const g::PrimarySceneConstructed&);
 void basic(){
     g::Actor fresh;fresh.current=123;fresh.position={4,5,6};fresh.primary_state.emplace();fresh.primary_state->part_visibility={1,0,1};
     const auto copied=g::copy_actor_owned(fresh);check(copied.status==g::ActorCopyStatus::completed&&copied.actor&&copied.actor->current==123&&copied.actor->position.y==5&&!copied.actor->animation&&!copied.actor->model&&!copied.actor->constraints&&!copied.actor->scripted);
@@ -165,15 +168,17 @@ void owned(const char* archive){
 }
 #include "primary_scene_actor_models_tests.inc"
 #include "primary_scene_entry_tests.inc"
+#include "primary_scene_construction_tests.inc"
 #ifdef REO_PRIMARY_MODELS_ORIGINAL
 #include "primary_models_reference.inc"
 #else
+namespace {void compare_construction(const g::Actor&,const g::Actor&,const g::Actor&,const reo::native::gameplay_scenario::CutscenePrimaryRoster&,const reo::native::gameplay_scenario::CutscenePrimaryRoster&,const reo::native::gameplay_scenario::CutscenePrimaryChoice&,std::uint16_t,const g::PrimarySceneConstructed&){}}
 namespace {void compare_cache(const Keys&,const Keys&,unsigned,std::uint8_t,std::uint8_t,std::uint8_t,std::int8_t,const g::PrimaryModelApplied&) {}}
 namespace {void compare_primary_scene(const reo::native::gameplay_scenario::CutsceneDescriptor&,std::size_t,const g::Actor&,std::span<const reo::native::gameplay_scenario::CutsceneActorParameter>,std::uint16_t,std::int8_t) {}}
 namespace {void compare_release(const Keys&,const Keys&,unsigned,const g::PrimaryModelApplied&) {}}
 namespace {void compare_entry(const Keys&,const Keys&,const std::array<std::uint8_t,8>&,const std::array<std::uint8_t,8>&,const g::PrimarySceneEntryReleased&) {}}
 #endif
 int main(int argc,char** argv)try{
-    basic();if(argc>=2){owned(argv[1]);owned_entry(argv[1]);}else check(argc==1);if(argc==3)owned_scenes(argv[1],argv[2]);else check(argc<=2);
-    std::cout<<"{\"owned_actor_copies\":"<<owned_actor_copies<<",\"actor_copy_refusals\":"<<actor_copy_refusals<<",\"independent_detached_copies\":"<<independent_detached_copies<<",\"direct_guard_checks\":"<<direct_guard_checks<<",\"entry_cases\":"<<entry_cases<<",\"entry_retirements\":"<<entry_retirements<<",\"entry_original_cases\":"<<entry_original_cases<<",\"entry_guard_checks\":"<<entry_guard_checks<<",\"entry_refusals\":"<<entry_refusals<<",\"retirements\":"<<retirements<<",\"retirement_noops\":"<<retirement_noops<<",\"reloads\":"<<reloads<<",\"detached_refusals\":"<<detached_refusals<<",\"retirement_original_cases\":"<<retirement_original_cases<<",\"generation_handoffs\":"<<generation_handoffs<<",\"checks\":"<<checks<<",\"loads\":"<<loads<<",\"reuses\":"<<reuses<<",\"replacements\":"<<replacements<<",\"shared_releases\":"<<shared_releases<<",\"refusals\":"<<refusals<<",\"original_cases\":"<<original_cases<<",\"original_calls\":"<<original_calls<<",\"scene_cases\":"<<scene_cases<<",\"scene_parameters\":"<<scene_parameters<<",\"scene_original_cases\":"<<scene_original_cases<<",\"game_run\":false}\n";
+    basic();if(argc>=2){owned(argv[1]);owned_entry(argv[1]);}else check(argc==1);if(argc>=2){construction_owned(argv[1]);construction_lifetimes(argv[1]);}if(argc==3)owned_scenes(argv[1],argv[2]);else check(argc<=2);
+    std::cout<<"{\"construction_cases\":"<<construction_cases<<",\"construction_original_cases\":"<<construction_original_cases<<",\"construction_refusals\":"<<construction_refusals<<",\"construction_guards\":"<<construction_guards<<",\"owned_actor_copies\":"<<owned_actor_copies<<",\"actor_copy_refusals\":"<<actor_copy_refusals<<",\"independent_detached_copies\":"<<independent_detached_copies<<",\"direct_guard_checks\":"<<direct_guard_checks<<",\"entry_cases\":"<<entry_cases<<",\"entry_retirements\":"<<entry_retirements<<",\"entry_original_cases\":"<<entry_original_cases<<",\"entry_guard_checks\":"<<entry_guard_checks<<",\"entry_refusals\":"<<entry_refusals<<",\"retirements\":"<<retirements<<",\"retirement_noops\":"<<retirement_noops<<",\"reloads\":"<<reloads<<",\"detached_refusals\":"<<detached_refusals<<",\"retirement_original_cases\":"<<retirement_original_cases<<",\"generation_handoffs\":"<<generation_handoffs<<",\"checks\":"<<checks<<",\"loads\":"<<loads<<",\"reuses\":"<<reuses<<",\"replacements\":"<<replacements<<",\"shared_releases\":"<<shared_releases<<",\"refusals\":"<<refusals<<",\"original_cases\":"<<original_cases<<",\"original_calls\":"<<original_calls<<",\"scene_cases\":"<<scene_cases<<",\"scene_parameters\":"<<scene_parameters<<",\"scene_original_cases\":"<<scene_original_cases<<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

@@ -25,6 +25,7 @@ public:
     ScenePrimaryStatus close()noexcept;
 private:
     friend class World;
+    friend class PrimaryActorModels;
     explicit ScenePrimaryActorPool(World& world)noexcept:world_(world){}
     World& world_;std::array<actors::EntityId,capacity> slots_{};
     bool initialized_{},closed_{},mutating_{};

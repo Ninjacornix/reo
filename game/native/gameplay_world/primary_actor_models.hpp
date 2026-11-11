@@ -2,6 +2,7 @@
 #include "actor_assets.hpp"
 #include "humanoid_motion_owner.hpp"
 #include "primary_actor_initialization.hpp"
+#include "../gameplay_scenario/cutscene_primary_selection.hpp"
 namespace reo::native::gameplay_world {
 struct PrimaryModelDomain;
 struct PrimarySceneActorProfile {
@@ -39,7 +40,7 @@ private:
     std::shared_ptr<const HumanoidMotionBanks> banks_;
     std::vector<std::uint8_t> scene_visibility_;
 };
-enum class PrimaryModelStatus {completed,unavailable,stale,busy,closed,no_memory};
+enum class PrimaryModelStatus {completed,unavailable,stale,busy,closed,no_memory,full};
 struct PrimaryModelApplied {
     PrimaryModelStatus status{PrimaryModelStatus::unavailable};
     bool replaced{},character_released{},initialized{};
@@ -50,6 +51,12 @@ struct PrimarySceneEntryReleased {
     std::size_t visited{},retired{},character_releases{};
     bool base_released{};
     std::optional<std::size_t> failed_slot{};
+};
+struct PrimarySceneConstructed {
+    PrimaryModelStatus status{PrimaryModelStatus::unavailable};
+    actors::EntityId id{};
+    std::optional<std::uint8_t> roster_slot{};
+    bool release_on_exit{},retirement_completed{},main_model_retired{};
 };
 // Canonical simulation-owner cache for the admitted archive-bundle5EC100 path.
 // Capture on the simulation owner; prepare uses only retained immutable request
@@ -73,6 +80,13 @@ public:
     // Complete admitted5F0C00 CPU/resource phase. No asset acquisition runs:
     // preparation here only clones bounded immutable banks during scene load.
     PrimarySceneEntryReleased release_scene_entry(const HumanoidMotionAssets&)noexcept;
+    // Apply one choice against the current BEFORE-choice roster, after pool
+    // initialization. Construction/retirement only: no temporary model-cache
+    // admission or update readiness is granted. A failed result with an ID is
+    // an explicit committed construction prefix; the scene owner must latch it.
+    PrimarySceneConstructed construct_scene_primary(
+        const gameplay_scenario::CutscenePrimaryChoice&,
+        gameplay_scenario::CutscenePrimaryRoster&,const HumanoidMotionAssets&)noexcept;
     PrimaryModelStatus close()noexcept;
     struct CacheKey {std::uint8_t character{255},model_class{255};friend bool operator==(const CacheKey&,const CacheKey&)=default;};
     CacheKey key(std::size_t slot)const{return rows_.at(slot).key;}
