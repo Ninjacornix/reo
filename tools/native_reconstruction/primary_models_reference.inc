@@ -4,9 +4,22 @@ constexpr std::uint32_t reference_actor=0x100000;
 std::vector<std::uint8_t> cache_memory(0x2000000);
 std::vector<std::uint32_t> cache_trace;
 unsigned reference_releases{},reference_loads{},reference_initializations{},reference_slot{},reference_character{},reference_class{};
+bool reference_scene{};
 }
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
     ++original_calls;const auto at=context->pc;
+    if(reference_scene){
+        if(at==0x5f0610){o2_005F0610_0x5f0610(memory,context,runtime);return;}
+        if(at==0x663170){o2_00663170_0x663170(memory,context,runtime);return;}
+        if(at==0x5f0b50){o2_005F0B50_0x5f0b50(memory,context,runtime);return;}
+        if(at==0x5ec100){
+            check(GPR_U32(context,4)==0&&GPR_U32(context,5)==reference_actor);
+            const auto scale=g::primary_actor_default(memory[reference_actor+0xb98]).scale;
+            transform_write(memory,reference_actor+0xb4,scale);
+        }else if(at!=0x5f0dc0&&at!=0x5f0c00&&at!=0x5d6850)
+            throw std::runtime_error("Undeclared primary-scene original port "+std::to_string(at));
+        context->pc=GPR_U32(context,31);return;
+    }
     if(at==0x5ec100){o2_005EC100_0x5ec100(memory,context,runtime);return;}
     if(at==0x5ec010){cache_trace.push_back(at);check(GPR_U32(context,4)==reference_slot&&GPR_U32(context,5)==reference_actor);o2_005EC010_0x5ec010(memory,context,runtime);return;}
     if(at==0x5ebfe0){cache_trace.push_back(at);check(GPR_U32(context,4)==reference_actor);o2_005EBFE0_0x5ebfe0(memory,context,runtime);return;}
@@ -21,6 +34,23 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
     context->pc=GPR_U32(context,31);
 }
 namespace {
+void compare_primary_scene(const reo::native::gameplay_scenario::CutsceneDescriptor& descriptor,std::size_t group,const g::Actor& actor,std::span<const reo::native::gameplay_scenario::CutsceneActorParameter> parameters,std::uint16_t room,std::int8_t pause){
+    auto* memory=cache_memory.data();std::memset(memory+0x38ec00,0,0x1700);std::memset(memory+reference_actor,0,0x10e0);
+    const auto header=descriptor.section(descriptor.actor_groups()[group][7]);const auto stream=descriptor.section(descriptor.actor_groups()[group][3]);check(header.size()<0x10000&&stream.size()>=4&&stream.size()<0x10000);
+    std::memcpy(memory+0x200000,header.data(),header.size());std::memcpy(memory+0x210000,stream.data(),stream.size());
+    transform_write(memory,0x38fb60+28,0x200000u);transform_write(memory,0x38fb60+12,0x210000u);transform_write(memory,0x38eddc,reference_actor);transform_write(memory,0x38ecb6,std::int16_t(1));
+    memory[reference_actor+0xb98]=actor.character;memory[reference_actor+0x54d]=actor.model_pose_class;memory[reference_actor+0xbbc]=1;memory[reference_actor+0xc6f]=0;
+    transform_write(memory,0x3243dc,room);transform_write(memory,0x4badf8,pause);
+    R5900Context context;PS2Runtime runtime;context.pc=0x5f0610;SET_GPR_U32(&context,29,0x1f00000);SET_GPR_U32(&context,31,0xabcdef);
+    reference_scene=true;original_transform_port(memory,&context,&runtime);reference_scene=false;
+    check(context.pc==0xabcdef&&GPR_U32(&context,29)==0x1f00000);
+    check(actor.room==transform_read<std::uint16_t>(memory,reference_actor+0x1e2)&&actor.appearance_variant==memory[reference_actor+0xbbc]);
+    check(actor.movement_enabled==memory[reference_actor+0x553]&&actor.scripted->scale_profile==memory[reference_actor+0xb8b]&&std::memcmp(&actor.model_scale,memory+reference_actor+0xb4,12)==0);
+    for(unsigned part=0;part<actor.primary_state->part_visibility.size();++part)check(actor.primary_state->part_visibility[part]==memory[reference_actor+0xf4+part]);
+    check(parameters.size()==transform_read<std::uint32_t>(memory,0x38ede0));
+    for(unsigned i=0;i<parameters.size();++i)check(parameters[i].key==transform_read<std::int32_t>(memory,0x38ede4+4*i)&&parameters[i].value==transform_read<std::uint32_t>(memory,0x38ee24+4*i));
+    ++scene_original_cases;
+}
 void compare_cache(const Keys& before,const Keys& after,unsigned slot,std::uint8_t character,std::uint8_t model_class,std::uint8_t loading,std::int8_t pause,const g::PrimaryModelApplied& result){
     auto* memory=cache_memory.data();reference_slot=slot;reference_character=character;reference_class=model_class;
     for(unsigned i=0;i<8;++i){memory[0x7434b4+2*i]=before[i].character;memory[0x7434b5+2*i]=before[i].model_class;}

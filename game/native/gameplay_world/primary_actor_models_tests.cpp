@@ -1,15 +1,18 @@
 #include "primary_actor_models.hpp"
 #include "../animation/constraints.hpp"
 #include "../gameplay_update/update.hpp"
+#include "../gameplay_scenario/scenario_archive.hpp"
 #include "runtime/assets/virtual_afs.h"
 #include <bit>
 #include <cstring>
 #include <iostream>
+#include <fstream>
 #include <source_location>
 namespace g=reo::native::gameplay_world;
 namespace a=reo::native::animation;
 namespace {
 std::uint64_t checks{},loads{},reuses{},replacements{},shared_releases{},refusals{},original_cases{},original_calls{};
+std::uint64_t scene_cases{},scene_parameters{},scene_original_cases{};
 void check(bool value,std::source_location at=std::source_location::current()){
     ++checks;if(!value)throw std::runtime_error(std::string("Primary model check ")+at.file_name()+":"+std::to_string(at.line()));
 }
@@ -17,6 +20,7 @@ g::Profile profile(){g::Profile p;p.layouts.push_back({});return p;}
 using Keys=std::array<g::PrimaryActorModels::CacheKey,8>;
 Keys keys(const g::PrimaryActorModels& owner){Keys result;for(unsigned i=0;i<8;++i)result[i]=owner.key(i);return result;}
 void compare_cache(const Keys&,const Keys&,unsigned,std::uint8_t,std::uint8_t,std::uint8_t,std::int8_t,const g::PrimaryModelApplied&);
+void compare_primary_scene(const reo::native::gameplay_scenario::CutsceneDescriptor&,std::size_t,const g::Actor&,std::span<const reo::native::gameplay_scenario::CutsceneActorParameter>,std::uint16_t,std::int8_t);
 void basic(){
     g::World world(profile(),std::make_shared<g::Session>());g::HumanoidMotionOwner motions(world);g::PrimaryActorModels owner(world,motions);
     bool rejected{};try{g::PrimaryActorModels duplicate(world,motions);}catch(const std::invalid_argument&){rejected=true;}
@@ -94,12 +98,14 @@ void owned(const char* archive){
     check(!owner.capture(id));world.session().asset_loading_mode=0;check(!owner.capture(id));world.paused=1;check(!owner.capture(id));++refusals;
 }
 }
+#include "primary_scene_actor_models_tests.inc"
 #ifdef REO_PRIMARY_MODELS_ORIGINAL
 #include "primary_models_reference.inc"
 #else
 namespace {void compare_cache(const Keys&,const Keys&,unsigned,std::uint8_t,std::uint8_t,std::uint8_t,std::int8_t,const g::PrimaryModelApplied&) {}}
+namespace {void compare_primary_scene(const reo::native::gameplay_scenario::CutsceneDescriptor&,std::size_t,const g::Actor&,std::span<const reo::native::gameplay_scenario::CutsceneActorParameter>,std::uint16_t,std::int8_t) {}}
 #endif
 int main(int argc,char** argv)try{
-    basic();if(argc==2)owned(argv[1]);else check(argc==1);
-    std::cout<<"{\"checks\":"<<checks<<",\"loads\":"<<loads<<",\"reuses\":"<<reuses<<",\"replacements\":"<<replacements<<",\"shared_releases\":"<<shared_releases<<",\"refusals\":"<<refusals<<",\"original_cases\":"<<original_cases<<",\"original_calls\":"<<original_calls<<",\"game_run\":false}\n";
+    basic();if(argc>=2)owned(argv[1]);else check(argc==1);if(argc==3)owned_scenes(argv[1],argv[2]);else check(argc<=2);
+    std::cout<<"{\"checks\":"<<checks<<",\"loads\":"<<loads<<",\"reuses\":"<<reuses<<",\"replacements\":"<<replacements<<",\"shared_releases\":"<<shared_releases<<",\"refusals\":"<<refusals<<",\"original_cases\":"<<original_cases<<",\"original_calls\":"<<original_calls<<",\"scene_cases\":"<<scene_cases<<",\"scene_parameters\":"<<scene_parameters<<",\"scene_original_cases\":"<<scene_original_cases<<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

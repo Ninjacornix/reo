@@ -51,6 +51,11 @@ verification. The latest user instruction is to keep the PC awake afterward.
   replacement and initialization. Paired focused comparisons cover1,024 cache
   cases with real native assets. Actual scene/resume caller adoption, renderer
   interfaces, generation teardown and installed native gameplay remain open.
+- [Assigned primary scene application](PRIMARY_SCENE_MODELS.md) now composes the
+  actual cache, appearance reset, room, scale, constraints, visibility and copied
+  parameters for kind0 groups. Paired cohorts pass1,196 real-header applications
+  with controlled primary bindings. Earlier roster assignment/cloning, cache
+  teardown, primary cinematic playback and full scene ownership remain open.
 - The [scene NPC loading-mode correction](CUTSCENE_NPC_CONSTRUCTION.md) separates
   asset-loading mode3243D7 from pause4BADF8. Paired current cohorts pass4,384 scene
   cases with independent inputs; the earlier fixture conflated the two and its

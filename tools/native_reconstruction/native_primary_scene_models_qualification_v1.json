@@ -1,0 +1,110 @@
+{
+  "schema": 1,
+  "status": "qualified_partial_native_assigned_primary_scene_application",
+  "source_sha256": {
+    "game/native/gameplay_world/primary_actor_models.hpp": "448e45c4a935d400147cc85e7e80d596cfb2666dec7e2f54e63cda13942cf4b2",
+    "game/native/gameplay_world/primary_actor_models.cpp": "a116fd3669a1437cf35ddcd2b494ee39b2be5f78f1d686ec26dfefbcf3ba64f7",
+    "game/native/gameplay_world/primary_actor_models_tests.cpp": "cd33ec491e7dbd24711065b1d4610499a5cf48574d9a4d4699eef3e359f624e2",
+    "game/native/gameplay_world/primary_scene_actor_models_tests.inc": "daf99b4b1660cbaa9a5a520464675be9590326abd05fb5030a5126ccd1f8a32f",
+    "tools/native_reconstruction/primary_models_reference.inc": "3537fd48bc67e8d2adce04919e16d5f697b70c75236d1c7b51a2afe54bd290d8",
+    "tools/native_reconstruction/verify_primary_actor_models.py": "f05744f58868230dc800169516d18dd31f5b1fe108a44bb7072c1cd1a0aaf17e",
+    "docs/native-gameplay/PRIMARY_SCENE_MODELS.md": "43a8015baf6c3dc240532a62ee1af0c5f274ec0fdb39ba463492a43267126bc7",
+    "docs/native-gameplay/STAGE4_PLAN.md": "7d98804a48686c38b57a8fd302dcd1ce61f59147b7a761e231face38ad64d0a5"
+  },
+  "cohorts": {
+    "llvm": {
+      "scene": {
+        "receipt": "build-native-sjuni/primary-scene-models-llvm-v1/receipt.json",
+        "sha256": "34ef12fa8352b0cabfbfa97e787c497ac3ae5bfd012778224a121ee557cbc23d",
+        "observed": {
+          "checks": 81071,
+          "loads": 256,
+          "reuses": 256,
+          "replacements": 512,
+          "shared_releases": 512,
+          "refusals": 1025,
+          "original_cases": 1024,
+          "original_calls": 13832,
+          "scene_cases": 1196,
+          "scene_parameters": 52,
+          "scene_original_cases": 1196,
+          "game_run": false
+        }
+      },
+      "initializer": {
+        "receipt": "build-native-sjuni/primary-scene-initialization-llvm-v1/receipt.json",
+        "sha256": "f0548603a64f02fce729fc0dd516660c19b9508c760e725bb43c31b36b9d8cb8",
+        "observed": {
+          "checks": 39664817,
+          "initializations": 32768,
+          "custom_initializations": 4384,
+          "custom_missing_models": 24,
+          "restores": 4096,
+          "setters": 65536,
+          "constraints": 128,
+          "bank_publications": 1,
+          "refusals": 5,
+          "saved_decodes": 65538,
+          "saved_initializations": 65536,
+          "saved_query_cases": 65792,
+          "saved_refusals": 9,
+          "selector_cases": 65536,
+          "selector_restores": 255,
+          "original_calls": 947325,
+          "game_run": false
+        }
+      }
+    },
+    "gcc": {
+      "scene": {
+        "receipt": "build-native-sjuni/primary-scene-models-gcc-v1/receipt.json",
+        "sha256": "decd6b26f7b07505512351bcdc0af3764520592bdff353e69d6a2d40999d4fc1",
+        "observed": {
+          "checks": 81071,
+          "loads": 256,
+          "reuses": 256,
+          "replacements": 512,
+          "shared_releases": 512,
+          "refusals": 1025,
+          "original_cases": 1024,
+          "original_calls": 13832,
+          "scene_cases": 1196,
+          "scene_parameters": 52,
+          "scene_original_cases": 1196,
+          "game_run": false
+        }
+      },
+      "initializer": {
+        "receipt": "build-native-sjuni/primary-scene-initialization-gcc-v1/receipt.json",
+        "sha256": "6b7ac50e473e6b6d00d172ae19a2b01ec4486c050acfbe42495d5c7940b18055",
+        "observed": {
+          "checks": 39664817,
+          "initializations": 32768,
+          "custom_initializations": 4384,
+          "custom_missing_models": 24,
+          "restores": 4096,
+          "setters": 65536,
+          "constraints": 128,
+          "bank_publications": 1,
+          "refusals": 5,
+          "saved_decodes": 65538,
+          "saved_initializations": 65536,
+          "saved_query_cases": 65792,
+          "saved_refusals": 9,
+          "selector_cases": 65536,
+          "selector_restores": 255,
+          "original_calls": 947325,
+          "game_run": false
+        }
+      }
+    }
+  },
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "limitations": [
+    "Primary group bindings are controlled inputs; full roster assignment/cloning and teardown remain open.",
+    "Selected original scene fixture declares earlier assignment/teardown/loading ports; real native cache and initializer run separately.",
+    "Primary cinematic action playback and coherent native game acceptance remain open."
+  ]
+}
