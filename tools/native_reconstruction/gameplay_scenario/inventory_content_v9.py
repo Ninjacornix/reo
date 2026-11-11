@@ -87,6 +87,8 @@ def prefix_graph(data,kind,table,declared,mask,profile,filters):
                 if payload(0)>=128 or payload(4)>=24:raise ValueError('native_room_counter_destination_refused')
                 payload(8)
             if op==0x65:payload(0)
+            if op in (0x38,0x39):payload(8)
+            if op==0x173:payload(4)
             if op==0x68:payload(8)
             if op==0x69:
                 actor,command,position=(payload(i)&255 for i in (0,4,8))

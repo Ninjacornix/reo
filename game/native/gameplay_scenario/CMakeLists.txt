@@ -2,6 +2,7 @@ add_library(reo_native_gameplay_scenario STATIC interpreter.cpp flags.cpp offlin
 target_compile_features(reo_native_gameplay_scenario PUBLIC cxx_std_20)
 target_sources(reo_native_gameplay_scenario PRIVATE resource_templates.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE script_program.cpp)
+target_sources(reo_native_gameplay_scenario PRIVATE actor_inventory_commands.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE resource_collisions.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE room_scene_input.cpp room_scene_owner.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE fog.cpp)

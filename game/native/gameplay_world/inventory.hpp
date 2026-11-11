@@ -27,6 +27,5 @@ private:
     ResourceFrames& frames_;
     std::shared_ptr<Actor> actor(const actors::EntityId&)const;
     gameplay_scenario::SceneDescriptor descriptor(std::uint8_t)const;
-    bool priority(std::uint8_t)const;
 };
 }

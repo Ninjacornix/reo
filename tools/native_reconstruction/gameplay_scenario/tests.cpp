@@ -192,8 +192,12 @@ void sub_00133490_0x133490(std::uint8_t* r,R5900Context* c,PS2Runtime*){stream_o
 void sub_001B82A0_0x1b82a0(std::uint8_t*,R5900Context* c,PS2Runtime*){SET_GPR_U32(c,2,0);done(c);}
 void sub_0012BEF8_0x12bef8(std::uint8_t*,R5900Context*,PS2Runtime*){throw std::runtime_error("Unexpected VM stream service");}
 PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
-    if(at==0x107ab0)return +[](std::uint8_t* r,R5900Context* c,PS2Runtime*){const auto d=GPR_U32(c,4),s=GPR_U32(c,5),n=GPR_U32(c,6);check(d<=0x800000&&n<=0x800000-d&&s<=0x800000&&n<=0x800000-s);std::memmove(r+d,r+s,n);done(c);};
+    if(at==0x107ab0||at==0x18dbb0)return +[](std::uint8_t* r,R5900Context* c,PS2Runtime*){const auto d=GPR_U32(c,4),s=GPR_U32(c,5),n=GPR_U32(c,6);check(d<=0x800000&&n<=0x800000-d&&s<=0x800000&&n<=0x800000-s);std::memmove(r+d,r+s,n);done(c);};
     if(at==0x107c68)return +[](std::uint8_t* r,R5900Context* c,PS2Runtime*){const auto d=GPR_U32(c,4),n=GPR_U32(c,6);check(d<=0x800000&&n<=0x800000-d);std::memset(r+d,int(GPR_U32(c,5)&255),n);done(c);};
+    if(at==0x5f2330)return +[](std::uint8_t* r,R5900Context* c,PS2Runtime* t){
+        if(GPR_U32(c,31)==0x694d3c)original_inventory_compact(r,c,t);
+        else o2_005F2330_0x5f2330(r,c,t);
+    };
     switch(at){
 #include "original_lookup.inc"
     default:throw std::runtime_error("Unqualified original VM dispatch "+std::to_string(at));
@@ -210,6 +214,7 @@ PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
 #include "room_counter_vm_tests.inc"
 #include "stock_room_vm_tests.inc"
 #include "actor_placement_vm_tests.inc"
+#include "actor_inventory_vm_tests.inc"
 int main(int argc,char** argv)try{
     check(argc==4);
     no_model_vm_tests();
@@ -217,6 +222,7 @@ int main(int argc,char** argv)try{
     room_counter_vm_tests(argv[2]);
     stock_room_vm_tests(argv[3]);
     actor_placement_vm_tests();
+    actor_inventory_vm_tests();
     {std::vector<std::byte> b;emit(b,1);const auto a=emit(b,0xa);run({b},{0,a},4);}
     for(unsigned delay:{0u,1u,2u,7u}){std::vector<std::byte> a,b;emit(a,4,{delay});emit(a,0xd);emit(b,0xa);run({a,b},{1,0},delay+3,delay%6);}
     {std::vector<std::byte> b;emit(b,3,{2});emit(b,0xe5);const auto end=emit(b,0xa);run({b},{0,end},2);}
@@ -363,5 +369,5 @@ int main(int argc,char** argv)try{
         for(std::size_t i=0;i<coverage.size();++i){if(i)std::cout<<',';std::cout<<(coverage[i].native_algorithm?"true":"false");count+=coverage[i].native_algorithm?1u:0u;}
         std::cout<<"],\"count\":"<<count<<",\"total\":432}";
     }
-    std::cout<<"},\"room_variant_handlers\":"<<room_variant_handlers<<",\"room_variant_dispatches\":"<<room_variant_dispatches<<",\"room_variant_refusals\":"<<room_variant_refusals<<",\"room_variant_world_cases\":"<<room_variant_world_cases<<",\"room_counter_handler_calls\":"<<room_counter_handler_calls<<",\"room_counter_dispatches\":"<<room_counter_dispatches<<",\"room_counter_resets\":"<<room_counter_resets<<",\"stock_room_dispatches\":"<<stock_room_dispatches<<",\"actor_placement_dispatches\":"<<actor_placement_dispatches<<",\"original_numeric_handler_invocations\":65536,\"game_launched\":false}\n";
+    std::cout<<"},\"room_variant_handlers\":"<<room_variant_handlers<<",\"room_variant_dispatches\":"<<room_variant_dispatches<<",\"room_variant_refusals\":"<<room_variant_refusals<<",\"room_variant_world_cases\":"<<room_variant_world_cases<<",\"room_counter_handler_calls\":"<<room_counter_handler_calls<<",\"room_counter_dispatches\":"<<room_counter_dispatches<<",\"room_counter_resets\":"<<room_counter_resets<<",\"stock_room_dispatches\":"<<stock_room_dispatches<<",\"actor_placement_dispatches\":"<<actor_placement_dispatches<<",\"actor_inventory_dispatches\":"<<actor_inventory_dispatches<<",\"original_numeric_handler_invocations\":65536,\"game_launched\":false}\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

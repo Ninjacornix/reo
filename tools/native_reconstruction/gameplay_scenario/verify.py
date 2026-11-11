@@ -21,6 +21,7 @@ IDS += ['00692B10','005D9630','00573890']
 IDS += ['00690490','005DFA90']
 IDS += ['00691D20','005D7CF0']
 IDS += ['0068F1D0','0068F1F0','0068F280','0068F3C0','006268D0']
+IDS += ['0068D920','0068DA50','00694BC0','00592A90','00591AE0','005B42B0','005F2810','005F2330','005B43F0']
 
 PINNED={};PIN_COMMITS={}
 def source_bytes(p):
@@ -47,6 +48,8 @@ def main(a):
         p=next((ROOT/'recomp/config/output_ovl/o2').glob('o2_'+ident+'_*'));text=p.read_text();sources[p.relative_to(ROOT).as_posix()]=sha(p);shutil.copyfile(p,out/p.name)
         for pc,opcode in re.findall(r'// (0x[0-9a-f]+): (0x[0-9a-f]+)\s',text):
             assert struct.unpack_from('<I',raw,int(pc,16)-0x570000)[0]==int(opcode,16),(p,pc);words+=1
+        if ident=='005F2330':
+            text=text.replace('void o2_005F2330_0x5f2330(', 'void original_inventory_compact(')
         texts.append('\n'.join(l for l in text.splitlines() if not l.startswith('#include')))
     elf_path=Path(os.environ['LOCALAPPDATA'])/'OutbreakRecomp/launcher/imports/file1/25e64b631bbaa0cac9a4822cb66174ff14c3531851d1e502c0a06704379bf446/data/SLUS_207.65'
     elf=elf_path.read_bytes();elf_sha=hashlib.sha256(elf).hexdigest();assert elf_sha=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46'
@@ -68,6 +71,7 @@ def main(a):
     unexecuted=set(names)-previous_names-stream_functions-stream_ports
     text+='\n'+'\n'.join('void '+name+'(std::uint8_t*,R5900Context*,PS2Runtime*){throw std::runtime_error("Unexecuted main stream dependency '+name+'");}' for name in sorted(unexecuted))
     declarations=['void '+n+'(std::uint8_t*,R5900Context*,PS2Runtime*);' for n in names]
+    declarations.append('void original_inventory_compact(std::uint8_t*,R5900Context*,PS2Runtime*);')
     table=struct.unpack_from('<432I',raw,0x717830-0x570000)
     opener=[];at=0x717600-0x570000
     while True:
@@ -116,6 +120,7 @@ def main(a):
     shutil.copyfile(HERE/'room_counter_vm_tests.inc',out/'room_counter_vm_tests.inc')
     shutil.copyfile(HERE/'stock_room_vm_tests.inc',out/'stock_room_vm_tests.inc')
     shutil.copyfile(HERE/'actor_placement_vm_tests.inc',out/'actor_placement_vm_tests.inc')
+    shutil.copyfile(HERE/'actor_inventory_vm_tests.inc',out/'actor_inventory_vm_tests.inc')
     shutil.copyfile(HERE/'periodic_control_vm_tests.inc',out/'periodic_control_vm_tests.inc')
     shutil.copyfile(HERE/'room_rule_tests.inc',out/'room_rule_tests.inc')
     shutil.copyfile(HERE/'room_object_vm_tests.inc',out/'room_object_vm_tests.inc')
@@ -136,6 +141,7 @@ def main(a):
     units += [('room_damage',ROOT/'game/native/gameplay_collision/room_damage.cpp')]
     units += [('script_program',ROOT/'game/native/gameplay_scenario/script_program.cpp')]
     units += [('actor_placements',ROOT/'game/native/gameplay_world/actor_placements.cpp')]
+    units += [('actor_inventory_commands',ROOT/'game/native/gameplay_scenario/actor_inventory_commands.cpp')]
     if not a.pin_effects_commit:
         import sys
         sys.path.insert(0,str(ROOT/'tools/native_reconstruction'))
@@ -150,6 +156,7 @@ def main(a):
     source_paths.append(HERE/'room_counter_vm_tests.inc')
     source_paths.append(HERE/'stock_room_vm_tests.inc')
     source_paths.append(HERE/'actor_placement_vm_tests.inc')
+    source_paths.append(HERE/'actor_inventory_vm_tests.inc')
     source_paths += [HERE/'surface_vm_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]
     source_paths += [ROOT/'game/native/transform_math/transform_math.hpp',ROOT/'game/native/transform_math/transform_math.cpp']

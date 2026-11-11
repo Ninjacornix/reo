@@ -3,6 +3,10 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. Put the PC to sleep after Stage 4 passes those checks, as requested.
 
+- [Scenario actor inventory grants](SCENARIO_ACTOR_INVENTORY.md) use the same
+  canonical Actor inventories, resource pool, and inventory compaction as the
+  native World. Both compiler comparisons pass. Live startup still needs to
+  supply these providers.
 - [Native actor placement commands](SCENARIO_ACTOR_PLACEMENTS.md) now write
   the Session placement requests and restore the canonical Actor transforms.
   Both compiler comparisons pass. Runtime packet and room-transition callers

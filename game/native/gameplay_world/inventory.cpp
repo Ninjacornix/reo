@@ -1,4 +1,5 @@
 #include "inventory.hpp"
+#include "../gameplay_scenario/inventory_compaction.hpp"
 #include <algorithm>
 #include <stdexcept>
 namespace reo::native::gameplay_world {
@@ -11,9 +12,6 @@ std::shared_ptr<Actor> WorldInventory::actor(const actors::EntityId& id)const{
 }
 gameplay_scenario::SceneDescriptor WorldInventory::descriptor(std::uint8_t index)const{
     const auto id=resources_.slot(index);const auto value=id?resources_.get(*id):std::nullopt;if(!value)throw std::runtime_error("Native inventory descriptor unavailable");return *value;
-}
-bool WorldInventory::priority(std::uint8_t index)const{
-    const auto value=descriptor(index);return value.active&&value.template_index!=255&&(templates_.flags(value.template_index)&0x20000u);
 }
 std::uint8_t WorldInventory::find(const actors::EntityId& id,std::uint8_t resource)const{
     const auto value=actor(id);for(unsigned i=0;i<4;++i)if(value->inventory.carried[i]==resource)return std::uint8_t(i);
@@ -35,29 +33,8 @@ bool WorldInventory::detach_item(const actors::EntityId& id,std::uint8_t resourc
     return true;
 }
 void WorldInventory::compact(const actors::EntityId& id){
-    const auto value=actor(id);auto& inventory=value->inventory;
-    std::array<std::uint8_t,4> ordered{};unsigned count{};
-    for(bool selected:{true,false})for(auto item:inventory.carried)if(item&&priority(item)==selected){
-        if(count>=ordered.size())throw std::runtime_error("Native carried inventory exceeded its canonical capacity");
-        ordered[count++]=item;
-    }
-    for(unsigned i=0;i<ordered.size();++i)if(ordered[i])for(unsigned j=i+1;j<ordered.size();++j)if(ordered[i]==ordered[j])ordered[j]=0;
-    inventory.carried.fill(0);unsigned output{};for(auto item:ordered)if(item)inventory.carried[output++]=item;
-    if(value->character==7){
-        std::array<std::array<std::uint8_t,9>,3> groups{};std::array<unsigned,3> used{};std::uint8_t other{};
-        for(unsigned i=1;i<29;++i){const auto item=inventory.storage[i];if(!item)continue;const auto content=descriptor(item).attachment_id;
-            if(content>=0x12c&&content<=0x12e){const auto group=unsigned(content-0x12c);if(used[group]==9)throw std::runtime_error("Native character7 inventory bucket exceeds admitted nine-item profile");groups[group][used[group]++]=item;}
-            else other=item;
-        }
-        for(unsigned group=0;group<3;++group)std::copy(groups[group].begin(),groups[group].end(),inventory.storage.begin()+1+group*9);
-        inventory.storage[28]=other;return;
-    }
-    std::array<std::uint8_t,32> storage{};storage[0]=inventory.storage[0];output=1;
-    for(bool selected:{true,false})for(unsigned i=1;i<32;++i){const auto item=inventory.storage[i];if(item&&priority(item)==selected){
-        if(output>=storage.size())throw std::runtime_error("Native storage inventory exceeded its canonical capacity");
-        storage[output++]=item;
-    }}
-    inventory.storage=storage;
+    const auto value=actor(id);
+    gameplay_scenario::compact_inventory(value->inventory,value->character,resources_,templates_);
 }
 void WorldInventory::insert(const actors::EntityId& id,std::uint8_t resource){
     const auto value=actor(id);const auto empty=std::find(value->inventory.carried.begin(),value->inventory.carried.end(),0);
