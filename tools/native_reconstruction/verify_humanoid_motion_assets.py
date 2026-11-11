@@ -15,7 +15,7 @@ def main():
     configured=re.search(r'^CMAKE_CXX_COMPILER:[^=]+=([^\n]+)',(build/'CMakeCache.txt').read_text(),re.M)[1];assert Path(configured.strip()).resolve()==compiler.resolve()
     elf=ROOT/'game_data/SLUS_207.65';assert sha(elf)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46'
     read=elf_reader(elf.read_bytes());entries={};proof=[]
-    for at in [0x1d1500,0x1d16c0,0x1d1940,0x1d1960,0x1d1990,0x1d19d0,0x1d1a80,0x1d1b10,0x1d1cc0,0x1b1bc0,0x1b1b40,0x1b2130]:
+    for at in [0x1d1500,0x1d16c0,0x1d1940,0x1d1960,0x1d1990,0x1d19d0,0x1d1a80,0x1d1b10,0x1d1cc0,0x1b1bc0,0x1b1b40,0x1b2130,0x1b1c20,0x1b1cb0,0x1b1df0]:
         source=ROOT/f'recomp/config/output/sub_{at:08X}_0x{at:x}.cpp';begin,end=[int(v,16)for v in re.search(r'// Address: (0x[0-9a-f]+) - (0x[0-9a-f]+)',source.read_text()).groups()];entries[at]=source
         proof.append(compare_source('complete source containing common/character loader and bank construction',source.relative_to(ROOT).as_posix(),begin,end,read))
     overlay=ROOT/'build-function-index/owned-overlays/o2.bin';assert sha(overlay)=='45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226';overlay_raw=overlay.read_bytes();source=ROOT/'recomp/config/output_ovl/o2/o2_005EC0E0_0x5ec0e0.cpp';entries[0x5ec0e0]=source
@@ -45,7 +45,7 @@ def main():
     (out/'o2_functions.h').write_text('#pragma once\n#include "functions.h"\n')
     for name in ['ps2_recompiled_stubs.h','ps2_stubs.h','ps2_syscalls.h']:(out/name).write_text('#pragma once\n')
     init='inline void constants(std::uint8_t* p){\n'
-    for address,size in [(0x2366f0,12)]:
+    for address,size in [(0x2366f0,12),(0x234410,24)]:
         raw=read(address,size);init+='{const std::uint8_t b[]{'+','.join(map(str,raw))+'};std::memcpy(p+'+str(address)+',b,sizeof b);}\n'
     init+='}\ninline void owned_humanoid_formats(std::uint8_t* p){\n'
     for address in [0x256380,0x2563b0,0x2563e0,0x256430,0x256460,0x256490]:
@@ -54,7 +54,7 @@ def main():
     fixture=(ROOT/'tools/native_reconstruction/animation/motion_bank_tests.cpp').read_text().replace('int main(','int unused_motion_bank_fixture(').replace('\n}catch(const std::exception& e)','\nreturn 0;\n}catch(const std::exception& e)')
     fixture=fixture.replace(' ++calls;',' ++calls;if(humanoid_loader_original_port(memory,context,runtime))return;').replace('std::to_string(expected.asset)','humanoid_original_identity(expected.asset)');(out/'motion_bank_fixture.hpp').write_text(fixture)
     (out/'humanoid_motion_loader_reference.inc').write_bytes((ROOT/'tools/native_reconstruction/humanoid_motion_loader_reference.inc').read_bytes())
-    result=dict(schema=1,status='failed',source_sha256=before,compiler_sha256=sha(compiler),member_profile=dict(path=str(profile_path),sha256=sha(profile_path)),original_owned_bodies=proof,scripted_member_profile=dict(path=str(scripted_path),sha256=sha(scripted_path)),owned_assets=assets,commands=[],game_run=False,installed_in_game=False,stage4_complete=False,declared_ports=['1CC8F0 path acquisition observed with pinned raw member bytes','1B1DF0/1B2CE0 work-buffer preparation/release observations','1D3550 raw block provenance,192500 token identity,1925A0 release observations','name-only failed reads bypass constructors explicitly'])
+    result=dict(schema=1,status='failed',source_sha256=before,compiler_sha256=sha(compiler),member_profile=dict(path=str(profile_path),sha256=sha(profile_path)),original_owned_bodies=proof,scripted_member_profile=dict(path=str(scripted_path),sha256=sha(scripted_path)),owned_assets=assets,commands=[],game_run=False,installed_in_game=False,stage4_complete=False,declared_ports=['1CC8F0 path acquisition observed with pinned raw member bytes','1B2CE0 pair-cursor reset observation; complete1B1DF0 partial-family release executes','1D3550 raw block provenance,192500 token identity,1925A0 release observations','name-only failed reads bypass constructors explicitly'])
     targets=['humanoid_motion_assets_tests','cutscene_npc_construction_tests','npc_actor_construction_tests','npc_actor_assets_tests','cutscene_scripted_construction_tests','cutscene_descriptor_assets_tests','gameplay_actor_assets_tests','scripted_motion_assets_tests','gameplay_target_metrics_tests','gameplay_cooperative_events_tests','gameplay_collision_workers_tests','gameplay_ai_owner_tests'];regex='^(native_humanoid_motion_assets|native_cutscene_npc_construction|native_npc_actor_construction|native_npc_actor_assets|native_cutscene_scripted_construction|native_cutscene_descriptor_assets|native_gameplay_actor_assets|native_scripted_motion_assets|native_gameplay_target_metrics|native_gameplay_cooperative_events|native_gameplay_collision_workers|native_gameplay_ai_owner)$'
     env=dict(os.environ);env['PATH']=str(compiler.parent)+os.pathsep+str(a.cmake.parent)+os.pathsep+env.get('PATH','')
     if a.publication:

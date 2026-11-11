@@ -61,6 +61,10 @@ verification. The latest user instruction is to keep the PC awake afterward.
   verifies explicit generation handoff. Current initialization/playback/World
   regressions pass. Complete scene-entry ownership and real partial-family
   bank release remain open; the old1B1DF0 work-buffer port must be corrected.
+- [Partial motion-family retirement](MOTION_FAMILY_RELEASE.md) corrects that
+  production/fixture omission. Complete1B1DF0 cleanup now precedes default
+  restoration; paired bank, all-eight-character and live publication checks pass.
+  Complete scene-entry/exit ownership and installed acceptance remain open.
 - The [scene NPC loading-mode correction](CUTSCENE_NPC_CONSTRUCTION.md) separates
   asset-loading mode3243D7 from pause4BADF8. Paired current cohorts pass4,384 scene
   cases with independent inputs; the earlier fixture conflated the two and its

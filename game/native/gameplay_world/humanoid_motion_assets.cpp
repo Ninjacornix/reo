@@ -53,10 +53,25 @@ std::shared_ptr<const HumanoidMotionBanks> HumanoidMotionAssets::base()const{
 }
 void HumanoidMotionAssets::load_defaults(HumanoidMotionBanks& result)const{
     const auto [bytes,identity]=read(0,255);
+    //1D1A80 first executes1B1DF0. This is a real partial bank release,
+    // including the character stores, not a temporary I/O-buffer operation.
+    clear_base_family(result);
     auto ordinary=result.scripted_.other_modes?std::make_shared<animation::MotionBank>(*result.scripted_.other_modes):std::make_shared<animation::MotionBank>();
     auto alternate=result.alternate_style_?std::make_shared<animation::MotionBank>(*result.alternate_style_):std::make_shared<animation::MotionBank>();
     ordinary->load_sparse(bytes,8,0,identity);alternate->load_sparse(bytes,168,0,identity);
     result.scripted_.other_modes=std::move(ordinary);result.alternate_style_=std::move(alternate);result.base_loaded_=true;
+}
+void HumanoidMotionAssets::clear_base_family(HumanoidMotionBanks& banks){
+    const auto clear=[](std::shared_ptr<const animation::MotionBank>& bank){
+        if(!bank)return;
+        auto next=std::make_shared<animation::MotionBank>(*bank);next->clear_family(0);bank=std::move(next);
+    };
+    clear(banks.scripted_.other_modes);clear(banks.alternate_style_);
+    for(auto& bank:banks.characters_)clear(bank);
+}
+std::shared_ptr<const HumanoidMotionBanks> HumanoidMotionAssets::release_base(const HumanoidMotionBanks& previous)const{
+    auto result=std::shared_ptr<HumanoidMotionBanks>(new HumanoidMotionBanks(previous));result->parent_=previous.revision_;result->revision_=std::make_shared<const HumanoidMotionRevision>();
+    clear_base_family(*result);result->base_loaded_=false;return result;
 }
 std::shared_ptr<const HumanoidMotionBanks> HumanoidMotionAssets::ensure_base(std::shared_ptr<const HumanoidMotionBanks> previous)const{
     if(!previous)throw std::invalid_argument("Native humanoid motion publication unavailable");

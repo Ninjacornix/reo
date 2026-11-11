@@ -1,4 +1,5 @@
 #include "motion_bank.hpp"
+#include <algorithm>
 #include <cstring>
 #include <limits>
 #include <map>
@@ -15,6 +16,14 @@ MotionBank MotionBank::cleared_bank(MotionBankKind kind){
     MotionBank result;result.kind_=kind;result.clear();return result;
 }
 void MotionBank::clear()noexcept{slots_.fill({});rows_.fill(0);first_=width_=0;cleared_=true;}
+void MotionBank::clear_family(std::uint8_t family){
+    struct Family {std::size_t first_row,rows,first_token,tokens;};
+    static constexpr std::array<Family,3> profiles{{{100,200,5,995},{300,1700,1000,1000},{0,100,1000,1000}}};
+    if(family>=profiles.size())throw std::out_of_range("Native motion release family unavailable");
+    const auto& profile=profiles[family];
+    std::fill_n(rows_.begin()+profile.first_row,profile.rows,0);
+    std::fill_n(slots_.begin()+profile.first_token,profile.tokens,std::shared_ptr<const MotionBlock>{});
+}
 void MotionBank::load_sparse(std::span<const std::byte> bytes,std::size_t table,std::uint8_t mode,std::string identity){
     if(mode>2||identity.empty())throw std::invalid_argument("Native sparse motion bank mode/identity unavailable");
     std::uint8_t first,width;header(bytes,first,width);const auto limit=read<std::uint32_t>(bytes,table+4);if(limit>bytes.size()||table>=limit)throw std::invalid_argument("Native sparse motion descriptor range unavailable");

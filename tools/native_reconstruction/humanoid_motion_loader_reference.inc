@@ -12,9 +12,9 @@ bool humanoid_loader_original_port(std::uint8_t* memory,R5900Context* context,PS
     const auto address=context->pc;
     if(humanoid_names_only&&(address==0x1d19d0||address==0x1d1940)){
         verify(address==0x1d19d0?GPR_U32(context,6)<=1:GPR_U32(context,7)==1);
-    }else if(address==0x1b1df0||address==0x1b2ce0){
-        // Work-buffer preparation/release is observed. Native archive reads
-        // prepare their own owned buffers outside the simulation worker.
+    }else if(address==0x1b2ce0){
+        // Pair-cursor work reset is observed.1B1DF0 and its partial family
+        // release bodies now execute completely instead of being ported away.
     }else if(address==0x10a830){
         const auto result=std::snprintf(reinterpret_cast<char*>(memory+GPR_U32(context,4)),128,reinterpret_cast<const char*>(memory+GPR_U32(context,5)),int(GPR_U32(context,6)),int(GPR_U32(context,7)));
         verify(result>0&&result<128);SET_GPR_S32(context,2,result);

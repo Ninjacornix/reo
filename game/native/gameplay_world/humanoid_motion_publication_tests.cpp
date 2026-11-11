@@ -92,6 +92,10 @@ void owned(const char* archive){
     check(cleared.status==g::HumanoidPublicationStatus::completed&&cleared.actors==4&&cleared.bindings==10&&resources.resolve(first.id,5)==released->character(3)&&actor->animation->resources[2]->cleared()&&!actor->animation->resources[2]->find(0,0));++publications;rebindings+=cleared.bindings;
     check(head->animation->resources[2]==released->character(5)&&!old_character->cleared()&&channel.timing.frame==old_frame&&world.resolve(third.id)->animation->resources[2]==released->character(3));
     const auto reloaded=assets.overlay(1,characters,*released);check(owner.publish(reloaded).status==g::HumanoidPublicationStatus::completed&&!resources.resolve(first.id,5)->cleared()&&resources.resolve(first.id,5)==reloaded->character(3)&&channel.timing.frame==old_frame);++publications;rebindings+=10;
+    const auto previous_model=actor->model;const auto previous_common=actor->animation->resources[1];const auto previous_character=actor->animation->resources[2];
+    const auto base_released=assets.release_base(*reloaded);const auto base_result=owner.publish(base_released);
+    check(base_result.status==g::HumanoidPublicationStatus::completed&&base_result.actors==4&&base_result.bindings==10&&!base_released->base_loaded()&&channel.timing.frame==old_frame&&actor->model==previous_model);
+    check(actor->animation->resources[1]!=previous_common&&actor->animation->resources[2]!=previous_character&&actor->animation->resources[2]->track_count()==previous_character->track_count()&&actor->animation->resources[2]->kind()==previous_character->kind()&&linked->animation->resources[0]==reloaded->scripted().mode_one);++publications;rebindings+=10;
     check(owner.close()==g::HumanoidPublicationStatus::completed&&!owner.snapshot());
     failed=false;try{(void)resources.resolve(first.id,0);}catch(const std::runtime_error&){failed=true;}check(failed);++refusals;
     failed=false;try{motion.tick(linked_id);}catch(const std::runtime_error&){failed=true;}check(failed);++refusals;

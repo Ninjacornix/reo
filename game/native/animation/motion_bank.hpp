@@ -27,6 +27,9 @@ public:
     // merely default-constructed bank has not admitted a header profile yet.
     static MotionBank cleared_bank(MotionBankKind = MotionBankKind::strided);
     void clear()noexcept;
+    // Complete1B1C20 with owned234410 profiles0/1/2. Partial retirement
+    // preserves the header/type and all rows/tokens outside that family.
+    void clear_family(std::uint8_t);
     bool cleared()const noexcept{return cleared_;}
     // Actual1D16C0/1D19D0 sparse construction. table_offset is8 or168 for
     // the two adjacent player banks. modes0/1/2 retain original5/1000/5 cursors.

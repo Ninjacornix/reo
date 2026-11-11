@@ -8,6 +8,7 @@ namespace a=reo::native::animation;
 #include "functions.h"
 std::uint64_t checks{},calls{},constructed{},releases{},bank_cases{},live_slots{},lookup_cases{},lifetime_cases{},refusal_cases{};
 std::uint64_t clear_cases{},cleared_queries{};
+std::uint64_t family_clear_cases{};
 void check(bool yes,const std::string& why){++checks;if(!yes)throw std::runtime_error(why);}
 template<class T>T get(const std::uint8_t* p,std::uint32_t at){return transform_read<T>(p,at);}
 template<class T>void put(std::uint8_t* p,std::uint32_t at,T v){transform_write(p,at,v);}
@@ -35,6 +36,26 @@ void compare(const a::MotionBank& bank,const std::vector<std::uint8_t>& ram,std:
  for(unsigned i=0;i<2000;++i){const auto token=get<std::uint16_t>(ram.data(),at+4+2*i);const auto block=bank.slots()[i];check(bool(block)==bool(token),"actual sparse/strided live slot "+std::to_string(i));if(token){check(token<tokens.size(),"slot token provenance");const auto expected=tokens[token];check(block->source_offset()==expected.offset&&block->source_identity()==std::to_string(expected.asset),"owned raw block identity through original memoization and overwrite");++live_slots;}if(bank.kind()==a::MotionBankKind::sparse)check(bank.rows()[i]==get<std::uint16_t>(ram.data(),at+0xfa4+2*i),"complete original logical-row map");}
  for(unsigned key=0;key<2000;++key)for(unsigned track=0;track<bank.track_count();++track){const auto slot=bank.kind()==a::MotionBankKind::sparse?std::size_t(get<std::uint16_t>(ram.data(),at+0xfa4+2*key))+track:200ull*(key/100)+(key%100)*bank.track_count()+track;if(slot>=2000)continue;const auto expected=get<std::uint16_t>(ram.data(),at+4+2*slot);check(bank.find(key,std::uint16_t(track))==bank.slots()[slot]&&bool(bank.find(key,std::uint16_t(track)))==bool(expected),"actual original query-index formula");++lookup_cases;}
  ++bank_cases;
+}
+void family_clear_tests(const std::vector<std::vector<std::byte>>& assets,std::vector<std::uint8_t>& ram){
+ constexpr unsigned destination=0x200000;
+ for(unsigned kind=0;kind<3;++kind)for(unsigned family=0;family<3;++family){
+  std::fill_n(ram.data()+destination,0x1f44,0);a::MotionBank bank;
+  for(unsigned asset=0;asset<2;++asset){current_asset=asset;const auto& bytes=assets[asset];std::memcpy(ram.data()+raw_base,bytes.data(),bytes.size());bank.load_sparse(bytes,8,std::uint8_t(asset),std::to_string(asset));call(ram.data(),0x1d1940,raw_base,destination,unsigned(bytes.size()),asset);}
+  if(kind){current_asset=2;const auto& bytes=assets[2];std::memcpy(ram.data()+raw_base,bytes.data(),bytes.size());bank.load_strided(bytes,kind==2?500:200,0,"2");call(ram.data(),kind==2?0x1d1990:0x1d1960,raw_base,destination,unsigned(bytes.size()),200);}
+  compare(bank,ram,destination);const auto before=bank;const auto old_releases=releases;
+  const unsigned row_begin=get<std::uint16_t>(ram.data(),0x234410+8*family),row_end=row_begin+get<std::uint16_t>(ram.data(),0x234412+8*family);
+  const unsigned token_begin=get<std::uint16_t>(ram.data(),0x234414+8*family),token_end=token_begin+get<std::uint16_t>(ram.data(),0x234416+8*family);
+  unsigned expected{};for(unsigned i=token_begin;i<token_end;++i)expected+=get<std::uint16_t>(ram.data(),destination+4+2*i)!=0;
+  bank.clear_family(std::uint8_t(family));call(ram.data(),0x1b1c20,destination,family);compare(bank,ram,destination);
+  check(bank.first_track()==before.first_track()&&bank.track_count()==before.track_count()&&bank.kind()==before.kind()&&bank.cleared()==before.cleared(),"partial family release preserves exact header/admission");
+  check(releases-old_releases==expected,"original family releases exactly its live token range");
+  for(unsigned i=0;i<2000;++i){check(bank.slots()[i]==(i>=token_begin&&i<token_end?nullptr:before.slots()[i]),"partial family preserves outside slot leases");check(bank.rows()[i]==(i>=row_begin&&i<row_end?0:before.rows()[i]),"partial family preserves outside logical rows");}
+  bank.clear_family(std::uint8_t(family));call(ram.data(),0x1b1c20,destination,family);check(releases-old_releases==expected,"repeated family release has no live tokens");
+  for(auto invalid:{std::uint8_t(3),std::uint8_t(255)}){const auto retained=bank;bool refused{};try{bank.clear_family(invalid);}catch(const std::out_of_range&){refused=true;}check(refused&&std::equal(retained.rows().begin(),retained.rows().end(),bank.rows().begin())&&std::equal(retained.slots().begin(),retained.slots().end(),bank.slots().begin()),"unknown family refuses before mutation");++refusal_cases;}
+  ++family_clear_cases;
+ }
+ a::MotionBank unknown;unknown.clear_family(0);bool refused{};try{(void)unknown.find(0,0);}catch(const std::out_of_range&){refused=true;}check(refused&&!unknown.cleared(),"partial release cannot invent a default header profile");
 }
 void clear_tests(const std::vector<std::vector<std::byte>>& assets,std::vector<std::uint8_t>& ram){
  constexpr unsigned destination=0x200000;
@@ -65,5 +86,6 @@ int main(int argc,char** argv)try{
  {current_asset=0;const auto& bytes=assets[0];std::memcpy(ram.data()+raw_base,bytes.data(),bytes.size());constexpr std::uint32_t destination=0x200000;std::fill_n(ram.data()+destination,0x1f44,0);a::MotionBank bank;bank.load_sparse(bytes,8,2,"0");call(ram.data(),0x1d1940,raw_base,destination,std::uint32_t(bytes.size()),2);compare(bank,ram,destination);auto held=bank.slots()[5];const auto before=std::vector<std::shared_ptr<const a::MotionBlock>>(bank.slots().begin(),bank.slots().end());auto malformed=bytes;std::uint32_t zero=0;std::memcpy(malformed.data()+4,&zero,4);bool refused{};try{bank.load_sparse(malformed,8,0,"bad-width");}catch(const std::invalid_argument&){refused=true;}check(refused&&std::equal(before.begin(),before.end(),bank.slots().begin()),"malformed asset refuses without replacing existing owned slots");++refusal_cases;refused=false;try{bank.load_sparse(bytes,8,3,"unknown-mode");}catch(const std::invalid_argument&){refused=true;}check(refused&&bank.slots()[5]==held,"unsupported mode retains admitted bank owner");++refusal_cases;}
  {a::MotionBank temporary;temporary.load_sparse(assets[0],8,0,"retained");auto held=temporary.slots()[5];check(held!=nullptr,"real initial sparse row");const auto data=std::vector<std::byte>(held->bytes().begin(),held->bytes().end());temporary=a::MotionBank{};check(std::equal(data.begin(),data.end(),held->bytes().begin(),held->bytes().end()),"immutable raw lease survives native bank destruction");++lifetime_cases;}
  clear_tests(assets,ram);
- check(constructed>0&&releases>0&&live_slots>0,"real original allocation/memoization/release and native ownership exercised");std::cout<<"{\"checks\":"<<checks<<",\"bank_cases\":"<<bank_cases<<",\"live_slots\":"<<live_slots<<",\"query_cases\":"<<lookup_cases<<",\"cleared_query_cases\":"<<cleared_queries<<",\"clear_cases\":"<<clear_cases<<",\"packed_block_seam_calls\":"<<constructed<<",\"release_seam_calls\":"<<releases<<",\"refusal_cases\":"<<refusal_cases<<",\"lifetime_cases\":"<<lifetime_cases<<",\"original_calls\":"<<calls<<",\"game_run\":false}\n";
+ family_clear_tests(assets,ram);
+ check(constructed>0&&releases>0&&live_slots>0,"real original allocation/memoization/release and native ownership exercised");std::cout<<"{\"family_clear_cases\":"<<family_clear_cases<<",\"checks\":"<<checks<<",\"bank_cases\":"<<bank_cases<<",\"live_slots\":"<<live_slots<<",\"query_cases\":"<<lookup_cases<<",\"cleared_query_cases\":"<<cleared_queries<<",\"clear_cases\":"<<clear_cases<<",\"packed_block_seam_calls\":"<<constructed<<",\"release_seam_calls\":"<<releases<<",\"refusal_cases\":"<<refusal_cases<<",\"lifetime_cases\":"<<lifetime_cases<<",\"original_calls\":"<<calls<<",\"game_run\":false}\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

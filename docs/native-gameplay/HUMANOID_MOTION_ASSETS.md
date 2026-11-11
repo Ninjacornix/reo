@@ -34,9 +34,11 @@ are compared, including preservation across overlays.
 
 The publication also owns the default-loaded gate. A scene request clears it
 even when every requested file is missing. `ensure_base(previous)` returns an
-already loaded publication directly; otherwise it applies PC_000 mode 0 over
-the current common banks while preserving body, face, character and unrelated
-row/block leases, then marks defaults loaded. A failed preparation never mutates
+already loaded publication directly; otherwise it first executes the real family0
+release across both common banks and every prepared character bank, then applies
+PC_000 mode0. Body, face and outside-family rows/tokens remain. Retained older
+snapshots survive, but character publication identities can change. It then marks
+defaults loaded. A failed preparation never mutates
 a previously published snapshot. Missing input and default result status stay
 explicit rather than claiming loaded content.
 
@@ -47,18 +49,26 @@ constructor examples use real N103 and HN88 models, actual prepared motion banks
 and the canonical auxiliary pool/model/animation owners. These examples verify
 binding; they do not execute every action or decode/play every curve.
 
-Both compiler cohorts pass 267,802 native checks plus 13,350,478 original checks.
+The historical v3 compiler cohorts passed267,802 native checks plus13,350,478 original checks.
 They execute 919 bank comparisons and 427,296 original calls, covering 90 common
 loads, 720 selected-character loads, 94 snapshot transitions and 66,048 loader
 name/gate cases. Complete source-word-audited default, overlay, scene and sparse/
 strided constructor bodies execute. Comparisons include all 2,000 physical slots,
 logical-row maps, lookup formulas and raw block provenance. Original acquisition,
-work-buffer and resource packing/heap handles are declared ports; the native
+pair-cursor reset and resource packing/heap handles are declared ports; the native
 reader uses actual independently hashed retained archive members.
+
+The subsequent [family-release correction](MOTION_FAMILY_RELEASE.md) supersedes
+v3's default-restoration claim. The old fixture incorrectly treated1B1DF0 as a
+work-buffer operation; it actually performs partial motion-bank retirement. The
+native restoration path also omitted that retirement. Complete1B1DF0/1B1CB0/
+1B1C20 bodies now execute, with all eight character stores and live publication
+checked. Current paired cohorts pass317,927 native checks,13,661,821 original
+checks and948 bank cases. This correction occurred before game installation.
 
 The complete shared-bank sequence is compared using actual PC_001, r001/d02,
 r001/hd02, PC_000 restoration and PC_002 inputs. It verifies the default-loaded
-flag, body/head bank contents, alternate and character preservation, the
+flag, body/head bank contents, outside-family alternate/character preservation, the
 ordinary/head alias, missing-scene preservation and default restoration. The
 source filename checks cover all 16-bit common indices, all byte character
 indices and all byte startup-flag values. Native content admission remains the
