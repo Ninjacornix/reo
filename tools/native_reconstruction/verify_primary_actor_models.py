@@ -17,7 +17,7 @@ def main():
     elf=ROOT/'game_data/SLUS_207.65';assert sha(elf)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46';main_read=elf_reader(elf.read_bytes())
     overlay=ROOT/'build-function-index/owned-overlays/o2.bin';assert sha(overlay)=='45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226';raw=overlay.read_bytes()
     originals=[];proof=[]
-    for at,end in [(0x5ec100,0x5ec270),(0x5ec270,0x5ec318),(0x5ec010,0x5ec0d8),(0x5ebfe0,0x5ec010),(0x1d1c40,0x1d1c48),(0x5f0610,0x5f0b50),(0x5f0b50,0x5f0bf8),(0x663170,0x663188)]:
+    for at,end in [(0x5ec100,0x5ec270),(0x5ec270,0x5ec318),(0x5ec010,0x5ec0d8),(0x5ebfe0,0x5ec010),(0x1d1c40,0x1d1c48),(0x5f0610,0x5f0b50),(0x5f0c00,0x5f0c60),(0x5f0b50,0x5f0bf8),(0x663170,0x663188)]:
         bank=at>=0x570000;path=next((ROOT/('recomp/config/output_ovl/o2'if bank else'recomp/config/output')).glob(f'*_{at:08X}_*'))
         proof.append(compare_source('complete primary cache/release/no-op source',path.relative_to(ROOT).as_posix(),at,end,(lambda address,size:raw[address-0x570000:address-0x570000+size])if bank else main_read));originals.append(path)
     inventory=ROOT/'build-native-sjuni/audio-asset-inventory/file1-v1/members.json';assert sha(inventory)=='276264fd0f5d14e8e0ef1e17f008560d611c6ca30c2ad811259a004b7a54fbc2';members={r['member']:r for r in json.loads(inventory.read_bytes())}
@@ -58,6 +58,7 @@ def main():
         '5EC0E0 release identity observed; actual immutable clear/publication is exercised natively and separately compared against its full original bodies.',
         'Registry8-key retirement, optional HP auxiliary retirement and compaction are declared resource ports; not an installed complete loader.',
         'Resident-file3243D7==0 and generation migration of a live cache row remain explicitly unavailable.',
+        'Scene-entry1B1DF0 call observed here; its complete native bank operation has a separate required original-body qualification.',
         'Primary-scene comparisons use controlled preassigned bindings. Earlier5F0DC0/5F0C00 assignment/teardown and5EC100 loading are declared ports; actual native cache and retained scene parameters run separately.'])
     env=dict(os.environ);env['PATH']=str(compiler.parent)+os.pathsep+str(args.cmake.parent)+os.pathsep+env.get('PATH','')
     commands=[('configure',[str(args.cmake),'-S',str(ROOT/'game/native'),'-B',str(build),'-DREO_PRIMARY_MODELS_REFERENCE_DIR='+str(out)]),('build',[str(args.cmake),'--build',str(build),'--parallel','2','--target','primary_actor_models_tests']),('owned',[str(build/'gameplay_world/primary_actor_models_tests.exe'),str(archive),str(out/'scenes.txt')]),('parents',[str(args.cmake.parent/'ctest.exe'),'--test-dir',str(build),'-R','^native_primary_actor_models$','--output-on-failure'])]

@@ -14,6 +14,8 @@ namespace {
 std::uint64_t checks{},loads{},reuses{},replacements{},shared_releases{},refusals{},original_cases{},original_calls{};
 std::uint64_t scene_cases{},scene_parameters{},scene_original_cases{};
 std::uint64_t retirements{},retirement_noops{},reloads{},detached_refusals{},retirement_original_cases{},generation_handoffs{};
+std::uint64_t entry_cases{},entry_retirements{},entry_original_cases{},entry_guard_checks{},entry_refusals{};
+std::uint64_t direct_guard_checks{};
 void check(bool value,std::source_location at=std::source_location::current()){
     ++checks;if(!value)throw std::runtime_error(std::string("Primary model check ")+at.file_name()+":"+std::to_string(at.line()));
 }
@@ -23,6 +25,7 @@ Keys keys(const g::PrimaryActorModels& owner){Keys result;for(unsigned i=0;i<8;+
 void compare_cache(const Keys&,const Keys&,unsigned,std::uint8_t,std::uint8_t,std::uint8_t,std::int8_t,const g::PrimaryModelApplied&);
 void compare_primary_scene(const reo::native::gameplay_scenario::CutsceneDescriptor&,std::size_t,const g::Actor&,std::span<const reo::native::gameplay_scenario::CutsceneActorParameter>,std::uint16_t,std::int8_t);
 void compare_release(const Keys&,const Keys&,unsigned,const g::PrimaryModelApplied&);
+void compare_entry(const Keys&,const Keys&,const std::array<std::uint8_t,8>&,const std::array<std::uint8_t,8>&,const g::PrimarySceneEntryReleased&);
 void basic(){
     g::World world(profile(),std::make_shared<g::Session>());g::HumanoidMotionOwner motions(world);g::PrimaryActorModels owner(world,motions);
     bool rejected{};try{g::PrimaryActorModels duplicate(world,motions);}catch(const std::invalid_argument&){rejected=true;}
@@ -64,10 +67,16 @@ void owned(const char* archive){
         const auto peer_id=world.spawn_primary(peer_slot,std::move(peer_initial)).id;const auto peer=world.resolve(peer_id);
         const auto peer_prepared=g::PrimaryActorModels::prepare(owner.capture(peer_id).value(),assets,content);check(owner.apply(*peer_prepared,state).status==g::PrimaryModelStatus::completed);
         const auto old_bank=motions.snapshot()->character(character);const auto old_constraints=actor->constraints;if(old_constraints)old_constraints->floor_height(0,17);
+        bool direct_retired{};
+        peer->animation->resources[0]=std::shared_ptr<const a::MotionBank>(new a::MotionBank,[&](const a::MotionBank* bank){
+            if(!world.busy()||owner.close()!=g::PrimaryModelStatus::busy||motions.close()!=g::HumanoidPublicationStatus::busy||owner.key(slot)!=g::PrimaryActorModels::CacheKey{std::uint8_t((character+1)%8),1}||actor->model==old_model||actor->animation!=old_playback||actor->animation->model()!=actor->model||actor->visible||peer->animation->resources[0]!=motions.snapshot()->bank({g::HumanoidMotionFamily::primary,0})){std::terminate();}
+            direct_retired=true;delete bank;
+        });
         actor->appearance_variant=0;actor->character=std::uint8_t((character+1)%8);actor->model_pose_class=1;
         const auto replacement=g::PrimaryActorModels::prepare(owner.capture(id).value(),assets,content);const auto before_replacement=keys(owner);
         const auto replaced=owner.apply(*replacement,state);check(replaced.status==g::PrimaryModelStatus::completed&&replaced.replaced&&replaced.character_released&&replaced.initialized);
         compare_cache(before_replacement,keys(owner),slot,actor->character,1,std::uint8_t(loading),world.paused,replaced);++replacements;
+        check(direct_retired);++direct_guard_checks;
         check(actor->model!=old_model&&actor->model_asset!=old_asset&&actor->animation==old_playback&&actor->animation->secondary_model()!=old_secondary&&!actor->visible);
         const auto history=a::PoseBlend::root_reference(*actor->model);check(history.x==12&&history.y==34&&history.z==56&&actor->root_motion_delta.y==8);
         check(channel.timing.frame==3.25f&&channel.selector==17&&channel.blend_remaining==9);
@@ -109,6 +118,7 @@ void owned(const char* archive){
         const auto late=g::PrimaryActorModels::prepare(owner.capture(id).value(),assets,content);check(world.retire_primary(slot)==g::actors::EntityStatus::completed);
         auto next=std::make_unique<g::Actor>();next->slot=std::uint8_t(slot);next->character=actor->character;const auto next_id=world.spawn_primary(slot,std::move(next)).id;
         check(next_id!=id&&owner.apply(*late,state).status==g::PrimaryModelStatus::stale&&!owner.capture(next_id));++refusals;
+        if(slot<4){const auto before_entry=motions.snapshot();const auto failed_entry=owner.release_scene_entry(content);check(failed_entry.status==g::PrimaryModelStatus::unavailable&&failed_entry.visited==0&&failed_entry.failed_slot==slot&&motions.snapshot()==before_entry);++entry_refusals;}
         check(owner.close()==g::PrimaryModelStatus::completed&&motions.close()==g::HumanoidPublicationStatus::completed&&world.close()==g::Status::completed);
     }
     check(loads==256&&reuses==256&&replacements==512&&shared_releases==512);
@@ -128,14 +138,16 @@ void owned(const char* archive){
 }
 }
 #include "primary_scene_actor_models_tests.inc"
+#include "primary_scene_entry_tests.inc"
 #ifdef REO_PRIMARY_MODELS_ORIGINAL
 #include "primary_models_reference.inc"
 #else
 namespace {void compare_cache(const Keys&,const Keys&,unsigned,std::uint8_t,std::uint8_t,std::uint8_t,std::int8_t,const g::PrimaryModelApplied&) {}}
 namespace {void compare_primary_scene(const reo::native::gameplay_scenario::CutsceneDescriptor&,std::size_t,const g::Actor&,std::span<const reo::native::gameplay_scenario::CutsceneActorParameter>,std::uint16_t,std::int8_t) {}}
 namespace {void compare_release(const Keys&,const Keys&,unsigned,const g::PrimaryModelApplied&) {}}
+namespace {void compare_entry(const Keys&,const Keys&,const std::array<std::uint8_t,8>&,const std::array<std::uint8_t,8>&,const g::PrimarySceneEntryReleased&) {}}
 #endif
 int main(int argc,char** argv)try{
-    basic();if(argc>=2)owned(argv[1]);else check(argc==1);if(argc==3)owned_scenes(argv[1],argv[2]);else check(argc<=2);
-    std::cout<<"{\"retirements\":"<<retirements<<",\"retirement_noops\":"<<retirement_noops<<",\"reloads\":"<<reloads<<",\"detached_refusals\":"<<detached_refusals<<",\"retirement_original_cases\":"<<retirement_original_cases<<",\"generation_handoffs\":"<<generation_handoffs<<",\"checks\":"<<checks<<",\"loads\":"<<loads<<",\"reuses\":"<<reuses<<",\"replacements\":"<<replacements<<",\"shared_releases\":"<<shared_releases<<",\"refusals\":"<<refusals<<",\"original_cases\":"<<original_cases<<",\"original_calls\":"<<original_calls<<",\"scene_cases\":"<<scene_cases<<",\"scene_parameters\":"<<scene_parameters<<",\"scene_original_cases\":"<<scene_original_cases<<",\"game_run\":false}\n";
+    basic();if(argc>=2){owned(argv[1]);owned_entry(argv[1]);}else check(argc==1);if(argc==3)owned_scenes(argv[1],argv[2]);else check(argc<=2);
+    std::cout<<"{\"direct_guard_checks\":"<<direct_guard_checks<<",\"entry_cases\":"<<entry_cases<<",\"entry_retirements\":"<<entry_retirements<<",\"entry_original_cases\":"<<entry_original_cases<<",\"entry_guard_checks\":"<<entry_guard_checks<<",\"entry_refusals\":"<<entry_refusals<<",\"retirements\":"<<retirements<<",\"retirement_noops\":"<<retirement_noops<<",\"reloads\":"<<reloads<<",\"detached_refusals\":"<<detached_refusals<<",\"retirement_original_cases\":"<<retirement_original_cases<<",\"generation_handoffs\":"<<generation_handoffs<<",\"checks\":"<<checks<<",\"loads\":"<<loads<<",\"reuses\":"<<reuses<<",\"replacements\":"<<replacements<<",\"shared_releases\":"<<shared_releases<<",\"refusals\":"<<refusals<<",\"original_cases\":"<<original_cases<<",\"original_calls\":"<<original_calls<<",\"scene_cases\":"<<scene_cases<<",\"scene_parameters\":"<<scene_parameters<<",\"scene_original_cases\":"<<scene_original_cases<<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

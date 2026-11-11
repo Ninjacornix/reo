@@ -45,6 +45,12 @@ struct PrimaryModelApplied {
     bool replaced{},character_released{},initialized{};
     bool retired{};
 };
+struct PrimarySceneEntryReleased {
+    PrimaryModelStatus status{PrimaryModelStatus::unavailable};
+    std::size_t visited{},retired{},character_releases{};
+    bool base_released{};
+    std::optional<std::size_t> failed_slot{};
+};
 // Canonical simulation-owner cache for the admitted archive-bundle5EC100 path.
 // Capture on the simulation owner; prepare uses only retained immutable request
 // inputs and content providers, so asset I/O need not run on that owner.
@@ -64,11 +70,17 @@ public:
         const gameplay_scenario::CutsceneDescriptor&,std::size_t group)const;
     static std::shared_ptr<const PreparedPrimaryModel> prepare(const PrimaryModelRequest&,const ActorAssets&,const HumanoidMotionAssets&);
     PrimaryModelApplied apply(const PreparedPrimaryModel&,const gameplay_update::State&,const PrimaryEquipmentContext* = nullptr)noexcept;
+    // Complete admitted5F0C00 CPU/resource phase. No asset acquisition runs:
+    // preparation here only clones bounded immutable banks during scene load.
+    PrimarySceneEntryReleased release_scene_entry(const HumanoidMotionAssets&)noexcept;
     PrimaryModelStatus close()noexcept;
     struct CacheKey {std::uint8_t character{255},model_class{255};friend bool operator==(const CacheKey&,const CacheKey&)=default;};
     CacheKey key(std::size_t slot)const{return rows_.at(slot).key;}
 private:
-    std::optional<PrimaryModelRequest> capture(actors::EntityId,bool retirement)const noexcept;
+    std::optional<PrimaryModelRequest> capture(actors::EntityId,bool retirement,bool nested=false)const noexcept;
+    static std::shared_ptr<const PreparedPrimaryModel> prepare_release(const PrimaryModelRequest&,const HumanoidMotionAssets&);
+    PrimaryModelApplied apply(const PreparedPrimaryModel&,const gameplay_update::State&,const PrimaryEquipmentContext*,bool nested)noexcept;
+    std::vector<std::array<std::shared_ptr<const animation::MotionBank>,3>> retain_resources()const;
     struct Row {CacheKey key;actors::EntityId actor;};
     World& world_;HumanoidMotionOwner& motions_;
     std::shared_ptr<const PrimaryModelDomain> domain_;

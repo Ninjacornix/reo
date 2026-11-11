@@ -65,6 +65,12 @@ verification. The latest user instruction is to keep the PC awake afterward.
   production/fixture omission. Complete1B1DF0 cleanup now precedes default
   restoration; paired bank, all-eight-character and live publication checks pass.
   Complete scene-entry/exit ownership and installed acceptance remain open.
+- [CPU scene-entry teardown](PRIMARY_SCENE_ENTRY.md) now composes the four roster
+  retirements and actual shared-family release with scoped nested guards. Paired
+  cohorts pass385 entry cases and448 direct/whole-entry lifetime guards. Earlier
+  assignment needs the [separate temporary actor/object owners](PRIMARY_TEMPORARY_ACTOR_OWNERSHIP.md),
+  not a replacement of the canonical roster or an unchecked actor/model copy.
+  Full cinematic entry/exit and installed native gameplay remain open.
 - The [scene NPC loading-mode correction](CUTSCENE_NPC_CONSTRUCTION.md) separates
   asset-loading mode3243D7 from pause4BADF8. Paired current cohorts pass4,384 scene
   cases with independent inputs; the earlier fixture conflated the two and its

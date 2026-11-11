@@ -5,6 +5,7 @@ std::vector<std::uint8_t> cache_memory(0x2000000);
 std::vector<std::uint32_t> cache_trace;
 unsigned reference_releases{},reference_loads{},reference_initializations{},reference_slot{},reference_character{},reference_class{};
 bool reference_scene{};
+bool reference_entry{};unsigned reference_entry_visits{},reference_entry_base_calls{};
 }
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
     ++original_calls;const auto at=context->pc;
@@ -21,8 +22,9 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
         context->pc=GPR_U32(context,31);return;
     }
     if(at==0x5ec100){o2_005EC100_0x5ec100(memory,context,runtime);return;}
-    if(at==0x5ec270){o2_005EC270_0x5ec270(memory,context,runtime);return;}
-    if(at==0x5ec010){cache_trace.push_back(at);check(GPR_U32(context,4)==reference_slot&&GPR_U32(context,5)==reference_actor);o2_005EC010_0x5ec010(memory,context,runtime);return;}
+    if(at==0x5f0c00){o2_005F0C00_0x5f0c00(memory,context,runtime);return;}
+    if(at==0x5ec270){if(reference_entry){reference_slot=GPR_U32(context,4);check(reference_slot<4&&GPR_U32(context,5)==0x4a5c30+0x10e0*reference_slot);++reference_entry_visits;}o2_005EC270_0x5ec270(memory,context,runtime);return;}
+    if(at==0x5ec010){cache_trace.push_back(at);check(GPR_U32(context,4)==reference_slot&&GPR_U32(context,5)==(reference_entry?0x4a5c30+0x10e0*reference_slot:reference_actor));o2_005EC010_0x5ec010(memory,context,runtime);return;}
     if(at==0x5ebfe0){cache_trace.push_back(at);check(GPR_U32(context,4)==reference_actor);o2_005EBFE0_0x5ebfe0(memory,context,runtime);return;}
     if(at==0x1d1c40){sub_001D1C40_0x1d1c40(memory,context,runtime);return;}
     if(at==0x5ec0e0){cache_trace.push_back(at);check(GPR_U32(context,4)==memory[0x7434b4+2*reference_slot]);++reference_releases;}
@@ -31,10 +33,22 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
     else if(at==0x18dcb0)cache_trace.push_back(at);
     else if(at==0x1cd080){const auto old_class=memory[0x7434b5+2*reference_slot];check(GPR_U32(context,4)==8*reference_slot+(old_class==1?0x1100:0x1000)&&GPR_U32(context,5)==8);}
     else if(at==0x1b2280){check(memory[0x7434b5+2*reference_slot]==1);}
+    else if(at==0x1b1df0&&reference_entry){++reference_entry_base_calls;memory[0x4bae0f]=0;}
     else throw std::runtime_error("Undeclared primary-cache original port "+std::to_string(at));
     context->pc=GPR_U32(context,31);
 }
 namespace {
+void compare_entry(const Keys& before,const Keys& after,const std::array<std::uint8_t,8>& before_visible,const std::array<std::uint8_t,8>& after_visible,const g::PrimarySceneEntryReleased& result){
+    auto* memory=cache_memory.data();
+    for(unsigned i=0;i<8;++i){memory[0x7434b4+2*i]=before[i].character;memory[0x7434b5+2*i]=before[i].model_class;const auto actor=0x4a5c30+0x10e0*i;std::memset(memory+actor,0,0x10e0);memory[actor+1]=before_visible[i];}
+    memory[0x4bae0f]=1;cache_trace.clear();reference_releases=reference_entry_visits=reference_entry_base_calls=0;
+    R5900Context context;PS2Runtime runtime;context.pc=0x5f0c00;SET_GPR_U32(&context,29,0x1f00000);SET_GPR_U32(&context,31,0xabcdef);
+    reference_entry=true;original_transform_port(memory,&context,&runtime);reference_entry=false;
+    check(context.pc==0xabcdef&&GPR_U32(&context,29)==0x1f00000&&reference_entry_visits==4&&reference_entry_base_calls==1&&result.visited==4&&result.base_released&&memory[0x4bae0f]==0);
+    check(result.retired==reference_releases&&result.character_releases==reference_releases);
+    for(unsigned i=0;i<8;++i)check(after[i].character==memory[0x7434b4+2*i]&&after[i].model_class==memory[0x7434b5+2*i]&&after_visible[i]==memory[0x4a5c30+0x10e0*i+1]);
+    ++entry_original_cases;
+}
 void compare_release(const Keys& before,const Keys& after,unsigned slot,const g::PrimaryModelApplied& result){
     auto* memory=cache_memory.data();reference_slot=slot;
     for(unsigned i=0;i<8;++i){memory[0x7434b4+2*i]=before[i].character;memory[0x7434b5+2*i]=before[i].model_class;}

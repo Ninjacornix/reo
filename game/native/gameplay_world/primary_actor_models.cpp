@@ -26,8 +26,8 @@ std::optional<PrimaryModelRequest> PrimaryActorModels::capture(actors::EntityId 
 std::optional<PrimaryModelRequest> PrimaryActorModels::capture_release(actors::EntityId id)const noexcept{
     return capture(std::move(id),true);
 }
-std::optional<PrimaryModelRequest> PrimaryActorModels::capture(actors::EntityId id,bool retirement)const noexcept{
-    if(closed_||world_.closed()||running_||world_.busy()||motions_.closed_||world_.humanoid_motion_source_!=&motions_||!motions_.snapshot()||(!retirement&&(!world_.session().asset_loading_mode||!*world_.session().asset_loading_mode)))return{};
+std::optional<PrimaryModelRequest> PrimaryActorModels::capture(actors::EntityId id,bool retirement,bool nested)const noexcept{
+    if(closed_||world_.closed()||(!nested&&(running_||world_.busy()))||(nested&&(!running_||!world_.updating_))||motions_.closed_||world_.humanoid_motion_source_!=&motions_||!motions_.snapshot()||(!retirement&&(!world_.session().asset_loading_mode||!*world_.session().asset_loading_mode)))return{};
     const auto actor=world_.resolve(id);
     if(!actor||actor->slot>=8||world_.primary(actor->slot)!=actor||(!retirement&&actor->character>=8)||(actor->model&&!actor->animation)||(actor->animation&&actor->animation->model()!=actor->model))return{};
     const auto& row=rows_[actor->slot];
@@ -58,11 +58,8 @@ std::optional<PrimaryModelRequest> PrimaryActorModels::capture_scene(actors::Ent
 }
 std::shared_ptr<const PreparedPrimaryModel> PrimaryActorModels::prepare(const PrimaryModelRequest& request,const ActorAssets& assets,const HumanoidMotionAssets& motions){
     if(!request.domain_||!request.banks_)throw std::invalid_argument("Native primary model request unavailable");
+    if(request.retirement_)return prepare_release(request,motions);
     auto result=std::shared_ptr<PreparedPrimaryModel>(new PreparedPrimaryModel);result->request_=request;result->banks_=request.banks_;
-    if(request.retirement_){
-        if(request.previous_character_!=255&&request.previous_model_class_!=255)result->banks_=motions.release_character(request.previous_character_,*request.banks_);
-        return result;
-    }
     if(request.rebuild_){
         result->asset_=request.variant_?assets.read_substituted_model(request.variant_,request.model_class_,request.character_):assets.read_primary(request.character_,request.appearance_,request.model_class_);
         if(!result->asset_||(result->model_=result->asset_->make_instance())==nullptr)throw std::invalid_argument("Native primary model skeleton unavailable");
@@ -78,18 +75,36 @@ std::shared_ptr<const PreparedPrimaryModel> PrimaryActorModels::prepare(const Pr
     }
     return result;
 }
+std::shared_ptr<const PreparedPrimaryModel> PrimaryActorModels::prepare_release(const PrimaryModelRequest& request,const HumanoidMotionAssets& motions){
+    if(!request.domain_||!request.banks_||!request.retirement_)throw std::invalid_argument("Native primary retirement request unavailable");
+    auto result=std::shared_ptr<PreparedPrimaryModel>(new PreparedPrimaryModel);result->request_=request;result->banks_=request.banks_;
+    if(request.previous_character_!=255&&request.previous_model_class_!=255)result->banks_=motions.release_character(request.previous_character_,*request.banks_);
+    return result;
+}
+std::vector<std::array<std::shared_ptr<const animation::MotionBank>,3>> PrimaryActorModels::retain_resources()const{
+    std::vector<std::array<std::shared_ptr<const animation::MotionBank>,3>> retained;retained.reserve(world_.entities_.size());
+    for(const auto& id:world_.entities_.identities()){const auto actor=world_.resolve(id);if(actor&&actor->animation)retained.push_back(actor->animation->resources);}
+    return retained;
+}
 PrimaryModelApplied PrimaryActorModels::apply(const PreparedPrimaryModel& prepared,const gameplay_update::State& state,const PrimaryEquipmentContext* equipment)noexcept{
+    return apply(prepared,state,equipment,false);
+}
+PrimaryModelApplied PrimaryActorModels::apply(const PreparedPrimaryModel& prepared,const gameplay_update::State& state,const PrimaryEquipmentContext* equipment,bool nested)noexcept{
     if(closed_||world_.closed()||motions_.closed_)return{PrimaryModelStatus::closed};
-    if(running_||world_.busy())return{PrimaryModelStatus::busy};
+    if((!nested&&(running_||world_.busy()))||(nested&&(!running_||!world_.updating_)))return{PrimaryModelStatus::busy};
     const auto& request=prepared.request_;
     if(request.domain_!=domain_||request.revision_!=revision_||request.banks_!=motions_.snapshot())return{PrimaryModelStatus::stale};
     const auto actor=world_.resolve(request.actor_);
     if(!actor||world_.primary(request.slot_)!=actor||actor->slot!=request.slot_||actor->character!=request.character_||actor->model_pose_class!=request.model_class_||actor->model_variant!=request.variant_||actor->appearance_variant!=request.expected_appearance_||actor->model!=request.model_||actor->model_asset!=request.asset_||actor->animation!=request.playback_||(!request.retirement_&&world_.session().asset_loading_mode!=request.loading_mode_)||world_.humanoid_motion_source_!=&motions_)return{PrimaryModelStatus::stale};
     if(revision_==std::numeric_limits<std::uint64_t>::max())return{};
-    running_=world_.updating_=true;
-    struct Reset{bool& running;bool& world;~Reset(){world=false;running=false;}}reset{running_,world_.updating_};
+    const bool previous_running=running_,previous_busy=world_.updating_;running_=world_.updating_=true;
+    struct Reset{bool& running;bool& world;bool previous_running,previous_world;~Reset(){world=previous_world;running=previous_running;}}reset{running_,world_.updating_,previous_running,previous_busy};
     PrimaryModelApplied result;
     try{
+        // Shared publication changes aliases on other actors too. Their old
+        // custom leases must survive the entire model/cache operation. A
+        // nested scene-entry call is covered by that outer owner's retention.
+        const auto previous_resources=nested?decltype(retain_resources()){}:retain_resources();(void)previous_resources;
         // Retire every old lease only after canonical pointers/cache agree and
         // while reentrant public mutations still observe the outer busy guard.
         const auto previous_model=actor->model,previous_secondary=actor->animation?actor->animation->secondary_model():nullptr;
@@ -143,6 +158,36 @@ PrimaryModelApplied PrimaryActorModels::apply(const PreparedPrimaryModel& prepar
             actor->primary_state->part_visibility=std::move(scene_visibility);
         }
         result.status=PrimaryModelStatus::completed;return result;
+    }catch(const std::bad_alloc&){result.status=PrimaryModelStatus::no_memory;return result;}catch(...){return result;}
+}
+PrimarySceneEntryReleased PrimaryActorModels::release_scene_entry(const HumanoidMotionAssets& content)noexcept{
+    if(closed_||world_.closed()||motions_.closed_)return{PrimaryModelStatus::closed};
+    if(running_||world_.busy())return{PrimaryModelStatus::busy};
+    if(world_.humanoid_motion_source_!=&motions_||!motions_.snapshot())return{};
+    // Reject a missing/stale live cache row before releasing any other slot.
+    for(unsigned slot=0;slot<4;++slot){
+        const auto& row=rows_[slot];if(row.key.character==255||row.key.model_class==255)continue;
+        const auto actor=world_.resolve(row.actor);
+        if(!actor||actor!=world_.primary(slot)||actor->slot!=slot||!actor->animation||actor->animation->model()!=actor->model)return{PrimaryModelStatus::unavailable,0,0,0,false,slot};
+    }
+    running_=world_.updating_=true;
+    struct Reset{bool& running;bool& world;~Reset(){world=false;running=false;}}reset{running_,world_.updating_};
+    PrimarySceneEntryReleased result;
+    try{
+        const auto previous_resources=retain_resources();(void)previous_resources;
+        const gameplay_update::State unused{};
+        for(unsigned slot=0;slot<4;++slot){
+            ++result.visited;const auto actor=world_.primary(slot);
+            if(!actor)continue; // Known absent native actor + invalid cache is source no-op.
+            const auto request=capture(world_.identity_of(*actor),true,true);
+            if(!request){result.failed_slot=slot;return result;}
+            const auto prepared=prepare_release(*request,content);const auto released=apply(*prepared,unused,nullptr,true);
+            result.retired+=released.retired;result.character_releases+=released.character_released;
+            if(released.status!=PrimaryModelStatus::completed){result.status=released.status;result.failed_slot=slot;return result;}
+        }
+        const auto banks=content.release_base(*motions_.snapshot());const auto published=motions_.publish_nested(banks,true);
+        if(published.status!=HumanoidPublicationStatus::completed){result.status=published.status==HumanoidPublicationStatus::no_memory?PrimaryModelStatus::no_memory:PrimaryModelStatus::unavailable;return result;}
+        result.base_released=true;result.status=PrimaryModelStatus::completed;return result;
     }catch(const std::bad_alloc&){result.status=PrimaryModelStatus::no_memory;return result;}catch(...){return result;}
 }
 }
