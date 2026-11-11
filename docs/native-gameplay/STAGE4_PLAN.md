@@ -37,6 +37,11 @@ verification. The latest user instruction is to keep the PC awake afterward.
   Paired complete66A750 comparisons cover all65,536 flag pairs and exactly255
   restore selections, with all15 parents passing. Actual model reuse/retirement,
   character-bank release and scene/resume caller adoption remain open.
+- [Motion-bank retirement](MOTION_BANK_RETIREMENT.md) now preserves the exact
+  release/initial-clear type distinction, supplies known absent-token queries
+  and prepares shared character release/reload. Paired bank, live rebinding,
+  primary initialization, World, behavior and15-parent regressions pass.
+  Actual primary model-cache and instance lifecycle adoption remain open.
 - [Shared humanoid motion publication](HUMANOID_MOTION_PUBLICATION.md) adds
   explicit NPC/scripted bank identities, atomic live rebinding, stale-load
   rejection and joined-owner closure. Paired publication, current World,

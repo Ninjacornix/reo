@@ -48,6 +48,9 @@ public:
     // Existing scene loader preserves each previous bank on missing/failed
     // input, including the shared general/head-motion destination.
     HumanoidSceneMotionLoad scene(std::uint16_t scenario,std::uint16_t clip,const HumanoidMotionBanks& previous)const;
+    //5EC0E0/1B1BC0: release one shared character bank, preserving its type byte.
+    // Previously retained clips remain alive through their native leases.
+    std::shared_ptr<const HumanoidMotionBanks> release_character(std::uint8_t character,const HumanoidMotionBanks& previous)const;
 private:
     struct Member {std::uint64_t offset{};std::uint32_t bytes{};std::string name;};
     std::shared_ptr<const reo::assets::Source> source_;

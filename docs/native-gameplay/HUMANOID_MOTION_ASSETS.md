@@ -16,6 +16,7 @@ The immutable publication preserves the actual shared bank destinations:
 | 4E8970, ordinary common and cutscene head | `scripted().other_modes`, also NPC style 0 |
 | 4E6A20, alternate common | `alternate_style()`, also NPC style 1 |
 | 4D7000 + 1F44 * character | `character(index)` |
+| 4EA8C0, primary initial bank | explicit known initial-clear bank, type zero |
 
 The ordinary common and cutscene head destinations are one bank, not independent
 copies named after their consumers. A scene head load changes the same bank later
@@ -76,6 +77,8 @@ and fresh output folders. Receipts are `humanoid-motion-assets-{llvm,gcc}-v3`;
 the combined seal is `native_humanoid_motion_assets_qualification_v1.json`.
 
 The live-publication follow-up supplies explicit NPC/scripted binding updates.
+The [retirement follow-up](MOTION_BANK_RETIREMENT.md) additionally supplies
+shared character release/reload and the exact primary initial-clear type.
 Scene loading/caller ownership,
 remaining actions, every curve/event consumer, the 11-NPC capacity conflict,
 coherent native game installation and full Step 4 acceptance remain open. The

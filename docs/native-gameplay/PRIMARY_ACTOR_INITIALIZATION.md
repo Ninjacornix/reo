@@ -18,8 +18,9 @@ control byte. Final auxiliary flags and color-fade reset retain source order.
 The distinct primary motion bank at original 4EA8C0 is now represented by a
 separate native family. The audited initial 1B2130/1B2150 clear policy supplies
 its empty state; common and scene loading do not replace it with cutscene body
-content. An empty binding is not successful animation playback: consuming an
-absent curve still refuses. Default motion aliases retain the original reset
+content. The [retirement follow-up](MOTION_BANK_RETIREMENT.md) corrects that
+initial bank to explicit type zero. A known cleared bank returns token absence;
+a consumer requiring a curve still reports that it is unavailable. Default motion aliases retain the original reset
 identities independently of future active animation selections.
 
 `restore_primary_slot` supplies the explicit restore branch selected by a

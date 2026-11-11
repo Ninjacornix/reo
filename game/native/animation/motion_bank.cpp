@@ -10,6 +10,11 @@ void header(std::span<const std::byte> bytes,std::uint8_t& first,std::uint8_t& w
 }
 MotionBlock::MotionBlock(std::span<const std::byte> bytes,std::size_t offset,std::string identity):bytes_(bytes.begin(),bytes.end()),source_offset_(offset),source_identity_(std::move(identity)){}
 std::shared_ptr<const Clip> MotionBlock::clip()const{if(!clip_)clip_=Clip::import_raw(bytes_);return clip_;}
+MotionBank MotionBank::cleared_bank(MotionBankKind kind){
+    if(kind!=MotionBankKind::strided&&kind!=MotionBankKind::sparse&&kind!=MotionBankKind::strided_500)throw std::invalid_argument("Native cleared motion bank kind unavailable");
+    MotionBank result;result.kind_=kind;result.clear();return result;
+}
+void MotionBank::clear()noexcept{slots_.fill({});rows_.fill(0);first_=width_=0;cleared_=true;}
 void MotionBank::load_sparse(std::span<const std::byte> bytes,std::size_t table,std::uint8_t mode,std::string identity){
     if(mode>2||identity.empty())throw std::invalid_argument("Native sparse motion bank mode/identity unavailable");
     std::uint8_t first,width;header(bytes,first,width);const auto limit=read<std::uint32_t>(bytes,table+4);if(limit>bytes.size()||table>=limit)throw std::invalid_argument("Native sparse motion descriptor range unavailable");
@@ -21,7 +26,7 @@ void MotionBank::load_sparse(std::span<const std::byte> bytes,std::size_t table,
             if(column+1==width&&row_live)cursor+=width;
         }
     }
-    slots_=std::move(slots);rows_=rows;first_=first;width_=width;kind_=MotionBankKind::sparse;
+    slots_=std::move(slots);rows_=rows;first_=first;width_=width;kind_=MotionBankKind::sparse;cleared_=false;
 }
 void MotionBank::load_strided(std::span<const std::byte> bytes,std::size_t stride,std::size_t bias,std::string identity){
     if((stride!=200&&stride!=500)||bias>=capacity||identity.empty())throw std::invalid_argument("Native strided motion bank profile unavailable");
@@ -29,13 +34,13 @@ void MotionBank::load_strided(std::span<const std::byte> bytes,std::size_t strid
     for(std::size_t group=0;group<8&&8+8*group<limit;++group){const auto n=read<std::uint32_t>(bytes,8+8*group),list=read<std::uint32_t>(bytes,12+8*group);if(n>65535||list>bytes.size()||std::size_t(n)*4>bytes.size()-list)throw std::invalid_argument("Native strided motion entry extent unavailable");
         for(std::size_t entry=0;entry<n;++entry){const auto offset=read<std::int32_t>(bytes,list+4*entry);if(offset==-1)continue;if(offset<0)throw std::invalid_argument("Native motion block negative offset");const auto at=std::size_t(offset),destination=bias+group*stride+entry;const auto size=read<std::uint32_t>(bytes,at+8);if(size<20||at>bytes.size()||size>bytes.size()-at||destination>=capacity)throw std::invalid_argument("Native strided motion block/capacity unavailable");auto& block=blocks[at];if(!block)block=std::shared_ptr<const MotionBlock>(new MotionBlock(bytes.subspan(at,size),at,identity));slots[destination]=block;}
     }
-    slots_=std::move(slots);first_=first;width_=width;kind_=stride==500?MotionBankKind::strided_500:MotionBankKind::strided;
+    slots_=std::move(slots);first_=first;width_=width;kind_=stride==500?MotionBankKind::strided_500:MotionBankKind::strided;cleared_=false;
 }
 std::shared_ptr<const MotionBlock> MotionBank::find(std::uint32_t key,std::uint16_t track)const{
-    if(!width_||track>=5)throw std::out_of_range("Native motion bank track unavailable");
+    if((!width_&&!cleared_)||track>=5)throw std::out_of_range("Native motion bank track unavailable");
     std::size_t slot;
     if(kind_==MotionBankKind::sparse){const auto index=key&0x7fffu;if(index>=capacity)throw std::out_of_range("Native sparse logical motion row unavailable");slot=std::size_t(rows_[index])+track;}
-    else{if(track<first_||track>=first_+width_)throw std::out_of_range("Native strided motion track outside authored range");slot=200ull*(key/100)+std::size_t(key%100)*width_+(track-first_);}
+    else{if(!cleared_&&(track<first_||track>=first_+width_))throw std::out_of_range("Native strided motion track outside authored range");slot=200ull*(key/100)+std::size_t(key%100)*width_+(track-first_);}
     if(slot>=capacity)throw std::out_of_range("Native physical motion row unavailable");
     return slots_[slot];
 }

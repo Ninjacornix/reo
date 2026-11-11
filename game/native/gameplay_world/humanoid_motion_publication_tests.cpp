@@ -87,6 +87,11 @@ void owned(const char* archive){
     }behavior(owner,assets.overlay(2,characters,*final));
     actor->visible=true;const reo::native::gameplay_collision::response::Grid floors{};g::GridSurfaceOrientation pose(floors);const g::Position camera{};const std::uint8_t inhibition{};
     {g::NpcActorUpdates updates(world,behavior,pose,camera,inhibition);check(updates.run().status==g::NpcUpdateStatus::completed&&behavior.calls==1);++busy_checks;}
+    const auto old_character=actor->animation->resources[2];const auto old_frame=channel.timing.frame;
+    const auto released=assets.release_character(3,*final);const auto cleared=owner.publish(released);
+    check(cleared.status==g::HumanoidPublicationStatus::completed&&cleared.actors==4&&cleared.bindings==10&&resources.resolve(first.id,5)==released->character(3)&&actor->animation->resources[2]->cleared()&&!actor->animation->resources[2]->find(0,0));++publications;rebindings+=cleared.bindings;
+    check(head->animation->resources[2]==released->character(5)&&!old_character->cleared()&&channel.timing.frame==old_frame&&world.resolve(third.id)->animation->resources[2]==released->character(3));
+    const auto reloaded=assets.overlay(1,characters,*released);check(owner.publish(reloaded).status==g::HumanoidPublicationStatus::completed&&!resources.resolve(first.id,5)->cleared()&&resources.resolve(first.id,5)==reloaded->character(3)&&channel.timing.frame==old_frame);++publications;rebindings+=10;
     check(owner.close()==g::HumanoidPublicationStatus::completed&&!owner.snapshot());
     failed=false;try{(void)resources.resolve(first.id,0);}catch(const std::runtime_error&){failed=true;}check(failed);++refusals;
     failed=false;try{motion.tick(linked_id);}catch(const std::runtime_error&){failed=true;}check(failed);++refusals;

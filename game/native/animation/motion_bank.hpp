@@ -22,6 +22,12 @@ enum class MotionBankKind:std::uint8_t {strided=0,sparse=1,strided_500=2};
 class MotionBank final {
 public:
     static constexpr std::size_t capacity=2000;
+    //1B2130's initial zero bank differs from1B1BC0 release: release preserves
+    // the kind byte. A known cleared bank has valid absent tokens, while a
+    // merely default-constructed bank has not admitted a header profile yet.
+    static MotionBank cleared_bank(MotionBankKind = MotionBankKind::strided);
+    void clear()noexcept;
+    bool cleared()const noexcept{return cleared_;}
     // Actual1D16C0/1D19D0 sparse construction. table_offset is8 or168 for
     // the two adjacent player banks. modes0/1/2 retain original5/1000/5 cursors.
     void load_sparse(std::span<const std::byte>,std::size_t table_offset,
@@ -39,6 +45,7 @@ public:
 private:
     std::uint8_t first_{},width_{};
     MotionBankKind kind_{MotionBankKind::sparse};
+    bool cleared_{};
     std::array<std::shared_ptr<const MotionBlock>,capacity> slots_{};
     std::array<std::uint16_t,capacity> rows_{};
 };

@@ -48,7 +48,7 @@ std::shared_ptr<const HumanoidMotionBanks> HumanoidMotionAssets::base()const{
     result->revision_=std::make_shared<const HumanoidMotionRevision>();
     //1B2150/1B2130 initially clear this distinct bank. Common/default and
     // scene loads do not populate it; it is not an alias for scene_body.
-    result->primary_=std::make_shared<const animation::MotionBank>();
+    result->primary_=std::make_shared<const animation::MotionBank>(animation::MotionBank::cleared_bank());
     load_defaults(*result);return result;
 }
 void HumanoidMotionAssets::load_defaults(HumanoidMotionBanks& result)const{
@@ -84,5 +84,10 @@ HumanoidSceneMotionLoad HumanoidMotionAssets::scene(std::uint16_t scenario,std::
     const auto loaded=scripted_.read(scenario,clip,previous.scripted_);
     auto result=std::shared_ptr<HumanoidMotionBanks>(new HumanoidMotionBanks(previous));result->parent_=previous.revision_;result->revision_=std::make_shared<const HumanoidMotionRevision>();result->scripted_=loaded.banks;result->base_loaded_=false;
     return{std::move(result),loaded.status,loaded.members};
+}
+std::shared_ptr<const HumanoidMotionBanks> HumanoidMotionAssets::release_character(std::uint8_t character,const HumanoidMotionBanks& previous)const{
+    if(character>=8)throw std::out_of_range("Native humanoid character release profile unavailable");
+    auto result=std::shared_ptr<HumanoidMotionBanks>(new HumanoidMotionBanks(previous));result->parent_=previous.revision_;result->revision_=std::make_shared<const HumanoidMotionRevision>();
+    auto bank=std::make_shared<animation::MotionBank>(previous.characters_[character]?*previous.characters_[character]:animation::MotionBank::cleared_bank());bank->clear();result->characters_[character]=std::move(bank);return result;
 }
 }
