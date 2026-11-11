@@ -46,6 +46,11 @@ class Playback final {
                            float frame);
     int configure(const MotionBank&, std::int32_t key, std::uint16_t track, float frame,
                   float blend, MotionClock, RootMotionRef);
+    // Whole-model scripted motion58C970/58CC80. These have distinct flag,
+    // root-reference and transition behavior from per-track configuration.
+    MotionBound configure_whole(const MotionBank&,std::int32_t key,float frame,
+                               float blend,MotionClock,RootMotionRef);
+    std::int8_t advance_whole(float step,std::uint8_t clock_mode,RootMotionRef);
     std::int8_t advance_plain(ModelBank, std::uint16_t track, float step, std::uint8_t clock_mode);
     std::int8_t advance_primary(std::uint16_t track, float step, std::uint8_t clock_mode,
                                 RootMotionRef);

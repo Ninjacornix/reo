@@ -3,6 +3,10 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to keep the PC awake afterward.
 
+- [Whole-model scripted playback](WHOLE_MODEL_PLAYBACK.md) now has native
+  configuration, root-motion advancement and full owned/synthetic comparisons
+  on both compilers. Caller tracing corrects B44 to blend duration. Actual
+  scripted actor consumption and game installation remain open.
 - [Native scripted actor construction](SCRIPTED_ACTOR_CONSTRUCTION.md) now
   composes prepared models, canonical actor state and material tasks through
   the existing owners. Both compiler comparisons,330 owned constructions and

@@ -178,6 +178,61 @@ int Playback::configure(const MotionBank& resource, std::int32_t key, std::uint1
     metadata(record, *clip);
     return 0;
 }
+MotionBound Playback::configure_whole(const MotionBank& resource,std::int32_t key,float frame,
+                                     float blend,MotionClock clock,RootMotionRef root) {
+    if(resource.kind()==MotionBankKind::sparse||resource.first_track()!=0||resource.track_count()!=1)
+        throw std::domain_error("Native whole-model motion requires a single-track strided bank");
+    if(key<0)throw std::domain_error("Native whole-model motion negative source row unavailable");
+    const auto block=resource.find(std::uint32_t(key),0);
+    if(!block)return MotionBound::unchanged;
+    const auto clip=block->clip();
+    auto& record=channel(ModelBank::primary,0);
+    record.selector=std::uint16_t(key);record.timing.frame=finite(frame);
+    const float factor=clock_factor(clock.mode);
+    blend=finite(blend/factor);record.blend_remaining=narrowed_duration(blend);
+    // The complete whole-model path clears only bit8 and zeroes these root
+    // outputs before saving them. It neither captures a secondary pose nor
+    // invokes the per-track transition blender.
+    record.timing.flags&=std::uint8_t(~8u);
+    saved_delta_={};root.set({});
+    if(blend!=0){
+        if(blend<0){record.timing.flags|=0x10;blend=-blend;record.blend_remaining=narrowed_duration(blend);}
+        record.timing.flags|=8;record.blend_increment=finite(1.f/plus(1,blend));record.blend_position=0;
+    }
+    PoseBlend::bind_all(*primary_,clip);primary_->sample_all(frame);
+    if(frame==0){
+        PoseBlend::root_reference(*primary_,{});
+        root.set(primary_->consume_root_translation());
+    }else{
+        const float step=times(factor,(clock.category==0||clock.category==1)?clock.rate:1.f);
+        root.set(primary_->translation_difference(1,minus(frame,step),frame));
+        (void)primary_->consume_root_translation();
+    }
+    // Unlike58B9A0,58C970 does not adjust odd frame ends or clear a low
+    // loop bit after querying the clip metadata.
+    record.timing.end=clip->last_frame();
+    record.timing.restart=clip->looping()?clip->loop_start():0;
+    record.timing.loop=std::int8_t(clip->looping());
+    if(record.timing.restart<0)record.timing.restart=0;
+    return MotionBound::prepared;
+}
+std::int8_t Playback::advance_whole(float step,std::uint8_t mode,RootMotionRef root) {
+    auto& record=channel(ModelBank::primary,0);
+    const float before=record.timing.frame;
+    if(mode)step=times(step,2);
+    const auto result=std::int8_t(advance(record.timing,step));
+    if(result>=2&&record.timing.frame!=0){
+        primary_->sample_all(record.timing.frame);
+        const auto tail=primary_->translation_difference(1,before,record.timing.end);
+        const auto head=primary_->translation_difference(1,record.timing.restart,record.timing.frame);
+        root.set(sum(head,tail));(void)primary_->consume_root_translation();
+    }else{
+        if(result>=2)PoseBlend::root_reference(*primary_,{});
+        primary_->sample_all(record.timing.frame);
+        root.set(primary_->consume_root_translation());
+    }
+    return result;
+}
 std::int8_t Playback::advance_plain(ModelBank bank, std::uint16_t track, float step,
                                     std::uint8_t mode) {
     auto& model = bank == ModelBank::primary ? primary_ : secondary_;
