@@ -1,4 +1,5 @@
 #include "actor_assets.hpp"
+#include "model_parts.hpp"
 #include "runtime/assets/virtual_afs.h"
 #include <algorithm>
 #include <cstring>
@@ -71,6 +72,12 @@ std::shared_ptr<const ActorModelAsset> ActorAssets::read(std::uint8_t type,std::
         throw std::invalid_argument("Native actor skeleton section unavailable");
     auto result = std::shared_ptr<ActorModelAsset>(new ActorModelAsset);
     result->name_ = name;
+    const auto model_offset = word(*bytes,0x14),model_length = word(*bytes,0x18);
+    if (model_offset) {
+        if (!model_length || model_offset > bytes->size() || model_length > bytes->size()-model_offset)
+            throw std::invalid_argument("Native actor model section unavailable");
+        result->part_count_ = std::uint16_t(model_part_count(std::span<const std::byte>(*bytes).subspan(model_offset,model_length)));
+    }
     if (offset)
         result->skeleton_ = animation::Skeleton::import_raw(std::span<const std::byte>(*bytes).subspan(offset,length));
     result->bytes_ = std::move(bytes);

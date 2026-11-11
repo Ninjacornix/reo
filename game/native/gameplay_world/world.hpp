@@ -66,6 +66,7 @@ struct ActorCollision {
     actors::EntityId body_peer;
     gameplay_collision::actors::Summary body_summary;
 };
+class ActorModelAsset;
 // One canonical native actor. The health/status/hit fields are inherited once;
 // native functions operate on this same object, not mirrored byte records.
 struct Actor : actors::Entity,actors::HitActor {
@@ -147,6 +148,7 @@ struct Actor : actors::Entity,actors::HitActor {
     ProjectileContact projectile_contact;
     gameplay_collision::delivery::Component contact;
     std::shared_ptr<animation::Instance> model;
+    std::shared_ptr<const ActorModelAsset> model_asset;
     std::shared_ptr<animation::Constraints> constraints;
     std::shared_ptr<animation::Playback> animation;
     std::shared_ptr<const animation::WeaponProgramBank> weapon_programs;

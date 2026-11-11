@@ -72,6 +72,7 @@ def main(a):
     assert struct.unpack('<II',body)==(0x03e00008,0);texts.append('\n'.join(l for l in main_text.splitlines() if not l.startswith('#include')))
     previous_names=set(re.findall(r'\b((?:o2|sub)_[A-Za-z0-9_]+)\(','\n'.join(texts)))|{'sub_00107AB0_0x107ab0'}
     stream_main=['001BA170','001ADA20','001ADFD0','001ADF50','001AE2E0','001AE3F0','001AE190','001B0340','001B02D0','001B0300','001AEC80','0018F570','0018FDF0','00190A10','001913E0','00191530','001919D0','001B3C40','001D45F0','001B2D80'];stream_functions=set()
+    stream_main += ['001A31B0','001A3590','001A35A0','001A35F0']
     for ident in stream_main:
         p=next((ROOT/'recomp/config/output').glob('sub_'+ident+'_*'));source=p.read_text();sources[p.relative_to(ROOT).as_posix()]=sha(p);shutil.copyfile(p,out/p.name)
         for pc,opcode in re.findall(r'// (0x[0-9a-f]+): (0x[0-9a-f]+)\s',source):
@@ -171,6 +172,7 @@ def main(a):
     from qualify_enemy_binding_profiles import generate as binding_profile, OUTPUT as binding_output
     assert binding_output.read_text()==binding_profile()
     shutil.copyfile(HERE/'enemy_binding_vm_tests.inc',out/'enemy_binding_vm_tests.inc')
+    shutil.copyfile(HERE/'model_parts_vm_tests.inc',out/'model_parts_vm_tests.inc')
     shutil.copyfile(HERE/'periodic_control_vm_tests.inc',out/'periodic_control_vm_tests.inc')
     shutil.copyfile(HERE/'room_rule_tests.inc',out/'room_rule_tests.inc')
     shutil.copyfile(HERE/'room_object_vm_tests.inc',out/'room_object_vm_tests.inc')
@@ -199,6 +201,7 @@ def main(a):
     units += [(name,ROOT/'game/native/gameplay_scenario'/(name+'.cpp')) for name in ('enemy_descriptors','enemy_routes')]
     units += [('character_remap',ROOT/'game/native/gameplay_scenario/character_remap.cpp')]
     units += [('enemy_initialization',ROOT/'game/native/gameplay_world/enemy_initialization.cpp')]
+    units += [('model_parts',ROOT/'game/native/gameplay_world/model_parts.cpp')]
     if not a.pin_effects_commit:
         import sys
         sys.path.insert(0,str(ROOT/'tools/native_reconstruction'))
@@ -223,6 +226,7 @@ def main(a):
     source_paths.append(HERE/'character_remap_vm_tests.inc')
     source_paths += [HERE/'enemy_initialization_vm_tests.inc',HERE/'qualify_enemy_initialization_profiles.py']
     source_paths += [HERE/'enemy_binding_vm_tests.inc',HERE/'qualify_enemy_binding_profiles.py']
+    source_paths.append(HERE/'model_parts_vm_tests.inc')
     source_paths += [HERE/'surface_vm_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]
     source_paths += [ROOT/'game/native/transform_math/transform_math.hpp',ROOT/'game/native/transform_math/transform_math.cpp']

@@ -14,6 +14,7 @@ public:
     std::string_view name() const noexcept { return name_; }
     std::span<const std::byte> bytes() const noexcept { return *bytes_; }
     const std::shared_ptr<const animation::Skeleton>& skeleton() const noexcept { return skeleton_; }
+    std::uint16_t part_count() const noexcept { return part_count_; }
     std::shared_ptr<animation::Instance> make_instance() const;
 private:
     friend class ActorAssets;
@@ -21,6 +22,7 @@ private:
     std::string name_;
     std::shared_ptr<const std::vector<std::byte>> bytes_;
     std::shared_ptr<const animation::Skeleton> skeleton_;
+    std::uint16_t part_count_{};
 };
 
 // Immutable definitions are shared. Every mutable model instance has its own
@@ -41,4 +43,9 @@ private:
     mutable std::mutex cache_mutex_;
     mutable std::map<std::size_t,std::shared_ptr<const ActorModelAsset>> cache_;
 };
+// Attach a prepared immutable asset to a live canonical actor. Allocations
+// finish before publication. Missing or retired IDs preserve the old model.
+// Asset I/O belongs to ActorAssets::read, outside this simulation-owner call.
+bool bind_actor_model_asset(World&,const actors::EntityId&,
+                            std::shared_ptr<const ActorModelAsset>);
 }

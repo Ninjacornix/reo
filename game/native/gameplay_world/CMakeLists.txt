@@ -6,7 +6,7 @@ target_sources(reo_native_gameplay_world PRIVATE actor_placements.cpp)
 target_sources(reo_native_gameplay_world PRIVATE launch_roster.cpp)
 target_sources(reo_native_gameplay_world PRIVATE enemy_initialization.cpp)
 
-add_library(reo_native_actor_assets STATIC actor_assets.cpp)
+add_library(reo_native_actor_assets STATIC actor_assets.cpp actor_model_binding.cpp model_parts.cpp)
 target_compile_features(reo_native_actor_assets PUBLIC cxx_std_20)
 target_include_directories(reo_native_actor_assets PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 target_link_libraries(reo_native_actor_assets PUBLIC reo_native_gameplay_world)

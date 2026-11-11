@@ -53,6 +53,24 @@ def skeleton_nodes(payload):
     return len(reached)
 
 
+def model_parts(payload):
+    offset,length = struct.unpack_from('<II',payload,0x14)
+    if not offset:
+        return 0
+    assert length and offset+length <= len(payload)
+    raw = payload[offset:offset+length]
+    count = struct.unpack_from('<I',raw,4)[0]
+    at = 12
+    for _ in range(count):
+        kind = struct.unpack_from('<I',raw,at)[0]
+        if kind == 2:
+            return 0 if count & 0x80000000 else struct.unpack_from('<I',raw,at+4)[0] & 65535
+        size = struct.unpack_from('<I',raw,at+8)[0]
+        assert size >= 12 and at+size <= len(raw)
+        at += size
+    return 0
+
+
 def owned_manifest(data,output):
     image = ROOT / 'game_data/SLUS_207.65'
     overlay = ROOT / 'build-function-index/owned-overlays/o0.bin'
@@ -85,13 +103,13 @@ def owned_manifest(data,output):
                 for variant in range(entries):
                     identity = zero[pointer-0x370000+16*variant]
                     if identity == 255:
-                        lines.append(f'{bank} {kind} {variant} - 0 0 0')
+                        lines.append(f'{bank} {kind} {variant} - 0 0 0 0')
                         continue
                     assert identity < len(names) and names[identity]
                     path = read(names[identity],128).split(b'\0')[0]
                     name = path.rsplit(b'\\',1)[1].decode('ascii')+'.NBD'
                     if name.lower() not in members:
-                        lines.append(f'{bank} {kind} {variant} {name} 0 0 0')
+                        lines.append(f'{bank} {kind} {variant} {name} 0 0 0 0')
                         records.append(dict(bank=bank,type=kind,variant=variant,name=name,status='missing'))
                         continue
                     assert len(members[name.lower()]) == 1,name
@@ -100,9 +118,10 @@ def owned_manifest(data,output):
                     payload = source.read(size)
                     assert len(payload) == size
                     nodes = skeleton_nodes(payload)
-                    lines.append(f'{bank} {kind} {variant} {name} {base+offset} {size} {nodes}')
+                    parts = model_parts(payload)
+                    lines.append(f'{bank} {kind} {variant} {name} {base+offset} {size} {nodes} {parts}')
                     records.append(dict(bank=bank,type=kind,variant=variant,name=name,offset=base+offset,
-                                        bytes=size,sha256=hashlib.sha256(payload).hexdigest(),nodes=nodes,status='present'))
+                                        bytes=size,sha256=hashlib.sha256(payload).hexdigest(),nodes=nodes,parts=parts,status='present'))
     manifest = output / 'owned-models.txt'
     manifest.write_text('\n'.join(lines)+'\n',encoding='utf-8')
     return archive,manifest,records

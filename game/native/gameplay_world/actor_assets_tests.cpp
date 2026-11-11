@@ -1,4 +1,6 @@
 #include "actor_assets.hpp"
+#include "../animation/playback.hpp"
+#include "../animation/constraints.hpp"
 #include "runtime/assets/virtual_afs.h"
 #include <atomic>
 #include <fstream>
@@ -10,6 +12,7 @@
 namespace world = reo::native::gameplay_world;
 namespace {
 std::size_t checks{},refusals{},owned_models{},owned_skeletons{},owned_absent_skeletons{},owned_absent_models{},owned_missing{};
+std::size_t model_bindings{},binding_refusals{};
 
 void check(bool condition,std::source_location at = std::source_location::current()) {
     ++checks;
@@ -36,6 +39,10 @@ std::vector<std::uint8_t> bundle(bool skeleton = true) {
     const auto node = 88u;
     put(bytes,node+8,0xffffffffu);put(bytes,node+12,0xffffffffu);
     for (unsigned lane = 0; lane < 3; ++lane) put(bytes,node+0x10+4*lane,1.f);
+    bytes.resize(184);
+    put(bytes,0x14,160u);put(bytes,0x18,24u);
+    put(bytes,160+4,1u);put(bytes,160+8,24u);
+    put(bytes,172,2u);put(bytes,172+4,3u);put(bytes,172+8,12u);
     return bytes;
 }
 
@@ -79,6 +86,55 @@ std::shared_ptr<reo::assets::Source> source(std::vector<File> files) {
         std::make_shared<Memory>(afs({{"romdata_usa.afs",afs(std::move(files))}})));
 }
 
+void bindings(const std::shared_ptr<const world::ActorModelAsset>& asset) {
+    world::Profile profile;profile.layouts.push_back({});
+    world::World owner(profile,std::make_shared<world::Session>());
+    auto first = std::make_unique<world::Actor>();
+    first->position = {10,20,30};first->status = 0x89abcdefu;
+    const auto first_id = owner.spawn_primary(0,std::move(first)).id;
+    const auto second_id = owner.spawn_primary(1,std::make_unique<world::Actor>()).id;
+    check(world::bind_actor_model_asset(owner,first_id,asset));
+    check(world::bind_actor_model_asset(owner,second_id,asset));
+    auto first_actor = owner.primary(0),second_actor = owner.primary(1);
+    check(first_actor->model_asset == asset && second_actor->model_asset == asset);
+    check(first_actor->model && second_actor->model && first_actor->model != second_actor->model);
+    check(first_actor->animation && first_actor->animation->model() == first_actor->model);
+    check(first_actor->position.x == 10 && first_actor->status == 0x89abcdefu);
+    const auto old_model = first_actor->model;
+    const auto old_animation = first_actor->animation;
+    old_model->rebuild(reo::native::transform_math::identity());
+    const auto snapshot = old_model->retain();
+    const auto old_constraints = std::make_shared<reo::native::animation::Constraints>(old_model);
+    first_actor->constraints = old_constraints;
+    first_actor->collision.joint_two_position = reo::native::gameplay_collision::Vec3{1,2,3};
+    first_actor->collision.pose_ready = true;
+    check(world::bind_actor_model_asset(owner,first_id,asset));
+    check(first_actor->model != old_model && first_actor->animation != old_animation);
+    check(old_animation->model() == old_model && old_constraints->model() == old_model && old_model->retain() == snapshot);
+    check(!first_actor->constraints && !first_actor->collision.joint_two_position && !first_actor->collision.pose_ready);
+    const auto prior = second_actor->model;
+    check(!world::bind_actor_model_asset(owner,second_id,{}));
+    check(second_actor->model == prior);
+    world::World foreign(profile,std::make_shared<world::Session>());
+    check(!world::bind_actor_model_asset(foreign,second_id,asset));
+    auto temporary = world::ActorAssets(source({{"e00_00.nbd",bundle()}})).read(0,0);
+    const std::weak_ptr<const world::ActorModelAsset> retained = temporary;
+    check(world::bind_actor_model_asset(owner,second_id,temporary));
+    check(second_actor->model_asset == temporary);
+    temporary.reset();
+    check(!retained.expired());
+    check(owner.retire_primary(0) == reo::native::gameplay_actors::EntityStatus::completed);
+    const auto replacement = owner.spawn_primary(0,std::make_unique<world::Actor>()).id;
+    check(replacement != first_id && !world::bind_actor_model_asset(owner,first_id,asset));
+    check(!owner.primary(0)->model && first_actor->model_asset == asset);
+    check(owner.close() == world::Status::completed);
+    check(!world::bind_actor_model_asset(owner,replacement,asset));
+    check(first_actor->model_asset == asset && old_model->retain() == snapshot);
+    second_actor.reset();
+    check(retained.expired());
+    model_bindings += 4;binding_refusals += 4;
+}
+
 void fixtures() {
     const auto payload = bundle();
     auto memory = std::make_shared<Memory>(afs({{"romdata_usa.afs",afs({{"e00_00.nbd",payload}})}}));
@@ -88,6 +144,7 @@ void fixtures() {
     check(asset && asset->name() == "E00_00.NBD" && asset->bytes().size() == payload.size());
     check(std::memcmp(asset->bytes().data(),payload.data(),payload.size()) == 0);
     check(asset->skeleton() && asset->skeleton()->nodes().size() == 1);
+    check(asset->part_count() == 3);
     const auto read_count = memory->reads.load();
     check(assets.read(0,0) == asset && memory->reads.load() == read_count);
     check(!assets.read(51,0) && memory->reads.load() == read_count);
@@ -99,6 +156,7 @@ void fixtures() {
     second->rebuild(reo::native::transform_math::identity());
     check(retained && first->retain() == retained && second->world_translation(0).x == 10);
     check(first->world_translation(0).x == 0);
+    bindings(asset);
     world::ActorAssets concurrent(input);
     auto read_one = std::async(std::launch::async,[&] { return concurrent.read(0,0); });
     auto read_two = std::async(std::launch::async,[&] { return concurrent.read(0,0); });
@@ -136,8 +194,8 @@ void owned(const std::filesystem::path& archive,const std::filesystem::path& man
     std::string line;
     while (std::getline(rows,line)) {
         std::istringstream row(line);
-        unsigned bank,type,variant;std::string name;std::uint64_t offset;std::size_t length,nodes;
-        check(bool(row>>bank>>type>>variant>>name>>offset>>length>>nodes));
+        unsigned bank,type,variant;std::string name;std::uint64_t offset;std::size_t length,nodes,parts;
+        check(bool(row>>bank>>type>>variant>>name>>offset>>length>>nodes>>parts));
         const auto selected = bank ? world::ModelDefinitionBank::alternate : world::ModelDefinitionBank::ordinary;
         if (name == "-") {
             check(!assets.read(std::uint8_t(type),std::uint16_t(variant),selected));
@@ -153,6 +211,7 @@ void owned(const std::filesystem::path& archive,const std::filesystem::path& man
         try { asset = assets.read(std::uint8_t(type),std::uint16_t(variant),selected); }
         catch (const std::exception& error) { throw std::runtime_error(name+" "+error.what()); }
         check(asset && asset->name() == name && asset->bytes().size() == length);
+        check(asset->part_count() == parts);
         std::vector<std::uint8_t> expected(length);
         raw.seekg(std::streamoff(offset));raw.read(reinterpret_cast<char*>(expected.data()),std::streamsize(length));
         check(bool(raw) && std::memcmp(asset->bytes().data(),expected.data(),length) == 0);
@@ -178,5 +237,6 @@ int main(int argc,char** argv) try {
     std::cout<<"{\"checks\":"<<checks<<",\"refusals\":"<<refusals<<",\"owned_models\":"<<owned_models
              <<",\"owned_skeletons\":"<<owned_skeletons<<",\"owned_absent_skeletons\":"<<owned_absent_skeletons
              <<",\"owned_absent_models\":"<<owned_absent_models
+             <<",\"model_bindings\":"<<model_bindings<<",\"binding_refusals\":"<<binding_refusals
              <<",\"owned_missing\":"<<owned_missing<<"}\n";
 } catch (const std::exception& error) { std::cerr<<error.what()<<'\n';return 1; }
