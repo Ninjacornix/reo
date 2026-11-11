@@ -82,8 +82,9 @@ void body_equal(const g::Actor& value, const std::vector<std::uint8_t>& ram) {
 #include "linked_actor_update_tests.inc"
 #include "cutscene_actor_command_tests.inc"
 #include "cutscene_actor_track_tests.inc"
+#include "cutscene_descriptor_tests.inc"
 int main(int argc, char** argv) try {
-    check(argc == 4, "owned World animation inputs required");
+    check(argc == 4 || argc == 5, "owned World animation inputs required");
     const auto old = _mm_getcsr();
     struct Reset {
         unsigned old;
@@ -101,6 +102,7 @@ int main(int argc, char** argv) try {
     cutscene_command_tests(ram);
     cutscene_track_tests(ram);
     linked_full_pool_tests(ram);
+    if(argc==5)cutscene_descriptor_tests(argv[4],ram);
     std::shared_ptr<const a::Skeleton> skeleton;
     std::vector<std::byte> raw_skeleton;
     for (const auto& raw : skeletons) {
@@ -712,6 +714,11 @@ int main(int argc, char** argv) try {
               << ",\"linked_update_refusals\":" << linked_update_refusals
               << ",\"required_prelude_cases\":" << prelude_native
               << ",\"refusal_cases\":" << world_refusals << ",\"joint_cases\":" << joint_cases
+              << ",\"cutscene_descriptors\":" << cutscene_descriptors
+              << ",\"cutscene_descriptor_sections\":" << cutscene_descriptor_sections
+              << ",\"cutscene_descriptor_streams\":" << cutscene_descriptor_streams
+              << ",\"cutscene_descriptor_refusals\":" << cutscene_descriptor_refusals
+              << ",\"cutscene_descriptor_partial\":" << cutscene_descriptor_partial
               << ",\"original_calls\":" << helper_calls << ",\"game_run\":false}\n";
 } catch (const std::exception& e) {
     std::cerr << location << " " << e.what() << '\n';

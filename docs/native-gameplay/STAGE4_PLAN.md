@@ -3,6 +3,11 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to keep the PC awake afterward.
 
+- [Native retained cutscene descriptors](CUTSCENE_DESCRIPTORS.md) now read actual
+  named archive members and retain all bounded0950 sections and actor programs.
+  Both compiler comparisons cover548 owned files; both actual archive cohorts
+  and seven parent tests pass. Actor assignment/construction, other streams,
+  legacy formats, scene lifecycle and game installation remain open.
 - [Native cutscene actor tracks](CUTSCENE_ACTOR_TRACKS.md) now drive those
   commands through the actual Update owner with exact/halved frame matching,
   one event per stream, terminal handling, checked lifetimes and failure latching.
