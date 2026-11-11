@@ -181,11 +181,25 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     return out;
 }
 Status Interpreter::install(std::size_t id,std::shared_ptr<const Program> p,Position entry)noexcept{
+    const ChannelReplacement replacement{id,std::move(p),entry};
+    return replace_channels(std::span(&replacement,1));
+}
+Status Interpreter::replace_channels(std::span<const ChannelReplacement> replacements)noexcept{
     if(running_)return Status::busy;
-    if(id>=channel_count)return Status::invalid_channel;
-    if(!p||!p->record(entry))return Status::invalid_program;
-    if(p->unsupported())return Status::unsupported_opcode;
-    channels_[id]=Channel{std::move(p),entry,{},0,entry.block,0};return Status::completed;
+    std::array<bool,channel_count> seen{};
+    for(const auto& change:replacements){
+        if(change.channel>=channel_count||seen[change.channel])return Status::invalid_channel;
+        seen[change.channel]=true;
+        if(bool(change.program)!=bool(change.entry))return Status::invalid_program;
+        if(change.entry&&!change.program->record(*change.entry))return Status::invalid_program;
+        if(change.program&&change.program->unsupported())return Status::unsupported_opcode;
+    }
+    for(const auto& change:replacements){
+        auto& channel=channels_[change.channel];
+        if(!change.entry){channel={};continue;}
+        channel=Channel{change.program,*change.entry,{},0,change.entry->block,0};
+    }
+    return Status::completed;
 }
 Status Interpreter::restore_channel(std::size_t id,const Channel& value)noexcept{
     if(running_)return Status::busy;

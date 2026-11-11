@@ -49,6 +49,8 @@ Status Owner::script_service(Services& services,scenario::Providers providers,st
     if(std::bit_cast<std::int32_t>(clock_.update_counter())>=0x83d60 && !state.limit_override){
         services.run(Worker::limit_action,*this);++result.worker_calls;return Status::completed;
     }
+    if(providers.world&&providers.world!=&world_)return Status::script_failure;
+    providers.world=&world_;
     FlagExpiry sink(flags_,world_);
     if(timers_.tick(sink)!=tasks::Status::completed)return Status::task_failure;
     if(sink.failed)return Status::flag_failure;

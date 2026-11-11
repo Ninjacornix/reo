@@ -1,4 +1,5 @@
 #include "update.hpp"
+#include "../gameplay_scenario/content.hpp"
 #include <iostream>
 #include <stdexcept>
 #include <source_location>
@@ -88,9 +89,103 @@ void check_automatic_worker(){
     world.primary(0)->status=0x400;check(owner.flags().scenario(44,1,s::NotifyOwner::selected_actor_plus_one,1));check(owner.flags().scenario_owner(44)==0&&notifications.scenario_changes==2);
     check(owner.close()==u::Status::completed&&owner.check_scenario_events().status==e::StatisticsStatus::unavailable);check(world.close()==u::world::Status::completed);
 }
+void check_session_script_binding(){
+    const u::world::Profile profile{{{1,2,4}},1,{16,UINT64_MAX}};
+    u::world::World world(profile,std::make_shared<u::world::Session>());
+    u::world::World foreign(profile,std::make_shared<u::world::Session>());
+    Notifications notifications;
+    u::Owner owner(world,notifications);
+    world.mode=1;
+    world.paused=true;
+    world.session().scenario=0;
+    check(owner.initialize_completion_statistics()==e::StatisticsStatus::completed);
+    const auto bytes=[](std::initializer_list<std::uint32_t> words){
+        std::vector<std::byte> result;
+        for(const auto word:words)
+            for(unsigned i=0;i<4;++i)result.push_back(std::byte((word>>(8*i))&255));
+        return result;
+    };
+    const auto program=std::make_shared<const s::Program>(std::vector{
+        bytes({1,0x020000f2,7,17,15,0xa}),bytes({1,0xa})});
+    check(owner.scripts().install(0,program,{0,0})==s::Status::completed);
+    check(owner.scripts().install(1,program,{1,0})==s::Status::completed);
+    auto& contacts=world.session().room_contacts;
+    Remaining workers;
+    EmptyActors actors;
+    check(owner.run_workers(workers,actors).status==u::Status::script_failure);
+    check(contacts.initialize_counters(2)&&contacts.counters.get(7,17)==1900);
+    s::Providers providers;
+    providers.world=&foreign;
+    check(owner.run_workers(workers,actors,providers).status==u::Status::script_failure);
+    check(contacts.counters.get(7,17)==1900&&owner.scripts().channels()[0].current==s::Position{0,0});
+    const auto result=owner.run_workers(workers,actors);
+    check(result.status==u::Status::completed&&result.script_operations==5);
+    check(contacts.counters.get(7,17)==4800&&foreign.session().room_contacts.counters.get(7,17)==0);
+}
+void check_content_script_binding(){
+    namespace content=s::content;
+    const u::world::Profile profile{{{1,2,4}},1,{16,UINT64_MAX}};
+    u::world::World world(profile,std::make_shared<u::world::Session>());
+    Notifications notifications;
+    u::Owner owner(world,notifications);
+    world.mode=1;
+    world.paused=true;
+    world.session().scenario=0;
+    check(owner.initialize_completion_statistics()==e::StatisticsStatus::completed);
+    const auto put=[](std::vector<std::byte>& data,std::size_t at,std::uint32_t word){
+        for(unsigned byte=0;byte<4;++byte)data.at(at+byte)=std::byte((word>>(8*byte))&255);
+    };
+    auto scenario=std::make_shared<std::vector<std::byte>>(448);
+    put(*scenario,0,128);
+    put(*scenario,128,1);
+    put(*scenario,132,0x020000f2);
+    put(*scenario,136,7);
+    put(*scenario,140,17);
+    put(*scenario,144,100);
+    put(*scenario,148,0xa);
+    auto load_scenario=[&](std::uint8_t row){
+        return owner.bind_scenario_scripts(content::ScriptBank(scenario,content::BankFormat::scenario_evb),row);
+    };
+    check(load_scenario(2)==u::Status::script_failure&&!owner.scripts().channels()[0].program);
+    put(*scenario,0x34,192);
+    put(*scenario,192+2*64,0x1234fedcu);
+    check(load_scenario(4)==u::Status::script_failure&&!owner.scripts().channels()[0].program);
+    check(owner.scripts().restore_counters({1,2,3,4})==s::Status::completed);
+    check(load_scenario(2)==u::Status::completed&&owner.scripts().counters()==std::array<std::uint32_t,4>{});
+    check(owner.scripts().channels()[0].current==s::Position{0,0}&&!owner.scripts().channels()[4].program);
+    auto room=std::make_shared<std::vector<std::byte>>(88);
+    put(*room,32,64);
+    put(*room,48,80);
+    put(*room,64,1);
+    put(*room,68,0xa);
+    put(*room,80,1);
+    put(*room,84,0xa);
+    auto load_room=[&](std::size_t channel=1){
+        return owner.bind_room_scripts(content::ScriptBank(room,content::BankFormat::room_section),channel);
+    };
+    check(load_room(2)==u::Status::script_failure);
+    check(load_room()==u::Status::completed);
+    check(owner.scripts().channels()[1].current==s::Position{8,0}&&owner.scripts().channels()[5].current==s::Position{12,0});
+    const auto previous=owner.scripts().channels()[1].program;
+    put(*room,80,0xd0);
+    check(load_room()==u::Status::script_failure);
+    check(owner.scripts().channels()[1].program==previous&&owner.scripts().channels()[5].program==previous);
+    put(*room,48,0);
+    check(load_room()==u::Status::completed&&!owner.scripts().channels()[5].program);
+    Remaining workers;
+    EmptyActors actors;
+    check(owner.run_workers(workers,actors).status==u::Status::completed);
+    check(world.session().room_contacts.counters.get(7,17)==-292);
+    world.mode=0;
+    check(load_room(3)==u::Status::completed);
+    check(owner.scripts().channels()[3].program->profile()==s::DispatchProfile::offline_actor);
+    check(owner.close()==u::Status::completed&&load_room()==u::Status::closed);
+}
 int main()try{
     check_actor_status();
     check_automatic_worker();
+    check_session_script_binding();
+    check_content_script_binding();
     u::world::World world({{{1,2,4}},1,{16,UINT64_MAX}},std::make_shared<u::world::Session>());Notifications notifications;u::Owner owner(world,notifications);check(owner.open());
     world.room=0x1234;check(owner.clock().restore({0,0,0,0},UINT32_MAX)==u::tasks::Status::completed);
     const auto first=owner.record_event(0xabcd0013,0x12345678,0xabcdef90);check(first.status==e::Status::completed);

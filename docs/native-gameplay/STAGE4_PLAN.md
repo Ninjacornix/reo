@@ -3,6 +3,10 @@
 Status, 2026-11-11. **Stage 4 is incomplete**. Continue through end-to-end
 verification. Put the PC to sleep after Stage 4 passes those checks, as requested.
 
+- [Native script setup](SCENARIO_SCRIPT_SETUP.md) binds admitted programs to
+  their source channels and runs them through the actual Update Owner.
+  A failed admission preserves the previous bindings. The game startup and
+  transition callers still need to supply stock content and providers.
 - [Stock room script admission](SCENARIO_STOCK_PROGRAMS.md) builds immutable
   native programs from checked stock bytecode. The dual-compiler admission
   probe installs 25 ordinary and 20 offline room programs. One stock room

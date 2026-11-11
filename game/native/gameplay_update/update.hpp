@@ -27,6 +27,8 @@
 #include "../gameplay_ai/observation_gates.hpp"
 #include "../gameplay_ai/observations.hpp"
 
+namespace reo::native::gameplay_scenario::content { class ScriptBank; }
+
 namespace reo::native::gameplay_update {
 namespace tasks=gameplay_tasks;
 namespace scenario=gameplay_scenario;
@@ -192,6 +194,10 @@ public:
     std::uint8_t seconds()const noexcept override{return clock_.play_time().seconds;}
     std::uint8_t subseconds()const noexcept override{return clock_.play_time().sixtieths;}
     scenario::Interpreter& scripts()noexcept{return scripts_;}
+    // Install the proven entries on the source's channel numbers. Missing
+    // secondary entries retire previous bindings for that channel.
+    Status bind_scenario_scripts(const scenario::content::ScriptBank&,std::uint8_t policy_row);
+    Status bind_room_scripts(const scenario::content::ScriptBank&,std::size_t room_channel=1);
     scenario::OfflineCoordinator& offline()noexcept{return offline_;}
     scenario::FlagState& flags()noexcept{return flags_;}
     gameplay_navigation::ConditionResult applicable_navigation_condition(const world::actors::EntityId&,std::uint32_t room,std::int32_t index);

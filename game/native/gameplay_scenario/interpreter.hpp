@@ -69,6 +69,7 @@ public:
     bool needs_room_object_queries()const noexcept{return room_object_queries_;}
     bool needs_periodic_effects()const noexcept{return periodic_effects_;}
     bool needs_surface_effects()const noexcept{return surface_effects_;}
+    bool needs_scenario_counter_policy()const noexcept{return scenario_counter_policy_;}
     bool admits_room_counters(const gameplay_world::World*)const noexcept;
     std::span<const std::uint8_t> adjusted_models()const noexcept{return adjusted_models_;}
     std::span<const std::uint8_t> visibility_models()const noexcept{return visibility_models_;}
@@ -88,6 +89,11 @@ struct Channel {
     std::shared_ptr<const Program> program;
     Position current,saved;
     std::uint32_t countdown{},block_index{},condition{};
+};
+struct ChannelReplacement {
+    std::size_t channel{};
+    std::shared_ptr<const Program> program;
+    std::optional<Position> entry;
 };
 struct ActorEvent {std::uint8_t active{},kind{};std::uint16_t value{};};
 enum class FlagBank { scenario,local_primary,local_auxiliary,secondary,bounded_byte,bounded_halfword };
@@ -122,6 +128,8 @@ class Interpreter {
 public:
     static constexpr std::size_t channel_count=6;
     Status install(std::size_t,std::shared_ptr<const Program>,Position entry={0,0})noexcept;
+    // Validate every change before replacing or clearing any channel.
+    Status replace_channels(std::span<const ChannelReplacement>)noexcept;
     Status restore_channel(std::size_t,const Channel&)noexcept;
     TickResult tick(std::size_t,const TickContext&,Providers={},std::size_t maximum_operations=4096)noexcept;
     TickResult tick_offline_channel(std::size_t,const TickContext&,OfflineDispatch,Providers,std::size_t maximum_operations=4096)noexcept;
