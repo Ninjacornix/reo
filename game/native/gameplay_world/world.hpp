@@ -198,6 +198,9 @@ struct Session : actors::HitSession {
     std::optional<std::uint16_t> last_scenario_audio; // original316550, written even when a bank request is rejected
     std::uint8_t resource_hide_selected{},resource_hide_others{}; // original4B9D10/11
     std::uint8_t sound_loading_mode{}; // original324405; only mode2 rejects queued direct bank loads
+    // Original3243D7 chooses resident-file versus archive-bundle resource work.
+    // It is independent of pause4BADF8. The actual content owner must supply it.
+    std::optional<std::uint8_t> asset_loading_mode;
     std::uint8_t gameplay_flags{}; // original4BAE96; use override bit0, contact-mode bit1
     std::int8_t message_phase{}; // original3243FB;1/2 enable the1B0310 message branch, independent of mode
     std::uint16_t actor_message_suppression{}; // original744638; shared selector suppression, not per actor

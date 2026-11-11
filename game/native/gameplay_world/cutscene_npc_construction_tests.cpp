@@ -41,8 +41,8 @@ void owned(const char* archive,const char* manifest){
     while(rows>>scenario>>sequence>>variant>>suffix>>offset>>length>>version){
         if(version!=950)continue;
         const auto descriptor=s::read_cutscene_descriptor(input,std::uint16_t(scenario),std::uint8_t(sequence),std::uint8_t(variant),std::uint8_t(suffix));check(bool(descriptor));
-        for(const auto pause:{std::int8_t(0),std::int8_t(1)}){
-            w::World world(profile(),std::make_shared<w::Session>());world.paused=pause;world.room=0xabcd;w::NpcActorConstruction factory(world);
+        for(const auto pause:{std::int8_t(0),std::int8_t(1)})for(const auto loading_mode:{std::uint8_t(0),std::uint8_t(1),std::uint8_t(128),std::uint8_t(255)}){
+            w::World world(profile(),std::make_shared<w::Session>());world.paused=pause;world.session().asset_loading_mode=loading_mode;world.room=0xabcd;w::NpcActorConstruction factory(world);
             std::shared_ptr<const w::PreparedCutsceneNpcActors> prepared;
             try{prepared=factory.prepare_cutscene_npcs(*descriptor,assets,banks);}catch(const std::exception& error){throw std::runtime_error("Scene "+std::to_string(scenario)+"/"+std::to_string(sequence)+"/"+std::to_string(variant)+"/"+std::to_string(suffix)+": "+error.what());}
             check(prepared&&prepared->size()==descriptor->actor_groups().size());
@@ -50,7 +50,8 @@ void owned(const char* archive,const char* manifest){
             for(unsigned group=0;group<prepared->size();++group){
                 if(!prepared->request(group)){check(factory.create_cutscene_npc(*prepared,group,&graphics).status==w::NpcConstructionStatus::unavailable);continue;}
                 if(!partial_cases){
-                    check(pause==0);const auto count=world.auxiliary_actors().remaining();check(factory.create_cutscene_npc(*prepared,group).status==w::NpcConstructionStatus::unavailable&&world.auxiliary_actors().remaining()==count);
+                    check(pause==0&&loading_mode==0);const auto count=world.auxiliary_actors().remaining();
+                    world.session().asset_loading_mode.reset();check(factory.create_cutscene_npc(*prepared,group,&graphics).status==w::NpcConstructionStatus::unavailable&&world.auxiliary_actors().remaining()==count);world.session().asset_loading_mode=loading_mode;check(factory.create_cutscene_npc(*prepared,group).status==w::NpcConstructionStatus::unavailable&&world.auxiliary_actors().remaining()==count);
                     for(unsigned failure=0;failure<2;++failure){graphics.fail=failure==0;graphics.throwing=failure==1;graphics.group=group;
                         const auto result=factory.create_cutscene_npc(*prepared,group,&graphics);check(result.status==w::NpcConstructionStatus::unavailable&&result.id&&world.resolve(result.id)&&!world.busy());
                         check(world.auxiliary_actors().reset()==w::AuxiliaryStatus::completed);
@@ -67,6 +68,7 @@ void owned(const char* archive,const char* manifest){
                 for(unsigned part=0;part<actor->scripted->part_visibility.size();++part)check(actor->scripted->part_visibility[part]==(part<32?((mask>>part)&1u):1u));
                 parameter_entries+=prepared->parameters(group).size();++created_npcs;
             }
+            check(graphics.calls==(loading_mode==0?std::min<std::size_t>(10,prepared->npc_count()):0));
             if(full)++full_scenes;
 #ifdef REO_CUTSCENE_NPC_ORIGINAL
             if(!full)compare_scene_npcs(*descriptor,ids,world,pause);
@@ -77,7 +79,7 @@ void owned(const char* archive,const char* manifest){
             check(tracks.close()==s::CutsceneTrackStatus::completed&&world.close()==w::Status::completed);++scenes;
         }
     }
-    check(rows.eof()&&scenes==1096&&created_npcs==490&&full_scenes==2&&partial_cases==1);
+    check(rows.eof()&&scenes==4384&&created_npcs==1960&&full_scenes==8&&partial_cases==1);
 }
 }
 #ifdef REO_CUTSCENE_NPC_ORIGINAL

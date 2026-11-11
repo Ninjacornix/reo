@@ -42,6 +42,14 @@ verification. The latest user instruction is to keep the PC awake afterward.
   and prepares shared character release/reload. Paired bank, live rebinding,
   primary initialization, World, behavior and15-parent regressions pass.
   Actual primary model-cache and instance lifecycle adoption remain open.
+- [Playback model replacement](PLAYBACK_MODEL_REPLACEMENT.md) preserves actor
+  channels, root history and resource ownership while rebuilding both mutable
+  node banks. Both compilers pass72 replacements and264 original continuation
+  cases. Actual primary model-cache caller adoption remains open.
+- The [scene NPC loading-mode correction](CUTSCENE_NPC_CONSTRUCTION.md) separates
+  asset-loading mode3243D7 from pause4BADF8. Paired current cohorts pass4,384 scene
+  cases with independent inputs; the earlier fixture conflated the two and its
+  shadow-gate claim is superseded. Unknown loading mode refuses before creation.
 - [Shared humanoid motion publication](HUMANOID_MOTION_PUBLICATION.md) adds
   explicit NPC/scripted bank identities, atomic live rebinding, stale-load
   rejection and joined-owner closure. Paired publication, current World,

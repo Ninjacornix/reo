@@ -10,14 +10,16 @@ terminal/cap is an error. Parameter lookup/consumption remains a scene-owner gat
 Creation restores every real part to visible before scale/graphics preparation,
 applies unit scale and actual native constraint initialization for profile zero,
 then writes the first 32 visibility bits. Parts beyond 32 retain visibility 1.
-The canonical pause byte is reread at the original shadow boundary. An unpaused
-scene requires its rendering provider; completed no-shadow is distinct from a
-missing provider. Reentrant world/pool mutation and closure are refused while
+The canonical asset-loading mode3243D7 is reread at the original shadow boundary.
+Mode zero requires its rendering provider; every nonzero mode skips that call.
+Pause4BADF8 independently controls constraint initialization. An unknown loading
+mode refuses before allocation. Completed no-shadow is distinct from a missing
+provider. Reentrant world/pool mutation and closure are refused while
 that provider runs. A failure after publication returns the actual actor ID and
 preceding effects; the enclosing scene owner must latch and handle the partial
 result. The adapter does not invent a rollback or retry the construction itself.
 
-Both compiler cohorts pass 37,640 checks over all 548 supported 0950 descriptors,
+The historical v3 compiler cohorts passed 37,640 checks over all 548 supported 0950 descriptors,
 each with pause on and off: 1,096 scene passes, 490 actual native constructions,
 245 completed shadow-provider requests and 128 retained parameter entries.
 Complete source-word-audited 5F0610 and 5F0B50 compare selected NPC behavior in
@@ -28,6 +30,16 @@ native factory, assets, constraints, part state and track bindings run separatel
 False and throwing graphics providers verify actual partial IDs/effects and
 release of both mutation guards. All eleven parent tests, corrected base NPC
 constructors and the existing owned actor baseline pass on each compiler.
+
+The primary-model lifecycle audit found that v3 incorrectly used pause for the
+shadow gate. Its fixture also exported pause into3243D7, hiding the production
+mistake. That gate is corrected before installation. Current
+`cutscene-npc-loading-mode-{llvm,gcc}-v1` cohorts vary pause0/1 independently of
+loading modes0/1/128/255. Each passes144,657 checks,4,384 scene passes,1,960 native
+constructions,4,376 restricted original comparisons /1,880 NPCs,490 actual shadow
+requests and all eleven parents. Unknown-mode refusal, false/throwing providers,
+canonical constraints, real models and the existing constructor baseline pass.
+The historical v3 gate claim is superseded, not a measured game slowdown cause.
 
 Scenario 1 `dm0600A.BIN` contains 11 active NPC headers. Original 682C60 initializes
 ten auxiliary slots and 682D10 returns null on exhaustion. The native owner

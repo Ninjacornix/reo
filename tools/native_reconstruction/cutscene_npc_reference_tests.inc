@@ -32,10 +32,10 @@ void compare_scene_npcs(const s::CutsceneDescriptor& descriptor,std::span<const 
         const auto header_at=0x900000+0x1000*group;check(header.size()<0x1000);std::memcpy(memory.data()+header_at,header.data(),header.size());transform_write(memory.data(),0x38fb60+32*group+28,header_at);
         const auto parameters=descriptor.section(descriptor.actor_groups()[group][3]);check(parameters.size()<0x1000);std::memcpy(memory.data()+0xa00000+0x1000*group,parameters.data(),parameters.size());transform_write(memory.data(),0x38fb60+32*group+12,0xa00000+0x1000*group);
     }
-    transform_write(memory.data(),0x38ecb6,std::int16_t(ids.size()));transform_write(memory.data(),0x38ecb8,std::int16_t(0));memory[0x3243d7]=std::uint8_t(pause);transform_write(memory.data(),0x3243dc,world.room);
+    transform_write(memory.data(),0x38ecb6,std::int16_t(ids.size()));transform_write(memory.data(),0x38ecb8,std::int16_t(0));memory[0x3243d7]=world.session().asset_loading_mode.value();transform_write(memory.data(),0x4badf8,pause);transform_write(memory.data(),0x3243dc,world.room);
     scene_model_index=scene_shadow_requests=scene_constraint_requests=scene_parameter_requests=0;
     R5900Context context;PS2Runtime runtime;context.pc=0x5f0610;SET_GPR_U32(&context,29,0x1f00000);SET_GPR_U32(&context,31,0xabcdef);original_transform_port(memory.data(),&context,&runtime);
-    check(context.pc==0xabcdef&&scene_model_index==npc_scene_actors.size()&&scene_constraint_requests==constraints&&scene_shadow_requests==(pause?0:npc_scene_actors.size())&&scene_parameter_requests==npc_scene_actors.size());
+    check(context.pc==0xabcdef&&scene_model_index==npc_scene_actors.size()&&scene_constraint_requests==constraints&&scene_shadow_requests==(*world.session().asset_loading_mode?0:npc_scene_actors.size())&&scene_parameter_requests==npc_scene_actors.size());
     unsigned index{};
     for(unsigned group=0;group<ids.size();++group){if(!ids[group])continue;const auto actor=world.resolve(ids[group]);const auto at=scene_actor_address(index++);
         check(memory[0x38edd8+0x8c*group]==1&&transform_read<std::uint32_t>(memory.data(),0x38eddc+0x8c*group)==at);

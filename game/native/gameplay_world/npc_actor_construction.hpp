@@ -68,6 +68,8 @@ public:
         const gameplay_scenario::CutsceneDescriptor&,const ActorAssets&,const NpcMotionBindings&)const;
     // A failure after allocation returns its real ID and preceding effects.
     // The enclosing scene owner must latch/handle that partial result.
+    // Requires the canonical Session asset-loading mode. Only mode zero
+    // requires the shadow provider; pause independently controls constraints.
     NpcConstructed create_cutscene_npc(const PreparedCutsceneNpcActors&,std::size_t group,NpcSceneGraphics* = nullptr)noexcept;
 private:World& world_;
 };

@@ -34,7 +34,8 @@ NpcConstructed NpcActorConstruction::create_cutscene_npc(const PreparedCutsceneN
     if(world_.closed())return{NpcConstructionStatus::closed,{}};
     if(world_.busy())return{NpcConstructionStatus::busy,{}};
     if(group>=prepared.entries_.size()||!prepared.entries_[group].actor)return{};
-    if(world_.paused==0&&!graphics)return{};
+    if(!world_.session().asset_loading_mode)return{};
+    if(*world_.session().asset_loading_mode==0&&!graphics)return{};
     const auto& entry=prepared.entries_[group];auto result=create(*entry.actor);
     if(result.status!=NpcConstructionStatus::completed)return result;
     auto& pool=world_.auxiliary_actors();world_.updating_=true;pool.mutating_=true;
@@ -44,8 +45,10 @@ NpcConstructed NpcActorConstruction::create_cutscene_npc(const PreparedCutsceneN
         std::fill(actor->scripted->part_visibility.begin(),actor->scripted->part_visibility.end(),1);
         actor->scripted->scale_profile=entry.scale_profile;
         if(!entry.scale_profile){actor->model_scale={1,1,1};initialize_model_constraints(world_,*actor);}
-        // Reread the canonical pause byte at the source rendering boundary.
-        if(world_.paused==0){
+        // Source3243D7 is an asset-loading mode, independent of pause4BADF8.
+        // Constraint initialization above continues to consult actual pause.
+        if(!world_.session().asset_loading_mode)return{NpcConstructionStatus::unavailable,result.id};
+        if(*world_.session().asset_loading_mode==0){
             if(!graphics||!graphics->prepare_shadow(world_,result.id,actor->model_variant))return{NpcConstructionStatus::unavailable,result.id};
             if(world_.resolve(result.id)!=actor||actor->model!=model||!actor->npc||!actor->scripted)return{NpcConstructionStatus::unavailable,result.id};
         }
