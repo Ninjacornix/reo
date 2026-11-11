@@ -11,6 +11,7 @@ namespace {
 #include "actor_asset_names.inc"
 #include "npc_actor_members.inc"
 #include "auxiliary_actor_members.inc"
+#include "primary_actor_members.inc"
 
 std::string lower_name(std::string_view input) {
     std::string result(input);
@@ -77,6 +78,20 @@ std::string ActorAssets::npc_model_name(std::uint16_t identity,std::uint8_t mode
     std::array<char,24> name{};
     std::snprintf(name.data(),name.size(),model_class==1?"HN%02u.NBD":"N%02u.NBD",unsigned(std::uint8_t(identity)));
     return name.data();
+}
+std::string ActorAssets::primary_model_name(std::uint8_t character,std::uint8_t appearance,std::uint8_t model_class){
+    std::array<char,24> name{};
+    if(model_class==1)std::snprintf(name.data(),name.size(),"HP%02u.NBD",unsigned(character));
+    else std::snprintf(name.data(),name.size(),model_class==0?"P%02u_%02u.NBD":"EP%02u_%02u.NBD",unsigned(character),unsigned(appearance));
+    return name.data();
+}
+std::shared_ptr<const ActorModelAsset> ActorAssets::read_primary(std::uint8_t character,std::uint8_t appearance,std::uint8_t model_class)const{
+    const auto name=primary_model_name(character,appearance,model_class);
+    const auto alias=std::find_if(primary_actor_members.begin(),primary_actor_members.end(),[&](const auto& entry){return entry.name==name;});
+    if(alias==primary_actor_members.end()||common_count_!=1342)throw std::invalid_argument("Native primary actor ROM member profile unavailable");
+    const auto member=std::find_if(members_.begin(),members_.end(),[&](const auto& entry){return entry.ordinal==alias->ordinal;});
+    if(member==members_.end()||member->name!=lower_name(name))throw std::invalid_argument("Native primary actor ROM member identity unavailable");
+    return read_entry(*member,name);
 }
 std::shared_ptr<const ActorModelAsset> ActorAssets::read_npc(std::uint16_t identity,std::uint8_t model_class)const{
     const auto name=npc_model_name(identity,model_class);

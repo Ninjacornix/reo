@@ -40,6 +40,10 @@ public:
     // definition1. Primary BB4==0 has different appearance paths.
     static std::string substituted_model_name(std::uint16_t variant,std::uint8_t definition,std::uint8_t character);
     std::shared_ptr<const ActorModelAsset> read_substituted_model(std::uint16_t variant,std::uint8_t definition,std::uint8_t character)const;
+    // Actual zeroBB4 primary appearance route. Class0 selects P, exactly1
+    // selects HP independently of appearance, and other classes select EP.
+    static std::string primary_model_name(std::uint8_t character,std::uint8_t appearance,std::uint8_t model_class);
+    std::shared_ptr<const ActorModelAsset> read_primary(std::uint8_t character,std::uint8_t appearance,std::uint8_t model_class)const;
     // Auxiliary NPC loader1D0800 uses the low-byte identity directly. Class1
     // selects HN; other classes select N. This is independent of primary BB4.
     static std::string npc_model_name(std::uint16_t identity,std::uint8_t model_class);

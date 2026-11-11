@@ -9,6 +9,10 @@ verification. The latest user instruction is to keep the PC awake afterward.
   Both compiler919-bank comparisons, actual NPC binding examples and twelve
   parent tests pass. Live publication, remaining scene/action/curve consumers
   and installed native gameplay remain open.
+- [Primary appearance assets](PRIMARY_ACTOR_ASSETS.md) now load all46 actual
+  P/EP/HP members by exact ROM alias. Paired source comparisons cover327,680
+  primary filenames; actual bytes, parts,1,973 skeleton nodes and independent
+  instances pass. Primary initialization and scene caller adoption remain open.
 - [Shared humanoid motion publication](HUMANOID_MOTION_PUBLICATION.md) adds
   explicit NPC/scripted bank identities, atomic live rebinding, stale-load
   rejection and joined-owner closure. Paired publication, current World,
