@@ -17,7 +17,7 @@ def main():
     elf=ROOT/'game_data/SLUS_207.65';assert sha(elf)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46';main_read=elf_reader(elf.read_bytes())
     overlay=ROOT/'build-function-index/owned-overlays/o2.bin';assert sha(overlay)=='45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226';raw=overlay.read_bytes()
     originals=[];proof=[]
-    for at,end in [(0x5ec100,0x5ec270),(0x5ec270,0x5ec318),(0x5ec010,0x5ec0d8),(0x5ebfe0,0x5ec010),(0x1d1c40,0x1d1c48),(0x5f0610,0x5f0b50),(0x5f0c00,0x5f0c60),(0x5f0b50,0x5f0bf8),(0x663170,0x663188),(0x5f1400,0x5f1598)]:
+    for at,end in [(0x5ec100,0x5ec270),(0x5ec270,0x5ec318),(0x5ec010,0x5ec0d8),(0x5ebfe0,0x5ec010),(0x1d1c40,0x1d1c48),(0x5f0610,0x5f0b50),(0x5f0c00,0x5f0c60),(0x5f0b50,0x5f0bf8),(0x663170,0x663188),(0x5f1400,0x5f1598),(0x5ed340,0x5ed76c)]:
         bank=at>=0x570000;path=next((ROOT/('recomp/config/output_ovl/o2'if bank else'recomp/config/output')).glob(f'*_{at:08X}_*'))
         proof.append(compare_source('complete primary cache/release/no-op source',path.relative_to(ROOT).as_posix(),at,end,(lambda address,size:raw[address-0x570000:address-0x570000+size])if bank else main_read));originals.append(path)
     inventory=ROOT/'build-native-sjuni/audio-asset-inventory/file1-v1/members.json';assert sha(inventory)=='276264fd0f5d14e8e0ef1e17f008560d611c6ca30c2ad811259a004b7a54fbc2';members={r['member']:r for r in json.loads(inventory.read_bytes())}

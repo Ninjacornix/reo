@@ -6,10 +6,19 @@ std::vector<std::uint32_t> cache_trace;
 unsigned reference_releases{},reference_loads{},reference_initializations{},reference_slot{},reference_character{},reference_class{};
 bool reference_scene{};
 bool reference_construction{};
+bool reference_roster{};
 bool reference_entry{};unsigned reference_entry_visits{},reference_entry_base_calls{};
 }
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
     ++original_calls;const auto at=context->pc;
+    if(reference_roster){
+        if(at==0x5ed340){o2_005ED340_0x5ed340(memory,context,runtime);return;}
+        switch(at){
+        case 0x107c68:{const auto to=GPR_U32(context,4),size=GPR_U32(context,6);check(to==0x600000&&size==0x10000&&GPR_U32(context,5)==0);std::memset(memory+to,0,size);SET_GPR_U32(context,2,to);break;}
+        case 0x1cd120:case 0x1b14a0:case 0x1b2b90:case 0x6519a0:case 0x1b13b0:case 0x1b1690:case 0x1925a0:case 0x1b1e50:case 0x1b1bb0:case 0x5f1290:case 0x5ebb10:case 0x5ebc20:case 0x1b2c30:case 0x67c250:break;
+        default:throw std::runtime_error("Undeclared World roster preparation port "+std::to_string(at));
+        }context->pc=GPR_U32(context,31);return;
+    }
     if(reference_construction){
         if(at==0x5f1400){o2_005F1400_0x5f1400(memory,context,runtime);return;}
         if(at==0x107c68||at==0x107ab0){
@@ -114,6 +123,17 @@ void construction_record(std::uint8_t* m,unsigned at,const g::Actor& actor){
     m[at+0xb40]=std::uint8_t(s.motion_rate_mode);m[at+0xb41]=std::uint8_t(s.scale_lock);m[at+0xb42]=s.request_phase;m[at+0xb43]=std::uint8_t(s.motion_selector);transform_write(m,at+0xb44,s.motion_blend_duration);
     transform_write(m,at+0xb48,s.relation_mode);transform_write(m,at+0xb4c,unsigned(bool(s.related_actor)));transform_write(m,at+0xb50,s.relation_options);transform_write(m,at+0xb54,s.relation_offset);transform_write(m,at+0xb60,s.relation_parameter);
     transform_write(m,at+0xb64,s.command_angles);transform_write(m,at+0xb6c,s.movement_angles);transform_write(m,at+0xb70,s.forward_step);transform_write(m,at+0xb74,s.yaw_step);transform_write(m,at+0xb78,s.movement_remaining);transform_write(m,at+0xb7c,s.track_two_motion);m[at+0xb8b]=s.scale_profile;transform_write(m,at+0xc50,s.command_angle_copy);
+}
+void compare_roster_world(const g::World& world,const reo::native::gameplay_scenario::CutsceneRosterState& before,const reo::native::gameplay_scenario::CutsceneRosterState& after,std::int32_t mode){
+    static std::vector<std::uint8_t> roster_memory(0x2000000);auto* m=roster_memory.data();std::memset(m+0x38eca0,0,0x1800);std::memset(m+0x4a5c30,0,8*0x10e0);
+    transform_write(m,0x38ecd4,mode);transform_write(m,0x38ecdc,before.preferred_one_based);transform_write(m,0x38edcc,unsigned(before.roster.eligible_count));std::memcpy(m+0x38ed90,before.roster.characters.data(),8);std::memcpy(m+0x38ed88,before.source_slots.data(),8);std::memcpy(m+0x38ece8,before.source_statuses.data(),32);
+    transform_write(m,0x4baea0,*world.session().primary_population);transform_write(m,0x3243da,*world.scenario);transform_write(m,0x32440c,0x800000u);transform_write(m,0x324444,0x600000u);
+    for(unsigned i=0;i<8;++i){const auto actor=world.primary(i);const auto at=0x4a5c30+i*0x10e0;m[at+1]=1;transform_write(m,at+0xba0,actor->status);transform_write(m,at+0x1e2,actor->room);m[at+0xb98]=actor->character;m[at+3]=actor->slot;}
+    for(unsigned i=0;i<4;++i)m[0x4b9d01+3*i]=world.session().actor_placements.requests()[i].room;
+    R5900Context c;PS2Runtime runtime;c.pc=0x5ed340;SET_GPR_U32(&c,29,0x1f00000);SET_GPR_U32(&c,31,0xabcdef);reference_roster=true;original_transform_port(m,&c,&runtime);reference_roster=false;
+    check(c.pc==0xabcdef&&GPR_U32(&c,29)==0x1f00000&&after.roster.eligible_count==transform_read<unsigned>(m,0x38edcc)&&after.preferred_one_based==transform_read<unsigned>(m,0x38ecdc));
+    for(unsigned i=0;i<8;++i)check(after.roster.characters[i]==m[0x38ed90+i]&&after.source_slots[i]==m[0x38ed88+i]&&after.source_statuses[i]==transform_read<unsigned>(m,0x38ece8+4*i)&&world.primary(i)->visible==bool(m[0x4a5c30+i*0x10e0+1]));
+    ++roster_world_original_cases;
 }
 void compare_construction(const g::Actor& destination,const g::Actor& source,const g::Actor& actor,
     const reo::native::gameplay_scenario::CutscenePrimaryRoster& before,

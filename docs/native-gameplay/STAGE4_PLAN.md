@@ -106,6 +106,11 @@ verification. The latest user instruction is to keep the PC awake afterward.
   preferences beyond that count. Both compiler comparisons pass56,686 cases.
   Exit cleanup resets temporary records before slot retirement, reinforcing the
   need for independent resident resource ownership.
+- [Eligible roster preparation](CUTSCENE_ROSTER_PREPARATION.md) now preserves
+  the actual status/room filters, slot/status metadata, special branch and
+  preference remapping. Both compilers pass396,845 original projections and
+  365 World-backed comparisons. Complete cleanup, physical resource ownership
+  and scene entry/exit adoption remain open.
 - The [scene NPC loading-mode correction](CUTSCENE_NPC_CONSTRUCTION.md) separates
   asset-loading mode3243D7 from pause4BADF8. Paired current cohorts pass4,384 scene
   cases with independent inputs; the earlier fixture conflated the two and its
