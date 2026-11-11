@@ -94,6 +94,12 @@ Playback::Playback(std::shared_ptr<Instance> primary, bool second) : primary_(st
     if (second)
         secondary_ = PoseBlend::create_sibling(*primary_);
 }
+std::shared_ptr<Playback> Playback::clone_independent()const {
+    auto result=std::shared_ptr<Playback>(new Playback(*this));
+    if(primary_)result->primary_=std::make_shared<Instance>(*primary_);
+    if(secondary_)result->secondary_=std::make_shared<Instance>(*secondary_);
+    return result;
+}
 void Playback::replace_model(std::shared_ptr<Instance> model) {
     if (!model)
         throw std::invalid_argument("Native Playback replacement requires a canonical model");

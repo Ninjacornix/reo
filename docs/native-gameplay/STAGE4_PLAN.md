@@ -83,6 +83,10 @@ verification. The latest user instruction is to keep the PC awake afterward.
   preserves the complete required/optional fallback and roster-preference policy.
   Both compilers pass31,494 source-body comparisons, including all548 owned0950
   raw headers. Cloning, live binding/model handoff and full scene ownership remain open.
+- [Independent playback ownership](PLAYBACK_OWNERSHIP_COPIES.md) now preserves
+  animation snapshots with separate mutable model banks. Both compilers pass
+  1,288 original continuation comparisons,64 isolation cases and256 detached
+  copies. Typed Actor cloning, constraint/cache handoff and scene adoption remain open.
 - The [scene NPC loading-mode correction](CUTSCENE_NPC_CONSTRUCTION.md) separates
   asset-loading mode3243D7 from pause4BADF8. Paired current cohorts pass4,384 scene
   cases with independent inputs; the earlier fixture conflated the two and its

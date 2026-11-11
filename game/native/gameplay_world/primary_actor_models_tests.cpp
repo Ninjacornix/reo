@@ -16,6 +16,7 @@ std::uint64_t scene_cases{},scene_parameters{},scene_original_cases{};
 std::uint64_t retirements{},retirement_noops{},reloads{},detached_refusals{},retirement_original_cases{},generation_handoffs{};
 std::uint64_t entry_cases{},entry_retirements{},entry_original_cases{},entry_guard_checks{},entry_refusals{};
 std::uint64_t direct_guard_checks{};
+std::uint64_t independent_detached_copies{};
 void check(bool value,std::source_location at=std::source_location::current()){
     ++checks;if(!value)throw std::runtime_error(std::string("Primary model check ")+at.file_name()+":"+std::to_string(at.line()));
 }
@@ -105,9 +106,15 @@ void owned(const char* archive){
         check(std::memcmp(&history_before,&history_after,sizeof history_before)==0&&channel.timing.frame==3.25f&&channel.selector==17);
         bool detached_rejected{};try{(void)release_playback->advance_primary(0,1,0,{actor->root_motion_delta.x,actor->root_motion_delta.y,actor->root_motion_delta.z});}catch(const std::runtime_error&){detached_rejected=true;}
         check(detached_rejected&&channel.timing.frame==3.25f);++detached_refusals;
+        const auto detached_copy=release_playback->clone_independent();const auto copy_history=detached_copy->root_reference();
+        check(detached_copy!=release_playback&&!detached_copy->model()&&!detached_copy->secondary_model()&&detached_copy->secondary_bank_enabled()&&detached_copy->resources==release_playback->resources&&std::memcmp(&copy_history,&history_after,sizeof copy_history)==0);
+        detached_copy->channel(a::ModelBank::primary,0).selector=111;check(channel.selector==17);
+        bool copy_rejected{};try{(void)detached_copy->advance_primary(0,1,0,{actor->root_motion_delta.x,actor->root_motion_delta.y,actor->root_motion_delta.z});}catch(const std::runtime_error&){copy_rejected=true;}
+        check(copy_rejected&&detached_copy->channel(a::ModelBank::primary,0).timing.frame==3.25f);++independent_detached_copies;
         world.session().asset_loading_mode=std::uint8_t(loading);
         const auto reconstruction=g::PrimaryActorModels::prepare(owner.capture(id).value(),assets,content);const auto before_reload=keys(owner);const auto reloaded=owner.apply(*reconstruction,state);
         check(reloaded.status==g::PrimaryModelStatus::completed&&reloaded.replaced&&!reloaded.character_released&&actor->model!=release_model&&actor->animation==release_playback&&actor->animation->secondary_model());
+        check(!detached_copy->model()&&!detached_copy->secondary_model()&&detached_copy->channel(a::ModelBank::primary,0).selector==111&&channel.selector==17);
         compare_cache(before_reload,keys(owner),slot,actor->character,0,std::uint8_t(loading),world.paused,reloaded);++reloads;
         const auto restored_history=release_playback->root_reference();check(std::memcmp(&history_before,&restored_history,sizeof history_before)==0&&channel.timing.frame==3.25f);
         const auto pending=g::PrimaryActorModels::prepare(owner.capture(id).value(),assets,content);const auto pending_model=actor->model;
@@ -149,5 +156,5 @@ namespace {void compare_entry(const Keys&,const Keys&,const std::array<std::uint
 #endif
 int main(int argc,char** argv)try{
     basic();if(argc>=2){owned(argv[1]);owned_entry(argv[1]);}else check(argc==1);if(argc==3)owned_scenes(argv[1],argv[2]);else check(argc<=2);
-    std::cout<<"{\"direct_guard_checks\":"<<direct_guard_checks<<",\"entry_cases\":"<<entry_cases<<",\"entry_retirements\":"<<entry_retirements<<",\"entry_original_cases\":"<<entry_original_cases<<",\"entry_guard_checks\":"<<entry_guard_checks<<",\"entry_refusals\":"<<entry_refusals<<",\"retirements\":"<<retirements<<",\"retirement_noops\":"<<retirement_noops<<",\"reloads\":"<<reloads<<",\"detached_refusals\":"<<detached_refusals<<",\"retirement_original_cases\":"<<retirement_original_cases<<",\"generation_handoffs\":"<<generation_handoffs<<",\"checks\":"<<checks<<",\"loads\":"<<loads<<",\"reuses\":"<<reuses<<",\"replacements\":"<<replacements<<",\"shared_releases\":"<<shared_releases<<",\"refusals\":"<<refusals<<",\"original_cases\":"<<original_cases<<",\"original_calls\":"<<original_calls<<",\"scene_cases\":"<<scene_cases<<",\"scene_parameters\":"<<scene_parameters<<",\"scene_original_cases\":"<<scene_original_cases<<",\"game_run\":false}\n";
+    std::cout<<"{\"independent_detached_copies\":"<<independent_detached_copies<<",\"direct_guard_checks\":"<<direct_guard_checks<<",\"entry_cases\":"<<entry_cases<<",\"entry_retirements\":"<<entry_retirements<<",\"entry_original_cases\":"<<entry_original_cases<<",\"entry_guard_checks\":"<<entry_guard_checks<<",\"entry_refusals\":"<<entry_refusals<<",\"retirements\":"<<retirements<<",\"retirement_noops\":"<<retirement_noops<<",\"reloads\":"<<reloads<<",\"detached_refusals\":"<<detached_refusals<<",\"retirement_original_cases\":"<<retirement_original_cases<<",\"generation_handoffs\":"<<generation_handoffs<<",\"checks\":"<<checks<<",\"loads\":"<<loads<<",\"reuses\":"<<reuses<<",\"replacements\":"<<replacements<<",\"shared_releases\":"<<shared_releases<<",\"refusals\":"<<refusals<<",\"original_cases\":"<<original_cases<<",\"original_calls\":"<<original_calls<<",\"scene_cases\":"<<scene_cases<<",\"scene_parameters\":"<<scene_parameters<<",\"scene_original_cases\":"<<scene_original_cases<<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

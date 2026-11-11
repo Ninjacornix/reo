@@ -35,6 +35,11 @@ struct MotionClock {
 class Playback final {
   public:
     explicit Playback(std::shared_ptr<Instance>, bool secondary_bank = true);
+    Playback& operator=(const Playback&)=delete;
+    // Simulation-owner snapshot for a distinct actor lifetime. Mutable model
+    // banks/channels are independent; authored skeletons/clips/banks stay shared.
+    // Includes detached playback state. Allocation failure leaves this intact.
+    std::shared_ptr<Playback> clone_independent()const;
     const std::shared_ptr<Instance>& model() const noexcept {
         return primary_;
     }
@@ -89,6 +94,7 @@ class Playback final {
     }
 
   private:
+    Playback(const Playback&)=default;
     friend class gameplay_world::PrimaryActorModels;
     void replace_model_prepared(std::shared_ptr<Instance>,std::shared_ptr<Instance>);
     void retire_model()noexcept;
