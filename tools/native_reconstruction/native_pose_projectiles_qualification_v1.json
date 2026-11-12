@@ -1,0 +1,291 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "coverage": {
+    "llvm": {
+      "checks": 15677003,
+      "cases": 1572864
+    },
+    "gcc": {
+      "checks": 15677003,
+      "cases": 1572864
+    }
+  },
+  "receipts": {
+    "build-native-sjuni/pose-ground-flight-llvm-v7/receipt.json": {
+      "sha256": "b5e88fe2cfadf480b6d9c935acae299c38507450bc49357f0dfaeed0e678a88c",
+      "observed": {
+        "checks": 2065624,
+        "cases": 262144,
+        "retirements": 33178,
+        "floor_queries": 65536,
+        "packets": 65536,
+        "flares": 65536,
+        "trails": 65536,
+        "sounds": 33178,
+        "original_calls": 3539748,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/pose-timed-projectile-llvm-v4/receipt.json": {
+      "sha256": "616fe66294a23cf56cfbc186bd68de739a2b28d89cc0adf690f263eecea41442",
+      "observed": {
+        "checks": 4140006,
+        "cases": 327680,
+        "retirements": 98304,
+        "floor_queries": 41879,
+        "packets": 65382,
+        "trails": 90402,
+        "original_calls": 1580463,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/pose-forward-projectile-llvm-v3/receipt.json": {
+      "sha256": "5c33f895914d9ab15197eadf24f860b8192b9dfb7c4873d532b18a45c7f114aa",
+      "observed": {
+        "checks": 2819119,
+        "cases": 327680,
+        "retirements": 131072,
+        "visuals": 65536,
+        "sounds": 39,
+        "packets": 410,
+        "lights": 102,
+        "original_calls": 590375,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/pose-surface-follower-llvm-v1/receipt.json": {
+      "sha256": "9bdc788c5043c91e87bfce0166a7420f33885d1af42592f1a2af3e3b5183dc85",
+      "observed": {
+        "checks": 2129927,
+        "cases": 262144,
+        "retirements": 32768,
+        "visuals": 65536,
+        "floors": 65536,
+        "positioned": 65536,
+        "original_calls": 557056,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/pose-presets-llvm-v1/receipt.json": {
+      "sha256": "0dc6e82da218c1dfaeca4f57969f85b66cba72615780b36f7a297a03355b4adf",
+      "observed": {
+        "checks": 1245428,
+        "cases": 131072,
+        "allocations": 131072,
+        "packets": 65536,
+        "original_calls": 327680,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/pose-splitting-arc-llvm-v2/receipt.json": {
+      "sha256": "d9af86ffd8f80fc95a45b29cdc348ecd2c1bf55bd7665c92ce0d10499cf1958f",
+      "observed": {
+        "checks": 3276899,
+        "cases": 262144,
+        "retirements": 32771,
+        "floor_queries": 65536,
+        "packets": 65536,
+        "trails": 131072,
+        "sounds": 32771,
+        "presets": 131084,
+        "original_calls": 2784414,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/room-pose-projectiles-llvm-v2/receipt.json": {
+      "sha256": "bc5be1b01426547b399407f5209dfdc280fb08d656d536398aef6c4e5e0f98da",
+      "observed": {
+        "checks": 419,
+        "owned_banks": 6,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/pose-callbacks-current-llvm-v9/receipt.json": {
+      "sha256": "5bfd8ab1cdf79da84502babe7a9671a747dc8cda7e2638c6bb7df823dd4b4073",
+      "observed": {
+        "checks": 2233,
+        "owned_banks": 6,
+        "cloud_frames": 380,
+        "room_cases": 6,
+        "profile_refusals": 1,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/room-pose-projectiles-current-llvm-v1/receipt.json": {
+      "sha256": "3da4cbc86647485a584987bb1cc86f1fdbd8b640ec7df222f5e63a05e162c855",
+      "observed": {
+        "checks": 419,
+        "owned_banks": 6,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/dialogue-response-parents-llvm-v1/receipt.json": {
+      "sha256": "265f533ad2222f69b74982cd61641945a50aa472f098963ded3d3a6df5e8b0b5",
+      "parent_tests": 30
+    },
+    "build-native-sjuni/pose-ground-flight-gcc-v7/receipt.json": {
+      "sha256": "fd3c2f77b8e8c1c845c49a6661e4ce9eb3991d0c9606155c6af9b35e18e8487d",
+      "observed": {
+        "checks": 2065624,
+        "cases": 262144,
+        "retirements": 33178,
+        "floor_queries": 65536,
+        "packets": 65536,
+        "flares": 65536,
+        "trails": 65536,
+        "sounds": 33178,
+        "original_calls": 3539748,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/pose-timed-projectile-gcc-v4/receipt.json": {
+      "sha256": "d83b152f186bc6ed68b337839728e36c434a57087b5e2d0f7e9025f593236f0d",
+      "observed": {
+        "checks": 4140006,
+        "cases": 327680,
+        "retirements": 98304,
+        "floor_queries": 41879,
+        "packets": 65382,
+        "trails": 90402,
+        "original_calls": 1580463,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/pose-forward-projectile-gcc-v3/receipt.json": {
+      "sha256": "5f6e48641341eaa6bd9cd28cbc7a232e8de3fb5d52428d9125b56f66f187f413",
+      "observed": {
+        "checks": 2819119,
+        "cases": 327680,
+        "retirements": 131072,
+        "visuals": 65536,
+        "sounds": 39,
+        "packets": 410,
+        "lights": 102,
+        "original_calls": 590375,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/pose-surface-follower-gcc-v1/receipt.json": {
+      "sha256": "39f99b8d273e41edc2b10373c4fa5c790e4a4c05237df2b8fb2320d190c42ca0",
+      "observed": {
+        "checks": 2129927,
+        "cases": 262144,
+        "retirements": 32768,
+        "visuals": 65536,
+        "floors": 65536,
+        "positioned": 65536,
+        "original_calls": 557056,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/pose-presets-gcc-v1/receipt.json": {
+      "sha256": "e8c80f76b2385b2128dbcf3b9cf4833cc711e7a9341436e5a5dad058c7f12768",
+      "observed": {
+        "checks": 1245428,
+        "cases": 131072,
+        "allocations": 131072,
+        "packets": 65536,
+        "original_calls": 327680,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/pose-splitting-arc-gcc-v2/receipt.json": {
+      "sha256": "e6d1a52d718da7d33e2ed507e5836d14f52fdce30d0d46754c8721845310ff98",
+      "observed": {
+        "checks": 3276899,
+        "cases": 262144,
+        "retirements": 32771,
+        "floor_queries": 65536,
+        "packets": 65536,
+        "trails": 131072,
+        "sounds": 32771,
+        "presets": 131084,
+        "original_calls": 2784414,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/room-pose-projectiles-gcc-v2/receipt.json": {
+      "sha256": "6dc68cbc70669c44cc69113742d8265fcc280c80b808969e24133c33d3d804dd",
+      "observed": {
+        "checks": 419,
+        "owned_banks": 6,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/pose-callbacks-current-gcc-v9/receipt.json": {
+      "sha256": "5dc25e42ca8c48bd5a92175d2dae2cd8dd5287a7dc58b8b9aabbfc610585f4b9",
+      "observed": {
+        "checks": 2233,
+        "owned_banks": 6,
+        "cloud_frames": 380,
+        "room_cases": 6,
+        "profile_refusals": 1,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/room-pose-projectiles-current-gcc-v1/receipt.json": {
+      "sha256": "8d2effc29a4107d185d448b08a47fe6fc04e59022443bd9be9be299790295c2e",
+      "observed": {
+        "checks": 419,
+        "owned_banks": 6,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/dialogue-response-parents-gcc-v1/receipt.json": {
+      "sha256": "0c4c855ebe554433443a616d9a6e736539215600baf4156c4bc60d74dba7dada",
+      "parent_tests": 30
+    }
+  },
+  "production_and_verification_sha256": {
+    "docs/native-gameplay/POSE_PROJECTILES.md": "58a3bc9f7146f3a85e30f632bcd70ae0536036306b1920ecfe494e85f2d03a5d",
+    "game/native/gameplay_world/pose_callbacks_contract_tests.cpp": "d833ceb0ff7381a9268fa5f0c6ca2ae7d9011ff3be5fdcf013153651ad2c1a06",
+    "game/native/gameplay_world/pose_forward_projectile.cpp": "2b389d5587ce1f25c6716cbdf0d614190c725d7909880f37ae9a3db879a0be01",
+    "game/native/gameplay_world/pose_forward_projectile.hpp": "b024ca7c8ae7fc0d293eb5a3b07e632023482f1687eecb900996bdf974af9a04",
+    "game/native/gameplay_world/pose_ground_flight.cpp": "83baf4b270dae9c18ad3460ab96cf23c774b8fbd09941b89874bd4ef132c8e6b",
+    "game/native/gameplay_world/pose_ground_flight.hpp": "fea0b78c8ca536382bc6fa711d6d00803eb13349c5c802ae2d80278414e3da71",
+    "game/native/gameplay_world/pose_presets.cpp": "cab35030635b6f71897ab7b97523a452ee669a38e10d94b6fb896a72880f95b8",
+    "game/native/gameplay_world/pose_presets.hpp": "a9444393e5b53af06c680c610765aa5726559ff5890adfcce2eafdf88ca7d0fc",
+    "game/native/gameplay_world/pose_presets_policy.cpp": "7477aea502b3554f2cc4b35d1e1d9f80a82d17d705a8f6b9615f17f493e173f4",
+    "game/native/gameplay_world/pose_splitting_arc.cpp": "8fd4c811f4e7308baf0fac169966bdd19e40ea24c7fd90fc496bb31f01be6516",
+    "game/native/gameplay_world/pose_splitting_arc.hpp": "be366fe5d9164b9f4201b8d21b6c4024a7e658d5aeb0d19a0191f6b462fd44ce",
+    "game/native/gameplay_world/pose_surface_follower.cpp": "87f3a38b03495c3105800201561c15fac55f3a6117624b010ca1c30cdf217e26",
+    "game/native/gameplay_world/pose_surface_follower.hpp": "174c9371683c88e2085ed8c625797d7fbb843f97f3747682671bde5588dbf7d3",
+    "game/native/gameplay_world/pose_timed_projectile.cpp": "dedc7e6ce2a9258c8ac833bc095f74bea95166d336abb47ed86a69b9cc5d023d",
+    "game/native/gameplay_world/pose_timed_projectile.hpp": "e5475ca81a618d25bb98e7f6afacd200ea3aac2de9b270557a35455f70828044",
+    "game/native/gameplay_world/pose_timed_projectile_policy.cpp": "2a16ff6faafff9008947e9c2e6d119ef0abb3a78302d8251d5dd847827c10b56",
+    "game/native/gameplay_world/pose_timed_projectile_tables.inc": "ab2ffc2ca4e91aaa951f07311090e2a0653f3ba00c87648d807e655f030c676b",
+    "game/native/gameplay_world/pose_work_state.hpp": "4dd5f1aba8392cef815d8373aafd29356f0d978e974dab42207993d13523385d",
+    "game/native/gameplay_world/room_pose_projectiles.cpp": "b2212402d8eaf9639f41ac03547cd378a964d99525387c87556a543ee407b522",
+    "game/native/gameplay_world/room_pose_projectiles.hpp": "b4dbe41c3477f5bdb43f379484cfbb1be771d591378809ceb8e44b882e9c8bee",
+    "game/native/gameplay_world/room_pose_projectiles_contract_tests.cpp": "6bda3bbb028387bd823b264da3c008df2288c60f54814b0a341b7bd9d149662c",
+    "tools/native_reconstruction/pose_forward_projectile_tests.cpp": "55eca00da16b306a9d6e37a36bd7a5d165161bbb8f7d0a7088f13cf78f29e844",
+    "tools/native_reconstruction/pose_ground_flight_tests.cpp": "d66acc6257278a5af461b46cc2256a8ec00f8dc8fe124830d9fb5315ee396648",
+    "tools/native_reconstruction/pose_presets_tests.cpp": "c6603ae1fb17383dfd3c3374117cf0d2de79fad0fd1f49778da9d595d6975976",
+    "tools/native_reconstruction/pose_splitting_arc_tests.cpp": "c8118d4295aeefd239fdabedba9b6eb2d9245d78a85b95ef7993209ca61a6715",
+    "tools/native_reconstruction/pose_surface_follower_tests.cpp": "27cfed368404632b575ebda6fe9aa929506dbfecafc2978d95632e454bb67ad5",
+    "tools/native_reconstruction/pose_timed_projectile_tests.cpp": "5243ee4ac508f0aae558cac3d78a0dbbcd2b51dd9f4dbf63a232ee5e269f5655",
+    "tools/native_reconstruction/qualify_pose_projectiles.py": "328db93e7288e87bff5680b70cfb235c1fe2fdc54dadf2b9fa824f78ba0e4609",
+    "tools/native_reconstruction/verify_pose_callbacks_current.py": "62db9e4a0ab03ce234ef2522c38fd4eefdbe6275a5986a081a633a612ba5a981",
+    "tools/native_reconstruction/verify_pose_forward_projectile.py": "128e8d19726fa37f42b45dbe7473b219cb4a679607807acea81de24292da8484",
+    "tools/native_reconstruction/verify_pose_ground_flight.py": "e02ba2cd6154825ba2eeffc5b24937c5ded76b078b019cef65cc1a7892a4f741",
+    "tools/native_reconstruction/verify_pose_presets.py": "fb45ace8298a6f38babafa1058d1e54d8523dad92b75765abc9c0f3c3284af0d",
+    "tools/native_reconstruction/verify_pose_splitting_arc.py": "18ce64f25099cbbb7a5da015bbc014994a488ba408ee1c763047636cc35e9168",
+    "tools/native_reconstruction/verify_pose_surface_follower.py": "695ab56eb4b39859429651182347012495bb5acf05ed479262c3c88efb767b27",
+    "tools/native_reconstruction/verify_pose_timed_projectile.py": "ed84f2badcc9868aedcb540e0a7fa1f94de599a1b2ddba8c507055703f3ee3d7",
+    "tools/native_reconstruction/verify_room_pose_projectiles.py": "8446690afb06a7b2e0ec798663597c8c1d959c8d0b187fbd231c88705c5d4e91",
+    "tools/native_reconstruction/verify_room_pose_projectiles_current.py": "8003c0fc2134a561233afdcc85093fedd56a4b73b63ed536b4921d8112a2a620"
+  },
+  "cmake": {
+    "path": "game/native/gameplay_world/CMakeLists.txt",
+    "qualified_snapshot_sha256": "c7a161fa07db2d7434f0628c40b6874fe2473835987b0d80a483ad301c96dd4a",
+    "pose_target_block_sha256": "229d793f8873c3ba9529d6a7167e5890c8759f6ac30b93652e952821d9811a42"
+  },
+  "limits": [
+    "Optional non-null emitter/special visual/light/actual offset audio/parentCF2 providers remain explicit reached requirements.",
+    "Source callback parity plus bounded native room contracts do not establish full native application, installed gameplay or Stage4 acceptance."
+  ]
+}

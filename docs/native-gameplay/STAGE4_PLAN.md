@@ -4,6 +4,11 @@ Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification with multiple agents. The user is awake and has revoked the prior
 sleep request: finish Stage4 and do not put the PC to sleep afterward.
 
+- [Pose projectiles and presets](POSE_PROJECTILES.md) now supply the remaining
+  kind6/12/15/17/100 callback policies and real preset factory/room ownership.
+  Both compilers pass1,572,864 complete source cases and15,677,003 checks each,
+  plus current six-bank contracts. Actual special visual/light/audio metadata
+  consumers and full application/game acceptance remain open.
 - [Parent-gated pose flight](PARENT_POSE_FLIGHT.md) now supplies kind18 through
   the real pose/room/trail owners, including ordered source comparisons,
   invalid-launch retirement and explicit missing sound metadata refusal.

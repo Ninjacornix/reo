@@ -328,10 +328,12 @@ add_library(reo_native_pose_callbacks STATIC pose_cloud.cpp pose_cloud_policy.cp
 target_sources(reo_native_pose_callbacks PRIVATE pose_trail_admission.cpp pose_trail_effects.cpp)
 target_sources(reo_native_pose_callbacks PRIVATE inherited_pose_trails.cpp)
 target_sources(reo_native_pose_callbacks PRIVATE pose_parent_flight.cpp pose_parent_flight_policy.cpp)
+target_sources(reo_native_pose_callbacks PRIVATE pose_ground_flight.cpp pose_timed_projectile.cpp pose_timed_projectile_policy.cpp pose_forward_projectile.cpp pose_surface_follower.cpp pose_presets.cpp pose_presets_policy.cpp)
+target_sources(reo_native_pose_callbacks PRIVATE pose_splitting_arc.cpp room_pose_projectiles.cpp)
 
 target_compile_features(reo_native_pose_callbacks PUBLIC cxx_std_20)
 
-target_link_libraries(reo_native_pose_callbacks PUBLIC reo_native_pose_work reo_native_gameplay_lighting reo_native_periodic_visuals reo_native_gameplay_contact_world)
+target_link_libraries(reo_native_pose_callbacks PUBLIC reo_native_pose_work reo_native_gameplay_lighting reo_native_periodic_visuals reo_native_gameplay_contact_world reo_native_linked_flight_pose)
 add_executable(pose_callbacks_contract_tests pose_callbacks_contract_tests.cpp)
 
 target_link_libraries(pose_callbacks_contract_tests PRIVATE reo_native_pose_callbacks)
@@ -340,6 +342,13 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_compile_options(reo_native_pose_callbacks PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
     target_compile_options(pose_callbacks_contract_tests PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
 endif()
+add_executable(room_pose_projectiles_contract_tests room_pose_projectiles_contract_tests.cpp)
+target_link_libraries(room_pose_projectiles_contract_tests PRIVATE reo_native_pose_callbacks)
+add_test(NAME native_room_pose_projectiles_contract COMMAND room_pose_projectiles_contract_tests)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(room_pose_projectiles_contract_tests PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+endif()
+
 
 add_library(reo_native_dialogue STATIC dialogue_records.cpp dialogue_pool.cpp cached_dialogue_presentation.cpp dialogue_conditions.cpp dialogue_inventory_traits.cpp dialogue_partner_characters.cpp)
 target_compile_features(reo_native_dialogue PUBLIC cxx_std_20)

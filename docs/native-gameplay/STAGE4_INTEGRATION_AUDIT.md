@@ -374,3 +374,11 @@ nonzero branch and supplies the same optional8D value borrowed by dialogue.
 Owned r028 advances to153 at block2+2536. Zero63 remains a distinct required
 604310/6DDD70 asset-reset operation; the frontier inventory records that authored
 use separately instead of treating the opcode's positive branch as complete.
+
+The [pose projectile/preset checkpoint](POSE_PROJECTILES.md) now supplies typed
+policies for the remaining6/12/15/17/100 families and concrete room/pool/packet/
+trail/preset ownership. Both compilers pass the complete source cohorts and
+current contracts against all six owned effect banks. The optional special
+visual/light actions and actual actor audio metadata remain reached requirements;
+this checkpoint does not close the terminal frame services or native application
+installation/acceptance gates in the matrix above.

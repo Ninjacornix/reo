@@ -6,6 +6,8 @@
 #include "linked_pose_timing.hpp"
 #include "linked_updates.hpp"
 #include "pose_parent_flight.hpp"
+#include "pose_timed_projectile.hpp"
+#include "pose_presets.hpp"
 #include "resource_pose_work.hpp"
 #include "../gameplay_effects/periodic_visuals.hpp"
 #include <fstream>
@@ -79,6 +81,24 @@ int main(int argc,char** argv)try{
             check(custom_pool.update(&parent_flights).status==g::PoseWorkStatus::completed&&invalid->primary==255&&invalid->pose_work->lifetime==1&&invalid->visible);check(custom_pool.update(&parent_flights).status==g::PoseWorkStatus::completed&&!custom_pool.resolve(failed_launch)&&!invalid->visible);
             const auto audio_id=work(custom_pool,18);const auto audio_prefix=custom_pool.resolve(audio_id);audio_prefix->primary=1;audio_prefix->contact.related=custom_parent;const auto sampled_floor=real_rooms.room->floors.floor(*origin);audio_prefix->position={origin->x,sampled_floor.height-.5f,origin->z};
             check(custom_pool.update(&parent_flights).status==g::PoseWorkStatus::unavailable&&custom_pool.resolve(audio_id)&&audio_prefix->primary==1&&audio_prefix->sampled_surface_height==sampled_floor.height);check(custom_pool.reset()==g::PoseWorkStatus::completed);
+            // Actual shared pool, imported contact catalog, room geometry and
+            // retained linked-pass quantum compose the new kind17 path.
+            d::Packets projectile_packets;g::RoomTimedPoseProjectiles projectiles(*custom_world,custom_pool,real_rooms,projectile_packets,catalog,&mapped,&actual_quantum);
+            const auto projectile_id=work(custom_pool,17);const auto projectile=custom_pool.resolve(projectile_id);projectile->contact.related=custom_parent;projectile->position={origin->x,origin->y+100,origin->z};
+            for(unsigned frame=0;frame<8;++frame){check(custom_pool.update(&projectiles).status==g::PoseWorkStatus::completed);check(custom_visuals.update({0,1,0}).status==e::VisualStatus::completed);}
+            check(custom_pool.resolve(projectile_id)&&projectile->primary==1&&projectile->collision.radius==50&&projectile->collision.previous_radius==50);check(custom_pool.reset()==g::PoseWorkStatus::completed);
+            const auto parent_variant_id=work(custom_pool,17);const auto parent_variant=custom_pool.resolve(parent_variant_id);parent_variant->pose_work->variant=255;parent_variant->contact.related=custom_parent;
+            check(custom_pool.update(&projectiles).status==g::PoseWorkStatus::unavailable&&parent_variant->primary==1&&parent_variant->subphase==0&&parent_variant->pose_work->timer==0);check(custom_pool.reset()==g::PoseWorkStatus::completed);
+            const auto contact_projectile_id=work(custom_pool,17);const auto stopped=custom_pool.resolve(contact_projectile_id);stopped->primary=1;stopped->contact.serial=1;
+            check(custom_pool.update(&projectiles).status==g::PoseWorkStatus::completed&&stopped->primary==3&&stopped->subphase==2&&(stopped->auxiliary_status&1));check(custom_pool.update(&projectiles).status==g::PoseWorkStatus::completed&&!custom_pool.resolve(contact_projectile_id)&&!stopped->visible);
+            const auto deadline_id=work(custom_pool,17);const auto deadline=custom_pool.resolve(deadline_id);deadline->primary=2;deadline->pose_work->timer=0;deadline->visible=true;
+            check(custom_pool.update(&projectiles).status==g::PoseWorkStatus::completed&&!custom_pool.resolve(deadline_id)&&!deadline->visible&&(deadline->auxiliary_status&1));
+            g::PresetPoseWork presets(*custom_world,custom_pool,projectile_packets,catalog);parent_actor->room=7;const auto preset_basis=reo::native::transform_math::identity();const std::array<std::int16_t,4> preset_angles{1,-2,3,-4};
+            const auto preset=presets.create(custom_parent,preset_basis,{1,2,3},preset_angles,7,3);check(preset.status==g::PoseWorkStatus::completed&&bool(preset.work));const auto preset_actor=custom_pool.resolve(preset.work);
+            check(preset_actor->pose_work->kind==13&&preset_actor->pose_work->variant==3&&preset_actor->pose_work->selector==255&&preset_actor->pose_work->lifetime==180&&preset_actor->pose_work->ordinal==1&&preset_actor->orientation==preset_angles&&preset_actor->contact.related==custom_parent&&preset_actor->pose_work->emitter_owner==custom_parent);check(custom_pool.reset()==g::PoseWorkStatus::completed);
+            parent_actor->room=8;check(presets.create(custom_parent,preset_basis,{},preset_angles,0,0).status==g::PoseWorkStatus::completed&&custom_pool.remaining()==64);parent_actor->room=7;
+            const auto negative=presets.create(custom_parent,preset_basis,{},preset_angles,1,0);check(negative.status==g::PoseWorkStatus::unavailable&&custom_pool.resolve(negative.work)&&custom_pool.resolve(negative.work)->pose_work->kind==5&&custom_pool.remaining()==63);check(custom_pool.reset()==g::PoseWorkStatus::completed);
+            for(unsigned slot=0;slot<64;++slot){check(custom_pool.allocate().status==g::PoseWorkStatus::completed);}check(presets.create(custom_parent,preset_basis,{},preset_angles,0,0).status==g::PoseWorkStatus::full);check(custom_pool.reset()==g::PoseWorkStatus::completed);
             custom_visuals.close();check(!inherited.bound_to(*custom_world));
             const auto floor=real_rooms.room->floors.floor(*origin);const auto arc_id=work(owned_pool,13);auto arc=owned_pool.resolve(arc_id);arc->primary=1;arc->position={origin->x,floor.height-.5f,origin->z};check(owned_pool.update(&real_arcs).status==g::PoseWorkStatus::completed&&!owned_pool.resolve(arc_id)&&arc->sampled_surface_height==floor.height&&arc->position.y==floor.height);
             const auto stale_id=work(owned_pool,13);arc=owned_pool.resolve(stale_id);arc->primary=1;check(real_rooms.room->ids.retire(real_rooms.room->id.entity)==g::actors::EntityStatus::completed);check(owned_pool.update(&real_arcs).status==g::PoseWorkStatus::unavailable&&owned_pool.resolve(stale_id));check(owned_pool.reset()==g::PoseWorkStatus::completed);++banks;++room_cases;
