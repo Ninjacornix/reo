@@ -204,6 +204,12 @@ predicate bindings and the real offline AI profile owner. Coverage becomes
 360/333 while full-bank admission stays31/26. Current five-EVB import
 frontiers are ordinary170/156/108/D0 and offline1A5/156; all remain required
 closure work before a complete scenario bootstrap can be claimed.
+The [156/1A5 cut](ACTOR_SCRIPT_PREDICATES_AND_COUNTER.md) subsequently qualifies
+all actor predicate branches and the real fixed-eight AI counter command.
+Coverage reaches361/335; admission remains31/26. All five ordinary EVB
+frontiers are now170/D0/108, and all five offline frontiers are1A8. These
+remain concrete unsupported authored-content uses rather than evidence of
+complete scenario execution.
 
 The native asset/primary initialization/cache, temporary primary/NPC/object
 ownership, typed tracks, object motion-bank loading and new _H.BIN resource

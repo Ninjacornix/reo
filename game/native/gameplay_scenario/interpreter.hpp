@@ -78,7 +78,7 @@ public:
     bool admits_script_audio(const ScriptAudio*,const gameplay_world::World*)const noexcept;
     bool needs_scene_record_parameters()const noexcept{return scene_record_parameters_;}
     bool admits_scene_record_parameters(const gameplay_world::World*,const gameplay_update::GameplayMessageSink*)const noexcept;
-    bool admits_actor_script_commands(const gameplay_world::World*)const noexcept;
+    bool admits_actor_script_commands(const gameplay_world::World*,const FlagState* = nullptr)const noexcept;
     bool needs_scenario_counter_policy()const noexcept{return scenario_counter_policy_;}
     bool admits_room_counters(const gameplay_world::World*)const noexcept;
     bool admits_inventory_grants(const gameplay_world::World*,const SceneResources*,const ResourceTemplates*)const noexcept;
@@ -106,6 +106,9 @@ private:
     std::vector<std::uint32_t> room_actor_selectors_;
     struct ActorProfileRequest {std::uint32_t mode{},selector{};std::int32_t profile{};};
     std::vector<ActorProfileRequest> actor_profile_requests_;
+    struct ActorConditionRequest {std::uint32_t mode{},selector{},query{},parameter{};};
+    std::vector<ActorConditionRequest> actor_condition_requests_;
+    bool actor_ai_counter_{};
     DispatchProfile profile_{};
 };
 struct Channel {

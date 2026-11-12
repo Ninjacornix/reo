@@ -1,0 +1,445 @@
+{
+  "schema": "reo.native.actor_script_predicates.qualification.v1",
+  "status": "passed",
+  "source_sha256": {
+    "game/native/gameplay_scenario/interpreter.cpp": "828439aafee5b98000e6986d6389f6c3f76e7078a24cdc6f64edb2b43bbaed60",
+    "game/native/gameplay_scenario/interpreter.hpp": "b5c65ae64c926e01ab919f0fef912e77fc37ddb9fff0afa8f2d47a10c66c5c34",
+    "game/native/gameplay_scenario/actor_script_predicates.hpp": "cca43d1a374c6b22794ade71c1c061efbd85b2d568e87c5b48f0b897e1119b2b",
+    "tools/native_reconstruction/gameplay_scenario/tests.cpp": "0075ec70abcdf1227909678da2c70013c47ff87d6fdcdb2211341961c973649a",
+    "tools/native_reconstruction/gameplay_scenario/actor_predicate_vm_tests.inc": "51a7579ca17962e01d266a80a9fd8a9a2952677e05af4d23010ab3d420c20363",
+    "tools/native_reconstruction/gameplay_scenario/verify.py": "3ac902ec6a9d91c13c68491283fddd003e7121d47d5281221c8cf4b987c5e78c",
+    "tools/native_reconstruction/gameplay_scenario/verify_scene_record_eligibility_admission.py": "3c97750bde86a69478799071a00c230a955c2a2c17fc9f8bf77d56e05ef99302",
+    "docs/native-gameplay/ACTOR_SCRIPT_PREDICATES_AND_COUNTER.md": "943e9af986b1f24ceb27be4e0e02bd45c5a29ca871d476d28cbed32b15d1984e",
+    "docs/native-gameplay/STAGE4_INTEGRATION_AUDIT.md": "02c5c7236f02a294ff7f76a540e5cea8962b5e5cbc461fa281d262b56b5fd44e"
+  },
+  "cohorts": [
+    {
+      "compiler": "llvm",
+      "full_interpreter": {
+        "receipt": {
+          "path": "build-native-sjuni/actor-predicates-ai-counter-vm-llvm-v2/receipt.json",
+          "sha256": "cbf26329084ec82b52bcbbb6e6bedd1f93c1e3c8a11df9e5d4c29f9d1fb1cb9d"
+        },
+        "result": {
+          "checks": 565098958,
+          "actor_condition_dispatches": 58432,
+          "actor_ai_counter_dispatches": 2560,
+          "actor_predicate_refusals": 8,
+          "script_audio_vm_dispatches": 11340,
+          "scene_record_parameter_dispatches": 4032,
+          "actor_room_dispatches": 4096,
+          "actor_profile_dispatches": 5880
+        },
+        "checked_owned_instruction_comments": 11486
+      },
+      "owned_program_admission": {
+        "receipt": {
+          "path": "build-native-sjuni/actor-predicates-ai-counter-admission-llvm-v2/receipt.json",
+          "sha256": "d1965ce351648018d121f41d1fc3090a3ffe2583f689fe721d81c1fdf2476b59"
+        },
+        "baseline_commit": "368b653d",
+        "baseline_header_sha256": "a9334b84887781ecc5ef9d128c5ffcc65850537cfc3a3acf062300c71d604730",
+        "baseline_probe_uses_matching_header": true,
+        "admitted": {
+          "before": [
+            31,
+            26
+          ],
+          "after": [
+            31,
+            26
+          ]
+        },
+        "evbs": [
+          {
+            "name": "r001.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 1748,
+                "opcode": 368
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3444,
+                "opcode": 421
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 1748,
+                "opcode": 368
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3460,
+                "opcode": 424
+              }
+            ]
+          },
+          {
+            "name": "r002.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3480,
+                "opcode": 342
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3480,
+                "opcode": 342
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 20,
+                "opcode": 208
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4100,
+                "opcode": 424
+              }
+            ]
+          },
+          {
+            "name": "r028.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 288,
+                "opcode": 264
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2216,
+                "opcode": 421
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 288,
+                "opcode": 264
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2232,
+                "opcode": 424
+              }
+            ]
+          },
+          {
+            "name": "r035.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 212,
+                "opcode": 208
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2668,
+                "opcode": 421
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 212,
+                "opcode": 208
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2684,
+                "opcode": 424
+              }
+            ]
+          },
+          {
+            "name": "r041.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4844,
+                "opcode": 342
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4844,
+                "opcode": 342
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 20,
+                "opcode": 208
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 5852,
+                "opcode": 424
+              }
+            ]
+          }
+        ],
+        "post_snapshot_live_header_drift": {
+          "game/native/gameplay_world/world.hpp": "e551ef34a9707f91b19268f5b7c774cdd8a5f5c3445ce04b93f2b640522bd9f1"
+        }
+      },
+      "current_parents": {
+        "receipt": {
+          "path": "build-native-sjuni/actor-predicates-ai-counter-parents-llvm-v1/receipt.json",
+          "sha256": "82b60d3e2858162e98d790b5de074236ed5e564ace3795046796945934811e9d"
+        },
+        "parent_tests": 16,
+        "source_drift": {}
+      }
+    },
+    {
+      "compiler": "gcc",
+      "full_interpreter": {
+        "receipt": {
+          "path": "build-native-sjuni/actor-predicates-ai-counter-vm-gcc-v2/receipt.json",
+          "sha256": "484f65d38c30ed1ef04b0e7277f34107150357a8a0890a8f98cd8791482cff45"
+        },
+        "result": {
+          "checks": 565098958,
+          "actor_condition_dispatches": 58432,
+          "actor_ai_counter_dispatches": 2560,
+          "actor_predicate_refusals": 8,
+          "script_audio_vm_dispatches": 11340,
+          "scene_record_parameter_dispatches": 4032,
+          "actor_room_dispatches": 4096,
+          "actor_profile_dispatches": 5880
+        },
+        "checked_owned_instruction_comments": 11486
+      },
+      "owned_program_admission": {
+        "receipt": {
+          "path": "build-native-sjuni/actor-predicates-ai-counter-admission-gcc-v2/receipt.json",
+          "sha256": "1b3de2ae5299f66a5df3938a59e6670ce42348bd0503a518f088a6fbc893e0a3"
+        },
+        "baseline_commit": "368b653d",
+        "baseline_header_sha256": "a9334b84887781ecc5ef9d128c5ffcc65850537cfc3a3acf062300c71d604730",
+        "baseline_probe_uses_matching_header": true,
+        "admitted": {
+          "before": [
+            31,
+            26
+          ],
+          "after": [
+            31,
+            26
+          ]
+        },
+        "evbs": [
+          {
+            "name": "r001.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 1748,
+                "opcode": 368
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3444,
+                "opcode": 421
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 1748,
+                "opcode": 368
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3460,
+                "opcode": 424
+              }
+            ]
+          },
+          {
+            "name": "r002.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3480,
+                "opcode": 342
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3480,
+                "opcode": 342
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 20,
+                "opcode": 208
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4100,
+                "opcode": 424
+              }
+            ]
+          },
+          {
+            "name": "r028.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 288,
+                "opcode": 264
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2216,
+                "opcode": 421
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 288,
+                "opcode": 264
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2232,
+                "opcode": 424
+              }
+            ]
+          },
+          {
+            "name": "r035.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 212,
+                "opcode": 208
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2668,
+                "opcode": 421
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 212,
+                "opcode": 208
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2684,
+                "opcode": 424
+              }
+            ]
+          },
+          {
+            "name": "r041.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4844,
+                "opcode": 342
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4844,
+                "opcode": 342
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 20,
+                "opcode": 208
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 5852,
+                "opcode": 424
+              }
+            ]
+          }
+        ],
+        "post_snapshot_live_header_drift": {
+          "game/native/gameplay_world/world.hpp": "e551ef34a9707f91b19268f5b7c774cdd8a5f5c3445ce04b93f2b640522bd9f1"
+        }
+      },
+      "current_parents": {
+        "receipt": {
+          "path": "build-native-sjuni/actor-predicates-ai-counter-parents-gcc-v1/receipt.json",
+          "sha256": "bd38cf9a6ff848c17182ce154cc92aca7596f4f5c6183f1c58df663e95fa1f0e"
+        },
+        "parent_tests": 16,
+        "source_drift": {}
+      }
+    }
+  ],
+  "source_scope": [
+    "Both original complete handler bodies,666080, mode getters and actual dispatcher/control-scan execute in the full VM comparison with the exact owned8-entry query table.",
+    "Current16-parent cohorts include final prepared stream/controller and close-lifetime guard, model/postprocess worker adapters and all previous14parents.",
+    "After shared-source freeze was released, World.hpp gained only AuxiliaryActorPostprocess/PrimaryRecordsInitialized forward declarations and corresponding friend declarations; exact admission receipts retain that later live drift. No fields or behavior changed in the inspected diff.",
+    "Historical baseline admission now compiles the before implementation and probe against the baseline Program header without rewriting historical source or mixing private Program layouts."
+  ],
+  "limitations": [
+    "Native primary population/physical extent is0..8. Unknown population and required missing canonical actor/AI/flag capabilities refuse before initial script effects.",
+    "All171 owned banks checked:31ordinary/26offline admitted. All5EVBs still refuse later source semantics.",
+    "No installed gameplay, complete native session bootstrap, input/network/media acceptance, semantic save adoption or Stage4 completion is claimed."
+  ],
+  "game_launched": false,
+  "installed_in_game": false,
+  "stage4_complete": false
+}
