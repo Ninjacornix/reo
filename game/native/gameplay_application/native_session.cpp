@@ -9,8 +9,8 @@ namespace reo::native::gameplay_application {
 namespace {
 namespace scenario=gameplay_scenario;
 bool minimal_room_providers(const scenario::Program& program)noexcept{
-    // This concrete initial composition admits the seven providers required by
-    // owned r0417300. Other existing owners will be attached explicitly as the
+    // This concrete composition admits the retained room providers and the
+    // canonical Update event factory. Other owners are attached explicitly as the
     // application expands; a parser-admitted program alone is insufficient.
     return !program.needs_flags()&&!program.needs_timers()&&!program.needs_actor_events()&&
         !program.needs_signals()&&!program.needs_scene_resources()&&!program.needs_session_counters()&&
@@ -126,6 +126,7 @@ gameplay_scenario::Providers NativeSession::providers()noexcept{
     result.action_choices=&update_.action_choices();result.sequences=&sequences_;
     result.lighting=&lighting_;result.scene_channels=&channels_;result.scene_controls=&room_state_->controls;
     result.control_effects=room_state_.get();
+    result.scenario_events=&update_.scenario_events();
     return result;
 }
 SessionStatus NativeSession::install_room(gameplay_scenario::content::RoomId id){

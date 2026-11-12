@@ -16,6 +16,11 @@ std::shared_ptr<EventTasks::Node> EventTasks::find(const Handle& handle) const n
     return node && node->handle.serial_ == handle.serial_ ? node : nullptr;
 }
 bool EventTasks::contains(const Handle& handle) const noexcept { return bool(find(handle)); }
+std::optional<EventView> EventTasks::slot(std::size_t bank,std::size_t slot)const noexcept{
+    if(bank>=banks||slot>=slots_per_bank)return{};
+    const auto& node=slots_[bank*slots_per_bank+slot];
+    return node?std::optional<EventView>{{node->handle,node->enabled,node->task}}:std::nullopt;
+}
 Created EventTasks::install(std::size_t bank, std::size_t slot, std::shared_ptr<EventTask> task) noexcept {
     if (closed_) return {Status::closed, {}};
     if (clearing_) return {Status::busy, {}};

@@ -21,7 +21,7 @@ remain acceptance boundaries.
 | Required cut | Already implemented, to reuse | Missing production ownership / evidence |
 |---|---|---|
 | Application/session entry | `NativeSession` owns canonical World, Session, Update, archive, script providers, reception, lighting and retained room graph; `SessionStartup` borrows it | Running-game selection of this owner, source-backed launch configuration/placement and complete shutdown across the remaining hosts. |
-| Scenario/room preparation | Actual owned `r0417300` room installation and script stepping; real `_H.BIN` ordinal reads; retained room generations and canonical object publication/reception | Complete ordinary scenario EVB admission. Current frontiers include D1/D0/108; offline1A8 remains distinct. All five EVBs still encounter unsupported semantics. |
+| Scenario/room preparation | Actual owned `r0417300` room installation and script stepping; real `_H.BIN` ordinal reads; retained room generations and canonical object publication/reception; D1 kind6 owns the actual countdown event in Update | Complete ordinary scenario EVB admission. Current frontiers include EE/D0/108; offline1A8 remains distinct. All five EVBs still encounter unsupported semantics. The D1 frontier audit finds77 unsupported ordinary instructions using13 distinct opcodes across4,837 authored role0 records. |
 | Primary actor/model startup | `SessionStartup`, `PrimaryActorModels::start_roster`, real actor/model/motion assets and construction/restore owners; actual actor voice and dialogue owners | Compose remaining startup effects and initial motion capabilities against the application; establish authored launch-room/roster/placement producers, rather than infer them from the controlled roster-kind fixture. |
 | Shared room records/models | Actual common Records identity, `RoomSceneOwner`, `RoomModels` persistent saved bank and static NBD poses, `SceneModelBindings`, complete object `Scene` construction/retirement | Qualify broader owned physical rooms through full script admission and actual gameplay scheduling. Unavailable loaded model poses/parts and unsupported retirement bindings still refuse. |
 | Ordinary update | `Owner::advance` owns pause/transition gates, worker ordering, script/task/timer ordering and clock commit | Concrete terminal `PhaseServices` implementation. Existing CollisionWorkers, LinkedModelWorkers and NpcActorWorkers are decorators that forward unowned work. |
@@ -35,6 +35,14 @@ remain acceptance boundaries.
 | Acceptance/build | Dual-compiler component oracles and native CMake target graph | Candidate linking and selecting the native game owner; owned launch/gameplay/room changes/cinematics/pause/exit/save-resume/error-recovery runs, input/transport/media acceptance, final source/build identity and joined shutdown. |
 
 ## Initial provider audit and checkpoint history
+
+The B99/B9B integration audit found two distinct existing owners: B99 is
+`Actor::motion_style`, already established by actual primary initialization
+and motion-resource selection; B9B is inherited `HealthState::class_marker`,
+used by health classification and hit processing. Dialogue prefix consumers
+must use `motion_style`. Reusing the health marker for the dialogue fixture
+would couple separately qualified source offsets and is not an admissible
+canonical-state mapping.
 
 The following detailed inventory records the original `bc5d18b2` audit and
 subsequent closure checkpoints. The matrix above is the current integration

@@ -24,6 +24,7 @@ public:
     virtual ~EventTask() = default;
     virtual void update(EventTasks&, const Handle&, EventContext) noexcept = 0;
 };
+struct EventView {Handle handle;bool enabled{};std::shared_ptr<EventTask> task;};
 class EventTasks {
 public:
     static constexpr std::size_t banks = 3, slots_per_bank = 10;
@@ -35,6 +36,8 @@ public:
     Status erase(const Handle&) noexcept;
     Status enabled(const Handle&, bool) noexcept;
     bool contains(const Handle&) const noexcept;
+    std::optional<EventView> slot(std::size_t bank,std::size_t slot)const noexcept;
+    bool open()const noexcept{return !closed_;}
     std::size_t size() const noexcept { return size_; }
     PassResult run(EventMode, OwnerSelection&) noexcept;
     Status clear() noexcept;

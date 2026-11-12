@@ -42,6 +42,7 @@ IDS += ['00693300','00666080','00702650']
 IDS += ['00693920','00702A60']
 IDS += ['006949A0','005B4380','005B1850','00591BE0','005F2180','005F2120','005F22C0','005B1A90','00590D80']
 IDS += ['00694D70','00592E90','00591400','00590C70','00590BE0']
+IDS += ['00691010','005B92B0']
 
 PINNED={};PIN_COMMITS={}
 def source_bytes(p):
@@ -139,6 +140,8 @@ def main(a):
     profile_bytes=ai_raw[0x828a60-0x810000:0x828a60-0x810000+20*56]
     initialization+='inline void owned_ai_profile_constants(std::uint8_t* p){const std::array<std::uint8_t,1120> b{'+','.join(str(x)for x in profile_bytes)+'};std::memcpy(p+0x828a60,b.data(),b.size());}\n'
     declarations.append(initialization)
+    event_tables=raw[0x70a180-0x570000:0x70a1e0-0x570000]
+    declarations.append('inline void owned_scenario_event_constants(std::uint8_t* p){const std::array<std::uint8_t,96> bytes{'+','.join(str(v)for v in event_tables)+'};std::memcpy(p+0x70a180,bytes.data(),bytes.size());}')
     actor_queries=struct.unpack_from('<8I',raw,0x7408f0-0x570000)
     assert actor_queries==(0x693a44,0x693a8c,0x693ad4,0x693b80,0x693b2c,0x693b58,0x693ae8,0x693bc0)
     declarations.append('inline constexpr std::array<std::uint32_t,8> original_actor_query_table{'+','.join(hex(x)for x in actor_queries)+'};')
@@ -219,6 +222,7 @@ def main(a):
     shutil.copyfile(HERE/'actor_predicate_vm_tests.inc',out/'actor_predicate_vm_tests.inc')
     shutil.copyfile(HERE/'script_resource_parameter_vm_tests.inc',out/'script_resource_parameter_vm_tests.inc')
     shutil.copyfile(HERE/'script_resource_activation_vm_tests.inc',out/'script_resource_activation_vm_tests.inc')
+    shutil.copyfile(HERE/'scenario_events_vm_tests.inc',out/'scenario_events_vm_tests.inc')
     shutil.copyfile(HERE/'periodic_control_vm_tests.inc',out/'periodic_control_vm_tests.inc')
     shutil.copyfile(HERE/'room_rule_tests.inc',out/'room_rule_tests.inc')
     shutil.copyfile(HERE/'room_object_vm_tests.inc',out/'room_object_vm_tests.inc')
@@ -249,6 +253,7 @@ def main(a):
     units += [('script_audio',ROOT/'game/native/gameplay_scenario/script_audio.cpp')]
     units += [('resource_collisions',ROOT/'game/native/gameplay_scenario/resource_collisions.cpp'),('weapon_curve',ROOT/'game/native/animation/weapon_program.cpp')]
     units += [('script_resource_parameters',ROOT/'game/native/gameplay_scenario/script_resource_parameters.cpp'),('script_resource_activation',ROOT/'game/native/gameplay_scenario/script_resource_activation.cpp')]
+    units += [(name,ROOT/'game/native/gameplay_scenario'/(name+'.cpp'))for name in ['scenario_events','timer_hud']]
     units += [('resource_owner_'+name,ROOT/'game/native/gameplay_world'/(name+'.cpp')) for name in ['resource_frames','resource_factory','resource_static_assets','inventory']]
     units += [('ai_execution',ROOT/'game/native/gameplay_ai/execution.cpp')]
     units += [('audio_'+name,ROOT/'game/native/gameplay_audio'/(name+'.cpp')) for name in ('routing','import','spatial','owner','scenario_cues')]
@@ -266,7 +271,19 @@ def main(a):
         for i,name in enumerate(SURFACE_WORLD_UNITS+['game/native/gameplay_scenario/fog.cpp']):
             path=ROOT/name
             if path not in [p for _,p in units]:units.append(('surface_dependency_'+str(i),path))
-    source_paths=[HERE/'no_model_vm_tests.inc',HERE/'actor_request_vm_tests.inc',HERE/'room_object_vm_tests.inc',HERE/'tests.cpp',HERE/'offline_tests.inc',HERE/'room_rule_tests.inc',HERE/'scene_vm_fixture.inc',HERE/'sequence_vm_fixture.inc',HERE/'lighting_vm_fixture.inc',HERE/'control_vm_fixture.inc',HERE/'stream_vm_fixture.inc',HERE/'actor_vm_fixture.inc',HERE/'model_vm_fixture.inc',reference,HERE/'verify.py',ROOT/'game/native/gameplay_tasks/tasks.hpp',ROOT/'game/native/gameplay_tasks/tasks.cpp',ROOT/'game/native/gameplay_actors/entity.hpp',ROOT/'game/native/gameplay_actors/entity.cpp',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_runtime_macros.h',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h']
+    # D1's private factory is created only by the actual canonical Update Owner.
+    # Retain its real CMake archives and complete source/header identity; no
+    # permissive test-only construction or successful provider port is added.
+    import sys
+    sys.path.insert(0,str(ROOT/'tools/native_reconstruction'))
+    from verify_native_session import dependency_sources
+    native_build=ROOT/'build-native-sjuni'/('gameplay-native-llvm-v1'if 'clang' in cc.name else'gameplay-native-gcc-v1')
+    native_closure,native_libraries=dependency_sources(native_build)
+    library_hashes={name:hashlib.sha256((native_build/name).read_bytes()).hexdigest()for name in native_libraries}
+    for name in native_libraries:
+        target=out/'libraries'/name;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes((native_build/name).read_bytes())
+        assert hashlib.sha256(target.read_bytes()).hexdigest()==library_hashes[name],name
+    source_paths=[*native_closure,HERE/'no_model_vm_tests.inc',HERE/'actor_request_vm_tests.inc',HERE/'room_object_vm_tests.inc',HERE/'tests.cpp',HERE/'offline_tests.inc',HERE/'room_rule_tests.inc',HERE/'scene_vm_fixture.inc',HERE/'sequence_vm_fixture.inc',HERE/'lighting_vm_fixture.inc',HERE/'control_vm_fixture.inc',HERE/'stream_vm_fixture.inc',HERE/'actor_vm_fixture.inc',HERE/'model_vm_fixture.inc',reference,HERE/'verify.py',ROOT/'game/native/gameplay_tasks/tasks.hpp',ROOT/'game/native/gameplay_tasks/tasks.cpp',ROOT/'game/native/gameplay_actors/entity.hpp',ROOT/'game/native/gameplay_actors/entity.cpp',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_runtime_macros.h',ROOT/'third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h']
     source_paths += [path for label,path in units if not path.is_relative_to(ROOT/'build-native-sjuni')]
     source_paths.append(HERE/'periodic_control_vm_tests.inc')
     source_paths.append(HERE/'room_variant_vm_tests.inc')
@@ -293,6 +310,8 @@ def main(a):
     source_paths.append(HERE/'actor_predicate_vm_tests.inc')
     source_paths.append(HERE/'script_resource_parameter_vm_tests.inc')
     source_paths.append(HERE/'script_resource_activation_vm_tests.inc')
+    source_paths.append(HERE/'scenario_events_vm_tests.inc')
+    source_paths.append(ROOT/'tools/native_reconstruction/comparison_objects.py')
     source_paths += [HERE/'surface_vm_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]
     source_paths += [ROOT/'game/native/transform_math/transform_math.hpp',ROOT/'game/native/transform_math/transform_math.cpp']
@@ -335,10 +354,12 @@ def main(a):
     os.environ['PATH']=str(cc.parent)+os.pathsep+os.environ.get('PATH','');base=[str(cc),'-std=c++20','-O2','-msse4.1','-pthread','-fno-fast-math','-ffp-contract=off','-I'+str(out/'source'),'-I'+str(out)]
     if a.pin_effects_commit:base+=['-DREO_VM_PINNED_EFFECTS=1']
     checks=[invoke(base+['-w','-c',str(out/'original.cpp'),'-o',str(out/'original.o')],out,'compile-original')]
-    for label,path in units:
-        frozen=out/'source'/path.relative_to(ROOT)if not path.is_relative_to(ROOT/'build-native-sjuni')else path
-        checks.append(invoke(base+['-Wall','-Wextra','-Wpedantic','-Werror','-c',str(frozen),'-o',str(out/(label+'.o'))],out,'compile-'+label))
-    checks.append(invoke([str(cc)]+[str(out/'original.o')]+[str(out/(n+'.o')) for n,p in units]+['-o',str(out/'checks.exe')],out,'link'))
+    from comparison_objects import compile_objects
+    native_names=[path.relative_to(ROOT).as_posix()for _,path in units if path.is_relative_to(ROOT/'game/native')]
+    frozen={name:(out/'source'/name).read_bytes()for name in before}
+    objects,production_objects=compile_objects(ROOT,out,cc,base[1:]+['-Wall','-Wextra','-Wpedantic','-Werror'],native_names,frozen,dict(os.environ))
+    checks.append(invoke(base+['-Wall','-Wextra','-Wpedantic','-Werror','-c',str(out/'tests.cpp'),'-o',str(out/'tests.o')],out,'compile-tests'))
+    checks.append(invoke([str(cc),str(out/'original.o'),*objects,str(out/'tests.o'),'-Wl,--start-group']+[str(out/'libraries'/name)for name in native_libraries]+['-Wl,--end-group','-lpthread','-o',str(out/'checks.exe')],out,'link'))
     checks.append(invoke([str(out/'checks.exe'),str(out/'owned_effect_geometry.bin'),str(policy_path),str(stock_path),str(out/'owned_enemy_members.bin')],out,'test'));assert all(sha(ROOT/n)==digest for n,digest in before.items())
     receipt=dict(status='passed',compiler=str(cc),compiler_sha256=sha(cc),source_sha256=before,original_sources_sha256=sources,checked_owned_instruction_comments=words,
         pinned_shared_sources={name:dict(commit=PIN_COMMITS[name],sha256=hashlib.sha256(data).hexdigest())for name,data in PINNED.items()},pinned_current_source_drift={name:hashlib.sha256((ROOT/name).read_bytes()).hexdigest()for name,data in PINNED.items()if (ROOT/name).read_bytes()!=data},oracle_profile=dict(reference_sha256=sha(reference),sdk131_sign_extended_word_setter=True,finite_simd=True,transitive_native_headers=True,compiled_private_source_snapshot=True,periodic_scheduler_allocation_declared_port=True,actual_native_periodic_visual_owner=True),periodic_effect_corpus=dict(receipt=str((corpus/'receipt.json').relative_to(ROOT)),sha256=sha(corpus/'receipt.json'),package_sha256=corpus_receipt['package_sha256']),executable_sha256=sha(out/'checks.exe'),generated_fixture_sha256=sha(out/'original_fixture.hpp'),generated_original_sha256=sha(out/'original.cpp'),original_main_elf_sha256=elf_sha,original_main_leaf=dict(address='1B3C30',bytes=8,sha256=hashlib.sha256(body).hexdigest(),instructions=['jr ra','nop'],context_cases=4096),
@@ -346,6 +367,8 @@ def main(a):
         npc_fixture_sha256=sha(out/'owned_npc_fixtures.inc'),checks=checks,result=json.loads((out/'test.stdout.txt').read_text()),
         enemy_members=enemy_members,enemy_fixture_sha256=sha(out/'owned_enemy_members.bin'),
         installed_in_game=False,game_launched=False,live_process_access=False,limitations=['Native opcode algorithm coverage is partial; entire programs with unsupported handlers are refused before native install.','Canonical flag storage and offline actor-delta merging are native; actual game caller/content import, notification delivery and message services remain external integration gates.','Actual original dispatcher and handler bodies are used only in the test oracle, with bounded memory/register scaffolding. No MIPS execution ships in native core.'])
+    receipt['native_owner_libraries_sha256']=library_hashes
+    receipt['production_objects']=production_objects
     receipt['room_counter_policy']=dict(index_receipt_sha256=sha(index/'receipt.json'),owned_members={e['name']:e['sha256'] for e in evbs},package_sha256=sha(policy_path))
     receipt['stock_room']=dict(name=stock['name'],sha256=sha(stock_path),installed_in_game=False)
     receipt['cutscene_model_admission']=dict(path=str(admission_path),sha256=sha(admission_path))

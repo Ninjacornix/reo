@@ -10,6 +10,7 @@
 #include "scenario_publication.hpp"
 #include "actor_gauge.hpp"
 #include "material_animation.hpp"
+#include "../gameplay_scenario/scenario_events.hpp"
 #include "../gameplay_world/behavior.hpp"
 #include "../gameplay_world/alignment.hpp"
 #include "../gameplay_world/interaction_transitions.hpp"
@@ -135,6 +136,7 @@ public:
     scenario::CutsceneTracksUpdated run_cutscene_actor_tracks(const std::uint32_t& frame,const std::uint8_t& scene,scenario::CutsceneSpeech* = nullptr);
     const scenario::CutsceneActorTracks* cutscene_actor_tracks()const noexcept{return cutscene_actor_tracks_.get();}
     tasks::EventTasks& events()noexcept{return events_;}
+    scenario::ScenarioEvents& scenario_events()noexcept{return *scenario_events_;}
     tasks::FlagTimers& timers()noexcept{return timers_;}
     tasks::SimulationClock& clock()noexcept{return clock_;}
     gameplay_events::Events& cooperative_events()noexcept{return cooperative_;}
@@ -295,6 +297,7 @@ private:
     scenario::ActionChoices choices_;
     scenario::Interpreter scripts_;
     scenario::OfflineCoordinator offline_;
+    std::unique_ptr<scenario::ScenarioEvents> scenario_events_;
     bool running_{},closed_{};
     bool changed(const scenario::ScenarioFlagChange& value)noexcept override{
         if(!open())return false;

@@ -19,6 +19,7 @@ bool script_ok(scenario::Status s){return s==scenario::Status::completed || s==s
 }
 Owner::Owner(world::World& world,scenario::FlagNotifications& notifications,std::shared_ptr<const gameplay_events::RuleBook> rules,GameplayMessageSink* messages,const gameplay_collision::room_objects::Owner* objects):world_(world),materials_(world_,linked_),statistics_(std::move(rules)),notifications_(notifications),flags_(this),publication_(world_,flags_,messages,objects){
     if(world_.session().timing)throw std::invalid_argument("Native world already has a timing owner");
+    scenario_events_.reset(new scenario::ScenarioEvents(world_,flags_,timers_,events_));
     world_.session().timing=this;
 }
 Owner::~Owner(){if(running_)std::terminate();(void)close();}
@@ -36,7 +37,7 @@ Status Owner::unbind_room_objects()noexcept{
 }
 Status Owner::close()noexcept{
     if(running_ || world_.busy() || !events_.idle() || !linked_.idle())return Status::busy;
-    closed_=true;(void)events_.seal();(void)linked_.seal();
+    closed_=true;(void)scenario_events_->close();(void)events_.seal();(void)linked_.seal();
     cooperative_.close();
     if(linked_actor_updates_)(void)linked_actor_updates_->close();
     if(cutscene_actor_tracks_)(void)cutscene_actor_tracks_->close();
@@ -98,6 +99,8 @@ Status Owner::run_script(std::size_t channel,scenario::Providers providers,std::
     auto* messages=publication_.message_sink();
     if(providers.messages&&providers.messages!=messages)return Status::script_failure;
     providers.messages=messages;
+    if(providers.scenario_events&&providers.scenario_events!=scenario_events_.get())return Status::script_failure;
+    providers.scenario_events=scenario_events_.get();
     providers.flags=&flags_;providers.canonical_flags=&flags_;providers.timers=&timers_;
     if(providers.action_choices&&providers.action_choices!=&choices_)return Status::script_failure;
     providers.action_choices=&choices_;
@@ -176,6 +179,7 @@ Result Owner::workers(Services& services,world::Services& actors,scenario::Provi
     auto selected=tasks::OwnerSelection::borrow(world_.selected_actor);
     result.events=events_.run(world_.mode==0?tasks::EventMode::owner_banks:tasks::EventMode::shared_bank,selected);
     if(result.events.status!=tasks::Status::completed){result.status=Status::task_failure;return result;}
+    if(scenario_events_->failure()!=scenario::ScenarioEventStatus::completed){result.status=Status::task_failure;return result;}
     work(Worker::model_interactions);work(Worker::resource_instances);work(Worker::scene_pose_tasks);
     result.linked=linked_.run(tasks::Pass::update,task_budget);
     if(result.linked.status!=tasks::Status::completed){result.status=Status::task_failure;return result;}
