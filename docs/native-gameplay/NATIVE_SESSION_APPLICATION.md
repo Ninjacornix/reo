@@ -86,3 +86,11 @@ model/proxy graph and a full64-slot object entity store. Its separate room
 identity cannot consume an object slot. The admitted room runs the complete
 zero-current-object outer caller; initial saved model poses still restrict
 rooms that require real instances.
+
+The subsequent [static room model owner](ROOM_MODEL_ASSETS.md) now supplies
+actual NBD-derived current poses and one persistent saved bank, including
+loaded-part visibility and byte-cache semantics. The admitted owned room loads
+69 real poses/parts. Physical records and objects now check that actual loaded
+capability instead of receiving fabricated identity matrices or a blanket
+missing-model response. Full frame services and scenario EVB admission remain
+explicit boundaries.

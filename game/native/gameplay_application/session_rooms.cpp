@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <map>
 #include <stdexcept>
+#include <algorithm>
 
 namespace reo::native::gameplay_application {
 namespace collision=gameplay_collision;
@@ -122,12 +123,19 @@ std::shared_ptr<gameplay_contact_world::RoomInvocation> SessionRooms::retain(std
                 if(!type_bytes||!placement_bytes)return {};
                 objects=std::make_shared<collision::room_objects::Owner>(collision::room_objects::Owner::import(*type_bytes,*placement_bytes));
             }
-            //745D60 counts actual6AD4E0 instances, not imported placements.
-            // The complete construction/proxy owner is attached below, but
-            // initial saved model poses still require their room producer.
-            // Only a room without matching placements has a proved zero.
-            for(const auto& object:objects->objects())if(objects->get(object)->room==id.room){
-                status_=RoomResourcesStatus::unavailable_object_instances;return {};
+            // Only the constructor's actual model-binding branch needs a
+            // loaded pose/part. Explicit shapes and absent grids take their
+            // original no-instance paths without a fabricated model service.
+            if(lease->directory().section(14))for(const auto& object:objects->objects()){
+                const auto& value=*objects->get(object);
+                if(value.room!=id.room||!(value.control_flags&1)||(value.control_flags&4)||!(value.control_flags&8))continue;
+                const auto* type=objects->type(value.type);const auto asset=host->room_models().asset();
+                if(!type||!asset){status_=RoomResourcesStatus::unavailable_object_instances;return {};}
+                const auto slot=host->scene_models().resolve(std::uint8_t(type->model_slot));
+                if(slot>=asset->parts()||std::none_of(asset->poses().begin(),asset->poses().end(),
+                    [&](const auto& pose){return pose.slot==slot;})){
+                    status_=RoomResourcesStatus::unavailable_object_instances;return {};
+                }
             }
             auto prepared=std::make_shared<SessionRoomGeometry>(std::move(walls),std::move(floors),std::move(regions),objects);
             if(!bind_objects(objects))return {};

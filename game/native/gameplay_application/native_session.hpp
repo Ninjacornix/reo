@@ -8,6 +8,7 @@
 #include "../gameplay_update/update.hpp"
 #include "../gameplay_update/reception.hpp"
 #include "../gameplay_collision/object_scene.hpp"
+#include "room_models.hpp"
 
 namespace reo::native::gameplay_application {
 class SessionRooms;
@@ -82,12 +83,14 @@ public:
     gameplay_scenario::SceneControls& scene_controls()noexcept;
     gameplay_collision::ownership::Proxies& scene_proxies()noexcept;
     gameplay_scenario::SceneModels& scene_models()noexcept;
+    RoomModels& room_models()noexcept{return room_models_;}
     gameplay_scenario::SceneMatrixPrograms& scene_matrices()noexcept;
     std::shared_ptr<gameplay_scene::Records> scene_records()const noexcept;
     const gameplay_scenario::RoomSceneOwner* room_scene()const noexcept;
     std::optional<gameplay_scenario::content::RoomId> room()const noexcept{return room_;}
     std::shared_ptr<RoomLease> retain_room(std::shared_ptr<NativeSession>)noexcept;
 private:
+    RoomModels room_models_;
     gameplay_scenario::content::ScenarioArchive archive_;
     std::shared_ptr<gameplay_world::Session> session_;
     gameplay_world::World world_;

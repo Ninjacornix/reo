@@ -82,3 +82,10 @@ actual6AD4E0 caller into that retained room graph. RoomInvocation now derives
 its dynamic triangles and source instance-selection count from this owner,
 and refuses it after explicit retirement. Saved model-pose production remains
 an explicit requirement for rooms with matching placements.
+
+The [RoomModels application owner](ROOM_MODEL_ASSETS.md) subsequently supplies
+that saved/current producer from the actual static NBD skeletons. Object
+admission now follows the real constructor's model-use branches and checks
+loaded pose/part provenance. The same retained Scene still owns construction,
+dynamic geometry, proxies and retirement. The selected r0417300 profile has
+zero current objects; it does not demonstrate broader room-script admission.

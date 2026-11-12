@@ -83,3 +83,9 @@ The seal is
 `tools/native_reconstruction/native_room_object_scene_qualification_v1.json`.
 No game or device was opened, no candidate was installed, and this checkpoint
 does not establish complete Stage4 gameplay.
+
+The subsequent [RoomModels cut](ROOM_MODEL_ASSETS.md) implements the identified
+static pose producer and persistent saved bank. It replaces this checkpoint's
+blanket current-placement refusal with actual loaded model/part admission.
+This earlier v4 Scene comparison remains unchanged evidence with its stated
+controlled pose preconditions.

@@ -5,35 +5,41 @@ incomplete. This document replaces neither the component receipts nor the
 end-to-end acceptance gate. No game, UI, audio device or power action was used
 for this audit.
 
-The immediate integration cut is a native application/session owner that
-constructs the existing World, Update and content owners and supplies their
-remaining real service implementations. There is currently no production
-construction of `gameplay_world::World` or `gameplay_update::Owner`. Searching
-production outside `game/native`, tools, generated source and documentation finds
-only the legacy save/session adapter importing native gameplay headers.
-`recomp/reo_bootstrap.cpp` installs that adapter under
-`REO_BUILD_NATIVE_GAMEPLAY_SAVE` / `REO_NATIVE_GAMEPLAY_SAVE`, immediately before
-starting original execution. It does not install native World gameplay.
+The native application owner is now implemented: `NativeSession` constructs
+the canonical World/Session/Update graph, owns actual room scripts, records,
+models, lighting and `RoomModels`; `SessionRooms` and `SessionStartup` borrow
+that same graph. This is a concrete bounded application with owned
+input tests. The running game has not selected it. `recomp/reo_bootstrap.cpp`
+still installs the guest-backed save adapter under
+`REO_BUILD_NATIVE_GAMEPLAY_SAVE` / `REO_NATIVE_GAMEPLAY_SAVE` before original
+execution; that adapter does not install native World gameplay. Full native
+frame behavior/physics and the platform, transport and semantic-save hosts
+remain acceptance boundaries.
 
 ## Concrete ownership and closure matrix
 
 | Required cut | Already implemented, to reuse | Missing production ownership / evidence |
 |---|---|---|
-| Application/session entry | `World(Profile, shared_ptr<Session>)`; `gameplay_update::Owner(World&, FlagNotifications&, shared_ptr<const RuleBook>, GameplayMessageSink*, const room_objects::Owner*)`; `Owner::initialize_launch_roster` | An application entry selecting the native session before original gameplay starts; explicit immutable launch configuration and imported sources; one simulation owner and shutdown order. Do not create a RAM/register projection of World. |
-| Scenario/room preparation | `ScenarioArchive` reads actual retained NETBIO00; `room(RoomId)`, `scenario_scripts`, `read_member`, `read_resource`; `Owner::load_scenario_scripts/load_room_scripts/load_scenario_npcs/load_scenario_enemies` | Native session must call these and keep their content leases. All five EVBs still encounter unsupported semantics. A room-only proof must not claim complete scenario launch. |
-| Primary actor/model startup | `spawn_primary`, launch roster import, `ActorAssets`, `HumanoidMotionAssets`, `HumanoidMotionOwner`, `PrimaryActorModels::capture/prepare/apply` and initialization/restore selector | A coherent startup transaction creating roster actors, preparing and applying actual models and default motion banks, equipment context and any saved overrides. Source selection of actual launch room/placement is not established by the parser alone. |
-| Shared room records | `SceneControls`, `ownership::Proxies`, `RoomSceneInput`, `RoomSceneOwner::install`, `SceneModels`, `SceneMatrixPrograms`, `SceneModelBindings` | Actual room model preparation/publication and common Records identity; room transition owner must retire bindings/tasks before replacing records, and install admitted channel tables/models. `RoomSceneOwner` is a room proxy initializer, not the whole game/session. |
+| Application/session entry | `NativeSession` owns canonical World, Session, Update, archive, script providers, reception, lighting and retained room graph; `SessionStartup` borrows it | Running-game selection of this owner, source-backed launch configuration/placement and complete shutdown across the remaining hosts. |
+| Scenario/room preparation | Actual owned `r0417300` room installation and script stepping; real `_H.BIN` ordinal reads; retained room generations and canonical object publication/reception | Complete ordinary scenario EVB admission. Current frontiers include D1/D0/108; offline1A8 remains distinct. All five EVBs still encounter unsupported semantics. |
+| Primary actor/model startup | `SessionStartup`, `PrimaryActorModels::start_roster`, real actor/model/motion assets and construction/restore owners; actual actor voice and dialogue owners | Compose remaining startup effects and initial motion capabilities against the application; establish authored launch-room/roster/placement producers, rather than infer them from the controlled roster-kind fixture. |
+| Shared room records/models | Actual common Records identity, `RoomSceneOwner`, `RoomModels` persistent saved bank and static NBD poses, `SceneModelBindings`, complete object `Scene` construction/retirement | Qualify broader owned physical rooms through full script admission and actual gameplay scheduling. Unavailable loaded model poses/parts and unsupported retirement bindings still refuse. |
 | Ordinary update | `Owner::advance` owns pause/transition gates, worker ordering, script/task/timer ordering and clock commit | Concrete terminal `PhaseServices` implementation. Existing CollisionWorkers, LinkedModelWorkers and NpcActorWorkers are decorators that forward unowned work. |
 | Primary behavior and actions | `BehaviorFrameServices`, `MotionFrameServices`, `MotionTransformFrameServices`, `GridSurfaceOrientation`, status/hit/gauge/recovery, inventory/resource primitives | Concrete terminal World::Services and BehaviorServices implementations; actual action dispatch and control/cooperation/authority consumers. There is no production implementation of BehaviorServices::dispatch. Missing actions cannot be successful no-ops. |
-| Collision/contact gameplay | Existing room geometry, body solver, collision-height workers, target cache, contact packet/region/route owners | Real CollisionParticipants, model pose leases, current room floor/wall/proxy publication, hit-region/contact producer ordering and packet consumers. Renderer submission can remain the Stage 5 boundary; gameplay pose/contact production cannot. |
-| Cinematic lifecycle | Separate primary/NPC/object pools, roster construction, model cache handoff, typed actor/object streams, actual object assets/motion banks and resource-index lookup | One scene owner for request selection, entry, authored group construction, timeline/media cadence, model passes, exit and restoration; explicit handling of unresolved authored model/track cases. Pose work in parallel does not supply this owner. |
+| Collision/contact gameplay | `SessionRooms` is the real retained RoomResources provider; actual contact Invocation, pose projection, collision/contact/effect owners and concrete workers exist | Real CollisionParticipants and terminal physics composition, complete producer/consumer scheduling and owned frame acceptance. Renderer submission remains the Stage5 boundary. |
+| Cinematic lifecycle | `CutscenePlayback` owns actual controller policy, voice preparation, camera/projection/display/view/descriptor consumers; `CutsceneSceneActors` owns real actor/object composition | Adopt one application lifecycle across entry, model/motion handoff, remaining light/media consumers and restoration into the same ordinary room owners. Missing owned assets remain explicit. |
 | Platform input | Native ControllerFrame, remapping, edge/repeat/menu routing and World controller spans | Platform sampler feeding normalized frames, focus/disconnect policy and frame ownership. Existing pad/RAM callers have not adopted this path. |
 | Transport | Typed `gameplay_update::Reception`, actor-message queues, cooperative events and control payload owners | Protocol codec and authority adapter into canonical World/Update with generation-safe references, room transition/ownership callbacks and outgoing event drains. `network/native/world_sync.h` still takes RAM, R5900Context and PS2Runtime and is not this adapter. |
 | Native media calls | `gameplay_audio::Owner`, SceneBankAudio, StreamChannels/StreamInstances and retained stream catalog; Stage 3 owners | Session must own direct bank/stream/movie services, real audio service tick, cue-to-scene completion/pause/end coupling, room audio callbacks and joined retirement. Update::state.audio_tick is intentionally optional and must not be a simulated frame counter. |
 | Save/resume | Legacy Container/codec, native Options/Random, typed primary-start decoder and saved initialization | Semantic native session snapshot including World state, descriptor/flag/route/task/script continuation identities, durable host file ownership and resume transaction. `gameplay_save::LiveState` still consists mainly of opaque legacy section byte arrays; the nine-entry adapter explicitly projects guest RAM. |
 | Acceptance/build | Dual-compiler component oracles and native CMake target graph | Candidate linking and selecting the native game owner; owned launch/gameplay/room changes/cinematics/pause/exit/save-resume/error-recovery runs, input/transport/media acceptance, final source/build identity and joined shutdown. |
 
-## Actual APIs needed by the new owner
+## Initial provider audit and checkpoint history
+
+The following detailed inventory records the original `bc5d18b2` audit and
+subsequent closure checkpoints. The matrix above is the current integration
+status; historical missing-provider statements below are superseded by the
+later linked implementations and receipts.
 
 `gameplay_world::Profile` supplies controller layouts/count; `World::controllers()` exposes
 the native ControllerFrame span, and `controller_bindings` maps actors to ports.
@@ -328,3 +334,11 @@ with explicitly supplied model-pose/remapping preconditions. Production
 SessionRooms executes the real zero-current-object branch; initial saved
 model-pose ownership and the ordinary static room-model asset path remain
 the specific restriction on positive-instance rooms.
+
+The [static RoomModels owner](ROOM_MODEL_ASSETS.md) now closes that producer:
+actual1D2CB0 matrix/group import, one persistent saved bank, current live-binding
+capture, source byte-cache semantics and loaded-part visibility are implemented
+and adopted by NativeSession. The current matrix above reflects this boundary.
+Full ordinary EVB admission and concrete terminal frame services are now the
+next application cuts; no installed-game or full Stage4 claim follows from the
+bounded room/model proof.

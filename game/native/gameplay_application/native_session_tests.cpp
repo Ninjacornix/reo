@@ -88,6 +88,13 @@ void owned(const std::filesystem::path& path){
         application::NativeSession session(source,profile(),notices,mode);
         check(session.install_room({41,73,0})==application::SessionStatus::completed);++owned_rooms;
         check(session.room()&&session.world().scenario==41&&session.world().room==73);
+        const auto asset=session.room_models().asset();
+        check(asset&&asset->name()=="r0417300.nbd"&&asset->parts()==69&&asset->nodes()==71&&asset->poses().size()==69);
+        for(unsigned i=0;i<128;++i){
+            check(session.scene_models().state().styles[i]==0xffffffffu);
+            if(i<69){check(session.scene_models().state().visibility[i]==1);check(*session.scene_models().pose(i)==session.room_models().saved()[i]);}
+        }
+        check(session.room_models().groups()[0].models==69&&session.room_models().groups()[0].control==0);
         check(session.room_scene()&&session.room_scene()->identities().size()==7);
         check(session.scene_controls().size()==7&&session.scene_proxies().size()==7);
         check(session.scene_records()==session.scene_controls().records()&&session.scene_records()==session.scene_proxies().records());
@@ -120,7 +127,14 @@ void owned(const std::filesystem::path& path){
         check(session.install_room({41,99,0})==application::SessionStatus::missing_room&&session.scene_records()==records);
         check(session.update().scripts().channels()[1].program==channels[1].program);
         const auto stale=session.room_scene()->identities().front();
+        const auto saved=session.room_models().saved()[0];auto live=saved;live[3][0]+=17;
+        check(session.scene_models().pose(0,live)==scenario::ModelStatus::completed);
+        session.scene_models().mark_slot_byte(128,123);
         check(session.install_room({41,73,0})==application::SessionStatus::completed);
+        check(session.room_models().asset()==asset&&*session.scene_models().pose(0)==live&&session.scene_models().state().styles[0]==0xffffff7bu);
+        check(session.room_models().saved()[0]==saved);
+        session.room_models().restore_poses_and_styles(session.scene_models());
+        check(*session.scene_models().pose(0)==saved&&session.scene_models().state().styles[0]==0xffffffffu);
         check(!records->acquire(stale)&&session.scene_records()!=records&&session.scene_controls().size()==7);
         check(session.close()==application::SessionStatus::completed&&session.scene_controls().size()==0);
     }

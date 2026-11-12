@@ -2,6 +2,8 @@
 #include "../gameplay_scenario/script_program.hpp"
 #include <stdexcept>
 #include <utility>
+#include <cstdio>
+#include <algorithm>
 
 namespace reo::native::gameplay_application {
 namespace {
@@ -44,8 +46,8 @@ struct NativeSession::RoomState final:gameplay_scenario::ControlEffects {
     static gameplay_scenario::RoomModelRemap absent_remap()noexcept{
         gameplay_scenario::RoomModelRemap result;result.fill(255);return result;
     }
-    RoomState(gameplay_update::Owner& update,gameplay_world::World& world):
-        models({},absent_remap()),bindings(models,entities),matrices(controls,models,bindings,update.flags(),world.room){
+    RoomState(gameplay_update::Owner& update,gameplay_world::World& world,const gameplay_scenario::SceneModelState& initial):
+        models(initial,absent_remap()),bindings(models,entities),matrices(controls,models,bindings,update.flags(),world.room){
         const auto created=room_identity.create(std::make_unique<Tag>());
         if(created.status!=gameplay_actors::EntityStatus::completed)throw std::bad_alloc();
         identity=created.id;
@@ -60,15 +62,19 @@ struct NativeSession::RoomState final:gameplay_scenario::ControlEffects {
         const auto result=matrices.select(authored,gameplay_scenario::SceneMatrixSelection::terminal);
         if(result.status!=gameplay_scenario::SceneMatrixStatus::completed)effects_status=result.status;
     }
-    void close()noexcept{
-        if(objects)(void)objects->close();
-        owner.reset();matrices.close();(void)bindings.close();entities.shutdown();room_identity.shutdown();
+    gameplay_collision::room_objects::InstanceStatus close()noexcept{
+        using gameplay_collision::room_objects::InstanceStatus;
+        const auto result=objects?objects->close():InstanceStatus::complete;
+        if(result==InstanceStatus::busy)return result;
+        owner.reset();matrices.close();const auto binding_result=bindings.close();entities.shutdown();room_identity.shutdown();
+        return result==InstanceStatus::complete&&binding_result==gameplay_scenario::ModelBindingError::none?
+            InstanceStatus::complete:InstanceStatus::model_refused;
     }
 };
 NativeSession::NativeSession(std::shared_ptr<const reo::assets::Source> archive,gameplay_world::Profile profile,
     gameplay_scenario::FlagNotifications& notifications,std::uint8_t mode):
     archive_(std::move(archive)),session_(std::make_shared<gameplay_world::Session>()),
-    world_(std::move(profile),session_),reception_(world_),update_(world_,notifications),room_state_(std::make_shared<RoomState>(update_,world_)){
+    world_(std::move(profile),session_),reception_(world_),update_(world_,notifications),room_state_(std::make_shared<RoomState>(update_,world_,room_models_.cold_state())){
     world_.mode=mode;
 }
 NativeSession::~NativeSession(){if(close()==SessionStatus::busy)std::terminate();}
@@ -139,14 +145,33 @@ SessionStatus NativeSession::install_room(gameplay_scenario::content::RoomId id)
         if(!scene||!lig)return SessionStatus::missing_providers;
         gameplay_scenario::Lighting prepared_lighting;
         if(prepared_lighting.import_lig(*lig)!=gameplay_scenario::LightingImport::completed)return SessionStatus::missing_providers;
-        auto prepared=std::make_shared<RoomState>(update_,world_);
+        auto model_asset=room_models_.current(id)?room_models_.asset():nullptr;
+        if(!model_asset){
+            char name[32];const auto count=std::snprintf(name,sizeof name,"r%03u%02u%02u.nbd",unsigned(id.scenario),unsigned(id.room),unsigned(id.variant));
+            if(count<=0||std::size_t(count)>=sizeof name)return SessionStatus::missing_providers;
+            const auto model_bytes=archive_.read_resource(id.scenario,name);if(!model_bytes)return SessionStatus::missing_providers;
+            try{model_asset=gameplay_scenario::RoomModelAsset::import(name,model_bytes);}
+            catch(const std::logic_error&){return SessionStatus::missing_providers;}
+        }
+        auto current_models=room_state_->models.state();
+        // Retirement retains actual bound object/matrix targets into their
+        // source slots. Capture those same live values before preparing the
+        // next generation, so admission can fail without abandoning owners.
+        for(unsigned i=0;i<128;++i){const auto pose=room_state_->bindings.live_pose(std::uint8_t(i));
+            if(!pose)return SessionStatus::missing_providers;
+            current_models.poses[i]=*pose;
+        }
+        auto prepared=std::make_shared<RoomState>(update_,world_,room_models_.prepare(id,*model_asset,current_models));
         prepared->room=id;prepared->directory=*room;
         prepared->input=std::make_shared<const gameplay_scenario::RoomSceneInput>(*scene,bank,
             gameplay_collision::ImportContext{id.scenario,id.room});
-        // The first owned room has authored FF model absence. Demanding any
-        // physical model slot requires the future real room asset owner.
+        // A physical helper requires this actual bundle's loaded pose/part;
+        // unrelated retained slots do not establish a new asset capability.
         for(const auto& definition:prepared->input->records())
-            if(definition.model&&definition.model->slot.slot())return SessionStatus::missing_providers;
+            if(definition.model)if(const auto slot=definition.model->slot.slot()){
+                if(*slot>=model_asset->parts()||std::none_of(model_asset->poses().begin(),model_asset->poses().end(),
+                    [&](const auto& pose){return pose.slot==*slot;}))return SessionStatus::missing_providers;
+            }
         auto installed=gameplay_scenario::RoomSceneOwner::install(prepared->input,prepared->controls,
             prepared->proxies,prepared->models,prepared->matrices,prepared->globals,
             gameplay_scenario::NoModelRepair::authored_absent);
@@ -171,8 +196,12 @@ SessionStatus NativeSession::install_room(gameplay_scenario::content::RoomId id)
         // Both parses see the same retained immutable bytes; publication below
         // performs no provider callback or resource allocation.
         (void)lighting_.import_lig(*lig);
-        room_state_->close();room_state_=std::move(prepared);
-        world_.scenario=id.scenario;world_.room=id.room;room_=id;return SessionStatus::completed;
+        const auto retired=room_state_->close();
+        if(retired==gameplay_collision::room_objects::InstanceStatus::busy)return SessionStatus::busy;
+        room_state_=std::move(prepared);
+        (void)room_models_.commit(id,std::move(model_asset));
+        world_.scenario=id.scenario;world_.room=id.room;room_=id;
+        return retired==gameplay_collision::room_objects::InstanceStatus::complete?SessionStatus::completed:SessionStatus::frame_failure;
     }catch(const std::invalid_argument&){return SessionStatus::unsupported_script;}
 }
 ScriptStep NativeSession::step_room_script(std::size_t budget){
@@ -210,8 +239,10 @@ SessionStatus NativeSession::close()noexcept{
     // World performs its actual controller-busy check before retiring anything.
     // Update's idle check above guarantees its subsequent close is admissible.
     if(world_.close()!=gameplay_world::Status::completed)return SessionStatus::busy;
-    room_state_->close();
+    const auto retired=room_state_->close();
+    if(retired==gameplay_collision::room_objects::InstanceStatus::busy)return SessionStatus::busy;
     if(update_.close()!=gameplay_update::Status::completed)return SessionStatus::busy;
-    closed_=true;return SessionStatus::completed;
+    closed_=true;
+    return retired==gameplay_collision::room_objects::InstanceStatus::complete?SessionStatus::completed:SessionStatus::frame_failure;
 }
 }

@@ -186,9 +186,16 @@ void owned(const std::filesystem::path& path){
             }
         }
         const auto objects=&geometry.objects;const auto wall_count=geometry.walls.triangles().size();
+        // A controlled real binding tests current-pose ownership across the
+        // hot room cache. The saved authored bank must remain independent.
+        auto bound_pose=std::make_shared<reo::native::gameplay_scenario::ModelMatrix>();
+        check(context.bindings.bind_pose(100,bound_pose));
+        *bound_pose=reo::native::transform_math::identity();(*bound_pose)[3][0]=777;
+        const auto saved_pose=host->room_models().saved()[100];
         host->world().room=72;check(!room->current(id)&&!flight->wall({},{ }).available);
         host->world().room=73;check(room->current(id));
         check(host->install_room({41,73,0})==a::SessionStatus::completed);++rooms;
+        check(*host->scene_models().pose(100)==*bound_pose&&host->room_models().saved()[100]==saved_pose);
         check(!room->current(id)&&!lease->current());
         check(!object_scene->open());
         check(room->geometry().walls.triangles().size()==wall_count);
@@ -211,6 +218,16 @@ void owned(const std::filesystem::path& path){
         object_scene.reset();replacement_scene.reset();replacement_lease.reset();
         check(!weak.expired()&&bool(matrices));
         matrices.reset();check(weak.expired());
+    }
+    {
+        auto host=std::make_shared<a::NativeSession>(source,profile(),notifications);
+        check(host->install_room({41,73,0})==a::SessionStatus::completed);
+        const auto lease=host->retain_room(host);check(bool(lease));
+        const auto asset=host->room_models().asset();
+        check(!lease->object_context().bindings.bind_pose(255,std::make_shared<s::ModelMatrix>()));
+        check(host->install_room({41,73,0})==a::SessionStatus::missing_providers&&lease->current()&&host->room_models().asset()==asset);
+        check(host->close()==a::SessionStatus::frame_failure&&!host->open()&&!lease->current());
+        check(host->close()==a::SessionStatus::completed);
     }
 }
 }

@@ -63,6 +63,9 @@ def main(args):
     try:
         run([CMAKE, '-S', ROOT / 'game/native', '-B', build], 'configure')
         sources, libraries = dependency_sources(build, 'gameplay_application/session_rooms_tests.exe')
+        application_sources,application_libraries=dependency_sources(build,'gameplay_application/native_session_tests.exe')
+        sources=sorted(set(sources+application_sources))
+        libraries=sorted(set(libraries+application_libraries))
         sources.extend([Path(__file__).resolve(), ROOT / 'tools/native_reconstruction/verify_native_session.py',
                         ROOT / 'tools/native_reconstruction/gameplay_collision_oracle/reference.hpp',
                         ROOT / 'third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h'])
@@ -102,7 +105,7 @@ def main(args):
             assert len(index_bytes) == 8 + count * 16 and first + count <= len(physical)
             keys = [index_bytes[8 + i * 16:24 + i * 16].split(b'\0', 1)[0].decode('ascii') for i in range(count)]
             header['sha256'] = hashlib.sha256(index_bytes).hexdigest()
-            for name in ['w0417300.bin', 'g0417300.bin', 'obj041.dat', 'r041.sto']:
+            for name in ['w0417300.bin', 'g0417300.bin', 'obj041.dat', 'r041.sto', 'r0417300.nbd']:
                 ordinal = first + keys.index(name.upper().replace('.', '_'))
                 row = dict(physical[ordinal], name=name, resource_ordinal=ordinal)
                 source.seek(row['archive_offset'])
