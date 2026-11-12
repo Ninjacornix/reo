@@ -1,0 +1,165 @@
+{
+  "schema": 1,
+  "status": "qualified_native_text_cache_and_concrete_dialogue_presentation",
+  "stage4_complete": false,
+  "game_run": false,
+  "audio_device_opened": false,
+  "source_sha256": {
+    "game/native/gameplay_scenario/text_cache.hpp": "b28fb2e439b2976b8d2d160ac2de72074750e9eb5b5edc68dc2978ee3f5077a9",
+    "game/native/gameplay_scenario/text_cache.cpp": "8085c291a1c4a23543b071cb1502193253458f928b2fa5f4bdbb71038221761e",
+    "game/native/gameplay_world/cached_dialogue_presentation.hpp": "607faed148468920a5899bf9ab50a9c74ef9b26e92b9fd55711c16ac2f4cfc02",
+    "game/native/gameplay_world/cached_dialogue_presentation.cpp": "f97f7b7f83f7dc9d655c0e68e4b118f80f91eb396f79199c0c15cd8e8cf04cef",
+    "game/native/gameplay_world/dialogue_cache_contract_tests.cpp": "49374b7fb9885f5f24c4e27b5d1dfc73edf5d4a0ce4fb790686005a4a3e3a5b2",
+    "tools/native_reconstruction/dialogue_records_tests.cpp": "a6d4d4dae2a79269b329d18ecbc3fdfda1433a66613b30f4f99e812c38c31454",
+    "tools/native_reconstruction/text_cache_tests.cpp": "7c9b865873dc98b9ed2029d501e11aa25c246cc035269c862add6206fb8ed87c",
+    "tools/native_reconstruction/dialogue_visibility_tests.cpp": "ac1e43e319d295c854b4b75436635b9970f0e3915e8001795e6b67c933f57903",
+    "tools/native_reconstruction/cached_dialogue_pool_tests.cpp": "5723e2d316d4e7c72020789a1cc0329395d9fd3c2d44cb3c94c140503b6aaa22",
+    "tools/native_reconstruction/verify_text_cache.py": "de7ad93af624c436ff078f3a8b5a395ad52b40a7aeb434e2750dd6b4149e0a5a",
+    "tools/native_reconstruction/verify_dialogue_visibility.py": "25732847aa8c32fca859c4c26e53d62db16a0f1a33151e052c57ed487b640795",
+    "tools/native_reconstruction/verify_cached_dialogue_pool.py": "1217a93eca0d4870117d1f37c70d0977670a378b230c4ac8f9d19dd46b4c011c",
+    "tools/native_reconstruction/qualify_dialogue_text_cache_v1.py": "2cbc51726b83adec62f687827068fa5324b058b6dd0d0df1414ba2b193550e82",
+    "docs/native-gameplay/DIALOGUE_TEXT_CACHE.md": "2d25203421f21ba67c68c35acbe967efa767a3659afb47d8563f1ee93b0a6c9e"
+  },
+  "owned_cmake_fragments": {
+    "game/native/gameplay_scenario/CMakeLists.txt": {
+      "text": "target_sources(reo_native_gameplay_scenario PRIVATE dialogue_assets.cpp text_cache.cpp)\n",
+      "sha256": "2965b5f7fe18d935f608ec6023e8c72d45e67656389db420539a16928664e9d8"
+    },
+    "game/native/gameplay_world/CMakeLists.txt": {
+      "text": "add_library(reo_native_dialogue STATIC dialogue_records.cpp dialogue_pool.cpp cached_dialogue_presentation.cpp)\nadd_executable(dialogue_cache_contract_tests dialogue_cache_contract_tests.cpp)\ntarget_link_libraries(dialogue_cache_contract_tests PRIVATE reo_native_dialogue)\nadd_test(NAME native_dialogue_cache_contract COMMAND dialogue_cache_contract_tests)\nif(CMAKE_CXX_COMPILER_ID MATCHES \"Clang|GNU\")\n    target_compile_options(dialogue_cache_contract_tests PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)\nendif()\n",
+      "sha256": "048b379a3d4f1c976b13124b6516601836126a684880043d3487450165cb0ff5"
+    }
+  },
+  "results": {
+    "cache": {
+      "checks": 1208167,
+      "complete_commands": 32768,
+      "source_calls": 126895,
+      "insertions": 16431,
+      "admitted_no_insertions": 4422,
+      "bounded_copy_interruptions": 1,
+      "retained_snapshots": 1,
+      "game_run": false
+    },
+    "visibility": {
+      "checks": 262147,
+      "complete_original_cases": 262144,
+      "unavailable_input_checks": 3,
+      "game_run": false
+    },
+    "concrete_pool": {
+      "checks": 1264192,
+      "complete_constructors": 787,
+      "complete_pool_updates": 1176,
+      "source_calls": 100384,
+      "record_clears": 48,
+      "native_guards": 289,
+      "retained_text_lifetimes": 2,
+      "controlled_interruptions": 0,
+      "authored_effect_writes": 560,
+      "literal_records": 1,
+      "capacity_refusals": 1,
+      "game_run": false,
+      "audio_device_opened": false
+    },
+    "records_fixture_fix": {
+      "checks": 131709,
+      "native_frames": 4096,
+      "continuation_frames": 86,
+      "complete_original_frames": 4182,
+      "source_calls": 41242,
+      "prefix_refusals": 1,
+      "retained_text_lifetimes": 2,
+      "game_run": false,
+      "audio_device_opened": false
+    }
+  },
+  "native_contract_checks": 15,
+  "receipts": [
+    {
+      "path": "build-native-sjuni/text-cache-gcc-v3/receipt.json",
+      "sha256": "551911880e2020dd01bbfe108bc86181facf2ba949ba9b512dc7f9654bf7b4b2",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "path": "build-native-sjuni/text-cache-llvm-v3/receipt.json",
+      "sha256": "650523b0c0ccf535ee42afe36350fe88ab2c057bd819f36093661dc92e7bea5b",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "path": "build-native-sjuni/dialogue-visibility-gcc-v1/receipt.json",
+      "sha256": "ad994d6b26172467bd33612c2ddc09964542913b4197070fc65c7c11eb89cf17",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "path": "build-native-sjuni/dialogue-visibility-llvm-v1/receipt.json",
+      "sha256": "d5188fbd8db3b8a755b349be5ac22211db898ee3611dbdd84bd80024649f2b2f",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "path": "build-native-sjuni/cached-dialogue-pool-gcc-v1/receipt.json",
+      "sha256": "3d1f3806b75dc25a548c64f9af2c086127b37c6766d37b5d5c3ea46998b6a613",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "path": "build-native-sjuni/cached-dialogue-pool-llvm-v1/receipt.json",
+      "sha256": "cdae3f348e786ce0c010a8b6e0efee2197026ef497b77f752e543f47841e18eb",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "path": "build-native-sjuni/dialogue-records-gcc-v9/receipt.json",
+      "sha256": "ffd623f4539b1a4c604f13af737f8a6229694439d7354b5ae33e0fc4ac5e4e73",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "path": "build-native-sjuni/dialogue-records-llvm-v9/receipt.json",
+      "sha256": "65257f5811c85b36b1e1c42f7ed9aaffd3c351d57c1564679092da83a2f01717",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "path": "build-native-sjuni/dialogue-cache-cmake-current-v1/gcc-receipt.json",
+      "sha256": "0db4e413a3c0a539b36c7a8655333dfe9a8e8e6b5a365cbeb13e683e6530e4d7",
+      "live_source_drift": []
+    },
+    {
+      "path": "build-native-sjuni/dialogue-cache-cmake-current-v1/llvm-receipt.json",
+      "sha256": "533bf5abbf9c4d8346dae8551ac294bf8019b7c909b9dfcdb59c9ff8b819c214",
+      "live_source_drift": []
+    }
+  ],
+  "fixture_fix_parent_receipts": [
+    {
+      "path": "build-native-sjuni/session-rooms-parents-gcc-v6/receipt.json",
+      "sha256": "ce4ea9eddb96bf9fca54f60fe9aa4e38125139e18a313142b46db280891cde4f",
+      "purpose": "Current25-parent strict standalone record fixture fix, before new cache registration."
+    },
+    {
+      "path": "build-native-sjuni/session-rooms-parents-llvm-v6/receipt.json",
+      "sha256": "cc2b82777a78732f8effe160c32b27e1b3aed0903c4b890fa1000d498d86d400",
+      "purpose": "Current25-parent strict standalone record fixture fix, before new cache registration."
+    }
+  ],
+  "retained_failures": [
+    {
+      "path": "build-native-sjuni/text-cache-gcc-v1/receipt.json",
+      "sha256": "4f32c8f23a1e6a6b88467c190703cd0a9719b89aba3dacfeec9f003445397726",
+      "reason": "Reference fixture lacked SRA32; no production difference."
+    }
+  ],
+  "limits": [
+    "Complete cache/string helpers and6DEE20 run; integrated complete6B7930/6B9590 bodies use the concrete cache presentation and canonical World.",
+    "The native cache owns32 typed entries; the source clear also zeros an unused16-byte header. Callback installer1B4A20 and font/glyph consumer1B4500 remain separate.",
+    "Suppression inputs remain optional borrowed capabilities; actual6DEC80 timed-message initialization and later writes are not manufactured.",
+    "Full1D41F0 room bank publication and outer6B7E40 actor-response worker remain separate integration; no application frame/game launch is claimed.",
+    "The historical dialogue-records v1 seal retains its old fixture hash. This follow-up records the oracle-only equality conditional and fresh identical v9 pair plus strict standalone current parent25-v6.",
+    "One controlled copy-entry interruption proves unsupported128-byte cache text metadata prefix; no overflowing original copy executes."
+  ]
+}

@@ -11,7 +11,11 @@ void check(bool value,std::source_location at=std::source_location::current()){+
 void word(std::vector<std::byte>& bytes,unsigned at,unsigned value){for(unsigned i=0;i<4;++i)bytes.at(at+i)=std::byte((value>>(8*i))&255);}
 std::shared_ptr<const s::DialogueTexts> text(std::span<const std::uint8_t> body){auto bytes=std::make_shared<std::vector<std::byte>>(24+body.size()+1+16);const auto effects=unsigned(24+body.size()+1);word(*bytes,0,effects);word(*bytes,4,12);word(*bytes,8,1);word(*bytes,12,16);for(unsigned i=0;i<body.size();++i)(*bytes)[24+i]=std::byte(body[i]);for(unsigned i=effects;i<bytes->size();++i)(*bytes)[i]=std::byte{255};return std::make_shared<const s::DialogueTexts>(bytes);}
 w::Profile profile(){w::Profile value;value.layouts.push_back({});return value;}
-struct Event {unsigned kind{};std::int32_t first{},second{};std::uint8_t alpha{};std::vector<std::byte> text;friend bool operator==(const Event&,const Event&)=default;};
+struct Event {unsigned kind{};std::int32_t first{},second{};std::uint8_t alpha{};std::vector<std::byte> text;
+#ifdef REO_DIALOGUE_RECORDS_ORIGINAL
+    friend bool operator==(const Event&,const Event&)=default;
+#endif
+};
 std::vector<Event> events;
 struct Display final:w::DialoguePresentation {
     w::World& world;bool hidden{};explicit Display(w::World& value):world(value){}
