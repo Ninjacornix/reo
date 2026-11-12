@@ -9,6 +9,7 @@ struct ResourceDepletionResult {ResourceDepletionStatus status{ResourceDepletion
 class ResourceDepletion final {
 public:
     ResourceDepletion(ResourceRecipes&,gameplay_effects::PeriodicVisuals&,animation_events::BasicAudio&,gameplay_weapon_resources::Owner&);
+    bool bound_to(const World&,const gameplay_scenario::SceneResources&,const gameplay_scenario::ResourceTemplates&)const noexcept;
     ResourceDepletionResult replace_depleted(std::uint32_t resource,const actors::EntityId&); //5B4AD0
     ResourceDepletionResult use_cost(std::uint32_t resource,const actors::EntityId&); //5B2590
     ResourceDepletionResult use_owned(std::uint32_t resource,const actors::EntityId&); //5B1F30

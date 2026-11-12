@@ -4,6 +4,13 @@ Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification with multiple agents. The user is awake and has revoked the prior
 sleep request: finish Stage4 and do not put the PC to sleep afterward.
 
+- [Weapon actions](WEAPON_ACTIONS.md) now compose actual resource depletion,
+  inventory removal/compaction, canonical counters, audio and firing preparation.
+  Both compilers pass65,536 use/refresh cases and32,768 full firing-order cases,
+  including bitwise matrices and changes during callbacks. Reached feedback and
+  light/contact/visual constructors still require concrete owners; complete
+  frame/session installation and game acceptance remain open.
+
 - [Scene record parameter commands](SCENE_RECORD_PARAMETERS.md) now compose
   opcode166, the actual message queue/receiver, canonical Update message-sink
   adoption and ignored-send outcomes. Both compilers pass full source/queue/VM

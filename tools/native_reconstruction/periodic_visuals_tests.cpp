@@ -38,6 +38,9 @@ template<class T>void put(std::uint8_t* memory,std::uint32_t at,T value){transfo
 constexpr std::uint32_t model=0x3b85b0,heap=0x800000,parts=0x900000,child_pool=0xb00000;
 bool allocated{};
 bool task_retired{};
+#ifdef REO_WEAPON_FIRE
+bool weapon_fire_port(std::uint8_t*,R5900Context*);
+#endif
 #ifdef REO_ACTOR_FORCED_TERMINAL
 bool actor_forced_terminal_capture{};
 bool actor_forced_terminal_port(std::uint8_t*,R5900Context*);
@@ -63,6 +66,9 @@ struct CompanionPolicyCapture {unsigned children{},released{},retired{},spawned{
 #endif
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
     ++calls;const auto done=[&](){context->pc=GPR_U32(context,31);};
+#ifdef REO_WEAPON_FIRE
+    if(weapon_fire_port(memory,context)){done();return;}
+#endif
 #ifdef REO_ACTOR_FORCED_TERMINAL
     if(actor_forced_terminal_capture&&actor_forced_terminal_port(memory,context)){done();return;}
 #endif
@@ -142,7 +148,7 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
     case 0x616f60:{check(placement_floors);const auto at=GPR_U32(context,4),out=GPR_U32(context,5);check(at<=0x2000000-12&&out<0x2000000);const auto floor=placement_floors->floor(get<reo::native::gameplay_collision::Vec3>(memory,at),std::uint8_t(GPR_U32(context,6)));memory[out]=floor.material;context->f[0]=floor.height;++placement_floor_queries;done();return;}
 #endif
 #ifdef REO_RESOURCE_INVENTORY
-    case 0x18dbb0:{const auto dst=GPR_U32(context,4),src=GPR_U32(context,5),size=GPR_U32(context,6);check(size==29&&dst>=0x4a5c30&&dst<0x4aa000&&src>=0x1e00000&&src<0x2000000-size);std::memmove(memory+dst,memory+src,size);SET_GPR_U32(context,2,dst);done();return;}
+    case 0x18dbb0:{const auto dst=GPR_U32(context,4),src=GPR_U32(context,5),size=GPR_U32(context,6);check(size==29&&dst>=0x4a5c30&&dst<=0x4ae330-size&&src>=0x1e00000&&src<0x2000000-size);std::memmove(memory+dst,memory+src,size);SET_GPR_U32(context,2,dst);done();return;}
 #endif
 #ifdef REO_WEAPON_RESOURCES
     case 0x10a830:{const auto dst=GPR_U32(context,4);const auto format=weapon_string(memory,GPR_U32(context,5));check(dst>=0x1e00000&&dst<0x2000000-128&&(format=="weapon%02d"||format=="data/rom/motion/weapon/wp%02d.wmd"));const auto n=std::snprintf(reinterpret_cast<char*>(memory+dst),128,format.c_str(),std::bit_cast<std::int32_t>(GPR_U32(context,6)));check(n>=0&&n<128);SET_GPR_U32(context,2,n);done();return;}
@@ -281,6 +287,12 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_RESOURCE_DEPLETION
 #include "tools/native_reconstruction/resource_depletion_tests.inc"
 #endif
+#ifdef REO_WEAPON_ACTIONS_ONLY
+#ifdef REO_WEAPON_FIRE
+#include "tools/native_reconstruction/weapon_fire_tests.inc"
+#endif
+#include "tools/native_reconstruction/weapon_actions_tests.inc"
+#endif
 #ifdef REO_RESOURCE_OWNERSHIP
 #include "tools/native_reconstruction/resource_ownership_tests.inc"
 #endif
@@ -323,6 +335,16 @@ int main(int argc,char** argv)try{
         2
 #endif
     );const auto corpus=load(argv[1]);std::vector<std::uint8_t> ram(0x2000000);auto* memory=ram.data();
+#ifdef REO_WEAPON_ACTIONS_ONLY
+    owned_constants(memory);
+    compare_weapon_actions(corpus,argv[2],argv[3],argv[4],std::filesystem::path(argv[1]).parent_path()/"owned_depletion_cue.bin",ram);
+    std::cout<<"{\"checks\":"<<checks<<",\"weapon_action_cases\":"<<weapon_action_cases<<",\"weapon_action_refusals\":"<<weapon_action_refusals
+#ifdef REO_WEAPON_FIRE
+        <<",\"weapon_fire_cases\":"<<weapon_fire_cases<<",\"weapon_fire_callbacks\":"<<weapon_fire_callbacks<<",\"weapon_fire_refusals\":"<<weapon_fire_refusals
+#endif
+        <<",\"original_helper_calls\":"<<calls<<",\"game_run\":false}\n";
+    return 0;
+#endif
 #ifdef REO_FORCED_TERMINAL_ONLY
     owned_constants(memory);
     compare_actor_forced_terminal(argv[2],argv[3],ram);

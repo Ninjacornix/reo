@@ -8,6 +8,11 @@ namespace reo::native::gameplay_world {
 ResourceDeployment::ResourceDeployment(ResourceRecipes& lifecycle,gameplay_update::Owner& update):lifecycle_(lifecycle),update_(update),factory_(lifecycle.contents_.factory_){
     if(&lifecycle_.pairs_.world_!=&update_.world()||!update_.open()||!factory_.models_.open())throw std::invalid_argument("Native resource deployment owners unavailable or foreign");
 }
+bool ResourceDeployment::bound_to(const World& world,const gameplay_scenario::SceneResources& resources,
+    const gameplay_scenario::ResourceTemplates& templates)const noexcept{
+    const auto& pairs=lifecycle_.pairs_;
+    return &pairs.world_==&world && &pairs.resources_==&resources && &pairs.templates_==&templates && update_.open();
+}
 ResourceDeploymentValue ResourceDeployment::count()const{
     if(!update_.open()||!factory_.models_.open())return{ResourceModelStatus::closed,0};
     std::uint8_t count{};unsigned visited{};

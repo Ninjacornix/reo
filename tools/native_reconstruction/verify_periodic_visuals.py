@@ -60,7 +60,13 @@ def main():
     p.add_argument('--resource-companion-policy', action='store_true')
     p.add_argument('--resource-companions', action='store_true')
     p.add_argument('--focus-companions', action='store_true')
+    p.add_argument('--weapon-actions', action='store_true', help='Focused canonical65EC40/65E750 resource-action comparisons')
+    p.add_argument('--weapon-fire', action='store_true', help='Also compare complete65E880 preparation and dispatch with declared effect/UI ports')
     args = p.parse_args()
+    if args.weapon_fire: args.weapon_actions=True
+    if args.weapon_actions:
+        for name in ['resource_pulses','resource_static','resource_factory','resource_placement','resource_delayed','resource_actions','resource_inventory','resource_content','resource_pairs','resource_recipes','owned_recipes','resource_consumption','resource_wrappers','resource_health','resource_deployment','resource_effects','resource_debris','resource_depletion','stock_wmd_absence','resource_use','weapon_resources','resource_companion_policy','resource_companions']:
+            setattr(args,name,True)
     assert not args.resource_factory or args.resource_static
     assert not args.resource_placement or args.resource_factory
     assert not args.resource_delayed or args.resource_placement
@@ -119,6 +125,7 @@ def main():
     if args.resource_placement: pending += [0x370320,0x191a40,0x1aec80]
     if args.resource_delayed: pending += [0x1904a0,0x190020]
     if args.resource_debris: pending += [0x1900e0]
+    if args.weapon_fire: pending += [0x18fdf0,0x1901a0,0x190100,0x1913e0,0x191500,0x1919d0,0x191a40]
     ports = [0x107c68, 0x18dc50, 0x18dca0, 0x18dc90, 0x1b10c0, 0x1b1110, 0x1b3830, 0x573740]
     if args.resource_companions:
         pending += [0x654180,0x652880,0x654720,0x5df450]
@@ -187,6 +194,10 @@ def main():
         for at in [0x1b8c70,0x1b8b20]:entries[at]=next((ROOT/'recomp/config/output').glob(f'sub_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.resource_use:
         at=0x5b1f30;entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
+    if args.weapon_actions:
+        for at in [0x65ec40,0x65e750,0x65e880,0x5f1f70]:entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
+    if args.weapon_fire:
+        at=0x6b4420;entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.resource_ownership:
         for at in [0x593060,0x5f2210,0x5b15d0,0x5b1610,0x5b1670,0x5b16d0,0x5b1710,0x5b1760,0x5b1bf0,0x5b1de0]:entries[at]=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*')).relative_to(ROOT).as_posix()
     if args.actor_resource_operations:
@@ -256,6 +267,8 @@ def main():
     if args.resource_deployment: units+=['game/native/gameplay_world/resource_deployment.cpp']
     if args.resource_effects: units+=['game/native/gameplay_world/resource_effects.cpp']
     if args.resource_depletion: units+=['game/native/gameplay_world/resource_depletion.cpp']
+    if args.weapon_actions: units+=['game/native/gameplay_world/weapon_actions.cpp','game/native/gameplay_world/animation_events.cpp']
+    if args.weapon_fire: units+=['game/native/gameplay_world/weapon_fire.cpp']
     if args.resource_ownership: units+=['game/native/gameplay_world/resource_ownership.cpp']
     if args.actor_resource_operations: units+=['game/native/gameplay_world/actor_resource_operations.cpp','game/native/gameplay_world/equipment_notice.cpp','game/native/gameplay_world/resource_auxiliary_lists.cpp']
     if args.actor_terminal: units+=['game/native/gameplay_world/actor_terminal_timer.cpp']
@@ -323,6 +336,10 @@ def main():
         name='tools/native_reconstruction/resource_debris_capacity_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.resource_depletion:
         name='tools/native_reconstruction/resource_depletion_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.weapon_actions:
+        name='tools/native_reconstruction/weapon_actions_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.weapon_fire:
+        name='tools/native_reconstruction/weapon_fire_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.resource_ownership:
         name='tools/native_reconstruction/resource_ownership_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.actor_resource_operations:
@@ -463,6 +480,9 @@ def main():
                 value=overlay['o2'][at-0x570000:at-0x570000+size];record.setdefault('resource_companion_switches',{})[hex(at)]=value.hex();init+='{const std::uint8_t data[]{'+','.join(str(v)for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
         if args.resource_companions:
             at,size=0x73ebc0,48;value=overlay['o2'][at-0x570000:at-0x570000+size];record['companion_offset_constants']=value.hex();init+='{const std::uint8_t data[]{'+','.join(str(v)for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
+        if args.weapon_actions:
+            for at,size in [(0x719a60,64*68),(0x71ae80,13*32),(0x740480,12)]:
+                value=overlay['o2'][at-0x570000:at-0x570000+size];record.setdefault('weapon_action_tables',{})[hex(at)]={'bytes':size,'sha256':hashlib.sha256(value).hexdigest()};init+='{const std::uint8_t data[]{'+','.join(str(v)for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
         if args.actor_progression:
             for at,size in [(0x71adb0,32),(0x71add0,32),(0x71ad10,32),(0x740478,4)]:
                 value=overlay['o2'][at-0x570000:at-0x570000+size];record.setdefault('gauge_progression_tables',{})[hex(at)]={'bytes':size,'sha256':hashlib.sha256(value).hexdigest()};init+='{const std::uint8_t data[]{'+','.join(str(v)for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
@@ -567,6 +587,10 @@ def main():
         if args.resource_depletion: command.insert(1,'-DREO_RESOURCE_DEPLETION=1')
         if args.stock_wmd_absence: command.insert(1,'-DREO_STOCK_WMD_ABSENCE=1')
         if args.resource_use: command.insert(1,'-DREO_RESOURCE_USE=1')
+        if args.weapon_actions: command.insert(1,'-DREO_WEAPON_ACTIONS_ONLY=1')
+        if args.weapon_fire:
+            command.insert(1,'-DREO_WEAPON_FIRE=1')
+            record['declared_ports'].append('Complete65E880 body and reached math/6B4420 execute;665CA0 feedback and distinct5823E0/6B24F0/5DD270/58E6D0 constructors are controlled ordered effect ports with synchronous action mutations, not newly executed effect implementations.')
         if args.resource_ownership: command.insert(1,'-DREO_RESOURCE_OWNERSHIP=1')
         if args.actor_resource_operations: command.insert(1,'-DREO_ACTOR_RESOURCE_OPERATIONS=1')
         if args.resource_auxiliary: command.insert(1,'-DREO_RESOURCE_AUXILIARY_LISTS=1')

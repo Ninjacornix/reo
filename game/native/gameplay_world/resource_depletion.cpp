@@ -9,6 +9,11 @@ ResourceDepletion::ResourceDepletion(ResourceRecipes& lifecycle,gameplay_effects
     if(!visuals_.debris_bound_to(pairs.world_,factory_.models_,factory_)||!audio_.bound_to(pairs.world_,pairs.resources_,pairs.templates_)||!weapons_.bound_to(pairs.world_,pairs.resources_,pairs.templates_)||&audio_.owner_!=weapons_.audio_.get())throw std::invalid_argument("Native resource depletion owners unavailable, foreign or split audio");
 }
 void ResourceDepletion::reset()noexcept{debris_.reset();cue_.reset();refresh_.reset();}
+bool ResourceDepletion::bound_to(const World& world,const gameplay_scenario::SceneResources& resources,
+    const gameplay_scenario::ResourceTemplates& templates)const noexcept{
+    const auto& pairs=lifecycle_.pairs_;
+    return &pairs.world_==&world && &pairs.resources_==&resources && &pairs.templates_==&templates && !world.closed();
+}
 ResourceDepletionResult ResourceDepletion::replace_core(std::uint32_t full_resource,const actors::EntityId& id){
     auto& pairs=lifecycle_.pairs_;if(pairs.world_.closed())return{ResourceDepletionStatus::closed};
     const auto resource=std::uint8_t(full_resource);const auto item=pairs.descriptor(resource);if(!item.active||!item.ownership_tag)return{};
