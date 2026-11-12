@@ -1,5 +1,9 @@
 # Direct native scenario archive loading
 
+The later [scenario resource index](SCENARIO_RESOURCE_INDEX.md) adds the
+separate owned key-to-ordinal lookup used by cinematic object loading. The
+display-name API described below retains its existing behavior.
+
 `ScenarioArchive` reads the five File #1 scenario archives from a retained
 NETBIO00 source through the existing bounded AFS reader. Names and extents come
 from the actual archive directories. Scenario EVBs and room RDTs become owned

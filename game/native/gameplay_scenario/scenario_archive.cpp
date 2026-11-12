@@ -37,6 +37,23 @@ ScenarioArchive::ScenarioArchive(std::shared_ptr<const reo::assets::Source> arch
                 members.push_back({lower_name(entry.name),std::uint64_t(source->offset)+entry.offset,entry.size});
         }
         std::stable_sort(members.begin(),members.end(),[](const Member& a,const Member& b) { return a.name < b.name; });
+        std::snprintf(name.data(),name.size(),"r%03u_h.bin",unsigned(scenario_ids[index]));
+        const auto header_match=[&](const auto& entry){return lower_name(entry.name)==name.data();};
+        const auto header=std::find_if(root.entries.begin(),root.entries.end(),header_match);
+        if(header==root.entries.end())continue;
+        if(std::find_if(header+1,root.entries.end(),header_match)!=root.entries.end()||header->size<8||header->size>maximum_member_bytes)
+            throw std::invalid_argument("Scenario resource index unavailable or ambiguous");
+        std::vector<std::uint8_t> raw(header->size);archive_->read(header->offset,raw.size(),raw.data());
+        const auto first=reo::assets::u32(raw.data()),count=reo::assets::u32(raw.data()+4);
+        if(first>contents.entries.size()||count>contents.entries.size()-first||count>(raw.size()-8)/16||raw.size()!=8ull+16ull*count)
+            throw std::invalid_argument("Scenario resource index extent unavailable");
+        auto& resources=resources_[index];resources.reserve(count);
+        for(std::size_t ordinal=0;ordinal<count;++ordinal){
+            const auto* start=reinterpret_cast<const char*>(raw.data()+8+16*ordinal);
+            const auto end=std::find(start,start+16,'\0');const auto& entry=contents.entries[first+ordinal];
+            resources.push_back({std::string(start,end),std::uint64_t(source->offset)+entry.offset,entry.size});
+        }
+        std::stable_sort(resources.begin(),resources.end(),[](const Member& a,const Member& b){return a.name<b.name;});
     }
 }
 
@@ -50,10 +67,34 @@ Bytes ScenarioArchive::read_member(std::uint16_t scenario,std::string_view name)
     if (member == members.end() || member->name != key || member->size == 0) return {};
     if (member+1 != members.end() && (member+1)->name == key)
         throw std::invalid_argument("Ambiguous scenario archive member");
-    if (member->size > maximum_member_bytes) throw std::invalid_argument("Scenario archive member exceeds limit");
-    auto bytes = std::make_shared<std::vector<std::byte>>(member->size);
-    archive_->read(member->offset,bytes->size(),bytes->data());
+    return read(*member);
+}
+
+Bytes ScenarioArchive::read(const Member& member)const{
+    if(!member.size)return{};
+    if(member.size>maximum_member_bytes)throw std::invalid_argument("Scenario archive member exceeds limit");
+    auto bytes=std::make_shared<std::vector<std::byte>>(member.size);
+    archive_->read(member.offset,bytes->size(),bytes->data());
     return bytes;
+}
+
+Bytes ScenarioArchive::read_resource(std::uint16_t scenario,std::string_view name)const{
+    const auto id=std::find(scenario_ids.begin(),scenario_ids.end(),scenario);
+    if(id==scenario_ids.end()||name.empty()||name.size()>255||name.find('\0')!=name.npos)return{};
+    //1A9D70 selects the suffix after the last forward slash; it looks for a
+    // backslash only when no forward slash exists. Preserve mixed-path order.
+    auto slash=name.rfind('/');if(slash==name.npos)slash=name.rfind('\\');
+    if(slash!=name.npos)name.remove_prefix(slash+1);
+    if(name.empty()||name.size()>16)return{};
+    std::string key(name);
+    for(char& c:key){
+        if(c<' '||static_cast<unsigned char>(c)>126)return{};
+        if(c>='a'&&c<='z')c+='A'-'a';
+        if(c=='\\'||c=='/'||c=='.'||c==':')c='_';
+    }
+    const auto& resources=resources_[std::size_t(id-scenario_ids.begin())];
+    const auto member=std::lower_bound(resources.begin(),resources.end(),key,[](const Member& value,const std::string& key){return value.name<key;});
+    return member==resources.end()||member->name!=key?Bytes{}:read(*member);
 }
 
 std::optional<ScriptBank> ScenarioArchive::scenario_scripts(std::uint16_t scenario) const {

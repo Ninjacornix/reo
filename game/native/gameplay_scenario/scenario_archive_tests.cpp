@@ -68,7 +68,46 @@ void enemy_boundaries() {
     check(descriptors.record(0)->variant==0xfe&&session.random.state()==random);
     ++enemy_boundary_cases;
 }
+void resource_index_fixtures(){
+    std::vector<std::uint8_t> bytes(6*16384);
+    const auto table=[&](unsigned base,const std::vector<std::string>& names){
+        std::memcpy(bytes.data()+base,"AFS\0",4);reo::assets::put32(bytes.data()+base+4,unsigned(names.size()));
+        for(unsigned i=0;i<names.size();++i){
+            const auto offset=base?2048+2048*i:(i<5?16384*(i+1):16384*(i-4)+12288);
+            reo::assets::put32(bytes.data()+base+8+8*i,offset);reo::assets::put32(bytes.data()+base+12+8*i,base?128:(i<5?16384:56));
+            std::memcpy(bytes.data()+base+256+48*i,names[i].data(),names[i].size());
+        }
+        reo::assets::put32(bytes.data()+base+8+8*names.size(),256);reo::assets::put32(bytes.data()+base+12+8*names.size(),unsigned(48*names.size()));
+    };
+    table(0,{"r001.afs","r002.afs","r028.afs","r035.afs","r041.afs","r001_h.bin","r002_h.bin","r028_h.bin","r035_h.bin","r041_h.bin"});
+    for(unsigned i=0;i<5;++i){
+        const auto base=16384*(i+1);table(base,{"display0","display1","display2","display3"});
+        for(unsigned n=0;n<4;++n)bytes[base+2048+2048*n]=std::uint8_t(11+n);
+        auto* header=bytes.data()+base+12288;reo::assets::put32(header,1);reo::assets::put32(header+4,3);
+        std::memcpy(header+8,"OBJ00_00_A_00_NB",16);std::memcpy(header+24,"OBJ00_00_A_00_NB",16);std::memcpy(header+40,"FILE_TXT",8);
+    }
+    const auto source=[&]{return std::make_shared<reo::assets::Source>("indexed memory",std::make_shared<Memory>(bytes));};
+    const content::ScenarioArchive archive(source());
+    for(unsigned id:{1u,2u,28u,35u,41u}){
+        for(const auto* key:{"obj00_00_a_00.nb","OBJ00_00_A_00_NB","directory/obj00_00_a_00.nb","directory\\obj00_00_a_00.nb"}){
+            const auto actual=archive.read_resource(std::uint16_t(id),key);check(actual&&actual->size()==128&&(*actual)[0]==std::byte{12});
+        }
+        check(archive.read_resource(std::uint16_t(id),"file:txt")->at(0)==std::byte{14});
+        check(archive.read_resource(std::uint16_t(id),"file.txt")->at(0)==std::byte{14});
+        check(archive.read_resource(std::uint16_t(id),"dir/FILE\\TXT")->at(0)==std::byte{14});
+        check(archive.read_resource(std::uint16_t(id),"dir\\FILE:TXT")->at(0)==std::byte{14});
+        check(!archive.read_resource(std::uint16_t(id),"obj00_00_a_00.nbd"));
+        check(!archive.read_resource(std::uint16_t(id),"display1"));
+        check(archive.read_member(std::uint16_t(id),"display1")->at(0)==std::byte{12});
+    }
+    check(!archive.read_resource(19,"FILE_TXT")&&!archive.read_resource(1,"")&&!archive.read_resource(1,"folder/")&&!archive.read_resource(1,std::string(256,'a'))&&!archive.read_resource(1,std::string("file\0txt",8)));
+    const auto malformed=[&]{bool refused{};try{content::ScenarioArchive candidate(source());}catch(const std::invalid_argument&){refused=true;}check(refused);};
+    reo::assets::put32(bytes.data()+16384+12288,4);malformed(); // index starts past the available suffix
+    reo::assets::put32(bytes.data()+16384+12288,1);reo::assets::put32(bytes.data()+16384+12292,4);malformed();
+    reo::assets::put32(bytes.data()+16384+12292,2);malformed(); // trailing bytes do not match count
+}
 void fixtures() {
+    resource_index_fixtures();
     enemy_boundaries();
     std::vector<std::uint8_t> bytes(6*4096);
     const auto table=[&](std::size_t base,const std::vector<std::string>& names) {

@@ -52,7 +52,9 @@ std::string CinematicObjectAssets::model_name(gameplay_scenario::CutsceneCue cue
 std::shared_ptr<const CinematicObjectAsset> CinematicObjectAssets::read(std::uint16_t destination,gameplay_scenario::CutsceneCue cue,std::uint32_t model)const{
     const auto name=model_name(cue,model);const auto key=std::pair{destination,name};
     {std::lock_guard guard(mutex_);const auto found=cache_.find(key);if(found!=cache_.end())return found->second;}
-    const auto bytes=archive_->read_member(destination,name);if(!bytes)return{};
+    //1AAAD0 explicitly terminates its basename at16 bytes before1A9D70
+    // resolves the scenario header's ordinal key. Display names are separate.
+    const auto bytes=archive_->read_resource(destination,std::string_view(name).substr(0,16));if(!bytes)return{};
     const auto asset=CinematicObjectAsset::import(name,bytes);
     std::lock_guard guard(mutex_);return cache_.try_emplace(key,asset).first->second;
 }

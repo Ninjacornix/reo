@@ -4,6 +4,12 @@ Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to put the PC to sleep only after
 Stage4 is fully implemented and verified; do not sleep at component checkpoints.
 
+- [Scenario resource identity](SCENARIO_RESOURCE_INDEX.md) now uses actual
+  sixteen-byte key/ordinal tables instead of object AFS display names. Paired
+  complete packaged-loader/resolver comparisons pass2,013 actual loads; all
+  450 canonical assets, existing archive/owner checks and five parents pass.
+  Controlled playback remains1,296/1,356. Actual scene selection/activation,
+  remaining refusals and installed acceptance remain open.
 - [Scalar prefix playback](SCALAR_PREFIX_PLAYBACK.md) now permits unused trailing
   clip tracks with original binding/sampling/timing parity. Both compilers pass
   playback, World and five-parent regressions. Controlled object playback now
