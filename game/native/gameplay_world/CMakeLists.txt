@@ -4,6 +4,7 @@ target_sources(reo_native_gameplay_world PRIVATE scene_primary_actors.cpp)
 target_sources(reo_native_gameplay_world PRIVATE secondary_pose_links.cpp)
 target_sources(reo_native_gameplay_world PRIVATE actor_surface_transition.cpp)
 target_sources(reo_native_gameplay_world PRIVATE primary_actor_records.cpp)
+target_sources(reo_native_gameplay_world PRIVATE inventory_ui.cpp)
 
 add_library(reo_native_actor_postprocess STATIC actor_scene_triggers.cpp primary_actor_postprocess.cpp)
 target_sources(reo_native_actor_postprocess PRIVATE auxiliary_actor_postprocess.cpp)

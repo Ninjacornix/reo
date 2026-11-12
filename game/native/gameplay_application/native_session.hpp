@@ -1,4 +1,5 @@
 #pragma once
+#include "../gameplay_world/inventory_ui.hpp"
 #include "../gameplay_scenario/scenario_archive.hpp"
 #include "../gameplay_scenario/sequence_control.hpp"
 #include "../gameplay_scenario/lighting.hpp"
@@ -78,6 +79,7 @@ public:
     bool open()const noexcept{return !closed_&&!world_.closed();}
     gameplay_world::World& world()noexcept{return world_;}
     gameplay_update::Owner& update()noexcept{return update_;}
+    gameplay_world::InventoryUi& inventory_ui()noexcept{return *inventory_ui_;}
     gameplay_update::ActorReception& reception()noexcept{return reception_;}
     const gameplay_scenario::content::ScenarioArchive& archive()const noexcept{return archive_;}
     gameplay_scenario::SequenceControl& sequences()noexcept{return sequences_;}
@@ -106,6 +108,7 @@ private:
     std::shared_ptr<SessionRoomObjects> room_objects_;
     std::optional<gameplay_scenario::content::RoomId> room_;
     bool running_{},closed_{};
+    std::unique_ptr<gameplay_world::InventoryUi> inventory_ui_;
     gameplay_scenario::Providers providers()noexcept;
     friend class SessionRooms;
 };

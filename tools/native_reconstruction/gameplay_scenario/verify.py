@@ -44,6 +44,7 @@ IDS += ['006949A0','005B4380','005B1850','00591BE0','005F2180','005F2120','005F2
 IDS += ['00694D70','00592E90','00591400','00590C70','00590BE0']
 IDS += ['00691010','005B92B0']
 IDS += ['00691AE0']
+IDS += ['006DEC80','006925C0','005F4FD0','006E1430']
 
 PINNED={};PIN_COMMITS={}
 def source_bytes(p):
@@ -228,6 +229,7 @@ def main(a):
     shutil.copyfile(HERE/'script_resource_activation_vm_tests.inc',out/'script_resource_activation_vm_tests.inc')
     shutil.copyfile(HERE/'scenario_events_vm_tests.inc',out/'scenario_events_vm_tests.inc')
     shutil.copyfile(HERE/'difficulty_vm_tests.inc',out/'difficulty_vm_tests.inc')
+    shutil.copyfile(HERE/'inventory_ui_vm_tests.inc',out/'inventory_ui_vm_tests.inc')
     shutil.copyfile(HERE/'periodic_control_vm_tests.inc',out/'periodic_control_vm_tests.inc')
     shutil.copyfile(HERE/'room_rule_tests.inc',out/'room_rule_tests.inc')
     shutil.copyfile(HERE/'room_object_vm_tests.inc',out/'room_object_vm_tests.inc')
@@ -259,6 +261,7 @@ def main(a):
     units += [('resource_collisions',ROOT/'game/native/gameplay_scenario/resource_collisions.cpp'),('weapon_curve',ROOT/'game/native/animation/weapon_program.cpp')]
     units += [('script_resource_parameters',ROOT/'game/native/gameplay_scenario/script_resource_parameters.cpp'),('script_resource_activation',ROOT/'game/native/gameplay_scenario/script_resource_activation.cpp')]
     units += [(name,ROOT/'game/native/gameplay_scenario'/(name+'.cpp'))for name in ['scenario_events','timer_hud']]
+    units += [('inventory_ui',ROOT/'game/native/gameplay_world/inventory_ui.cpp')]
     units += [('resource_owner_'+name,ROOT/'game/native/gameplay_world'/(name+'.cpp')) for name in ['resource_frames','resource_factory','resource_static_assets','inventory']]
     units += [('ai_execution',ROOT/'game/native/gameplay_ai/execution.cpp')]
     units += [('audio_'+name,ROOT/'game/native/gameplay_audio'/(name+'.cpp')) for name in ('routing','import','spatial','owner','scenario_cues')]
@@ -317,6 +320,7 @@ def main(a):
     source_paths.append(HERE/'script_resource_activation_vm_tests.inc')
     source_paths.append(HERE/'scenario_events_vm_tests.inc')
     source_paths.append(HERE/'difficulty_vm_tests.inc')
+    source_paths.append(HERE/'inventory_ui_vm_tests.inc')
     source_paths.append(ROOT/'tools/native_reconstruction/comparison_objects.py')
     source_paths += [HERE/'surface_vm_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]

@@ -8,7 +8,7 @@
 namespace reo::native::gameplay_application {
 namespace {
 namespace scenario=gameplay_scenario;
-bool minimal_room_providers(const scenario::Program& program,const gameplay_world::World& world)noexcept{
+bool minimal_room_providers(const scenario::Program& program,const gameplay_world::World& world,const gameplay_world::InventoryUi& ui)noexcept{
     // This concrete composition admits the retained room providers and the
     // canonical Update event factory. Other owners are attached explicitly as the
     // application expands; a parser-admitted program alone is insufficient.
@@ -19,7 +19,7 @@ bool minimal_room_providers(const scenario::Program& program,const gameplay_worl
         !program.needs_periodic_effects()&&!program.needs_surface_effects()&&!program.needs_forced_terminal()&&
         !program.needs_script_audio()&&!program.needs_scene_record_parameters()&&!program.needs_resource_parameters()&&!program.needs_resource_activation()&&
         program.admits_room_counters(nullptr)&&program.admits_inventory_grants(nullptr,nullptr,nullptr)&&
-        program.admits_actor_roster(nullptr)&&program.admits_character_remap(nullptr)&&program.admits_actor_script_commands(nullptr)&&program.admits_difficulty(&world);
+        program.admits_actor_roster(nullptr)&&program.admits_character_remap(nullptr)&&program.admits_actor_script_commands(nullptr)&&program.admits_difficulty(&world)&&program.admits_inventory_ui(&ui,&world);
 }
 }
 struct NativeSession::RoomState final:gameplay_scenario::ControlEffects {
@@ -76,6 +76,9 @@ NativeSession::NativeSession(std::shared_ptr<const reo::assets::Source> archive,
     archive_(std::move(archive)),session_(std::make_shared<gameplay_world::Session>()),
     world_(std::move(profile),session_),reception_(world_),update_(world_,notifications),room_state_(std::make_shared<RoomState>(update_,world_,room_models_.cold_state())){
     world_.mode=mode;
+    inventory_ui_.reset(new gameplay_world::InventoryUi(world_));
+    if(inventory_ui_->initialize()!=gameplay_world::InventoryUiStatus::completed)
+        throw std::runtime_error("Native inventory UI initialization unavailable");
 }
 NativeSession::~NativeSession(){if(close()==SessionStatus::busy)std::terminate();}
 NativeSession::RoomLease::RoomLease(std::shared_ptr<NativeSession> host,std::shared_ptr<RoomState> state):
@@ -127,6 +130,7 @@ gameplay_scenario::Providers NativeSession::providers()noexcept{
     result.lighting=&lighting_;result.scene_channels=&channels_;result.scene_controls=&room_state_->controls;
     result.control_effects=room_state_.get();
     result.scenario_events=&update_.scenario_events();
+    result.inventory_ui=inventory_ui_.get();
     return result;
 }
 SessionStatus NativeSession::import_launch_difficulty(std::uint8_t selected)noexcept{
@@ -146,7 +150,7 @@ SessionStatus NativeSession::install_room(gameplay_scenario::content::RoomId id)
         const auto admitted=gameplay_scenario::content::admit_script_program(bank,world_.mode==0?
             gameplay_scenario::DispatchProfile::offline_actor:gameplay_scenario::DispatchProfile::ordinary);
         if(admitted.status!=gameplay_scenario::content::ScriptAdmission::admitted||!admitted.program)return SessionStatus::unsupported_script;
-        if(!minimal_room_providers(*admitted.program,world_))return SessionStatus::missing_providers;
+        if(!minimal_room_providers(*admitted.program,world_,*inventory_ui_))return SessionStatus::missing_providers;
         const auto scene=room->section(10),lig=room->section(11);
         if(!scene||!lig)return SessionStatus::missing_providers;
         gameplay_scenario::Lighting prepared_lighting;

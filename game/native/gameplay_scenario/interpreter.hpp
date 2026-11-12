@@ -7,7 +7,7 @@
 #include <optional>
 #include <span>
 #include <vector>
-namespace reo::native::gameplay_world { class World; }
+namespace reo::native::gameplay_world { class World;class InventoryUi; }
 namespace reo::native::gameplay_update { class GameplayMessageSink; }
 
 namespace reo::native::gameplay_scenario {
@@ -90,6 +90,8 @@ public:
     bool admits_scenario_events(const ScenarioEvents*,const gameplay_world::World*)const noexcept;
     bool needs_difficulty()const noexcept{return difficulty_;}
     bool admits_difficulty(const gameplay_world::World*)const noexcept;
+    bool needs_inventory_ui()const noexcept{return inventory_ui_;}
+    bool admits_inventory_ui(const gameplay_world::InventoryUi*,const gameplay_world::World*)const noexcept;
     bool needs_scenario_counter_policy()const noexcept{return scenario_counter_policy_;}
     bool admits_room_counters(const gameplay_world::World*)const noexcept;
     bool admits_inventory_grants(const gameplay_world::World*,const SceneResources*,const ResourceTemplates*)const noexcept;
@@ -124,6 +126,7 @@ private:
     std::vector<ResourceParameterRequest> resource_parameter_requests_;
     bool resource_activation_{};
     bool difficulty_{};
+    bool inventory_ui_{};
     bool scenario_events_{};
     DispatchProfile profile_{};
 };
@@ -158,7 +161,7 @@ public:
     virtual std::optional<std::int32_t> query(std::uint32_t id)noexcept=0;
 };
 struct Providers {Flags* flags{};gameplay_tasks::FlagTimers* timers{};Signals* signals{};FlagState* canonical_flags{};
-    SceneResources* scene_resources{};SceneEffects* scene_effects{};SceneOwners* scene_owners{};SessionCounters* session_counters{};SequenceControl* sequences{};Lighting* lighting{};SceneChannels* scene_channels{};SceneControls* scene_controls{};ControlEffects* control_effects{};StreamChannels* streams{};StreamBackend* stream_backend{};SavedControlRecords* saved_controls{};gameplay_world::World* world{};ActionChoices* action_choices{};SceneModels* models{};RoomObjectCommands* room_objects{};PeriodicEffects* periodic_effects{};SurfaceEffects* surface_effects{};const ResourceTemplates* resource_templates{};ForcedActorTerminal* forced_terminal{};ScriptAudio* script_audio{};gameplay_update::GameplayMessageSink* messages{};ScriptResourceParameters* resource_parameters{};ScriptResourceActivation* resource_activation{};ScenarioEvents* scenario_events{};};
+    SceneResources* scene_resources{};SceneEffects* scene_effects{};SceneOwners* scene_owners{};SessionCounters* session_counters{};SequenceControl* sequences{};Lighting* lighting{};SceneChannels* scene_channels{};SceneControls* scene_controls{};ControlEffects* control_effects{};StreamChannels* streams{};StreamBackend* stream_backend{};SavedControlRecords* saved_controls{};gameplay_world::World* world{};ActionChoices* action_choices{};SceneModels* models{};RoomObjectCommands* room_objects{};PeriodicEffects* periodic_effects{};SurfaceEffects* surface_effects{};const ResourceTemplates* resource_templates{};ForcedActorTerminal* forced_terminal{};ScriptAudio* script_audio{};gameplay_update::GameplayMessageSink* messages{};ScriptResourceParameters* resource_parameters{};ScriptResourceActivation* resource_activation{};ScenarioEvents* scenario_events{};gameplay_world::InventoryUi* inventory_ui{};};
 struct TickContext {bool enabled{true};bool alternate_mode{};std::uint8_t selected_actor{};std::uint16_t current_room{};
     // Caller-provided actual SDK/audio service tick, distinct from task passes
     // or the simulation clock. Never inferred from host elapsed time.

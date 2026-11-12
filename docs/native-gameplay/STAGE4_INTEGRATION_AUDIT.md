@@ -21,7 +21,7 @@ remain acceptance boundaries.
 | Required cut | Already implemented, to reuse | Missing production ownership / evidence |
 |---|---|---|
 | Application/session entry | `NativeSession` owns canonical World, Session, Update, archive, script providers, reception, lighting and retained room graph; `SessionStartup` borrows it | Running-game selection of this owner, source-backed launch configuration/placement and complete shutdown across the remaining hosts. |
-| Scenario/room preparation | Actual owned `r0417300` room installation and script stepping; real `_H.BIN` ordinal reads; retained room generations and canonical object publication/reception; D1 kind6 owns the actual countdown event in Update; EE reads canonical optional launch difficulty | Complete ordinary scenario EVB admission. Current frontiers include64/D0/108; offline1A8 remains distinct. All five EVBs still encounter unsupported semantics. The current frontier audit finds69 unsupported ordinary instructions using12 distinct opcodes across4,837 authored role0 records. |
+| Scenario/room preparation | Actual owned `r0417300` room installation and script stepping; real `_H.BIN` ordinal reads; retained room generations and canonical object publication/reception; D1 kind6 owns the actual countdown event in Update; EE reads canonical optional launch difficulty;108 uses the canonical cold InventoryUi owner shared with recovery | Complete ordinary scenario EVB admission. Current frontiers include64/D0/63; offline1A8 remains distinct. All five EVBs still encounter unsupported semantics. The current frontier audit finds68 unsupported ordinary instructions using11 distinct opcodes across4,837 authored role0 records. |
 | Primary actor/model startup | `SessionStartup`, `PrimaryActorModels::start_roster`, real actor/model/motion assets and construction/restore owners; actual actor voice and dialogue owners | Compose remaining startup effects and initial motion capabilities against the application; establish authored launch-room/roster/placement producers, rather than infer them from the controlled roster-kind fixture. |
 | Shared room records/models | Actual common Records identity, `RoomSceneOwner`, `RoomModels` persistent saved bank and static NBD poses, `SceneModelBindings`, complete object `Scene` construction/retirement | Qualify broader owned physical rooms through full script admission and actual gameplay scheduling. Unavailable loaded model poses/parts and unsupported retirement bindings still refuse. |
 | Ordinary update | `Owner::advance` owns pause/transition gates, worker ordering, script/task/timer ordering and clock commit | Concrete terminal `PhaseServices` implementation. Existing CollisionWorkers, LinkedModelWorkers and NpcActorWorkers are decorators that forward unowned work. |
@@ -350,3 +350,12 @@ and adopted by NativeSession. The current matrix above reflects this boundary.
 Full ordinary EVB admission and concrete terminal frame services are now the
 next application cuts; no installed-game or full Stage4 claim follows from the
 bounded room/model proof.
+
+The [cold inventory UI owner](INVENTORY_UI.md) now supplies actual6DEC80 and
+complete108/6925C0 through the cold6E1430 branch in NativeSession. Recovery uses
+that same owner. Active UI phases remain explicitly unavailable. The five
+ordinary frontiers are r001:64, r002:D0, r028:63, r035:D0 and r041:D0; all offline
+frontiers remain1A8. The next small source-backed cut is64's physical population
+loop writing the existing Actor.model_pose_class54D. Opcode63 nonzero sets a UI
+request gate, while its zero branch reaches the larger resource-reset6DDD70;
+those branches must retain their distinct capability requirements.

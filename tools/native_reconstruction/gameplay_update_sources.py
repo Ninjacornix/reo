@@ -37,6 +37,7 @@ UPDATE_UNITS += ['game/native/gameplay_scenario/cutscene_actor_commands.cpp',
 UPDATE_UNITS += ['game/native/gameplay_scenario/script_audio.cpp']
 UPDATE_UNITS += ['game/native/gameplay_scenario/script_resource_parameters.cpp','game/native/gameplay_scenario/script_resource_activation.cpp']
 UPDATE_UNITS += ['game/native/gameplay_scenario/scenario_events.cpp','game/native/gameplay_scenario/timer_hud.cpp']
+UPDATE_UNITS += ['game/native/gameplay_world/inventory_ui.cpp']
 UPDATE_UNITS += ['game/native/gameplay_audio/'+name+'.cpp' for name in
                  ['routing','import','spatial','owner','scenario_cues']]
 UPDATE_UNITS += ['game/native/audio_banks/v2/'+name+'.cpp' for name in

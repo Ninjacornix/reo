@@ -23,6 +23,7 @@
 #include "script_resource_activation.hpp"
 #include "scenario_events.hpp"
 #include "difficulty_predicate.hpp"
+#include "../gameplay_world/inventory_ui.hpp"
 #include "scene_record_parameters.hpp"
 #include "actor_script_commands.hpp"
 #include "actor_script_predicates.hpp"
@@ -170,6 +171,7 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
                 scenario_events_=true;world_=true;
             }
             if(!noop&&op==0xee&&std::to_integer<std::uint8_t>(b[at+8])<6){difficulty_=true;world_=true;}
+            inventory_ui_|=!noop&&op==0x108;
             low_actor_population_|=!noop&&(op==0x38||op==0x39);
             full_actor_population_|=!noop&&op==0x173;
             npc_inventory_grants_|=!noop&&op==0x3a;
@@ -271,6 +273,9 @@ bool Program::admits_scenario_events(const ScenarioEvents* events,const gameplay
 bool Program::admits_difficulty(const gameplay_world::World* world)const noexcept{
     return !difficulty_||(world&&!world->closed()&&world->session().difficulty.has_value());
 }
+bool Program::admits_inventory_ui(const gameplay_world::InventoryUi* ui,const gameplay_world::World* world)const noexcept{
+    return !inventory_ui_||(ui&&world&&ui->bound_to(*world)&&ui->close_ready());
+}
 bool Program::admits_room_counters(const gameplay_world::World* world)const noexcept {
     return !room_counters_ || (world && !world->closed() &&
         world->session().room_contacts.counters_ready(scenario_counter_policy_));
@@ -342,6 +347,7 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     out[0x191].native_algorithm=true;out[0x191].world_required=true;out[0x191].scenario_required=true;out[0x191].canonical_flags_required=true;out[0x191].scene_controls_required=true;
     out[0xd1].native_algorithm=true;out[0xd1].world_required=true;
     out[0xee].native_algorithm=true; // Valid comparisons require canonical difficulty, selected per Program.
+    out[0x108].native_algorithm=true;out[0x108].world_required=true;
     if(profile==DispatchProfile::offline_actor)for(std::size_t i=0;i<out.size();++i){
         if(offline_bindings[i].noop)out[i]={true,false,false,false};
         else if(!offline_bindings[i].same_handler&&i!=0xb&&i!=0xc&&i!=0xe3&&i!=0xed&&i!=0xef&&i!=0x104&&i!=0x105)out[i]={};
@@ -422,6 +428,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
     if(!c.program->admits_resource_activation(providers.resource_activation,providers.world,providers.scene_resources,providers.resource_templates))return{Status::provider_unavailable,0,{},0};
     if(!c.program->admits_scenario_events(providers.scenario_events,providers.world))return{Status::provider_unavailable,0,{},0};
     if(!c.program->admits_difficulty(providers.world))return{Status::provider_unavailable,0,{},0};
+    if(!c.program->admits_inventory_ui(providers.inventory_ui,providers.world))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_selected_actor()&&!providers.world->primary(context.selected_actor))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_action_choices()&&!providers.action_choices)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_scenario()&&!providers.world->scenario)return{Status::provider_unavailable,0,{},0};
@@ -755,6 +762,9 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
             if(providers.scenario_events->command(value(0),value(4),args)!=ScenarioEventStatus::completed)return result(Status::provider_unavailable);
             break;
         }
+        case 0x108:
+            if(providers.inventory_ui->force_close()!=gameplay_world::InventoryUiStatus::completed)return result(Status::provider_unavailable);
+            break;
         case 0x73:{
             const auto mode=value(4);
             if(mode<=2){

@@ -88,6 +88,20 @@ void canonical_step(){
     check(!stepped.clock_committed&&owner.clock().update_counter()==0&&!owner.busy());
     check(owner.step_script(99).status==update::Status::script_failure);
 }
+void cold_inventory_ui(){
+    Notifications notices;application::NativeSession session(fixture_archive(),profile(),notices);
+    auto& ui=session.inventory_ui();auto& world=session.world();
+    check(ui.bound_to(world)&&ui.snapshot()&&ui.snapshot()->phase==0&&ui.snapshot()->update_enabled==1&&ui.snapshot()->requests_enabled==1);
+    check(!ui.close_ready()&&ui.force_close()==world::InventoryUiStatus::unavailable_actor);
+    auto actor=std::make_unique<world::Actor>();actor->status=0x80008001u;actor->auxiliary_status=0x80000001u;
+    const auto spawned=world.spawn_primary(0,std::move(actor));check(bool(spawned.id));
+    world.selected_frame_marker=0x80;world.session().inventory_owner=4;
+    check(ui.close_ready()&&ui.force_close()==world::InventoryUiStatus::completed);
+    check(world.primary(0)->status==0x80000001u&&world.primary(0)->auxiliary_status==0x80000401u&&world.selected_frame_marker==0x83&&world.session().inventory_owner==0);
+    world.primary(0)->status=0x8001;world.session().inventory_owner=4;world::RecoveryUi& recovery=ui;
+    check(recovery.close()&&world.primary(0)->status==1&&world.session().inventory_owner==4);
+    check(session.close()==application::SessionStatus::completed&&!ui.close_ready()&&!recovery.close());
+}
 void owned(const std::filesystem::path& path){
     auto source=std::make_shared<const reo::assets::Source>(path);Notifications notices;
     for(const auto mode:{std::uint8_t(1),std::uint8_t(0)})for(bool terminal:{false,true}){
@@ -147,7 +161,7 @@ void owned(const std::filesystem::path& path){
 }
 }
 int main(int argc,char** argv)try{
-    fixtures();canonical_step();check(argc==1||argc==2);
+    fixtures();canonical_step();cold_inventory_ui();check(argc==1||argc==2);
     if(argc==2){const std::string_view value(argv[1]);owned(std::filesystem::path(std::u8string(value.begin(),value.end())));}
     std::cout<<"{\"status\":\"passed\",\"checks\":"<<checks<<",\"owned_rooms\":"<<owned_rooms<<",\"script_steps\":"<<script_steps<<",\"frame_refusals\":"<<frame_refusals<<",\"game_launched\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

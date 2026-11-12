@@ -1,0 +1,137 @@
+{
+  "schema": "reo.native.inventory_ui.qualification.v1",
+  "status": "passed",
+  "source_sha256": {
+    "game/native/gameplay_world/recovery_ui.hpp": "3d897bf123b5dcd63ac55ec28e24cfb35949d947ebfcb164f70309fd34e95a05",
+    "game/native/gameplay_world/inventory_ui.hpp": "ee8013f09d8c072bfa6d226eca7781f27160be77394dc835e1a8df55f606fc31",
+    "game/native/gameplay_world/inventory_ui.cpp": "66e5e3f4b12559dc1599c530fc446c9143ade09bf41878c472ff1210ee0571f6",
+    "game/native/gameplay_world/actor_recovery.hpp": "53c481913c9c6eafb1d19e36adcaa48709a0fc6b6e004892827933381e34f781",
+    "game/native/gameplay_application/native_session.hpp": "6e7f404552e5b94d0202a24b6e3b028d04df3fd89ef764e23759e0e43095e463",
+    "game/native/gameplay_application/native_session.cpp": "43d0e6b4b67aa36df88da6d999f5ad071e85e4fc04ef2979e1bc12a04a1cf840",
+    "game/native/gameplay_application/native_session_tests.cpp": "537d1f12f5b1868e4b100f9219dc9f74bc4f47431b090f474cb18c630020816a",
+    "game/native/gameplay_scenario/interpreter.hpp": "d19c779f89c79c761d38fabb87385552ab032e459bd6353134c11d4158006b0d",
+    "game/native/gameplay_scenario/interpreter.cpp": "7868182e72ba25efa69a477d920ce361652e7aab22c2493e0248991e7bd9238a",
+    "tools/native_reconstruction/gameplay_scenario/tests.cpp": "ce4bfc617cb3e8529c520fd29ff825a30e2a7ac555f1a84b1d7f4c2b452fe71d",
+    "tools/native_reconstruction/gameplay_scenario/verify.py": "d63cf62df225ef629147f547d12c0164bf32e6c724d0969f93fe0848b42a5ed6",
+    "tools/native_reconstruction/gameplay_scenario/inventory_ui_vm_tests.inc": "69cdc96e38139548cb6e2a82b78b1706ea175e38762a00f8e4a3a8bae1593f1c",
+    "tools/native_reconstruction/gameplay_update_sources.py": "c735be90ae29bacabed2fc148911818e447f4fa37d460b0a3dfc3312619c131f",
+    "tools/native_reconstruction/inventory_ui_tests.cpp": "7c931b48cbe91bfaf657f02dfc7ba59843b53fe310778ba74e4ca388531781c4",
+    "tools/native_reconstruction/verify_inventory_ui.py": "7876c9f74d25d27e23b3afee40a18b51c7dbc17059560b4b098f585684cc48d0",
+    "tools/native_reconstruction/qualify_inventory_ui_v1.py": "facdca8abc83cb9ca776af40488402398cb5448445e8b91f579da04d5a383599",
+    "docs/native-gameplay/INVENTORY_UI.md": "fba0e166841a35e015f4ef9b46f2f59798ed4c24306d45154572f1224bbae656",
+    "docs/native-gameplay/STAGE4_INTEGRATION_AUDIT.md": "40c229a32435fa3c44389e5938ca94270f70935e4a1e0163620708a104443e26"
+  },
+  "evidence": [
+    {
+      "path": "build-native-sjuni/inventory-ui-llvm-v1/receipt.json",
+      "sha256": "1dd6e4dee6bed82d345e7c1407bfd74ef8b864dfebbc527dda6f84d09deb19d0"
+    },
+    {
+      "path": "build-native-sjuni/inventory-ui-vm-llvm-v2/receipt.json",
+      "sha256": "93105c4c1b941893ae8fbc4198843c73b921d4da2851bf21a12a66219072de6a"
+    },
+    {
+      "path": "build-native-sjuni/inventory-ui-admission-llvm-v1/receipt.json",
+      "sha256": "9f613c929cfcc0bc470563cddde83d5515085ffd0897aa932c61cf5eb1de12de"
+    },
+    {
+      "path": "build-native-sjuni/inventory-ui-parents-llvm-v2/receipt.json",
+      "sha256": "d49a56f2ebedf04a3a53bad6e6de7fe1a5f5fe5475cfce0855a5b9d81636e88d"
+    },
+    {
+      "path": "build-native-sjuni/inventory-ui-room-lighting-assets-llvm-v1/receipt.json",
+      "sha256": "0f9d4c9b255a654352b0564f654895b13d5953603081ba6dfbe7dc88c3e5f853"
+    },
+    {
+      "path": "build-native-sjuni/inventory-ui-gcc-v1/receipt.json",
+      "sha256": "31072b2cab3b6c63215ca098a25eb6dbca7e0e5f95c9d78261970a9fd1642867"
+    },
+    {
+      "path": "build-native-sjuni/inventory-ui-vm-gcc-v2/receipt.json",
+      "sha256": "e146bcec6ca3f14eea69a7cda9baacbe921a7c6866a26060ea7216503aa87f43"
+    },
+    {
+      "path": "build-native-sjuni/inventory-ui-admission-gcc-v1/receipt.json",
+      "sha256": "8765f2f00835629cbdd8cb9ad1e21fc4c9e996b9f48842a12db6012e3a5d92c2"
+    },
+    {
+      "path": "build-native-sjuni/inventory-ui-parents-gcc-v2/receipt.json",
+      "sha256": "ecbb40d0b1aa170346229b95b9b93ff16dfe4c2d4275693ed9d57aa0f60a1bc6"
+    },
+    {
+      "path": "build-native-sjuni/inventory-ui-room-lighting-assets-gcc-v1/receipt.json",
+      "sha256": "fb1ebc9eb7bca98cf0edc8290afd9c46957857ba3017eeb966c91bee7a3fc4cb"
+    },
+    {
+      "path": "build-native-sjuni/inventory-ui-frontier-v1/receipt.json",
+      "sha256": "2c932f3695bb73fbc3e478d7402fd353cfa74fe4b9fee05e55dba8bc361c0d07"
+    }
+  ],
+  "observed": [
+    {
+      "compiler": "llvm",
+      "owner": {
+        "status": "passed",
+        "checks": 4262927,
+        "constructors": 256,
+        "commands": 16384,
+        "recovery_closes": 16384,
+        "original_calls": 66048,
+        "game_launched": false
+      },
+      "vm": {
+        "checks": 578910460,
+        "inventory_ui_dispatches": 65536,
+        "inventory_ui_refusals": 4
+      },
+      "parent_tests": 28,
+      "room_lighting": {
+        "checks": 285448,
+        "room_keys": 227,
+        "visits": 4086,
+        "lighting_reads": 1752,
+        "fog_reads": 2676,
+        "default_misses": 1362,
+        "game_run": false
+      }
+    },
+    {
+      "compiler": "gcc",
+      "owner": {
+        "status": "passed",
+        "checks": 4262927,
+        "constructors": 256,
+        "commands": 16384,
+        "recovery_closes": 16384,
+        "original_calls": 66048,
+        "game_launched": false
+      },
+      "vm": {
+        "checks": 578910460,
+        "inventory_ui_dispatches": 65536,
+        "inventory_ui_refusals": 4
+      },
+      "parent_tests": 28,
+      "room_lighting": {
+        "checks": 285448,
+        "room_keys": 227,
+        "visits": 4086,
+        "lighting_reads": 1752,
+        "fog_reads": 2676,
+        "default_misses": 1362,
+        "game_run": false
+      }
+    }
+  ],
+  "game_launched": false,
+  "device_opened": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "limitations": [
+    "The native owner implements a typed cold projection of complete6DEC80, not every later role in its16004-byte source domain.",
+    "Only phase0 of6E1430 is admitted; active UI phases require actual equipment/audio/teardown owners and refuse.",
+    "All original register/memory contexts are offline qualification fixtures, absent from native production.",
+    "All five EVBs still refuse complete admission;68 ordinary authored instructions across11 distinct opcodes remain unsupported.",
+    "Native terminal frame services, installed gameV39 replacement, input/transport/media hosts and semantic save/resume remain Stage4 gates."
+  ]
+}
