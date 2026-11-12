@@ -11,6 +11,7 @@ public:
     ~HumanoidMotionOwner();
     HumanoidMotionOwner(const HumanoidMotionOwner&)=delete;
     HumanoidMotionOwner& operator=(const HumanoidMotionOwner&)=delete;
+    bool bound_to(const World& world)const noexcept{return &world_==&world;}
     HumanoidPublished publish(std::shared_ptr<const HumanoidMotionBanks>)noexcept;
     std::shared_ptr<const animation::MotionBank> bank(HumanoidMotionAlias)const noexcept override;
     std::shared_ptr<const HumanoidMotionBanks> snapshot()const noexcept{return current_;}

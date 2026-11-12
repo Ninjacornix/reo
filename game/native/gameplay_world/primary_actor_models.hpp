@@ -83,6 +83,7 @@ public:
     ~PrimaryActorModels();
     PrimaryActorModels(const PrimaryActorModels&)=delete;
     PrimaryActorModels& operator=(const PrimaryActorModels&)=delete;
+    bool bound_to(const World& world)const noexcept{return &world_==&world;}
     std::optional<PrimaryModelRequest> capture(actors::EntityId)const noexcept;
     std::optional<PrimaryModelRequest> capture_release(actors::EntityId)const noexcept;
     // Kind0/3 adapter after the scene owner has assigned a real primary ID to
@@ -101,6 +102,9 @@ public:
     // Returns physical work to previously capable canonical bindings. This
     // does not initialize them; the enclosing scene owner must do so afterward.
     PrimaryModelStatus return_scene_models(const PrimarySceneModelScope&)noexcept;
+    // Intermediate5ED340 reset before the next queued5ECF90. Final5ED770
+    // descriptor retirement has not occurred, so physical rows remain owned.
+    PrimaryModelStatus continue_scene_models(const PrimarySceneModelScope&)noexcept;
     static std::shared_ptr<const PreparedPrimaryModel> prepare(const PrimaryModelRequest&,const ActorAssets&,const HumanoidMotionAssets&);
     PrimaryModelApplied apply(const PreparedPrimaryModel&,const gameplay_update::State&,const PrimaryEquipmentContext* = nullptr)noexcept;
     // Complete5EB520 roster/model startup, with reached external resources
@@ -121,6 +125,7 @@ public:
     CacheKey key(std::size_t slot)const{return rows_.at(slot).key;}
     PrimaryModelResources resident(std::size_t slot)const{return rows_.at(slot).resources;}
 private:
+    PrimaryModelStatus return_scene_models(const PrimarySceneModelScope&,bool final_exit)noexcept;
     std::optional<PrimaryModelRequest> capture(actors::EntityId,bool retirement,bool nested=false,bool temporary=false)const noexcept;
     std::optional<PrimaryModelRequest> capture_scene(actors::EntityId,const gameplay_scenario::CutsceneDescriptor&,std::size_t,bool)const;
     bool owns(const PrimarySceneModelScope&)const noexcept;

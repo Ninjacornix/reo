@@ -356,12 +356,18 @@ PrimaryModelApplied PrimaryActorModels::release_scene_model(const PrimarySceneMo
     }catch(const std::bad_alloc&){result.status=PrimaryModelStatus::no_memory;return result;}catch(...){return result;}
 }
 PrimaryModelStatus PrimaryActorModels::return_scene_models(const PrimarySceneModelScope& scope)noexcept{
+    return return_scene_models(scope,true);
+}
+PrimaryModelStatus PrimaryActorModels::continue_scene_models(const PrimarySceneModelScope& scope)noexcept{
+    return return_scene_models(scope,false);
+}
+PrimaryModelStatus PrimaryActorModels::return_scene_models(const PrimarySceneModelScope& scope,bool final_exit)noexcept{
     if(closed_||world_.closed()||motions_.closed_)return PrimaryModelStatus::closed;
     if(running_||world_.busy())return PrimaryModelStatus::busy;
     if(!owns(scope))return PrimaryModelStatus::stale;
     if(!scene_reset_)return PrimaryModelStatus::unavailable;
     if(revision_==std::numeric_limits<std::uint64_t>::max())return PrimaryModelStatus::unavailable;
-    for(const auto& record:scene_records_)if(record.construction.id&&record.construction.release_on_exit&&record.group<16&&!record.released)return PrimaryModelStatus::unavailable;
+    if(final_exit)for(const auto& record:scene_records_)if(record.construction.id&&record.construction.release_on_exit&&record.group<16&&!record.released)return PrimaryModelStatus::unavailable;
     running_=world_.updating_=true;
     struct Reset{bool& running;bool& world;~Reset(){world=false;running=false;}}reset{running_,world_.updating_};
     try{

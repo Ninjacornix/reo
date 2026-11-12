@@ -29,6 +29,39 @@ void scene_scopes(const char* archive,const char* manifest){
         }
     }
     check(rows.eof()&&counts[0][0]==8&&counts[0][1]==8&&counts[1][0]>0);
+    //5EE680 chains5ED340 ->5EB8B0 ->5ECF90 without the final5ED770
+    // selected-model releases. Keep physical work across that intermediate
+    // reset, then exercise the next actual construction/5F0C00 ordering.
+    for(const auto& item:cases)for(unsigned source_slot:{0u,5u}){
+        g::World world(profile(),std::make_shared<g::Session>());world.session().asset_loading_mode=1;world.room=27;
+        g::HumanoidMotionOwner motions(world);check(motions.publish(banks).status==g::HumanoidPublicationStatus::completed);g::PrimaryActorModels owner(world,motions);
+        check(owner.bound_to(world)&&motions.bound_to(world));g::World foreign(profile(),std::make_shared<g::Session>());check(!owner.bound_to(foreign)&&!motions.bound_to(foreign));
+        for(unsigned slot:{0u,5u}){auto initial=std::make_unique<g::Actor>();initial->slot=std::uint8_t(slot);initial->character=std::uint8_t(item.character);const auto id=world.spawn_primary(slot,std::move(initial)).id;const auto prepared=g::PrimaryActorModels::prepare(owner.capture(id).value(),assets,content);check(owner.apply(*prepared,{}).status==g::PrimaryModelStatus::completed);}
+        auto& pool=world.scene_primary_actors();check(pool.initialize()==g::ScenePrimaryStatus::completed);
+        s::CutscenePrimaryRoster roster;roster.characters.fill(255);roster.characters[source_slot]=std::uint8_t(item.character);roster.eligible_count=1;
+        const s::CutscenePrimaryChoice choice{std::uint8_t(item.group),0,std::uint8_t(item.character),std::uint8_t(item.model_class),std::uint8_t(source_slot)};
+        const auto made=owner.construct_scene_primary(choice,roster,content);check(made.status==g::PrimaryModelStatus::completed);
+        const auto first=owner.open_scene_models();check(first.has_value());const auto prepared=g::PrimaryActorModels::prepare(owner.capture_scene(*first,made.id,*item.descriptor,item.group).value(),assets,content);check(owner.apply(*prepared,{}).status==g::PrimaryModelStatus::completed);
+        const auto retained_actor=world.resolve(made.id);retained_actor->model->local_translation(0,{123,456,789});const auto retained=owner.resident(0);const auto previous_key=owner.key(0);
+        check(owner.continue_scene_models(*first)==g::PrimaryModelStatus::unavailable);++queued_scene_refusals;
+        check(owner.reset_scene_actors(*first)==g::PrimaryModelStatus::completed);
+        if(made.release_on_exit){check(owner.return_scene_models(*first)==g::PrimaryModelStatus::unavailable);++queued_scene_refusals;}
+        check(owner.continue_scene_models(*first)==g::PrimaryModelStatus::completed&&!world.resolve(made.id)&&owner.key(0)==previous_key);
+        const auto ordinary=world.primary(0);check(ordinary&&ordinary->model&&ordinary->model!=retained.primary&&ordinary->animation->model()==ordinary->model&&ordinary->model->local_translation(0).x==123);
+        check(retained.primary&&retained_actor->model==retained.primary&&retained.primary->local_translation(0).x==123);++queued_scene_retained_leases;
+        check(owner.continue_scene_models(*first)==g::PrimaryModelStatus::stale&&!owner.capture_scene(*first,made.id,*item.descriptor,item.group));++queued_scene_refusals;
+        const auto next_request=owner.capture(world.identity(0));check(next_request.has_value());
+        // Refresh compact roster bytes as5ED340 does; source selection still
+        // clones before5F0C00 releases the four physical ordinary slots.
+        roster.characters.fill(255);roster.characters[0]=std::uint8_t(item.character);roster.eligible_count=1;
+        const auto next=owner.construct_scene_primary({std::uint8_t(item.group),0,std::uint8_t(item.character),std::uint8_t(item.model_class),0},roster,content);check(next.status==g::PrimaryModelStatus::completed);
+        const auto before_entry=keys(owner);const auto visible_before=visibility(world);
+        const auto released=owner.release_scene_entry(content);check(released.status==g::PrimaryModelStatus::completed);compare_entry(before_entry,keys(owner),visible_before,visibility(world),released);
+        const auto second=owner.open_scene_models();check(second.has_value());const auto second_prepared=g::PrimaryActorModels::prepare(owner.capture_scene(*second,next.id,*item.descriptor,item.group).value(),assets,content);check(owner.apply(*second_prepared,{}).status==g::PrimaryModelStatus::completed);
+        check(owner.reset_scene_actors(*second)==g::PrimaryModelStatus::completed);if(next.release_on_exit)check(owner.release_scene_model(*second,0,content).status==g::PrimaryModelStatus::completed);check(owner.return_scene_models(*second)==g::PrimaryModelStatus::completed);
+        check(retained.primary->local_translation(0).x==123&&retained_actor->model==retained.primary);++queued_scene_transitions;
+        check(owner.close()==g::PrimaryModelStatus::completed&&world.close()==g::Status::completed);
+    }
     for(const auto& item:cases)for(unsigned source_slot:{0u,5u})for(unsigned paused:{0u,1u}){
         g::World world(profile(),std::make_shared<g::Session>());world.room=0x1234;world.paused=std::int8_t(paused);world.session().asset_loading_mode=1;
         g::HumanoidMotionOwner motions(world);check(motions.publish(banks).status==g::HumanoidPublicationStatus::completed);g::PrimaryActorModels owner(world,motions);
