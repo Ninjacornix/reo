@@ -487,6 +487,7 @@ public sealed class GameSession {
     }
     internal const string EscapeCheatCapability = "[CHEATS-ESCAPE-1] active countdown frozen";
     internal const string OnlineUnlockCapability = "[CHEATS-ONLINE-UNLOCK-1] progression";
+    internal const string File3CheatCapability = "[CHEATS-FILE3-NPCS-1] hidden characters";
     internal static void VerifyCheatCompatibility(string image, string gameId, IEnumerable<string> manifest, bool online = false) {
         var lines = manifest.ToHashSet(StringComparer.Ordinal);
         if (gameId == "file2" && !HasMarker(image, "[CHEATS-FILE2-1] health infection ammo data"))
@@ -495,6 +496,10 @@ public sealed class GameSession {
             throw new IOException("Unlock everything needs the updated game build. Rebuild or update the game.");
         if (online && lines.Contains("builtin unlock") && !HasMarker(image, OnlineUnlockCapability))
             throw new IOException("Online Unlock everything needs the updated game build. Rebuild or update the selected game in Game files.");
+        if (lines.Contains("builtin file3") && (gameId != "file2" || online))
+            throw new IOException("Unlock File #3 characters requires File #2 in Play alone.");
+        if (lines.Contains("builtin file3") && !HasMarker(image, File3CheatCapability))
+            throw new IOException("Unlock File #3 characters needs the updated game build. Rebuild or update the game.");
         if (lines.Contains("builtin points") && !HasMarker(image, PointsCheatCapability))
             throw new IOException("Max results points needs the updated game build. Rebuild or update the game.");
         if (lines.Contains("builtin escape") && !HasMarker(image, EscapeCheatCapability))

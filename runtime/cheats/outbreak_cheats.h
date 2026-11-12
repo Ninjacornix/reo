@@ -3,7 +3,7 @@
 
 namespace reo::cheats {
 enum Builtin : unsigned { FullHealth = 1, NoInfection = 2, InfiniteAmmo = 4, UnlockEverything = 8,
-                          MaxResultsPoints = 16, InfiniteEscapeTime = 32 };
+                          MaxResultsPoints = 16, InfiniteEscapeTime = 32, UnlockFile3Characters = 64 };
 inline constexpr uint32_t maximumResultsPoints = 999999999u;
 struct Program {
     std::vector<Write> writes;
@@ -37,6 +37,8 @@ inline Program parseProgram(std::istream& input) {
                 result.builtins |= MaxResultsPoints;
             else if (name == "escape")
                 result.builtins |= InfiniteEscapeTime;
+            else if (name == "file3")
+                result.builtins |= UnlockFile3Characters;
             else
                 throw std::runtime_error("Unknown built-in cheat");
         } else
@@ -112,6 +114,16 @@ inline BuiltinResult applyBuiltins(unsigned flags, uint8_t* r, Game game = Game:
     if (file2 && (flags & UnlockEverything)) {
         unlockFile2(r);
         result.unlocks = true;
+    }
+    if (file2 && (flags & UnlockFile3Characters)) {
+        // SLUS-20984: the 25 named NPC IDs outside the original progression masks.
+        // The name table at 0x219690 ends at ID 92. The getter at 0x59c550 uses
+        // each ID as its bit index in the save's NPC availability words.
+        constexpr uint32_t file3Masks[] = {0x8430033du, 0x00243007u, 0x00003f04u};
+        for (unsigned i = 0; i < 3; ++i) {
+            const uint32_t address = 0x2feeb0 + 4 * i;
+            setWord(r, address, word(r, address) | file3Masks[i]);
+        }
     }
     if (!file2 && (flags & UnlockEverything)) {
         // Verified NTSC-U v2.00 save/progression fields. The scenario menu

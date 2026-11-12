@@ -64,6 +64,22 @@ internal static class CheatCompatibilityTests {
                 GameSession.VerifyCheatCompatibility(image, game, new[] { "builtin unlock" }, online: true);
                 check(true, game + " accepts online unlocks when the native room-progression banks are supported");
             }
+            var file3 = Cheats.Builtins("file2").Single(g => g.Builtin == "file3");
+            check(Cheats.Builtins("file1").All(g => g.Builtin != "file3") && file3.Supported &&
+                  !Cheats.OnlineAllowed(file3), "Hidden NPC unlock is a File #2 solo-only option");
+            var solo = new Settings { SelectedGame = "file2", CoopMode = "offline", CheatsEnabled = true,
+                EnabledCheats = new() { file3.Id } };
+            string[] File3Manifest() => File.ReadAllLines(Cheats.Export(solo, folder));
+            check(File3Manifest().SequenceEqual(new[] { "REO-CHEATS-2", "builtin file3" }),
+                  "Hidden-only selection leaves ordinary progression disabled");
+            solo.EnabledCheats.Add("builtin.file2.unlock");
+            check(File3Manifest().Count(line => line == "builtin file3") == 1,
+                  "Selecting both File #2 options exports one hidden NPC operation");
+            check(Rejected("file2", "file3", "Unlock File #3 characters"),
+                  "Older File #2 builds prompt for an update when hidden NPCs are enabled");
+            File.AppendAllText(image, "\n" + GameSession.File3CheatCapability, Encoding.ASCII);
+            GameSession.VerifyCheatCompatibility(image, "file2", File3Manifest());
+            check(true, "A File #2 build with the hidden NPC capability accepts solo Unlock everything");
             string marker = "[CHEATS-POINTS-1] maximum results points";
             File.WriteAllText(image, new string('x', 1024 * 1024 + marker.Length - 3) + marker, Encoding.ASCII);
             GameSession.VerifyCheatCompatibility(image, "file1", new[] { "builtin points" });
