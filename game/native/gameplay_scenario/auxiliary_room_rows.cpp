@@ -83,6 +83,11 @@ std::optional<bool> AuxiliaryScene::timer_active(std::uint32_t index) const noex
     return active_[index];
 }
 
+void AuxiliaryScene::clear_timers() noexcept {
+    active_.reset();
+    timers_ = {};
+}
+
 void AuxiliaryScene::advance_timers() noexcept {
     for (std::size_t i = 0; i < timer_count; ++i)
         timers_[i] = active_[i] ? timers_[i] + 1u : 0u;

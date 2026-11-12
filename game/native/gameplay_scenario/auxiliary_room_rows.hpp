@@ -30,6 +30,7 @@ public:
     std::optional<std::uint32_t> timer(std::uint32_t index) const noexcept;
     std::optional<bool> timer_active(std::uint32_t index) const noexcept;
     void advance_timers() noexcept;
+    void clear_timers() noexcept; // actual6B7610 clears74E828/74E868 together
 
 private:
     std::optional<AuxiliaryRoomRows> rows_;

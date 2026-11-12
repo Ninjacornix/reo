@@ -1,6 +1,10 @@
 #pragma once
 #include "dialogue_records.hpp"
+namespace reo::native::gameplay_update { class DialogueWorkers; }
 namespace reo::native::gameplay_world {
+class DialogueResponsesState;
+struct DialogueResponseFrame;
+struct DialogueResponsesUpdated;
 struct DialogueGates {
     std::optional<std::uint8_t> blocked; //4BAE8D, distinct from World.paused
     std::optional<std::uint8_t> flags;   //4BAE89; bit2 suppresses dialogue
@@ -33,12 +37,19 @@ public:
     DialogueStatus banks(std::shared_ptr<const DialogueBanks>)noexcept;
     DialogueConstructed construct(const actors::EntityId&,const DialogueGates&)noexcept; //6B7930
     DialoguePoolUpdated update(const DialogueGates&)noexcept; //6B9590
+    DialogueResponsesUpdated advance_responses(const DialogueResponseFrame&)noexcept; //complete6B7E40 admitted frame
     std::optional<DialogueRecord> record(std::size_t)const;
     std::optional<bool> flag(std::uint16_t)const noexcept;
     std::optional<std::int32_t> flag_duration(std::uint16_t)const noexcept;
     DialogueStatus advance_flag_durations()noexcept; //complete6B80A0, no pause gate in this helper
     std::optional<std::array<std::int16_t,2>> selected_counts()const noexcept{return initialized_&&counts_[0]&&counts_[1]?std::optional(std::array<std::int16_t,2>{*counts_[0],*counts_[1]}):std::nullopt;}
 private:
+    friend class DialogueResponsesState;
+    friend class reo::native::gameplay_update::DialogueWorkers;
+    DialogueResponsesUpdated advance_response_prefix(const DialogueResponseFrame&)noexcept; //Owner finalizes6B80A0
+    DialogueResponsesUpdated advance_responses_impl(const DialogueResponseFrame&,bool include_durations)noexcept;
+    DialogueConstructed construct_impl(const actors::EntityId&,const DialogueGates&,bool nested)noexcept;
+    DialoguePoolUpdated update_impl(const DialogueGates&,bool nested)noexcept;
     std::optional<bool> gates(const DialogueGates&)const noexcept;
     void clear_records_unchecked()noexcept;
     void select(std::size_t)noexcept; //6B9E90
@@ -51,10 +62,8 @@ private:
     std::optional<actors::EntityId> previous_secondary_actor_;
     std::optional<actors::EntityId> primary_actor_;
     std::array<std::uint16_t,2> selected_sequences_{};
-    // Complete owned SPM profiles use only authored IDs0..511. Higher source
-    // bit indices require their actual larger owner before they can be used.
-    std::array<std::uint32_t,16> flags_{};
-    std::array<std::int32_t,512> flag_ticks_{}; //74E868, initialized by actual6B7610 clear
-    bool initialized_{},running_{};
+    // Flags and duration counters borrow the existing Session AuxiliaryScene.
+    std::unique_ptr<DialogueResponsesState> responses_;
+    bool initialized_{},running_{},responding_{};
 };
 } // namespace reo::native::gameplay_world

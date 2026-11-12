@@ -19,6 +19,8 @@ void original_clear(unsigned seed){for(unsigned i=0;i<source_bytes+32;++i)memory
 #endif
 void check_cleared(const w::Actor& actor,unsigned physical){
     check(actor.contact_style_discriminator==0);
+    check(actor.speech.selection&&actor.speech.selection->sequence==0&&actor.speech.selection->target_identifier==0&&actor.speech.selection->target_context==0&&actor.speech.selection->pending==0&&actor.speech.selection->response_state==0&&actor.speech.variant==0&&actor.speech.gauge_notice==0);
+    check(actor.speech.request==0&&actor.speech.notice==0&&actor.speech.repeat_delay==0&&actor.speech.response_delay==0&&actor.speech.target_lock==0&&actor.speech.timing_active==0&&actor.speech.previous_elapsed==0&&actor.speech.elapsed==0&&actor.speech.remote_request==0);
     check(actor.speech.dialogue_delay==0&&actor.speech.display_style==0&&actor.speech.partner_characters==std::array<std::int8_t,4>{});
     check(!actor.active&&!actor.visible&&actor.category==0&&actor.slot==0&&actor.primary==0&&actor.secondary==0&&actor.phase==0&&actor.subphase==0);
     check(actor.current==0&&actor.maximum==0&&actor.status==0&&actor.auxiliary_status==0&&actor.room==0&&actor.character==0&&actor.model_variant==0);
@@ -41,6 +43,12 @@ void check_cleared(const w::Actor& actor,unsigned physical){
     check(actor.ai_execution->goal==transform_read<std::uint16_t>(memory.data(),at+0xff4)&&actor.ai_execution->action==transform_read<std::uint16_t>(memory.data(),at+0xff8)&&!actor.ai_execution->weight_profile&&transform_read<unsigned>(memory.data(),at+0x10ac)==0);
     check(route.output.link==transform_read<std::int16_t>(memory.data(),at+0x10aa)&&route.current_node==std::int8_t(memory[at+0x100c])&&route.final_position.z==transform_read<float>(memory.data(),at+0x1018)&&route.selection_mode==memory[at+0x105b]);
     for(unsigned i=0;i<4;++i)check((*actor.speech.partner_characters)[i]==std::int8_t(memory[at+0xdac+i]));
+    check(actor.speech.selection->sequence==transform_read<std::uint32_t>(memory.data(),at+0xdb4)&&*actor.speech.gauge_notice==transform_read<std::int32_t>(memory.data(),at+0xdb8)&&*actor.speech.variant==std::int8_t(memory[at+0xda9]));
+    check(actor.speech.selection->pending==std::int8_t(memory[at+0xdc0])&&actor.speech.selection->response_state==std::int8_t(memory[at+0xdc1])&&actor.speech.selection->target_identifier==transform_read<std::int16_t>(memory.data(),at+0xdc2)&&actor.speech.selection->target_context==std::int8_t(memory[at+0xdc7]));
+    check(*actor.speech.request==std::int8_t(memory[at+0xda8])&&*actor.speech.notice==transform_read<std::int16_t>(memory.data(),at+0xdaa));
+    check(*actor.speech.repeat_delay==transform_read<std::int32_t>(memory.data(),at+0xdb0)&&*actor.speech.response_delay==transform_read<std::int16_t>(memory.data(),at+0xdbe));
+    check(*actor.speech.target_lock==std::int8_t(memory[at+0xdc5])&&*actor.speech.remote_request==memory[at+0x1098]);
+    check(*actor.speech.timing_active==transform_read<std::int32_t>(memory.data(),at+0xdc8)&&*actor.speech.previous_elapsed==transform_read<std::int32_t>(memory.data(),at+0xdcc)&&*actor.speech.elapsed==transform_read<std::int32_t>(memory.data(),at+0xdd0));
     check(*actor.speech.dialogue_delay==transform_read<std::int16_t>(memory.data(),at+0xdbc)&&*actor.speech.display_style==std::int8_t(memory[at+0x1075]));
 #else
     (void)physical;
@@ -56,6 +64,8 @@ struct Busy final:w::Services {
 };
 int main()try{
     const w::Actor generic;check(!generic.speech.dialogue_delay&&!generic.speech.display_style&&!generic.speech.partner_characters);
+    check(!generic.speech.selection&&!generic.speech.variant&&!generic.speech.gauge_notice);
+    check(!generic.speech.request&&!generic.speech.notice&&!generic.speech.repeat_delay&&!generic.speech.response_delay&&!generic.speech.target_lock&&!generic.speech.timing_active&&!generic.speech.previous_elapsed&&!generic.speech.elapsed&&!generic.speech.remote_request);
     for(unsigned seed=0;seed<64;++seed){
 #ifdef REO_PRIMARY_RECORDS_ORIGINAL
         original_clear(seed);

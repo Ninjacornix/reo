@@ -17,5 +17,10 @@ inline void initialize_cleared_actor_defaults(Actor& actor)noexcept{
     actor.contact_style_discriminator=0;
     actor.speech.dialogue_delay=0;actor.speech.display_style=0;
     actor.speech.partner_characters=std::array<std::int8_t,4>{};
+    actor.speech.selection=SpeechSelection{0,0,0,0,0};actor.speech.variant=0;actor.speech.gauge_notice=0;
+    actor.speech.request=0;actor.speech.notice=0;actor.speech.repeat_delay=0;
+    actor.speech.response_delay=0;actor.speech.target_lock=0;
+    actor.speech.timing_active=0;actor.speech.previous_elapsed=0;actor.speech.elapsed=0;
+    actor.speech.remote_request=0;
 }
 }

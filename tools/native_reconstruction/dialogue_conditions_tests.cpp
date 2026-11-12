@@ -123,7 +123,7 @@ void condition_round(w::World& world,const w::DialoguePool& pool,unsigned serial
     world.session().clock_mode=old_clock;world.session().primary_population=old_population;put(0x4baea0,*old_population);put(0x3243cc,old_clock);
     actor->position=old_positions[0];second->position=old_positions[1];put(actor_base+0x38,actor->position);put(actor_base+0x10e0+0x38,second->position);
     actor->visible=old_visibility[0];second->visible=old_visibility[1];second->room=old_room;put(actor_base+1,std::uint8_t(actor->visible));put(actor_base+0x10e0+1,std::uint8_t(second->visible));put(actor_base+0x10e0+0x1e2,old_room);
-    actor->speech.selection=old_selection;actor->speech.variant=old_variant;put(actor_base+0xdc2,old_selection?old_selection->target_identifier:0);put(actor_base+0xdc7,old_selection?old_selection->target_context:0);put(actor_base+0xda9,old_variant.value_or(0));
+    actor->speech.selection=old_selection;actor->speech.variant=old_variant;put(actor_base+0xdc2,std::int16_t(old_selection?old_selection->target_identifier:0));put(actor_base+0xdc7,std::int8_t(old_selection?old_selection->target_context:0));put(actor_base+0xda9,old_variant.value_or(0));
 }
 
 }

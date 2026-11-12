@@ -350,7 +350,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
 endif()
 
 
-add_library(reo_native_dialogue STATIC dialogue_records.cpp dialogue_pool.cpp cached_dialogue_presentation.cpp dialogue_conditions.cpp dialogue_inventory_traits.cpp dialogue_partner_characters.cpp)
+add_library(reo_native_dialogue STATIC dialogue_records.cpp dialogue_pool.cpp cached_dialogue_presentation.cpp dialogue_conditions.cpp dialogue_inventory_traits.cpp dialogue_partner_characters.cpp dialogue_response_uses.cpp dialogue_input_request.cpp dialogue_targeting.cpp dialogue_response_choice.cpp dialogue_responses_state.cpp)
+target_sources(reo_native_dialogue PRIVATE inventory_dialogue_presentation.cpp ../gameplay_update/dialogue_workers.cpp)
 target_compile_features(reo_native_dialogue PUBLIC cxx_std_20)
 target_link_libraries(reo_native_dialogue PUBLIC reo_native_primary_roster_startup)
 add_executable(dialogue_records_tests ${CMAKE_CURRENT_SOURCE_DIR}/../../../tools/native_reconstruction/dialogue_records_tests.cpp)
