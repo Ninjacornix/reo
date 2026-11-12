@@ -1,5 +1,6 @@
 #include "session_rooms.hpp"
 #include "../gameplay_effects/resource_flight_queries.hpp"
+#include "../gameplay_update/actor_message_queue.hpp"
 #include "runtime/assets/virtual_afs.h"
 #include <iostream>
 #include <source_location>
@@ -15,6 +16,7 @@ namespace s=reo::native::gameplay_scenario;
 namespace c=reo::native::gameplay_collision;
 namespace w=reo::native::gameplay_world;
 namespace e=reo::native::gameplay_effects;
+namespace u=reo::native::gameplay_update;
 namespace {
 std::size_t checks{},queries{},hits{},rooms{},original_calls{};
 void check(bool value,std::source_location at=std::source_location::current()){
@@ -55,8 +57,55 @@ void masks(){
     a::SessionRooms expired(nullptr);check(!expired.world()&&!expired.retain(73));
     check(expired.status()==a::RoomResourcesStatus::unavailable_session);
 }
+struct BusyBinding final:reo::native::gameplay_tasks::Task {
+    u::Owner& owner;std::shared_ptr<c::room_objects::Owner> objects;
+    u::Status bind{},unbind{};
+    BusyBinding(u::Owner& value,std::shared_ptr<c::room_objects::Owner> table):owner(value),objects(std::move(table)){}
+    void update(reo::native::gameplay_tasks::Scheduler&,const reo::native::gameplay_tasks::Handle&)noexcept override{
+        bind=owner.bind_room_objects(41,objects);unbind=owner.unbind_room_objects();
+    }
+};
+void bindings(const std::shared_ptr<const reo::assets::Source>& source){
+    s::content::ScenarioArchive archive(source);const auto types=archive.read_resource(41,"obj041.dat"),placements=archive.read_resource(41,"r041.sto");
+    check(types&&placements);
+    auto objects=std::make_shared<c::room_objects::Owner>(c::room_objects::Owner::import(*types,*placements));
+    auto foreign=std::make_shared<c::room_objects::Owner>(c::room_objects::Owner::import(*types,*placements));
+    Notifications notifications;w::World world(profile(),std::make_shared<w::Session>());world.mode=1;world.scenario=41;
+    u::ActorReception reception(world);u::ActorMessageQueue queue(reception);
+    u::Owner owner(world,notifications,reo::native::gameplay_events::RuleBook::file1(),&queue);
+    check(!owner.room_objects()&&!reception.room_objects());
+    check(owner.bind_room_objects(28,objects)==u::Status::actor_failure&&!reception.bind_room_objects(28,objects));
+    check(owner.bind_room_objects(41,std::make_shared<c::room_objects::Owner>())==u::Status::actor_failure);
+    check(owner.bind_room_objects(41,objects)==u::Status::completed&&reception.bind_room_objects(41,objects));
+    check(owner.room_objects()==objects.get()&&reception.room_objects()==objects.get());
+    check(owner.bind_room_objects(41,foreign)==u::Status::actor_failure&&!reception.bind_room_objects(41,foreign));
+    auto busy=std::make_shared<BusyBinding>(owner,objects);const auto task=owner.linked().create(busy);check(bool(task.handle));
+    check(owner.linked().run(reo::native::gameplay_tasks::Pass::update).status==reo::native::gameplay_tasks::Status::completed);
+    check(busy->bind==u::Status::busy&&busy->unbind==u::Status::busy&&owner.room_objects()==objects.get());
+    check(owner.linked().erase(task.handle)==reo::native::gameplay_tasks::Status::completed);busy.reset();
+    auto primary=std::make_unique<w::Actor>();primary->active=true;primary->grid=1;primary->position={125,-50,375};
+    const auto spawned=world.spawn_primary(0,std::move(primary));check(bool(spawned.id));world.session().message_phase=1;
+    const auto captured=objects->source_coordinates(1);check(bool(captured));
+    check(owner.record_actor_message(spawned.id,u::ActorMessageSelector::room_object)==u::PublicationStatus::completed&&queue.pending()==1);
+    check(objects->apply_source_coordinates(1,{12,-7}));
+    const auto drained=queue.drain(1,true);check(drained.status==u::ActorQueueStatus::completed&&drained.consumed==1);
+    check(objects->source_coordinates(1)==captured&&foreign->source_coordinates(1)==captured);
+    u::ActorRoomObjectMessage message;message.channel=1;message.grid=1;message.coordinates={-128,127};
+    check(queue.send(message)&&queue.drain(1,true).consumed==1);
+    check(objects->source_coordinates(1)==std::optional<std::array<std::int8_t,2>>({-128,127}));
+    check(foreign->source_coordinates(1)==captured);
+    world.scenario=28;check(!owner.room_objects()&&!reception.room_objects());
+    check(owner.record_actor_message(spawned.id,u::ActorMessageSelector::room_object)==u::PublicationStatus::unavailable);
+    world.scenario=41;check(owner.room_objects()==objects.get()&&reception.room_objects()==objects.get());
+    std::weak_ptr<c::room_objects::Owner> retained=objects;objects.reset();
+    check(!retained.expired());check(owner.unbind_room_objects()==u::Status::completed&&!retained.expired());
+    check(reception.unbind_room_objects()&&retained.expired());
+    check(owner.close()==u::Status::completed&&owner.bind_room_objects(41,foreign)==u::Status::closed);
+    check(world.close()==w::Status::completed&&!reception.bind_room_objects(41,foreign));
+}
 void owned(const std::filesystem::path& path){
     auto source=std::make_shared<const reo::assets::Source>(path);Notifications notifications;
+    bindings(source);
     for(bool terminal:{false,true}){
         auto host=std::make_shared<a::NativeSession>(source,profile(),notifications);
         a::SessionRooms resources(host),same_owner(host);
@@ -92,6 +141,8 @@ void owned(const std::filesystem::path& path){
         }
 #endif
         check(geometry.objects.initialized()&&geometry.objects.objects().size()==5);
+        check(host->update().room_objects()==&geometry.objects&&host->reception().room_objects()==&geometry.objects);
+        check(resources.objects().get()==&geometry.objects);
         check(!geometry.objects_enabled&&!geometry.height_layers&&geometry.dynamic.empty()&&!geometry.objects.grid());
         check(geometry.walls.triangles().size()>0&&geometry.floors.triangles().size()>0);
         auto same=same_owner.retain(73);check(same&&same->identity()==id);

@@ -118,6 +118,11 @@ public:
     bool busy()const noexcept{return running_||world_.busy()||!events_.idle()||!linked_.idle();}
     Status close()noexcept;
     world::World& world()noexcept{return world_;}
+    // Scenario resources become known after application/session construction.
+    // Bind their same retained canonical table only while all callers are idle.
+    Status bind_room_objects(std::uint16_t,std::shared_ptr<const gameplay_collision::room_objects::Owner>)noexcept;
+    Status unbind_room_objects()noexcept;
+    const gameplay_collision::room_objects::Owner* room_objects()const noexcept{return publication_.room_objects();}
     tasks::Scheduler& linked()noexcept{return linked_;}
     MaterialAnimations& material_animations()noexcept{return materials_;}
     Status bind_linked_actors(world::ScriptedMotionBanks,std::shared_ptr<const gameplay_collision::response::Grid>);

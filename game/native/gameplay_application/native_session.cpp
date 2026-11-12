@@ -63,7 +63,7 @@ struct NativeSession::RoomState final:gameplay_scenario::ControlEffects {
 NativeSession::NativeSession(std::shared_ptr<const reo::assets::Source> archive,gameplay_world::Profile profile,
     gameplay_scenario::FlagNotifications& notifications,std::uint8_t mode):
     archive_(std::move(archive)),session_(std::make_shared<gameplay_world::Session>()),
-    world_(std::move(profile),session_),update_(world_,notifications),room_state_(std::make_shared<RoomState>(update_,world_)){
+    world_(std::move(profile),session_),reception_(world_),update_(world_,notifications),room_state_(std::make_shared<RoomState>(update_,world_)){
     world_.mode=mode;
 }
 NativeSession::~NativeSession(){if(close()==SessionStatus::busy)std::terminate();}

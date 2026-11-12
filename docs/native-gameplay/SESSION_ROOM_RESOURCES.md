@@ -72,3 +72,7 @@ The seal is `tools/native_reconstruction/native_session_rooms_qualification_v1.j
 Production game selection, remaining scripts and full frame services, movable
 object construction, input/network/media hosts and semantic saves remain open
 Stage4 acceptance requirements.
+
+The subsequent [retained object binding](SESSION_OBJECT_BINDING.md) now connects
+this same placement table to Update publication and NativeSession reception,
+with actual native type9 queue tests. Model/proxy construction remains explicit.

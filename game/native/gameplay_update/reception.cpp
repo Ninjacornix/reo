@@ -5,6 +5,18 @@ ActorReception::ActorReception(gameplay_world::World& world,gameplay_collision::
     if(equipment_&&!equipment_->bound_to(world_))throw std::invalid_argument("Native actor reception equipment belongs to another or closed World");
     if(presence_&&!presence_->bound_to(world_))throw std::invalid_argument("Native actor reception inventory presence belongs to another or closed World");
 }
+const gameplay_collision::room_objects::Owner* ActorReception::room_objects()const noexcept{
+    return world_.closed()||(objects_scenario_&&world_.scenario!=*objects_scenario_)?nullptr:objects_;
+}
+bool ActorReception::bind_room_objects(std::uint16_t scenario,std::shared_ptr<gameplay_collision::room_objects::Owner> objects)noexcept{
+    if(world_.closed()||world_.busy()||world_.scenario!=scenario||!objects||!objects->initialized())return false;
+    if(room_objects()&&room_objects()!=objects.get())return false;
+    objects_=objects.get();objects_scenario_=scenario;retained_objects_=std::move(objects);return true;
+}
+bool ActorReception::unbind_room_objects()noexcept{
+    if(world_.closed()||world_.busy())return false;
+    objects_=nullptr;objects_scenario_.reset();retained_objects_.reset();return true;
+}
 ActorReception::Admission ActorReception::begin(std::uint32_t channel,bool local_echo)noexcept{
     if(world_.closed())return{ReceptionStatus::unavailable,{}};
     const auto phase=world_.session().message_phase;if(phase!=1&&phase!=2)return{};
@@ -65,7 +77,7 @@ ReceptionResult ActorReception::receive(const ActorResourcePairMessage& message,
 ReceptionResult ActorReception::receive(const ActorRoomObjectMessage& message,bool local_echo)noexcept{
     const auto admitted=begin(message.channel,local_echo);if(!admitted.actor)return{admitted.status,{}};
     auto& actor=*admitted.actor;actor.grid=message.grid;
-    if(!objects_||!objects_->apply_source_coordinates(message.grid,message.coordinates))return{ReceptionStatus::unavailable,{}};
+    if(!room_objects()||!objects_->apply_source_coordinates(message.grid,message.coordinates))return{ReceptionStatus::unavailable,{}};
     return finish(actor);
 }
 ReceptionResult ActorReception::receive(const ActorPeerMessage& message,bool local_echo)noexcept{

@@ -1,6 +1,6 @@
 add_library(reo_native_gameplay_application STATIC native_session.cpp session_rooms.cpp)
 target_compile_features(reo_native_gameplay_application PUBLIC cxx_std_20)
-target_link_libraries(reo_native_gameplay_application PUBLIC reo_native_gameplay_update reo_native_gameplay_contact_world)
+target_link_libraries(reo_native_gameplay_application PUBLIC reo_native_gameplay_update reo_native_gameplay_contact_world reo_native_gameplay_reception)
 target_include_directories(reo_native_gameplay_application PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 add_executable(native_session_tests native_session_tests.cpp)
 target_link_libraries(native_session_tests PRIVATE reo_native_gameplay_application)

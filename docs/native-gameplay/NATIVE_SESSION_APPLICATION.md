@@ -78,3 +78,5 @@ geometry to native flight/contact consumers. Room generations now retire
 explicitly while retained invocations keep their data alive. The separately
 qualified SessionStartup application owner also composes actual roster startup
 against these same World/Update owners; it does not duplicate the session.
+The [object binding owner](SESSION_OBJECT_BINDING.md) now also retains the
+canonical scenario placement table in publication and concrete reception.

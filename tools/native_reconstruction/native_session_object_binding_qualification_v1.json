@@ -1,0 +1,109 @@
+{
+  "schema": "reo.native.session_object_binding.qualification.v1",
+  "status": "passed",
+  "source_sha256": {
+    "game/native/gameplay_update/update.hpp": "83b23d5afb3a6ad07e3b2911d2ff16d8da30404d3c1dede3738cb0f0250fece5",
+    "game/native/gameplay_update/update.cpp": "7ad283ac5d769e506b078d5096799e8e4981ae5e92982cb5c3b00cea61303621",
+    "game/native/gameplay_update/scenario_publication.hpp": "18caf1cc0bd946104886be0f2ef03af4a4619ca11e9c5ed87d6d1c522fba524b",
+    "game/native/gameplay_update/reception.hpp": "f9534d71da800c03ef20d32720c924562b71b923668fc4c2d0b420c7f33d7507",
+    "game/native/gameplay_update/reception.cpp": "c889a86e56a952a4bc5feb07e112d159b8722ae21d89092b826943128de7872a",
+    "game/native/gameplay_application/CMakeLists.txt": "93b8213590beb344152b9d3a1de6f92e612ac0f59bdfd86a9c705751d0ddeb0c",
+    "game/native/gameplay_application/native_session.hpp": "394d9ddd1debfeb53010972b7d4f7da47e255687c249737236db864ee0ebf334",
+    "game/native/gameplay_application/native_session.cpp": "759f82ffef0849d8d646025c724f74f75431837666a5745102bc6878d8d062cc",
+    "game/native/gameplay_application/session_rooms.hpp": "823edf0f1423ab52f9add22912a63d50bf6e5f5c2ebed3ca79ab14b9e7c1d126",
+    "game/native/gameplay_application/session_rooms.cpp": "71078746d49f68cef01478f90208ac02057e2f685abdf9226ef5599bdd19459b",
+    "game/native/gameplay_application/session_rooms_tests.cpp": "5646781bad9d01f4ca17d6513ec36217a28194e77fbebc95a0c5cacc16261d9a",
+    "docs/native-gameplay/SESSION_OBJECT_BINDING.md": "dc066b8150e387c59dec7c45fcd48b335308a0193d747a0954c12a33144911d9",
+    "docs/native-gameplay/SESSION_ROOM_RESOURCES.md": "5ac79c1da91a67f304db5a4572b3c643d68c6e9552f414d6d5e2138b88a29d30",
+    "docs/native-gameplay/NATIVE_SESSION_APPLICATION.md": "6286c8d2b70d315d59957bc71b964431647077a2baf0a37cd11395f558451e29",
+    "docs/native-gameplay/STAGE4_INTEGRATION_AUDIT.md": "5f6ff1b564ab7e233bc7f32496ccdd2f76e463f692547fa0d61261dbfc6144db"
+  },
+  "cohorts": [
+    {
+      "compiler": "llvm",
+      "receipts": {
+        "room_and_bindings": {
+          "path": "build-native-sjuni/session-rooms-llvm-v4/receipt.json",
+          "sha256": "714bd8df57ba22cfb81618b9a1d365c7a6a49bb824a47249dd4b1c3766208ea7"
+        },
+        "parents": {
+          "path": "build-native-sjuni/session-rooms-parents-llvm-v2/receipt.json",
+          "sha256": "dbd3969e356eed16f31823324f7b4db4cf8002c3d1eae91b11d139305c952608"
+        }
+      },
+      "native": {
+        "status": "passed",
+        "checks": 21574,
+        "rooms": 4,
+        "queries": 586,
+        "hits": 328,
+        "original_calls": 0,
+        "game_launched": false
+      },
+      "original": {
+        "status": "passed",
+        "checks": 31846,
+        "rooms": 4,
+        "queries": 586,
+        "hits": 328,
+        "original_calls": 10250,
+        "game_launched": false
+      },
+      "captured_inputs": 696,
+      "native_archives": 57,
+      "parent_tests": 22,
+      "parent_inputs": 702
+    },
+    {
+      "compiler": "gcc",
+      "receipts": {
+        "room_and_bindings": {
+          "path": "build-native-sjuni/session-rooms-gcc-v4/receipt.json",
+          "sha256": "71e282119b60224358dd7bc140b62afb98de088edd6a3b9b5dc74aa5e3e286ff"
+        },
+        "parents": {
+          "path": "build-native-sjuni/session-rooms-parents-gcc-v2/receipt.json",
+          "sha256": "2e83c6c86d751b923a60d8d78ae5e7106d2219093ba096d6c32c562d83a92a1b"
+        }
+      },
+      "native": {
+        "status": "passed",
+        "checks": 21574,
+        "rooms": 4,
+        "queries": 586,
+        "hits": 328,
+        "original_calls": 0,
+        "game_launched": false
+      },
+      "original": {
+        "status": "passed",
+        "checks": 31846,
+        "rooms": 4,
+        "queries": 586,
+        "hits": 328,
+        "original_calls": 10250,
+        "game_launched": false
+      },
+      "captured_inputs": 696,
+      "native_archives": 57,
+      "parent_tests": 22,
+      "parent_inputs": 702
+    }
+  ],
+  "dependencies": {
+    "native_actor_room_object_message_qualification_v1.json": "aa9067cc18c3a3443a37b1795e2a78730d87bd87d48c7ceede035b72c3737289",
+    "native_session_rooms_qualification_v1.json": "7b7fe56bacd8a4ce80d249ddd5facd0cf9fa4a3ab322a2c5688abc4a5dab9c10"
+  },
+  "game_launched": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "shared_source_scope": [
+    "Exact v4/v2 snapshots include root in-development PoseWorkState Actor ABI. World.hpp is not staged by this checkpoint.",
+    "Camera near/far field naming correction occurred after these immutable cohorts; binding uses neither camera parameter.",
+    "Unregistered object-scene prototype and its new helper methods are not adopted by this checkpoint."
+  ],
+  "limitations": [
+    "Type9 native queue composition is exercised; a production host transport is not claimed.",
+    "Actual6AD4E0 model/proxy application construction and initial room model-pose producers remain required."
+  ]
+}

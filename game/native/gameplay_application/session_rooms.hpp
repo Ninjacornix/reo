@@ -9,7 +9,7 @@ bool set_collision_disabled(gameplay_world::Session&,std::uint32_t selector)noex
 bool clear_collision_disabled(gameplay_world::Session&,std::uint32_t selector)noexcept;
 enum class RoomResourcesStatus {
     completed,unavailable_session,unavailable_room,unavailable_geometry,
-    unavailable_object_instances,unsupported_dynamic
+    unavailable_object_instances,unsupported_dynamic,object_binding_refused
 };
 // Production RoomResources bound to one application's actual World, archive,
 // Records and matrix-program graph. Import is lazy and occurs once per room
@@ -20,6 +20,7 @@ public:
     std::shared_ptr<gameplay_contact_world::RoomInvocation> retain(std::uint16_t)override;
     RoomResourcesStatus status()const noexcept{return status_;}
     std::shared_ptr<gameplay_world::World> world()const noexcept;
+    std::shared_ptr<gameplay_collision::room_objects::Owner> objects()const noexcept;
 private:
     std::weak_ptr<NativeSession> session_;
     RoomResourcesStatus status_{RoomResourcesStatus::unavailable_room};

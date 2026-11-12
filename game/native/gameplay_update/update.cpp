@@ -22,6 +22,18 @@ Owner::Owner(world::World& world,scenario::FlagNotifications& notifications,std:
     world_.session().timing=this;
 }
 Owner::~Owner(){if(running_)std::terminate();(void)close();}
+Status Owner::bind_room_objects(std::uint16_t scenario,std::shared_ptr<const gameplay_collision::room_objects::Owner> objects)noexcept{
+    if(!open())return Status::closed;
+    if(busy())return Status::busy;
+    if(!objects||!objects->initialized()||world_.scenario!=scenario)return Status::actor_failure;
+    if(publication_.room_objects()&&publication_.room_objects()!=objects.get())return Status::actor_failure;
+    publication_.bind_room_objects(scenario,std::move(objects));return Status::completed;
+}
+Status Owner::unbind_room_objects()noexcept{
+    if(!open())return Status::closed;
+    if(busy())return Status::busy;
+    publication_.bind_room_objects(0,{});return Status::completed;
+}
 Status Owner::close()noexcept{
     if(running_ || world_.busy() || !events_.idle() || !linked_.idle())return Status::busy;
     closed_=true;(void)events_.seal();(void)linked_.seal();
@@ -29,6 +41,7 @@ Status Owner::close()noexcept{
     if(linked_actor_updates_)(void)linked_actor_updates_->close();
     if(cutscene_actor_tracks_)(void)cutscene_actor_tracks_->close();
     materials_.close();
+    publication_.bind_room_objects(0,{});
     (void)events_.clear();(void)linked_.clear();
     if(world_.session().timing==this)world_.session().timing=nullptr;
     return Status::completed;

@@ -14,6 +14,9 @@ struct ReceptionResult {
 class ActorReception final {
 public:
     ActorReception(gameplay_world::World&,gameplay_collision::room_objects::Owner* = nullptr,gameplay_weapon_resources::Equipment* = nullptr,gameplay_world::InventoryPresence* = nullptr);
+    bool bind_room_objects(std::uint16_t,std::shared_ptr<gameplay_collision::room_objects::Owner>)noexcept;
+    bool unbind_room_objects()noexcept;
+    const gameplay_collision::room_objects::Owner* room_objects()const noexcept;
     ReceptionResult receive(const ActorStatusMessage&,bool local_echo=false)noexcept;
     ReceptionResult receive(const SceneRecordParameterMessage&,bool local_echo=false)noexcept;
     ReceptionResult receive(const ActorAlignmentMessage&,bool local_echo=false)noexcept;
@@ -28,6 +31,8 @@ private:
     struct Admission {ReceptionStatus status{ReceptionStatus::completed};std::shared_ptr<gameplay_world::Actor> actor;};
     gameplay_world::World& world_;
     gameplay_collision::room_objects::Owner* objects_;
+    std::shared_ptr<gameplay_collision::room_objects::Owner> retained_objects_;
+    std::optional<std::uint16_t> objects_scenario_;
     gameplay_weapon_resources::Equipment* equipment_;
     gameplay_world::InventoryPresence* presence_;
     Admission begin(std::uint32_t channel,bool local_echo)noexcept;

@@ -310,3 +310,10 @@ retirement; their production application composition is still required. Rooms
 with current movable-object placements refuse until that composition exists.
 Neither the global placement count nor an empty successful binding is a valid
 substitute for the actual current instance count745D60.
+
+The [guarded late-binding cut](SESSION_OBJECT_BINDING.md) now implements that
+Update/StatePublication and NativeSession/ActorReception connection, with real
+typed type9 queue composition and scope/lifetime checks. It leaves actual
+object construction and the saved/current model-pose producer as the immediate
+next integration boundary, rather than claiming those consumers from binding
+alone.

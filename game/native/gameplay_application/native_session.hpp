@@ -6,6 +6,7 @@
 #include "../gameplay_scenario/scene_controls.hpp"
 #include "../gameplay_scenario/room_scene_owner.hpp"
 #include "../gameplay_update/update.hpp"
+#include "../gameplay_update/reception.hpp"
 
 namespace reo::native::gameplay_application {
 class SessionRooms;
@@ -60,6 +61,7 @@ public:
     bool open()const noexcept{return !closed_&&!world_.closed();}
     gameplay_world::World& world()noexcept{return world_;}
     gameplay_update::Owner& update()noexcept{return update_;}
+    gameplay_update::ActorReception& reception()noexcept{return reception_;}
     const gameplay_scenario::content::ScenarioArchive& archive()const noexcept{return archive_;}
     gameplay_scenario::SequenceControl& sequences()noexcept{return sequences_;}
     gameplay_scenario::Lighting& lighting()noexcept{return lighting_;}
@@ -76,6 +78,7 @@ private:
     gameplay_scenario::content::ScenarioArchive archive_;
     std::shared_ptr<gameplay_world::Session> session_;
     gameplay_world::World world_;
+    gameplay_update::ActorReception reception_;
     gameplay_update::Owner update_;
     gameplay_scenario::SequenceControl sequences_;
     gameplay_scenario::Lighting lighting_;

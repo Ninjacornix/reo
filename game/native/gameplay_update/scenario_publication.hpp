@@ -149,6 +149,9 @@ class StatePublication final:public gameplay_world::LinkedExpirySink {
 public:
     StatePublication(gameplay_world::World& world,gameplay_scenario::FlagState& flags,GameplayMessageSink* messages=nullptr,const gameplay_collision::room_objects::Owner* objects=nullptr):world_(world),flags_(flags),messages_(messages),objects_(objects){}
     GameplayMessageSink* message_sink()const noexcept{return messages_;}
+    const gameplay_collision::room_objects::Owner* room_objects()const noexcept{
+        return objects_scenario_&&world_.scenario!=*objects_scenario_?nullptr:objects_;
+    }
     bool expired(const gameplay_world::LinkedExpiryNotice& notice)noexcept override {
         return notice.mode<2&&messages_&&messages_->send(ActorExpiryMessage{notice.mode==0?MessageRoute::mode_zero:MessageRoute::mode_one,notice.ordinal});
     }
@@ -257,8 +260,8 @@ public:
             return dispatch_actor(*actor,message);
         }
         case ActorMessageSelector::room_object:{
-            if(!objects_)return PublicationStatus::unavailable;
-            const auto coordinates=objects_->source_coordinates(actor->grid);if(!coordinates)return PublicationStatus::unavailable;
+            const auto* objects=room_objects();if(!objects)return PublicationStatus::unavailable;
+            const auto coordinates=objects->source_coordinates(actor->grid);if(!coordinates)return PublicationStatus::unavailable;
             ActorRoomObjectMessage message;message.grid=actor->grid;message.coordinates=*coordinates;
             return dispatch_actor(*actor,message);
         }
@@ -371,5 +374,12 @@ private:
     }
     gameplay_world::World& world_;gameplay_scenario::FlagState& flags_;GameplayMessageSink* messages_;
     const gameplay_collision::room_objects::Owner* objects_;
+    std::shared_ptr<const gameplay_collision::room_objects::Owner> retained_objects_;
+    std::optional<std::uint16_t> objects_scenario_;
+    void bind_room_objects(std::uint16_t scenario,std::shared_ptr<const gameplay_collision::room_objects::Owner> objects)noexcept{
+        objects_=objects.get();objects_scenario_=objects?std::optional<std::uint16_t>(scenario):std::nullopt;
+        retained_objects_=std::move(objects);
+    }
+    friend class Owner;
 };
 }

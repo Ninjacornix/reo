@@ -74,6 +74,11 @@ SessionRooms::SessionRooms(std::shared_ptr<NativeSession> session):session_(std:
 std::shared_ptr<gameplay_world::World> SessionRooms::world()const noexcept{
     const auto host=session_.lock();return host?std::shared_ptr<gameplay_world::World>(host,&host->world()):nullptr;
 }
+std::shared_ptr<collision::room_objects::Owner> SessionRooms::objects()const noexcept{
+    const auto host=session_.lock();if(!host||!host->open()||!host->room()||!host->room_objects_)return {};
+    const auto found=host->room_objects_->scenarios.find(host->room()->scenario);
+    return found==host->room_objects_->scenarios.end()?nullptr:found->second;
+}
 std::shared_ptr<gameplay_contact_world::RoomInvocation> SessionRooms::retain(std::uint16_t room){
     status_=RoomResourcesStatus::unavailable_session;
     const auto host=session_.lock();if(!host)return {};
@@ -82,6 +87,7 @@ std::shared_ptr<gameplay_contact_world::RoomInvocation> SessionRooms::retain(std
     try{
         auto& cached=lease->geometry_cache();
         if(!cached){
+            if(host->update().busy()||host->world().busy()){status_=RoomResourcesStatus::object_binding_refused;return {};}
             status_=RoomResourcesStatus::unavailable_geometry;
             const auto id=lease->room();
             const auto w=host->archive().read_resource(id.scenario,key('w',id));
@@ -120,6 +126,12 @@ std::shared_ptr<gameplay_contact_world::RoomInvocation> SessionRooms::retain(std
             cached=std::move(prepared);
         }
         if(!host->world().session().collision_disabled_mask){status_=RoomResourcesStatus::unavailable_geometry;return {};}
+        if(host->update().room_objects()!=cached->objects.get()||host->reception().room_objects()!=cached->objects.get()){
+            status_=RoomResourcesStatus::object_binding_refused;
+            if(host->update().busy()||host->world().busy())return {};
+            if(host->update().bind_room_objects(lease->room().scenario,cached->objects)!=gameplay_update::Status::completed)return {};
+            if(!host->reception().bind_room_objects(lease->room().scenario,cached->objects))return {};
+        }
         auto result=std::make_shared<Invocation>(std::move(lease),cached);
         status_=RoomResourcesStatus::completed;return result;
     }catch(const std::invalid_argument&){status_=RoomResourcesStatus::unavailable_geometry;return {};}
