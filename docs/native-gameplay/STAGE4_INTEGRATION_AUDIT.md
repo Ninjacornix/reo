@@ -269,6 +269,14 @@ canonical native controller routing. Exact axis/pressure normalization still
 needs source comparison; the existing production RAM packet writers are not
 an acceptable NativeSession implementation.
 
+The [concrete NativeSession implementation](NATIVE_SESSION_APPLICATION.md) now
+owns this application lifetime and exercises the actual owned room scripts,
+section10 records/helpers, section11Lighting and B5 terminal matrix consumer.
+It adds the real scene/model/matrix ownership that the read-only Program probe
+could not identify. Full frame services, actual actor startup and installed game
+selection remain explicit open boundaries; cold empty controls/lighting are not
+used as a successful room bootstrap.
+
 The [opcode170 cut](SCRIPT_RESOURCE_PARAMETERS.md) now passes paired complete
 original dispatcher/native owner qualification and current17-parent cohorts.
 All171-bank admission remains31/26; r001 advances to174 at block2+2508.

@@ -1,0 +1,115 @@
+{
+  "schema": "reo.native.application_session.qualification.v1",
+  "status": "passed",
+  "source_sha256": {
+    "game/native/CMakeLists.txt": "e45aac803ad5cce23cc0c409a2cd706b94001cbc737e9d9ac982153214fe3fa7",
+    "game/native/gameplay_update/update.hpp": "b8e6bb91d2f3620403c82e1d31fd5676ac1cafe36d38a003160a8a284ae3883c",
+    "game/native/gameplay_update/update.cpp": "3beb4ed736f4216d8a18d547a43458f73cb337eb59be33f1ad332d9756eba624",
+    "tools/native_reconstruction/verify_native_session.py": "6822a2ba4d204e0f103c25ca5daba1b22caea8bf7d555813da1ebdcf24196e05",
+    "docs/native-gameplay/NATIVE_SESSION_APPLICATION.md": "9a96b568ca291c6a2c927d6ed97ae3adb6c6aeea30d3f551dbddab95e0e8a801",
+    "docs/native-gameplay/STAGE4_INTEGRATION_AUDIT.md": "03e426d46b0ecc9ad895d89e57990a53c1764c81204eb8a923a36ae7abb8d13d",
+    "game/native/gameplay_application/CMakeLists.txt": "2735f9d73fd4aad95a8810debc46b10fd2aec2f3046abcaea73fef20fdc0a341",
+    "game/native/gameplay_application/native_session.hpp": "bfef25d03a799ca21091108335633a2e5b46440703dbf49fa8ae943fddca71fa",
+    "game/native/gameplay_application/native_session.cpp": "2bdeb3fd61c373b3054bb5357c19b368ad0149411aa31ee938abf8491dbdaf22",
+    "game/native/gameplay_application/native_session_tests.cpp": "ac4351b741c462bc96d23b7f6f2204034607378437a35a2bffa858205c61d336"
+  },
+  "cohorts": [
+    {
+      "compiler": "llvm",
+      "application_receipt": {
+        "path": "build-native-sjuni/native-application-session-llvm-v2/receipt.json",
+        "sha256": "3ff6ed7cf3d0b290d281cef852e021e416dbb9c13acde4857900fa0faa7fdf2e"
+      },
+      "parent_receipt": {
+        "path": "build-native-sjuni/native-application-session-parents-llvm-v2/receipt.json",
+        "sha256": "77267c85900b9b0e0d4c4adef1c801057a6680d3b391aafcfc85b7630c194ca5"
+      },
+      "result": {
+        "status": "passed",
+        "checks": 158,
+        "owned_rooms": 4,
+        "script_steps": 12,
+        "frame_refusals": 4,
+        "game_launched": false
+      },
+      "source_inputs": 605,
+      "native_archives": 50,
+      "compiled_cpp": 238,
+      "compatibility_data_adapter_cpp": [
+        "recomp/overrides/native_banks/v3/packet_adapter.cpp"
+      ],
+      "parent_source_inputs": 622,
+      "parent_tests": 18,
+      "owned_room": {
+        "name": "r0417300.rdt",
+        "sha256": "9b848ba85495890ba61b68adbd4c9681a541f8c0316101d988a3a2b1f88fe368",
+        "archive_offset": 880670720,
+        "bytes": 295388
+      },
+      "no_original_cpu_identifiers_in_compiled_closure": true
+    },
+    {
+      "compiler": "gcc",
+      "application_receipt": {
+        "path": "build-native-sjuni/native-application-session-gcc-v2/receipt.json",
+        "sha256": "e419850d3161dd65b237b55d77210251017edb1143e0d51ad83ad242ec364d33"
+      },
+      "parent_receipt": {
+        "path": "build-native-sjuni/native-application-session-parents-gcc-v2/receipt.json",
+        "sha256": "be1e212df23d49b3dfa791a369306424327956def534b8ebc19fa9b3c3073e92"
+      },
+      "result": {
+        "status": "passed",
+        "checks": 158,
+        "owned_rooms": 4,
+        "script_steps": 12,
+        "frame_refusals": 4,
+        "game_launched": false
+      },
+      "source_inputs": 605,
+      "native_archives": 50,
+      "compiled_cpp": 238,
+      "compatibility_data_adapter_cpp": [
+        "recomp/overrides/native_banks/v3/packet_adapter.cpp"
+      ],
+      "parent_source_inputs": 622,
+      "parent_tests": 18,
+      "owned_room": {
+        "name": "r0417300.rdt",
+        "sha256": "9b848ba85495890ba61b68adbd4c9681a541f8c0316101d988a3a2b1f88fe368",
+        "archive_offset": 880670720,
+        "bytes": 295388
+      },
+      "no_original_cpu_identifiers_in_compiled_closure": true
+    }
+  ],
+  "existing_child_qualification": [
+    {
+      "path": "tools/native_reconstruction/native_gameplay_authored_no_model_qualification_v1.json",
+      "sha256": "980e34cd78b1bd771645db163226ecbfd730f7dbf527a86f954b93cab15e628c"
+    },
+    {
+      "path": "tools/native_reconstruction/native_scene_matrix_programs_qualification_v1.json",
+      "sha256": "399e144eddd47be2f11b2d9bdf94ec23e1115b6667067ca1963c7077e75f4bf2"
+    }
+  ],
+  "failed_cohorts": [
+    {
+      "path": "build-native-sjuni/native-application-session-{llvm,gcc}-v1",
+      "reason": "Standalone canonical-step fixture left World at default offline while installing ordinary Program; fixture mode corrected, production unchanged."
+    },
+    {
+      "path": "build-native-sjuni/native-application-session-parents-{llvm,gcc}-v1",
+      "reason": "All18 parents passed; copied wrapper expected17. V2 corrected count and reran unchanged code."
+    }
+  ],
+  "game_launched": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "limitations": [
+    "Actual native application owner and owned room/script/scene/lighting composition; no complete gameplay frame claimed.",
+    "Initial room explicitly opts into existing authoredNoModel repair profile; physical-model room assets require their real owner.",
+    "Native audio dependency graph still includes typed bank packet capture adapter; this room path invokes no capture or emulated CPU.",
+    "Canonical primary actor startup, remaining frame/host services, complete scenario EVBs and semantic saves remain required."
+  ]
+}

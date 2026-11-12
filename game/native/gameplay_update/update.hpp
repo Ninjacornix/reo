@@ -112,6 +112,10 @@ public:
                        std::size_t script_budget=4096,std::size_t task_budget=1024);
     Result advance(PhaseServices&,world::Services&,scenario::Providers={},
                    std::size_t script_budget=4096,std::size_t task_budget=1024);
+    // Application/bootstrap script stepping uses this same canonical caller,
+    // without pretending the frame workers ran or committing simulation time.
+    Result step_script(std::size_t channel,scenario::Providers={},std::size_t maximum_operations=4096)noexcept;
+    bool busy()const noexcept{return running_||world_.busy()||!events_.idle()||!linked_.idle();}
     Status close()noexcept;
     world::World& world()noexcept{return world_;}
     tasks::Scheduler& linked()noexcept{return linked_;}

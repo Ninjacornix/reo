@@ -99,6 +99,20 @@ Status Owner::run_script(std::size_t channel,scenario::Providers providers,std::
     const auto step=scripts_.tick(channel,context,providers,budget);
     result.script_operations+=step.operations;return script_ok(step.status)?Status::completed:Status::script_failure;
 }
+Result Owner::step_script(std::size_t channel,scenario::Providers providers,std::size_t budget)noexcept{
+    Result result;
+    if(!open()){result.status=Status::closed;return result;}
+    if(busy()){result.status=Status::busy;return result;}
+    if((providers.world&&providers.world!=&world_)||
+       (providers.flags&&providers.flags!=&flags_)||
+       (providers.canonical_flags&&providers.canonical_flags!=&flags_)||
+       (providers.timers&&providers.timers!=&timers_)){
+        result.status=Status::script_failure;return result;
+    }
+    providers.world=&world_;
+    running_=true;struct Reset{bool& value;~Reset(){value=false;}}reset{running_};
+    result.status=run_script(channel,providers,budget,result);return result;
+}
 Status Owner::script_service(Services& services,scenario::Providers providers,std::size_t budget,Result& result){
     if(std::bit_cast<std::int32_t>(clock_.update_counter())>=0x83d60 &&
        !world_.session().cutscene_requests.limit_override){
