@@ -272,7 +272,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_compile_options(reo_native_weapon_actions PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
 endif()
 
-add_library(reo_native_primary_roster_startup STATIC primary_roster_startup.cpp)
+add_library(reo_native_primary_roster_startup STATIC primary_roster_startup.cpp actor_voice_startup.cpp actor_voice_requests.cpp)
 target_compile_features(reo_native_primary_roster_startup PUBLIC cxx_std_20)
 target_link_libraries(reo_native_primary_roster_startup PUBLIC reo_native_primary_actor_models reo_native_gameplay_update)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")

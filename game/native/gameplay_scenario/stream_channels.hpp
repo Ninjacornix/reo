@@ -10,6 +10,7 @@ enum class StreamStatus { completed,pending,closed,busy,invalid_channel,unbound,
 constexpr bool stream_accepted(StreamStatus s)noexcept{return s==StreamStatus::completed||s==StreamStatus::pending;}
 struct StreamValue {StreamStatus status{StreamStatus::fault};std::int32_t value{};};
 struct StreamRequest {std::uint32_t archive{};std::int32_t member{};};
+struct StreamSourceResult {StreamStatus status{StreamStatus::unbound};StreamRequest source;};
 struct StreamCue {StreamRequest source;std::string_view identity;};
 // Primitive native decoder/output operations, not opaque engine-call wrappers.
 // Implementations must use native source identities; no guest RAM/callbacks.
@@ -28,6 +29,12 @@ public:
     virtual StreamValue start_ready(std::uint8_t)noexcept{return{StreamStatus::unbound,0};}
     virtual StreamStatus start_inhibit(std::uint8_t,bool)noexcept{return StreamStatus::unbound;}
     virtual StreamStatus prepare_cues(std::uint8_t,std::span<const StreamCue>,std::uint32_t)noexcept{return StreamStatus::unbound;}
+    // Explicit actor archive capabilities. Older backends cannot manufacture
+    // an activated archive or a known zero loaded marker.
+    virtual StreamStatus activate_actor_archive(std::uint8_t,std::uint8_t)noexcept{return StreamStatus::unbound;}
+    virtual StreamStatus clear_actor_archives()noexcept{return StreamStatus::unbound;}
+    virtual StreamValue actor_archive_marker(std::uint8_t)noexcept{return{StreamStatus::unbound,0};}
+    virtual StreamSourceResult actor_voice_source(std::uint8_t,std::int32_t)noexcept{return{};}
 };
 struct StreamChannel {
     std::int8_t paused{};std::uint8_t type{},start_wait{},started{};

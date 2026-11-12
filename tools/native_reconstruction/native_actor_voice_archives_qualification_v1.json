@@ -1,0 +1,132 @@
+{
+  "schema": 1,
+  "status": "qualified_partial_native_actor_voice_activation_and_ordinary_request",
+  "game_run": false,
+  "audio_device_opened": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_scenario/actor_voice_archive_assets.hpp": "9f46481e94349c32b76b7e995231c84a79840fb92972d008496a6732fb44c371",
+    "game/native/gameplay_scenario/actor_voice_archive_assets.cpp": "26526ea730f75a4136d4a42273072443a8e8673445725a089e6ed2ecd1551544",
+    "game/native/gameplay_scenario/stream_channels.hpp": "00fb374d442f84279fd45ef76ae91d3c2cee8544a0b0fae682ffb9950df1a162",
+    "game/native/gameplay_scenario/stream_instances.hpp": "68ef0b2b2db89530e54fec9035d9a6bb9fce9905091650e75268d905e6631a5a",
+    "game/native/gameplay_scenario/stream_instances.cpp": "4fe0af009bb5d7e2cddd20c5616b08d768b1f820f3e21e341d71e50bab6dc5de",
+    "game/native/gameplay_world/actor_voice_startup.hpp": "a6ca898a8ff72f927cea45ddfcd0626b5415646c59daf38b39eb398a56bfc9dc",
+    "game/native/gameplay_world/actor_voice_startup.cpp": "4202cce898d1978e1ef2f17557eacf7e434b020cc32acd004cc0a096130341bb",
+    "game/native/gameplay_world/actor_voice_requests.hpp": "470f446ad86088d39a204de30ee60e84a32a34e150d4be829f0fb0fb0920ad96",
+    "game/native/gameplay_world/actor_voice_requests.cpp": "5b094d171be70c6e160f3cc65f23565484d5439f6552713d2b3308bc127351c3",
+    "game/native/gameplay_application/actor_voice_tests.cpp": "6616cd777b691462f97405da92b08f778a840c5051601d97ecd07b403febd51a",
+    "tools/native_reconstruction/audit_actor_voice_archive_activation.py": "3f24893ad6a6eab0d694af6699b488cc61584d705909dd450d35c1d076ca657c",
+    "tools/native_reconstruction/verify_actor_voice_archives.py": "584f523ed13546536b737b1872de2dadda1d217a4188d944d5412d6a6812d412",
+    "tools/native_reconstruction/verify_actor_voice_caller.py": "bfa3507eb4759d45e1eb573cd70331a1df03ddc65b4a7b4b0465974f9b0bd986",
+    "tools/native_reconstruction/actor_voice_archive_reference.inc": "c09e92008dfd82269c2f1db3efbc5aba99e1f88f7c38ccd0aa582e81bb6a92d6",
+    "tools/native_reconstruction/actor_voice_caller_reference.inc": "7c7548bcf2a666ba1c763a55793c8b11a825978db83bf5fd90dfebc93f606320",
+    "tools/native_reconstruction/gameplay_scenario/stream_instances_oracle/actor_voice_archive_tests.cpp": "8a60374a2b4e2303e501a6eb719ba4bb1240756f6ac320a471aa68d88e2c576a",
+    "tools/native_reconstruction/gameplay_scenario/stream_instances_oracle/CMakeLists.txt": "8520711ef63b1c98a1af4b3b8762641decd1aa447313e219c3423696d2f83d92",
+    "docs/native-gameplay/ACTOR_VOICE_ARCHIVES.md": "de4f2220e07662cec52351959610aeb9066dc529c49a8721ad065cf9fddff34c"
+  },
+  "owned_cmake_fragments_sha256": {
+    "game/native/gameplay_application/CMakeLists.txt": "6f52a47c6168625efab66ad7879191e63c355e03951a72752d5687c52e462174",
+    "game/native/gameplay_world/CMakeLists.txt": "6eaf961ca790fcd4af95dae67075a849f43254d29444fe9ff0475125acb470f9",
+    "game/native/gameplay_scenario/CMakeLists.txt": "7ebe6be8a59ff58ac8cdb799e8462a7d7caff6308de6034eb56151a0fec6f4d1"
+  },
+  "paired_activation_results": {
+    "checks": 3285213,
+    "native_activations": 2048,
+    "complete_source_cases": 2050,
+    "source_calls": 1092730,
+    "source_polls": 120,
+    "busy_cases": 1,
+    "retained_archive_lifetimes": 1,
+    "decoder_sources_started": 0,
+    "audio_device_opened": false,
+    "game_run": false
+  },
+  "paired_caller_results": {
+    "checks": 4353,
+    "complete_native_caller_cases": 192,
+    "complete_original_caller_cases": 192,
+    "source_calls": 1825,
+    "canonical_startup_bridges": 1,
+    "refusal_prefixes": 3,
+    "decoder_sources_started": 1,
+    "actual_copied_samples": 640,
+    "audio_device_opened": false,
+    "game_run": false
+  },
+  "receipts": [
+    {
+      "path": "build-native-sjuni/actor-voice-archives-gcc-v2/receipt.json",
+      "sha256": "d79b995c6fefee36d8f41b84761e4a75b9f06781fcd6d5d7600f3712a8f9aa36",
+      "snapshot_unchanged": true,
+      "live_source_drift": [
+        "tools/native_reconstruction/periodic_visuals_tests.cpp"
+      ]
+    },
+    {
+      "path": "build-native-sjuni/actor-voice-archives-llvm-v2/receipt.json",
+      "sha256": "d01ff29cb2e64ba6af38a14feabf2cf61ed048ac746670b8a725f7a769fffa1c",
+      "snapshot_unchanged": true,
+      "live_source_drift": [
+        "game/native/gameplay_application/native_session.cpp",
+        "game/native/gameplay_application/session_rooms_tests.cpp",
+        "tools/native_reconstruction/contact_styles_tests.inc"
+      ]
+    },
+    {
+      "path": "build-native-sjuni/actor-voice-caller-gcc-v3/receipt.json",
+      "sha256": "3954e239f6b6c76d2c804f4efffb06cfb09d0a42bcf53feb59aabbe2bd3b4c41",
+      "snapshot_unchanged": true,
+      "live_source_drift": [
+        "game/native/gameplay_collision/room_objects.cpp",
+        "game/native/gameplay_scenario/camera_projection.cpp",
+        "game/native/gameplay_scenario/CMakeLists.txt",
+        "game/native/gameplay_scenario/cutscene_playback.cpp",
+        "game/native/gameplay_scenario/cutscene_playback.hpp",
+        "tools/native_reconstruction/cutscene_playback_tests.cpp",
+        "tools/native_reconstruction/pose_work_tests.cpp",
+        "tools/native_reconstruction/verify_cutscene_playback.py"
+      ]
+    },
+    {
+      "path": "build-native-sjuni/actor-voice-caller-llvm-v3/receipt.json",
+      "sha256": "b507d15dee7e8ee64907d52805ddf1f0c559fb6ae8dc913c3ba0fcfdb6e9a398",
+      "snapshot_unchanged": true,
+      "live_source_drift": [
+        "game/native/gameplay_collision/room_objects.cpp",
+        "game/native/gameplay_scenario/CMakeLists.txt",
+        "game/native/gameplay_scenario/cutscene_playback.cpp",
+        "game/native/gameplay_scenario/cutscene_playback.hpp",
+        "game/native/gameplay_world/pose_work_pool.cpp",
+        "game/native/gameplay_world/pose_work_pool.hpp",
+        "tools/native_reconstruction/cutscene_playback_tests.cpp",
+        "tools/native_reconstruction/pose_work_tests.cpp",
+        "tools/native_reconstruction/verify_cutscene_playback.py"
+      ]
+    }
+  ],
+  "owned_archive_audit": {
+    "path": "build-native-sjuni/actor-voice-archive-activation-audit-v1/receipt.json",
+    "sha256": "ba5fc3940d99255ac67d7f628471c90b0a48abe6f5eeb10e505fca2687aacb76",
+    "archives": 8,
+    "verified_adx_members": 8000
+  },
+  "retained_failures": [
+    {
+      "path": "build-native-sjuni/actor-voice-archives-gcc-v1/receipt.json",
+      "sha256": "7c2edac26155a8d5b7f62544ecacfc21d069b007ee67b828d888b03da0c07e84",
+      "reason": "Synthetic attenuation table fixture invalid; first word corrected to256."
+    },
+    {
+      "path": "build-native-sjuni/actor-voice-caller-gcc-v1/receipt.json",
+      "sha256": "314a50bfc3d47f5ca67ab839c9900a557c1276ce45c75973721a0274b78f2d99",
+      "reason": "Original test port compared unsigned slot to signed addition; explicit unsigned expression fixed. Production unchanged."
+    }
+  ],
+  "limits": [
+    "Only five ordinary selections have actual producers. Separate NPC/common slot5 remains unavailable; activation slots5..7 retain original no-op semantics.",
+    "SDK open/poll and output primitives are declared original test boundaries; metadata is certified from actual owned archives.1B94B0 spatial logic is separately qualified, with fixed known gains in the caller reference and actual native locate in production.",
+    "Actual canonical SessionStartup composition retains explicit controlled remaining render/resource operations; no full authored launch or complete dialogue UI owner is claimed.",
+    "The GCC caller receipt contains an older broad sentence saying no decoder source starts. Its observed decoder_sources_started=1 and actual_copied_samples=640 describe the added concrete consumer correctly; zero source starts applies only to the controlled output comparison/startup subset. LLVMv3 has the corrected scope sentence.",
+    "Every receipt identifies its immutable full source snapshot. Listed live drift is retained, and own production/CMake fragment identities above are checked against both final compiler snapshots. Historical qualifier-tool copies may predate fixture fixes; actual compiled external references are separately hashed in each receipt."
+  ]
+}

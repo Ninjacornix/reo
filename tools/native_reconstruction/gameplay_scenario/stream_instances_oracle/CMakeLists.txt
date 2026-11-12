@@ -24,3 +24,18 @@ target_compile_features(stream_instance_checks PRIVATE cxx_std_20)
 target_include_directories(stream_instance_checks PRIVATE "${REO_ROOT}")
 target_link_libraries(stream_instance_checks PRIVATE reo_native_adxt_control_owner reo_native_afs_source_range reo_native_audio_cue_queue)
 target_compile_options(stream_instance_checks PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+
+add_executable(actor_voice_archive_checks actor_voice_archive_tests.cpp
+  "${REO_ROOT}/game/native/gameplay_scenario/actor_voice_archive_assets.cpp"
+  "${REO_ROOT}/game/native/gameplay_scenario/stream_voice_queue.cpp"
+  "${REO_ROOT}/game/native/gameplay_scenario/stream_instances.cpp"
+  "${REO_ROOT}/game/native/gameplay_scenario/stream_channels.cpp")
+target_compile_features(actor_voice_archive_checks PRIVATE cxx_std_20)
+target_include_directories(actor_voice_archive_checks PRIVATE "${REO_ROOT}")
+target_link_libraries(actor_voice_archive_checks PRIVATE reo_native_adxt_control_owner reo_native_afs_source_range reo_native_audio_cue_queue)
+target_compile_options(actor_voice_archive_checks PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+if(REO_ACTOR_ARCHIVE_REFERENCE_DIR)
+  target_sources(actor_voice_archive_checks PRIVATE "${REO_ACTOR_ARCHIVE_REFERENCE_DIR}/original.cpp")
+  target_include_directories(actor_voice_archive_checks PRIVATE "${REO_ACTOR_ARCHIVE_REFERENCE_DIR}")
+  target_compile_definitions(actor_voice_archive_checks PRIVATE REO_ACTOR_ARCHIVE_ORIGINAL=1)
+endif()
