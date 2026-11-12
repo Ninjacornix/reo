@@ -1,0 +1,188 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "scope": "Sole Playback-owned cinematic speech frontend, actual fixed422-name lookup and source-ordered facial claim for5EEC50 opcode3.",
+  "game_run": false,
+  "device_opened": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_scenario/cutscene_actor_speech.hpp": "46882896bcdd56b5a2e5c5a043455a4ddebb18ab73a317ec7039da72852a7ece",
+    "game/native/gameplay_scenario/cutscene_actor_speech.cpp": "4e3acae6ee914dbb401e5b0e56a0a60f2abe86fcde64231651d15fa73430fca8",
+    "game/native/gameplay_scenario/cutscene_actor_speech_assets_tests.cpp": "8e6dc1f4dcee736bf87e96b6b738d51cc35fcab29c7a8b4e8c7a922133e7fc01",
+    "game/native/gameplay_scenario/cutscene_playback.hpp": "599edcb7ac96aa9e83270482df05ddbe6fbe2ee6447ceaf678e2522275e01c1d",
+    "game/native/gameplay_scenario/cutscene_playback.cpp": "58051ef6a806b8e5947c6c74ad0d807a4c3adc404675a4048f8b2d98ed1ded16",
+    "game/native/gameplay_scenario/CMakeLists.txt": "1316d753736207c6879d130083d8880f57074e52a191e0bc1b567ced702d2b80",
+    "tools/native_reconstruction/cinematic_speech_lookup_tests.cpp": "59db81562558f5c7ab4e7fa3bd55b010fb7fc95be5e32e5887c19f4440401938",
+    "tools/native_reconstruction/verify_cinematic_speech_lookup.py": "8cae62be056df02a85827c25fe9d5b8c656490f8819c548b01afaeca6fb6ed77",
+    "tools/native_reconstruction/cutscene_actor_speech_tests.cpp": "cdcec456c06897f20a6e5975ca455cdfe8ca384e00749f213695d8e287355cc5",
+    "tools/native_reconstruction/verify_cutscene_actor_speech.py": "6fe59eed4321128960a56d3e401c793d40f5bd7a3cf0a79380c15838c241f46f",
+    "tools/native_reconstruction/qualify_cutscene_actor_speech_v1.py": "95605b0293eb92b629eb4d8da821b6084be98b0ccef07da7ef628a983c16afd6",
+    "docs/native-gameplay/CUTSCENE_ACTOR_SPEECH.md": "1fdd210bc56132998db8cebb98d187e1b92cf48161762787ae0cb6684c4aa1f1"
+  },
+  "matching_qualified_snapshots": {
+    "game/native/gameplay_scenario/cutscene_actor_speech.hpp": [
+      "owner_caller_llvm",
+      "owner_caller_gcc",
+      "current_parents_assets_llvm",
+      "current_parents_assets_gcc"
+    ],
+    "game/native/gameplay_scenario/cutscene_actor_speech.cpp": [
+      "owner_caller_llvm",
+      "owner_caller_gcc",
+      "current_parents_assets_llvm",
+      "current_parents_assets_gcc"
+    ],
+    "game/native/gameplay_scenario/cutscene_actor_speech_assets_tests.cpp": [
+      "current_parents_assets_llvm",
+      "current_parents_assets_gcc"
+    ],
+    "game/native/gameplay_scenario/cutscene_playback.hpp": [
+      "owner_caller_llvm",
+      "owner_caller_gcc",
+      "current_parents_assets_llvm",
+      "current_parents_assets_gcc"
+    ],
+    "game/native/gameplay_scenario/cutscene_playback.cpp": [
+      "owner_caller_llvm",
+      "owner_caller_gcc",
+      "current_parents_assets_llvm",
+      "current_parents_assets_gcc"
+    ],
+    "game/native/gameplay_scenario/CMakeLists.txt": [
+      "current_parents_assets_llvm",
+      "current_parents_assets_gcc"
+    ],
+    "tools/native_reconstruction/cinematic_speech_lookup_tests.cpp": [
+      "lookup_preparation_llvm",
+      "lookup_preparation_gcc"
+    ],
+    "tools/native_reconstruction/verify_cinematic_speech_lookup.py": [
+      "lookup_preparation_llvm",
+      "lookup_preparation_gcc"
+    ],
+    "tools/native_reconstruction/cutscene_actor_speech_tests.cpp": [
+      "owner_caller_llvm",
+      "owner_caller_gcc"
+    ],
+    "tools/native_reconstruction/verify_cutscene_actor_speech.py": [
+      "owner_caller_llvm",
+      "owner_caller_gcc"
+    ]
+  },
+  "receipts": {
+    "lookup_preparation_llvm": {
+      "path": "build-native-sjuni/cinematic-speech-lookup-llvm-v4/receipt.json",
+      "sha256": "69af8679aaf8220a4b201bdd3a9dc93374fec285890d34a199da45be4a2ea5e4",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 8330,
+        "positive_aliases": 422,
+        "queries": 1179,
+        "voice_misses": 757,
+        "original_calls": 1475425,
+        "preparation_sdk_calls": 24,
+        "voice_sdk_children_reached": 0,
+        "game_run": false
+      },
+      "speech": null,
+      "parent_tests": null,
+      "source_drift": {}
+    },
+    "lookup_preparation_gcc": {
+      "path": "build-native-sjuni/cinematic-speech-lookup-gcc-v4/receipt.json",
+      "sha256": "4a24300ab3ec41d19c801dd06f494e66951b504408fc8e7b70abaae7decc812f",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 8330,
+        "positive_aliases": 422,
+        "queries": 1179,
+        "voice_misses": 757,
+        "original_calls": 1475425,
+        "preparation_sdk_calls": 24,
+        "voice_sdk_children_reached": 0,
+        "game_run": false
+      },
+      "speech": null,
+      "parent_tests": null,
+      "source_drift": {}
+    },
+    "owner_caller_llvm": {
+      "path": "build-native-sjuni/cutscene-actor-speech-llvm-v6/receipt.json",
+      "sha256": "c891cf9d036e11d7f8160492a834923df32e07c5caa9cc576844f95f370d2215",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 2970596,
+        "owned_clips": 33,
+        "loads": 100,
+        "claims": 43,
+        "frames": 21656,
+        "model_patches": 150234,
+        "callback_guards": 109,
+        "original_calls": 2415700,
+        "speech_misses": 693,
+        "game_run": false
+      },
+      "speech": null,
+      "parent_tests": null,
+      "source_drift": {}
+    },
+    "owner_caller_gcc": {
+      "path": "build-native-sjuni/cutscene-actor-speech-gcc-v6/receipt.json",
+      "sha256": "7e1b16de34e12648d2058453910c86a7c0c31d161e6e0b094887dea6054a4040",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 2970596,
+        "owned_clips": 33,
+        "loads": 100,
+        "claims": 43,
+        "frames": 21656,
+        "model_patches": 150234,
+        "callback_guards": 109,
+        "original_calls": 2415700,
+        "speech_misses": 693,
+        "game_run": false
+      },
+      "speech": null,
+      "parent_tests": null,
+      "source_drift": {}
+    },
+    "current_parents_assets_llvm": {
+      "path": "build-native-sjuni/session-resources-parents-llvm-v1/receipt.json",
+      "sha256": "cbbf2f31bdb34cb73a3a05b74787e823371117bc722e5a9b26bb8f91f8b5168c",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": null,
+      "speech": {
+        "checks": 4715864,
+        "owned_clips": 33,
+        "frames": 21649,
+        "model_patches": 129696,
+        "game_run": false
+      },
+      "parent_tests": 31,
+      "source_drift": {}
+    },
+    "current_parents_assets_gcc": {
+      "path": "build-native-sjuni/session-resources-parents-gcc-v1/receipt.json",
+      "sha256": "aea299fb99c5f51ed3aa65cff8ac4607f7ccdb5ff0572a5818d4863c005205c7",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": null,
+      "speech": {
+        "checks": 4715864,
+        "owned_clips": 33,
+        "frames": 21649,
+        "model_patches": 129696,
+        "game_run": false
+      },
+      "parent_tests": 31,
+      "source_drift": {}
+    }
+  },
+  "limits": [
+    "Complete original1ADB30,1AB2F0,1AB050 and string helpers execute; all422 positive controls and757 generated VO-name misses are checked. Complete1AB450/1AE7D0/1ADFD0/1AE6D0 with24 declared SDK primitives precede those checks and preserve the fixed table/string bytes. SDK archive/decoder implementations are not executed by this lookup/preparation cohort.",
+    "77 actual descriptor request tuples use descriptor-header scenario, not archive context;22 cross-context rows differ. Owned typed requests cover693 suffix cases. Standard formatter and SDK sector-transfer primitives remain declared ports in the separate nineteen-entry actor/face comparison; the actual voice lookup executes.",
+    "Controller owns a noncopyable bound adapter; unbound/foreign/reentrant operations refuse and borrowed access expires at unbind/destruction. Actual actor-track dispatch selects it before an external speech fallback and admits the original World-update traversal.",
+    "The genuine fixed-catalogue miss completes the source call and continues facial claims without reporting queued/played audio. Unexpected positive VO lookups, arbitrary replacement tables and other locales remain unavailable rather than fabricated media behavior.",
+    "Current31-parent CMake cohort also executes33 actual owned-clip caller/model paths without external speech. The unprovided later object callback is an explicit unavailable boundary; complete scene entry, movies/render publication and full cinematic/application lifecycle remain separate work."
+  ]
+}

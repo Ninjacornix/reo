@@ -12,6 +12,7 @@ class CutsceneDisplay;
 class CutsceneViewControls;
 class CutsceneLights;
 class FacialMotions;
+class CutsceneActorSpeech;
 struct CameraParameters;
 // One native controller for source38ECA0. The original7434C8 pointer aliases
 // this record; +8 and global38ECA8 are the SAME simulation frame. Request.mode
@@ -101,11 +102,15 @@ public:
     CutscenePlaybackStatus unbind_facial_motions()noexcept;
     FacialMotions* facial_motions()noexcept{return facial_motions_.get();}
     const FacialMotions* facial_motions()const noexcept{return facial_motions_.get();}
+    CutscenePlaybackStatus bind_actor_speech(std::unique_ptr<CutsceneActorSpeech>&)noexcept;
+    CutscenePlaybackStatus unbind_actor_speech()noexcept;
+    CutsceneActorSpeech* actor_speech()noexcept{return actor_speech_.get();}
+    const CutsceneActorSpeech* actor_speech()const noexcept{return actor_speech_.get();}
     // The actual5EE680 outer visit and5EE260 substate. Neither starts a game,
     // device nor thread; required media/scene capability failures are returned.
     CutscenePlaybackResult tick()noexcept;
     CutscenePlaybackResult advance()noexcept;
-    bool busy()const noexcept{return running_||(light_running_&&*light_running_)||(facial_running_&&*facial_running_);}
+    bool busy()const noexcept{return running_||(light_running_&&*light_running_)||(facial_running_&&*facial_running_)||(speech_running_&&*speech_running_);}
 private:
     gameplay_world::World& world_;FlagState& flags_;const std::optional<std::uint32_t>& audio_tick_;
     StreamChannels& channels_;StreamBackend& streams_;SceneVoicePreparation voice_;
@@ -115,10 +120,12 @@ private:
     std::unique_ptr<CutsceneViewControls> view_controls_;
     std::unique_ptr<CutsceneLights> lights_;
     std::unique_ptr<FacialMotions> facial_motions_;
+    std::unique_ptr<CutsceneActorSpeech> actor_speech_;
     // Alias the owned worker's real activity flag, including direct borrowed
     // worker visits. The inline World close guard needs no reverse link unit.
     const bool* light_running_{};
     const bool* facial_running_{};
+    const bool* speech_running_{};
     bool running_{};
     std::size_t work_calls_{};
     CutscenePlaybackResult advance_inner();

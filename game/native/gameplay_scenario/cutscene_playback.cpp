@@ -1,5 +1,6 @@
 #include "cutscene_playback.hpp"
 #include "facial_motions.hpp"
+#include "cutscene_actor_speech.hpp"
 #include "cutscene_actor_tracks.hpp"
 #include "cutscene_object_tracks.hpp"
 #include "cutscene_camera.hpp"
@@ -95,6 +96,18 @@ CutscenePlaybackStatus CutscenePlayback::unbind_facial_motions()noexcept{
     if(world_.closed())return CutscenePlaybackStatus::closed;
     facial_running_=nullptr;facial_motions_.reset();return CutscenePlaybackStatus::completed;
 }
+CutscenePlaybackStatus CutscenePlayback::bind_actor_speech(std::unique_ptr<CutsceneActorSpeech>& speech)noexcept{
+    if(busy()||world_.busy()||(speech&&speech->busy()))return CutscenePlaybackStatus::busy;
+    if(world_.closed())return CutscenePlaybackStatus::closed;
+    if(!speech||actor_speech_||speech->bound_||!speech->bound_to(world_,*this))return CutscenePlaybackStatus::unavailable;
+    actor_speech_=std::move(speech);actor_speech_->bound_=true;speech_running_=&actor_speech_->running_;
+    return CutscenePlaybackStatus::completed;
+}
+CutscenePlaybackStatus CutscenePlayback::unbind_actor_speech()noexcept{
+    if(busy()||world_.busy())return CutscenePlaybackStatus::busy;
+    if(world_.closed())return CutscenePlaybackStatus::closed;
+    speech_running_=nullptr;actor_speech_.reset();return CutscenePlaybackStatus::completed;
+}
 CutscenePlaybackStatus CutscenePlayback::fade(bool rising,std::int16_t duration,std::uint32_t color){
     if(!display_)return services_.fade(rising,duration,color);
     display_->fade(rising,duration,color);return CutscenePlaybackStatus::completed;
@@ -114,7 +127,7 @@ CutscenePlaybackStatus CutscenePlayback::frame_work(CutsceneFrameWork work,std::
     const auto map=[](CutsceneTrackStatus status){switch(status){case CutsceneTrackStatus::completed:return CutscenePlaybackStatus::completed;case CutsceneTrackStatus::busy:return CutscenePlaybackStatus::busy;case CutsceneTrackStatus::closed:return CutscenePlaybackStatus::closed;case CutsceneTrackStatus::no_memory:return CutscenePlaybackStatus::no_memory;default:return CutscenePlaybackStatus::unavailable;}};
     if(work==CutsceneFrameWork::actor_tracks){
         if(!world_.cutscene_tracks_owner_)return CutscenePlaybackStatus::unavailable;
-        return map(world_.cutscene_tracks_owner_->tick(state_.frame,state_.request.current.area,services_.speech()).status);
+        return map(world_.cutscene_tracks_owner_->tick(state_.frame,state_.request.current.area,actor_speech_?actor_speech_.get():services_.speech()).status);
     }
     if(work==CutsceneFrameWork::object_tracks){
         if(!world_.cutscene_object_tracks_owner_)return CutscenePlaybackStatus::unavailable;

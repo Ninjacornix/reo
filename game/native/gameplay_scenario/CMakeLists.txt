@@ -135,3 +135,12 @@ target_link_libraries(facial_motions_assets_tests PRIVATE reo_native_gameplay_sc
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_compile_options(facial_motions_assets_tests PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
 endif()
+
+target_sources(reo_native_gameplay_scenario PRIVATE cutscene_actor_speech.cpp)
+target_link_libraries(reo_native_gameplay_scenario PUBLIC reo_native_gameplay_bank_loading)
+
+add_executable(cutscene_actor_speech_assets_tests cutscene_actor_speech_assets_tests.cpp)
+target_link_libraries(cutscene_actor_speech_assets_tests PRIVATE reo_native_gameplay_scenario)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(cutscene_actor_speech_assets_tests PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+endif()
