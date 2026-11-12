@@ -68,7 +68,7 @@ void scene_scopes(const char* archive,const char* manifest){
                 auto copied=g::copy_actor_owned(*main);check(copied.status==g::ActorCopyStatus::completed&&copied.actor->animation&&!copied.actor->model&&!copied.actor->animation->model());
                 g::World detached_world(profile(),std::make_shared<g::Session>());
                 const auto id=detached_world.spawn_primary(0,std::move(copied.actor)).id;const auto value=detached_world.resolve(id);
-                value->category=std::uint8_t(family);value->phase=0;value->scripted.emplace();value->scripted->motion_rate_mode=1;value->scripted->motion_selector=ordinary.key;value->root_motion_delta={4,5,6};
+                value->category=std::uint8_t(family);value->phase=0;value->scripted.emplace();value->model_correction_skip=1;value->scripted->motion_selector=ordinary.key;value->root_motion_delta={4,5,6};
                 g::ScriptedActorMotion detached_motion(detached_world,supplied.banks->scripted());bool refused{};
                 g::PrimaryCutsceneAction detached_action(detached_world,detached_motion);detached_action.tick(id);
                 check(!value->model&&!value->animation->model()&&value->root_motion_delta.x==0&&value->phase==0);++detached_scene_action_initializations;
@@ -79,7 +79,7 @@ void scene_scopes(const char* archive,const char* manifest){
             }
         }
         check(motions.publish(scene_motion.banks).status==g::HumanoidPublicationStatus::completed);
-        temporary->scripted->motion_rate_mode=1;temporary->scripted->motion_selector=choice_motion.key;temporary->scripted->motion_blend_duration=2.5f;
+        temporary->model_correction_skip=1;temporary->scripted->motion_selector=choice_motion.key;temporary->scripted->motion_blend_duration=2.5f;
         g::ScriptedActorMotion motion(world,scene_motion.banks->scripted());
         const reo::native::gameplay_collision::response::Grid floors{};g::GridSurfaceOrientation pose(floors);g::PrimaryCutsceneAction callback(world,motion);
         const auto previous_pause=world.paused;world.paused=1;temporary->scripted->cue_phase=0;callback.tick(constructed.id);

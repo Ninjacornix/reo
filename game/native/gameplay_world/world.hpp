@@ -135,7 +135,7 @@ struct Actor : actors::Entity,actors::HitActor {
     std::uint16_t contact_flags{};
     std::uint16_t action_flags{};
     float surface_blend_weight{},surface_blend_rate{};
-    std::int8_t model_correction_skip{};
+    std::int8_t model_correction_skip{}; // Shared source B40: scripted bank/rate mode and paused height-correction skip.
     float model_height_correction{};
     std::uint16_t model_variant{};
     std::uint32_t response_mask{},response_value{};
@@ -229,6 +229,7 @@ class LinkedModelPool;
 class LinkedActorUpdates;
 class NpcActorUpdates;
 class CinematicActorFrames;
+class CinematicModelPass;
 class AuxiliaryActorPool;
 class TargetMetricCache;
 class PrimaryActorModels;
@@ -317,6 +318,7 @@ private:
     NpcActorUpdates* npc_update_owner_{};
     friend class CinematicActorFrames;
     CinematicActorFrames* cinematic_frame_owner_{};
+    friend class CinematicModelPass;
     friend class HumanoidMotionOwner;
     friend class PrimaryActorInitialization;
     friend class PrimaryActorModels;

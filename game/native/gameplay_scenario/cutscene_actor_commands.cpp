@@ -52,12 +52,12 @@ CutsceneCommandStatus apply_cutscene_actor_command(gameplay_world::World& world,
         actor->visible=true;actor->collision.pose_ready=false;break;
     case 1:{
         if(read<std::uint32_t>(event,4)){
-            state.motion_rate_mode=1;state.motion_selector=std::bit_cast<std::int8_t>(std::uint8_t(read<std::uint32_t>(event,8)));
+            actor->model_correction_skip=1;state.motion_selector=std::bit_cast<std::int8_t>(std::uint8_t(read<std::uint32_t>(event,8)));
             state.motion_blend_duration=float(read<std::int32_t>(event,24));
             if(read<std::uint32_t>(event,20)&&actor->motion_style)
                 state.motion_selector=std::bit_cast<std::int8_t>(std::uint8_t(std::uint8_t(state.motion_selector)+100u));
         }else{
-            state.motion_rate_mode=0;state.motion_selector=std::bit_cast<std::int8_t>(std::uint8_t(actor->character+(read<std::uint32_t>(event,8)<<3)));
+            actor->model_correction_skip=0;state.motion_selector=std::bit_cast<std::int8_t>(std::uint8_t(actor->character+(read<std::uint32_t>(event,8)<<3)));
             state.scale_lock=std::bit_cast<std::int8_t>(std::uint8_t(read<std::uint32_t>(event,12)));
             state.request_phase=std::uint8_t(read<std::uint32_t>(event,16));
             state.motion_blend_duration=float(read<std::int32_t>(event,24));

@@ -4,6 +4,13 @@ Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to put the PC to sleep only after
 Stage4 is fully implemented and verified; do not sleep at component checkpoints.
 
+- [Cinematic primary model publication](CINEMATIC_MODEL_PUBLICATION.md) now
+  implements the actual separate eight-slot pass with current actor bases,
+  shared scripted/correction B40 ownership and150 owned correction variants.
+  Paired full comparisons pass512 passes and192 command/publication compositions;
+  ordinary pose, model-lifetime and five parent regressions pass. Reaction/
+  secondary-pose work, category10 objects, full scene entry/exit and installed
+  native gameplay acceptance remain open.
 - [Shared humanoid motion preparation](HUMANOID_MOTION_ASSETS.md) now reads
   all90 common and eight character-base files, preserves the actual shared
   ordinary/head bank, and reproduces default reload after scene attempts.

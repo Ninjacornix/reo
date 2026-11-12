@@ -88,11 +88,11 @@ void ScriptedActorMotion::tick(const actors::EntityId& id){
     if(actor->phase==0){
         actor->phase=1;actor->motion_class=0x14;actor->motion_rate=1;
         auto& state=playback(*actor);
-        const HumanoidMotionAlias alias{control.motion_rate_mode==1?HumanoidMotionFamily::scene_body:HumanoidMotionFamily::general,0};
+        const HumanoidMotionAlias alias{actor->model_correction_skip==1?HumanoidMotionFamily::scene_body:HumanoidMotionFamily::general,0};
         actor->motion_bank_aliases[0]=alias;
-        state.resources[0]=resolve_humanoid_motion_bank(world_,alias,control.motion_rate_mode==1?banks_.mode_one:banks_.other_modes);
+        state.resources[0]=resolve_humanoid_motion_bank(world_,alias,actor->model_correction_skip==1?banks_.mode_one:banks_.other_modes);
         actor->root_motion_delta={};
-        const float duration=control.motion_blend_duration*(control.motion_rate_mode==0?1.f:2.f);
+        const float duration=control.motion_blend_duration*(actor->model_correction_skip==0?1.f:2.f);
         if(!std::isfinite(duration))throw std::domain_error("Native scripted motion finite blend duration required");
         configure(world_,*actor,bank(state.resources[0]),control.motion_selector,duration);
         state.activate(state.channel_count);
@@ -100,7 +100,7 @@ void ScriptedActorMotion::tick(const actors::EntityId& id){
         auto& state=playback(*actor);
         if(!state.resources_known)throw std::runtime_error("Native scripted motion bank bindings unavailable");
         if(actor->motion_bank_aliases[0])state.resources[0]=resolve_humanoid_motion_bank(world_,*actor->motion_bank_aliases[0],state.resources[0]);
-        advance(world_,*actor,bank(state.resources[0]),control.motion_rate_mode==0?1.f:.5f);
+        advance(world_,*actor,bank(state.resources[0]),actor->model_correction_skip==0?1.f:.5f);
     }
     if(control.track_two_motion!=0&&actor->model_pose_class!=1){
         auto& state=playback(*actor);

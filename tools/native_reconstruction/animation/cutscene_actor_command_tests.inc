@@ -58,7 +58,7 @@ void cutscene_command_tests(std::vector<std::uint8_t>& ram){
         put(ram.data(),actor+0x553,value->movement_enabled);put(ram.data(),actor+0xbb4,value->model_variant);
         put(ram.data(),actor+0xb98,value->character);put(ram.data(),actor+0xb99,value->motion_style);
         put(ram.data(),actor+0xb38,s.cue_phase);put(ram.data(),actor+0xb3c,s.request_flags);
-        put(ram.data(),actor+0xb40,s.motion_rate_mode);put(ram.data(),actor+0xb41,s.scale_lock);put(ram.data(),actor+0xb42,s.request_phase);put(ram.data(),actor+0xb43,s.motion_selector);put(ram.data(),actor+0xb44,s.motion_blend_duration);
+        put(ram.data(),actor+0xb40,value->model_correction_skip);put(ram.data(),actor+0xb41,s.scale_lock);put(ram.data(),actor+0xb42,s.request_phase);put(ram.data(),actor+0xb43,s.motion_selector);put(ram.data(),actor+0xb44,s.motion_blend_duration);
         put(ram.data(),actor+0xb8b,s.scale_profile);put(ram.data(),actor+0xb48,s.relation_mode);put(ram.data(),actor+0xb4c,0u);
         put(ram.data(),actor+0xb50,s.relation_options);put(ram.data(),actor+0xb54,s.relation_offset);put(ram.data(),actor+0xb60,s.relation_parameter);
         put(ram.data(),actor+0xb64,s.command_angles);put(ram.data(),actor+0xc50,s.command_angle_copy);
@@ -72,7 +72,7 @@ void cutscene_command_tests(std::vector<std::uint8_t>& ram){
         check(ram[actor]==value->active&&ram[actor+1]==value->visible&&ram[actor+8]==value->primary&&get<std::int8_t>(ram.data(),actor+0xb38)==s.cue_phase&&get<std::uint32_t>(ram.data(),actor+0xb3c)==s.request_flags,"actual cutscene command common prefix and kind gates");
         check(std::memcmp(&value->position,ram.data()+actor+0x38,12)==0&&std::memcmp(value->orientation.data(),ram.data()+actor+0x90,8)==0,"actual cutscene command position/degrees");
         check(std::memcmp(&value->model_scale,ram.data()+actor+0xb4,12)==0&&s.scale_profile==ram[actor+0xb8b],"actual command scale table, distinct NPC base and unit gate");
-        check(s.motion_rate_mode==get<std::int8_t>(ram.data(),actor+0xb40)&&s.scale_lock==get<std::int8_t>(ram.data(),actor+0xb41)&&s.request_phase==ram[actor+0xb42]&&s.motion_selector==get<std::int8_t>(ram.data(),actor+0xb43)&&bits(s.motion_blend_duration)==get<std::uint32_t>(ram.data(),actor+0xb44),"motion mode, byte normalization, branch-preserved controls and signed blend conversion");
+        check(value->model_correction_skip==get<std::int8_t>(ram.data(),actor+0xb40)&&s.scale_lock==get<std::int8_t>(ram.data(),actor+0xb41)&&s.request_phase==ram[actor+0xb42]&&s.motion_selector==get<std::int8_t>(ram.data(),actor+0xb43)&&bits(s.motion_blend_duration)==get<std::uint32_t>(ram.data(),actor+0xb44),"motion mode, byte normalization, branch-preserved controls and signed blend conversion");
         check(s.relation_mode==get<std::int32_t>(ram.data(),actor+0xb48)&&s.relation_options==get<std::uint32_t>(ram.data(),actor+0xb50)&&std::memcmp(s.relation_offset.data(),ram.data()+actor+0xb54,12)==0&&s.relation_parameter==get<std::uint32_t>(ram.data(),actor+0xb60),"relationship native state");
         const auto expected=s.related_actor==target?0xa00000u:s.related_actor==id?actor:0u;
         check(expected==get<std::uint32_t>(ram.data(),actor+0xb4c),"relationship carries canonical identities, including known null");
@@ -82,7 +82,7 @@ void cutscene_command_tests(std::vector<std::uint8_t>& ram){
     const auto run=[&](unsigned kind,unsigned seed){
         location="cutscene command="+std::to_string(kind)+" seed="+std::to_string(seed);
         value->active=false;value->visible=false;value->primary=3;value->scripted.emplace();
-        auto& s=*value->scripted;s.cue_phase=7;s.request_flags=0x89abcdef;s.motion_rate_mode=17;s.scale_lock=23;s.request_phase=45;s.motion_selector=-55;s.motion_blend_duration=6.5f;s.scale_profile=17;
+        auto& s=*value->scripted;s.cue_phase=7;s.request_flags=0x89abcdef;value->model_correction_skip=17;s.scale_lock=23;s.request_phase=45;s.motion_selector=-55;s.motion_blend_duration=6.5f;s.scale_profile=17;
         value->position={-1,-2,-3};value->orientation={-10,-20,-30,-40};value->model_scale={2,3,4};value->movement_enabled=99;
         value->category=std::uint8_t(seed%4);value->slot=1;value->model_pose_class=std::uint8_t((seed>>5)%2);
         value->model_variant=cue_fixture::cue_variant_scales[(seed/4)%cue_fixture::cue_variant_scales.size()].id;

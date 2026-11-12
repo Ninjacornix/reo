@@ -11,7 +11,7 @@ void construction_owned(const char* archive){
         const auto source_id=world.spawn_primary(main,std::move(initial)).id;const auto original=world.resolve(source_id);reo::native::gameplay_update::State state;
         const auto loaded=g::PrimaryActorModels::prepare(owner.capture(source_id).value(),assets,content);check(owner.apply(*loaded,state).status==g::PrimaryModelStatus::completed);
         original->current=std::int16_t(123+main);original->primary=1;original->secondary=2;original->phase=3;original->subphase=4;original->position={7,8,9};original->model_variant=37;original->appearance_variant=19;
-        original->scripted.emplace();auto& script=*original->scripted;script.cue_phase=3;script.request_flags=0xffffffff;script.motion_rate_mode=2;script.scale_lock=3;script.request_phase=4;script.motion_selector=5;script.motion_blend_duration=6;
+        original->scripted.emplace();auto& script=*original->scripted;script.cue_phase=3;script.request_flags=0xffffffff;original->model_correction_skip=2;script.scale_lock=3;script.request_phase=4;script.motion_selector=5;script.motion_blend_duration=6;
         script.relation_mode=7;script.related_actor=source_id;script.relation_options=8;script.relation_parameter=9;script.relation_offset={10,11,12};script.command_angles={13,14,15};script.command_angle_copy=77;script.movement_angles={16,17};script.forward_step=18;script.yaw_step=19;script.movement_remaining=20;script.track_two_motion=21;script.scale_profile=22;
         original->primary_state->initialization_marker=0x7654;
         const auto source_before=g::copy_actor_owned(*original);check(source_before.status==g::ActorCopyStatus::completed);

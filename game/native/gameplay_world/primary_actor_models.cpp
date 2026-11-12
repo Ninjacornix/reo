@@ -255,7 +255,7 @@ PrimarySceneConstructed PrimaryActorModels::construct_scene_primary(
         actor.model_variant=0;actor.character=choice.character;actor.room=world_.room;actor.model_pose_class=choice.model_class;
         if(!actor.scripted)actor.scripted.emplace();
         auto& script=*actor.scripted;script.cue_phase=0;script.request_flags=0;
-        script.motion_rate_mode=script.scale_lock=script.motion_selector=0;script.request_phase=0;script.motion_blend_duration=0;
+        actor.model_correction_skip=0;script.scale_lock=script.motion_selector=0;script.request_phase=0;script.motion_blend_duration=0;
         script.relation_mode=0;script.related_actor={};script.relation_options=script.relation_parameter=0;script.relation_offset={};
         script.command_angles={};script.movement_angles={};script.forward_step=0;script.yaw_step=script.movement_remaining=0;
         script.track_two_motion=0;script.scale_profile=0;

@@ -18,7 +18,7 @@ struct ScriptedActorState {
     std::int8_t cue_phase{},scale_lock{}; // B38/B41
     std::uint8_t request_phase{}; // B42
     std::uint32_t request_flags{}; // B3C
-    std::int8_t motion_rate_mode{},motion_selector{}; // B40/B43
+    std::int8_t motion_selector{}; // B43; shared B40 lives on Actor
     float motion_blend_duration{}; // B44, duration rather than initial frame
     std::int16_t track_two_motion{}; // B7C
     std::uint8_t scale_profile{}; // B8B

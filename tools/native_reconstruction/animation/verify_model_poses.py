@@ -26,7 +26,7 @@ def main():
  originals=list(entries.values());proof=[]
  for n in originals:
   begin,end=[int(v,16)for v in re.search(r'// Address: (0x[0-9a-f]+) - (0x[0-9a-f]+)',(ROOT/n).read_text()).groups()];proof.append(compare_source('complete original skeleton/model/frame/root or math body',n,begin,end,read if begin<0x370000 else (lambda at,size:o0raw[at-0x370000:at-0x370000+size])if begin<0x570000 else lambda at,size:overlay[at-0x570000:at-0x570000+size]))
- native_cpp=['game/native/'+n for n in ['animation/model.cpp','animation/model_math.cpp','animation/curves.cpp','transform_math/transform_math.cpp','gameplay_world/model_poses.cpp','gameplay_world/model_constraints.cpp','gameplay_world/linked_models.cpp','gameplay_world/auxiliary_actors.cpp','gameplay_world/scene_primary_actors.cpp','animation/constraints.cpp','animation/constraint_math.cpp','gameplay_world/world.cpp','gameplay_world/bodies.cpp','gameplay_actors/entity.cpp','gameplay_actors/input.cpp','gameplay_actors/health.cpp','gameplay_collision/collision.cpp','gameplay_collision/response.cpp','gameplay_collision/actors.cpp','gameplay_collision/actor_views.cpp']]
+ native_cpp=['game/native/'+n for n in ['gameplay_navigation/bank.cpp','animation/model.cpp','animation/model_math.cpp','animation/curves.cpp','transform_math/transform_math.cpp','gameplay_world/model_poses.cpp','gameplay_world/model_constraints.cpp','gameplay_world/linked_models.cpp','gameplay_world/auxiliary_actors.cpp','gameplay_world/scene_primary_actors.cpp','animation/constraints.cpp','animation/constraint_math.cpp','gameplay_world/world.cpp','gameplay_world/bodies.cpp','gameplay_actors/entity.cpp','gameplay_actors/input.cpp','gameplay_actors/health.cpp','gameplay_collision/collision.cpp','gameplay_collision/response.cpp','gameplay_collision/actors.cpp','gameplay_collision/actor_views.cpp']]
  native=set(native_cpp);pending=list(native_cpp)
  while pending:
   n=pending.pop()
@@ -49,7 +49,7 @@ def main():
   init='inline void owned_constants(std::uint8_t* p){\n';record['owned_constants']={}
   for at,size in [(0x22fe20,32),(0x241c78,40),(0x241e90,4)]:
    raw=read(at,size);record['owned_constants'][hex(at)]=raw.hex();init+=' {const std::uint8_t bytes[]{'+','.join(str(v)for v in raw)+'};std::memcpy(p+'+str(at)+',bytes,sizeof bytes);}\n'
-  profile_path=ROOT/'build-native-sjuni/model-scale-profile-v1/receipt.json';profile=json.loads(profile_path.read_bytes());assert profile['status']=='passed'and hashlib.sha256((ROOT/'game/native/gameplay_world/model_scale_profile.inc').read_bytes()).hexdigest()==profile['output_sha256'];record['scale_profile']=dict(path=str(profile_path),sha256=sha(profile_path))
+  profile_path=ROOT/'build-native-sjuni/model-scale-profile-v2/receipt.json';profile=json.loads(profile_path.read_bytes());assert profile['status']=='passed'and hashlib.sha256((ROOT/'game/native/gameplay_world/model_scale_profile.inc').read_bytes()).hexdigest()==profile['output_sha256'];record['scale_profile']=dict(path=str(profile_path),sha256=sha(profile_path))
   correction={}
   for at,count,stride in [(0x71ae00,8,12),(0x73eae0,3,4)]:
    correction[hex(at)]=[]

@@ -91,6 +91,7 @@ void body_equal(const g::Actor& value, const std::vector<std::uint8_t>& ram) {
 #include "npc_skeleton_tests.inc"
 #include "common_actor_frame_tests.inc"
 #include "cinematic_actor_frames_tests.inc"
+#include "cinematic_model_pass_tests.inc"
 #include "npc_update_tests.inc"
 int main(int argc, char** argv) try {
     check(argc >= 4 && argc <= 6, "owned World animation inputs required");
@@ -110,6 +111,7 @@ int main(int argc, char** argv) try {
     npc_update_tests(ram);
     npc_update_failure_tests();
     cinematic_actor_frame_tests(load((std::filesystem::path(argv[0]).parent_path()/"owned_secondary_skeletons.bin").string().c_str()),ram);
+    cinematic_model_pass_tests(load((std::filesystem::path(argv[0]).parent_path()/"owned_secondary_skeletons.bin").string().c_str()),ram);
     std::fill(ram.begin(),ram.end(),0);owned_constants(ram.data());put(ram.data(),0x294e00,t::identity());
     scripted_motion_tests(raw_banks,skeletons,ram);
     scripted_motion_tests(raw_banks,skeletons,ram,0);
@@ -757,6 +759,11 @@ int main(int argc, char** argv) try {
               << ",\"npc_pool_actors\":" << npc_pool_actors
               << ",\"npc_attachment_cases\":" << npc_attachment_cases
               << ",\"common_actor_cases\":" << common_actor_cases
+              << ",\"cinematic_model_passes\":" << cinematic_model_passes
+              << ",\"cinematic_model_publications\":" << cinematic_model_publications
+              << ",\"cinematic_model_joints\":" << cinematic_model_joints
+              << ",\"cinematic_model_commands\":" << cinematic_model_commands
+              << ",\"cinematic_model_refusals\":" << cinematic_model_refusals
               << ",\"cinematic_frame_cases\":" << cinematic_frame_cases
               << ",\"cinematic_frame_calls\":" << cinematic_frame_calls
               << ",\"cinematic_frame_restores\":" << cinematic_frame_restores

@@ -47,7 +47,7 @@ void export_actor(std::uint8_t* ram,const g::Actor& actor){
 int main(int argc,char** argv)try{
  check(argc==3,"owned model content required");const auto old=_mm_getcsr();struct Reset{unsigned old;~Reset(){_mm_setcsr(old);}}reset{old};_mm_setcsr(0x1f80);std::vector<std::uint8_t> ram(0x2000000);owned_constants(ram.data());put(ram.data(),0x294e00,t::identity());const auto skeletons=load(argv[2]);auto skeleton=a::Skeleton::import_raw(skeletons[0]);g::World world(profile(),std::make_shared<g::Session>());Scales scales;std::vector<std::uint16_t> variants;
  for(unsigned id=1;id<=208;++id){try{const float value=scales.owned.variant(std::uint16_t(id));check(std::bit_cast<std::uint32_t>(value)==get<std::uint32_t>(ram.data(),0x716444+20*id),"actual owned NPC scale metadata");variants.push_back(std::uint16_t(id));}catch(const std::out_of_range&){}}
- check(variants.size()==125,"all original named NPC loader variants admitted");
+ check(variants.size()==150,"all ordinary and high-detail named NPC correction variants admitted");
  for(unsigned id=0;id<8;++id)check(std::bit_cast<std::uint32_t>(scales.owned.character(std::uint8_t(id)))==get<std::uint32_t>(ram.data(),0x71ae00+12*id),"actual owned player scale metadata");
  auto instance=std::make_shared<a::Instance>(skeleton);std::memcpy(ram.data()+0x400000,skeletons[0].data(),skeletons[0].size());call(ram.data(),0x1a2e00,0x10000,skeleton_resource,0x400000);call(ram.data(),0x193380,nodes,1);
  for(unsigned i=0;i<skeleton->nodes().size();++i)put(ram.data(),work+0x820+4*i,nodes+400*i);

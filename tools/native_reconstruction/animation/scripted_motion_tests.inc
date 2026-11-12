@@ -108,7 +108,7 @@ void scripted_motion_tests(const std::vector<std::vector<std::byte>>& banks,
             current->animation=std::make_shared<a::Playback>(current->model);
             current->animation->resources_known=true;current->animation->channel_count=std::uint8_t((variant/8)%6);
             current->scripted.emplace();auto& control=*current->scripted;
-            control.motion_rate_mode=std::bit_cast<std::int8_t>(std::uint8_t(variant));
+            current->model_correction_skip=std::bit_cast<std::int8_t>(std::uint8_t(variant));
             control.motion_selector=std::int8_t(key);control.motion_blend_duration=std::array{0.f,3.5f,-5.f,.25f}[(variant/2)%4];
             current->model_pose_class=std::uint8_t(variant%4==2?1:variant%3);
             if(family<2)current->model_pose_class=std::uint8_t(skeleton->nodes().size()==73);
@@ -122,7 +122,7 @@ void scripted_motion_tests(const std::vector<std::vector<std::byte>>& banks,
             put(ram.data(),actor+0x54a,current->contact_flags);put(ram.data(),actor+0x54d,current->model_pose_class);
             put(ram.data(),actor+0x54f,current->motion_class);put(ram.data(),actor+0xba8,current->motion_rate);
             put(ram.data(),actor+0xba4,current->auxiliary_status);put(ram.data(),actor+0x4e4,current->root_motion_delta);
-            put(ram.data(),actor+0xb40,control.motion_rate_mode);put(ram.data(),actor+0xb43,control.motion_selector);
+            put(ram.data(),actor+0xb40,current->model_correction_skip);put(ram.data(),actor+0xb43,control.motion_selector);
             put(ram.data(),actor+0xb44,control.motion_blend_duration);put(ram.data(),actor+0xb7c,control.track_two_motion);
             put(ram.data(),actor+0xd28,current->control_elapsed);put(ram.data(),0x3243cc,world.session().clock_mode);
             g::ScriptedActorMotion motion(world,{mode_one,other,additive});
@@ -133,8 +133,8 @@ void scripted_motion_tests(const std::vector<std::vector<std::byte>>& banks,
                 check(current->phase==ram[actor+0xa]&&current->motion_class==ram[actor+0x54f]&&bits(current->motion_rate)==get<std::uint32_t>(ram.data(),actor+0xba8),"scripted phase/class/rate effects");
                 check(current->contact_flags==get<std::uint16_t>(ram.data(),actor+0x54a)&&current->auxiliary_status==get<std::uint32_t>(ram.data(),actor+0xba4),"scripted control and consumed duration-reset mask");
                 check(control.track_two_motion==get<std::int16_t>(ram.data(),actor+0xb7c)&&current->control_elapsed==0x12345678,"scripted pending track and independent primary control state");
-                const auto selected=control.motion_rate_mode==1?mode_one:other;
-                check(current->animation->resources[0]==selected&&get<std::uint32_t>(ram.data(),actor+0x514)==(control.motion_rate_mode==1?mode_one_at:other_at),"exact-one resource selection differs from nonzero rate selection");
+                const auto selected=current->model_correction_skip==1?mode_one:other;
+                check(current->animation->resources[0]==selected&&get<std::uint32_t>(ram.data(),actor+0x514)==(current->model_correction_skip==1?mode_one_at:other_at),"exact-one resource selection differs from nonzero rate selection");
                 records(*current->animation,ram,{current->root_motion_delta.x,current->root_motion_delta.y,current->root_motion_delta.z});
                 if(pending>0&&current->model_pose_class!=1){if(family==2)++scripted_positive_tracks;else ++primary_scripted_positive_tracks;}
                 if(family==2)++scripted_motion_ticks;else ++primary_scripted_ticks;
@@ -158,7 +158,7 @@ void scripted_motion_tests(const std::vector<std::vector<std::byte>>& banks,
         check(supplied->find(inputs.front().key,0)->clip()->tracks().size()==36,"diagnostic case uses an actual ordinary primary clip");
         for(bool detached:{false,true}){
             g::World world(world_profile(),std::make_shared<g::Session>());const auto id=world.spawn_primary(0,std::make_unique<g::Actor>()).id;const auto value=world.resolve(id);
-            value->category=std::uint8_t(family);value->scripted.emplace();value->scripted->motion_rate_mode=1;value->scripted->motion_selector=std::int16_t(inputs.front().key);
+            value->category=std::uint8_t(family);value->scripted.emplace();value->model_correction_skip=1;value->scripted->motion_selector=std::int16_t(inputs.front().key);
             value->model=std::make_shared<a::Instance>(player_skeleton);value->animation=std::make_shared<a::Playback>(value->model);value->model_pose_class=2;
             const auto previous=std::vector<std::uint16_t>(value->model->track_ids().begin(),value->model->track_ids().end());
             if(detached){value->model_pose_class=0;value->model.reset();}

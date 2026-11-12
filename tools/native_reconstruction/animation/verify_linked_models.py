@@ -53,7 +53,7 @@ def main():
   init='inline void owned_constants(std::uint8_t* p){\n';record['owned_constants']={}
   for at,size in [(0x22fe20,32),(0x241c78,40),(0x241e90,4)]:
    raw=read(at,size);record['owned_constants'][hex(at)]=raw.hex();init+=' {const std::uint8_t bytes[]{'+','.join(str(v)for v in raw)+'};std::memcpy(p+'+str(at)+',bytes,sizeof bytes);}\n'
-  profile_path=ROOT/'build-native-sjuni/model-scale-profile-v1/receipt.json';profile=json.loads(profile_path.read_bytes());assert profile['status']=='passed'and hashlib.sha256((ROOT/'game/native/gameplay_world/model_scale_profile.inc').read_bytes()).hexdigest()==profile['output_sha256'];record['scale_profile']=dict(path=str(profile_path),sha256=sha(profile_path))
+  profile_path=ROOT/'build-native-sjuni/model-scale-profile-v2/receipt.json';profile=json.loads(profile_path.read_bytes());assert profile['status']=='passed'and hashlib.sha256((ROOT/'game/native/gameplay_world/model_scale_profile.inc').read_bytes()).hexdigest()==profile['output_sha256'];record['scale_profile']=dict(path=str(profile_path),sha256=sha(profile_path))
   correction={}
   for at,count,stride in [(0x71ae00,8,12),(0x73eae0,3,4),(0x70afc0,16,4),(0x73eaf8,1,4),(0x73eb00,1,4)]:
    correction[hex(at)]=[]

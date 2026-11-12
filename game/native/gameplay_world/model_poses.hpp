@@ -25,6 +25,10 @@ enum class ModelPoseKind {primary,linked_actor};
 // original prelude. The proven paused fast-path remains admitted; there is no
 // dummy pose or after-effects legacy fallback.
 void rebuild_standard_model(World&,Actor&,ModelPoseKind,const ModelCorrectionScales&);
+//376CF0: standard publication from the CURRENT actor basis. It scales/corrects
+// the model but does not replace basis translation from Actor.position or select
+//5D6400 constraints. The enclosing cinematic phase owns prior basis updates.
+void rebuild_cinematic_primary_model(World&,Actor&,const ModelCorrectionScales&);
 
 class WorldModelPoses final:public BodyPoses {
 public:

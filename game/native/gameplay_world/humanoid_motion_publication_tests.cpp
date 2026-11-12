@@ -79,11 +79,11 @@ void owned(const char* archive){
     // Actual scripted phase0 selects from the adopted source even though this
     // consumer was constructed with old banks. The invalid selector refuses
     // after recording its real binding; no curve/playback success is claimed.
-    const auto linked_id=world.linked_models().allocate(true).id;const auto linked=world.resolve(linked_id);linked->category=2;linked->scripted.emplace();linked->scripted->motion_rate_mode=1;linked->scripted->motion_selector=-1;
+    const auto linked_id=world.linked_models().allocate(true).id;const auto linked=world.resolve(linked_id);linked->category=2;linked->scripted.emplace();linked->model_correction_skip=1;linked->scripted->motion_selector=-1;
     linked->model=prepared->asset()->make_instance();linked->animation=std::make_shared<a::Playback>(linked->model);linked->animation->resources_known=true;
     g::ScriptedActorMotion motion(world,ready->scripted());bool failed=false;try{motion.tick(linked_id);}catch(const std::exception&){failed=true;}
     check(failed&&linked->phase==1&&linked->motion_bank_aliases[0]==g::HumanoidMotionAlias{g::HumanoidMotionFamily::scene_body,0}&&linked->animation->resources[0]==later->scripted().mode_one);++scripted_checks;
-    linked->scripted->motion_rate_mode=0;const auto final=assets.scene(1,2,*later).banks;
+    linked->model_correction_skip=0;const auto final=assets.scene(1,2,*later).banks;
     const auto final_result=owner.publish(final);check(final_result.status==g::HumanoidPublicationStatus::completed&&final_result.actors==4&&final_result.bindings==10&&linked->phase==1&&linked->animation->resources[0]==final->scripted().mode_one&&linked->animation->resources[0]!=final->scripted().other_modes);++publications;rebindings+=final_result.bindings;++scripted_checks;
     struct Behavior final:g::Services {
         g::HumanoidMotionOwner& owner;std::shared_ptr<const g::HumanoidMotionBanks> candidate;unsigned calls{};
