@@ -20,17 +20,23 @@ model, geometry and alignment capabilities remain absent until their actual
 producers supply them. Generic `Actor` construction does not grant this
 bootstrap state.
 
+The clear also establishes zero AI execution and route components. The native
+route failure default of -1 is replaced by the source-cleared output link 0.
+The source 10AC profile pointer is null: the optional weight profile remains
+absent until actual AI initialization selects an authored profile.
+
 Every `actor.slot` remains zero after the clear, including records physically
 stored in slots one through seven. The later source producer is `5EB520` at
 `5EB598`, which assigns indices over the actual `primary_population` after
-its release and resource preparation calls. The bootstrap helper does not
+its voice-archive and stream-stage preparation calls. The bootstrap helper does not
 move that later producer earlier or infer its result.
 
-Paired `primary-actor-records-{gcc,llvm}-v2` comparisons each pass 2,230,107
+Paired `primary-actor-records-{gcc,llvm}-v3` comparisons each pass 2,233,691
 checks. They execute complete original `66A730` and complete original SDK
 clear `107C68` for 64 cases, checking every cleared byte and both outside
 guards. The native projection checks all eight canonical Actors, zero
-capabilities, distinct identities, preserved unrelated state, bootstrap-only
+capabilities including AI/route zero and absent profile pointer, distinct
+identities, preserved unrelated state, bootstrap-only
 refusal, eight capacity rollback profiles, reentry under the actual World
 guard, and 512 retained actor lifetimes. No memory-clear observation stub is
 substituted for the original SDK routine.

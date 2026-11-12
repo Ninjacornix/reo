@@ -28,9 +28,16 @@ void check_cleared(const w::Actor& actor,unsigned physical){
     const auto& head=*actor.head_reaction;check(head.mode==0&&head.ticks==0&&head.retarget_ticks==0&&!head.target&&head.current==std::array<std::int16_t,2>{}&&head.applied==std::array<std::int16_t,2>{}&&head.step==std::array<std::int16_t,2>{});
     for(const auto& column:head.local)for(const float value:column)check(value==0);
     check(!actor.model&&!actor.model_asset&&!actor.animation&&!actor.constraints&&!actor.alignment_target);
+    check(actor.ai_execution&&*actor.ai_execution==reo::native::gameplay_ai::ExecutionState{});
+    check(actor.navigation_route.has_value());const auto& route=*actor.navigation_route;
+    check(route.current_node==0&&route.destination_node==0&&route.last_current_node==0&&route.output.link==0&&route.output.route.first==0&&route.output.route.second==0);
+    check(route.final_position.x==0&&route.final_position.y==0&&route.final_position.z==0&&route.output.route.first_position.x==0&&route.output.route.first_position.y==0&&route.output.route.first_position.z==0&&route.output.route.second_position.x==0&&route.output.route.second_position.y==0&&route.output.route.second_position.z==0);
+    check(route.previous_action==0&&route.action==0&&route.destination_room==0&&route.completed==0&&route.selection_mode==0&&route.refresh==0&&route.travel_ticks==0);
     check(actor.inventory.carried==std::array<std::uint8_t,4>{}&&actor.inventory.storage==std::array<std::uint8_t,32>{});
 #ifdef REO_PRIMARY_RECORDS_ORIGINAL
     const auto at=source_base+physical*0x10e0;check(actor.slot==memory[at+3]&&*actor.surface_transition_flags==memory[at+0xce2]&&*actor.secondary_pose_category_override==transform_read<unsigned>(memory.data(),at+0xfac));check(actor.position.x==transform_read<float>(memory.data(),at+0x38)&&actor.model_scale.y==transform_read<float>(memory.data(),at+0xb8)&&head.ticks==transform_read<std::int16_t>(memory.data(),at+0xbd2));
+    check(actor.ai_execution->goal==transform_read<std::uint16_t>(memory.data(),at+0xff4)&&actor.ai_execution->action==transform_read<std::uint16_t>(memory.data(),at+0xff8)&&!actor.ai_execution->weight_profile&&transform_read<unsigned>(memory.data(),at+0x10ac)==0);
+    check(route.output.link==transform_read<std::int16_t>(memory.data(),at+0x10aa)&&route.current_node==std::int8_t(memory[at+0x100c])&&route.final_position.z==transform_read<float>(memory.data(),at+0x1018)&&route.selection_mode==memory[at+0x105b]);
 #else
     (void)physical;
 #endif

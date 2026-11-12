@@ -208,6 +208,8 @@ struct Session : actors::HitSession {
     // Original3243D7 chooses resident-file versus archive-bundle resource work.
     // It is independent of pause4BADF8. The actual content owner must supply it.
     std::optional<std::uint8_t> asset_loading_mode;
+    std::optional<std::uint8_t> setup_gate; //3243D2; actual5EB520/scene-transition producer required
+    std::optional<std::uint8_t> scene_stream_stage; //3243FE; actual5EC3A0/load-finalizer producer required
     std::uint8_t gameplay_flags{}; // original4BAE96; use override bit0, contact-mode bit1
     std::int8_t message_phase{}; // original3243FB;1/2 enable the1B0310 message branch, independent of mode
     std::uint16_t actor_message_suppression{}; // original744638; shared selector suppression, not per actor

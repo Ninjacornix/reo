@@ -1,0 +1,454 @@
+{
+  "schema": 1,
+  "status": "qualified_partial_native_primary_roster_startup",
+  "source_sha256": {
+    "game/native/gameplay_world/primary_roster_startup.hpp": "53cf43463acfa78e3f061cdb72170d774badd9a7cf40d3efa42267dcebb31837",
+    "game/native/gameplay_world/primary_roster_startup.cpp": "a0d68fe2bef6974ecd589a38ee48201c21e3d9edc390cb0ee86240a32bb41505",
+    "game/native/gameplay_world/primary_roster_startup_tests.cpp": "fafacc96f62c2db27de1019b915c40a80cfa56430f03a8e67838d21152b5c9dd",
+    "game/native/gameplay_world/primary_actor_models.hpp": "923c4d83af59aa1ac2196c31ec4a1ead0fc61b6a732b4ad72eaa949b4a8c2e0e",
+    "game/native/gameplay_world/primary_actor_records.cpp": "85e9397c153951cfd2bb45fe8d10943e65adaf723006bd1fc93b4aff5779b148",
+    "game/native/gameplay_world/primary_actor_records_tests.cpp": "b25ef9e81417a3bb65e8df6f9785a293feb212092c0edc7eb90b0aef83795ea8",
+    "game/native/gameplay_world/world.hpp": "3280514a4bdba9fe27edf3463e692728f66ae66bb7d698074bc2fe8a37f33ce1",
+    "game/native/gameplay_world/CMakeLists.txt": "dd585d4f0f1da21ebce8d8a5979b06dc81a87f5c8c88a58e35f7f5c4a8c7d32d",
+    "tools/native_reconstruction/primary_startup_reference.inc": "1b2e733e8ece815469fc91dd05e6832822d0d96f781908f5274252e3a5bbd62c",
+    "tools/native_reconstruction/verify_primary_roster_startup.py": "a8c1b8725983b0c0ed41706bf1702537f5e60cd76ba9e2667ae3a20a71964bdc",
+    "tools/native_reconstruction/audit_primary_roster_startup_assets.py": "1a5a57626abcc71c8a4704f09b4cfa26c501ad5a498907b6be17f7097bf90586",
+    "docs/native-gameplay/PRIMARY_ROSTER_STARTUP.md": "88bb2600387cd19b7c821d3d3a93f52000302f5e2a1f9bcf160671989b1106b0",
+    "docs/native-gameplay/PRIMARY_ACTOR_RECORDS.md": "016ae712d22e18a2d0bfc0b53a4a6d389968fb54ac4419776a81a725d61f22a9"
+  },
+  "paired_compiler_receipts": [
+    {
+      "receipt": "build-native-sjuni/primary-roster-startup-gcc-v2/receipt.json",
+      "sha256": "a34e9bf31a3b1c67455d9ee53c5addb7a62344c2df5bc54fdb2a5dda6362eaa3",
+      "observed": {
+        "startup": {
+          "checks": 9876,
+          "complete_native_startups": 27,
+          "model_applications": 129,
+          "guard_checks": 2515,
+          "refusals": 48,
+          "complete_original_cases": 58,
+          "source_prefixes": 31,
+          "source_calls": 4332,
+          "lifetimes": 36,
+          "game_run": false
+        },
+        "bootstrap": {
+          "checks": 19675,
+          "complete_source_clears": 0,
+          "canonical_bootstraps": 64,
+          "capacity_refusals": 8,
+          "busy_proofs": 1,
+          "lifetimes": 512,
+          "game_run": false
+        }
+      },
+      "snapshot_unchanged": true,
+      "domain_current": true,
+      "unrelated_live_source_drift": [
+        "game/native/CMakeLists.txt",
+        "game/native/gameplay_scenario/CMakeLists.txt"
+      ]
+    },
+    {
+      "receipt": "build-native-sjuni/primary-roster-startup-llvm-v2/receipt.json",
+      "sha256": "422e37fde7c99e7ce749b1b97c7591f456b1fd5c498a69f453ce6d0fb436454e",
+      "observed": {
+        "startup": {
+          "checks": 9876,
+          "complete_native_startups": 27,
+          "model_applications": 129,
+          "guard_checks": 2515,
+          "refusals": 48,
+          "complete_original_cases": 58,
+          "source_prefixes": 31,
+          "source_calls": 4332,
+          "lifetimes": 36,
+          "game_run": false
+        },
+        "bootstrap": {
+          "checks": 19675,
+          "complete_source_clears": 0,
+          "canonical_bootstraps": 64,
+          "capacity_refusals": 8,
+          "busy_proofs": 1,
+          "lifetimes": 512,
+          "game_run": false
+        }
+      },
+      "snapshot_unchanged": true,
+      "domain_current": true,
+      "unrelated_live_source_drift": [
+        "game/native/CMakeLists.txt",
+        "game/native/gameplay_scenario/CMakeLists.txt"
+      ]
+    }
+  ],
+  "bootstrap_compiler_receipts": [
+    {
+      "receipt": "build-native-sjuni/primary-actor-records-gcc-v3/receipt.json",
+      "sha256": "9cd589fe590161dfcd819565501b77ea2278363e6b0bfa86741c8c9d7096c857",
+      "observed": {
+        "checks": 2233691,
+        "complete_source_clears": 64,
+        "canonical_bootstraps": 64,
+        "capacity_refusals": 8,
+        "busy_proofs": 1,
+        "lifetimes": 512,
+        "game_run": false
+      },
+      "source_unchanged": true
+    },
+    {
+      "receipt": "build-native-sjuni/primary-actor-records-llvm-v3/receipt.json",
+      "sha256": "0c9e04768a47899a208e534fc8a5f98fd86222ec705a2fd8c2c3dd452a209ac1",
+      "observed": {
+        "checks": 2233691,
+        "complete_source_clears": 64,
+        "canonical_bootstraps": 64,
+        "capacity_refusals": 8,
+        "busy_proofs": 1,
+        "lifetimes": 512,
+        "game_run": false
+      },
+      "source_unchanged": true
+    }
+  ],
+  "owned_asset_receipt": {
+    "receipt": "build-native-sjuni/primary-roster-startup-assets-v2/receipt.json",
+    "sha256": "434cc9ad8f0339f6015d137b9906230401356153799c0299c77fdd7b309b1a0d",
+    "assets": [
+      {
+        "member": "NETBIO00.DAT/0/491",
+        "names": [
+          "romdata_usa.afs",
+          "P00_00.nbd"
+        ],
+        "offset": 205576192,
+        "bytes": 400768,
+        "sha256": "964daa4c3ce1cf724e62b0e9cda79a88a4761c4899d159d0090ae5ba539b4baf"
+      },
+      {
+        "member": "NETBIO00.DAT/0/493",
+        "names": [
+          "romdata_usa.afs",
+          "P01_00.nbd"
+        ],
+        "offset": 206272512,
+        "bytes": 379328,
+        "sha256": "2e8a0bf58da9cc3c86815234ece899619a0208679f7ac7eb19cd2ac81704388b"
+      },
+      {
+        "member": "NETBIO00.DAT/0/495",
+        "names": [
+          "romdata_usa.afs",
+          "P02_00.nbd"
+        ],
+        "offset": 206944256,
+        "bytes": 397888,
+        "sha256": "c96257dc52c5ff49b5b704bcddc52a376ec10c4bc789219bc447c0992a52c920"
+      },
+      {
+        "member": "NETBIO00.DAT/0/497",
+        "names": [
+          "romdata_usa.afs",
+          "P03_00.nbd"
+        ],
+        "offset": 207642624,
+        "bytes": 406464,
+        "sha256": "444ae0cff8e2dfb44a7cc13b59cf029e665c8bd61dbd68b9ca0642a8dc5a663c"
+      },
+      {
+        "member": "NETBIO00.DAT/0/499",
+        "names": [
+          "romdata_usa.afs",
+          "P04_00.nbd"
+        ],
+        "offset": 208349184,
+        "bytes": 394304,
+        "sha256": "e4401ccd66f491479b6d57216c83f3f964bd3c4673271ea04ee2246f042115e1"
+      },
+      {
+        "member": "NETBIO00.DAT/0/501",
+        "names": [
+          "romdata_usa.afs",
+          "P05_00.nbd"
+        ],
+        "offset": 209039360,
+        "bytes": 382912,
+        "sha256": "672701ce75a5972321dff48f8756baabecf7397e2eb522794083ef528e21c841"
+      },
+      {
+        "member": "NETBIO00.DAT/0/504",
+        "names": [
+          "romdata_usa.afs",
+          "P06_00.nbd"
+        ],
+        "offset": 209983488,
+        "bytes": 390592,
+        "sha256": "2b6e825a4f4234bf00aa38167ad45f0e6923f5a36708c0eab246e88bd2244b2f"
+      },
+      {
+        "member": "NETBIO00.DAT/0/507",
+        "names": [
+          "romdata_usa.afs",
+          "P07_00.nbd"
+        ],
+        "offset": 210968576,
+        "bytes": 407744,
+        "sha256": "d484134cf04775dc95bd4f58304cf8133b8a6185a7145c7ee90e9a872c8fdb24"
+      },
+      {
+        "member": "NETBIO00.DAT/0/957",
+        "names": [
+          "romdata_usa.afs",
+          "pc_000.bin"
+        ],
+        "offset": 326944768,
+        "bytes": 1172464,
+        "sha256": "e4fed6ac54f92488bec0386ddc1239329093dd877fbab83bc253e7130d31fac6"
+      },
+      {
+        "member": "NETBIO00.DAT/1/1681",
+        "names": [
+          "r001.afs",
+          "r001.npc"
+        ],
+        "offset": 586180608,
+        "bytes": 2844,
+        "sha256": "2e0d73fe2228c60006de3db17b9f8d14007950fbc7ae5619c238bc0ffc55f41f"
+      },
+      {
+        "member": "NETBIO00.DAT/1/1853",
+        "names": [
+          "r001.afs",
+          "e001.emd"
+        ],
+        "offset": 586534912,
+        "bytes": 33196,
+        "sha256": "c663ced10e4258e82a27526b86d07ab32ce8c655b327a8f096b63a182640b860"
+      },
+      {
+        "member": "NETBIO00.DAT/1/1854",
+        "names": [
+          "r001.afs",
+          "sgl_e001.emd"
+        ],
+        "offset": 586569728,
+        "bytes": 35308,
+        "sha256": "b9d3bcb6625fd7db3a1dacb66bc4884827bd7af766bf42ee8fae38f6214a6071"
+      }
+    ],
+    "profiles": {
+      "primary-actor-member": {
+        "receipt": "build-native-sjuni/primary-actor-member-profile-v1/receipt.json",
+        "sha256": "1a1de7f6fce6ee80d9dd13a2c1b12fb20f5f01835fa28fb48fc6b0b2296be2d4"
+      },
+      "humanoid-motion-member": {
+        "receipt": "build-native-sjuni/humanoid-motion-member-profile-v1/receipt.json",
+        "sha256": "52e258ee50ca934815e68b862d1fdf44696f45b710b15259ba587fc667890b01"
+      }
+    },
+    "inventory_sha256": "276264fd0f5d14e8e0ef1e17f008560d611c6ca30c2ad811259a004b7a54fbc2"
+  },
+  "original_owned_bodies": [
+    {
+      "role": "audited declared resource boundary or ignored pure getter",
+      "path": "recomp/config/output/sub_0018DCB0_0x18dcb0.cpp",
+      "sha256": "73b478fac68e0055dfc8a9720514301464d10d431dbc63b18b02a7467aab170e",
+      "start": "0x18dcb0",
+      "end_exclusive": "0x18dce0",
+      "matched_comments": 9,
+      "omitted_zero_words": 3,
+      "conflicts": 0
+    },
+    {
+      "role": "audited declared resource boundary or ignored pure getter",
+      "path": "recomp/config/output/sub_001BA440_0x1ba440.cpp",
+      "sha256": "3e20eabd1f15f6966c77b8d8d7125be50003d5d25e65c8b46b3ce5b887e4a422",
+      "start": "0x1ba440",
+      "end_exclusive": "0x1ba4c0",
+      "matched_comments": 32,
+      "omitted_zero_words": 0,
+      "conflicts": 0
+    },
+    {
+      "role": "audited declared resource boundary or ignored pure getter",
+      "path": "recomp/config/output/sub_001AF6A0_0x1af6a0.cpp",
+      "sha256": "37603fdf0f25c6042b607d5881be6185bcf7b59b2d71df53b646364ec5a46aec",
+      "start": "0x1af6a0",
+      "end_exclusive": "0x1af710",
+      "matched_comments": 28,
+      "omitted_zero_words": 0,
+      "conflicts": 0
+    },
+    {
+      "role": "audited declared resource boundary or ignored pure getter",
+      "path": "recomp/config/output/sub_001B0510_0x1b0510.cpp",
+      "sha256": "99a2d658eefa930ecee6c11b13cedfafca1d9fc4420980511953120d151b969d",
+      "start": "0x1b0510",
+      "end_exclusive": "0x1b05b0",
+      "matched_comments": 37,
+      "omitted_zero_words": 3,
+      "conflicts": 0
+    },
+    {
+      "role": "audited declared resource boundary or ignored pure getter",
+      "path": "recomp/config/output/sub_001D3F60_0x1d3f60.cpp",
+      "sha256": "4cc88414a842cb7cecc8045f54534b9c95337289a2e5160b2a6e958e8d77b47c",
+      "start": "0x1d3f60",
+      "end_exclusive": "0x1d4020",
+      "matched_comments": 45,
+      "omitted_zero_words": 3,
+      "conflicts": 0
+    },
+    {
+      "role": "audited declared resource boundary or ignored pure getter",
+      "path": "recomp/config/output/sub_001AC630_0x1ac630.cpp",
+      "sha256": "b173b2a68a40f229aee5bca2abb7d1740482a33af4e34373fbbad25d8a74e7f9",
+      "start": "0x1ac630",
+      "end_exclusive": "0x1ac650",
+      "matched_comments": 7,
+      "omitted_zero_words": 1,
+      "conflicts": 0
+    },
+    {
+      "role": "complete startup body executed in source comparison",
+      "path": "recomp/config/output_ovl/o2/o2_005EB520_0x5eb520.cpp",
+      "sha256": "850845f9e8969549422794929d30bd12a3ec8a7c65f3d5f6a8f05e5c92379421",
+      "start": "0x5eb520",
+      "end_exclusive": "0x5eb6cc",
+      "matched_comments": 82,
+      "omitted_zero_words": 25,
+      "conflicts": 0
+    },
+    {
+      "role": "complete startup body executed in source comparison",
+      "path": "recomp/config/output_ovl/o2/o2_005EB350_0x5eb350.cpp",
+      "sha256": "c8cdc18e4954efcd5c8d88eea1c236bb06f7d000394ed26586d54cd8cbfc828c",
+      "start": "0x5eb350",
+      "end_exclusive": "0x5eb514",
+      "matched_comments": 100,
+      "omitted_zero_words": 13,
+      "conflicts": 0
+    },
+    {
+      "role": "complete startup body executed in source comparison",
+      "path": "recomp/config/output_ovl/o2/o2_005EB310_0x5eb310.cpp",
+      "sha256": "41a812ff5fb7bfa87950f5a0cea01694f702d5b712bd24d0b4dd1174fd4a65a2",
+      "start": "0x5eb310",
+      "end_exclusive": "0x5eb344",
+      "matched_comments": 9,
+      "omitted_zero_words": 4,
+      "conflicts": 0
+    },
+    {
+      "role": "complete startup body executed in source comparison",
+      "path": "recomp/config/output_ovl/o2/o2_005EC3A0_0x5ec3a0.cpp",
+      "sha256": "c18937d18f145d59a55b499786b2aeb77aeedcc8259d1fdd38c46733c85e1ade",
+      "start": "0x5ec3a0",
+      "end_exclusive": "0x5ec3e0",
+      "matched_comments": 14,
+      "omitted_zero_words": 2,
+      "conflicts": 0
+    },
+    {
+      "role": "complete startup body executed in source comparison",
+      "path": "recomp/config/output_ovl/o2/o2_0066ACD0_0x66acd0.cpp",
+      "sha256": "75d7b63f3c0340306c5144a3201e202979fc71ba0d4811013ba059ad1032a8eb",
+      "start": "0x66acd0",
+      "end_exclusive": "0x66ad2c",
+      "matched_comments": 23,
+      "omitted_zero_words": 0,
+      "conflicts": 0
+    },
+    {
+      "role": "complete startup body executed in source comparison",
+      "path": "recomp/config/output_ovl/o2/o2_0066AC50_0x66ac50.cpp",
+      "sha256": "8a42937e39e7bce93155c596a6dd52f6f485aef0774462a2a1d9add7fb8dd40f",
+      "start": "0x66ac50",
+      "end_exclusive": "0x66acc4",
+      "matched_comments": 28,
+      "omitted_zero_words": 1,
+      "conflicts": 0
+    },
+    {
+      "role": "complete startup body executed in source comparison",
+      "path": "recomp/config/output/sub_001B0310_0x1b0310.cpp",
+      "sha256": "5433621577d0b55090377ff5bec839dcc77bf56538c7991104061c782995b18e",
+      "start": "0x1b0310",
+      "end_exclusive": "0x1b033c",
+      "matched_comments": 10,
+      "omitted_zero_words": 1,
+      "conflicts": 0
+    },
+    {
+      "role": "complete startup body executed in source comparison",
+      "path": "recomp/config/output/sub_001B0300_0x1b0300.cpp",
+      "sha256": "34178874b104851edaa2bbb5311e7a79a83ccb8361d5f0be1ccb2b2d55fdf2bb",
+      "start": "0x1b0300",
+      "end_exclusive": "0x1b05b0",
+      "matched_comments": 165,
+      "omitted_zero_words": 7,
+      "conflicts": 0
+    },
+    {
+      "role": "complete startup body executed in source comparison",
+      "path": "recomp/config/output/sub_001B02D0_0x1b02d0.cpp",
+      "sha256": "a091812b9c8cd9dce7cafac70faac4cce4da1b7a2e516dae350337e3b84ca2ab",
+      "start": "0x1b02d0",
+      "end_exclusive": "0x1b0300",
+      "matched_comments": 11,
+      "omitted_zero_words": 1,
+      "conflicts": 0
+    },
+    {
+      "role": "complete startup body executed in source comparison",
+      "path": "recomp/config/output/sub_001D24F0_0x1d24f0.cpp",
+      "sha256": "05590bccbb7a1d569a4755021d7a9aff38c8519d44abdc0690605d3b166c06c9",
+      "start": "0x1d24f0",
+      "end_exclusive": "0x1d2520",
+      "matched_comments": 12,
+      "omitted_zero_words": 0,
+      "conflicts": 0
+    },
+    {
+      "role": "complete startup body executed in source comparison",
+      "path": "recomp/config/output/sub_001D2550_0x1d2550.cpp",
+      "sha256": "cafba447276eb5b852e752811418785fb38557a6918234d43ab90aadf581ab2c",
+      "start": "0x1d2550",
+      "end_exclusive": "0x1d255c",
+      "matched_comments": 3,
+      "omitted_zero_words": 0,
+      "conflicts": 0
+    },
+    {
+      "role": "complete startup body executed in source comparison",
+      "path": "recomp/config/output/sub_001D24B0_0x1d24b0.cpp",
+      "sha256": "66eb42a2c3edea0b315b7b4350ac1cf5ecb49fed4b5885bca3da6918b9ebc052",
+      "start": "0x1d24b0",
+      "end_exclusive": "0x1d24e4",
+      "matched_comments": 12,
+      "omitted_zero_words": 1,
+      "conflicts": 0
+    }
+  ],
+  "owned_elf_sha256": "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46",
+  "owned_o2_sha256": "45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226",
+  "limits": [
+    "Complete5EB520/5EB350/5EB310/5EC3A0/66ACD0/66AC50 plus real branch/getter/render-mode wrapper bodies execute with declared external resource ports.",
+    "Native side composes real canonical World/Update, eight-record66A730 bootstrap, owned ActorAssets, PrimaryActorModels/HumanoidMotionOwner and actual ScenarioArchive NPC/enemy imports; source model and import helpers remain declared independently qualified boundaries.",
+    "Voice1BA440, background1AF6A0, stream-stage1B0510, resource-pump18DCB0 and remaining external render/resource consumers require explicit providers. No successful default implementation is supplied.",
+    "Native finite network room-row overflow is refused; full original comparison admits only authored four-entry reads. Runtime747400 heights and4BADF0 choice kind are controlled imported producer facts, not claimed owned constants.",
+    "Controlled external interruptions stop the test-only source execution at unavailable capability boundaries. They are not a claimed original failure-status return protocol.",
+    "Ordinary room mode, bounded network room rows, saved snapshot room skipping, archive loading mode1 and0..8 canonical primary records are admitted. Resident377560/3777B0 remains unavailable.",
+    "Unrelated CMake changes are retained as historical snapshot identities; all startup production, API, bootstrap and qualifier domain files match the live source at sealing."
+  ],
+  "development_fixture_corrections": [
+    "Initial unsealed native fixture used unsupported scenario0; corrected to owned scenario1 before source comparison.",
+    "Initial unsealed interruption loop requested32 operations while the admitted profile reaches31; the fixture now derives its reached operation count from a real completed startup."
+  ],
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false
+}

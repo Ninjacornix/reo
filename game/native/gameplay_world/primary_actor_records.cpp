@@ -12,6 +12,11 @@ PrimaryRecordsInitialized initialize_primary_records(World& world)noexcept{
     try{
         for(auto& id:next){
             auto actor=std::make_unique<Actor>();initialize_cleared_actor_defaults(*actor);actor->head_reaction.emplace();
+            actor->ai_execution.emplace();actor->navigation_route.emplace();
+            // Native route query defaults use -1 for a failed link; the actual
+            // ordinary bootstrap clears that short to0. A cleared10AC profile
+            // pointer remains absent rather than selecting authored profile0.
+            actor->navigation_route->output.link=0;
             const auto created=world.entities_.create(std::move(actor));
             if(created.status!=actors::EntityStatus::completed){rollback();return{created.status==actors::EntityStatus::no_memory?PrimaryRecordsStatus::no_memory:PrimaryRecordsStatus::entity_capacity};}
             id=created.id;

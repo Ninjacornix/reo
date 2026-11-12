@@ -5,6 +5,8 @@
 #include "../gameplay_scenario/cutscene_primary_selection.hpp"
 namespace reo::native::gameplay_world {
 struct PrimaryModelDomain;
+struct PrimaryStartupContext;
+struct PrimaryStartupReport;
 // Physical resources have read-only retained views; channels/constraints stay
 // Actor-owned. Mutable instances remain private to simulation-owned bindings.
 struct PrimaryModelResources {
@@ -101,6 +103,9 @@ public:
     PrimaryModelStatus return_scene_models(const PrimarySceneModelScope&)noexcept;
     static std::shared_ptr<const PreparedPrimaryModel> prepare(const PrimaryModelRequest&,const ActorAssets&,const HumanoidMotionAssets&);
     PrimaryModelApplied apply(const PreparedPrimaryModel&,const gameplay_update::State&,const PrimaryEquipmentContext* = nullptr)noexcept;
+    // Complete5EB520 roster/model startup, with reached external resources
+    // supplied explicitly. Refusals preserve the source's completed prefix.
+    PrimaryStartupReport start_roster(const PrimaryStartupContext&)noexcept;
     // Complete admitted5F0C00 CPU/resource phase. No asset acquisition runs:
     // preparation here only clones bounded immutable banks during scene load.
     PrimarySceneEntryReleased release_scene_entry(const HumanoidMotionAssets&)noexcept;
