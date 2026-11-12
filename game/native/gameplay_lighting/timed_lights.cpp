@@ -46,15 +46,15 @@ struct TimedLights::Shared {
     Shared(gameplay_world::World& w,gameplay_tasks::Scheduler& t,Pool& p):world(w),tasks(t),pool(p){entries.reserve(gameplay_tasks::Scheduler::capacity);}
 };
 class TimedLights::Work final:public gameplay_tasks::Task {
-    std::shared_ptr<Shared> owner_;gameplay_actors::EntityId actor_;
+    std::shared_ptr<Shared> owner_;gameplay_actors::EntityId actor_;bool ungated_{};
 public:
     std::shared_ptr<TimedState> state;
     LightId light;
-    Work(std::shared_ptr<Shared> owner,gameplay_actors::EntityId actor,std::shared_ptr<TimedState> s):owner_(std::move(owner)),actor_(std::move(actor)),state(std::move(s)){}
+    Work(std::shared_ptr<Shared> owner,gameplay_actors::EntityId actor,std::shared_ptr<TimedState> s,bool ungated):owner_(std::move(owner)),actor_(std::move(actor)),ungated_(ungated),state(std::move(s)){}
     ~Work()override{if(light)(void)owner_->pool.retire(light);}
     void update(gameplay_tasks::Scheduler& tasks,const gameplay_tasks::Handle& handle)noexcept override{
-        const auto actor=owner_->world.resolve(actor_);
-        if(owner_->closed||!actor||actor->primary!=2||actor->secondary!=11){(void)tasks.erase(handle);return;}
+        if(owner_->closed){(void)tasks.erase(handle);return;}
+        if(!ungated_){const auto actor=owner_->world.resolve(actor_);if(!actor||actor->primary!=2||actor->secondary!=11){(void)tasks.erase(handle);return;}}
         const auto current=owner_->pool.retain(light);
         if(!current){owner_->fault=TimedStatus::light_unavailable;(void)tasks.erase(handle);return;}
         try{
@@ -74,13 +74,19 @@ bool TimedLights::bound_to(const gameplay_world::World& world)const noexcept{
     return !shared_->closed&&!world.closed() && &shared_->world==&world&&!shared_->tasks.closed()&&!shared_->pool.closed();
 }
 TimedCreated TimedLights::create(const gameplay_actors::EntityId& id,const std::array<float,3>& position)noexcept{
+    return create_impl(id,position,false);
+}
+TimedCreated TimedLights::create_ungated(const gameplay_actors::EntityId& id,const std::array<float,3>& position)noexcept{
+    return create_impl(id,position,true);
+}
+TimedCreated TimedLights::create_impl(const gameplay_actors::EntityId& id,const std::array<float,3>& position,bool ungated)noexcept{
     auto& owner=*shared_;
     if(owner.closed||owner.world.closed()||owner.tasks.closed()||owner.pool.closed())return{TimedStatus::closed,gameplay_tasks::Status::closed,{},{}};
     const auto actor=owner.world.resolve(id);if(!actor)return{TimedStatus::actor_unavailable,gameplay_tasks::Status::invalid,{},{}};
-    if(actor->primary!=2||actor->secondary!=11)return{TimedStatus::skipped,gameplay_tasks::Status::invalid,{},{}};
+    if(!ungated&&(actor->primary!=2||actor->secondary!=11))return{TimedStatus::skipped,gameplay_tasks::Status::invalid,{},{}};
     try{
         std::erase_if(owner.entries,[&](const auto& e){return !owner.tasks.contains(e.handle);});
-        auto state=std::make_shared<TimedState>();auto work=std::make_shared<Work>(shared_,id,state);
+        auto state=std::make_shared<TimedState>();auto work=std::make_shared<Work>(shared_,id,state,ungated);
         const auto task=owner.tasks.create(work);
         if(task.status!=gameplay_tasks::Status::completed){
             const auto result=task.status==gameplay_tasks::Status::full?TimedStatus::task_full:task.status==gameplay_tasks::Status::no_memory?TimedStatus::no_memory:TimedStatus::task_unavailable;

@@ -4,6 +4,14 @@ Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification with multiple agents. The user is awake and has revoked the prior
 sleep request: finish Stage4 and do not put the PC to sleep afterward.
 
+- [Linked resource flight](LINKED_RESOURCE_FLIGHT.md) now supplies583C50,
+  generic5822A0 attachment, packed actor sound and actual ungated6B2760 light
+  lifetime. Both compilers pass262,144 flight states,8,192 constructors,
+  4,096 composed frames and8,576 light ticks; all25 current parent tests pass.
+  Silent event0x12 output for the selected test cue remains explicitly silent.
+  Remaining pose consumers, application installation and full game acceptance
+  remain required.
+
 - [Canonical pose work](POSE_WORK.md) now supplies the real64-slot domain,
   resource construction, five concrete update callbacks, contact-matrix projection
   and callback retirement/reuse order. Both compilers pass2,048 constructors,

@@ -1,4 +1,5 @@
 #include "resource_pose_work.hpp"
+#include <bit>
 #include <stdexcept>
 namespace reo::native::gameplay_world {
 ResourcePoseWork::ResourcePoseWork(World& world,PoseWorkPool& pool,gameplay_scenario::SceneResources& resources,
@@ -8,6 +9,28 @@ ResourcePoseWork::ResourcePoseWork(World& world,PoseWorkPool& pool,gameplay_scen
     if(!bound_to(world))throw std::invalid_argument("Native resource pose-work owners unavailable");
 }
 bool ResourcePoseWork::bound_to(const World& world)const noexcept{return &world==&world_&&pool_.bound_to(world)&&!packets_.closed();}
+ResourcePoseCreated ResourcePoseWork::attach(const actors::EntityId& parent,std::uint32_t descriptor,
+    std::uint32_t kind,std::uint32_t bank,const transform_math::Matrix* basis,
+    const transform_math::Vector* point,std::int32_t lifetime){
+    ResourcePoseCreated result;if(!bound_to(world_))return result;
+    // Source only retains this pointer. Null is admitted; foreign/stale is not.
+    if(parent&&!world_.resolve(parent))return result;
+    const auto made=pool_.allocate();result.status=made.status;result.work=made.id;
+    if(made.status!=PoseWorkStatus::completed)return result;
+    const auto actor=pool_.resolve(made.id);if(!actor||!actor->pose_work){result.status=PoseWorkStatus::unavailable;return result;}
+    auto& state=*actor->pose_work;actor->active=true;actor->category=9;actor->slot=std::uint8_t(descriptor);
+    state.kind=std::uint8_t(kind);state.selector=255;state.update_bound=true;
+    actor->contact.related=parent;state.ordinal=std::uint8_t(PoseWorkPool::capacity-pool_.remaining());
+    state.lifetime=std::bit_cast<std::int16_t>(std::uint16_t(lifetime));
+    if(point)actor->position={point->x,point->y,point->z};
+    if(basis)state.basis=*basis;
+    if(bank>255){result.status=PoseWorkStatus::unavailable;return result;}
+    const auto made_packet=packets_.attach(catalog_,std::uint8_t(bank),std::uint8_t(descriptor),
+        {made.id,*actor,actor->contact,actor->character,actor->position,actor->normalized_marker});
+    result.packet=made_packet.id;
+    if(made_packet.status!=gameplay_collision::delivery::PacketStatus::completed&&made_packet.status!=gameplay_collision::delivery::PacketStatus::full)result.status=PoseWorkStatus::unavailable;
+    return result;
+}
 ResourcePoseCreated ResourcePoseWork::create(const actors::EntityId& owner,const transform_math::Matrix& basis,transform_math::Vector point,std::uint32_t resource){
     ResourcePoseCreated result;if(!bound_to(world_))return result;
     const auto actor=world_.resolve(owner);if(!actor)return result;

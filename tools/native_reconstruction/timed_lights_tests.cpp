@@ -10,7 +10,7 @@ namespace w=reo::native::gameplay_world;
 namespace t=reo::native::gameplay_tasks;
 constexpr unsigned light_at=0x747540,task_at=0x120000,actor_at=0x10000,position_at=0x11000;
 unsigned checks{},calls{},policy_cases{},lifecycles{},frames{},refusals{},admissions{},retirements{},guard_cases{};
-bool original_task{},deny_task{};
+bool original_task{},deny_task{},ungated_callback{};
 void check(bool ok,std::source_location at=std::source_location::current()){
     ++checks;if(!ok)throw std::runtime_error("Timed light check "+std::to_string(checks)+" at line "+std::to_string(at.line()));
 }
@@ -21,7 +21,7 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
     switch(context->pc){
     case 0x107c68:{const auto dst=GPR_U32(context,4),n=GPR_U32(context,6);check(dst>=light_at&&dst<light_at+64*56&&n==56&&(dst-light_at)%56==0&&GPR_U32(context,5)==0);std::memset(memory+dst,0,n);SET_GPR_U32(context,2,dst);done();return;}
     case 0x107ab0:{const auto dst=GPR_U32(context,4),src=GPR_U32(context,5),n=GPR_U32(context,6);check(dst>=light_at+4&&dst<light_at+64*56&&(dst-light_at-4)%56==0&&src==0x1efffc0&&n==52);std::memcpy(memory+dst,memory+src,n);SET_GPR_U32(context,2,dst);done();return;}
-    case 0x573890:check(GPR_U32(context,4)==0&&GPR_U32(context,5)==0x5d85e0);if(deny_task){SET_GPR_U32(context,2,0);}else{check(!original_task);original_task=true;std::memset(memory+task_at,0,256);SET_GPR_U32(context,2,task_at);++admissions;}done();return;
+    case 0x573890:check(GPR_U32(context,4)==0&&GPR_U32(context,5)==(ungated_callback?0x5d8620u:0x5d85e0u));if(deny_task){SET_GPR_U32(context,2,0);}else{check(!original_task);original_task=true;std::memset(memory+task_at,0,256);SET_GPR_U32(context,2,task_at);++admissions;}done();return;
     case 0x573740:check(GPR_U32(context,4)==task_at&&original_task);original_task=false;++retirements;done();return;
 #include "original_dispatch.hpp"
     default:throw std::runtime_error("Unexpected timed-light original port "+std::to_string(context->pc));
@@ -93,6 +93,24 @@ int main()try{
         }
         check(!original_task&&tasks.size()==0&&pool.size()==0&&timed.failure()==l::TimedStatus::completed);++lifecycles;
     }
+    // Complete6B2760 creates the same curve without the5D85E0 action gate.
+    // Both source and native continue after the original owner is retired.
+    ungated_callback=true;
+    for(unsigned n=0;n<2048;++n){
+        reset_original(m);auto session=std::make_shared<w::Session>();session->clock_mode=std::uint8_t(n/8);w::World world({{{0x100,0x10,0x20}},1,{16,100}},session);
+        const auto id=world.spawn_primary(0,actor(std::uint8_t(n))).id;check(bool(id));auto parent=world.resolve(id);parent->primary=std::uint8_t(n);parent->secondary=std::uint8_t(n>>3);
+        reo::native::gameplay_scenario::Lighting canonical;l::Pool pool(canonical);t::Scheduler tasks;l::TimedLights timed(world,tasks,pool);
+        const std::array<float,3> pos{float(n)*.25f,-17.5f,7.125f};m[actor_at+8]=parent->primary;m[actor_at+9]=parent->secondary;m[actor_at+0x175]=std::uint8_t(n);std::memcpy(m+position_at,pos.data(),12);m[0x3243cc]=session->clock_mode;
+        call(m,0x6b2760,{actor_at,position_at});const auto made=timed.create_ungated(id,pos);check(made.status==l::TimedStatus::completed&&original_task);compare_light(m,0,*pool.retain(made.light));
+        for(unsigned frame=0;original_task&&frame<80;++frame){
+            if(frame==2){check(world.retire_primary(0)==w::actors::EntityStatus::completed);const auto replacement=world.spawn_primary(0,actor(255)).id;check(replacement!=id);m[actor_at+8]=0;m[actor_at+9]=0;}
+            if(n%4==3&&frame==5){session->clock_mode^=1;m[0x3243cc]=session->clock_mode;}
+            call(m,0x5d8620,{task_at,0});const auto pass=tasks.run(t::Pass::update);check(pass.status==t::Status::completed&&pass.called==1);check(tasks.contains(made.task)==original_task);
+            const auto snap=timed.snapshot(made.task);check(bool(snap)==original_task&&pool.size()==m[0x747538]);if(snap){compare_state(m,snap->state);compare_light(m,0,*pool.retain(made.light));}else check(!pool.retain(made.light));++frames;
+        }
+        check(!original_task&&tasks.size()==0&&pool.size()==0&&timed.failure()==l::TimedStatus::completed);++lifecycles;
+    }
+    ungated_callback=false;
     auto session=std::make_shared<w::Session>();w::World world({{{0x100,0x10,0x20}},1,{16,100}},session);auto id=world.spawn_primary(0,actor({})).id;
     reo::native::gameplay_scenario::Lighting canonical;l::Pool pool(canonical);t::Scheduler tasks;l::TimedLights timed(world,tasks,pool);
     check(w::Actor{}.surface_material==255);

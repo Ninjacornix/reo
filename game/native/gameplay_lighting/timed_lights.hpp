@@ -30,6 +30,9 @@ public:
     TimedLights(const TimedLights&)=delete;
     TimedLights& operator=(const TimedLights&)=delete;
     TimedCreated create(const gameplay_actors::EntityId&,const std::array<float,3>&)noexcept;
+    // Complete6B2760/5D8620. Shares the actual5D8630 curve but has no parent
+    // action gate and continues after its initial owner's retirement.
+    TimedCreated create_ungated(const gameplay_actors::EntityId&,const std::array<float,3>&)noexcept;
     std::optional<TimedSnapshot> snapshot(const gameplay_tasks::Handle&)const noexcept;
     bool bound_to(const gameplay_world::World&,const gameplay_tasks::Scheduler&,const Pool&)const noexcept;
     bool bound_to(const gameplay_world::World&)const noexcept;
@@ -39,5 +42,6 @@ private:
     struct Shared;
     class Work;
     std::shared_ptr<Shared> shared_;
+    TimedCreated create_impl(const gameplay_actors::EntityId&,const std::array<float,3>&,bool ungated)noexcept;
 };
 }
