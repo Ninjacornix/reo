@@ -41,6 +41,7 @@ IDS += ['00694470','005A8F40','00680FB0']
 IDS += ['00693300','00666080','00702650']
 IDS += ['00693920','00702A60']
 IDS += ['006949A0','005B4380','005B1850','00591BE0','005F2180','005F2120','005F22C0','005B1A90','00590D80']
+IDS += ['00694D70','00592E90','00591400','00590C70','00590BE0']
 
 PINNED={};PIN_COMMITS={}
 def source_bytes(p):
@@ -78,6 +79,13 @@ def main(a):
     for pc,opcode in re.findall(r'// (0x[0-9a-f]+): (0x[0-9a-f]+)\s',ai_text):
         assert struct.unpack_from('<I',ai_raw,int(pc,16)-0x810000)[0]==int(opcode,16);words+=1
     texts.append('\n'.join(line for line in ai_text.splitlines()if not line.startswith('#include')))
+    static_raw=(ROOT/'build-function-index/owned-overlays/o0.bin').read_bytes()
+    assert hashlib.sha256(static_raw).hexdigest()=='bfac1906d63d585736e46573295cff12e308720af6b49914e1ad8695dfcf50c2'
+    static_source=ROOT/'recomp/config/output_ovl/o0/o0_00372490_0x372490.cpp'
+    static_text=static_source.read_text();sources[static_source.relative_to(ROOT).as_posix()]=sha(static_source);shutil.copyfile(static_source,out/static_source.name)
+    for pc,opcode in re.findall(r'// (0x[0-9a-f]+): (0x[0-9a-f]+)\s',static_text):
+        assert struct.unpack_from('<I',static_raw,int(pc,16)-0x370000)[0]==int(opcode,16);words+=1
+    texts.append('\n'.join(line for line in static_text.splitlines()if not line.startswith('#include')))
     elf_path=Path(os.environ['LOCALAPPDATA'])/'OutbreakRecomp/launcher/imports/file1/25e64b631bbaa0cac9a4822cb66174ff14c3531851d1e502c0a06704379bf446/data/SLUS_207.65'
     elf=elf_path.read_bytes();elf_sha=hashlib.sha256(elf).hexdigest();assert elf_sha=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46'
     phoff=struct.unpack_from('<I',elf,28)[0];phsize,phcount=struct.unpack_from('<HH',elf,42);loads=[struct.unpack_from('<8I',elf,phoff+i*phsize) for i in range(phcount)];loads=[p for p in loads if p[0]==1]
@@ -86,7 +94,7 @@ def main(a):
         at=int(pc,16);segment=next(p for p in loads if p[2]<=at and at+4<=p[2]+p[4]);assert struct.unpack_from('<I',elf,segment[1]+at-segment[2])[0]==int(opcode,16);words+=1
     segment=next(p for p in loads if p[2]<=0x1b3c30 and 0x1b3c38<=p[2]+p[4]);body=elf[segment[1]+0x1b3c30-segment[2]:segment[1]+0x1b3c38-segment[2]]
     assert struct.unpack('<II',body)==(0x03e00008,0);texts.append('\n'.join(l for l in main_text.splitlines() if not l.startswith('#include')))
-    previous_names=set(re.findall(r'\b((?:o2|o9|sub)_[A-Za-z0-9_]+)\(','\n'.join(texts)))|{'sub_00107AB0_0x107ab0'}
+    previous_names=set(re.findall(r'\b((?:o0|o2|o9|sub)_[A-Za-z0-9_]+)\(','\n'.join(texts)))|{'sub_00107AB0_0x107ab0'}
     stream_main=['001BA170','001ADA20','001ADFD0','001ADF50','001AE2E0','001AE3F0','001AE190','001B0340','001B02D0','001B0300','001AEC80','0018F570','0018FDF0','00190A10','001913E0','00191530','001919D0','001B3C40','001D45F0','001B2D80'];stream_functions=set()
     stream_main += ['001A31B0','001A3590','001A35A0','001A35F0']
     stream_main += ['001D1F40']
@@ -97,7 +105,7 @@ def main(a):
             at=int(pc,16);segment=next(p for p in loads if p[2]<=at and at+4<=p[2]+p[4]);assert struct.unpack_from('<I',elf,segment[1]+at-segment[2])[0]==int(opcode,16);words+=1
         texts.append('\n'.join(l for l in source.splitlines() if not l.startswith('#include')));stream_functions.add('sub_'+ident+'_0x'+format(int(ident,16),'x'))
     stream_ports={f'sub_{a:08X}_0x{a:x}' for a in [0x131e38,0x131ef8,0x1327b8,0x132e50,0x133490,0x1b82a0,0x12bef8]}
-    text='\n'.join(texts);names=sorted(set(re.findall(r'\b((?:o2|o9|sub)_[A-Za-z0-9_]+)\(',text))|previous_names|stream_ports)
+    text='\n'.join(texts);names=sorted(set(re.findall(r'\b((?:o0|o2|o9|sub)_[A-Za-z0-9_]+)\(',text))|previous_names|stream_ports)
     unexecuted=set(names)-previous_names-stream_functions-stream_ports
     text+='\n'+'\n'.join('void '+name+'(std::uint8_t*,R5900Context*,PS2Runtime*){throw std::runtime_error("Unexecuted main stream dependency '+name+'");}' for name in sorted(unexecuted))
     declarations=['void '+n+'(std::uint8_t*,R5900Context*,PS2Runtime*);' for n in names]
@@ -156,7 +164,7 @@ def main(a):
         initialization+='const std::array<std::uint8_t,'+str(size)+'> bytes_'+str(address)+'{'+','.join(map(str,chunk))+'};std::memcpy(p+'+str(address)+',bytes_'+str(address)+'.data(),'+str(size)+');\n'
     declarations.append(initialization+'}\n')
     (out/'original_declarations.inc').write_text('\n'.join(declarations)+'\n')
-    actual_definitions=set(re.findall(r'^void ((?:o2|o9|sub)_[A-Za-z0-9_]+)\(','\n'.join(texts),re.M));lookup={}
+    actual_definitions=set(re.findall(r'^void ((?:o0|o2|o9|sub)_[A-Za-z0-9_]+)\(','\n'.join(texts),re.M));lookup={}
     for n in names:
         at=int(n.split('_')[-1],16)
         if at not in lookup or n in actual_definitions:lookup[at]=n
@@ -210,6 +218,7 @@ def main(a):
     shutil.copyfile(HERE/'actor_script_vm_tests.inc',out/'actor_script_vm_tests.inc')
     shutil.copyfile(HERE/'actor_predicate_vm_tests.inc',out/'actor_predicate_vm_tests.inc')
     shutil.copyfile(HERE/'script_resource_parameter_vm_tests.inc',out/'script_resource_parameter_vm_tests.inc')
+    shutil.copyfile(HERE/'script_resource_activation_vm_tests.inc',out/'script_resource_activation_vm_tests.inc')
     shutil.copyfile(HERE/'periodic_control_vm_tests.inc',out/'periodic_control_vm_tests.inc')
     shutil.copyfile(HERE/'room_rule_tests.inc',out/'room_rule_tests.inc')
     shutil.copyfile(HERE/'room_object_vm_tests.inc',out/'room_object_vm_tests.inc')
@@ -239,7 +248,7 @@ def main(a):
     units += [('character_remap',ROOT/'game/native/gameplay_scenario/character_remap.cpp')]
     units += [('script_audio',ROOT/'game/native/gameplay_scenario/script_audio.cpp')]
     units += [('resource_collisions',ROOT/'game/native/gameplay_scenario/resource_collisions.cpp'),('weapon_curve',ROOT/'game/native/animation/weapon_program.cpp')]
-    units += [('script_resource_parameters',ROOT/'game/native/gameplay_scenario/script_resource_parameters.cpp')]
+    units += [('script_resource_parameters',ROOT/'game/native/gameplay_scenario/script_resource_parameters.cpp'),('script_resource_activation',ROOT/'game/native/gameplay_scenario/script_resource_activation.cpp')]
     units += [('resource_owner_'+name,ROOT/'game/native/gameplay_world'/(name+'.cpp')) for name in ['resource_frames','resource_factory','resource_static_assets','inventory']]
     units += [('ai_execution',ROOT/'game/native/gameplay_ai/execution.cpp')]
     units += [('audio_'+name,ROOT/'game/native/gameplay_audio'/(name+'.cpp')) for name in ('routing','import','spatial','owner','scenario_cues')]
@@ -283,6 +292,7 @@ def main(a):
     source_paths.append(HERE/'actor_script_vm_tests.inc')
     source_paths.append(HERE/'actor_predicate_vm_tests.inc')
     source_paths.append(HERE/'script_resource_parameter_vm_tests.inc')
+    source_paths.append(HERE/'script_resource_activation_vm_tests.inc')
     source_paths += [HERE/'surface_vm_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]
     source_paths += [ROOT/'game/native/transform_math/transform_math.hpp',ROOT/'game/native/transform_math/transform_math.cpp']

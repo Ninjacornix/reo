@@ -1,0 +1,445 @@
+{
+  "schema": "reo.native.script_resource_activation.qualification.v1",
+  "status": "passed",
+  "source_sha256": {
+    "game/native/gameplay_application/native_session.cpp": "1fb0c6813afc153fe8c60cde49c6f02980b8098127605eb28510a2589dde55a6",
+    "tools/native_reconstruction/gameplay_update_sources.py": "22c9d6d03532dcc3eef4a256a48026225f1d95ff5da05eaa8075185111fb8a39",
+    "game/native/gameplay_scenario/CMakeLists.txt": "b96827848ce32b1d029892704882812f587e1010db5f93e9bdf15ebe0fe09be4",
+    "game/native/gameplay_scenario/interpreter.hpp": "5ae6ca3d11e5d185896c5fd309e9a35409b428e46246083c2b07f269bda8f28d",
+    "game/native/gameplay_scenario/interpreter.cpp": "b33739621ef871904d75094f0476cbc59cf992e5a95df24c877d14e581bece57",
+    "game/native/gameplay_scenario/script_resource_activation.hpp": "a08c6ac1b103ad80e6b17bc881e38f0bbf881ad44defdaa421b6db72b7399dea",
+    "game/native/gameplay_scenario/script_resource_activation.cpp": "28fc3bf73379700cf8f660999cc056414176b5a409e825bf6c2d0b2b8ac4c869",
+    "game/native/gameplay_scenario/script_resource_activation_tests.cpp": "3e3261aabdc48a5b008ebdee932fe05e3fb31cea73f10aed63de910de5aba2e8",
+    "tools/native_reconstruction/gameplay_scenario/tests.cpp": "9ea54a760be35987651035e252b1c547520741ef5983da75c895586ea7c6accd",
+    "tools/native_reconstruction/gameplay_scenario/verify.py": "11cb1364444b3a92b9bb1715313ad76062bbad3ca0120a242e760c1d1b680cff",
+    "tools/native_reconstruction/gameplay_scenario/script_resource_activation_vm_tests.inc": "d8d3ff2a7f67a8c258432f0a32a8673aa44cf0fbab9170298c26a12198b1c8bc",
+    "docs/native-gameplay/SCRIPT_RESOURCE_ACTIVATION.md": "439805dee73def46663695139345265a389a4d1f9029ba06973b842504d6994b",
+    "docs/native-gameplay/STAGE4_INTEGRATION_AUDIT.md": "e156ff5c76d99ad4fc777cb396a7e961753376a0e2f535733422888a45402675"
+  },
+  "cohorts": [
+    {
+      "compiler": "llvm",
+      "receipts": {
+        "full_interpreter": {
+          "path": "build-native-sjuni/script-resource-activation-vm-llvm-v1/receipt.json",
+          "sha256": "c8a64a3c1fff2f1803a63ca9f2b9c47a654b3b994fce8eace81de158d99a54e3"
+        },
+        "owned_program_admission": {
+          "path": "build-native-sjuni/script-resource-activation-admission-llvm-v1/receipt.json",
+          "sha256": "38b940cc5de8cb3b67abfe2df707ad4fe204691fe54e7f2bc2f8fcddb0f79acc"
+        },
+        "current_parents": {
+          "path": "build-native-sjuni/script-resource-activation-parents-llvm-v2/receipt.json",
+          "sha256": "7c51975b05f6ac6659baeb51118440a4232524506473c07ff3b2ac64cd4bd4ac"
+        }
+      },
+      "full_interpreter": {
+        "result": {
+          "checks": 569126216,
+          "resource_activation_dispatches": 8192,
+          "resource_activation_constructed": 48,
+          "resource_activation_refusals": 8
+        },
+        "checked_owned_instruction_comments": 12021,
+        "coverage": {
+          "ordinary": 363,
+          "offline_actor": 337
+        }
+      },
+      "owned_program_admission": {
+        "baseline_commit": "a2a37f08",
+        "baseline_probe_uses_matching_header": true,
+        "admitted": {
+          "before": [
+            31,
+            26
+          ],
+          "after": [
+            34,
+            27
+          ]
+        },
+        "evbs": [
+          {
+            "name": "r001.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 2508,
+                "opcode": 372
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3460,
+                "opcode": 424
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 3420,
+                "opcode": 209
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3460,
+                "opcode": 424
+              }
+            ]
+          },
+          {
+            "name": "r002.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 20,
+                "opcode": 208
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4100,
+                "opcode": 424
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 20,
+                "opcode": 208
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4100,
+                "opcode": 424
+              }
+            ]
+          },
+          {
+            "name": "r028.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 288,
+                "opcode": 264
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2232,
+                "opcode": 424
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 288,
+                "opcode": 264
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2232,
+                "opcode": 424
+              }
+            ]
+          },
+          {
+            "name": "r035.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 212,
+                "opcode": 208
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2684,
+                "opcode": 424
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 212,
+                "opcode": 208
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2684,
+                "opcode": 424
+              }
+            ]
+          },
+          {
+            "name": "r041.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 20,
+                "opcode": 208
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 5852,
+                "opcode": 424
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 20,
+                "opcode": 208
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 5852,
+                "opcode": 424
+              }
+            ]
+          }
+        ]
+      },
+      "parent_tests": 19,
+      "parent_source_inputs": 668
+    },
+    {
+      "compiler": "gcc",
+      "receipts": {
+        "full_interpreter": {
+          "path": "build-native-sjuni/script-resource-activation-vm-gcc-v1/receipt.json",
+          "sha256": "411dac865b2ab0a288c2ddd43ff2f5347603fc4dc6f3561e6a61234c53204c11"
+        },
+        "owned_program_admission": {
+          "path": "build-native-sjuni/script-resource-activation-admission-gcc-v1/receipt.json",
+          "sha256": "246c8039cb19101856dea1dbbfb26b7fecc9f406678b8b240f34ed6de8ae44a9"
+        },
+        "current_parents": {
+          "path": "build-native-sjuni/script-resource-activation-parents-gcc-v2/receipt.json",
+          "sha256": "4b3be45c925abbb405b0852dfadd455f032feafd4a5b45513860c57f973824c3"
+        }
+      },
+      "full_interpreter": {
+        "result": {
+          "checks": 569126216,
+          "resource_activation_dispatches": 8192,
+          "resource_activation_constructed": 48,
+          "resource_activation_refusals": 8
+        },
+        "checked_owned_instruction_comments": 12021,
+        "coverage": {
+          "ordinary": 363,
+          "offline_actor": 337
+        }
+      },
+      "owned_program_admission": {
+        "baseline_commit": "a2a37f08",
+        "baseline_probe_uses_matching_header": true,
+        "admitted": {
+          "before": [
+            31,
+            26
+          ],
+          "after": [
+            34,
+            27
+          ]
+        },
+        "evbs": [
+          {
+            "name": "r001.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 2508,
+                "opcode": 372
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3460,
+                "opcode": 424
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 3420,
+                "opcode": 209
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3460,
+                "opcode": 424
+              }
+            ]
+          },
+          {
+            "name": "r002.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 20,
+                "opcode": 208
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4100,
+                "opcode": 424
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 20,
+                "opcode": 208
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4100,
+                "opcode": 424
+              }
+            ]
+          },
+          {
+            "name": "r028.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 288,
+                "opcode": 264
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2232,
+                "opcode": 424
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 288,
+                "opcode": 264
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2232,
+                "opcode": 424
+              }
+            ]
+          },
+          {
+            "name": "r035.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 212,
+                "opcode": 208
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2684,
+                "opcode": 424
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 212,
+                "opcode": 208
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2684,
+                "opcode": 424
+              }
+            ]
+          },
+          {
+            "name": "r041.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 20,
+                "opcode": 208
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 5852,
+                "opcode": 424
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 20,
+                "opcode": 208
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 5852,
+                "opcode": 424
+              }
+            ]
+          }
+        ]
+      },
+      "parent_tests": 19,
+      "parent_source_inputs": 668
+    }
+  ],
+  "existing_delayed_owner_qualification": {
+    "path": "tools/native_reconstruction/native_resource_delayed_qualification_v1.json",
+    "sha256": "d72826e5921f316ed17514850c2984df34cd4f8e73a63c0ad7fd98a274f41e69"
+  },
+  "failed_cohorts": [
+    {
+      "path": "build-native-sjuni/script-resource-activation-parents-{llvm,gcc}-v1",
+      "reason": "Scenario needed PUBLIC actual ResourceFactory/model-attachments dependency; private unit link was insufficient. Canonical dependency fixed, v2 passed."
+    }
+  ],
+  "game_launched": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "limitations": [
+    "FullVM uses actual cold static-asset owner and original empty-cache lookup profile; populated cache import and delayed callbacks retain separate complete original proofs.",
+    "NativeSession first provider composition explicitly refuses positive174 requests until a real resource environment is supplied.",
+    "Complete bank admission is34ordinary/27offline of171; allfive scenarioEVBs still refuse laterD0/D1/108/1A8 frontiers."
+  ]
+}

@@ -15,7 +15,7 @@ bool minimal_room_providers(const scenario::Program& program)noexcept{
         !program.needs_streams()&&!program.needs_saved_controls()&&!program.needs_selected_actor()&&
         !program.needs_action_choices()&&!program.needs_models()&&!program.needs_room_objects()&&
         !program.needs_periodic_effects()&&!program.needs_surface_effects()&&!program.needs_forced_terminal()&&
-        !program.needs_script_audio()&&!program.needs_scene_record_parameters()&&!program.needs_resource_parameters()&&
+        !program.needs_script_audio()&&!program.needs_scene_record_parameters()&&!program.needs_resource_parameters()&&!program.needs_resource_activation()&&
         program.admits_room_counters(nullptr)&&program.admits_inventory_grants(nullptr,nullptr,nullptr)&&
         program.admits_actor_roster(nullptr)&&program.admits_character_remap(nullptr)&&program.admits_actor_script_commands(nullptr);
 }

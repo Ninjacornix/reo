@@ -20,6 +20,7 @@
 #include "surface_effects.hpp"
 #include "script_audio.hpp"
 #include "script_resource_parameters.hpp"
+#include "script_resource_activation.hpp"
 #include "scene_record_parameters.hpp"
 #include "actor_script_commands.hpp"
 #include "actor_script_predicates.hpp"
@@ -43,7 +44,7 @@ std::size_t payload_minimum(std::uint32_t op)noexcept{
     case 0x166:return 9;
     case 0x150:case 0x1a1:return 12;
     case 0x156:return 20;
-    case 0x170:return 6;
+    case 0x170:case 0x174:return 6;
     case 0x73:return 8;
     case 0x88:return 16;
     case 0x89:return 22;
@@ -158,6 +159,7 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
             }
             actor_ai_counter_|=!noop&&op==0x1a5;
             if(!noop&&op==0x170)resource_parameter_requests_.push_back({std::uint16_t(word(b.data()+at+4)),std::bit_cast<std::int16_t>(std::uint16_t(word(b.data()+at+8)))});
+            if(!noop&&op==0x174&&std::bit_cast<std::int16_t>(std::uint16_t(word(b.data()+at+4)))>0){resource_activation_=true;world_=true;}
             low_actor_population_|=!noop&&(op==0x38||op==0x39);
             full_actor_population_|=!noop&&op==0x173;
             npc_inventory_grants_|=!noop&&op==0x3a;
@@ -249,6 +251,10 @@ bool Program::admits_resource_parameter_commands(const gameplay_world::World* wo
     }
     return true;
 }
+bool Program::admits_resource_activation(const ScriptResourceActivation* activation,const gameplay_world::World* world,
+    const SceneResources* resources,const ResourceTemplates* templates)const noexcept{
+    return !resource_activation_||(activation&&world&&activation->bound_to(*world,resources,templates));
+}
 bool Program::admits_room_counters(const gameplay_world::World* world)const noexcept {
     return !room_counters_ || (world && !world->closed() &&
         world->session().room_contacts.counters_ready(scenario_counter_policy_));
@@ -303,6 +309,7 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     for(const auto i:{0x20,0x23,0x24,0x25})out[i]={true,false,false,false,false,false,false,true};
     for(std::size_t i=0xa0;i<=0xa3;++i)out[i]={true,false,false,false,false,false,false,false,true};
     out[0x190].native_algorithm=true;
+    out[0x174].native_algorithm=true;
     for(std::size_t i=0;i<out.size();++i)if(control_command(std::uint32_t(i)))out[i]={true,false,false,false,false,false,false,false,false,true};
     for(const auto i:{0x70,0x71})out[i]={true,false,false,false,false,false,false,false,false,false,true};
     for(const auto i:{0x104,0x105})out[i]={true,false,false,false,false,false,false,false,false,true};
@@ -394,6 +401,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
     if(!c.program->admits_scene_record_parameters(providers.world,providers.messages))return{Status::provider_unavailable,0,{},0};
     if(!c.program->admits_actor_script_commands(providers.world,providers.canonical_flags))return{Status::provider_unavailable,0,{},0};
     if(!c.program->admits_resource_parameter_commands(providers.world,providers.resource_parameters,providers.scene_resources,providers.resource_templates))return{Status::provider_unavailable,0,{},0};
+    if(!c.program->admits_resource_activation(providers.resource_activation,providers.world,providers.scene_resources,providers.resource_templates))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_selected_actor()&&!providers.world->primary(context.selected_actor))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_action_choices()&&!providers.action_choices)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_scenario()&&!providers.world->scenario)return{Status::provider_unavailable,0,{},0};
@@ -714,6 +722,9 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
         case 0x170:
             if(!script_resource_parameter_noop(*providers.world,std::uint16_t(value(0)))&&
                providers.resource_parameters->command(std::uint16_t(value(0)),signed_half(4))!=SceneStatus::completed)return result(Status::provider_unavailable);
+            break;
+        case 0x174:
+            if(signed_half(0)>0&&providers.resource_activation->command(signed_half(0),signed_half(4))!=SceneStatus::completed)return result(Status::provider_unavailable);
             break;
         case 0x73:{
             const auto mode=value(4);

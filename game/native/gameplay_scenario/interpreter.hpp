@@ -33,6 +33,7 @@ class ResourceTemplates;
 class ForcedActorTerminal;
 class ScriptAudio;
 class ScriptResourceParameters;
+class ScriptResourceActivation;
 enum class DispatchProfile { ordinary,offline_actor };
 enum class Status { completed,yielded,disabled,invalid_channel,invalid_program,invalid_record,unsupported_opcode,
     provider_unavailable,alternate_mode_unavailable,budget_exhausted,busy };
@@ -82,6 +83,8 @@ public:
     bool admits_actor_script_commands(const gameplay_world::World*,const FlagState* = nullptr)const noexcept;
     bool admits_resource_parameter_commands(const gameplay_world::World*,const ScriptResourceParameters*,const SceneResources*,const ResourceTemplates*)const noexcept;
     bool needs_resource_parameters()const noexcept{return !resource_parameter_requests_.empty();}
+    bool needs_resource_activation()const noexcept{return resource_activation_;}
+    bool admits_resource_activation(const ScriptResourceActivation*,const gameplay_world::World*,const SceneResources*,const ResourceTemplates*)const noexcept;
     bool needs_scenario_counter_policy()const noexcept{return scenario_counter_policy_;}
     bool admits_room_counters(const gameplay_world::World*)const noexcept;
     bool admits_inventory_grants(const gameplay_world::World*,const SceneResources*,const ResourceTemplates*)const noexcept;
@@ -114,6 +117,7 @@ private:
     bool actor_ai_counter_{};
     struct ResourceParameterRequest {std::uint16_t resource{};std::int16_t quantity{};};
     std::vector<ResourceParameterRequest> resource_parameter_requests_;
+    bool resource_activation_{};
     DispatchProfile profile_{};
 };
 struct Channel {
@@ -147,7 +151,7 @@ public:
     virtual std::optional<std::int32_t> query(std::uint32_t id)noexcept=0;
 };
 struct Providers {Flags* flags{};gameplay_tasks::FlagTimers* timers{};Signals* signals{};FlagState* canonical_flags{};
-    SceneResources* scene_resources{};SceneEffects* scene_effects{};SceneOwners* scene_owners{};SessionCounters* session_counters{};SequenceControl* sequences{};Lighting* lighting{};SceneChannels* scene_channels{};SceneControls* scene_controls{};ControlEffects* control_effects{};StreamChannels* streams{};StreamBackend* stream_backend{};SavedControlRecords* saved_controls{};gameplay_world::World* world{};ActionChoices* action_choices{};SceneModels* models{};RoomObjectCommands* room_objects{};PeriodicEffects* periodic_effects{};SurfaceEffects* surface_effects{};const ResourceTemplates* resource_templates{};ForcedActorTerminal* forced_terminal{};ScriptAudio* script_audio{};gameplay_update::GameplayMessageSink* messages{};ScriptResourceParameters* resource_parameters{};};
+    SceneResources* scene_resources{};SceneEffects* scene_effects{};SceneOwners* scene_owners{};SessionCounters* session_counters{};SequenceControl* sequences{};Lighting* lighting{};SceneChannels* scene_channels{};SceneControls* scene_controls{};ControlEffects* control_effects{};StreamChannels* streams{};StreamBackend* stream_backend{};SavedControlRecords* saved_controls{};gameplay_world::World* world{};ActionChoices* action_choices{};SceneModels* models{};RoomObjectCommands* room_objects{};PeriodicEffects* periodic_effects{};SurfaceEffects* surface_effects{};const ResourceTemplates* resource_templates{};ForcedActorTerminal* forced_terminal{};ScriptAudio* script_audio{};gameplay_update::GameplayMessageSink* messages{};ScriptResourceParameters* resource_parameters{};ScriptResourceActivation* resource_activation{};};
 struct TickContext {bool enabled{true};bool alternate_mode{};std::uint8_t selected_actor{};std::uint16_t current_room{};
     // Caller-provided actual SDK/audio service tick, distinct from task passes
     // or the simulation clock. Never inferred from host elapsed time.

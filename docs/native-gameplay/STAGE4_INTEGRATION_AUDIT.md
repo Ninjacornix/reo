@@ -279,8 +279,12 @@ used as a successful room bootstrap.
 
 The [opcode170 cut](SCRIPT_RESOURCE_PARAMETERS.md) now passes paired complete
 original dispatcher/native owner qualification and current17-parent cohorts.
-All171-bank admission remains31/26; r001 advances to174 at block2+2508.
-The next scenario-bank cuts remain authored uses: ordinary `174`, `D0`, `108`
+At that checkpoint all171-bank admission remains31/26 and r001 advances to174
+at block2+2508. The subsequent [174 cut](SCRIPT_RESOURCE_ACTIVATION.md) uses
+the actual delayed factory and raises admission to34ordinary/27offline banks,
+with nineteen current parents passing on both compilers. Scenario r001 now
+advances toD1 at block2+3420; no scenario EVB is fully admitted.
+The next scenario-bank cuts remain authored uses: ordinary `D1`, `D0`, `108`
 and offline `1A8`. For D0, the owned r035 kind11 offline callback is5B8880,
 which calls the already native contact-visual impact path5DD6F0; the missing
 layer is a concrete typed scenario-event task factory/state owner and the
