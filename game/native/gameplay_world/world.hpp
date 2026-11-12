@@ -243,6 +243,7 @@ enum class Stage {
 };
 class World;
 class PoseWorkPool;
+class DialoguePool;
 class LinkedModelPool;
 class LinkedActorUpdates;
 class NpcActorUpdates;
@@ -325,6 +326,8 @@ public:
     std::uint8_t selected_frame_marker{};
     std::uint16_t& frame_shared_counter;
 private:
+    friend class DialoguePool;
+    DialoguePool* dialogue_pool_owner_{};
     friend class PoseWorkPool;
     PoseWorkPool* pose_work_owner_{};
     friend class AuxiliaryActorPool;

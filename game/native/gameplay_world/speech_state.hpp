@@ -14,5 +14,7 @@ struct SpeechState {
     std::optional<SpeechSelection> selection;
     std::optional<std::int32_t> gauge_notice;     // DB8, sender11 writes0/1
     std::optional<std::int8_t> variant;           // DA9; receipt can set this alone
+    std::optional<std::int16_t> dialogue_delay;   // DBC,6B7930 cue delay
+    std::optional<std::int8_t> display_style;      //1075,6B97D0 dialogue presentation
 };
 }

@@ -110,4 +110,5 @@ endif()
 
 target_sources(reo_native_gameplay_scenario PRIVATE scene_voice_assets.cpp stream_voice_queue.cpp scene_voice_preparation.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE actor_voice_archive_assets.cpp)
+target_sources(reo_native_gameplay_scenario PRIVATE dialogue_assets.cpp)
 target_link_libraries(reo_native_gameplay_scenario PUBLIC reo_native_audio_cue_queue)

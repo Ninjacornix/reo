@@ -1,0 +1,173 @@
+{
+  "schema": 1,
+  "status": "qualified_partial_native_dialogue_records_and_pool",
+  "game_run": false,
+  "audio_device_opened": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_scenario/dialogue_assets.hpp": "9265ffcc9048453e0c3f26f91a4df7ab3166f0d17e606d7429106799fdac560b",
+    "game/native/gameplay_scenario/dialogue_assets.cpp": "89e5674b2a4395c62c2c115e13d105842ad62e6f2e0eb2a389e60e3bfed0d991",
+    "game/native/gameplay_world/dialogue_records.hpp": "5afba5a8417059bb7f65d6b85b6674ea99da61629998a20b1770383a9525f87c",
+    "game/native/gameplay_world/dialogue_records.cpp": "32f2a2dfc1dc2b644fbb223a540473025e89a67121a31c36e75f9a253586a5d7",
+    "game/native/gameplay_world/dialogue_pool.hpp": "e6e9fa46141105c1f97f6324c1ddae543eaddaaca6e58cf2783289e0c679f2d4",
+    "game/native/gameplay_world/dialogue_pool.cpp": "f23238fc7b5a33d54148669a56ced195c154e09b7f83c88b8d9b9f6564ce807c",
+    "game/native/gameplay_world/speech_state.hpp": "29ef549e1b5b667480c4d5617a80cdcbcb725919f1d4066b254c2494ce02a609",
+    "game/native/gameplay_world/actor_initial_state.hpp": "e163ca53b982845de3ea5e74afc6aea80bd810305b718fab2beeadc4828b14c9",
+    "game/native/gameplay_world/primary_actor_records_tests.cpp": "5f2ae3be2425d65e527ef7f176699c02cb4cdde0dfcf788a48d62ee04c1e5108",
+    "game/native/gameplay_world/world.hpp": "e0a352aa9ab0834e9a22542771ce46772ad8058d4fe1972af73103a2e1670daf",
+    "tools/native_reconstruction/dialogue_assets_tests.cpp": "d2fa8fe3bbcff27989a7ecdc157449a2e0819d264bf7b858a9413d70073456f1",
+    "tools/native_reconstruction/dialogue_records_tests.cpp": "5eb6009a17d0dd827fcd97b4f919873991634f3ba1834a315ef4c6e28340d19e",
+    "tools/native_reconstruction/dialogue_records_reference.inc": "4c867446c4c7ed284ca926c0b81fd973a3d12ddab3e26535620c5f5c7d3ada0f",
+    "tools/native_reconstruction/dialogue_pool_tests.cpp": "358114e03040e9ea28734c0294d78b80127ba73171c7adb4a82afb204e2becf8",
+    "tools/native_reconstruction/verify_dialogue_assets.py": "c148bb7a18878ea34f51edcd48ad88bf69a11263c60f1c98654602247980c022",
+    "tools/native_reconstruction/verify_dialogue_records.py": "7127a3247374efd350f7ce7f47db3ef9d527ceb8c910a847ec5f0b488dc2ce1b",
+    "tools/native_reconstruction/verify_dialogue_pool.py": "e6bfd271e2195b8d0065ce69566bcae1cbace96f4cad74410c71439d03748374",
+    "docs/native-gameplay/DIALOGUE_RECORDS.md": "7ac7c0fefa4239027c9d60b57420b4501b272410b657149516d7ae7d32b816b2"
+  },
+  "owned_cmake_fragments_sha256": {
+    "game/native/gameplay_world/CMakeLists.txt": "eb85f690dbc1734bb86a04ca16f3aaec24d2f9bd328911a448571c57f20b5b3b",
+    "game/native/gameplay_scenario/CMakeLists.txt": "4ab8f903eb8d2ef4e1d93fc20542e51c646021f6e4d7e9364837998666ca53fa"
+  },
+  "results": {
+    "assets": {
+      "checks": 4460784,
+      "owned_pairs": 270,
+      "original_cue_getters": 1620000,
+      "owned_text_rows": 81295,
+      "source_calls": 1782860,
+      "retained_asset_lifetimes": 1,
+      "malformed_refusals": 6,
+      "game_run": false
+    },
+    "records": {
+      "checks": 131709,
+      "native_frames": 4096,
+      "continuation_frames": 86,
+      "complete_original_frames": 4182,
+      "source_calls": 41242,
+      "prefix_refusals": 1,
+      "retained_text_lifetimes": 2,
+      "game_run": false,
+      "audio_device_opened": false
+    },
+    "pool": {
+      "checks": 1133345,
+      "complete_constructors": 787,
+      "complete_pool_updates": 1176,
+      "source_calls": 63550,
+      "record_clears": 48,
+      "native_guards": 289,
+      "retained_text_lifetimes": 2,
+      "controlled_interruptions": 0,
+      "authored_effect_writes": 560,
+      "literal_records": 1,
+      "capacity_refusals": 1,
+      "game_run": false,
+      "audio_device_opened": false
+    },
+    "bootstrap": {
+      "checks": 2235228,
+      "complete_source_clears": 64,
+      "canonical_bootstraps": 64,
+      "capacity_refusals": 8,
+      "busy_proofs": 1,
+      "lifetimes": 512,
+      "game_run": false
+    }
+  },
+  "receipts": [
+    {
+      "path": "build-native-sjuni/dialogue-assets-gcc-v1/receipt.json",
+      "sha256": "8d0381999f85e56db3aae6f5707769d1fc8a7f4e8f2efb9154d6d5cea148f862",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "path": "build-native-sjuni/dialogue-assets-llvm-v1/receipt.json",
+      "sha256": "53077901549353824dd04eff39d42ad040d6070785dc7f89fbe0fad0095a5720",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "path": "build-native-sjuni/dialogue-records-gcc-v8/receipt.json",
+      "sha256": "c87a442386748f882cb7b7b1063fcb1f008be71b559f2b8274dde30cfaf75fc5",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "path": "build-native-sjuni/dialogue-records-llvm-v8/receipt.json",
+      "sha256": "6f7faafccacb5890c21e3dffd1aac97aee6ba065f513c15eee2cced2b1899c94",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "path": "build-native-sjuni/dialogue-pool-gcc-v4/receipt.json",
+      "sha256": "032d5feb2166970831cd86f5c708c5abddff01b087144653c29f6a25fdb07028",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "path": "build-native-sjuni/dialogue-pool-llvm-v4/receipt.json",
+      "sha256": "9391f6b0a56ffb73038a324c59e8ff7a8058c38b15827085366914a57eedcc8d",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "path": "build-native-sjuni/primary-actor-records-dialogue-gcc-v1/receipt.json",
+      "sha256": "f05ccfa1e506fe098d4db91dc78e2494249a9e8c898a4830ba2ac50227393800",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "path": "build-native-sjuni/primary-actor-records-dialogue-llvm-v1/receipt.json",
+      "sha256": "987d051912ce11a6894137e00e87ad07aa2a568af1ab2e357cef16b61865812d",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    }
+  ],
+  "retained_failures": [
+    {
+      "path": "build-native-sjuni/dialogue-records-gcc-v1/receipt.json",
+      "sha256": "cccc3a2d7510207ef853099d7223c0d6968a969e01e4c2a758fc06baed46071f",
+      "reason": "Fixture aggregate initializer omitted explicit optional context fields."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-records-gcc-v2/receipt.json",
+      "sha256": "4cbbc7d86737ed6d3857e6fec38a50d1a9dc4e5acd350a542ad8c18b562d7f8c",
+      "reason": "Direct source closure lacked routing and ScenarioArchive resource dependencies."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-records-gcc-v3/receipt.json",
+      "sha256": "0f74328fa5b273904dda90f4a30c0ec3cb6a18fa11889bc289b4265f4ed78586",
+      "reason": "Source non-rebuild character tick still draws cached text; production early return corrected."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-records-gcc-v4/receipt.json",
+      "sha256": "1c240ee19b8321709c98e1e0ff32801bac1b43036efff7c18f2eb4a33a8aa288",
+      "reason": "Source timeout shortcut reads selection slot1, not slot0."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-records-gcc-v5/receipt.json",
+      "sha256": "fc64773d9686a95b7830cb4f01342a7f460cfb00658c1fd39ef327a59efcbc6e",
+      "reason": "Retained diagnostic confirmation of the selection-slot mismatch."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-records-gcc-v7/receipt.json",
+      "sha256": "1abd26f284e474721f5993e8e5619c9e8275ff1bc5cb0dd15ceb21e950f352fa",
+      "reason": "Multi-page continuation returns immediately after page-fade erase; production continuation corrected."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-records-llvm-v7/receipt.json",
+      "sha256": "540afbf20c4c39693e5fc475c48bd40ea18629b39dedc34df3f324243a7be4b0",
+      "reason": "Same retained page-fade continuation failure under LLVM."
+    }
+  ],
+  "limits": [
+    "The complete pool constructor/clear/selection/update and record update bodies execute against the same native World actors and random state; owned banks resolve through the existing ScenarioArchive resource index.",
+    "6B7610 cold initialization is explicitly a projection onto represented pool/flag/actor fields, not installation of its separate timer and monitor owners. The secondary selection count stays unavailable until its actual6B9590 producer runs.",
+    "Actual UI cache/presentation ownership, full1D41F0 room-bank publication and outer6B7E40 actor-response orchestration remain uninstalled. No application frame or authored game launch is claimed.",
+    "One retained controlled text copy reaches8169 literal construction; no owned USA text has that prefix. Ordinary voice uses the independently qualified known-zero marker leaf in this cohort; NPC positive voice remains outside the admitted scope.",
+    "The new World registration is an exclusive native owner binding. Earlier bootstrap receipts retain their historical full World header identity; the current speech fields and initializer are matched exactly.",
+    "A strict GCC current CMake target build and native record test probe passed in the private ordinary-postprocess-cmake-gcc-v1 directory; the audit agent owns the frozen current application/parent cohort."
+  ]
+}

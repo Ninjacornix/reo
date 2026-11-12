@@ -19,6 +19,7 @@ void original_clear(unsigned seed){for(unsigned i=0;i<source_bytes+32;++i)memory
 #endif
 void check_cleared(const w::Actor& actor,unsigned physical){
     check(actor.contact_style_discriminator==0);
+    check(actor.speech.dialogue_delay==0&&actor.speech.display_style==0);
     check(!actor.active&&!actor.visible&&actor.category==0&&actor.slot==0&&actor.primary==0&&actor.secondary==0&&actor.phase==0&&actor.subphase==0);
     check(actor.current==0&&actor.maximum==0&&actor.status==0&&actor.auxiliary_status==0&&actor.room==0&&actor.character==0&&actor.model_variant==0);
     check(actor.position.x==0&&actor.position.y==0&&actor.position.z==0&&actor.orientation==std::array<std::int16_t,4>{});
@@ -39,6 +40,7 @@ void check_cleared(const w::Actor& actor,unsigned physical){
     const auto at=source_base+physical*0x10e0;check(actor.slot==memory[at+3]&&*actor.surface_transition_flags==memory[at+0xce2]&&*actor.secondary_pose_category_override==transform_read<unsigned>(memory.data(),at+0xfac));check(actor.position.x==transform_read<float>(memory.data(),at+0x38)&&actor.model_scale.y==transform_read<float>(memory.data(),at+0xb8)&&head.ticks==transform_read<std::int16_t>(memory.data(),at+0xbd2));
     check(actor.ai_execution->goal==transform_read<std::uint16_t>(memory.data(),at+0xff4)&&actor.ai_execution->action==transform_read<std::uint16_t>(memory.data(),at+0xff8)&&!actor.ai_execution->weight_profile&&transform_read<unsigned>(memory.data(),at+0x10ac)==0);
     check(route.output.link==transform_read<std::int16_t>(memory.data(),at+0x10aa)&&route.current_node==std::int8_t(memory[at+0x100c])&&route.final_position.z==transform_read<float>(memory.data(),at+0x1018)&&route.selection_mode==memory[at+0x105b]);
+    check(*actor.speech.dialogue_delay==transform_read<std::int16_t>(memory.data(),at+0xdbc)&&*actor.speech.display_style==std::int8_t(memory[at+0x1075]));
 #else
     (void)physical;
 #endif
@@ -52,6 +54,7 @@ struct Busy final:w::Services {
     float grid_response(w::World&,std::uint8_t)override{std::terminate();}
 };
 int main()try{
+    const w::Actor generic;check(!generic.speech.dialogue_delay&&!generic.speech.display_style);
     for(unsigned seed=0;seed<64;++seed){
 #ifdef REO_PRIMARY_RECORDS_ORIGINAL
         original_clear(seed);
