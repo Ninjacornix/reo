@@ -7,12 +7,14 @@ FlagWords* FlagState::words(FlagBank bank)noexcept {
 }
 const FlagWords* FlagState::words(FlagBank bank)const noexcept{return const_cast<FlagState*>(this)->words(bank);}
 std::optional<bool> FlagState::get(FlagBank bank,std::uint32_t id)const noexcept {
+    if(bank==FlagBank::scene_record_eligibility)return state_.scene_record_eligibility.get(id);
     if(const auto* values=words(bank)){if(id>=512)return{};return bool((*values)[id/32]&(1u<<(id&31)));}
     if(bank==FlagBank::bounded_byte){if(id>=128)return{};return bool(state_.bounded_bytes[id/8]&(1u<<(id&7)));}
     if(bank==FlagBank::bounded_halfword){if(id>=16)return{};return bool(state_.bounded_halfword&(1u<<id));}
     return{};
 }
 bool FlagState::write(FlagBank bank,std::uint32_t id,bool set)noexcept {
+    if(bank==FlagBank::scene_record_eligibility)return state_.scene_record_eligibility.write(id,set);
     if(auto* values=words(bank)){
         if(id>=512)return false;
         auto& word=(*values)[id/32];const auto mask=1u<<(id&31);word=set?word|mask:word&~mask;return true;

@@ -105,7 +105,7 @@ struct ChannelReplacement {
     std::optional<Position> entry;
 };
 struct ActorEvent {std::uint8_t active{},kind{};std::uint16_t value{};};
-enum class FlagBank { scenario,local_primary,local_auxiliary,secondary,bounded_byte,bounded_halfword };
+enum class FlagBank { scenario,local_primary,local_auxiliary,secondary,bounded_byte,bounded_halfword,scene_record_eligibility };
 enum class NotifyOwner { selected_actor_plus_one,zero };
 class Flags {
 public:

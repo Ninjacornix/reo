@@ -1,5 +1,6 @@
 #pragma once
 #include "interpreter.hpp"
+#include "scene_record_eligibility.hpp"
 
 namespace reo::native::gameplay_scenario {
 using FlagWords=std::array<std::uint32_t,16>;
@@ -11,6 +12,7 @@ struct FlagStateSnapshot {
     std::array<FlagWords,3> primary{},auxiliary{};
     std::array<std::uint8_t,16> bounded_bytes{};
     std::uint16_t bounded_halfword{};
+    SceneRecordEligibility scene_record_eligibility;
     // Native admission profile for the scenario ownership-tag consumers at
     // original4BAA50. This is not a claim of bounds in the original code.
     std::array<std::uint8_t,512> scenario_owners{};

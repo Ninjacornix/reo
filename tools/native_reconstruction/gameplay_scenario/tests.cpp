@@ -236,8 +236,10 @@ PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
 #include "model_parts_vm_tests.inc"
 #include "material_uv_vm_tests.inc"
 #include "scripted_actor_vm_tests.inc"
+#include "scene_record_eligibility_vm_tests.inc"
 int main(int argc,char** argv)try{
     check(argc==5);
+    scene_record_eligibility_tests();
     no_model_vm_tests();
     surface_vm_tests(argv[1]);
     room_counter_vm_tests(argv[2]);
@@ -431,5 +433,6 @@ int main(int argc,char** argv)try{
              <<",\"model_part_queries\":"<<model_part_queries<<",\"model_part_refusals\":"<<model_part_refusals
              <<",\"material_uv_calls\":"<<material_uv_calls
              <<",\"scripted_constructor_calls\":"<<scripted_constructor_calls<<",\"scripted_constructor_refusals\":"<<scripted_constructor_refusals
+             <<",\"scene_record_eligibility_handlers\":"<<scene_record_eligibility_handlers<<",\"scene_record_eligibility_dispatches\":"<<scene_record_eligibility_dispatches
              <<",\"original_numeric_handler_invocations\":65536,\"game_launched\":false}\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
