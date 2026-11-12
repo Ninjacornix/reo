@@ -90,7 +90,7 @@ public:
     bool admits_scenario_events(const ScenarioEvents*,const gameplay_world::World*)const noexcept;
     bool needs_difficulty()const noexcept{return difficulty_;}
     bool admits_difficulty(const gameplay_world::World*)const noexcept;
-    bool needs_inventory_ui()const noexcept{return inventory_ui_;}
+    bool needs_inventory_ui()const noexcept{return inventory_ui_||!inventory_requests_.empty();}
     bool admits_inventory_ui(const gameplay_world::InventoryUi*,const gameplay_world::World*)const noexcept;
     bool admits_actor_model_classes(const gameplay_world::World*)const noexcept;
     bool needs_scenario_counter_policy()const noexcept{return scenario_counter_policy_;}
@@ -129,6 +129,7 @@ private:
     bool difficulty_{};
     bool inventory_ui_{};
     bool actor_model_classes_{};
+    std::vector<std::uint32_t> inventory_requests_;
     bool scenario_events_{};
     DispatchProfile profile_{};
 };

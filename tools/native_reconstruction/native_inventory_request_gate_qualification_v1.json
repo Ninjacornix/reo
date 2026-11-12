@@ -1,0 +1,77 @@
+{
+  "schema": "reo.native.inventory_request_gate.qualification.v1",
+  "status": "passed",
+  "source_sha256": {
+    "game/native/gameplay_world/inventory_ui.hpp": "21e78aa167a2759678f6489624a816f86fa83321eb4505573dba24c626c387b2",
+    "game/native/gameplay_world/inventory_ui.cpp": "26885bf82f83226981c138ee5a5d9fa3560f549ae42c883e9802bc30f0190033",
+    "game/native/gameplay_scenario/interpreter.hpp": "de6b445ebccc56e782514f14b6c6d268561c71d83d3b8313e20f114ebc56fab4",
+    "game/native/gameplay_scenario/interpreter.cpp": "66c5e3af89052316dd28a230b2265b3370a27f831130cdb677d13e2062412bad",
+    "game/native/gameplay_application/native_session_tests.cpp": "17abe6f6851a1152298eda9bbd192f7c441a7c27f66b0f9c081e2e0be883c412",
+    "tools/native_reconstruction/gameplay_scenario/tests.cpp": "8f845d79942fa61227e14c36592741535a16381bed3eba5e27030232749fde9f",
+    "tools/native_reconstruction/gameplay_scenario/verify.py": "86eed214aca4d6578970fd128e8894991c836ff2551a05a3f534c0fb7ed5adfa",
+    "tools/native_reconstruction/gameplay_scenario/inventory_request_gate_vm_tests.inc": "53b7fe5d2ad517c5009f6cf0322cb7d5beca78cf476c12fa67ffe2ca6ea3957d",
+    "tools/native_reconstruction/audit_scenario_opcode_frontier.py": "aefb6f31df7376daade326866a149909d77721d6b3a90beaa7b08e0ecf53acad",
+    "tools/native_reconstruction/qualify_inventory_request_gate_v1.py": "e8769d12931ec03cdef147f1d7e3d0e3dda47475ab22e8551a7cd4e0de27b7af",
+    "docs/native-gameplay/INVENTORY_REQUEST_GATE.md": "01c42903c09c1640f6d7d1a6c266b69550423d273b92efb34a5e0bdef8b44c71",
+    "docs/native-gameplay/STAGE4_INTEGRATION_AUDIT.md": "94f45e0004bf2c1cd8e92bfc2b9d176a7d5f7f647e61d78216147a2c803dd27f"
+  },
+  "evidence": [
+    {
+      "path": "build-native-sjuni/inventory-request-vm-llvm-v1/receipt.json",
+      "sha256": "331a4877898a0166e6927cd9d333d5981b0b08a79d79a4ca1ca80bd763eb9d12"
+    },
+    {
+      "path": "build-native-sjuni/inventory-request-admission-llvm-v1/receipt.json",
+      "sha256": "b850c87623ac42c178f8416ff23de7600cd2f744fce20676f4084fccdcb8f2fb"
+    },
+    {
+      "path": "build-native-sjuni/inventory-request-parents-llvm-v1/receipt.json",
+      "sha256": "1e979fb24ed96ab792d748bf894586131bdb38f7511cdf2d72b0910585810b0d"
+    },
+    {
+      "path": "build-native-sjuni/inventory-request-vm-gcc-v1/receipt.json",
+      "sha256": "6faf32b463fc6213209e328f30f53d3c2e6140437c6caca8c0184f20456bfefd"
+    },
+    {
+      "path": "build-native-sjuni/inventory-request-admission-gcc-v1/receipt.json",
+      "sha256": "81e6f34b30e565db81e258c8e39e104b9735e75090a79e4f3f7e41c3c933cb59"
+    },
+    {
+      "path": "build-native-sjuni/inventory-request-parents-gcc-v1/receipt.json",
+      "sha256": "06d7311df77ddf73f91bb02ca91ccf0381fb7ca9effb4fc0d0ef4bd7e1548e1d"
+    },
+    {
+      "path": "build-native-sjuni/inventory-request-frontier-v1/receipt.json",
+      "sha256": "a317f8fe4b21d2ad1abaa187ffa62e285c5e279d803f442288254ba738946749"
+    }
+  ],
+  "observed": [
+    {
+      "compiler": "llvm",
+      "checks": 586070532,
+      "programs": 524296,
+      "refusals": 6,
+      "initializers": 64,
+      "parent_tests": 28
+    },
+    {
+      "compiler": "gcc",
+      "checks": 586070532,
+      "programs": 524296,
+      "refusals": 6,
+      "initializers": 64,
+      "parent_tests": 28
+    }
+  ],
+  "game_launched": false,
+  "device_opened": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "limitations": [
+    "Only full-word nonzero63/604300 is admitted. Zero604310 requires actual6DDD70 resource-reset ownership and refuses before the Program prefix.",
+    "Canonical8D stays unknown before its actual producer, and6DEC80 preserves it.",
+    "Original CPU/register/memory objects occur only in offline qualification.",
+    "All five scenario EVBs remain unsupported;65 ordinary opcode-mask records plus one known zero63 payload branch remain. Static authored counts do not prove dynamic reachability.",
+    "Application resource composition, terminal frame services, installed gameV39 replacement, input/network/media and semantic save/resume remain Stage4 gates."
+  ]
+}

@@ -46,6 +46,7 @@ IDS += ['00691010','005B92B0']
 IDS += ['00691AE0']
 IDS += ['006DEC80','006925C0','005F4FD0','006E1430']
 IDS += ['0068F180']
+IDS += ['0068F140','00604300']
 
 PINNED={};PIN_COMMITS={}
 def source_bytes(p):
@@ -232,6 +233,7 @@ def main(a):
     shutil.copyfile(HERE/'difficulty_vm_tests.inc',out/'difficulty_vm_tests.inc')
     shutil.copyfile(HERE/'inventory_ui_vm_tests.inc',out/'inventory_ui_vm_tests.inc')
     shutil.copyfile(HERE/'actor_model_classes_vm_tests.inc',out/'actor_model_classes_vm_tests.inc')
+    shutil.copyfile(HERE/'inventory_request_gate_vm_tests.inc',out/'inventory_request_gate_vm_tests.inc')
     shutil.copyfile(HERE/'periodic_control_vm_tests.inc',out/'periodic_control_vm_tests.inc')
     shutil.copyfile(HERE/'room_rule_tests.inc',out/'room_rule_tests.inc')
     shutil.copyfile(HERE/'room_object_vm_tests.inc',out/'room_object_vm_tests.inc')
@@ -324,6 +326,7 @@ def main(a):
     source_paths.append(HERE/'difficulty_vm_tests.inc')
     source_paths.append(HERE/'inventory_ui_vm_tests.inc')
     source_paths.append(HERE/'actor_model_classes_vm_tests.inc')
+    source_paths.append(HERE/'inventory_request_gate_vm_tests.inc')
     source_paths.append(ROOT/'tools/native_reconstruction/comparison_objects.py')
     source_paths += [HERE/'surface_vm_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]

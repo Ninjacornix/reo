@@ -93,6 +93,10 @@ void cold_inventory_ui(){
     auto& ui=session.inventory_ui();auto& world=session.world();
     check(ui.bound_to(world)&&ui.snapshot()&&ui.snapshot()->phase==0&&ui.snapshot()->update_enabled==1&&ui.snapshot()->requests_enabled==1);
     check(!ui.close_ready()&&ui.force_close()==world::InventoryUiStatus::unavailable_actor);
+    check(!ui.request_blocked()&&ui.request_mode_ready(0x10000)&&!ui.request_mode_ready(0));
+    check(ui.configure_requests(0)==world::InventoryUiStatus::unavailable_request_reset&&!ui.request_blocked());
+    check(ui.configure_requests(0x10000)==world::InventoryUiStatus::completed&&ui.request_blocked()==1);
+    check(ui.initialize()==world::InventoryUiStatus::completed&&ui.request_blocked()==1);
     auto actor=std::make_unique<world::Actor>();actor->status=0x80008001u;actor->auxiliary_status=0x80000001u;
     const auto spawned=world.spawn_primary(0,std::move(actor));check(bool(spawned.id));
     world.selected_frame_marker=0x80;world.session().inventory_owner=4;
@@ -101,6 +105,7 @@ void cold_inventory_ui(){
     world.primary(0)->status=0x8001;world.session().inventory_owner=4;world::RecoveryUi& recovery=ui;
     check(recovery.close()&&world.primary(0)->status==1&&world.session().inventory_owner==4);
     check(session.close()==application::SessionStatus::completed&&!ui.close_ready()&&!recovery.close());
+    check(!ui.request_mode_ready(1)&&ui.configure_requests(1)==world::InventoryUiStatus::closed&&ui.request_blocked()==1);
 }
 void owned(const std::filesystem::path& path){
     auto source=std::make_shared<const reo::assets::Source>(path);Notifications notices;

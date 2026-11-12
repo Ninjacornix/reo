@@ -12,6 +12,16 @@ InventoryUiStatus InventoryUi::initialize()noexcept{
 bool InventoryUi::close_ready()const noexcept{
     return !world_.closed()&&state_&&state_->phase==0&&bool(world_.primary(world_.selected_actor));
 }
+bool InventoryUi::request_mode_ready(std::uint32_t mode)const noexcept{
+    return !world_.closed()&&state_.has_value()&&mode!=0;
+}
+InventoryUiStatus InventoryUi::configure_requests(std::uint32_t mode)noexcept{
+    if(world_.closed())return InventoryUiStatus::closed;
+    //604310 also clears three asset caches then invokes6DDD70. Until the real
+    // resource-reset owner is installed, refuse its complete command prefix.
+    if(!request_mode_ready(mode))return InventoryUiStatus::unavailable_request_reset;
+    request_blocked_=1;return InventoryUiStatus::completed;
+}
 bool InventoryUi::close()noexcept{
     //6E1430 clears the selected actor's status bit before its phase switch.
     // Whole-command admission excludes active phases with unowned consumers.
