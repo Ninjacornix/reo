@@ -716,7 +716,12 @@ int main(int argc, char** argv) try {
               << ",\"scripted_motion_refusals\":" << scripted_motion_refusals
               << ",\"scripted_positive_tracks\":" << scripted_positive_tracks
               << ",\"cutscene_actor_calls\":" << cutscene_actor_calls
-              << ",\"primary_cutscene_actor_calls\":" << primary_cutscene_actor_calls
+              << ",\"primary_action_calls\":" << primary_action_calls
+              << ",\"primary_action_initializations\":" << primary_action_initializations
+              << ",\"primary_action_timer_calls\":" << primary_action_timer_calls
+              << ",\"primary_action_timer_sweeps\":" << primary_action_timer_sweeps
+              << ",\"primary_action_gate_calls\":" << primary_action_gate_calls
+              << ",\"primary_action_refusals\":" << primary_action_refusals
               << ",\"cutscene_actor_gate_calls\":" << cutscene_actor_gate_calls
               << ",\"cutscene_actor_refusals\":" << cutscene_actor_refusals
               << ",\"linked_actor_cases\":" << linked_actor_cases

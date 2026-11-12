@@ -139,7 +139,8 @@ void scripted_motion_tests(const std::vector<std::vector<std::byte>>& banks,
                 if(pending>0&&current->model_pose_class!=1){if(family==2)++scripted_positive_tracks;else ++primary_scripted_positive_tracks;}
                 if(family==2)++scripted_motion_ticks;else ++primary_scripted_ticks;
             }
-            cutscene_actor_composition(world,id,motion,variant,ram);
+            if(family==2)cutscene_actor_composition(world,id,motion,variant,ram);
+            if(family<2)primary_cutscene_action_composition(world,id,motion,variant,ram);
             if(family==2)linked_actor_composition(world,id,{mode_one,other,additive},variant,ram);
             const auto lease=current;const auto flags=current->contact_flags;
             if(family==2)check(world.linked_models().reset()==g::LinkedStatus::completed,"scripted actor retirement");
@@ -151,6 +152,7 @@ void scripted_motion_tests(const std::vector<std::vector<std::byte>>& banks,
         }
     }
     if(family<2){
+        if(family==0)primary_cutscene_action_gates(ram);
         check(primary_scripted_positive_tracks!=0,"primary callback consumes actual positive additive tracks");
         auto supplied=std::make_shared<a::MotionBank>();supplied->load_strided(inputs.front().raw,200,0,"owned primary diagnostic input");
         check(supplied->find(inputs.front().key,0)->clip()->tracks().size()==36,"diagnostic case uses an actual ordinary primary clip");

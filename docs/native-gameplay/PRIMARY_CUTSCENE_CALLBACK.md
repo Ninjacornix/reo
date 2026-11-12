@@ -1,5 +1,11 @@
 # Primary cinematic animation and callback composition
 
+Historical bounded callback experiment. The subsequent
+[actual dispatch audit and primary action implementation](PRIMARY_CUTSCENE_ACTION.md)
+supersede its categories0/1 use of6BA880: that generic numerical experiment did
+not establish a real primary caller. Production6BA880 admission is now linked-only;
+the qualified primary animation wrappers remain and are consumed by67BE90.
+
 Status: qualified bounded native categories0/1 composition, not the installed
 scene scheduler or complete Step4. Installed game remains V39. No game or new
 performance measurement was run.

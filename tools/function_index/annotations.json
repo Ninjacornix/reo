@@ -128372,7 +128372,7 @@
           "line": 18
         }
       ],
-      "rationale": "Secondary action6 selects signed byte+B38 states0/1/2. State0 sets action6,clears+9..B,+4E4..4EC,and twelve32-byte records+1E4. State1 writes active+1=1,increments+B38,clears states,calls0x67BC90 then0x67BE60. State2 calls0x67BE60. At end+BA4 bit2 propagates to+54A bit40."
+      "rationale": "Action-six SECONDARY-pass target712C10[6]. SignedB38 state0 setsaction6,clears9/A/B,rootdelta4E4XYZ,andtwelve32-byteprimarychannelrecords1E4;cueunchanged. State1 setsvisiblebyte1=1,incrementscue2,clears9/A/B. BOTHstates1and2call67BC90then67BE60. Othercuesskipboth. AllpathspropagateBA4bit2to54Abit40. Noouterpause/activitygate;66A2E0ownslaterrootintegration/basis. Pairednativefull-bodycomparisonsconfirmbothstate1/2calls;earlierstate2-only67BE60descriptioncorrected."
     },
     {
       "id": "o2:0x0067BF90",

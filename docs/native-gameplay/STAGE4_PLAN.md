@@ -145,11 +145,14 @@ Stage4 is fully implemented and verified; do not sleep at component checkpoints.
   IDs per model instance, preserving shared authored skeletons and accessory
   tails. Paired complete helper/configuration/continuation comparisons pass;
   cinematic wrapper adoption and the full primary callback remain open.
-- [Primary cinematic callbacks](PRIMARY_CUTSCENE_CALLBACK.md) now compose the
-  bounded categories0/1 animation wrappers and6BA880 outer movement/pose path.
-  Paired original comparisons and112 real constructor/model/bank lifecycle cases
-  pass. The actual primary/NPC cinematic traversal, remaining scene objects and
-  full installed acceptance remain open.
+- [Actual cinematic primary action dispatch](PRIMARY_CUTSCENE_ACTION.md) now
+  consumes the bounded categories0/1 animation wrappers through67BE90, including
+  channel resets, three sequenced timers, paired-node offsets and movement.
+  Paired original comparisons cover the full signed timer domain and112 actual
+  scene-model lifetimes. This corrects an earlier6BA880 generic callback
+  experiment and a cue2 mapping error. Production6BA880 is linked-only again.
+  Actual primary/NPC traversal, secondary-pose owners, remaining scene objects
+  and full installed acceptance remain open.
 - The [scene NPC loading-mode correction](CUTSCENE_NPC_CONSTRUCTION.md) separates
   asset-loading mode3243D7 from pause4BADF8. Paired current cohorts pass4,384 scene
   cases with independent inputs; the earlier fixture conflated the two and its

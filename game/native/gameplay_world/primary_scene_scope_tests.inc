@@ -70,6 +70,9 @@ void scene_scopes(const char* archive,const char* manifest){
                 const auto id=detached_world.spawn_primary(0,std::move(copied.actor)).id;const auto value=detached_world.resolve(id);
                 value->category=std::uint8_t(family);value->phase=0;value->scripted.emplace();value->scripted->motion_rate_mode=1;value->scripted->motion_selector=ordinary.key;value->root_motion_delta={4,5,6};
                 g::ScriptedActorMotion detached_motion(detached_world,supplied.banks->scripted());bool refused{};
+                g::PrimaryCutsceneAction detached_action(detached_world,detached_motion);detached_action.tick(id);
+                check(!value->model&&!value->animation->model()&&value->root_motion_delta.x==0&&value->phase==0);++detached_scene_action_initializations;
+                value->root_motion_delta={4,5,6};
                 try{detached_motion.tick(id);}catch(const std::runtime_error&){refused=true;}
                 check(refused&&value->phase==1&&!value->model&&!value->animation->model()&&value->root_motion_delta.x==4&&value->root_motion_delta.y==5&&value->root_motion_delta.z==6);
                 ++detached_scene_motion_refusals;check(detached_world.close()==g::Status::completed);
@@ -78,9 +81,11 @@ void scene_scopes(const char* archive,const char* manifest){
         check(motions.publish(scene_motion.banks).status==g::HumanoidPublicationStatus::completed);
         temporary->scripted->motion_rate_mode=1;temporary->scripted->motion_selector=choice_motion.key;temporary->scripted->motion_blend_duration=2.5f;
         g::ScriptedActorMotion motion(world,scene_motion.banks->scripted());
-        const reo::native::gameplay_collision::response::Grid floors{};g::CutsceneActor callback(world,motion,floors);
-        const auto previous_pause=world.paused;world.paused=1;temporary->scripted->cue_phase=1;temporary->scripted->request_flags|=2;
-        for(unsigned tick=0;tick<4;++tick){callback.tick(constructed.id);check(temporary->phase==1&&temporary->scripted->cue_phase==2&&temporary->visible&&temporary->collision.pose_ready&&temporary->animation->resources[0]==scene_motion.banks->scripted().mode_one&&temporary->animation->model()==temporary->model&&temporary->model==owner.resident(0).primary);++scene_scope_motion_ticks;}
+        const reo::native::gameplay_collision::response::Grid floors{};g::GridSurfaceOrientation pose(floors);g::PrimaryCutsceneAction callback(world,motion);
+        const auto previous_pause=world.paused;world.paused=1;temporary->scripted->cue_phase=0;callback.tick(constructed.id);
+        check(temporary->secondary==0&&temporary->phase==0&&temporary->scripted->cue_phase==0);++scene_scope_action_initializations;
+        temporary->scripted->cue_phase=1;temporary->scripted->request_flags|=2;
+        for(unsigned tick=0;tick<4;++tick){callback.tick(constructed.id);g::integrate_local_motion(*temporary);g::rebuild_actor_pose(world,*temporary,pose);check(temporary->phase==1&&temporary->scripted->cue_phase==2&&temporary->visible&&temporary->collision.pose_ready&&temporary->animation->resources[0]==scene_motion.banks->scripted().mode_one&&temporary->animation->model()==temporary->model&&temporary->model==owner.resident(0).primary);++scene_scope_motion_ticks;}
         world.paused=previous_pause;
         ++scene_scope_motion_cases;
         temporary->model->local_translation(0,{321,654,987});const auto retained=owner.resident(0);
