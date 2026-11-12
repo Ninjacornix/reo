@@ -1,0 +1,73 @@
+{
+  "schema": "reo.native.actor_model_classes.qualification.v1",
+  "status": "passed",
+  "source_sha256": {
+    "game/native/gameplay_scenario/actor_model_classes.hpp": "11d42bee5d511c60e9d2105758d20bc4154661c49defb03620fdcdd6ecfb4023",
+    "game/native/gameplay_scenario/interpreter.hpp": "a9d66ed6052e348a6b8d9e20dd8aca8d32ea1302c4362184be7b27f6a4154b97",
+    "game/native/gameplay_scenario/interpreter.cpp": "05b74c645f42284d78a39313bacba9cc0d205eb838f92dc46ce8b399fb0c3120",
+    "game/native/gameplay_application/native_session.cpp": "5f7e53a231c4003987d8c7fe2751043d230b478a54b57d6438347d15511cbaec",
+    "tools/native_reconstruction/gameplay_scenario/tests.cpp": "193d2d0755996f2da285612027de62dc92c8cd5da1c34a98839473c86dcc0d4c",
+    "tools/native_reconstruction/gameplay_scenario/verify.py": "7f97988538d40d8e2423debe658e509c97079a78c040d5f113b551e23bf3e9ba",
+    "tools/native_reconstruction/gameplay_scenario/actor_model_classes_vm_tests.inc": "b4754a32db25f7ef94cccacf757f057d2c43024d5d65a7ee8ca37220e24e0b1b",
+    "tools/native_reconstruction/qualify_actor_model_classes_v1.py": "133dd201a070dc8440c28ec2fac248ff27207d6ebdef5ac08521aefcb6c00b20",
+    "docs/native-gameplay/ACTOR_MODEL_CLASSES.md": "09a522c644cab6b4fed81e8d5c3d04ac1849250343e337eda3a970256a4b439a",
+    "docs/native-gameplay/STAGE4_INTEGRATION_AUDIT.md": "0fb9369bec7531a1d28f986f845d3cb51b9ded78f892ef28fc558be86607e3c7"
+  },
+  "evidence": [
+    {
+      "path": "build-native-sjuni/actor-model-classes-vm-llvm-v2/receipt.json",
+      "sha256": "fdc94b748896a17edefe14d399d886ed50e5d9cb8b31f0bf1ea2677eb5df9854"
+    },
+    {
+      "path": "build-native-sjuni/actor-model-classes-admission-llvm-v1/receipt.json",
+      "sha256": "9e5a86c918ea86b124bc9044df9fb0a4d241d798559957a8f61dc19a3f9740a5"
+    },
+    {
+      "path": "build-native-sjuni/actor-model-classes-parents-llvm-v2/receipt.json",
+      "sha256": "62289ea1c6cc17feee7b41b5f3e8d17de95ae37eafd53b9eeb8941fda90aadd4"
+    },
+    {
+      "path": "build-native-sjuni/actor-model-classes-vm-gcc-v2/receipt.json",
+      "sha256": "cbff1b5a6a4dbdaa7f9170b87383a6f77b541a9467c851c2aea1cbd0b12cacc2"
+    },
+    {
+      "path": "build-native-sjuni/actor-model-classes-admission-gcc-v1/receipt.json",
+      "sha256": "e7627178723dddf69c5a08872831708ee4caf6be93e56dfe71df95ff5dc1a223"
+    },
+    {
+      "path": "build-native-sjuni/actor-model-classes-parents-gcc-v2/receipt.json",
+      "sha256": "61e797aa094943d9f9193f02611bf4688a980b566f13cd74b9f694f3cc8ca316"
+    },
+    {
+      "path": "build-native-sjuni/actor-model-classes-frontier-v1/receipt.json",
+      "sha256": "5948c628e06ea834449ac686540bd76aed6cc8e0f0b0e6278ac59e7184fec48d"
+    }
+  ],
+  "observed": [
+    {
+      "compiler": "llvm",
+      "checks": 579254551,
+      "programs": 24576,
+      "refusals": 9,
+      "parent_tests": 28
+    },
+    {
+      "compiler": "gcc",
+      "checks": 579254551,
+      "programs": 24576,
+      "refusals": 9,
+      "parent_tests": 28
+    }
+  ],
+  "game_launched": false,
+  "device_opened": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "limitations": [
+    "Canonical signed population must be known; positive counts above eight or absent writable records refuse before a Program prefix. Negative full words perform no writes.",
+    "Model class54D is the existing Actor field consumed by native models and contacts, with no duplicate bank or fabricated reload effect.",
+    "Original CPU/register/memory objects occur only in offline qualification.",
+    "All five scenario EVBs remain unsupported;67 ordinary authored instructions across10 opcodes remain. Static authored counts do not prove dynamic reachability.",
+    "The application resource graph, terminal frame services, installed gameV39 replacement, input/network/media and semantic save/resume remain Stage4 gates."
+  ]
+}

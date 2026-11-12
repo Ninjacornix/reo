@@ -92,6 +92,7 @@ public:
     bool admits_difficulty(const gameplay_world::World*)const noexcept;
     bool needs_inventory_ui()const noexcept{return inventory_ui_;}
     bool admits_inventory_ui(const gameplay_world::InventoryUi*,const gameplay_world::World*)const noexcept;
+    bool admits_actor_model_classes(const gameplay_world::World*)const noexcept;
     bool needs_scenario_counter_policy()const noexcept{return scenario_counter_policy_;}
     bool admits_room_counters(const gameplay_world::World*)const noexcept;
     bool admits_inventory_grants(const gameplay_world::World*,const SceneResources*,const ResourceTemplates*)const noexcept;
@@ -127,6 +128,7 @@ private:
     bool resource_activation_{};
     bool difficulty_{};
     bool inventory_ui_{};
+    bool actor_model_classes_{};
     bool scenario_events_{};
     DispatchProfile profile_{};
 };

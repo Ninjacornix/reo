@@ -23,6 +23,7 @@
 #include "script_resource_activation.hpp"
 #include "scenario_events.hpp"
 #include "difficulty_predicate.hpp"
+#include "actor_model_classes.hpp"
 #include "../gameplay_world/inventory_ui.hpp"
 #include "scene_record_parameters.hpp"
 #include "actor_script_commands.hpp"
@@ -62,6 +63,7 @@ std::size_t payload_minimum(std::uint32_t op)noexcept{
     case 0x53:case 0x56:case 0x59:case 0x5b:case 0x5c:case 0x5d:case 0x5e:return 4;
     case 0x61:case 0x70:case 0xa0:case 0xa1:return 4;case 0x20:case 0x23:case 0x24:case 0x65:return 1;case 0x10:case 0x11:case 0x14:return 4;case 0x13:return 6;case 0x15:return 1;case 0x16:return 16;case 0x17:return 8;
     case 3:case 4:case 6:case 0x44:case 0x4c:return 4;case 8:return 5;
+    case 0x64:return 1;
     case 0xee:return 5;
     case 0xe3:case 0xe6:case 0xe8:case 0xe9:case 0xec:case 0xed:case 0xef:case 0xf4:case 0xf5:return 8;
     case 0x40:case 0x41:case 0x42:case 0x43:case 0x47:case 0x48:case 0x49:case 0x4d:case 0x110:case 0x111:case 0x112:return 8;
@@ -172,6 +174,7 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
             }
             if(!noop&&op==0xee&&std::to_integer<std::uint8_t>(b[at+8])<6){difficulty_=true;world_=true;}
             inventory_ui_|=!noop&&op==0x108;
+            actor_model_classes_|=!noop&&op==0x64;
             low_actor_population_|=!noop&&(op==0x38||op==0x39);
             full_actor_population_|=!noop&&op==0x173;
             npc_inventory_grants_|=!noop&&op==0x3a;
@@ -276,6 +279,9 @@ bool Program::admits_difficulty(const gameplay_world::World* world)const noexcep
 bool Program::admits_inventory_ui(const gameplay_world::InventoryUi* ui,const gameplay_world::World* world)const noexcept{
     return !inventory_ui_||(ui&&world&&ui->bound_to(*world)&&ui->close_ready());
 }
+bool Program::admits_actor_model_classes(const gameplay_world::World* world)const noexcept{
+    return !actor_model_classes_||(world&&actor_model_classes_ready(*world));
+}
 bool Program::admits_room_counters(const gameplay_world::World* world)const noexcept {
     return !room_counters_ || (world && !world->closed() &&
         world->session().room_contacts.counters_ready(scenario_counter_policy_));
@@ -348,6 +354,7 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     out[0xd1].native_algorithm=true;out[0xd1].world_required=true;
     out[0xee].native_algorithm=true; // Valid comparisons require canonical difficulty, selected per Program.
     out[0x108].native_algorithm=true;out[0x108].world_required=true;
+    out[0x64].native_algorithm=true;out[0x64].world_required=true;
     if(profile==DispatchProfile::offline_actor)for(std::size_t i=0;i<out.size();++i){
         if(offline_bindings[i].noop)out[i]={true,false,false,false};
         else if(!offline_bindings[i].same_handler&&i!=0xb&&i!=0xc&&i!=0xe3&&i!=0xed&&i!=0xef&&i!=0x104&&i!=0x105)out[i]={};
@@ -429,6 +436,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
     if(!c.program->admits_scenario_events(providers.scenario_events,providers.world))return{Status::provider_unavailable,0,{},0};
     if(!c.program->admits_difficulty(providers.world))return{Status::provider_unavailable,0,{},0};
     if(!c.program->admits_inventory_ui(providers.inventory_ui,providers.world))return{Status::provider_unavailable,0,{},0};
+    if(!c.program->admits_actor_model_classes(providers.world))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_selected_actor()&&!providers.world->primary(context.selected_actor))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_action_choices()&&!providers.action_choices)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_scenario()&&!providers.world->scenario)return{Status::provider_unavailable,0,{},0};
@@ -529,6 +537,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
             break;}
         case 0xb0:case 0xb1:if(providers.models->visibility(std::to_integer<std::uint8_t>(payload[0]),opcode==0xb1)!=ModelStatus::completed)return result(Status::provider_unavailable);break;
         case 0xb4:if(providers.models->adjust(std::to_integer<std::uint8_t>(payload[0]),value(4))!=ModelStatus::completed)return result(Status::provider_unavailable);break;
+        case 0x64:if(!set_actor_model_classes(*providers.world,std::to_integer<std::uint8_t>(payload[0])))return result(Status::provider_unavailable);break;
         case 0x65:providers.world->session().script_room_parameter=std::to_integer<std::uint8_t>(payload[0]);break;
         case 0x68:
             if(!gameplay_world::queue_character_placement(*providers.world,std::to_integer<std::uint8_t>(payload[0]),

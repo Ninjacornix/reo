@@ -19,7 +19,7 @@ bool minimal_room_providers(const scenario::Program& program,const gameplay_worl
         !program.needs_periodic_effects()&&!program.needs_surface_effects()&&!program.needs_forced_terminal()&&
         !program.needs_script_audio()&&!program.needs_scene_record_parameters()&&!program.needs_resource_parameters()&&!program.needs_resource_activation()&&
         program.admits_room_counters(nullptr)&&program.admits_inventory_grants(nullptr,nullptr,nullptr)&&
-        program.admits_actor_roster(nullptr)&&program.admits_character_remap(nullptr)&&program.admits_actor_script_commands(nullptr)&&program.admits_difficulty(&world)&&program.admits_inventory_ui(&ui,&world);
+        program.admits_actor_roster(nullptr)&&program.admits_character_remap(nullptr)&&program.admits_actor_script_commands(nullptr)&&program.admits_difficulty(&world)&&program.admits_inventory_ui(&ui,&world)&&program.admits_actor_model_classes(&world);
 }
 }
 struct NativeSession::RoomState final:gameplay_scenario::ControlEffects {
