@@ -62,7 +62,9 @@ def main():
     p.add_argument('--focus-companions', action='store_true')
     p.add_argument('--weapon-actions', action='store_true', help='Focused canonical65EC40/65E750 resource-action comparisons')
     p.add_argument('--weapon-fire', action='store_true', help='Also compare complete65E880 preparation and dispatch with declared effect/UI ports')
+    p.add_argument('--resource-flights', action='store_true', help='Focused actual resource flight/room/native-audio owner comparisons')
     args = p.parse_args()
+    if args.resource_flights:args.weapon_actions=True
     if args.weapon_fire: args.weapon_actions=True
     if args.weapon_actions:
         for name in ['resource_pulses','resource_static','resource_factory','resource_placement','resource_delayed','resource_actions','resource_inventory','resource_content','resource_pairs','resource_recipes','owned_recipes','resource_consumption','resource_wrappers','resource_health','resource_deployment','resource_effects','resource_debris','resource_depletion','stock_wmd_absence','resource_use','weapon_resources','resource_companion_policy','resource_companions']:
@@ -126,10 +128,12 @@ def main():
     if args.resource_delayed: pending += [0x1904a0,0x190020]
     if args.resource_debris: pending += [0x1900e0]
     if args.weapon_fire: pending += [0x18fdf0,0x1901a0,0x190100,0x1913e0,0x191500,0x1919d0,0x191a40]
+    if args.resource_flights:pending += [0x58e6d0,0x58e850]
     ports = [0x107c68, 0x18dc50, 0x18dca0, 0x18dc90, 0x1b10c0, 0x1b1110, 0x1b3830, 0x573740]
     if args.resource_companions:
         pending += [0x654180,0x652880,0x654720,0x5df450]
         ports += [0x6b2680,0x1b8c70]
+    if args.resource_flights:ports += [0x5795e0,0x57d560,0x1b93d0]
     entries = {}
     while pending:
         at = pending.pop()
@@ -269,6 +273,7 @@ def main():
     if args.resource_depletion: units+=['game/native/gameplay_world/resource_depletion.cpp']
     if args.weapon_actions: units+=['game/native/gameplay_world/weapon_actions.cpp','game/native/gameplay_world/animation_events.cpp']
     if args.weapon_fire: units+=['game/native/gameplay_world/weapon_fire.cpp']
+    if args.resource_flights:units+=['game/native/gameplay_world/resource_flight_audio.cpp','game/native/gameplay_world/flight_weapon_effects.cpp']
     if args.resource_ownership: units+=['game/native/gameplay_world/resource_ownership.cpp']
     if args.actor_resource_operations: units+=['game/native/gameplay_world/actor_resource_operations.cpp','game/native/gameplay_world/equipment_notice.cpp','game/native/gameplay_world/resource_auxiliary_lists.cpp']
     if args.actor_terminal: units+=['game/native/gameplay_world/actor_terminal_timer.cpp']
@@ -340,6 +345,8 @@ def main():
         name='tools/native_reconstruction/weapon_actions_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.weapon_fire:
         name='tools/native_reconstruction/weapon_fire_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.resource_flights:
+        name='tools/native_reconstruction/resource_flight_owner_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.resource_ownership:
         name='tools/native_reconstruction/resource_ownership_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.actor_resource_operations:
@@ -483,6 +490,9 @@ def main():
         if args.weapon_actions:
             for at,size in [(0x719a60,64*68),(0x71ae80,13*32),(0x740480,12)]:
                 value=overlay['o2'][at-0x570000:at-0x570000+size];record.setdefault('weapon_action_tables',{})[hex(at)]={'bytes':size,'sha256':hashlib.sha256(value).hexdigest()};init+='{const std::uint8_t data[]{'+','.join(str(v)for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
+        if args.resource_flights:
+            for bank,at,size in [('sub',0x2392b8,76),('sub',0x241c00,0x400),('o0',0x38b290,4),('o2',0x7093d8,24),('o2',0x7093f0,108),('o2',0x709460,32)]:
+                base=0x370000 if bank=='o0'else 0x570000;value=main_read(at,size)if bank=='sub'else overlay[bank][at-base:at-base+size];record.setdefault('flight_tables',{})[hex(at)]={'bytes':size,'sha256':hashlib.sha256(value).hexdigest()};init+='{const std::uint8_t data[]{'+','.join(str(v)for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
         if args.actor_progression:
             for at,size in [(0x71adb0,32),(0x71add0,32),(0x71ad10,32),(0x740478,4)]:
                 value=overlay['o2'][at-0x570000:at-0x570000+size];record.setdefault('gauge_progression_tables',{})[hex(at)]={'bytes':size,'sha256':hashlib.sha256(value).hexdigest()};init+='{const std::uint8_t data[]{'+','.join(str(v)for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
@@ -562,6 +572,16 @@ def main():
             record['declared_ports'].append('1B93D0 final positioned bank request uses an independently qualified native audio owner/mixer; complete1B8C70 frontend executes; '+cue_name+' cue bank is a controlled identity-bank assignment')
             if args.stock_wmd_absence:
                 record['declared_ports'].append('1CC8F0 returns0 without writing only for the18 independently audited missing stock WMD paths; complete original refresh/depletion callers execute. Original filesystem worker internals are not newly executed.')
+        if args.resource_flights:
+            path=ROOT/'build-native-sjuni/gameplay-collision-response-llvm-v8/receipt.json';grid_record=json.loads(path.read_bytes());record['flight_geometry_parent']={'path':path.relative_to(ROOT).as_posix(),'sha256':sha(path),'assets':{}}
+            for source,target in [('w0010100.bin','owned_flight_walls.bin'),('g0010100.bin','owned_flight_floors.bin')]:
+                asset=path.parent/source;assert sha(asset)==grid_record['output_sha256'][source];(out/target).write_bytes(asset.read_bytes());record['flight_geometry_parent']['assets'][source]=sha(asset)
+            flight_cue=next(m for m in json.loads(inventory.read_bytes()) if 'weapon01.snd' in [name.lower()for name in m.get('names',[])])
+            with (ROOT/'iso/Resident Evil - Outbreak (v2.00).iso').open('rb')as iso:
+                iso.seek(flight_cue['iso_offset']);data=iso.read(flight_cue['bytes']);assert hashlib.sha256(data).hexdigest()==flight_cue['sha256']
+            begin=struct.unpack_from('<I',data,32)[0]+16;assert data[begin+4*16]==data[begin+7*16]==0
+            (out/'owned_flight_cue.bin').write_bytes(data);record['flight_cue_asset']=flight_cue
+            record['declared_ports'].append('Complete58E6D0/58E850 and actual original work/geometry-cache ownership execute.5795E0/57D560 call actual independently qualified native traces on retained owned wall/floor grids;1B93D0 uses an independent real native audio owner/mixer.')
         env = dict(os.environ)
         env['PATH'] = str(args.compiler.resolve().parent) + os.pathsep + env.get('PATH', '')
         binary = out / 'checks.exe'
@@ -588,6 +608,7 @@ def main():
         if args.stock_wmd_absence: command.insert(1,'-DREO_STOCK_WMD_ABSENCE=1')
         if args.resource_use: command.insert(1,'-DREO_RESOURCE_USE=1')
         if args.weapon_actions: command.insert(1,'-DREO_WEAPON_ACTIONS_ONLY=1')
+        if args.resource_flights:command.insert(1,'-DREO_RESOURCE_FLIGHT_ONLY=1')
         if args.weapon_fire:
             command.insert(1,'-DREO_WEAPON_FIRE=1')
             record['declared_ports'].append('Complete65E880 body and reached math/6B4420 execute;665CA0 feedback and distinct5823E0/6B24F0/5DD270/58E6D0 constructors are controlled ordered effect ports with synchronous action mutations, not newly executed effect implementations.')

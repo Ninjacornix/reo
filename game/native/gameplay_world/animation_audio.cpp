@@ -69,6 +69,11 @@ void BasicAudio::resource(Actor& actor, std::uint16_t event) {
     // bank number. All other signed byte values take the same identity bank.
     request(actor, unsigned(actor.slot) + 8u, event);
 }
+void BasicAudio::flight_contact(Actor& actor,animation::Vector point){
+    admit(actor);last_.reset();
+    if(actor.category==0)last_=owner_.positional({unsigned(actor.slot)+8u,4},{point.x,point.y,point.z},spatial_,1);
+    else this->actor(actor,7,true); // complete1B8B20 category1 gate/bank13
+}
 void BasicAudio::surface(Actor& actor, std::int8_t kind) {
     admit(actor);
     last_.reset();

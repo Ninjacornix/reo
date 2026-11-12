@@ -21,6 +21,8 @@ class BasicAudio final : public Audio {
     void resource(Actor&, std::uint16_t event) override;
     void node(Actor&, std::uint16_t) override;
     void position(Actor&, std::uint32_t) override;
+    void flight_contact(Actor&,animation::Vector point);
+    bool bound_to(const World& world)const noexcept{return &world_==&world&&!world.closed()&&owner_.bound_to(world.session().random);}
     bool bound_to(const World& world,const gameplay_scenario::SceneResources& resources,const gameplay_scenario::ResourceTemplates& templates)const noexcept{
         return &world_==&world && &resources_==&resources && &templates_==&templates&&!world.closed()&&owner_.bound_to(world.session().random);
     }

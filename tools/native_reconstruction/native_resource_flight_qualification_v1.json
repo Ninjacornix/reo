@@ -1,0 +1,290 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_effects/resource_flight.hpp": "910ee728e8b4947da425cfce454303df167c8196b8c3e3579403c129accc8ce4",
+    "game/native/gameplay_effects/resource_flight.cpp": "3b3ea3266308ae7e73965d27ff36615fbd30ef834842cb5447ccb8271e666d10",
+    "game/native/gameplay_effects/resource_flight_profile.inc": "11260680fdc1ee432d433104faec9efbdbb1f0bfebbe22f5f110a0fce80d80aa",
+    "game/native/gameplay_effects/resource_flight_queries.hpp": "5642c37759d686ca74aa68ae81e74cc9b066e8de375176e123a47a0e40ddddb7",
+    "game/native/gameplay_effects/resource_flight_queries.cpp": "d1159000c4988534c10f43b3e4b1c8420a0de1b06bb5fc22afb612a5ef48f83f",
+    "game/native/gameplay_effects/periodic_visuals.hpp": "d468e43ab7cedf5bb7fbc276bfc4a85c835d8bc519c836aed0427f8052b91f67",
+    "game/native/gameplay_effects/periodic_visuals.cpp": "4fc72461d8eb4778fe6a766f713a22ac6b1a0f9b944341b1f600b4285fdba2dd",
+    "game/native/gameplay_effects/CMakeLists.txt": "5e1bee07ced8fd2976ea00c771e0fd70484bbd3f84acf6f1eef148e183422271",
+    "game/native/gameplay_world/animation_audio.hpp": "485c590790457b1271cfd76e3d6adcab2ef2e329101c89297f571b818949abd3",
+    "game/native/gameplay_world/animation_audio.cpp": "fdbbc9043ed79334b52b831c7ab0cceab37d4512d4605d4e3c53846c12d7c281",
+    "game/native/gameplay_world/resource_flight_audio.hpp": "71ff2f913d12a8d9d1a0ca7976eff1efa10d4c4b1eef142fefb21f80cb35c7f7",
+    "game/native/gameplay_world/resource_flight_audio.cpp": "370d6db453c04ab926fdfce56302089d6267b7ca68f16250093f89f58314cd18",
+    "game/native/gameplay_world/flight_weapon_effects.hpp": "4c435274067db29d222600ca4729a852ca79b138c1af1cbda31a4161075fd03e",
+    "game/native/gameplay_world/flight_weapon_effects.cpp": "cff916f5e988ab226dd88a2efe27b8e2ce3c6abdd0c8c16e914978a84930df14",
+    "tools/native_reconstruction/effect_work_sources.py": "d3e39d5137c08e6aaad54e8272d25bb43361e588757cbee4a00207eca54f2d24",
+    "tools/native_reconstruction/verify_periodic_visuals.py": "c0aec25483a4b64538965c12e333d3a376d2118ac18ab09588a39590e0858c58",
+    "tools/native_reconstruction/periodic_visuals_tests.cpp": "08b6e8fb0167e7ad245423fe60ea4801183aa1d703fad5833e9ff39fe6981203",
+    "tools/native_reconstruction/generate_resource_flight_profile.py": "9d05d9bf6bf719e14a5615f72af6ff274ce943d53c713541468abfac58fb6f0b",
+    "tools/native_reconstruction/verify_resource_flight.py": "ec4af58052c9e4a39177ff7e99f0f9550470dca9add293875e790f4d915ebfae",
+    "tools/native_reconstruction/resource_flight_tests.cpp": "3a187349c28e77c739ea4b7c1559e35e7a56cf2e704c537b35e5987873e667c1",
+    "tools/native_reconstruction/resource_flight_owner_tests.inc": "01faf4a372e57f38d8f7a42e3c54c8da3228e999510fe9f6733d3e264dc2cdab",
+    "tools/native_reconstruction/qualify_resource_flight_v1.py": "68d332c64f3e77bdaa68b13d79986538ffda83c7d058fda8b3e69a62d1d29726",
+    "docs/native-gameplay/RESOURCE_FLIGHT.md": "8d948f9186d7da330d856e480b5828fc85692b4b73a7615dccc15d29b0ecef8b"
+  },
+  "cohorts": {
+    "llvm": {
+      "policy": {
+        "path": "build-native-sjuni/resource-flight-policy-llvm-v4/receipt.json",
+        "sha256": "65985cf57111c66466de594a6974636bd6823c0f9842a738fc18c505581edaf2",
+        "observed": {
+          "checks": 22014002,
+          "cases": 1310720,
+          "constructors": 32768,
+          "queries": 786432,
+          "cues": 157184,
+          "retirements": 262144,
+          "original_calls": 4340187,
+          "game_run": false
+        },
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "subsequent_dependency_changes": {}
+      },
+      "owner": {
+        "path": "build-native-sjuni/resource-flight-owner-llvm-v4/receipt.json",
+        "sha256": "fdb3ec9a64472b2eed506d9db82d4125e8c5e0ec33a0f41011e79ca9da1af200",
+        "observed": {
+          "checks": 1422206,
+          "flight_owner_cases": 1152,
+          "flight_owner_frames": 12408,
+          "flight_owner_cues": 372,
+          "flight_pcm_frames": 3176448,
+          "flight_signal_samples": 2172728,
+          "flight_owner_refusals": 5,
+          "original_helper_calls": 14768560,
+          "game_run": false
+        },
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "subsequent_dependency_changes": {},
+        "flight_geometry_parent": {
+          "path": "build-native-sjuni/gameplay-collision-response-llvm-v8/receipt.json",
+          "sha256": "17c92e8858260c0823ec24a2824bc635cb8cb9c3b9a835ae5c68a80efcb27e94",
+          "assets": {
+            "w0010100.bin": "3ef29ed4ff7bdac36878544e4167c3079f8be817dc95182ffd61b1724b5871b3",
+            "g0010100.bin": "cacd5b62220d57a7207b193ea601803981fa6c71714dd02303c5658ed9e18385"
+          }
+        },
+        "flight_cue_asset": {
+          "container": "NETBIO01.DAT",
+          "member": "NETBIO01.DAT/0/355",
+          "names": [
+            "adxsnd.afs",
+            "weapon01.snd"
+          ],
+          "iso_offset": 1526063104,
+          "parent_relative_offset": 601956352,
+          "bytes": 63808,
+          "container_sha256": "067b0bd9e32f9c3628520faad70f0961874d618f1bb56b7e834f8fd0a41017c2",
+          "sha256": "0aa6f207de6aaa02e9ef79052713cce256b40a7b11d9358b6bdbcf5ffc0f85b9",
+          "recognition": "opaque_unparsed"
+        },
+        "declared_ports": [
+          "107C68 bounded memset;18DC50/18DCA0/18DC90 private resource allocation/lookup/release",
+          "1B10C0/1B1110 resource-cache bookkeeping",
+          "1B3830 debug-overfree diagnostic remains unadmitted and throws if reached",
+          "573740 task retirement is a declared independently qualified native scheduler seam",
+          "107AB0 bounded byte copy for owned version3 template sections",
+          "616F60 actual native Grid.floor consumer; independently qualified floor policy, not another comparison of its internals",
+          "18DBB0 bounded29-byte source stack-to-character7 inventory copy; no source arena alias emulation",
+          "10A830 bounded formatting of two exact owned weapon format strings",
+          "1CC8F0 copies owned WMD bytes into the bounded original cleared buffer; unused return not compared",
+          "107AB0 bounded16-byte source queue name copy",
+          "Native bank loader and PCM mixer internals are independently qualified; this checks their concrete composition",
+          "654720 state-policy cohort captures652880 child rendering,652D60/651D00 retirement,654180 child fade,6B2680 gameplay spawn and1B8C70 resource audio as intents only; their actual integration is not qualified by these policy cases",
+          "1B0300 exact three-word raw-mode getter3243F2; actual1B0340/1B02D0 bodies execute",
+          "UI close6E1430, controller feedback665CA0, text resolve1C1CE0 and notice1B4820; actual UI/device consumers remain open",
+          "57D560 delegates to actual canonical Grid/trace.floor; independent trace internals are not requalified by debris lifecycle comparisons",
+          "1B93D0 final positioned bank request uses an independently qualified native audio owner/mixer; complete1B8C70 frontend executes; weapon35.snd cue bank is a controlled identity-bank assignment",
+          "1CC8F0 returns0 without writing only for the18 independently audited missing stock WMD paths; complete original refresh/depletion callers execute. Original filesystem worker internals are not newly executed.",
+          "Complete58E6D0/58E850 and actual original work/geometry-cache ownership execute.5795E0/57D560 call actual independently qualified native traces on retained owned wall/floor grids;1B93D0 uses an independent real native audio owner/mixer."
+        ]
+      },
+      "periodic-parent": {
+        "path": "build-native-sjuni/resource-flight-periodic-parent-llvm-v1/receipt.json",
+        "sha256": "6288503ccd743bd6da5aa607c957e5def45a69fc012de8b3eeb14af28f34a32a",
+        "observed": {
+          "checks": 1300872,
+          "banks": 6,
+          "updates": 7200,
+          "created": 2808,
+          "expired": 2286,
+          "piece_cases": 32532,
+          "camera_cases": 65536,
+          "signed_timer_cases": 65536,
+          "task_cases": 8688,
+          "original_helper_calls": 3758065,
+          "heap_allocations": 5058,
+          "heap_releases": 5058,
+          "concurrent_reader_pass": true,
+          "game_run": false
+        },
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "subsequent_dependency_changes": {}
+      }
+    },
+    "gcc": {
+      "policy": {
+        "path": "build-native-sjuni/resource-flight-policy-gcc-v4/receipt.json",
+        "sha256": "6416d4827e1af1fd8b9b85c21d47a122d41ac81dae16a29a709c89002381faf2",
+        "observed": {
+          "checks": 22014002,
+          "cases": 1310720,
+          "constructors": 32768,
+          "queries": 786432,
+          "cues": 157184,
+          "retirements": 262144,
+          "original_calls": 4340187,
+          "game_run": false
+        },
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "subsequent_dependency_changes": {}
+      },
+      "owner": {
+        "path": "build-native-sjuni/resource-flight-owner-gcc-v4/receipt.json",
+        "sha256": "0d1d0a3b554ecd998caae9fa85cb9d40587e7bd88c08498bbe63bde6d8cb49d2",
+        "observed": {
+          "checks": 1422206,
+          "flight_owner_cases": 1152,
+          "flight_owner_frames": 12408,
+          "flight_owner_cues": 372,
+          "flight_pcm_frames": 3176448,
+          "flight_signal_samples": 2172728,
+          "flight_owner_refusals": 5,
+          "original_helper_calls": 14768560,
+          "game_run": false
+        },
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "subsequent_dependency_changes": {},
+        "flight_geometry_parent": {
+          "path": "build-native-sjuni/gameplay-collision-response-llvm-v8/receipt.json",
+          "sha256": "17c92e8858260c0823ec24a2824bc635cb8cb9c3b9a835ae5c68a80efcb27e94",
+          "assets": {
+            "w0010100.bin": "3ef29ed4ff7bdac36878544e4167c3079f8be817dc95182ffd61b1724b5871b3",
+            "g0010100.bin": "cacd5b62220d57a7207b193ea601803981fa6c71714dd02303c5658ed9e18385"
+          }
+        },
+        "flight_cue_asset": {
+          "container": "NETBIO01.DAT",
+          "member": "NETBIO01.DAT/0/355",
+          "names": [
+            "adxsnd.afs",
+            "weapon01.snd"
+          ],
+          "iso_offset": 1526063104,
+          "parent_relative_offset": 601956352,
+          "bytes": 63808,
+          "container_sha256": "067b0bd9e32f9c3628520faad70f0961874d618f1bb56b7e834f8fd0a41017c2",
+          "sha256": "0aa6f207de6aaa02e9ef79052713cce256b40a7b11d9358b6bdbcf5ffc0f85b9",
+          "recognition": "opaque_unparsed"
+        },
+        "declared_ports": [
+          "107C68 bounded memset;18DC50/18DCA0/18DC90 private resource allocation/lookup/release",
+          "1B10C0/1B1110 resource-cache bookkeeping",
+          "1B3830 debug-overfree diagnostic remains unadmitted and throws if reached",
+          "573740 task retirement is a declared independently qualified native scheduler seam",
+          "107AB0 bounded byte copy for owned version3 template sections",
+          "616F60 actual native Grid.floor consumer; independently qualified floor policy, not another comparison of its internals",
+          "18DBB0 bounded29-byte source stack-to-character7 inventory copy; no source arena alias emulation",
+          "10A830 bounded formatting of two exact owned weapon format strings",
+          "1CC8F0 copies owned WMD bytes into the bounded original cleared buffer; unused return not compared",
+          "107AB0 bounded16-byte source queue name copy",
+          "Native bank loader and PCM mixer internals are independently qualified; this checks their concrete composition",
+          "654720 state-policy cohort captures652880 child rendering,652D60/651D00 retirement,654180 child fade,6B2680 gameplay spawn and1B8C70 resource audio as intents only; their actual integration is not qualified by these policy cases",
+          "1B0300 exact three-word raw-mode getter3243F2; actual1B0340/1B02D0 bodies execute",
+          "UI close6E1430, controller feedback665CA0, text resolve1C1CE0 and notice1B4820; actual UI/device consumers remain open",
+          "57D560 delegates to actual canonical Grid/trace.floor; independent trace internals are not requalified by debris lifecycle comparisons",
+          "1B93D0 final positioned bank request uses an independently qualified native audio owner/mixer; complete1B8C70 frontend executes; weapon35.snd cue bank is a controlled identity-bank assignment",
+          "1CC8F0 returns0 without writing only for the18 independently audited missing stock WMD paths; complete original refresh/depletion callers execute. Original filesystem worker internals are not newly executed.",
+          "Complete58E6D0/58E850 and actual original work/geometry-cache ownership execute.5795E0/57D560 call actual independently qualified native traces on retained owned wall/floor grids;1B93D0 uses an independent real native audio owner/mixer."
+        ]
+      },
+      "periodic-parent": {
+        "path": "build-native-sjuni/resource-flight-periodic-parent-gcc-v1/receipt.json",
+        "sha256": "a96328cadb0345f69cf393848f9a38c1a11aaf6ebfcd66cf2d84e3d399289387",
+        "observed": {
+          "checks": 1300872,
+          "banks": 6,
+          "updates": 7200,
+          "created": 2808,
+          "expired": 2286,
+          "piece_cases": 32532,
+          "camera_cases": 65536,
+          "signed_timer_cases": 65536,
+          "task_cases": 8688,
+          "original_helper_calls": 3758065,
+          "heap_allocations": 5058,
+          "heap_releases": 5058,
+          "concurrent_reader_pass": true,
+          "game_run": false
+        },
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "subsequent_dependency_changes": {}
+      }
+    }
+  },
+  "current_parent_tests": {
+    "llvm": {
+      "path": "build-native-sjuni/script-resource-activation-parents-llvm-v2/receipt.json",
+      "sha256": "7c51975b05f6ac6659baeb51118440a4232524506473c07ff3b2ac64cd4bd4ac",
+      "parent_tests": 19
+    },
+    "gcc": {
+      "path": "build-native-sjuni/script-resource-activation-parents-gcc-v2/receipt.json",
+      "sha256": "4b3be45c925abbb405b0852dfadd455f032feafd4a5b45513860c57f973824c3",
+      "parent_tests": 19
+    }
+  },
+  "cmake_builds": {
+    "llvm": {
+      "command": [
+        "C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe",
+        "--build",
+        "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\gameplay-native-llvm-v1",
+        "--target",
+        "reo_native_weapon_flight_effects",
+        "--parallel",
+        "2"
+      ],
+      "returncode": 0,
+      "output": "ninja: no work to do.\r\n",
+      "libraries": {
+        "build-native-sjuni/gameplay-native-llvm-v1/gameplay_effects/libreo_native_gameplay_effects.a": "cd7ad045b2d2eb740e3ecf43de692d91aa7ff4f1690e5f68354d961a3e1b6cfa",
+        "build-native-sjuni/gameplay-native-llvm-v1/gameplay_effects/libreo_native_periodic_visuals.a": "345865f7675d56eb8dd0cd06adda4e2f6e65a3de696aa7a9bc76075eca6c6911",
+        "build-native-sjuni/gameplay-native-llvm-v1/gameplay_effects/libreo_native_resource_flight_audio.a": "180613f44038729c85837113fd45fb05b8b792a09da470e3945e158ef69ff60f",
+        "build-native-sjuni/gameplay-native-llvm-v1/gameplay_effects/libreo_native_weapon_flight_effects.a": "25e11659280731369f5d668525580d5fab78a8550366eb6450f7eaba261bc57d"
+      }
+    },
+    "gcc": {
+      "command": [
+        "C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe",
+        "--build",
+        "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\gameplay-native-gcc-v1",
+        "--target",
+        "reo_native_weapon_flight_effects",
+        "--parallel",
+        "2"
+      ],
+      "returncode": 0,
+      "output": "ninja: no work to do.\r\n",
+      "libraries": {
+        "build-native-sjuni/gameplay-native-gcc-v1/gameplay_effects/libreo_native_gameplay_effects.a": "121416b7a2324fbc6e019a54ef0e788d3716ec37b6668ce9cb036b5b22c6a920",
+        "build-native-sjuni/gameplay-native-gcc-v1/gameplay_effects/libreo_native_periodic_visuals.a": "16ff694d7be56371194af6047e280cb3635a8865572f0fd128940021e3a331e6",
+        "build-native-sjuni/gameplay-native-gcc-v1/gameplay_effects/libreo_native_resource_flight_audio.a": "3f67a603ea969bc515b75e94e490f77d598e7b4fea9a4ee95bae817e157b3b4b",
+        "build-native-sjuni/gameplay-native-gcc-v1/gameplay_effects/libreo_native_weapon_flight_effects.a": "b5950179c4987b93c7aeecaaae1ac5390263090f41077db3d4a5e95e3d19d21e"
+      }
+    }
+  },
+  "limits": [
+    "Original geometry allocation/render lookup/retirement are declared oracle ports.",
+    "Room trace ports use independently qualified native traces on retained owned grids.",
+    "Cue bank assignment is an explicit fixture; no installed game bank setup claim.",
+    "Other weapon families, renderer installation and full gameplay acceptance remain open."
+  ]
+}

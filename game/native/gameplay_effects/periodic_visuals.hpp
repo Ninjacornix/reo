@@ -4,6 +4,7 @@
 #include "surface_work.hpp"
 #include "resource_companion.hpp"
 #include "resource_debris.hpp"
+#include "resource_flight.hpp"
 namespace reo::native::gameplay_world {class ResourceFactory;}
 #include "../gameplay_scenario/surface_effects.hpp"
 #include "../gameplay_scenario/periodic_effects.hpp"
@@ -50,6 +51,7 @@ struct VisualOutput {
     std::optional<std::uint8_t> category;
     std::vector<PieceOutput> pieces;
     std::optional<ResourceDebrisState> debris;
+    std::optional<ResourceFlightState> flight;
 };
 struct EffectFrame {std::uint64_t revision{};std::vector<VisualOutput> visuals;};
 enum class VisualStatus {completed,closed,busy,invalid_camera,invalid_profile,no_memory};
@@ -88,6 +90,10 @@ public:
     DebrisPiece create_resource_debris_piece(const gameplay_actors::EntityId&,std::uint32_t part,std::uint32_t effect)noexcept;
     CompanionsCreated create_resource_debris(const gameplay_actors::EntityId&)noexcept;
     std::optional<ResourceDebrisState> resource_debris_state(const gameplay_actors::EntityId&)const noexcept;
+    bool bind_resource_flights(gameplay_world::World&,gameplay_contact_world::RoomResources&,FlightAudio&)noexcept;
+    bool flights_bound_to(const gameplay_world::World&)const noexcept;
+    DebrisPiece create_resource_flight(const gameplay_actors::EntityId&,const transform_math::Matrix&,std::uint32_t style)noexcept;
+    std::optional<ResourceFlightState> resource_flight_state(const gameplay_actors::EntityId&)const noexcept;
     gameplay_scenario::EmissionResult emit(const gameplay_scenario::PeriodicEmission&)noexcept override;
     WorkCreated create(const WorkRequest&)noexcept override;
     WorkStatus emit_surface(const SurfaceEmission&)noexcept override;
@@ -107,6 +113,7 @@ private:
     struct SurfaceRuntime;
     struct CompanionRuntime;
     struct DebrisRuntime;
+    struct FlightRuntime;
     class SurfaceSink;
     struct Piece {bool active{};PieceOutput output;};
     gameplay_actors::EntityStore entities_{{168}};
@@ -118,6 +125,7 @@ private:
     std::unique_ptr<SurfaceRuntime> surfaces_;
     std::unique_ptr<CompanionRuntime> companions_;
     std::unique_ptr<DebrisRuntime> debris_;
+    std::unique_ptr<FlightRuntime> flights_;
     std::shared_ptr<Editing> editing_;
     mutable std::mutex publication_;
     std::shared_ptr<const EffectFrame> published_;

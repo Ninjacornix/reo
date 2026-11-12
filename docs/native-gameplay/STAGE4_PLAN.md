@@ -4,10 +4,16 @@ Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification with multiple agents. The user is awake and has revoked the prior
 sleep request: finish Stage4 and do not put the PC to sleep afterward.
 
+- [Resource flight effects](RESOURCE_FLIGHT.md) now run the full constructor and
+  lifetime through the canonical visual pool, retained room traces, actual audio
+  and firing adapter. Both compilers pass32,768 constructors,1,310,720 policy cases
+  and12,408 owner frames, including matching nonzero PCM. Existing visual
+  regressions pass. Contact/pose families and complete game acceptance remain open.
+
 - [Transient weapon lights](TRANSIENT_WEAPON_LIGHTS.md) now supply the actual
   attack light constructor, both canonical light pools and linked-task lifetime.
   Both compilers pass1,310,720 callback states and77 owner/adapter cases;
-  primary-light regressions also pass. Pose/contact/flight effect families and
+  primary-light regressions also pass. Pose/contact effect families and
   complete session/game acceptance remain open.
 
 - [Weapon actions](WEAPON_ACTIONS.md) now compose actual resource depletion,
