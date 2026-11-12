@@ -7,7 +7,8 @@ for this audit.
 
 The native application owner is now implemented: `NativeSession` constructs
 the canonical World/Session/Update graph, owns actual room scripts, records,
-models, lighting and `RoomModels`; `SessionRooms` and `SessionStartup` borrow
+models, lighting, `RoomModels` and the canonical `SessionResources` graph;
+`SessionRooms` and `SessionStartup` borrow
 that same graph. This is a concrete bounded application with owned
 input tests. The running game has not selected it. `recomp/reo_bootstrap.cpp`
 still installs the guest-backed save adapter under
@@ -24,6 +25,7 @@ remain acceptance boundaries.
 | Scenario/room preparation | Actual owned `r0417300` room installation and script stepping; real `_H.BIN` ordinal reads; retained room generations and canonical object publication/reception; D1 kind6 owns the actual countdown event in Update; EE reads canonical optional launch difficulty;108 uses the canonical cold InventoryUi owner shared with recovery;64 writes existing model classes through the signed population loop;63 nonzero produces the canonical request gate | Complete ordinary scenario EVB admission. Current frontiers include151/D0/153; offline1A8 remains distinct. All five EVBs still encounter unsupported semantics. The current opcode mask leaves65 ordinary instructions using9 opcodes; one additional zero63 payload branch remains unimplemented, giving66 known ordinary records across4,837 authored role0 records. |
 | Primary actor/model startup | `SessionStartup`, `PrimaryActorModels::start_roster`, real actor/model/motion assets and construction/restore owners; actual actor voice and dialogue owners | Compose remaining startup effects and initial motion capabilities against the application; establish authored launch-room/roster/placement producers, rather than infer them from the controlled roster-kind fixture. |
 | Shared room records/models | Actual common Records identity, `RoomSceneOwner`, `RoomModels` persistent saved bank and static NBD poses, `SceneModelBindings`, complete object `Scene` construction/retirement | Qualify broader owned physical rooms through full script admission and actual gameplay scheduling. Unavailable loaded model poses/parts and unsupported retirement bindings still refuse. |
+| Application resources/inventory/pose work | `SessionResources` owns real ordinary591C50 selection, item/template/placement/tuning/starting inventory, one descriptor/model/inventory graph and exclusive World pose pool; real resource/pose workers and170/174 providers | Actual591920 persistent room reset/rebind; cinematic controller installation for the4BAE9A model gate; required companion, audio/spatial, inherited trail and projectile action consumers. Binding assets alone never admits empty runtime providers. |
 | Ordinary update | `Owner::advance` owns pause/transition gates, worker ordering, script/task/timer ordering and clock commit | Concrete terminal `PhaseServices` implementation. Existing CollisionWorkers, LinkedModelWorkers and NpcActorWorkers are decorators that forward unowned work. |
 | Primary behavior and actions | `BehaviorFrameServices`, `MotionFrameServices`, `MotionTransformFrameServices`, `GridSurfaceOrientation`, status/hit/gauge/recovery, inventory/resource primitives | Concrete terminal World::Services and BehaviorServices implementations; actual action dispatch and control/cooperation/authority consumers. There is no production implementation of BehaviorServices::dispatch. Missing actions cannot be successful no-ops. |
 | Collision/contact gameplay | `SessionRooms` is the real retained RoomResources provider; actual contact Invocation, pose projection, collision/contact/effect owners and concrete workers exist | Real CollisionParticipants and terminal physics composition, complete producer/consumer scheduling and owned frame acceptance. Renderer submission remains the Stage5 boundary. |
@@ -382,3 +384,21 @@ current contracts against all six owned effect banks. The optional special
 visual/light actions and actual actor audio metadata remain reached requirements;
 this checkpoint does not close the terminal frame services or native application
 installation/acceptance gates in the matrix above.
+
+The [SessionResources application graph](SESSION_RESOURCES.md) now composes
+actual ordinary591C50 selection/import/starting inventory, canonical descriptor,
+template, inventory/model/pose owners and actual resource/pose worker routing.
+NativeSession publishes the corresponding providers only after startup succeeds.
+The resource model gate borrows the sole cinematic controller's4BAE9A state;
+absence is an explicit refusal. Room changes remain guarded until591920's
+persistent reset/rebind caller is owned. This closes the previously missing
+application resource graph, without claiming complete frame services, audio/
+companion actions, scenario EVB admission or installed-game acceptance.
+
+The [canonical actor sound consumers](ACTOR_SOUND_CONSUMERS.md) now read the
+actual shared33/554 metadata and CF2 variant, with complete source and real PCM
+comparisons. The [projectile trail controller](PROJECTILE_TRAIL_CONTROLLER.md)
+owns actual5DEF90/653CC0 and the shared168-work budget. Those concrete owners
+are available for application adoption; SessionResources currently borrows the
+canonical parent variant reader, while its required audio/spatial and projectile
+action bindings remain explicit rather than supplied as successful stand-ins.

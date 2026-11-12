@@ -1,4 +1,8 @@
 #include "native_session.hpp"
+#include "session_resources.hpp"
+#include "session_resource_workers.hpp"
+#include "session_rooms.hpp"
+#include "../gameplay_scenario/cutscene_playback.hpp"
 #include "../gameplay_scenario/script_program.hpp"
 #include <stdexcept>
 #include <utility>
@@ -8,18 +12,21 @@
 namespace reo::native::gameplay_application {
 namespace {
 namespace scenario=gameplay_scenario;
-bool minimal_room_providers(const scenario::Program& program,const gameplay_world::World& world,const gameplay_world::InventoryUi& ui)noexcept{
-    // This concrete composition admits the retained room providers and the
-    // canonical Update event factory. Other owners are attached explicitly as the
-    // application expands; a parser-admitted program alone is insufficient.
-    return !program.needs_flags()&&!program.needs_timers()&&!program.needs_actor_events()&&
-        !program.needs_signals()&&!program.needs_scene_resources()&&!program.needs_session_counters()&&
-        !program.needs_streams()&&!program.needs_saved_controls()&&!program.needs_selected_actor()&&
-        !program.needs_action_choices()&&!program.needs_models()&&!program.needs_room_objects()&&
-        !program.needs_periodic_effects()&&!program.needs_surface_effects()&&!program.needs_forced_terminal()&&
-        !program.needs_script_audio()&&!program.needs_scene_record_parameters()&&!program.needs_resource_parameters()&&!program.needs_resource_activation()&&
-        program.admits_room_counters(nullptr)&&program.admits_inventory_grants(nullptr,nullptr,nullptr)&&
-        program.admits_actor_roster(nullptr)&&program.admits_character_remap(nullptr)&&program.admits_actor_script_commands(nullptr)&&program.admits_difficulty(&world)&&program.admits_inventory_ui(&ui,&world)&&program.admits_actor_model_classes(&world);
+bool room_providers(const scenario::Program& program,const gameplay_world::World& world,const scenario::Providers& providers)noexcept{
+    return (!program.needs_flags()||providers.flags)&&(!program.needs_timers()||providers.timers)&&
+        !program.needs_actor_events()&&!program.needs_signals()&&
+        (!program.needs_scene_resources()||providers.scene_resources)&&!program.needs_session_counters()&&
+        !program.needs_streams()&&!program.needs_saved_controls()&&
+        (!program.needs_selected_actor()||bool(world.primary(world.selected_actor)))&&
+        (!program.needs_action_choices()||providers.action_choices)&&(!program.needs_models()||providers.models)&&
+        !program.needs_room_objects()&&!program.needs_periodic_effects()&&!program.needs_surface_effects()&&!program.needs_forced_terminal()&&
+        !program.needs_script_audio()&&
+        program.admits_scene_record_parameters(&world,providers.messages)&&
+        program.admits_resource_parameter_commands(&world,providers.resource_parameters,providers.scene_resources,providers.resource_templates)&&
+        program.admits_resource_activation(providers.resource_activation,&world,providers.scene_resources,providers.resource_templates)&&
+        program.admits_room_counters(&world)&&program.admits_inventory_grants(&world,providers.scene_resources,providers.resource_templates)&&
+        program.admits_actor_roster(&world)&&program.admits_character_remap(&world)&&program.admits_actor_script_commands(&world,providers.canonical_flags)&&
+        program.admits_difficulty(&world)&&program.admits_inventory_ui(providers.inventory_ui,&world)&&program.admits_actor_model_classes(&world);
 }
 }
 struct NativeSession::RoomState final:gameplay_scenario::ControlEffects {
@@ -76,6 +83,9 @@ NativeSession::NativeSession(std::shared_ptr<const reo::assets::Source> archive,
     archive_(std::move(archive)),session_(std::make_shared<gameplay_world::Session>()),
     world_(std::move(profile),session_),reception_(world_),update_(world_,notifications),room_state_(std::make_shared<RoomState>(update_,world_,room_models_.cold_state())){
     world_.mode=mode;
+    // Actual1AC688..1AC698 always selects archive asset mode. The native archive
+    // supplies that IO owner; this adopts its constant field subproducer only.
+    session_->asset_loading_mode=1;
     inventory_ui_.reset(new gameplay_world::InventoryUi(world_));
     if(inventory_ui_->initialize()!=gameplay_world::InventoryUiStatus::completed)
         throw std::runtime_error("Native inventory UI initialization unavailable");
@@ -123,6 +133,7 @@ gameplay_scenario::SceneModels& NativeSession::scene_models()noexcept{return roo
 gameplay_scenario::SceneMatrixPrograms& NativeSession::scene_matrices()noexcept{return room_state_->matrices;}
 std::shared_ptr<gameplay_scene::Records> NativeSession::scene_records()const noexcept{return room_state_->records;}
 const gameplay_scenario::RoomSceneOwner* NativeSession::room_scene()const noexcept{return room_state_->owner.get();}
+gameplay_collision::room_objects::Scene* NativeSession::object_instances()noexcept{return room_state_->objects.get();}
 gameplay_scenario::Providers NativeSession::providers()noexcept{
     gameplay_scenario::Providers result;result.world=&world_;
     result.flags=result.canonical_flags=&update_.flags();result.timers=&update_.timers();
@@ -131,7 +142,26 @@ gameplay_scenario::Providers NativeSession::providers()noexcept{
     result.control_effects=room_state_.get();
     result.scenario_events=&update_.scenario_events();
     result.inventory_ui=inventory_ui_.get();
+    result.models=&room_state_->models;
+    if(resources_)resources_->provide(result);
     return result;
+}
+SessionStatus NativeSession::bind_resource_assets(std::shared_ptr<const SessionResourceAssets> assets,std::shared_ptr<SessionRooms> rooms)noexcept{
+    if(!open())return SessionStatus::closed;
+    if(running_||update_.busy()||world_.busy())return SessionStatus::busy;
+    if(const auto controller=world_.cinematic_controller();controller&&controller->busy())return SessionStatus::busy;
+    if(!room_)return SessionStatus::missing_room;
+    if(resources_||!assets||assets->scenario!=room_->scenario||!rooms||rooms->world().get()!=&world_)return SessionStatus::missing_providers;
+    running_=true;struct Reset{bool& value;~Reset(){value=false;}}reset{running_};
+    try{resources_.reset(new SessionResources(*this,std::move(assets),std::move(rooms)));return SessionStatus::completed;}
+    catch(const std::exception&){return SessionStatus::missing_providers;}
+}
+ResourceImportReport NativeSession::initialize_resources()noexcept{
+    if(!open()){ResourceImportReport result;result.status=ResourceImportStatus::closed;return result;}
+    if(running_||update_.busy()||world_.busy()){ResourceImportReport result;result.status=ResourceImportStatus::busy;return result;}
+    if(const auto controller=world_.cinematic_controller();controller&&controller->busy()){ResourceImportReport result;result.status=ResourceImportStatus::busy;return result;}
+    if(!resources_)return {};
+    running_=true;struct Reset{bool& value;~Reset(){value=false;}}reset{running_};return resources_->initialize();
 }
 SessionStatus NativeSession::import_launch_difficulty(std::uint8_t selected)noexcept{
     if(!open())return SessionStatus::closed;
@@ -141,6 +171,9 @@ SessionStatus NativeSession::import_launch_difficulty(std::uint8_t selected)noex
 SessionStatus NativeSession::install_room(gameplay_scenario::content::RoomId id){
     if(!open())return SessionStatus::closed;
     if(running_||update_.busy()||world_.busy())return SessionStatus::busy;
+    // Resource descriptors/inventory persist. Until the actual591920 rebind
+    // caller is adopted, refuse a room replacement instead of discarding them.
+    if(resources_)return SessionStatus::missing_providers;
     running_=true;struct Reset{bool& value;~Reset(){value=false;}}reset{running_};
     try{
         const auto room=archive_.room(id);if(!room)return SessionStatus::missing_room;
@@ -150,7 +183,7 @@ SessionStatus NativeSession::install_room(gameplay_scenario::content::RoomId id)
         const auto admitted=gameplay_scenario::content::admit_script_program(bank,world_.mode==0?
             gameplay_scenario::DispatchProfile::offline_actor:gameplay_scenario::DispatchProfile::ordinary);
         if(admitted.status!=gameplay_scenario::content::ScriptAdmission::admitted||!admitted.program)return SessionStatus::unsupported_script;
-        if(!minimal_room_providers(*admitted.program,world_,*inventory_ui_))return SessionStatus::missing_providers;
+        if(!room_providers(*admitted.program,world_,providers()))return SessionStatus::missing_providers;
         const auto scene=room->section(10),lig=room->section(11);
         if(!scene||!lig)return SessionStatus::missing_providers;
         gameplay_scenario::Lighting prepared_lighting;
@@ -235,9 +268,12 @@ FrameStep NativeSession::advance(gameplay_update::PhaseServices* phases,gameplay
     if(running_||update_.busy()||world_.busy())return{SessionStatus::busy,{}};
     if(!room_)return{SessionStatus::missing_room,{}};
     if(!phases||!actors)return{SessionStatus::missing_frame_services,{}};
+    if(resources_&&!resources_->initialized())return{SessionStatus::missing_providers,{}};
     running_=true;struct Reset{bool& value;~Reset(){value=false;}}reset{running_};
     room_state_->effects_status=gameplay_scenario::SceneMatrixStatus::completed;
-    auto result=update_.advance(*phases,*actors,providers(),script_budget,task_budget);
+    gameplay_update::Result result;
+    if(resources_){SessionResourceWorkers workers(*this,*resources_,*phases);result=update_.advance(workers,*actors,providers(),script_budget,task_budget);}
+    else result=update_.advance(*phases,*actors,providers(),script_budget,task_budget);
     const auto status=result.status==gameplay_update::Status::completed&&
         room_state_->effects_status==gameplay_scenario::SceneMatrixStatus::completed?SessionStatus::completed:SessionStatus::frame_failure;
     return{status,std::move(result)};
@@ -245,7 +281,9 @@ FrameStep NativeSession::advance(gameplay_update::PhaseServices* phases,gameplay
 SessionStatus NativeSession::close()noexcept{
     if(closed_)return SessionStatus::completed;
     if(running_||update_.busy()||world_.busy())return SessionStatus::busy;
+    if(const auto controller=world_.cinematic_controller();controller&&controller->busy())return SessionStatus::busy;
     running_=true;struct Reset{bool& value;~Reset(){value=false;}}reset{running_};
+    if(resources_){if(resources_->close()==SessionResourceStatus::busy)return SessionStatus::busy;resources_.reset();}
     // World performs its actual controller-busy check before retiring anything.
     // Update's idle check above guarantees its subsequent close is admissible.
     if(world_.close()!=gameplay_world::Status::completed)return SessionStatus::busy;

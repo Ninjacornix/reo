@@ -20,6 +20,9 @@ public:
     std::shared_ptr<gameplay_contact_world::RoomInvocation> retain(std::uint16_t)override;
     RoomResourcesStatus status()const noexcept{return status_;}
     std::shared_ptr<gameplay_world::World> world()const noexcept;
+    // Retains the same immutable floor asset without retaining a RoomLease or
+    // NativeSession. Session-owned resource factories must not create a cycle.
+    std::shared_ptr<const gameplay_collision::response::Grid> retain_floor(std::uint16_t);
     std::shared_ptr<gameplay_collision::room_objects::Owner> objects()const noexcept;
 private:
     std::weak_ptr<NativeSession> session_;

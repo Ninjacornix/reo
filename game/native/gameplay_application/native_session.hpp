@@ -10,9 +10,12 @@
 #include "../gameplay_update/reception.hpp"
 #include "../gameplay_collision/object_scene.hpp"
 #include "room_models.hpp"
+#include "session_resource_import.hpp"
 
 namespace reo::native::gameplay_application {
 class SessionRooms;
+class SessionResources;
+struct SessionResourceAssets;
 struct SessionRoomGeometry;
 struct SessionRoomObjects;
 enum class SessionStatus {
@@ -72,6 +75,9 @@ public:
     // Exact37F330 difficulty subproducer; the host supplies its actual selected
     // frontend byte. This does not claim the remaining launch side effects.
     SessionStatus import_launch_difficulty(std::uint8_t)noexcept;
+    SessionStatus bind_resource_assets(std::shared_ptr<const SessionResourceAssets>,std::shared_ptr<SessionRooms>)noexcept;
+    ResourceImportReport initialize_resources()noexcept;
+    SessionResources* resources()noexcept{return resources_.get();}
     ScriptStep step_room_script(std::size_t maximum_operations=4096);
     FrameStep advance(gameplay_update::PhaseServices*,gameplay_world::Services*,
                       std::size_t script_budget=4096,std::size_t task_budget=1024);
@@ -92,6 +98,7 @@ public:
     gameplay_scenario::SceneMatrixPrograms& scene_matrices()noexcept;
     std::shared_ptr<gameplay_scene::Records> scene_records()const noexcept;
     const gameplay_scenario::RoomSceneOwner* room_scene()const noexcept;
+    gameplay_collision::room_objects::Scene* object_instances()noexcept;
     std::optional<gameplay_scenario::content::RoomId> room()const noexcept{return room_;}
     std::shared_ptr<RoomLease> retain_room(std::shared_ptr<NativeSession>)noexcept;
 private:
@@ -109,6 +116,7 @@ private:
     std::optional<gameplay_scenario::content::RoomId> room_;
     bool running_{},closed_{};
     std::unique_ptr<gameplay_world::InventoryUi> inventory_ui_;
+    std::unique_ptr<SessionResources> resources_;
     gameplay_scenario::Providers providers()noexcept;
     friend class SessionRooms;
 };

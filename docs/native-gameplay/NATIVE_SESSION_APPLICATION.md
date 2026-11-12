@@ -94,3 +94,11 @@ loaded-part visibility and byte-cache semantics. The admitted owned room loads
 capability instead of receiving fabricated identity matrices or a blanket
 missing-model response. Full frame services and scenario EVB admission remain
 explicit boundaries.
+
+The [SessionResources owner](SESSION_RESOURCES.md) now adds the actual ordinary
+resource selection/import/starting inventory producer and canonical logical
+resources, primary resource models, inventory and pose-work graph. NativeSession
+publishes those providers only after successful initialization and routes the
+two actual resource/pose workers through them. Retained floors share the real
+SessionRooms asset without retaining the host. Full terminal frame services,
+required audio/action consumers and persistent591920 room rebind remain open.

@@ -1065,3 +1065,14 @@ Preserve rules, content, original game speed, saves and co-op. Native state and
 ownership can modernize obsolete allocation/scheduling internals; do not turn
 unknown original behavior into a guessed successful implementation. Record
 unsupported profiles and missing evidence explicitly.
+
+The [SessionResources application graph](SESSION_RESOURCES.md) now adopts
+actual ordinary591C50 selection/import/starting inventory and the canonical
+resource/model/inventory/pose owners in NativeSession. Its actual resource and
+pose workers require the remaining real terminal services;591920 room rebind
+and full scenario admission remain open. The separately qualified
+[actor sound consumers](ACTOR_SOUND_CONSUMERS.md) and
+[projectile trail controller](PROJECTILE_TRAIL_CONTROLLER.md) supply concrete
+audio/visual consumers for subsequent application binding. Current31-parent,
+full interpreter and owned-room checks pass on both compilers; installedgameV39
+has not been replaced and Stage4 remains incomplete.

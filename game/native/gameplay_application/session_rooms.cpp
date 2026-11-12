@@ -80,6 +80,13 @@ std::string key(char prefix,gameplay_scenario::content::RoomId room){
 }
 }
 SessionRooms::SessionRooms(std::shared_ptr<NativeSession> session):session_(std::move(session)){}
+std::shared_ptr<const collision::response::Grid> SessionRooms::retain_floor(std::uint16_t number){
+    const auto invocation=retain(number);if(!invocation||!invocation->current(invocation->identity()))return{};
+    const auto host=session_.lock();const auto lease=host?host->retain_room(host):nullptr;
+    if(!lease||!lease->current()||lease->room().room!=number)return{};
+    const auto data=lease->geometry_cache();if(!data||!data->ready)return{};
+    return {data,&data->floors};
+}
 std::shared_ptr<gameplay_world::World> SessionRooms::world()const noexcept{
     const auto host=session_.lock();return host?std::shared_ptr<gameplay_world::World>(host,&host->world()):nullptr;
 }
