@@ -2,6 +2,7 @@ add_library(reo_native_animation STATIC curves.cpp model.cpp model_math.cpp cons
 target_compile_features(reo_native_animation PUBLIC cxx_std_20)
 target_sources(reo_native_animation PRIVATE frame_events.cpp scalar_playback.cpp secondary_pose_math.cpp)
 target_sources(reo_native_animation PRIVATE weapon_program.cpp)
+target_sources(reo_native_animation PRIVATE facial_pose_math.cpp)
 target_include_directories(reo_native_animation PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 target_link_libraries(reo_native_animation PUBLIC reo_native_transform_math)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
