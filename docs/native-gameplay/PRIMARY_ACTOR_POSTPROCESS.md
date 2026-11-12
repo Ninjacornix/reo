@@ -3,9 +3,9 @@
 The original `66A3A0` pass is separate from common frame `66A2E0`. It visits
 eight ordinary primary records, performs equipment/room work, applies surface
 transitions, updates head/secondary poses, and then records local actor counters.
-The complete pass is being integrated; the following concrete prerequisites are
-implemented and independently checked. They do not constitute a full pass or
-Stage 4 acceptance on their own.
+`PrimaryActorPostprocess` now implements that ordering against the canonical
+World and scenario owners. Its reached equipment attack consumer remains an
+explicit bound capability. This is not Stage 4 acceptance on its own.
 
 `actor_scene_triggers.cpp` implements complete `581870`, including reached
 `5C1710 -> 5C2F00`. It walks the actual shared `gameplay_scene::Records` newest
@@ -58,7 +58,38 @@ Register, RAM and SIMD surroundings exist only in the test artifacts. Failed
 earlier versions remain retained. This is finite native arithmetic evidence,
 not a physical PS2 exceptional-arithmetic claim or a game execution result.
 
-The remaining full-pass integration must bind the actual equipment-use arm
-`65EC40`, including reached `65E750/65E880` attack consumers, and call the
-qualified head/secondary composition in its original position. It must not
-substitute successful generic callbacks or insert this pass into `66A2E0`.
+`primary_actor_postprocess.cpp` visits the eight live primary slots in order,
+updates the original offline selected actor, clears auxiliary bit `0x80`, and
+handles the status-bit-31 equipment request before its room gate. The known
+zero-resource return clears the request without requiring an attack owner.
+A nonzero resource requires an `ActorWeaponActions` instance bound to that
+World. Its abstract interface supplies no successful default. The subsequent
+scene, surface, head/secondary and local-statistics calls consume their actual
+owners in source order. Missing reached ownership returns the failing identity
+and preserves the completed prefix; the final offline selected-actor reset
+occurs only after a completed pass. Invocation guards release on every return.
+
+`primary-actor-postprocess-{gcc,llvm}-v7` execute the complete original
+`66A3A0` body over the same eight-actor cohorts. Each compiler passes 61,726
+checks over 544 complete passes, including 32 repeated-frame continuations,
+1,752 controlled equipment-boundary calls, 993 classified-floor observations,
+11 refusal proofs, and 4,361 retained-model lifetime checks. Sixteen original
+bodies are word-audited, and all 184 source files remain unchanged during each
+comparison. Real owned P00 skeletons, canonical Records, channel/flag owners,
+imported native collision Grids, head resets, no-work secondary selections,
+and statistics participate. The floor reference port returns the same Grid
+classification; the original floor-classification implementation is not
+requalified by this cohort. Nontrivial secondary dynamics and head tracking
+retain their separate complete-body qualification.
+
+The outer cohort deliberately declares the equipment attack as a controlled
+boundary. Actual `65EC40`, including reached `65E750/65E880` attack consumers,
+still needs its concrete bound owner. The native worker refuses that reached
+work until supplied. The CMake `reo_native_actor_postprocess` target includes
+both the actual scene-trigger and outer-worker implementations and passes a
+fresh private GCC build.
+
+The authoritative ordinary caller `5FED00` runs model passes `3769F0`,
+`376AE0`, and `376B80` before `66A3A0`, then calls `6832F0`. Initial room
+setup `5EB780` uses the same four-pass sequence. Integration must retain these
+positions; `66A2E0` is a separate phase.

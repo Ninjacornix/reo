@@ -4,7 +4,7 @@ target_sources(reo_native_gameplay_world PRIVATE scene_primary_actors.cpp)
 target_sources(reo_native_gameplay_world PRIVATE secondary_pose_links.cpp)
 target_sources(reo_native_gameplay_world PRIVATE actor_surface_transition.cpp)
 
-add_library(reo_native_actor_postprocess STATIC actor_scene_triggers.cpp)
+add_library(reo_native_actor_postprocess STATIC actor_scene_triggers.cpp primary_actor_postprocess.cpp)
 target_compile_features(reo_native_actor_postprocess PUBLIC cxx_std_20)
 target_include_directories(reo_native_actor_postprocess PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 target_link_libraries(reo_native_actor_postprocess PUBLIC reo_native_gameplay_world reo_native_gameplay_scenario reo_native_gameplay_events)
