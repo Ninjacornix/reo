@@ -18,6 +18,8 @@
 #include "room_object_commands.hpp"
 #include "periodic_effects.hpp"
 #include "surface_effects.hpp"
+#include "script_audio.hpp"
+#include "scene_record_commands.hpp"
 #include "../gameplay_world/world.hpp"
 #include <algorithm>
 #include <bit>
@@ -33,7 +35,8 @@ std::uint32_t word(const std::byte* p)noexcept{
 }
 std::size_t payload_minimum(std::uint32_t op)noexcept{
     switch(op) {
-    case 0x80:case 0x81:case 0x164:return 4;
+    case 0x80:case 0x81:case 0x164:case 0x165:return 4;
+    case 0x73:return 8;
     case 0x88:return 16;
     case 0x89:return 22;
     case 0x8a:case 0x8c:return 8;
@@ -117,8 +120,15 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
             boundaries_[i].push_back(static_cast<std::uint32_t>(at));unsupported_|=!coverage[op].native_algorithm;
             if(!noop&&(op==5||op==6)){if(word(b.data()+at+4)>=4)throw std::invalid_argument("Actor event slot extent");actor_events_=true;}
             if(!noop&&(op==0xe8||op==0xe9)&&word(b.data()+at+4)>=2)throw std::invalid_argument("Native session counter profile");
-            if(!noop&&op==0x164&&word(b.data()+at+4)>=SceneRecordEligibility::capacity)
+            if(!noop&&(op==0x164||op==0x165)&&word(b.data()+at+4)>=SceneRecordEligibility::capacity)
                 throw std::invalid_argument("Native scene-record eligibility profile");
+            if(!noop&&op==0x73){
+                const auto mode=word(b.data()+at+8);
+                if((mode==1&&bytes-4<12)||(mode==2&&bytes-4<20))
+                    throw std::invalid_argument("Truncated native script sound position");
+                if(mode<=2){script_audio_=true;world_=true;
+                    audio_requests_.push_back({word(b.data()+at+4),mode,mode==1?word(b.data()+at+12):0});}
+            }
             low_actor_population_|=!noop&&(op==0x38||op==0x39);
             full_actor_population_|=!noop&&op==0x173;
             npc_inventory_grants_|=!noop&&op==0x3a;
@@ -179,6 +189,12 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
         }
     }
 }
+bool Program::admits_script_audio(const ScriptAudio* audio,const gameplay_world::World* world)const noexcept{
+    if(!script_audio_)return true;
+    if(!audio||!world||!audio->bound_to(*world))return false;
+    for(const auto& request:audio_requests_)if(!audio->ready(request.event,request.mode,request.actor))return false;
+    return true;
+}
 bool Program::admits_room_counters(const gameplay_world::World* world)const noexcept {
     return !room_counters_ || (world && !world->closed() &&
         world->session().room_contacts.counters_ready(scenario_counter_policy_));
@@ -207,6 +223,9 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     for(const auto i:{1,2,3,4,5,6,7,0xa,0xd,0xe4,0xe5,0x110,0x111,0x112,0x113,0x114})out[i].native_algorithm=true;
     for(const auto i:{8,0xb,0xc,0x40,0x41,0x42,0x43,0x44,0x49,0x4c,0x4d,0xe3,0xe6,0xec,0xed,0xef,0xb7,0xb8,0xf4,0xf5})out[i]={true,true,false,false};
     out[0x164]={true,true,false,false};
+    out[0x165].native_algorithm=true;out[0x165].flags_required=true;
+    out[0x165].canonical_flags_required=true;out[0x165].world_required=true;
+    out[0x73].native_algorithm=true;out[0x73].script_audio_required=true;
     for(const auto i:{0x46,0x47,0x48})out[i]={true,false,false,true};
     out[0x45]={true,false,true,false};
     for(std::size_t i=0x30;i<=0x37;++i)out[i]={true,false,false,false,true};
@@ -315,6 +334,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
     if(!c.program->admits_inventory_grants(providers.world,providers.scene_resources,providers.resource_templates))return{Status::provider_unavailable,0,{},0};
     if(!c.program->admits_actor_roster(providers.world))return{Status::provider_unavailable,0,{},0};
     if(!c.program->admits_character_remap(providers.world))return{Status::provider_unavailable,0,{},0};
+    if(!c.program->admits_script_audio(providers.script_audio,providers.world))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_selected_actor()&&!providers.world->primary(context.selected_actor))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_action_choices()&&!providers.action_choices)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_scenario()&&!providers.world->scenario)return{Status::provider_unavailable,0,{},0};
@@ -618,6 +638,16 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
         case 0x5a:if(providers.world->closed()||!providers.world->session().room_variants.store(value(0),value(4)))return result(Status::provider_unavailable);break;
         case 0x44:if(value(0)<128&&!providers.flags->write(FlagBank::bounded_byte,value(0),true))return result(Status::provider_unavailable);break;
         case 0x164:if(!providers.flags->write(FlagBank::scene_record_eligibility,value(0),true))return result(Status::provider_unavailable);break;
+        case 0x165:if(!clear_scene_record_eligibility(*providers.canonical_flags,*providers.world,value(0)))return result(Status::provider_unavailable);break;
+        case 0x73:{
+            const auto mode=value(4);
+            if(mode<=2){
+                const auto actor=mode==1?value(8):0;
+                std::array<std::int32_t,3> coordinates{};
+                if(mode==2)for(unsigned i=0;i<3;++i)coordinates[i]=std::bit_cast<std::int32_t>(value(8+4*i));
+                if(!providers.script_audio->command(value(0),mode,actor,coordinates))return result(Status::provider_unavailable);
+            }
+            break;}
         case 0x40:case 0x41:case 0x42:case 0x43:
             if(!providers.flags->strided(value(0),value(4),0,opcode==0x40||opcode==0x42,opcode==0x42||opcode==0x43))return result(Status::provider_unavailable);
             break;

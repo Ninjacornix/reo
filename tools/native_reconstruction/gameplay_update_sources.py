@@ -34,3 +34,8 @@ UPDATE_UNITS += ['game/native/animation/'+name+'.cpp' for name in
                  ['playback','model_blend','motion_bank','motion_descriptors']]
 UPDATE_UNITS += ['game/native/gameplay_scenario/cutscene_actor_commands.cpp',
                  'game/native/gameplay_scenario/cutscene_actor_tracks.cpp']
+UPDATE_UNITS += ['game/native/gameplay_scenario/script_audio.cpp']
+UPDATE_UNITS += ['game/native/gameplay_audio/'+name+'.cpp' for name in
+                 ['routing','import','spatial','owner','scenario_cues']]
+UPDATE_UNITS += ['game/native/audio_banks/v2/'+name+'.cpp' for name in
+                 ['algorithms','session']]

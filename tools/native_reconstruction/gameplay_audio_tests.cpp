@@ -1,6 +1,9 @@
 #include "game/native/gameplay_audio/owner.hpp"
 #include "game/native/gameplay_audio/options.hpp"
 #include "game/native/gameplay_audio/stream_levels.hpp"
+#ifdef REO_SCRIPT_AUDIO_TESTS
+#include "game/native/gameplay_scenario/script_audio.hpp"
+#endif
 #ifdef REO_ANIMATION_AUDIO_TESTS
 #include "game/native/gameplay_world/animation_audio.hpp"
 #endif
@@ -130,6 +133,7 @@ void original_transform_port(std::uint8_t* m, R5900Context* c, PS2Runtime* r) {
         case 0x5b4ce0:return o2_005B4CE0_0x5b4ce0(m,c,r);
 #endif
 #ifdef REO_NODE_POSITION_AUDIO_TESTS
+        case 0x1b8930:return sub_001B8930_0x1b8930(m,c,r);
         case 0x1b8870:return sub_001B8870_0x1b8870(m,c,r);
         case 0x1b8a10:return sub_001B8A10_0x1b8a10(m,c,r);
         case 0x1b93b0:return sub_001B93B0_0x1b93b0(m,c,r);
@@ -830,6 +834,9 @@ void stock_composition(std::vector<std::uint8_t>& m, const char* path) {
 #ifdef REO_NODE_POSITION_AUDIO_TESTS
 #include "node_position_audio_tests.inc"
 #endif
+#ifdef REO_SCRIPT_AUDIO_TESTS
+#include "script_audio_tests.inc"
+#endif
 #ifdef REO_SCENE_AUDIO_TESTS
 #include "scene_bank_audio_tests.inc"
 #endif
@@ -839,6 +846,11 @@ int main(int argc, char** argv) {
         std::vector<std::uint8_t> memory(0x2000000);
 #ifdef REO_ANIMATION_AUDIO_TESTS
         compare_positional(memory,argv[2]);
+#ifdef REO_SCRIPT_AUDIO_TESTS
+        compare_script_audio(memory,std::filesystem::path(argv[1]).parent_path());
+        std::cout<<"{\"checks\":"<<checks<<",\"script_cases\":"<<script_audio_cases<<",\"commands\":"<<script_audio_commands<<",\"mixed_frames\":"<<script_audio_frames<<",\"signal_samples\":"<<script_audio_signal<<",\"refusals\":"<<script_audio_refusals<<",\"original_calls\":"<<calls<<",\"game_launched\":false}\n";
+        return 0;
+#endif
 #ifdef REO_SCENE_AUDIO_TESTS
         compare_scene_audio(memory,std::filesystem::path(argv[1]).parent_path());
         std::cout<<"{\"checks\":"<<checks<<",\"direct_cases\":"<<scene_audio_cases<<",\"playback_cases\":"<<scene_audio_playbacks<<",\"playback_frames\":"<<scene_audio_frames<<",\"playback_sounds\":"<<scene_audio_sounds<<",\"commands\":"<<scene_audio_commands<<",\"mixed_frames\":"<<scene_audio_mixed_frames<<",\"signal_samples\":"<<scene_audio_signal<<",\"refusals\":"<<scene_audio_refusals<<",\"original_calls\":"<<calls<<",\"game_launched\":false}\n";

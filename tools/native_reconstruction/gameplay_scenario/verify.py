@@ -36,6 +36,7 @@ IDS += ['006BBDA0','006EFAF0']
 IDS += ['005D0C90']
 IDS += ['006BA5C0']
 IDS += ['00694390']
+IDS += ['006943D0','0068F640']
 
 PINNED={};PIN_COMMITS={}
 def source_bytes(p):
@@ -185,6 +186,7 @@ def main(a):
     shutil.copyfile(HERE/'material_uv_vm_tests.inc',out/'material_uv_vm_tests.inc')
     shutil.copyfile(HERE/'scripted_actor_vm_tests.inc',out/'scripted_actor_vm_tests.inc')
     shutil.copyfile(HERE/'scene_record_eligibility_vm_tests.inc',out/'scene_record_eligibility_vm_tests.inc')
+    shutil.copyfile(HERE/'script_audio_vm_tests.inc',out/'script_audio_vm_tests.inc')
     shutil.copyfile(HERE/'periodic_control_vm_tests.inc',out/'periodic_control_vm_tests.inc')
     shutil.copyfile(HERE/'room_rule_tests.inc',out/'room_rule_tests.inc')
     shutil.copyfile(HERE/'room_object_vm_tests.inc',out/'room_object_vm_tests.inc')
@@ -212,6 +214,9 @@ def main(a):
     units += [('npc_descriptors',ROOT/'game/native/gameplay_scenario/npc_descriptors.cpp')]
     units += [(name,ROOT/'game/native/gameplay_scenario'/(name+'.cpp')) for name in ('enemy_descriptors','enemy_routes')]
     units += [('character_remap',ROOT/'game/native/gameplay_scenario/character_remap.cpp')]
+    units += [('script_audio',ROOT/'game/native/gameplay_scenario/script_audio.cpp')]
+    units += [('audio_'+name,ROOT/'game/native/gameplay_audio'/(name+'.cpp')) for name in ('routing','import','spatial','owner','scenario_cues')]
+    units += [('audio_banks_'+name,ROOT/'game/native/audio_banks/v2'/(name+'.cpp')) for name in ('algorithms','session')]
     units += [('enemy_initialization',ROOT/'game/native/gameplay_world/enemy_initialization.cpp')]
     units += [('model_parts',ROOT/'game/native/gameplay_world/model_parts.cpp')]
     units += [('constructor_'+name,ROOT/'game/native'/folder/(name+'.cpp')) for folder,name in [
@@ -246,6 +251,7 @@ def main(a):
     source_paths.append(HERE/'material_uv_vm_tests.inc')
     source_paths += [HERE/'scripted_actor_vm_tests.inc',ROOT/'runtime/assets/virtual_afs.h']
     source_paths.append(HERE/'scene_record_eligibility_vm_tests.inc')
+    source_paths.append(HERE/'script_audio_vm_tests.inc')
     source_paths += [HERE/'surface_vm_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]
     source_paths += [ROOT/'game/native/transform_math/transform_math.hpp',ROOT/'game/native/transform_math/transform_math.cpp']

@@ -25,7 +25,9 @@ def main():
     parser.add_argument('--surface-frontends',action='store_true')
     parser.add_argument('--node-position-frontends',action='store_true')
     parser.add_argument('--scene-frontends',action='store_true')
+    parser.add_argument('--script-frontends',action='store_true')
     args = parser.parse_args()
+    args.node_position_frontends |= args.script_frontends
     args.animation_frontends=args.animation_frontends or args.surface_frontends or args.node_position_frontends or args.scene_frontends
     out = args.output.resolve()
     allowed = (ROOT / 'build-native-sjuni').resolve()
@@ -62,6 +64,11 @@ def main():
             end=int(re.search(r'// Address: 0x[0-9a-fA-F]+ - 0x([0-9a-fA-F]+)',text)[1],16)
             audits.append(compare_source('actual node sound frontend',source.relative_to(ROOT).as_posix(),0x595f10,end,lambda at,n:raw[at-0x570000:at-0x570000+n]))
             originals.append(source);bodies.append(text[text.index('// Function:'):])
+        if args.script_frontends:
+            source=ROOT/'recomp/config/output_ovl/o2/o2_0068F640_0x68f640.cpp';text=source.read_text()
+            end=int(re.search(r'// Address: 0x[0-9a-fA-F]+ - 0x([0-9a-fA-F]+)',text)[1],16)
+            audits.append(compare_source('actual script73 sound frontend',source.relative_to(ROOT).as_posix(),0x68f640,end,lambda at,n:raw[at-0x570000:at-0x570000+n]))
+            originals.append(source);bodies.append(text[text.index('// Function:'):])
         if args.scene_frontends:
             source=ROOT/'recomp/config/output_ovl/o2/o2_006B60E0_0x6b60e0.cpp';text=source.read_text()
             end=int(re.search(r'// Address: 0x[0-9a-fA-F]+ - 0x([0-9a-fA-F]+)',text)[1],16)
@@ -96,6 +103,9 @@ def main():
     if args.scene_frontends:
         frontend_units += [ROOT/'game/native/gameplay_scenario'/n for n in ['bank_audio.cpp','scene_matrix_playback.cpp','scene_matrix_programs.cpp','scene_matrix_tables.cpp','scene_model_bindings.cpp','flags.cpp','scene_controls.cpp']]
         paths += frontend_units+[ROOT/'tools/native_reconstruction/scene_bank_audio_tests.inc',ROOT/'tools/native_reconstruction/generate_scene_audio_profile.py',ROOT/'game/native/gameplay_scenario/CMakeLists.txt']
+    if args.script_frontends:
+        frontend_units += [ROOT/'game/native/gameplay_scenario/script_audio.cpp']
+        paths += frontend_units+[ROOT/'tools/native_reconstruction/script_audio_tests.inc']
     paths=list(dict.fromkeys(paths))
     for source in paths:
         if source.suffix=='.bin':continue
@@ -107,6 +117,7 @@ def main():
     if args.animation_frontends:names.add('o2_005B4CE0_0x5b4ce0')
     if args.node_position_frontends:names.add('o2_00595F10_0x595f10')
     if args.scene_frontends:names.add('o2_006B60E0_0x6b60e0')
+    if args.script_frontends:names.add('o2_0068F640_0x68f640')
     all_calls=set(re.findall(r'\b((?:sub|o2)_[0-9A-F]+_0x[0-9a-f]+)\(', '\n'.join(bodies)))
     header=helper.read_text().replace('Register r[32];','Register r[32];std::uint64_t hi{},lo{};')
     header+='\n#define GPR_S32(c,n) std::bit_cast<std::int32_t>(GPR_U32(c,n))\n#define SRA32(a,b) (std::bit_cast<std::int32_t>(std::uint32_t(a)) >> unsigned(b))\n#define FPU_CVT_W_S(a) _mm_cvttss_si32(_mm_set_ss(a))\n'
@@ -153,6 +164,7 @@ def main():
     if args.surface_frontends:command+=['-DREO_SURFACE_AUDIO_TESTS=1']
     if args.node_position_frontends:command+=['-DREO_NODE_POSITION_AUDIO_TESTS=1']
     if args.scene_frontends:command+=['-DREO_SCENE_AUDIO_TESTS=1']
+    if args.script_frontends:command+=['-DREO_SCRIPT_AUDIO_TESTS=1']
     record=dict(schema=1,status='failed',source_sha256=inputs,compiler_sha256=sha(compiler),original_word_audits=audits,game_launched=False,checks=[])
     env=dict(os.environ);env['PATH']=str(compiler.parent)+os.pathsep+env.get('PATH','')
     try:
