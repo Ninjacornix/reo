@@ -9,7 +9,18 @@ internal static class GraphicsOptionsTests {
         var culture = CultureInfo.CurrentCulture;
         try {
             CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("hr-HR");
+            check(GraphicsOptions.From(new Settings()).Environment["REO_VSYNC"] == "on",
+                  "Existing settings default to synchronized presentation");
             foreach (string game in new[] { "file1", "file2" }) {
+                foreach (string? mode in new string?[] { "on", "off", "adaptive", "invalid", null }) {
+                    var saved = JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(
+                        new Settings { SelectedGame = game, VSync = mode! }))!;
+                    var captured = GraphicsOptions.From(saved);
+                    saved.VSync = "off";
+                    check(captured.Environment["REO_VSYNC"] ==
+                              (mode is "off" or "adaptive" ? mode : "on"),
+                          game + " persists and captures VSync with safe fallback");
+                }
                 var settings = new Settings {
                     SelectedGame = game, Fullscreen = true, WindowSize = 6,
                     InternalResolution = 4, AspectRatio = "16:9", ScreenFit = "fill",

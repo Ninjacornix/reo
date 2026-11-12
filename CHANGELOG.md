@@ -8,6 +8,7 @@
 - Fix hosting startup after upgrading an older server database (#84). Migrate missing account fields and Outbreak rankings atomically, retaining existing credentials and every original result in an archive table.
 - Add DualShock 4 controller input over USB and Bluetooth.
 - Show an error and exit when the graphics driver does not provide OpenGL 3.3, instead of crashing while opening the game window. Vulkan remains optional; without it the game uses software rendering.
+- Add On, Off and Adaptive vertical sync in Graphics for both games (#85). Default to On and preserve the original game clock. Game build kits must be regenerated so existing installations rebuild with the new display controls.
 - Show shared setup progress over the current launcher page without shrinking its content or duplicating progress in notifications or Game files. Keep detail and compact elapsed/ETA information on one line below the bar, and use a normal completion message when the game exits successfully. Import completion and error notifications remain available.
 - Resume interrupted compiler downloads, retry temporary connection failures, and time out only when network progress stops. Keep partial downloads across Import attempts and allow optional idle-timeout/retry settings or a verified manually downloaded compiler archive (#60).
 - Move Windows, macOS and Linux to the shared Avalonia/.NET 10 launcher. Bundle the Windows runtime by default and compare complete RC tags when checking and installing updates. Older RC0/RC1 installations require a manual upgrade.

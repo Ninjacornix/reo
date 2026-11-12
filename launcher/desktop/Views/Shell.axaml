@@ -306,6 +306,14 @@
                       </ComboBox>
                       <compat:Rc1TextBlock Text="Screen fit" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
                     </DockPanel>
+                    <DockPanel MinHeight="48">
+                      <ComboBox x:Name="VSync" SelectionChanged="SettingChanged" DockPanel.Dock="Right" AutomationProperties.Name="Vertical sync" Classes="GraphicsChoice" ToolTip.Tip="On prevents tearing. Off presents without waiting for refresh. Adaptive allows tearing below the display refresh rate, where supported. Applies when starting the game; game speed stays unchanged.">
+                        <ComboBoxItem Content="On" />
+                        <ComboBoxItem Content="Off" />
+                        <ComboBoxItem Content="Adaptive" />
+                      </ComboBox>
+                      <compat:Rc1TextBlock Text="Vertical sync" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
+                    </DockPanel>
                     <Border Height="1" Background="{StaticResource Line}" Margin="0,16,0,16" />
                     <compat:Rc1TextBlock Text="RENDERING" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,8" />
                     <DockPanel MinHeight="48">

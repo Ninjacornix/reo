@@ -48,6 +48,14 @@ internal static class HeadlessChecks {
               "Keyboard movement must send only the digital D-pad after remapping.");
         Control<Button>("ResetBindingsButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         window.ShowPage("Graphics");Dispatcher.UIThread.RunJobs();
+        var sync = Control<ComboBox>("VSync");
+        Check(sync.SelectedIndex == 0, "Existing settings must default VSync to On.");
+        foreach (var (index, mode) in new[] { (1, "off"), (2, "adaptive"), (0, "on") }) {
+            sync.SelectedIndex = index;
+            Check(window.settings.ResolvedVSync == mode &&
+                      Settings.Load(window.root).ResolvedVSync == mode,
+                  "VSync selection did not persist: " + mode);
+        }
         var resolution=Control<ComboBox>("InternalResolution");resolution.IsDropDownOpen=true;Dispatcher.UIThread.RunJobs();
         Check(resolution.GetRealizedContainers().Any(),"Dropdown does not populate RC1 choices.");resolution.IsDropDownOpen=false;
         Control<ComboBox>("InternalResolution").SelectedIndex=2;

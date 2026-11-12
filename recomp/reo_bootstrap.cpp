@@ -44,6 +44,7 @@
 #include "overrides/reo_cri_server_observer.h"
 #include "overrides/reo_cd_async.h"
 #include "overrides/reo_display_probe.h"
+#include "overrides/reo_display_sync.h"
 
 #include "overrides/actor_first_nonfinite.h"
 #include "overrides/ground_query_origin.h"
@@ -1220,6 +1221,9 @@ int main(int argc, char* argv[]) {
 
         return 1;
     }
+
+    if (!std::getenv("REO_HEADLESS") && !reo_gpu_present::requested())
+        reo::display_sync::configureOpenGl();
 
     // Configure I/O paths
 

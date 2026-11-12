@@ -54,6 +54,8 @@ public partial class MainWindow : Window {
         AspectRatio.SelectedIndex = Math.Max(0, Array.IndexOf(DisplayOptions.AspectChoices,
             (settings.ResolvedAspect, settings.ResolvedWidescreen)));
         ScreenFit.SelectedIndex = Array.IndexOf(DisplayOptions.Fits, settings.ResolvedFit);
+        VSync.SelectedIndex = settings.ResolvedVSync switch { "off" => 1, "adaptive" => 2,
+                                                              _ => 0 };
         UpdateScreenFitHint();
         Fullscreen.IsChecked = settings.Fullscreen;
         PerformanceOverlay.IsChecked = settings.PerformanceOverlay;
@@ -180,6 +182,11 @@ public partial class MainWindow : Window {
         if (WindowSize.SelectedItem is OutputSize outputSize)
             settings.WindowSize = Array.IndexOf(DisplayOptions.Sizes, outputSize);
         settings.LinearFilter = Filter.SelectedIndex == 0;
+        settings.VSync = VSync.SelectedIndex switch {
+            1 => "off",
+            2 => "adaptive",
+            _ => "on"
+        };
         var aspect = DisplayOptions.AspectChoices[
             Math.Clamp(AspectRatio.SelectedIndex, 0, DisplayOptions.AspectChoices.Length - 1)];
         settings.AspectRatio = aspect.Aspect;

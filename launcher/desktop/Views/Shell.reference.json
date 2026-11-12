@@ -1,5 +1,5 @@
 {
-  "reference": "v1.0.20-rc1 + RC2 keyboard controls",
+  "reference": "v1.0.20-rc1 + RC2 keyboard controls + issue 85 vertical sync",
   "sourceSha256": {
     "Shell.xaml": "ab01c37414a780999502da553f0b5650a7ef13668c8b6c3132d3e2602f2f2ace",
     "Theme.xaml": "b58cd89b05dc373c195e4e53a546dce7f72ce97b21a1ef78fa1dbfb432e911d1"
@@ -65,6 +65,9 @@
       "SelectionChanged": "SettingChanged"
     },
     "ScreenFit": {
+      "SelectionChanged": "SettingChanged"
+    },
+    "VSync": {
       "SelectionChanged": "SettingChanged"
     },
     "InternalResolution": {
@@ -679,6 +682,7 @@
     "RumbleSwitch",
     "SaveCount",
     "ScreenFit",
+    "VSync",
     "SearchGamesButton",
     "SearchStatus",
     "SelectedBuildPath",
@@ -739,6 +743,7 @@
       "Window resolution",
       "Aspect ratio",
       "Screen fit",
+      "Vertical sync",
       "RENDERING",
       "Internal resolution",
       "Texture filtering",

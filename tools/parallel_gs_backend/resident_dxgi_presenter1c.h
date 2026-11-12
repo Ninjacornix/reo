@@ -12,6 +12,7 @@
 #include "smaa/resident_smaa.hpp"
 #include "movie_frame_signal.h"
 #include "runtime/gs/performance.h"
+#include "runtime/gs/display_sync.h"
 #include <chrono>
 
 namespace ps2_ipu {
@@ -36,6 +37,47 @@ class ResidentDxgiPresenter {
     unsigned movieSwitches_ = 0;
     std::chrono::steady_clock::time_point lastMovieFrame_{};
     reo::performance::Meter performance_;
+    reo::display_sync::Adaptive adaptiveSync_;
+    HMONITOR syncMonitor_ = nullptr;
+    double refreshHz_ = 0;
+    std::chrono::steady_clock::time_point refreshChecked_{};
+    bool displaySynchronized_ = true;
+    unsigned syncLogs_ = 0;
+
+    bool displaySync() {
+        const auto mode = reo::display_sync::configured();
+        const auto now = std::chrono::steady_clock::now();
+        const HMONITOR monitor = mode == reo::display_sync::Mode::Adaptive
+                                     ? MonitorFromWindow(window_, MONITOR_DEFAULTTONEAREST)
+                                     : nullptr;
+        if (mode == reo::display_sync::Mode::Adaptive &&
+            (monitor != syncMonitor_ || now - refreshChecked_ > std::chrono::seconds(1))) {
+            MONITORINFOEXW info{};
+            info.cbSize = sizeof(info);
+            DEVMODEW display{};
+            display.dmSize = sizeof(display);
+            const double refreshHz =
+                GetMonitorInfoW(monitor, &info) &&
+                        EnumDisplaySettingsW(info.szDevice, ENUM_CURRENT_SETTINGS, &display) &&
+                        display.dmDisplayFrequency > 1
+                    ? double(display.dmDisplayFrequency)
+                    : 0;
+            if (monitor != syncMonitor_ || refreshHz != refreshHz_)
+                adaptiveSync_ = {};
+            refreshHz_ = refreshHz;
+            syncMonitor_ = monitor;
+            refreshChecked_ = now;
+        }
+        const bool synchronized = adaptiveSync_.synchronized(
+            mode, std::chrono::duration<double>(now.time_since_epoch()).count(), refreshHz_);
+        if ((!syncLogs_ || synchronized != displaySynchronized_) && syncLogs_ < 12) {
+            ++syncLogs_;
+            std::fprintf(stderr, "[DISPLAY-SYNC] DXGI requested=%s interval=%d refresh=%.2fHz\n",
+                         reo::display_sync::name(mode), synchronized ? 1 : 0, refreshHz_);
+        }
+        displaySynchronized_ = synchronized;
+        return synchronized;
+    }
     struct Parameters {
         uint32_t sourceWidth, sourceHeight, destinationWidth, destinationHeight, linear;
         uint32_t fps = 0, frameMs = 0, ups = 0;
@@ -170,6 +212,7 @@ class ResidentDxgiPresenter {
             throw std::invalid_argument("Invalid presentation target");
         if (window_ == window && width_ == width && height_ == height)
             return;
+        adaptiveSync_ = {};
         device_.wait_idle();
         targetView_.reset();
         target_.reset();
@@ -288,7 +331,7 @@ class ResidentDxgiPresenter {
         Vulkan::Semaphore release;
         Vulkan::Fence drawComplete;
         device_.submit(cmd, &drawComplete, 1, &release);
-        if (!release || !swapchain_->present(std::move(release), displayVsync))
+        if (!release || !swapchain_->present(std::move(release), displayVsync || displaySync()))
             throw std::runtime_error("DXGI GPU present failed");
         heldSource_ = merged;
         ++submitted_;
