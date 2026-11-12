@@ -4,6 +4,12 @@ Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification with multiple agents. The user is awake and has revoked the prior
 sleep request: finish Stage4 and do not put the PC to sleep afterward.
 
+- [Transient weapon lights](TRANSIENT_WEAPON_LIGHTS.md) now supply the actual
+  attack light constructor, both canonical light pools and linked-task lifetime.
+  Both compilers pass1,310,720 callback states and77 owner/adapter cases;
+  primary-light regressions also pass. Pose/contact/flight effect families and
+  complete session/game acceptance remain open.
+
 - [Weapon actions](WEAPON_ACTIONS.md) now compose actual resource depletion,
   inventory removal/compaction, canonical counters, audio and firing preparation.
   Both compilers pass65,536 use/refresh cases and32,768 full firing-order cases,

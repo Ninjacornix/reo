@@ -5,3 +5,17 @@ target_link_libraries(reo_native_gameplay_lighting PUBLIC reo_native_gameplay_sc
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_compile_options(reo_native_gameplay_lighting PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
 endif()
+
+add_library(reo_native_transient_lights STATIC transient_light_policy.cpp transient_lights.cpp)
+target_compile_features(reo_native_transient_lights PUBLIC cxx_std_20)
+target_link_libraries(reo_native_transient_lights PUBLIC reo_native_gameplay_lighting reo_native_gameplay_update)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(reo_native_transient_lights PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+endif()
+
+add_library(reo_native_weapon_light_effects STATIC ../gameplay_world/transient_weapon_effects.cpp)
+target_compile_features(reo_native_weapon_light_effects PUBLIC cxx_std_20)
+target_link_libraries(reo_native_weapon_light_effects PUBLIC reo_native_weapon_actions reo_native_transient_lights)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(reo_native_weapon_light_effects PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+endif()

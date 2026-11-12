@@ -39,7 +39,7 @@ LightingImport Lighting::import_lig(std::span<const std::byte> bytes){
     banks_=banks;reset_work();return LightingImport::completed;
 }
 void Lighting::reset_work()noexcept{
-    selected_=-1;primary_={};auxiliary_={};primary_count_=0;bindings_.fill(0xff);
+    selected_=-1;primary_={};auxiliary_={};primary_count_=auxiliary_count_=0;bindings_.fill(0xff);
     if(reset_epoch_==UINT64_MAX)exhausted_=true;else ++reset_epoch_;
     // Existing bank masks are deliberately not cleared by 6B1DC0.
 }
@@ -69,6 +69,35 @@ std::optional<std::uint8_t> Lighting::slot(const LightHandle& id)const noexcept{
 std::optional<NativeLight> Lighting::light(const LightHandle& id)const noexcept{const auto index=slot(id);return index?std::optional(primary_[*index]):std::nullopt;}
 bool Lighting::release(const LightHandle& id)noexcept{const auto index=slot(id);return index&&release(*index);}
 bool Lighting::replace(const LightHandle& id,const LightDescriptor& value)noexcept{const auto index=slot(id);if(!index)return false;primary_[*index].descriptor=value;return true;}
+std::optional<AuxiliaryLightHandle> Lighting::allocate_auxiliary(const LightDescriptor* source,std::uint8_t tag)noexcept{
+    if(exhausted_||auxiliary_count_>=auxiliary_.size())return{};
+    for(std::size_t i=0;i<auxiliary_.size();++i)if(!auxiliary_[i].active){
+        if(auxiliary_generations_[i]==UINT64_MAX)return{};
+        auto& value=auxiliary_[i];value.active=1;value.tag=tag;
+        if(source)value.descriptor=*source;
+        ++auxiliary_generations_[i];++auxiliary_count_;return auxiliary_handle(std::uint8_t(i));
+    }
+    return{};
+}
+std::optional<AuxiliaryLightHandle> Lighting::auxiliary_handle(std::uint8_t index)const noexcept{
+    if(exhausted_||index>=auxiliary_.size()||!auxiliary_[index].active)return{};
+    AuxiliaryLightHandle id;id.domain_=domain_;id.epoch_=reset_epoch_;id.generation_=auxiliary_generations_[index];id.slot_=index;return id;
+}
+std::optional<std::uint8_t> Lighting::auxiliary_slot(const AuxiliaryLightHandle& id)const noexcept{
+    if(exhausted_||id.domain_!=domain_||id.epoch_!=reset_epoch_||!id.generation_||id.slot_>=auxiliary_.size()||auxiliary_generations_[id.slot_]!=id.generation_||!auxiliary_[id.slot_].active)return{};
+    return id.slot_;
+}
+std::optional<NativeLight> Lighting::light(const AuxiliaryLightHandle& id)const noexcept{
+    const auto index=auxiliary_slot(id);return index?std::optional(auxiliary_[*index]):std::nullopt;
+}
+bool Lighting::release(const AuxiliaryLightHandle& id)noexcept{
+    const auto index=auxiliary_slot(id);if(!index)return false;
+    auxiliary_[*index]={};--auxiliary_count_;return true;
+}
+bool Lighting::replace(const AuxiliaryLightHandle& id,const LightDescriptor& value)noexcept{
+    const auto index=auxiliary_slot(id);if(!index)return false;
+    auxiliary_[*index].descriptor=value;return true;
+}
 bool Lighting::remove(std::uint8_t index)noexcept{
     if(index>=bindings_.size()||selected_<0||std::size_t(selected_)>=banks_.size())return false;
     if(bindings_[index]!=0xff)release(bindings_[index]);

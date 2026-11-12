@@ -39,6 +39,17 @@ private:
     friend class Lighting;
 };
 enum class LightingImport { completed,unsupported_version };
+class AuxiliaryLightHandle final {
+public:
+    AuxiliaryLightHandle()=default;
+    explicit operator bool()const noexcept{return bool(domain_)&&generation_!=0;}
+    friend bool operator==(const AuxiliaryLightHandle&,const AuxiliaryLightHandle&)=default;
+private:
+    std::shared_ptr<const LightDomain> domain_;
+    std::uint64_t epoch_{},generation_{};
+    std::uint8_t slot_{};
+    friend class Lighting;
+};
 // Canonical game-side state; rendering consumes its typed snapshots later.
 // Internal bank bindings name physical native pool slots deliberately: original
 // removal retains its binding, including subsequent reuse of that same slot.
@@ -62,12 +73,21 @@ public:
     std::optional<NativeLight> light(const LightHandle&)const noexcept;
     bool release(const LightHandle&)noexcept;
     bool replace(const LightHandle&,const LightDescriptor&)noexcept;
+    // The source6B2BD0/6B2CC0 auxiliary pool is already canonical here. Its
+    // handles have a distinct type so primary consumers cannot retarget it.
+    std::optional<AuxiliaryLightHandle> allocate_auxiliary(const LightDescriptor*,std::uint8_t tag)noexcept;
+    std::optional<AuxiliaryLightHandle> auxiliary_handle(std::uint8_t)const noexcept;
+    std::optional<std::uint8_t> auxiliary_slot(const AuxiliaryLightHandle&)const noexcept;
+    std::optional<NativeLight> light(const AuxiliaryLightHandle&)const noexcept;
+    bool release(const AuxiliaryLightHandle&)noexcept;
+    bool replace(const AuxiliaryLightHandle&,const LightDescriptor&)noexcept;
     const std::array<LightingBank,4>& banks()const noexcept{return banks_;}
     const std::array<NativeLight,64>& primary()const noexcept{return primary_;}
     const std::array<NativeLight,64>& auxiliary()const noexcept{return auxiliary_;}
     const std::array<std::uint8_t,32>& bindings()const noexcept{return bindings_;}
     std::int8_t selected()const noexcept{return selected_;}
     std::uint8_t primary_count()const noexcept{return primary_count_;}
+    std::uint8_t auxiliary_count()const noexcept{return auxiliary_count_;}
     std::uint64_t reset_epoch()const noexcept{return reset_epoch_;}
 private:
     std::array<LightingBank,4> banks_{};
@@ -78,6 +98,8 @@ private:
     std::uint64_t reset_epoch_{};
     std::shared_ptr<const LightDomain> domain_;
     std::array<std::uint64_t,64> generations_{};
+    std::array<std::uint64_t,64> auxiliary_generations_{};
+    std::uint8_t auxiliary_count_{};
     bool exhausted_{};
 };
 } // namespace reo::native::gameplay_scenario
