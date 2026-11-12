@@ -98,6 +98,8 @@ struct PeriodicVisuals::Node final:gameplay_scenario::PeriodicVisual {
     transform_math::Vector uniform{1,1,1},parameters208{1,1,1};
     transform_math::Vector additional_offset;
     float feedback_scale{},camera_offset{};
+    float opacity{1}; // actual652F00 default;652F90 also establishes1.
+    std::optional<std::uint8_t> particle_mode;
     std::optional<transform_math::Matrix> basis;
     VisualBinding binding;
     std::optional<gameplay_scenario::FogPulse> pulse;
@@ -153,7 +155,7 @@ public:
     WorkStatus emit_surface(const SurfaceEmission& request)noexcept override{return owner_.emit_surface_impl(request,true);}
 };
 struct PeriodicVisuals::Editing {PeriodicVisuals* owner;};
-class PeriodicVisuals::Edit final:public WorkEdit {
+class PeriodicVisuals::Edit final:public WorkEdit,public ParticleEdit {
     std::weak_ptr<Editing> owner_;std::shared_ptr<Node> node_;gameplay_actors::EntityId id_;
     PeriodicVisuals* active()const noexcept {
         const auto token=owner_.lock();if(!token||!node_->live)return nullptr;
@@ -169,9 +171,16 @@ public:
     bool set_attributes(std::uint16_t value)noexcept override {if(!active())return false;node_->attributes=value;return true;}
     bool feedback(transform_math::Vector value,float scalar)noexcept override {
         auto* owner=active();if(!owner||!finite(value)||!std::isfinite(scalar))return false;
-        node_->flags|=0x40;node_->parameters208=value;node_->feedback_scale=scalar;node_->attributes|=0x100;
+        node_->flags|=0x40;node_->parameters208=value;node_->opacity=1;node_->feedback_scale=scalar;node_->attributes|=0x100;
         for(const auto slot:node_->pieces){auto& output=owner->pieces_[slot].output;output.flags|=0x40;output.parameters208=value;}
         return true;
+    }
+    bool configure_particle(std::uint8_t mode,std::int16_t delay,const std::array<float,6>& policy)noexcept override{
+        if(!active()||node_->periodic||!std::all_of(policy.begin(),policy.end(),[](float v){return std::isfinite(v);}))return false;
+        node_->category=13;node_->particle_mode=mode;node_->delay=delay;
+        if(policy[0]!=1.f){node_->attributes=4;node_->uniform={policy[0],policy[0],policy[0]};}
+        else node_->attributes=0; // Source does not reset old scale values here.
+        return policy[1]==0.f||feedback({policy[2],policy[3],policy[4]},policy[5]);
     }
 };
 PeriodicVisuals::PeriodicVisuals(std::shared_ptr<const EffectBank> bank):bank_(std::move(bank)){
@@ -316,6 +325,13 @@ PeriodicVisuals::CompanionsCreated PeriodicVisuals::create_resource_debris(const
 }
 WorkCreated PeriodicVisuals::create(const WorkRequest& request)noexcept{
     return create_impl(request,false);
+}
+std::optional<ParticleSnapshot> PeriodicVisuals::particle_state(const gameplay_actors::EntityId& id)const noexcept{
+    if(closed_)return{};
+    const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));if(!node||!node->particle_mode||!node->category)return{};
+    ParticleSnapshot result;result.category=*node->category;result.mode=*node->particle_mode;result.delay=node->delay;result.attributes=node->attributes;result.scale=node->uniform;result.parameters208=node->parameters208;result.opacity=node->opacity;result.feedback_scale=node->feedback_scale;result.flags=node->flags;result.child_count=node->pieces.size();
+    for(std::size_t i=0;i<node->pieces.size();++i){const auto& piece=pieces_[node->pieces[i]].output;result.children[i]={piece.flags,piece.parameters208};}
+    return result;
 }
 bool PeriodicVisuals::bind_resource_flights(gameplay_world::World& world,gameplay_contact_world::RoomResources& rooms,FlightAudio& audio)noexcept{
     if(!admitted()||busy_||flights_||world.closed()||!bound_to(world.session().random)||!audio.bound_to(world))return false;

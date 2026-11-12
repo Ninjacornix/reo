@@ -1,6 +1,7 @@
 #include "pose_arcs.hpp"
 #include "pose_cloud.hpp"
 #include "pose_motion.hpp"
+#include "pose_trail_effects.hpp"
 #include "resource_pose_work.hpp"
 #include "../gameplay_effects/periodic_visuals.hpp"
 #include <fstream>
@@ -44,6 +45,13 @@ int main(int argc,char** argv)try{
                 if(real_rooms.room->floors.floor(p).triangle){origin=p;break;}
             }
             check(bool(origin));
+            e::PeriodicVisuals trail_visuals(bank,owned_session->random);g::MappedPoseTrailEffects trails(owned_world,trail_visuals,real_rooms);
+            const auto moving=owned_world.spawn_primary(1,std::make_unique<g::Actor>()).id;check(bool(moving));owned_world.resolve(moving)->position={origin->x,origin->y,origin->z};
+            owned_world.resolve(parent)->slot=0;check(trails.emit(parent,{},0)&&trail_visuals.size()==0);owned_world.resolve(parent)->slot=7;
+            check(!trails.emit(parent,moving,1)&&trail_visuals.size()==0);check(trails.emit(parent,moving,0));
+            check(trail_visuals.update({0,1,0}).status==e::VisualStatus::completed);const auto trail_frame=trail_visuals.retain();check(bool(trail_frame));
+            for(const auto& visual:trail_frame->visuals){const auto state=trail_visuals.particle_state(visual.id);check(state&&state->category==13&&state->mode==0);}
+            trail_visuals.close();check(!trails.bound_to(owned_world));
             const auto floor=real_rooms.room->floors.floor(*origin);const auto arc_id=work(owned_pool,13);auto arc=owned_pool.resolve(arc_id);arc->primary=1;arc->position={origin->x,floor.height-.5f,origin->z};check(owned_pool.update(&real_arcs).status==g::PoseWorkStatus::completed&&!owned_pool.resolve(arc_id)&&arc->sampled_surface_height==floor.height&&arc->position.y==floor.height);
             const auto stale_id=work(owned_pool,13);arc=owned_pool.resolve(stale_id);arc->primary=1;check(real_rooms.room->ids.retire(real_rooms.room->id.entity)==g::actors::EntityStatus::completed);check(owned_pool.update(&real_arcs).status==g::PoseWorkStatus::unavailable&&owned_pool.resolve(stale_id));check(owned_pool.reset()==g::PoseWorkStatus::completed);++banks;++room_cases;
         }check(banks==6&&profile_refusals==1&&cloud_frames==380&&room_cases==6);

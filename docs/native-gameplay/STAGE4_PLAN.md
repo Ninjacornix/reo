@@ -4,6 +4,10 @@ Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification with multiple agents. The user is awake and has revoked the prior
 sleep request: finish Stage4 and do not put the PC to sleep afterward.
 
+- [Pose trail admission and ordinary emissions](POSE_TRAILS.md) now supply
+  actual578620 modes0/2/3 and578900 parameter edits through the shared visual
+  owner, with both compiler comparisons and current owned-asset contracts.
+  The five staggered custom mode1 lifecycles remain required. Stage4 is open.
 - [Additional pose callbacks](POSE_CALLBACKS.md) now implement the cloud,
   vertical/timer and quarter-turn arc policies through the canonical pool.
   Both compilers pass full original-body comparisons and current contracts

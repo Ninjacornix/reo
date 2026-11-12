@@ -1,6 +1,7 @@
 #pragma once
 #include "geometry.hpp"
 #include "work.hpp"
+#include "particle_work.hpp"
 #include "surface_work.hpp"
 #include "resource_companion.hpp"
 #include "resource_debris.hpp"
@@ -103,6 +104,7 @@ public:
     std::optional<ActorContactState> actor_contact_state(const gameplay_actors::EntityId&)const noexcept;
     gameplay_scenario::EmissionResult emit(const gameplay_scenario::PeriodicEmission&)noexcept override;
     WorkCreated create(const WorkRequest&)noexcept override;
+    std::optional<ParticleSnapshot> particle_state(const gameplay_actors::EntityId&)const noexcept;
     WorkStatus emit_surface(const SurfaceEmission&)noexcept override;
     WorkStatus refresh_companion()noexcept override;
     VisualReport update(transform_math::Vector camera)noexcept;

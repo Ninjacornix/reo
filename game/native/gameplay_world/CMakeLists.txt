@@ -324,6 +324,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
 endif()
 
 add_library(reo_native_pose_callbacks STATIC pose_cloud.cpp pose_cloud_policy.cpp pose_motion.cpp pose_motion_policy.cpp pose_arcs.cpp pose_arcs_policy.cpp)
+target_sources(reo_native_pose_callbacks PRIVATE pose_trail_admission.cpp pose_trail_effects.cpp)
 
 target_compile_features(reo_native_pose_callbacks PUBLIC cxx_std_20)
 
