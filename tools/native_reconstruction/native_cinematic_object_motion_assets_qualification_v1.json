@@ -1,0 +1,139 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/animation/CMakeLists.txt": "c222bafa86c5eec37afb4f4e02474561da3d07c511fccccac420773512109cfb",
+    "game/native/animation/constraint_math.cpp": "b75f1f46c2081d3c0f565b754cbca0f49ebe1f6f52b3ba169857cb13d5a9857e",
+    "game/native/animation/constraint_math.hpp": "070e67f8de1eae0564c0cde549f583661aff13cf6fb313752fcdfb194198b3c8",
+    "game/native/animation/curves.cpp": "143289127bf911e7f9726ab13e6761b893ad222f4066445c3a1f267ac56cd55b",
+    "game/native/animation/curves.hpp": "c337a6c8946f21d7d14b7c50f06d1d3b906e2bd3f284646d82fc0b3fdded07c2",
+    "game/native/animation/model.cpp": "a47d8f9598fd21612a63207e767889eba8fdd6d581fd3dae8a95ae3bed4393f9",
+    "game/native/animation/model.hpp": "ce893b5cc064c969eac36aac7e059109a65546642277b95eb6d0f9c0926645d8",
+    "game/native/animation/model_blend.cpp": "65e40c532bb16fafb43636ff0602ddd5a8ababb368c50c39df5c4c15d5ca2ef3",
+    "game/native/animation/motion_bank.cpp": "d77ec70e97ed9a71018e3bf9112f4b5085e22410b0bfc6283a4ae506184e0f8d",
+    "game/native/animation/motion_bank.hpp": "2ef113fbc196de6ede1218a92d5785ebda61b309b2b510e8abb212d3f6319cc9",
+    "game/native/animation/primary_motion_routing.hpp": "8afb13cb504beab839edb4f0d8f1c077ab2a2152bf56d2fd2234f1252ea969a6",
+    "game/native/animation/primary_track_layouts.inc": "aec3ac38998bbc4538993dd2db1ca6c4376a735ca330e06c1cbff68eb35727a4",
+    "game/native/animation/scalar_playback.cpp": "fe4f8045aef3803e036e462e1d4b5d9caaf25580f3755aaadf43c8009e2d434c",
+    "game/native/animation/scalar_playback.hpp": "f3f28a96d27ddd186bc4a50d5c95d88d3b5e8fc11e988dfa4615b44652397913",
+    "game/native/gameplay_scenario/CMakeLists.txt": "1e256a1e0df825fb5b7631ab7024c4e024ba748d8bc623748245988669bc765b",
+    "game/native/gameplay_scenario/cutscene_actor_commands.cpp": "16a334e5fe19973f51a0d98342f8f765bfda0c0a378f689a19a092adaa074373",
+    "game/native/gameplay_scenario/cutscene_descriptor.hpp": "03233684743e02393c3ce5b14c3e67c32898bd0f064aafc5592d6187c372f69a",
+    "game/native/gameplay_scenario/cutscene_object_tracks.cpp": "7b8a2dd2ee9ad1c8fabd636321ed73d7f1e14fc2e0c1050cc5c8bf15e0613c4c",
+    "game/native/gameplay_scenario/cutscene_object_tracks.hpp": "31c013086e77cb408e99d568d271550bf6aee3379a30416405f161afc3a945f6",
+    "game/native/gameplay_world/CMakeLists.txt": "35a28b3ebce6f4bdcdc839b24a0940928e57a89d08346f133f9c701dffad91f7",
+    "game/native/gameplay_world/auxiliary_actors.hpp": "c6cfe9f5f8958e6eec718aba1f4fb2534f4c3259afd67d875167015290f8cb89",
+    "game/native/gameplay_world/cinematic_actor_frames.cpp": "ec2542fe63dbd4733b8fbd12860fec052f43e756b1c067ad3d128a45588917bb",
+    "game/native/gameplay_world/cinematic_actor_frames.hpp": "31983fb212e670a22ba833fdfc2c0528f4a9ae0c98137dc2cefcd7e6f65ca470",
+    "game/native/gameplay_world/cinematic_model_pass.cpp": "163126dbb8ae57f29dbc5d0d37819d7cd9b8a5089665ceeb305f4cf3885bb8fd",
+    "game/native/gameplay_world/cinematic_model_pass.hpp": "974131b1cb7396ccaf69001079b905b7de4470ef037d1025483c348effa4a5bb",
+    "game/native/gameplay_world/cinematic_object_assets.cpp": "b88d1592b24aceb0c5f348fe771c02ff1eb918d3db7d31e1eec52033c3db1254",
+    "game/native/gameplay_world/cinematic_object_assets.hpp": "640f3a544bccdd59e2e9d2ad1a028d2846322430fb087119334ca6bd85e0e164",
+    "game/native/gameplay_world/cinematic_object_attachment.cpp": "dbd7efbe377f7940eeca151efb3ab3d10d60d6beffc93b63331b60fbcd299515",
+    "game/native/gameplay_world/cinematic_object_attachment.hpp": "c4726ebbbb5948984c1939d22790914f8bc95d2122764f556cf5d7e74655df8e",
+    "game/native/gameplay_world/cinematic_object_construction.cpp": "a807cf86e558ea62b9ae6229ad380e65ca5cb9c02697b22c17d148d1643d40f9",
+    "game/native/gameplay_world/cinematic_object_construction.hpp": "286b113a25185e124e73c512fd824f25a8c73a7325dcddcea9d134cbbefa356c",
+    "game/native/gameplay_world/cinematic_object_motion_assets.cpp": "266f980005aae054f4987966b45ccda5c23fd28350dd967f20aada67bd2af4ce",
+    "game/native/gameplay_world/cinematic_object_motion_assets.hpp": "0ad787c1a4f365aac877eab6f043d91598dc9d981e645c90ea63db3eba988557",
+    "game/native/gameplay_world/cinematic_object_motion_members.inc": "319b2834d16bc17164be0e3d30db8a8eb9222b62e1f3c3d7f71c69fa95167267",
+    "game/native/gameplay_world/cinematic_objects.cpp": "479b89b59ee21a2c7324afc57027bfb25ce796351979ea0a27e65f8517a18d8b",
+    "game/native/gameplay_world/cinematic_objects.hpp": "a72b5571744981561656c16036c079bb618889026708ec007b57e00b9992eb56",
+    "game/native/gameplay_world/cutscene_actor.cpp": "18943de710e9e94d0b6e64cfc53a6a7a190716a01f1a602f8a1f34a12965b8fc",
+    "game/native/gameplay_world/model_parts.cpp": "1403768a24a4de2411e74dadd11df17ee966bd32d9d7d90f3b9fdbcb896b9cf4",
+    "game/native/gameplay_world/model_parts.hpp": "a6e21ce2f68297021c88c32f5592b31302a2a6eea43b13d7d8312c4876cdd2d9",
+    "game/native/gameplay_world/model_poses.cpp": "0eaada1bd7fef51df85c0dc29771dcfcec67d26893f052358c20438aae999434",
+    "game/native/gameplay_world/model_poses.hpp": "599b5703bd5222c701595df886b38004dbc655f4a4fb560be2296580ac2cba0d",
+    "game/native/gameplay_world/model_scale_profile.inc": "d6fb8c85d30ea0c224af120e2bda75a25f6ed117085e221e41fb9ac50a78e701",
+    "game/native/gameplay_world/primary_actor_models.cpp": "ea649035f16c7c668ef7841538893007b985df8bfd187bc016e40b3e46d9cefb",
+    "game/native/gameplay_world/scripted_actor.hpp": "004289e2fbb18431376da80271ed78b03999df87a18a6931876e363d7c5e2cd7",
+    "game/native/gameplay_world/scripted_motion.cpp": "e0aac6248fc577d6d7541908e78d360932312e87e4551e2bfe206de5a2d9cad8",
+    "game/native/gameplay_world/scripted_motion.hpp": "069eb1ff5afbe02e32dac649727c7724c4ce674459b07318520ddc99be2d5ca6",
+    "game/native/gameplay_world/secondary_pose_link_profiles.inc": "c9a7835c08720be86a51bb390e408e9ac2faccf68ebbacd6f5636042bf6d561d",
+    "game/native/gameplay_world/secondary_pose_links.cpp": "1bdf4848b0b2ef821be61fee3455232a3caba9fc96d2eeac104cd8d134191517",
+    "game/native/gameplay_world/secondary_pose_links.hpp": "c17b96fb2aca36a9f3d41b93e0372b9076b4d076617369c8a9058137eec80b66",
+    "game/native/gameplay_world/world.cpp": "07ee42de8aa4a35be7f304e89ac66932cdc23f8d1fc11b0f664fb30419267aa8",
+    "game/native/gameplay_world/world.hpp": "c96105f1f801c193a2e5aced82f1d8bbcfd647339e7ecb04b3a72383395e6c35",
+    "game/native/transform_math/transform_math.cpp": "a1ef2abee0b565113047fb7623d0dfe4f0d2b293e3b9560bc9062be26ecdc0a6",
+    "game/native/transform_math/transform_math.hpp": "21ae9bfff2fe029fef63b92e9c46359158fa6f5f0ee27c761ad2b3e3f2e45b7d",
+    "recomp/config/output/sub_001AA110_0x1aa110.cpp": "93539965e58256fcb76a8f40c82435770b686429bb6521c1d30a8cbbed68c868",
+    "recomp/config/output/sub_001AA480_0x1aa480.cpp": "d8e7e49b02d94c098242528f780c9f4a6d1a76bc53ae0e28963463b34e4e100d",
+    "recomp/config/output/sub_001AB050_0x1ab050.cpp": "7074183f79f2e7db5abfff792577dd4a49714e6df92eb61e61d0c2a945d8e250",
+    "recomp/config/output/sub_001CC8F0_0x1cc8f0.cpp": "f2abb56f5a1c2d96988620bf2fac6f2166301ab3d0e05b747d5be2a23000f2da",
+    "recomp/config/output/sub_001D1500_0x1d1500.cpp": "ed5250ad194fa882e20405662cada407fa8322a461169352d7f63f45312ceace",
+    "recomp/config/output/sub_001D1960_0x1d1960.cpp": "a6ecc16cb3aa6d6476422d775f91b8cac097730381d220bfa485cafb55bf1423",
+    "recomp/config/output/sub_001D1E00_0x1d1e00.cpp": "e3ae2cd6818434d3af7f117788eb4236c9b0c58879ce33371760643783e1c4f6",
+    "runtime/assets/virtual_afs.h": "8fa06c0e1da74b44f225510d81463fc510e868f917cad42d86221288c9905598",
+    "tools/native_reconstruction/cinematic_object_motion_tests.cpp": "906d491b210260c9aae0dd8f1cd11710303d29de68dc0d1a6412965ea6a30000",
+    "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f",
+    "tools/native_reconstruction/generate_cinematic_object_motion_profile.py": "2139ed8426d67cb8831d7d1975d6ac39dd6ac7f45ecf4e7b4800846813c6115e",
+    "tools/native_reconstruction/verify_cinematic_object_motion_assets.py": "41107c096732df15d8e91fa10aed5f7453e50eece56e0d6ad31620734397ddbd"
+  },
+  "cohorts": {
+    "assets": {
+      "llvm": {
+        "receipt": "build-native-sjuni/cinematic-object-motion-assets-llvm-v2/receipt.json",
+        "receipt_sha256": "23e4c106006ceae52084f1ebd94853fd984fa6eae39d88e69bc80cfac7e01658",
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "observed": {
+          "checks": 230928,
+          "loads": 104,
+          "live_blocks": 1079,
+          "loader_cases": 312,
+          "retained_slots": 677,
+          "fault_cases": 6,
+          "source_releases": 184,
+          "original_calls": 2132,
+          "game_run": false
+        }
+      },
+      "gcc": {
+        "receipt": "build-native-sjuni/cinematic-object-motion-assets-gcc-v2/receipt.json",
+        "receipt_sha256": "a993a66c2654eee5c3c57c761ee2d564c8a5ba614c606aa0ccaaf9f096578666",
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "observed": {
+          "checks": 230928,
+          "loads": 104,
+          "live_blocks": 1079,
+          "loader_cases": 312,
+          "retained_slots": 677,
+          "fault_cases": 6,
+          "source_releases": 184,
+          "original_calls": 2132,
+          "game_run": false
+        }
+      }
+    },
+    "parents": {
+      "llvm": {
+        "receipt": "build-native-sjuni/cinematic-object-motion-assets-parents-llvm-v1/receipt.json",
+        "receipt_sha256": "57119c801881510ecb5e81f440849606ea78ccc66f193eb87112c3a39f57b647",
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "observed": {
+          "parent_tests": 5
+        }
+      },
+      "gcc": {
+        "receipt": "build-native-sjuni/cinematic-object-motion-assets-parents-gcc-v1/receipt.json",
+        "receipt_sha256": "59163d9ae4a2b690ac43c7929722c3fdb2158aa1f0682033f5826b2ce8d4c7de",
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "observed": {
+          "parent_tests": 5
+        }
+      }
+    }
+  },
+  "profile": {
+    "receipt": "build-native-sjuni/cinematic-object-motion-profile-v1/receipt.json",
+    "receipt_sha256": "b9f387e93224afea35a993896ce9be96578edd52a98273cdd865c56b9da6ccef",
+    "members": 52
+  },
+  "limits": [
+    "Exact52 ROM alias member ownership and complete bounded original object-bank loader/strided parser comparisons; no game run or speedup measurement.",
+    "Controlled I/O and raw-block packing/token provenance ports remain explicit. This is not original packed curve construction or every model/clip playback.",
+    "Failed native reads retain the previous shared bank; loaded definitions copy old slots before literal200-stride writes. Six native fault/retention cases execute.",
+    "Actual bank publication, complete scene phases/entry/exit, remaining pose/actor providers and installed Step4 acceptance remain open."
+  ]
+}
