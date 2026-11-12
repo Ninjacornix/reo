@@ -11,6 +11,11 @@ bool ForwardPoseVisuals::forward_visual(const actors::EntityId& id){
 bool ForwardPoseVisuals::ground_flare(const actors::EntityId& id){return bound_to(world_)&&remaining_&&remaining_->ground_flare(id);}
 bool ForwardPoseVisuals::ground_trail(const actors::EntityId& id){return bound_to(world_)&&remaining_&&remaining_->ground_trail(id);}
 bool ForwardPoseVisuals::projectile_light(transform_math::Vector point){return bound_to(world_)&&remaining_&&remaining_->projectile_light(point);}
-std::optional<actors::EntityId> ForwardPoseVisuals::follower_visual(const actors::EntityId& id){return bound_to(world_)&&remaining_?remaining_->follower_visual(id):std::nullopt;}
-bool ForwardPoseVisuals::follower_position(const actors::EntityId& id,transform_math::Vector point){return bound_to(world_)&&remaining_&&remaining_->follower_position(id,point);}
+std::optional<actors::EntityId> ForwardPoseVisuals::follower_visual(const actors::EntityId& id){
+    if(!bound_to(world_))return{};
+    const auto made=visuals_.create_surface_follower_visual(world_,id);
+    if(made.status==gameplay_effects::WorkStatus::completed||made.status==gameplay_effects::WorkStatus::pool_full)return made.id;
+    return{};
+}
+bool ForwardPoseVisuals::follower_position(const actors::EntityId& id,transform_math::Vector point){return bound_to(world_)&&visuals_.position_surface_follower_visual(id,point);}
 }

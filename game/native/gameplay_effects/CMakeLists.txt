@@ -59,3 +59,12 @@ add_test(NAME native_projectile_trail_owner COMMAND projectile_trail_owner_tests
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_compile_options(projectile_trail_owner_tests PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
 endif()
+
+target_sources(reo_native_gameplay_effects PRIVATE surface_follower_visual.cpp)
+
+add_executable(surface_follower_owner_tests surface_follower_owner_tests.cpp)
+target_link_libraries(surface_follower_owner_tests PRIVATE reo_native_pose_callbacks)
+add_test(NAME native_surface_follower_owner COMMAND surface_follower_owner_tests)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(surface_follower_owner_tests PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+endif()

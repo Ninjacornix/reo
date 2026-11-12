@@ -85,6 +85,8 @@ struct PeriodicVisuals::Node final:gameplay_scenario::PeriodicVisual {
     struct Trail {InheritedTrailState state;InheritedTrailRequest binding;};
     struct ProjectileTrail {ProjectileTrailState state;gameplay_world::World* world{};std::shared_ptr<gameplay_world::Actor> parent;gameplay_actors::EntityId parent_id;std::uint8_t variant{};std::size_t root{};};
     std::optional<ProjectileTrail> projectile;
+    struct SurfaceFollower {SurfaceFollowerVisual state;gameplay_world::World* world{};std::shared_ptr<gameplay_world::Actor> parent;gameplay_actors::EntityId parent_id;};
+    std::optional<SurfaceFollower> surface_follower;
 
     std::optional<Trail> trail;
     std::shared_ptr<const EffectBank> bank;
@@ -398,6 +400,27 @@ std::optional<ProjectileTrailOutput> PeriodicVisuals::projectile_trail_state(con
     const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));if(!node||!node->projectile)return{};
     return ProjectileTrailOutput{node->projectile->state,node->projectile->root,node->flags};
 }
+PeriodicVisuals::SurfaceFollowerCreated PeriodicVisuals::create_surface_follower_visual(gameplay_world::World& world,const gameplay_actors::EntityId& parent_id)noexcept{
+    if(closed_||busy_||!admitted()||world.closed()||!bound_to(world.session().random))return{};
+    const auto parent=parent_id?world.resolve(parent_id):nullptr;if(parent_id&&!parent)return{};
+    if(entities_.size()==168)return{WorkStatus::pool_full,{}};
+    gameplay_actors::EntityId id;
+    try{
+        auto node=std::make_unique<Node>();node->periodic=false;node->bank=bank_;node->category=7;node->visible=false;
+        node->surface_follower.emplace();auto& binding=*node->surface_follower;binding.world=&world;binding.parent=parent;binding.parent_id=parent_id;
+        const auto made=entities_.create(std::move(node));if(made.status!=gameplay_actors::EntityStatus::completed)return{made.status==gameplay_actors::EntityStatus::full?WorkStatus::pool_full:WorkStatus::unavailable,{}};
+        id=made.id;order_.push_front(id);return{WorkStatus::completed,id};
+    }catch(const std::bad_alloc&){if(id)retire_node(id);failure_=VisualStatus::no_memory;return{};}
+    catch(const std::exception&){if(id)retire_node(id);failure_=VisualStatus::invalid_profile;return{};}
+}
+std::optional<SurfaceFollowerVisual> PeriodicVisuals::surface_follower_state(const gameplay_actors::EntityId& id)const noexcept{
+    const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));return node&&node->surface_follower?std::optional(node->surface_follower->state):std::nullopt;
+}
+bool PeriodicVisuals::position_surface_follower_visual(const gameplay_actors::EntityId& id,transform_math::Vector point)noexcept{
+    if(closed_||busy_||!finite(point))return false;
+    const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));if(!node||!node->surface_follower)return false;
+    node->surface_follower->state.position=point;return true;
+}
 WorkCreated PeriodicVisuals::create(const WorkRequest& request)noexcept{
     return create_impl(request,false);
 }
@@ -630,6 +653,14 @@ VisualReport PeriodicVisuals::update_impl(transform_math::Vector camera,const st
             const auto id=*cursor++;const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));
             if(!node)throw std::logic_error("Native periodic visual identity unexpectedly stale");
             ++report.visited;
+            if(node->surface_follower){
+                auto& binding=*node->surface_follower;
+                if(!binding.world||binding.world->closed()||!bound_to(binding.world->session().random))throw std::domain_error("Native surface follower World unavailable");
+                std::optional<transform_math::Vector> parent;
+                if(binding.parent)parent=transform_math::Vector{binding.parent->position.x,binding.parent->position.y,binding.parent->position.z};
+                const bool retire=advance_surface_follower_visual(binding.state,parent);node->visible=binding.state.visible;node->flags=binding.state.flags;
+                if(retire){retire_node(id);++report.retired;}continue;
+            }
             if(node->projectile){
                 auto& binding=*node->projectile;ProjectileOperations operations(*this);ProjectileTrailMotion input;
                 if(binding.state.phase==0||binding.state.phase==1){
@@ -773,7 +804,7 @@ VisualReport PeriodicVisuals::update_impl(transform_math::Vector camera,const st
         }
         if(revision_==UINT64_MAX)throw std::overflow_error("Native effect frame revision exhausted");
         auto frame=std::make_shared<EffectFrame>();frame->revision=revision_+1;frame->visuals.reserve(order_.size());
-        for(const auto& id:order_){const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));VisualOutput output;output.id=id;output.bank=node->bank;output.visible=node->visible;output.category=node->category;output.debris=node->resource_debris;output.flight=node->resource_flight;output.actor_contact=node->actor_contact;if(node->projectile)output.projectile_trail=ProjectileTrailOutput{node->projectile->state,node->projectile->root,node->flags};output.pieces.reserve(node->pieces.size());for(const auto slot:node->pieces)output.pieces.push_back(pieces_[slot].output);frame->visuals.push_back(std::move(output));}
+        for(const auto& id:order_){const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));VisualOutput output;output.id=id;output.bank=node->bank;output.visible=node->visible;output.category=node->category;output.debris=node->resource_debris;output.flight=node->resource_flight;output.actor_contact=node->actor_contact;if(node->surface_follower)output.surface_follower=node->surface_follower->state;if(node->projectile)output.projectile_trail=ProjectileTrailOutput{node->projectile->state,node->projectile->root,node->flags};output.pieces.reserve(node->pieces.size());for(const auto slot:node->pieces)output.pieces.push_back(pieces_[slot].output);frame->visuals.push_back(std::move(output));}
         revision_=frame->revision;publish(std::move(frame));return report;
     }catch(const std::bad_alloc&){failure_=VisualStatus::no_memory;}
     catch(const std::exception&){failure_=VisualStatus::invalid_profile;}

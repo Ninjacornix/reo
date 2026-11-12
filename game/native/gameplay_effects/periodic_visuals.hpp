@@ -4,6 +4,7 @@
 #include "particle_work.hpp"
 #include "inherited_trail_owner.hpp"
 #include "projectile_trail.hpp"
+#include "surface_follower_visual.hpp"
 #include "surface_work.hpp"
 #include "resource_companion.hpp"
 #include "resource_debris.hpp"
@@ -58,6 +59,7 @@ struct VisualOutput {
     std::optional<ResourceFlightState> flight;
     std::optional<ActorContactState> actor_contact;
     std::optional<ProjectileTrailOutput> projectile_trail;
+    std::optional<SurfaceFollowerVisual> surface_follower;
 };
 struct EffectFrame {std::uint64_t revision{};std::vector<VisualOutput> visuals;};
 enum class VisualStatus {completed,closed,busy,invalid_camera,invalid_profile,no_memory};
@@ -112,6 +114,12 @@ public:
     // parent lease retains its retired state without retargeting a reused slot.
     ProjectileTrailCreated create_projectile_trail(gameplay_world::World&,const gameplay_actors::EntityId&,std::uint8_t variant)noexcept;
     std::optional<ProjectileTrailOutput> projectile_trail_state(const gameplay_actors::EntityId&)const noexcept;
+
+    // Actual58DA20 subtype0; shares168 work slots and consumes no track children.
+    struct SurfaceFollowerCreated {WorkStatus status{WorkStatus::unavailable};gameplay_actors::EntityId id;};
+    SurfaceFollowerCreated create_surface_follower_visual(gameplay_world::World&,const gameplay_actors::EntityId& parent)noexcept;
+    std::optional<SurfaceFollowerVisual> surface_follower_state(const gameplay_actors::EntityId&)const noexcept;
+    bool position_surface_follower_visual(const gameplay_actors::EntityId&,transform_math::Vector)noexcept;
 
     std::optional<ParticleSnapshot> particle_state(const gameplay_actors::EntityId&)const noexcept;
     InheritedTrailBatch create_inherited_trails(const InheritedTrailRequest&)noexcept;

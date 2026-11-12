@@ -2,7 +2,7 @@
 #include "room_pose_projectiles.hpp"
 #include "../gameplay_effects/periodic_visuals.hpp"
 namespace reo::native::gameplay_world {
-// Actual5DEF90/653CC0 through the same168/256 visual owner. Other reached
+// Actual5DEF90/653CC0 and58DA20 subtype0 through the same168/256 visual owner. Other reached
 // projectile constructors are delegated to explicit remaining capabilities.
 class ForwardPoseVisuals final:public PoseProjectileActions {
 public:
