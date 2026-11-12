@@ -4,6 +4,12 @@ Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to put the PC to sleep only after
 Stage4 is fully implemented and verified; do not sleep at component checkpoints.
 
+- [Cinematic object assets](CINEMATIC_OBJECT_ASSETS.md) now retain actual archive
+  definitions, independent instances and distinct inverse bind data. Both
+  compilers pass452 imports,450 actual filename reads and1,808 controlled
+  original constructions; five parents pass. Cold attachment metadata is now
+  qualified for the owned material profile. Actual scene publication,55 unresolved
+  descriptor occurrences, full scene lifetime and installed acceptance remain open.
 - [Authored cinematic object streams](CUTSCENE_OBJECT_TRACKS.md) now dispatch
   all four command kinds through actual object/actor/model ownership, retain
   typed pose keys and preserve exact media-frame/cursor cadence. Paired cohorts

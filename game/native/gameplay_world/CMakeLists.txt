@@ -30,6 +30,13 @@ target_sources(reo_native_gameplay_world PRIVATE enemy_initialization.cpp)
   target_sources(reo_native_gameplay_world PRIVATE linked_updates.cpp)
 
 add_library(reo_native_actor_assets STATIC actor_assets.cpp actor_model_binding.cpp model_parts.cpp)
+add_library(reo_native_cinematic_object_assets STATIC cinematic_object_assets.cpp)
+target_compile_features(reo_native_cinematic_object_assets PUBLIC cxx_std_20)
+target_link_libraries(reo_native_cinematic_object_assets PUBLIC reo_native_actor_assets reo_native_gameplay_scenario)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(reo_native_cinematic_object_assets PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+endif()
+
 add_library(reo_native_npc_actor_construction STATIC npc_actor_construction.cpp cutscene_npc_construction.cpp)
 target_compile_features(reo_native_npc_actor_construction PUBLIC cxx_std_20)
 target_link_libraries(reo_native_npc_actor_construction PUBLIC reo_native_actor_assets)
