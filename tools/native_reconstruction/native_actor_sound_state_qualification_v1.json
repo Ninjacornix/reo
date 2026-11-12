@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_world/world.hpp": "724dbc01e929c08ce6076ea3e68229e6d9f80a6fbb9194a2e8ee9b53e58e2772",
+    "game/native/gameplay_world/actor_sound_state.hpp": "a26be9f040fa78e14c8de732db932bd773c8da2239ce9af04b373d4e59b1961d",
+    "game/native/gameplay_world/actor_initial_state.hpp": "79c1cd44d6ff274b9ce916d64c7f5ae182f12f92c8d4b0d0077c61383d5135ae",
+    "game/native/gameplay_world/linked_models.cpp": "185bda643b8b2245db81909c11e25fc51fd737c415f54607297af96036db20b5",
+    "game/native/gameplay_world/primary_actor_records_tests.cpp": "3acfd22e7b17d41fb36489b34f966734e31c460bde7de4bc08102ef527fb9bec",
+    "docs/native-gameplay/ACTOR_SOUND_STATE.md": "2d7ffe7e47cf87388858ac7a5bfd21ce1fbe814ad6fbb6ac1964c47f8355c062",
+    "tools/native_reconstruction/qualify_actor_sound_state.py": "20a9e6e979767e96e6b49cda8566f85e554be203d4331cc87614579b1ae8307a"
+  },
+  "receipts": {
+    "build-native-sjuni/actor-audio-clear-llvm-v1/receipt.json": {
+      "sha256": "f018a29f18fd8d70180e868864dfd35ee23fca011551c33a2deec622f0a8c673",
+      "observed": {
+        "checks": 2242399,
+        "complete_source_clears": 64,
+        "canonical_bootstraps": 64,
+        "capacity_refusals": 8,
+        "busy_proofs": 1,
+        "lifetimes": 512,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/dialogue-response-parents-llvm-v2/receipt.json": {
+      "sha256": "fb459355017ecd8067ffadd84035dfe099b9a25548a0208fd2abc1ad529fcd32",
+      "parent_tests": 30
+    },
+    "build-native-sjuni/actor-audio-clear-gcc-v1/receipt.json": {
+      "sha256": "7a61498fce4d18f245aa5fda8147f3d3a323d3156a6341d329fa03a344de8578",
+      "observed": {
+        "checks": 2242399,
+        "complete_source_clears": 64,
+        "canonical_bootstraps": 64,
+        "capacity_refusals": 8,
+        "busy_proofs": 1,
+        "lifetimes": 512,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/dialogue-response-parents-gcc-v2/receipt.json": {
+      "sha256": "ea00d85dcb6552c9a4d16f11369ad5f809bbbeba3968fe38a7f24d9f201225d7",
+      "parent_tests": 30
+    },
+    "build-native-sjuni/linked-model-profile-v1/receipt.json": {
+      "sha256": "d2f9060cc288facaa022ab268097ff5e43d3a00a9c0e971798a7e9c6e1cf7d3c",
+      "linked_domain": {
+        "capacity": 50,
+        "source_stride": "0xd90",
+        "source_pool": "0x42eb00",
+        "free_count_signed_half": "0x3b58f0",
+        "free_stack": "0x3b5910",
+        "head": "0x3b58f8",
+        "tail": "0x3b5900",
+        "budget_recycled_only_on_explicit_reset": true
+      }
+    }
+  },
+  "limits": [
+    "Metadata producer/state only. No assertion that nonzero population audio assignment or changingCF2attack producers are complete.",
+    "Worldheaderaddsreadonlycontrolleraccess/friendswithoutnewWorldfields. Laterconsumer/app checkpoints must qualify their own coherent layouts and owners."
+  ]
+}

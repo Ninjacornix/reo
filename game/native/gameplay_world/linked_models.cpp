@@ -8,6 +8,8 @@ namespace {
 #include "linked_model_definitions.inc"
 #include "cutscene_model_definitions.inc"
 void clear_authored_defaults(Actor& a) {
+    // Actual6BA260 pool clear covers both metadata roles within each D90 record.
+    a.sound_state=ActorSoundState{};a.projectile_variant=0;
     a.linked_frame.emplace();
     a.material_uv = MaterialUv{};
     a.motion_rate = 0;

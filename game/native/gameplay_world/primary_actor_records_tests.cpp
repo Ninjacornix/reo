@@ -19,6 +19,7 @@ void original_clear(unsigned seed){for(unsigned i=0;i<source_bytes+32;++i)memory
 #endif
 void check_cleared(const w::Actor& actor,unsigned physical){
     check(actor.contact_style_discriminator==0);
+    check(actor.sound_state==w::ActorSoundState{}&&actor.projectile_variant==0);
     check(actor.speech.selection&&actor.speech.selection->sequence==0&&actor.speech.selection->target_identifier==0&&actor.speech.selection->target_context==0&&actor.speech.selection->pending==0&&actor.speech.selection->response_state==0&&actor.speech.variant==0&&actor.speech.gauge_notice==0);
     check(actor.speech.request==0&&actor.speech.notice==0&&actor.speech.repeat_delay==0&&actor.speech.response_delay==0&&actor.speech.target_lock==0&&actor.speech.timing_active==0&&actor.speech.previous_elapsed==0&&actor.speech.elapsed==0&&actor.speech.remote_request==0);
     check(actor.speech.dialogue_delay==0&&actor.speech.display_style==0&&actor.speech.partner_characters==std::array<std::int8_t,4>{});
@@ -39,7 +40,7 @@ void check_cleared(const w::Actor& actor,unsigned physical){
     check(route.previous_action==0&&route.action==0&&route.destination_room==0&&route.completed==0&&route.selection_mode==0&&route.refresh==0&&route.travel_ticks==0);
     check(actor.inventory.carried==std::array<std::uint8_t,4>{}&&actor.inventory.storage==std::array<std::uint8_t,32>{});
 #ifdef REO_PRIMARY_RECORDS_ORIGINAL
-    const auto at=source_base+physical*0x10e0;check(actor.slot==memory[at+3]&&*actor.surface_transition_flags==memory[at+0xce2]&&*actor.secondary_pose_category_override==transform_read<unsigned>(memory.data(),at+0xfac));check(actor.position.x==transform_read<float>(memory.data(),at+0x38)&&actor.model_scale.y==transform_read<float>(memory.data(),at+0xb8)&&head.ticks==transform_read<std::int16_t>(memory.data(),at+0xbd2));
+    const auto at=source_base+physical*0x10e0;check(actor.sound_state->allocation_slot==memory[at+0x554]&&actor.sound_state->program_variant==memory[at+0x33]&&*actor.projectile_variant==memory[at+0xcf2]);check(actor.slot==memory[at+3]&&*actor.surface_transition_flags==memory[at+0xce2]&&*actor.secondary_pose_category_override==transform_read<unsigned>(memory.data(),at+0xfac));check(actor.position.x==transform_read<float>(memory.data(),at+0x38)&&actor.model_scale.y==transform_read<float>(memory.data(),at+0xb8)&&head.ticks==transform_read<std::int16_t>(memory.data(),at+0xbd2));
     check(actor.ai_execution->goal==transform_read<std::uint16_t>(memory.data(),at+0xff4)&&actor.ai_execution->action==transform_read<std::uint16_t>(memory.data(),at+0xff8)&&!actor.ai_execution->weight_profile&&transform_read<unsigned>(memory.data(),at+0x10ac)==0);
     check(route.output.link==transform_read<std::int16_t>(memory.data(),at+0x10aa)&&route.current_node==std::int8_t(memory[at+0x100c])&&route.final_position.z==transform_read<float>(memory.data(),at+0x1018)&&route.selection_mode==memory[at+0x105b]);
     for(unsigned i=0;i<4;++i)check((*actor.speech.partner_characters)[i]==std::int8_t(memory[at+0xdac+i]));
@@ -63,7 +64,7 @@ struct Busy final:w::Services {
     float grid_response(w::World&,std::uint8_t)override{std::terminate();}
 };
 int main()try{
-    const w::Actor generic;check(!generic.speech.dialogue_delay&&!generic.speech.display_style&&!generic.speech.partner_characters);
+    const w::Actor generic;check(!generic.sound_state&&!generic.projectile_variant);check(!generic.speech.dialogue_delay&&!generic.speech.display_style&&!generic.speech.partner_characters);
     check(!generic.speech.selection&&!generic.speech.variant&&!generic.speech.gauge_notice);
     check(!generic.speech.request&&!generic.speech.notice&&!generic.speech.repeat_delay&&!generic.speech.response_delay&&!generic.speech.target_lock&&!generic.speech.timing_active&&!generic.speech.previous_elapsed&&!generic.speech.elapsed&&!generic.speech.remote_request);
     for(unsigned seed=0;seed<64;++seed){

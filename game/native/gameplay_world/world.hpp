@@ -9,6 +9,7 @@
 #include "speech_state.hpp"
 #include "secondary_pose_state.hpp"
 #include "pose_work_state.hpp"
+#include "actor_sound_state.hpp"
 #include "head_reaction_state.hpp"
 #include "../gameplay_actors/entity.hpp"
 #include "../gameplay_actors/reference.hpp"
@@ -41,6 +42,7 @@ namespace reo::native::animation {class Instance;class Constraints;class Playbac
 namespace reo::native::gameplay_navigation {class Bank;}
 namespace reo::native::gameplay_scenario {class CutscenePlayback;class CutsceneActorTracks;class CutsceneObjectTracks;class CutsceneRosterPreparation;}
 namespace reo::native::gameplay_update {class LinkedModelWorkers;}
+namespace reo::native::gameplay_application {class ResourceBootstrap;class SessionResources;}
 namespace reo::native::gameplay_world {
 namespace actors=gameplay_actors;
 namespace input=gameplay_actors::input;
@@ -89,6 +91,8 @@ struct Actor : actors::Entity,actors::HitActor {
     // establish zero; generic Actor construction does not supply this value.
     std::optional<std::int16_t> contact_style_discriminator;
     std::optional<PoseWorkState> pose_work;
+    std::optional<ActorSoundState> sound_state; //554/33; actual full-record producer required
+    std::optional<std::uint8_t> projectile_variant; //CF2; ordinary-family producer required
     std::optional<gameplay_navigation::ActorRouteState> navigation_route;
     std::optional<gameplay_ai::ExecutionState> ai_execution;
     std::optional<TargetingState> targeting;
@@ -309,6 +313,7 @@ public:
     const Session& session()const noexcept{return *session_;}
     bool closed()const noexcept{return closed_;}
     bool busy()const noexcept;
+    const gameplay_scenario::CutscenePlayback* cinematic_controller()const noexcept{return closed_?nullptr:cutscene_playback_owner_;}
     const HumanoidMotionSource* humanoid_motion_source()const noexcept{return humanoid_motion_source_;}
     bool humanoid_motion_source_closed()const noexcept{return humanoid_motion_source_closed_;}
     // Complete1B0340 predicate over this canonical session and actor state.
@@ -344,6 +349,8 @@ private:
     friend class gameplay_update::LinkedModelWorkers;
     gameplay_scenario::CutscenePlayback* cutscene_playback_owner_{};
     friend class gameplay_scenario::CutscenePlayback;
+    friend class gameplay_application::ResourceBootstrap;
+    friend class gameplay_application::SessionResources;
     gameplay_scenario::CutsceneActorTracks* cutscene_tracks_owner_{};
     friend class gameplay_scenario::CutsceneActorTracks;
     gameplay_scenario::CutsceneObjectTracks* cutscene_object_tracks_owner_{};

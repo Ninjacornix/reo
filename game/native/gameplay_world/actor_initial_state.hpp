@@ -15,6 +15,7 @@ inline void initialize_cleared_actor_defaults(Actor& actor)noexcept{
     actor.secondary_pose_history=SecondaryPoseHistory{};actor.secondary_pose_category_override=0;
     actor.surface_transition_flags=0;
     actor.contact_style_discriminator=0;
+    actor.sound_state=ActorSoundState{};actor.projectile_variant=0;
     actor.speech.dialogue_delay=0;actor.speech.display_style=0;
     actor.speech.partner_characters=std::array<std::int8_t,4>{};
     actor.speech.selection=SpeechSelection{0,0,0,0,0};actor.speech.variant=0;actor.speech.gauge_notice=0;
