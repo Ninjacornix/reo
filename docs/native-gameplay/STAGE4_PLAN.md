@@ -4,6 +4,11 @@ Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to put the PC to sleep only after
 Stage4 is fully implemented and verified; do not sleep at component checkpoints.
 
+- [Object/model/motion composition audit](CINEMATIC_OBJECT_PLAYBACK_AUDIT.md)
+  completes1,162 of1,356 controlled authored pairs on both compilers. It exposes
+  118 track-cardinality refusals,74 wider-radian cases and two nonfinite-clip
+  refusals. Missing-model requests remain in12 descriptors. These are explicit
+  integration gates, not a complete scene or installed-game acceptance claim.
 - [Cinematic object motion assets](CINEMATIC_OBJECT_MOTION_ASSETS.md) now read
   all52 exact ROM members, preserve prior banks on failures and retain absent
   slots on successful200-stride replacement. Both compilers pass104 loads,
