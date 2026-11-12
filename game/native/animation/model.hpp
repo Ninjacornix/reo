@@ -26,6 +26,12 @@ private:
 };
 struct NodePose {Parameters parameters{};Caches caches{};Matrix local{},world{};};
 struct JointSnapshot {std::vector<Matrix> joints;std::uint64_t revision{};};
+struct NodeLinks {
+    std::optional<std::size_t> parent,child,sibling;
+    friend bool operator==(const NodeLinks&,const NodeLinks&)=default;
+};
+enum class NodeLink {parent,child,sibling};
+struct NodeLinkPatch {std::size_t node{};NodeLink link{};std::optional<std::size_t> target;};
 // A native mutable model owner, distinct from its canonical actor/object basis.
 // Calls are synchronous and serialized by the enclosing native gameplay owner.
 class Instance {
@@ -33,6 +39,13 @@ public:
     explicit Instance(std::shared_ptr<const Skeleton>);
     const Skeleton& skeleton()const noexcept{return *skeleton_;}
     std::span<const NodePose> nodes()const noexcept{return nodes_;}
+    std::span<const NodeLinks> links()const noexcept{return links_;}
+    std::span<const std::size_t> traversal()const noexcept{return traversal_;}
+    // Atomic typed topology replacement. Disconnected owned branches remain
+    // alive; invalid indices, cycles and shared child/sibling paths refuse.
+    // Detached branches retain their original parent metadata. Reachable
+    // parent links must agree with the child/sibling walk used by the source.
+    void patch_links(std::span<const NodeLinkPatch>);
     std::span<const std::uint16_t> track_ids()const noexcept{return track_ids_;}
     // Runtime node routing is instance-owned. Temporary cinematic relabels
     // never mutate the shared authored Skeleton or another model bank.
@@ -60,6 +73,8 @@ private:
     struct Binding {std::shared_ptr<const Clip> clip;std::size_t track{};};
     std::shared_ptr<const Skeleton> skeleton_;
     std::vector<NodePose> nodes_;
+    std::vector<NodeLinks> links_;
+    std::vector<std::size_t> traversal_;
     std::vector<std::uint16_t> track_ids_;
     std::vector<std::optional<Binding>> bindings_;
     Vector previous_root_translation_{};

@@ -10,7 +10,7 @@ def main():
  corpus=a.corpus.resolve();corpus_receipt=corpus/'receipt.json';cr=json.loads(corpus_receipt.read_bytes());assert cr['clips']==59 and cr['skeletons']==2
  for n,h in cr['output_sha256'].items():assert sha(corpus/n)==h
  elf=ROOT/'game_data/SLUS_207.65';assert sha(elf)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46';read=elf_reader(elf.read_bytes())
- pending=[0x18e3c0,0x1a1fd0,0x193c80,0x1a2e00,0x193380,0x193240,0x193230,0x193220,0x192bf0,0x1925c0,0x192b30,0x5d59a0,0x5d5ab0,0x5d5ad0,0x5d5bd0,0x5d5be0,0x5d5fa0,0x5d6850];entries={}
+ pending=[0x61b1a0,0x18e3c0,0x1a1fd0,0x193c80,0x1a2e00,0x193380,0x193240,0x193230,0x193220,0x192bf0,0x1925c0,0x192b30,0x5d59a0,0x5d5ab0,0x5d5ad0,0x5d5bd0,0x5d5be0,0x5d5fa0,0x5d6850];entries={}
  while pending:
   at=pending.pop()
   if at in entries or at==0x18dca0:continue

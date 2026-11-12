@@ -11,8 +11,8 @@ std::shared_ptr<Instance> PoseBlend::create_sibling(const Instance& source){retu
 Vector PoseBlend::root_reference(const Instance& model)noexcept{return model.previous_root_translation_;}
 void PoseBlend::root_reference(Instance& model,Vector value){finite(value.x);finite(value.y);finite(value.z);model.invalidate();model.previous_root_translation_=value;}
 void PoseBlend::bind_all(Instance& model,std::shared_ptr<const Clip> clip){
-    if(!clip||clip->tracks().size()!=model.nodes_.size())throw std::invalid_argument("Native whole-model motion cardinality mismatch");
-    model.invalidate();std::size_t ordinal{};for(auto i:model.skeleton_->traversal())model.bindings_[i]=Instance::Binding{clip,ordinal++};
+    if(!clip||clip->tracks().size()!=model.traversal_.size())throw std::invalid_argument("Native whole-model motion cardinality mismatch");
+    model.invalidate();std::size_t ordinal{};for(auto i:model.traversal_)model.bindings_[i]=Instance::Binding{clip,ordinal++};
 }
 void PoseBlend::capture_pose(Instance& destination,const Instance& source,std::uint16_t track){
     if(destination.skeleton_!=source.skeleton_||source.nodes_.size()>255)throw std::invalid_argument("Native flat pose capture requires corresponding bounded model banks");
@@ -32,7 +32,34 @@ Matrix PoseBlend::matrix(const Matrix& primary,const Matrix& secondary,float p,f
 void PoseBlend::blend(Instance& destination,const Instance& source,std::uint16_t track,float p,float s){
     if(destination.skeleton_!=source.skeleton_)throw std::invalid_argument("Native blend requires corresponding owned model banks");
     finite(p);finite(s);
-    std::optional<std::size_t> root;for(auto i:destination.skeleton_->traversal())if(destination.track_ids_[i]==track){root=i;break;}if(!root)throw std::invalid_argument("Native blend track absent from model");
-    destination.invalidate();const auto walk=[&](auto&& self,std::size_t i,bool siblings)->void{const auto& definition=destination.skeleton_->nodes()[i];if(destination.track_ids_[i]==track){auto& output=destination.nodes_[i];const auto& input=source.nodes_[i];for(unsigned c=0;c<3;++c)output.parameters[c]=weighted(output.parameters[c],input.parameters[c],p,s);output.local=matrix(output.local,input.local,p,s);}if(definition.child)self(self,*definition.child,true);if(siblings&&definition.sibling)self(self,*definition.sibling,true);};walk(walk,*root,false);
+    const auto root=[&](const Instance& model)->std::size_t{
+        for(auto i:model.traversal_)if(model.track_ids_[i]==track)return i;
+        throw std::invalid_argument("Native blend track absent from model");
+    };
+    const auto first=root(destination),second=root(source);
+    //192710 walks both banks' links together. Corresponding nodes need not
+    // have the same physical index after runtime topology changes.
+    const auto walk=[&](bool apply){
+        auto i=first,j=second;
+        const auto required=[](const std::optional<std::size_t>& value){if(!value)throw std::invalid_argument("Native paired blend path unavailable");return *value;};
+        for(;;){
+            if(apply&&destination.track_ids_[i]==track){auto& output=destination.nodes_[i];const auto& input=source.nodes_[j];for(unsigned c=0;c<3;++c)output.parameters[c]=weighted(output.parameters[c],input.parameters[c],p,s);output.local=matrix(output.local,input.local,p,s);}
+            if(destination.links_[i].child){i=*destination.links_[i].child;j=required(source.links_[j].child);continue;}
+            if(i==first)return;
+            if(destination.links_[i].sibling){i=*destination.links_[i].sibling;j=required(source.links_[j].sibling);continue;}
+            // After ascending,192710 skips an unmatched ancestor sibling's
+            // entire subtree. Direct leaf siblings take the ordinary path.
+            for(;;){
+                if(destination.links_[i].sibling){
+                    i=*destination.links_[i].sibling;j=required(source.links_[j].sibling);
+                    if(destination.track_ids_[i]==track)break;
+                }else{
+                    i=required(destination.links_[i].parent);j=required(source.links_[j].parent);
+                    if(i==first)return;
+                }
+            }
+        }
+    };
+    walk(false);destination.invalidate();walk(true);
 }
 } // namespace reo::native::animation

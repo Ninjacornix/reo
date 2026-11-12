@@ -49,6 +49,40 @@ std::shared_ptr<const Skeleton> Skeleton::import_raw(std::span<const std::byte> 
 Instance::Instance(std::shared_ptr<const Skeleton> skeleton):skeleton_(std::move(skeleton)){
     if(!skeleton_||skeleton_->nodes().empty())throw std::invalid_argument("Native model requires owned skeleton");
     nodes_.resize(skeleton_->nodes().size());bindings_.resize(nodes_.size());track_ids_.resize(nodes_.size());for(std::size_t i=0;i<nodes_.size();++i){track_ids_[i]=skeleton_->nodes()[i].track;nodes_[i].parameters=skeleton_->nodes()[i].defaults;nodes_[i].local=unscaled_pose(nodes_[i].parameters);nodes_[i].world=transform_math::identity();}
+    links_.reserve(nodes_.size());for(const auto& node:skeleton_->nodes())links_.push_back({node.parent,node.child,node.sibling});
+    traversal_.assign(skeleton_->traversal().begin(),skeleton_->traversal().end());
+}
+void Instance::patch_links(std::span<const NodeLinkPatch> patches){
+    if(patches.empty())return;
+    auto next=links_;
+    for(const auto& patch:patches){
+        if(patch.node>=next.size()||(patch.target&&*patch.target>=next.size()))
+            throw std::out_of_range("Native model topology node unavailable");
+        auto& row=next[patch.node];
+        switch(patch.link){
+        case NodeLink::parent:row.parent=patch.target;break;
+        case NodeLink::child:row.child=patch.target;break;
+        case NodeLink::sibling:row.sibling=patch.target;break;
+        default:throw std::invalid_argument("Native model topology link kind unavailable");
+        }
+    }
+    std::vector<unsigned char> incoming(next.size()),color(next.size());
+    for(const auto& row:next)for(const auto& target:{row.child,row.sibling})
+        if(target&&++incoming[*target]>1)throw std::invalid_argument("Native model topology has shared paths");
+    const auto validate=[&](auto&& self,std::size_t node)->void{
+        if(color[node]==1)throw std::invalid_argument("Native model topology cycle");
+        if(color[node]==2)return;
+        color[node]=1;
+        for(const auto& target:{next[node].child,next[node].sibling})if(target)self(self,*target);
+        color[node]=2;
+    };
+    for(std::size_t node=0;node<next.size();++node)validate(validate,node);
+    std::vector<std::size_t> order;order.reserve(next.size());
+    const auto walk=[&](auto&& self,std::size_t node,std::optional<std::size_t> parent)->void{
+        if(next[node].parent!=parent)throw std::invalid_argument("Native reachable topology parent mismatch");
+        order.push_back(node);if(next[node].child)self(self,*next[node].child,node);if(next[node].sibling)self(self,*next[node].sibling,parent);
+    };walk(walk,0,{});
+    links_.swap(next);traversal_.swap(order);invalidate();
 }
 void Instance::relabel_prefix(std::size_t count,std::uint16_t track){
     if(count>track_ids_.size())throw std::out_of_range("Native model track prefix extent unavailable");
@@ -60,16 +94,16 @@ void Instance::relabel_prefix(std::span<const std::uint16_t> tracks){
 }
 void Instance::bind(std::uint16_t track,std::shared_ptr<const Clip> clip){
     if(!clip)throw std::invalid_argument("Native model requires owned motion clip");
-    std::size_t count=0;for(auto i:skeleton_->traversal())count+=track_ids_[i]==track;
+    std::size_t count=0;for(auto i:traversal_)count+=track_ids_[i]==track;
     if(!count||clip->tracks().size()!=count)throw std::invalid_argument("Native motion/model track cardinality mismatch");
-    invalidate();std::size_t ordinal=0;for(auto i:skeleton_->traversal())if(track_ids_[i]==track)bindings_[i]=Binding{clip,ordinal++};
+    invalidate();std::size_t ordinal=0;for(auto i:traversal_)if(track_ids_[i]==track)bindings_[i]=Binding{clip,ordinal++};
 }
-void Instance::clear(std::uint16_t track){invalidate();for(std::size_t i=0;i<nodes_.size();++i)if(track_ids_[i]==track)bindings_[i].reset();}
+void Instance::clear(std::uint16_t track){invalidate();for(auto i:traversal_)if(track_ids_[i]==track)bindings_[i].reset();}
 void Instance::sample_node(std::size_t i,float frame){
     auto& node=nodes_[i];node.parameters=skeleton_->nodes()[i].defaults;if(bindings_[i])sample_parameters(bindings_[i]->clip->tracks()[bindings_[i]->track],frame,node.parameters,node.caches);node.local=unscaled_pose(node.parameters);
 }
-void Instance::sample(std::uint16_t track,float frame){invalidate();bool found=false;for(auto i:skeleton_->traversal())if(track_ids_[i]==track){sample_node(i,frame);found=true;}if(!found)throw std::invalid_argument("Native animation track absent from skeleton");}
-void Instance::sample_all(float frame){invalidate();for(auto i:skeleton_->traversal())sample_node(i,frame);}
+void Instance::sample(std::uint16_t track,float frame){invalidate();bool found=false;for(auto i:traversal_)if(track_ids_[i]==track){sample_node(i,frame);found=true;}if(!found)throw std::invalid_argument("Native animation track absent from skeleton");}
+void Instance::sample_all(float frame){invalidate();for(auto i:traversal_)sample_node(i,frame);}
 void Instance::root_scale(Vector scale){invalidate();nodes_[0].local=transform_math::scale(scale);}
 Vector Instance::local_translation(std::size_t node)const{return translation(nodes_.at(node).local);}
 Vector Instance::world_translation(std::size_t node)const{return translation(nodes_.at(node).world);}
@@ -85,7 +119,7 @@ Vector Instance::translation_difference(std::size_t node,float start,float end){
     const auto& binding=*bindings_[node];auto p=skeleton_->nodes()[node].defaults;sample_parameters(binding.clip->tracks()[binding.track],start,p,nodes_[node].caches);const auto a=scaled_pose(p);p=skeleton_->nodes()[node].defaults;sample_parameters(binding.clip->tracks()[binding.track],end,p,nodes_[node].caches);return difference(translation(scaled_pose(p)),translation(a));
 }
 void Instance::rebuild(const Matrix& parent){
-    invalidate();const auto walk=[&](auto&& self,std::size_t i,const Matrix& incoming,Vector scale)->void{auto& n=nodes_[i];n.world=hierarchical_pose(n,incoming,scale);const auto& definition=skeleton_->nodes()[i];if(definition.child)self(self,*definition.child,n.world,Vector{n.parameters[0],n.parameters[1],n.parameters[2]});if(definition.sibling)self(self,*definition.sibling,incoming,scale);};walk(walk,0,parent,{1,1,1});
+    invalidate();const auto walk=[&](auto&& self,std::size_t i,const Matrix& incoming,Vector scale)->void{auto& n=nodes_[i];n.world=hierarchical_pose(n,incoming,scale);const auto& definition=links_[i];if(definition.child)self(self,*definition.child,n.world,Vector{n.parameters[0],n.parameters[1],n.parameters[2]});if(definition.sibling)self(self,*definition.sibling,incoming,scale);};walk(walk,0,parent,{1,1,1});
     publish_snapshot();
 }
 void Instance::publish_snapshot(){

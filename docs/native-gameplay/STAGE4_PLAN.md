@@ -153,6 +153,11 @@ Stage4 is fully implemented and verified; do not sleep at component checkpoints.
   experiment and a cue2 mapping error. Production6BA880 is linked-only again.
   Actual primary/NPC traversal, secondary-pose owners, remaining scene objects
   and full installed acceptance remain open.
+- [Instance-owned live topology](LIVE_NODE_TOPOLOGY.md) now preserves actual
+  Yoko branch detach/reconnect behavior through binding, clearing, sampling,
+  paired blending, constraints and pose publication. Both compilers pass the
+  coupled original comparisons and current World/model-lifetime regressions.
+  Secondary-pose selector/chain ownership and actual scene scheduling remain open.
 - The [scene NPC loading-mode correction](CUTSCENE_NPC_CONSTRUCTION.md) separates
   asset-loading mode3243D7 from pause4BADF8. Paired current cohorts pass4,384 scene
   cases with independent inputs; the earlier fixture conflated the two and its

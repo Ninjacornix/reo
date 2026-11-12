@@ -60,8 +60,8 @@ void Constraints::initialize_mirrored(std::int8_t paused,Vector input_scale){
     create(1,2,4,5,6,input_scale,std::bit_cast<float>(0x3fc90fdcu),{-1,0,0});
 }
 void Constraints::solve(std::size_t context_index,std::size_t node_index,const Matrix& parent){
-    auto& context=contexts_[context_index];auto& node=model_->nodes_[node_index];const auto parent_index=model_->skeleton_->nodes()[node_index].parent;
-    if(!parent_index)throw std::invalid_argument("Two-link source callback requires an authored parent node");
+    auto& context=contexts_[context_index];auto& node=model_->nodes_[node_index];const auto parent_index=model_->links_[node_index].parent;
+    if(!parent_index)throw std::invalid_argument("Two-link source callback requires a current parent node");
     const auto bend=m::rotation_x(context.bend);
     node.world=hierarchical_pose(node,parent,scale(model_->nodes_[*parent_index]));
     const auto target_delta=m::subtract(context.target,translation(node.world));
@@ -101,7 +101,7 @@ void Constraints::rebuild(const Matrix& parent){
             else if(binding.callback==ConstraintCallback::two_link)solve(binding.context,index,incoming);
             // already_solved is the source's actual empty middle-node callback.
         }
-        const auto& definition=model_->skeleton_->nodes()[index];
+        const auto& definition=model_->links_[index];
         if(definition.child)self(self,*definition.child,model_->nodes_[index].world,staged);
         if(definition.sibling)self(self,*definition.sibling,incoming,incoming_scale);
     };walk(walk,0,parent,{1,1,1});model_->publish_snapshot();
