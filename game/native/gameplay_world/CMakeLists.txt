@@ -323,6 +323,20 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_compile_options(linked_flight_contract_tests PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
 endif()
 
+add_library(reo_native_pose_callbacks STATIC pose_cloud.cpp pose_cloud_policy.cpp pose_motion.cpp pose_motion_policy.cpp pose_arcs.cpp pose_arcs_policy.cpp)
+
+target_compile_features(reo_native_pose_callbacks PUBLIC cxx_std_20)
+
+target_link_libraries(reo_native_pose_callbacks PUBLIC reo_native_pose_work reo_native_gameplay_lighting reo_native_periodic_visuals reo_native_gameplay_contact_world)
+add_executable(pose_callbacks_contract_tests pose_callbacks_contract_tests.cpp)
+
+target_link_libraries(pose_callbacks_contract_tests PRIVATE reo_native_pose_callbacks)
+add_test(NAME native_pose_callbacks_contract COMMAND pose_callbacks_contract_tests)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(reo_native_pose_callbacks PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+    target_compile_options(pose_callbacks_contract_tests PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+endif()
+
 add_library(reo_native_dialogue STATIC dialogue_records.cpp dialogue_pool.cpp cached_dialogue_presentation.cpp)
 target_compile_features(reo_native_dialogue PUBLIC cxx_std_20)
 target_link_libraries(reo_native_dialogue PUBLIC reo_native_primary_roster_startup)

@@ -4,6 +4,13 @@ Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification with multiple agents. The user is awake and has revoked the prior
 sleep request: finish Stage4 and do not put the PC to sleep afterward.
 
+- [Additional pose callbacks](POSE_CALLBACKS.md) now implement the cloud,
+  vertical/timer and quarter-turn arc policies through the canonical pool.
+  Both compilers pass full original-body comparisons and current contracts
+  using all six owned effect banks and real room floors. EF02's unadmitted
+  effect55 group, the actual timing-quantum producer and reached trail emitters
+  remain explicit requirements, along with full frame/game acceptance.
+
 - [Linked resource flight](LINKED_RESOURCE_FLIGHT.md) now supplies583C50,
   generic5822A0 attachment, packed actor sound and actual ungated6B2760 light
   lifetime. Both compilers pass262,144 flight states,8,192 constructors,
