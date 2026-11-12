@@ -71,3 +71,10 @@ The retained seal is `tools/native_reconstruction/native_application_session_qua
 Stage4 remains incomplete until the
 remaining native application producers, full frame consumers and installed
 acceptance close.
+
+The subsequent [SessionRooms production adapter](SESSION_ROOM_RESOURCES.md)
+retains this same application graph and supplies actual archive wall/floor/region
+geometry to native flight/contact consumers. Room generations now retire
+explicitly while retained invocations keep their data alive. The separately
+qualified SessionStartup application owner also composes actual roster startup
+against these same World/Update owners; it does not duplicate the session.

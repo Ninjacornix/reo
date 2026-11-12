@@ -18,14 +18,14 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def dependency_sources(build):
+def dependency_sources(build, target='gameplay_application/native_session_tests.exe'):
     rules = {}
     for line in (build / 'build.ninja').read_text().splitlines():
         match = re.match(r'^build ([^:]+): \S+\s*(.*)', line)
         if match:
             for output in match[1].split():
                 rules[output] = match[2].split()
-    pending = ['gameplay_application/native_session_tests.exe']
+    pending = [target]
     visited, sources, libraries = set(), set(), set()
     while pending:
         node = pending.pop()

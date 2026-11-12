@@ -291,3 +291,22 @@ layer is a concrete typed scenario-event task factory/state owner and the
 other required callback families. Opcode108 also reaches inventory UI close,
 whose complete application owner is absent. These are subsequent work items,
 not reasons to defer creating the concrete application owner.
+
+The [SessionRooms integration](SESSION_ROOM_RESOURCES.md) now closes the missing
+positive `RoomResources` provider for the admitted owned r0417300 room. Its
+`RoomInvocation` retains the actual NativeSession room graph and immutable
+archive geometry, rejects replaced/closed identities, reads canonical matrix
+gate/kind bytes and owns the source-backed Session collision mask producer.
+Actual flight and contact callers consume this provider. The separate
+SessionStartup owner now adopts qualified roster startup; those owners are
+implemented, rather than still missing helper targets.
+
+The next room cut is precise: `StatePublication` receives its object owner only
+in the Update constructor, while scenario selection occurs later. A guarded
+late binding must connect the retained canonical scenario placement owner to
+publication/reception. Actual `InteractionOwner::Lifetime` and
+`SceneModelBindings` already implement6AD4E0/model/proxy creation, update and
+retirement; their production application composition is still required. Rooms
+with current movable-object placements refuse until that composition exists.
+Neither the global placement count nor an empty successful binding is a valid
+substitute for the actual current instance count745D60.

@@ -194,6 +194,9 @@ struct Session : actors::HitSession {
     LinkedUpdateState linked_updates;
     std::uint8_t script_room_parameter{}; // original4B9D17; exact downstream use is unresolved
     gameplay_collision::delivery::RoomContacts room_contacts;
+    //3C2748: only the actual wall-grid installation6161E0 establishes zero.
+    // Generic sessions retain unknown state until that producer is installed.
+    std::optional<std::uint32_t> collision_disabled_mask;
     gameplay_session::Random random{};
     gameplay_session::Options options;
     std::uint8_t previous_primary{},previous_secondary{};

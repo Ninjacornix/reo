@@ -19,7 +19,7 @@ struct RoomId {
 // immutable geometry/dynamic storage and all borrowed matrix-program backing
 // owners (controls/models/bindings/flags/session), even after retirement.
 // current() rejects retired/reused identities; retained data stays readable.
-// No positive implementation or runtime room installer is supplied here.
+// gameplay_application::SessionRooms supplies the production archive installer.
 class RoomInvocation {
   public:
     virtual ~RoomInvocation() = default;
