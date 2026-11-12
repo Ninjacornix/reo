@@ -4,6 +4,10 @@ Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification with multiple agents. The user is awake and has revoked the prior
 sleep request: finish Stage4 and do not put the PC to sleep afterward.
 
+- [Pose timing](POSE_TIMING.md) now reads the existing actual linked-pass
+  clock factor through a read-only capability. Both compilers pass the complete
+  empty-population producer and actual linked-pass-to-kind11 contracts. This
+  adds no clock or game-speed change; whole-frame installation remains open.
 - [Five-work inherited trails](INHERITED_POSE_TRAILS.md) now compose the actual
   mode1 constructors/callbacks with the shared168/256 visual owner and kind16
   arcs. Both compilers pass source and current owned-room contracts. Required
@@ -17,8 +21,8 @@ sleep request: finish Stage4 and do not put the PC to sleep afterward.
   vertical/timer and quarter-turn arc policies through the canonical pool.
   Both compilers pass full original-body comparisons and current contracts
   using all six owned effect banks and real room floors. EF02's unadmitted
-  effect55 group, the actual timing-quantum producer and reached trail emitters
-  remain explicit requirements, along with full frame/game acceptance.
+  effect55 group and remaining trail action consumers stay explicit
+  requirements, along with full frame/game acceptance.
 
 - [Linked resource flight](LINKED_RESOURCE_FLIGHT.md) now supplies583C50,
   generic5822A0 attachment, packed actor sound and actual ungated6B2760 light

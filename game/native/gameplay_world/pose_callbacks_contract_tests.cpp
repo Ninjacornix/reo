@@ -3,6 +3,8 @@
 #include "pose_motion.hpp"
 #include "pose_trail_effects.hpp"
 #include "inherited_pose_trails.hpp"
+#include "linked_pose_timing.hpp"
+#include "linked_updates.hpp"
 #include "resource_pose_work.hpp"
 #include "../gameplay_effects/periodic_visuals.hpp"
 #include <fstream>
@@ -63,6 +65,11 @@ int main(int argc,char** argv)try{
             check(custom_ids.size()==(bank->geometry().resolve(0x86)?5u:0u));
             check(custom_pool.retire(custom_motion)==g::PoseWorkStatus::completed);check(custom_visuals.update({0,1,0}).status==e::VisualStatus::completed);
             for(const auto& custom_id:custom_ids){check(!custom_visuals.inherited_trail_state(custom_id));}
+            g::LinkedPoseTimingQuantum actual_quantum(*custom_world);check(!actual_quantum.read());
+            const std::shared_ptr<const c::response::Grid> linked_floor(real_rooms.room,&real_rooms.room->floors);g::LinkedActorUpdates linked(*custom_world,{},linked_floor);
+            custom_session->clock_mode=9;check(!actual_quantum.read());check(linked.run().status==g::LinkedUpdateStatus::completed&&actual_quantum.read()==2);
+            custom_session->clock_mode=0;check(actual_quantum.read()==2);check(linked.run().status==g::LinkedUpdateStatus::completed&&actual_quantum.read()==1);
+            g::PoseMotionUpdates actual_motion(*custom_world,custom_pool,&actual_quantum);const auto vertical_id=work(custom_pool,11);check(custom_pool.update(&actual_motion).status==g::PoseWorkStatus::completed&&custom_pool.resolve(vertical_id)->pose_work->timer==179);check(custom_pool.reset()==g::PoseWorkStatus::completed);
             custom_visuals.close();check(!inherited.bound_to(*custom_world));
             const auto floor=real_rooms.room->floors.floor(*origin);const auto arc_id=work(owned_pool,13);auto arc=owned_pool.resolve(arc_id);arc->primary=1;arc->position={origin->x,floor.height-.5f,origin->z};check(owned_pool.update(&real_arcs).status==g::PoseWorkStatus::completed&&!owned_pool.resolve(arc_id)&&arc->sampled_surface_height==floor.height&&arc->position.y==floor.height);
             const auto stale_id=work(owned_pool,13);arc=owned_pool.resolve(stale_id);arc->primary=1;check(real_rooms.room->ids.retire(real_rooms.room->id.entity)==g::actors::EntityStatus::completed);check(owned_pool.update(&real_arcs).status==g::PoseWorkStatus::unavailable&&owned_pool.resolve(stale_id));check(owned_pool.reset()==g::PoseWorkStatus::completed);++banks;++room_cases;
