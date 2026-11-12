@@ -238,6 +238,8 @@ class NpcActorUpdates;
 class CinematicActorFrames;
 class CinematicActorReactions;
 class PrimaryActorPostprocess;
+class AuxiliaryActorPostprocess;
+struct PrimaryRecordsInitialized;
 class CinematicModelPass;
 class CinematicObjectPool;
 class CinematicObjectConstruction;
@@ -335,6 +337,8 @@ private:
     friend class CinematicActorFrames;
     friend class CinematicActorReactions;
     friend class PrimaryActorPostprocess;
+    friend class AuxiliaryActorPostprocess;
+    friend PrimaryRecordsInitialized initialize_primary_records(World&)noexcept;
     CinematicActorFrames* cinematic_frame_owner_{};
     friend class CinematicModelPass;
     friend class ActorModelPasses;

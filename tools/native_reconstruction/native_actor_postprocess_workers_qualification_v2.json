@@ -1,0 +1,132 @@
+{
+  "schema": 2,
+  "status": "passed canonical primary/auxiliary Update adoption after ordinary bootstrap",
+  "whole_stage4_complete": false,
+  "game_run": false,
+  "native_adoption_domain_sha256": {
+    "game/native/gameplay_update/actor_postprocess_workers.cpp": "42751ee79a6186746b893341358cea515db14d9a6a3f68008ee91cfb82d22420",
+    "game/native/gameplay_update/actor_postprocess_workers.hpp": "53967f0b17bf6494d490f883a3043ec1c6e1274cf7e60ebc509a15bf78aafbd2",
+    "game/native/gameplay_update/actor_postprocess_workers_tests.cpp": "78befa9bae453027b0f0409c0778d48c64ff53932051aae2e5232c193598ddef",
+    "tools/native_reconstruction/animation/verify_actor_postprocess_workers.py": "d89c3d4d127f5f784c0adc9645649c8c8c5e9c9028188d7c9638152e100fc1a3",
+    "game/native/gameplay_update/update.cpp": "27fe808336c5040389366ace27ff899f16ab26d2aa03f32b9137f7f248a05e83",
+    "game/native/gameplay_update/update.hpp": "f25562ff9b6f2940c6d0139194aff44e2b18b7442cf7f2c2a5969d0e1ea26ee8",
+    "game/native/gameplay_world/primary_actor_postprocess.cpp": "98b76395363b86c3689ee677d63a160ef8eaf3deb16fa4f12683ac106ee32f1f",
+    "game/native/gameplay_world/primary_actor_postprocess.hpp": "1909e4440217355f14c9d0158ea9cc9d8ed876db3101b1df15ce344cec3fd75e",
+    "game/native/gameplay_world/auxiliary_actor_postprocess.cpp": "13def0a56615cc8a26de193e3351e6e7ea09931f59e6da4e0be2ebff57c975e8",
+    "game/native/gameplay_world/auxiliary_actor_postprocess.hpp": "30f31d06e3e3415bd279c608f0ad4d4f86ed8e12a7786c14fde26095b4abbd0e",
+    "game/native/gameplay_world/primary_actor_records.cpp": "e3195e5d2e594c664200eb928133347d8948758356947572883a09b9a4899b82",
+    "game/native/gameplay_world/primary_actor_records.hpp": "be486fc58eb17e54e67015375c6a22e55be8c8db6b2e994384db951d094e83cb",
+    "game/native/gameplay_world/primary_actor_records_tests.cpp": "48699df4115d466b67033d87ce7310fc8f6bf26dae91e98dd34e94fd3e451149",
+    "game/native/gameplay_world/actor_initial_state.hpp": "4312ae0da0ded489141d4a5bc25923facf2ca92cb3ae20a0b927d694ded6eb23",
+    "game/native/gameplay_world/world.cpp": "aa55825b7d83669cd41aa2a35158be5234d65303ff2eae4585e107a6796fdbb8",
+    "game/native/gameplay_world/world.hpp": "e551ef34a9707f91b19268f5b7c774cdd8a5f5c3445ce04b93f2b640522bd9f1",
+    "game/native/gameplay_world/auxiliary_actors.hpp": "8cf9ad3964feb9ec42cf1b31a15956a8d0510f2ffec5502fda8f51da6c18105b",
+    "game/native/gameplay_events/statistics.hpp": "320d2e6b7eeb60c54075f82df87e45794b4ce4839e73fb9cae89bec4d37f377a"
+  },
+  "cohorts": {
+    "gcc": {
+      "receipt": "build-native-sjuni/actor-postprocess-workers-gcc-v5/receipt.json",
+      "receipt_sha256": "d2bb20661bb413f0b41bb257a83c79e168677587beb2f22eed6a3c9a988017ed",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "run_workers": {
+          "checks": 1079,
+          "canonical_owner_frames": 32,
+          "declared_remaining_phase_surroundings": true,
+          "game_run": false
+        },
+        "run_bootstrap": {
+          "checks": 17115,
+          "complete_source_clears": 0,
+          "canonical_bootstraps": 64,
+          "capacity_refusals": 8,
+          "busy_proofs": 1,
+          "lifetimes": 512,
+          "game_run": false
+        }
+      },
+      "immutable_snapshot_unchanged": true,
+      "native_adoption_domain_current_unchanged": true,
+      "source_files": 2913,
+      "live_source_drift": [
+        "game/native/gameplay_scenario/cutscene_playback.cpp",
+        "game/native/gameplay_scenario/cutscene_playback.hpp",
+        "game/native/gameplay_scenario/stream_channels.cpp",
+        "game/native/gameplay_scenario/stream_channels.hpp",
+        "game/native/gameplay_scenario/stream_instances.cpp",
+        "game/native/gameplay_scenario/stream_instances.hpp",
+        "game/native/gameplay_world/inventory.hpp",
+        "game/native/gameplay_world/resource_depletion.cpp",
+        "game/native/gameplay_world/resource_depletion.hpp",
+        "game/native/gameplay_world/resource_deployment.cpp",
+        "game/native/gameplay_world/resource_deployment.hpp",
+        "game/native/gameplay_world/resource_factory.hpp"
+      ],
+      "test_binary_sha256": {
+        "gameplay_update/actor_postprocess_workers_tests.exe": "94b5f3cd7af6842a8bd4b90354eeafa3a2837a81f86f2dc60d6047808ce117a5",
+        "gameplay_world/primary_actor_records_tests.exe": "06cdc8f08ab3be619bc036f559743382f8955ebe265044b20c0eb5c16b1fb1b0"
+      },
+      "cmake_source_sha256": {
+        "game/native/gameplay_update/CMakeLists.txt": "47a562a532d9ce25ea82a8fef9fba7df14cd3c5638ca0c550e6c54536e621638",
+        "game/native/gameplay_world/CMakeLists.txt": "e532b577e20f629a7bdbfcb68829a5b64aa28ac98ae5056fd414f92a98096351"
+      }
+    },
+    "llvm": {
+      "receipt": "build-native-sjuni/actor-postprocess-workers-llvm-v5/receipt.json",
+      "receipt_sha256": "074887cab17ef3aec63cbd32fdb692c87927ab6d07d92771312924efea5cc400",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "run_workers": {
+          "checks": 1079,
+          "canonical_owner_frames": 32,
+          "declared_remaining_phase_surroundings": true,
+          "game_run": false
+        },
+        "run_bootstrap": {
+          "checks": 17115,
+          "complete_source_clears": 0,
+          "canonical_bootstraps": 64,
+          "capacity_refusals": 8,
+          "busy_proofs": 1,
+          "lifetimes": 512,
+          "game_run": false
+        }
+      },
+      "immutable_snapshot_unchanged": true,
+      "native_adoption_domain_current_unchanged": true,
+      "source_files": 2913,
+      "live_source_drift": [
+        "game/native/gameplay_scenario/cutscene_playback.cpp",
+        "game/native/gameplay_scenario/cutscene_playback.hpp",
+        "game/native/gameplay_scenario/stream_channels.cpp",
+        "game/native/gameplay_scenario/stream_channels.hpp",
+        "game/native/gameplay_scenario/stream_instances.cpp",
+        "game/native/gameplay_scenario/stream_instances.hpp",
+        "game/native/gameplay_world/inventory.hpp",
+        "game/native/gameplay_world/resource_depletion.cpp",
+        "game/native/gameplay_world/resource_depletion.hpp",
+        "game/native/gameplay_world/resource_deployment.cpp",
+        "game/native/gameplay_world/resource_deployment.hpp",
+        "game/native/gameplay_world/resource_factory.hpp"
+      ],
+      "test_binary_sha256": {
+        "gameplay_update/actor_postprocess_workers_tests.exe": "9335c25005f0f629da870b69b46bec5f94decd1efbff40a6078f9227f80bef31",
+        "gameplay_world/primary_actor_records_tests.exe": "e7703b2581504527515a21399c61e68c223be75aa79140389507c5f76127d225"
+      },
+      "cmake_source_sha256": {
+        "game/native/gameplay_update/CMakeLists.txt": "47a562a532d9ce25ea82a8fef9fba7df14cd3c5638ca0c550e6c54536e621638",
+        "game/native/gameplay_world/CMakeLists.txt": "e532b577e20f629a7bdbfcb68829a5b64aa28ac98ae5056fd414f92a98096351"
+      }
+    }
+  },
+  "component_qualifications": {
+    "native_primary_actor_postprocess_qualification_v1.json": "901417af9bcf98ac1eeed3bfe59f314ec8d242cf9e6f3e8fb06a6c64dd2b1811",
+    "native_auxiliary_actor_postprocess_qualification_v1.json": "9323dbc327d7b8840f5e9da725cf6aa81bee7c16b680c04aee6f5df3cfabb5a9",
+    "native_primary_actor_records_qualification_v1.json": "37f70448a35132b908f3cf6000764eafe99f97cd5288313529503858e00ad36f"
+  },
+  "limits": [
+    "Actual32 canonical Update traversals use initialize_primary_records, primary66A3A0 and auxiliary6832F0 stages; unrelated frame phases remain declared test surroundings.",
+    "Complete-body component qualifications cover fixed bootstrap clear and finite postprocess profiles. Equipment attacks and classified-floor observations retain their declared boundaries.",
+    "Immutable snapshots preserve exact source and explicitly record unrelated live drift; final combined current parent verification remains separate."
+  ]
+}

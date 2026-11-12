@@ -1,0 +1,61 @@
+#include "primary_actor_records.hpp"
+#include <cstring>
+#include <iostream>
+#include <source_location>
+#include <stdexcept>
+namespace w=reo::native::gameplay_world;
+std::uint64_t checks{},source_cases{},lifetimes{},capacity_cases{},busy_cases{};
+void check(bool value,std::source_location at=std::source_location::current()){++checks;if(!value)throw std::runtime_error("Primary record bootstrap "+std::to_string(at.line()));}
+w::Profile profile(unsigned capacity=1024){w::Profile value;value.layouts.push_back({});value.entities.capacity=capacity;return value;}
+#ifdef REO_PRIMARY_RECORDS_ORIGINAL
+#include "reference.hpp"
+#include "functions.h"
+constexpr unsigned source_base=0x4a5c30,source_bytes=0x8700;
+std::vector<std::uint8_t> memory(0x2000000);
+void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){switch(context->pc){
+#include "original_dispatch.hpp"
+default:throw std::runtime_error("Undeclared primary bootstrap source helper");}}
+void original_clear(unsigned seed){for(unsigned i=0;i<source_bytes+32;++i)memory[source_base-16+i]=std::uint8_t(seed+i*37+1);const auto before=memory;R5900Context context;PS2Runtime runtime;context.pc=0x66a730;SET_GPR_U32(&context,29,0x1f00000);SET_GPR_U32(&context,31,0xabcdef);original_transform_port(memory.data(),&context,&runtime);check(context.pc==0xabcdef&&GPR_U32(&context,29)==0x1f00000&&GPR_U32(&context,2)==source_base);for(unsigned i=0;i<source_bytes;++i)check(memory[source_base+i]==0);check(std::memcmp(memory.data()+source_base-16,before.data()+source_base-16,16)==0&&std::memcmp(memory.data()+source_base+source_bytes,before.data()+source_base+source_bytes,16)==0);++source_cases;}
+#endif
+void check_cleared(const w::Actor& actor,unsigned physical){
+    check(!actor.active&&!actor.visible&&actor.category==0&&actor.slot==0&&actor.primary==0&&actor.secondary==0&&actor.phase==0&&actor.subphase==0);
+    check(actor.current==0&&actor.maximum==0&&actor.status==0&&actor.auxiliary_status==0&&actor.room==0&&actor.character==0&&actor.model_variant==0);
+    check(actor.position.x==0&&actor.position.y==0&&actor.position.z==0&&actor.orientation==std::array<std::int16_t,4>{});
+    check(actor.model_scale.x==0&&actor.model_scale.y==0&&actor.model_scale.z==0&&actor.motion_rate==0&&actor.motion_multiplier==0);
+    check(actor.surface_kind==0&&actor.surface_material==0&&actor.surface_normal.x==0&&actor.surface_normal.y==0&&actor.surface_normal.z==0);
+    check(actor.surface_transition_flags==0&&actor.secondary_pose_category_override==0&&actor.secondary_pose_history.has_value()&&actor.head_reaction.has_value());
+    for(const auto& vector:actor.secondary_pose_history->displacement)check(vector.x==0&&vector.y==0&&vector.z==0);
+    const auto& head=*actor.head_reaction;check(head.mode==0&&head.ticks==0&&head.retarget_ticks==0&&!head.target&&head.current==std::array<std::int16_t,2>{}&&head.applied==std::array<std::int16_t,2>{}&&head.step==std::array<std::int16_t,2>{});
+    for(const auto& column:head.local)for(const float value:column)check(value==0);
+    check(!actor.model&&!actor.model_asset&&!actor.animation&&!actor.constraints&&!actor.alignment_target);
+    check(actor.inventory.carried==std::array<std::uint8_t,4>{}&&actor.inventory.storage==std::array<std::uint8_t,32>{});
+#ifdef REO_PRIMARY_RECORDS_ORIGINAL
+    const auto at=source_base+physical*0x10e0;check(actor.slot==memory[at+3]&&*actor.surface_transition_flags==memory[at+0xce2]&&*actor.secondary_pose_category_override==transform_read<unsigned>(memory.data(),at+0xfac));check(actor.position.x==transform_read<float>(memory.data(),at+0x38)&&actor.model_scale.y==transform_read<float>(memory.data(),at+0xb8)&&head.ticks==transform_read<std::int16_t>(memory.data(),at+0xbd2));
+#else
+    (void)physical;
+#endif
+}
+struct Busy final:w::Services {
+    void begin_offline_frame(w::World& world)override{check(w::initialize_primary_records(world).status==w::PrimaryRecordsStatus::busy);++busy_cases;}
+    void run(w::Stage,w::World&,w::Actor&)override{std::terminate();}
+    bool remote_motion(w::World&,w::Actor&)override{std::terminate();}
+    bool find_grid(w::World&,w::Actor&,std::int8_t&)override{std::terminate();}
+    void switch_grid(w::World&,std::int32_t,std::int32_t)override{std::terminate();}
+    float grid_response(w::World&,std::uint8_t)override{std::terminate();}
+};
+int main()try{
+    for(unsigned seed=0;seed<64;++seed){
+#ifdef REO_PRIMARY_RECORDS_ORIGINAL
+        original_clear(seed);
+#endif
+        w::World world(profile(),std::make_shared<w::Session>());world.mode=std::uint8_t(seed%4);world.selected_actor=7;world.room=42;world.session().primary_population=3;auto separate=std::make_unique<w::Actor>();separate->character=93;const auto outside=world.spawn_linked(std::move(separate)).id;const auto retained_outside=world.resolve(outside);check(bool(retained_outside));
+        const auto result=w::initialize_primary_records(world);check(result.status==w::PrimaryRecordsStatus::completed&&result.initialized==8&&!world.busy());check(world.mode==seed%4&&world.selected_actor==7&&world.room==42&&world.session().primary_population==3&&world.resolve(outside)==retained_outside&&retained_outside->character==93);
+        std::array<std::shared_ptr<w::Actor>,8> retained;std::array<w::actors::EntityId,8> identities;for(unsigned index=0;index<8;++index){retained[index]=world.primary(index);identities[index]=world.identity(index);check(bool(retained[index])&&world.resolve(identities[index])==retained[index]);check_cleared(*retained[index],index);for(unsigned earlier=0;earlier<index;++earlier)check(identities[earlier]!=identities[index]&&retained[earlier]!=retained[index]);}
+        retained[7]->character=41;retained[7]->surface_transition_flags=17;retained[7]->secondary_pose_history->displacement[0]={1,2,3};check(w::initialize_primary_records(world).status==w::PrimaryRecordsStatus::not_empty&&world.identity(7)==identities[7]&&world.primary(7)->character==41&&world.primary(7)->surface_transition_flags==17&&world.primary(7)->secondary_pose_history->displacement[0].x==1);
+        check(world.close()==w::Status::completed&&w::initialize_primary_records(world).status==w::PrimaryRecordsStatus::closed);for(unsigned index=0;index<8;++index){check(!world.resolve(identities[index])&&retained[index]->slot==0);++lifetimes;}check(retained[7]->character==41&&retained_outside->character==93);
+    }
+    for(unsigned capacity=1;capacity<=8;++capacity){w::World world(profile(capacity),std::make_shared<w::Session>());const auto outside=capacity?world.spawn_linked(std::make_unique<w::Actor>()).id:w::actors::EntityId{};const auto retained=world.resolve(outside);check(w::initialize_primary_records(world).status==w::PrimaryRecordsStatus::entity_capacity&&!world.busy());for(unsigned i=0;i<8;++i)check(!world.primary(i)&&!world.identity(i));check(world.resolve(outside)==retained);if(capacity>1)check(world.spawn_linked(std::make_unique<w::Actor>()).status==w::actors::EntityStatus::completed);++capacity_cases;}
+    w::World partial(profile(),std::make_shared<w::Session>());auto actor=std::make_unique<w::Actor>();actor->slot=6;actor->character=51;const auto existing=partial.spawn_primary(4,std::move(actor)).id;check(w::initialize_primary_records(partial).status==w::PrimaryRecordsStatus::not_empty&&partial.resolve(existing)->slot==6&&partial.resolve(existing)->character==51&&!partial.primary(0));
+    w::World busy(profile(),std::make_shared<w::Session>());Busy services;check(busy.update_primary(services).status==w::Status::completed&&busy_cases==1&&!busy.busy());check(w::initialize_primary_records(busy).status==w::PrimaryRecordsStatus::completed);
+    std::cout<<"{\"checks\":"<<checks<<",\"complete_source_clears\":"<<source_cases<<",\"canonical_bootstraps\":64,\"capacity_refusals\":"<<capacity_cases<<",\"busy_proofs\":"<<busy_cases<<",\"lifetimes\":"<<lifetimes<<",\"game_run\":false}\n";
+}catch(const std::exception& x){std::cerr<<x.what()<<'\n';return 1;}

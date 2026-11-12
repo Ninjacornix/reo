@@ -10,7 +10,7 @@ inline void initialize_cleared_actor_defaults(Actor& actor)noexcept{
     actor.collision.basis.x={};actor.collision.basis.y={};actor.collision.basis.z={};actor.collision.basis.translation={};
     actor.contact.recipient={0,0};actor.contact.related_recipient={0,0};actor.contact.source_related={0,0};actor.contact.damage_scale=0;
     actor.gauge_value=0;actor.interaction_resource=0;actor.aim_pitch_adjustment=0;actor.aim_target_pitch=0;actor.aim_target_index=0;
-    // Actual5F1290/682D10 record clears cover both61AAA0 history and FAC.
+    // Actual66A730/5F1290/682D10 clears cover61AAA0 history, FAC and CE2.
     // Generic Actor construction does not establish either source capability.
     actor.secondary_pose_history=SecondaryPoseHistory{};actor.secondary_pose_category_override=0;
     actor.surface_transition_flags=0;

@@ -114,11 +114,24 @@ fixture uses the already proved session-one head fast return and an unchanged
 secondary selection. The complete outer cohort above checks real head resets
 with owned model assets separately.
 
-Paired immutable CMake snapshots
+The original paired immutable CMake snapshots
 `actor-postprocess-workers-{gcc,llvm}-v4` each pass 977 checks over those 32
-canonical owner traversals. The adapter, canonical Update/World, statistics,
-and outer-worker domain hashes match current source. The receipts retain their
+canonical owner traversals at that checkpoint. The receipts retain their
 complete source manifests and explicitly record concurrent changes to stream
 channels and the separate model-worker adapter. Those unrelated changes are
 outside this adoption proof; the combined current parent cohort verifies
 their final composition. Earlier failed build snapshots remain retained.
+
+The adapter now also owns the actual
+[auxiliary postprocess](AUXILIARY_ACTOR_POSTPROCESS.md) stage and its dedicated
+report. Its updated canonical fixture begins with the actual
+[ordinary primary bootstrap](PRIMARY_ACTOR_RECORDS.md), traverses three real
+auxiliary actors including an off-room node, and verifies inactive-node
+refusal and the selected-primary room gate.
+
+Paired immutable Release CMake snapshots
+`actor-postprocess-workers-{gcc,llvm}-v5` each pass 1,079 combined worker
+checks over 32 actual Update traversals and 17,115 bootstrap checks over 64
+Worlds. The v2 adoption seal retains exact domain hashes and reports the
+unrelated concurrent stream, cutscene and resource-owner changes instead of
+claiming they were included in that immutable snapshot.
