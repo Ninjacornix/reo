@@ -18,6 +18,7 @@ default:throw std::runtime_error("Undeclared primary bootstrap source helper");}
 void original_clear(unsigned seed){for(unsigned i=0;i<source_bytes+32;++i)memory[source_base-16+i]=std::uint8_t(seed+i*37+1);const auto before=memory;R5900Context context;PS2Runtime runtime;context.pc=0x66a730;SET_GPR_U32(&context,29,0x1f00000);SET_GPR_U32(&context,31,0xabcdef);original_transform_port(memory.data(),&context,&runtime);check(context.pc==0xabcdef&&GPR_U32(&context,29)==0x1f00000&&GPR_U32(&context,2)==source_base);for(unsigned i=0;i<source_bytes;++i)check(memory[source_base+i]==0);check(std::memcmp(memory.data()+source_base-16,before.data()+source_base-16,16)==0&&std::memcmp(memory.data()+source_base+source_bytes,before.data()+source_base+source_bytes,16)==0);++source_cases;}
 #endif
 void check_cleared(const w::Actor& actor,unsigned physical){
+    check(actor.contact_style_discriminator==0);
     check(!actor.active&&!actor.visible&&actor.category==0&&actor.slot==0&&actor.primary==0&&actor.secondary==0&&actor.phase==0&&actor.subphase==0);
     check(actor.current==0&&actor.maximum==0&&actor.status==0&&actor.auxiliary_status==0&&actor.room==0&&actor.character==0&&actor.model_variant==0);
     check(actor.position.x==0&&actor.position.y==0&&actor.position.z==0&&actor.orientation==std::array<std::int16_t,4>{});

@@ -106,6 +106,8 @@ struct PeriodicVisuals::Node final:gameplay_scenario::PeriodicVisual {
     std::optional<ResourceDebrisState> resource_debris;
     std::optional<ResourceFlightState> resource_flight;
     gameplay_actors::EntityId flight_parent;
+    std::optional<ActorContactState> actor_contact;
+    gameplay_actors::EntityId channel_parent;
     std::shared_ptr<gameplay_world::ResourceModel> resource_model;
     std::optional<std::uint8_t> category;
     gameplay_actors::EntityId surface_actor;
@@ -126,6 +128,22 @@ struct PeriodicVisuals::SurfaceRuntime {
 struct PeriodicVisuals::FlightRuntime {
     gameplay_world::World& world;gameplay_contact_world::RoomResources& rooms;
     FlightAudio& audio;
+};
+struct PeriodicVisuals::ChannelRuntime {
+    gameplay_world::World& world;ActorContactPoses& poses;
+};
+class PeriodicVisuals::ChannelOperations final:public ActorContactOperations {
+public:
+    PeriodicVisuals& owner;Node& node;transform_math::Vector camera;const std::optional<transform_math::Matrix>& view;VisualReport& report;
+    ChannelOperations(PeriodicVisuals& o,Node& n,transform_math::Vector c,const std::optional<transform_math::Matrix>& v,VisualReport& r):owner(o),node(n),camera(c),view(v),report(r){}
+    bool rebind(ActorContactState& state)override{return owner.channels_&&owner.channels_->poses.rebind(node.channel_parent,state);}
+    WorkStatus clone(const ActorContactState& state,std::uint32_t variant)override{
+        return owner.create_actor_contact_impl(node.channel_parent,state.basis,state.base_position,state.mode,variant,true).status;
+    }
+    bool sample(const ActorContactState& state)override{
+        node.basis=state.basis;node.initial_position=state.base_position;
+        owner.sample_children(node,state.age,camera,view,report);return true;
+    }
 };
 class PeriodicVisuals::SurfaceSink final:public SurfaceVisuals {
     PeriodicVisuals& owner_;
@@ -180,7 +198,7 @@ bool PeriodicVisuals::bound_to(const gameplay_world::World& world)const noexcept
     return true;
 }
 bool PeriodicVisuals::bind_surfaces(std::shared_ptr<gameplay_world::World> world,gameplay_contact_world::RoomResources& rooms,Modulation& modulation,SurfaceProfile profile)noexcept{
-    if(!world||surfaces_||busy_||!admitted()||!bound_to(world->session().random)||(debris_&&&debris_->world!=world.get())||(flights_&&&flights_->world!=world.get()))return false;
+    if(!world||surfaces_||busy_||!admitted()||!bound_to(world->session().random)||(debris_&&&debris_->world!=world.get())||(flights_&&&flights_->world!=world.get())||(channels_&&&channels_->world!=world.get()))return false;
     try{surfaces_=std::make_unique<SurfaceRuntime>(SurfaceRuntime{std::move(world),&rooms,&modulation,std::move(profile)});return true;}
     catch(const std::bad_alloc&){return false;}
 }
@@ -214,7 +232,7 @@ bool PeriodicVisuals::companions_bound_to(const gameplay_world::World& world,con
     return admitted()&&companions_ && &companions_->world==&world && &companions_->resources==&resources && &companions_->models==&models&&bound_to(world.session().random)&&&companions_->templates==&templates&&companions_->actions.bound_to(world,resources,models,templates);
 }
 bool PeriodicVisuals::bind_resource_companions(gameplay_world::World& world,gameplay_scenario::SceneResources& resources,gameplay_world::ResourceModels& models,const gameplay_scenario::ResourceTemplates& templates,ResourceCompanionActions& actions)noexcept{
-    if(busy_||companions_||!bound_to(world.session().random)||!actions.bound_to(world,resources,models,templates)||(debris_&&(&debris_->world!=&world||&debris_->models!=&models))||(flights_&&&flights_->world!=&world))return false;
+    if(busy_||companions_||!bound_to(world.session().random)||!actions.bound_to(world,resources,models,templates)||(debris_&&(&debris_->world!=&world||&debris_->models!=&models))||(flights_&&&flights_->world!=&world)||(channels_&&&channels_->world!=&world))return false;
     try{companions_=std::make_unique<CompanionRuntime>(CompanionRuntime{world,resources,models,templates,actions});return true;}
     catch(const std::bad_alloc&){return false;}
 }
@@ -257,7 +275,7 @@ PeriodicVisuals::CompanionsCreated PeriodicVisuals::create_resource_companions(c
 }
 bool PeriodicVisuals::bind_resource_debris(gameplay_world::World& world,gameplay_world::ResourceModels& models,gameplay_world::ResourceFactory& factory)noexcept{
     if(!admitted()||busy_||debris_||world.closed()||!models.open()||!bound_to(world.session().random)||!factory.bound_to(world,models))return false;
-    if((companions_&&(&companions_->world!=&world||&companions_->models!=&models))||(surfaces_&&surfaces_->world.get()!=&world)||(flights_&&&flights_->world!=&world))return false;
+    if((companions_&&(&companions_->world!=&world||&companions_->models!=&models))||(surfaces_&&surfaces_->world.get()!=&world)||(flights_&&&flights_->world!=&world)||(channels_&&&channels_->world!=&world))return false;
     try{debris_=std::make_unique<DebrisRuntime>(DebrisRuntime{world,models,factory.token_});return true;}catch(...){return false;}
 }
 bool PeriodicVisuals::debris_bound_to(const gameplay_world::World& world,const gameplay_world::ResourceModels& models,const gameplay_world::ResourceFactory& factory)const noexcept{
@@ -301,7 +319,7 @@ WorkCreated PeriodicVisuals::create(const WorkRequest& request)noexcept{
 }
 bool PeriodicVisuals::bind_resource_flights(gameplay_world::World& world,gameplay_contact_world::RoomResources& rooms,FlightAudio& audio)noexcept{
     if(!admitted()||busy_||flights_||world.closed()||!bound_to(world.session().random)||!audio.bound_to(world))return false;
-    if((surfaces_&&surfaces_->world.get()!=&world)||(companions_&&&companions_->world!=&world)||(debris_&&&debris_->world!=&world))return false;
+    if((surfaces_&&surfaces_->world.get()!=&world)||(companions_&&&companions_->world!=&world)||(debris_&&&debris_->world!=&world)||(channels_&&&channels_->world!=&world))return false;
     try{flights_=std::make_unique<FlightRuntime>(FlightRuntime{world,rooms,audio});return true;}catch(...){return false;}
 }
 bool PeriodicVisuals::flights_bound_to(const gameplay_world::World& world)const noexcept{
@@ -325,6 +343,28 @@ PeriodicVisuals::DebrisPiece PeriodicVisuals::create_resource_flight(const gamep
         if(made.status!=gameplay_actors::EntityStatus::completed)return{made.status==gameplay_actors::EntityStatus::full?WorkStatus::pool_full:WorkStatus::unavailable,{}};
         id=made.id;order_.push_front(id);return{WorkStatus::completed,id};
     }catch(...){if(id)retire_node(id);return{};}
+}
+bool PeriodicVisuals::bind_actor_contacts(gameplay_world::World& world,ActorContactPoses& poses)noexcept{
+    if(!admitted()||busy_||channels_||world.closed()||!bound_to(world.session().random)||!poses.bound_to(world))return false;
+    if((surfaces_&&surfaces_->world.get()!=&world)||(companions_&&&companions_->world!=&world)||(debris_&&&debris_->world!=&world)||(flights_&&&flights_->world!=&world)||(channels_&&&channels_->world!=&world))return false;
+    try{channels_=std::make_unique<ChannelRuntime>(ChannelRuntime{world,poses});return true;}catch(...){return false;}
+}
+bool PeriodicVisuals::channels_bound_to(const gameplay_world::World& world)const noexcept{
+    return admitted()&&channels_&&&channels_->world==&world&&!world.closed()&&bound_to(world.session().random)&&channels_->poses.bound_to(world);
+}
+WorkStatus PeriodicVisuals::actor_channel(const gameplay_actors::EntityId& parent,const std::optional<transform_math::Matrix>& basis,transform_math::Vector point,std::uint32_t mode,std::uint32_t variant){return create_actor_contact(parent,basis,point,mode,variant).status;}
+PeriodicVisuals::DebrisPiece PeriodicVisuals::create_actor_contact(const gameplay_actors::EntityId& parent,const std::optional<transform_math::Matrix>& basis,transform_math::Vector point,std::uint32_t mode,std::uint32_t variant)noexcept{return create_actor_contact_impl(parent,basis,point,mode,variant,false);}
+std::optional<ActorContactState> PeriodicVisuals::actor_contact_state(const gameplay_actors::EntityId& id)const noexcept{
+    const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));return node?node->actor_contact:std::nullopt;
+}
+PeriodicVisuals::DebrisPiece PeriodicVisuals::create_actor_contact_impl(const gameplay_actors::EntityId& parent,const std::optional<transform_math::Matrix>& basis,transform_math::Vector point,std::uint32_t mode,std::uint32_t variant,bool internal)noexcept{
+    if(!channels_||!channels_bound_to(channels_->world)||(busy_&&!internal)||!channels_->world.resolve(parent))return{};
+    const auto profile=actor_contact_profile(mode,variant);if(!profile)return{};
+    const auto made=create_impl({basis,point,profile->variant,profile->resource,profile->child_mask,0x1a193,WorkUpdate::ordinary},internal);
+    if(made.status!=WorkStatus::completed||!made.edit)return{made.status,{}};
+    const auto id=made.edit->identity();const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));if(!node)return{};
+    ActorContactState state;state.mode=std::uint8_t(mode);state.clone=(variant&0x80000000u)!=0;/*652470 clears cycle after571EC0 stores the caller variant.*/state.remaining=node->remaining;state.basis=basis;state.base_position=point;
+    node->category=9;node->channel_parent=parent;node->actor_contact=state;return{WorkStatus::completed,id};
 }
 WorkCreated PeriodicVisuals::create_impl(const WorkRequest& request,bool internal)noexcept{
     if(!admitted()||(busy_&&!internal))return{};
@@ -469,6 +509,14 @@ VisualReport PeriodicVisuals::update_impl(transform_math::Vector camera,const st
             const auto id=*cursor++;const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));
             if(!node)throw std::logic_error("Native periodic visual identity unexpectedly stale");
             ++report.visited;
+            if(node->actor_contact){
+                if(!channels_||!channels_bound_to(channels_->world))throw std::logic_error("Native actor contact owners unavailable");
+                const auto parent=channels_->world.resolve(node->channel_parent);
+                if(!parent){retire_node(id);++report.retired;continue;}
+                ChannelOperations operations(*this,*node,camera,view,report);const auto step=advance_actor_contact(*node->actor_contact,parent->primary,parent->secondary,operations);node->visible=node->actor_contact->visible;
+                if(!step.available)throw std::domain_error("Native actor contact consumer unavailable");
+                if(step.retire){retire_node(id);++report.retired;}continue;
+            }
             if(node->resource_flight){
                 if(!flights_||!flights_bound_to(flights_->world))throw std::logic_error("Native resource flight owners unavailable");
                 const auto parent=flights_->world.resolve(node->flight_parent);
@@ -579,7 +627,7 @@ VisualReport PeriodicVisuals::update_impl(transform_math::Vector camera,const st
         }
         if(revision_==UINT64_MAX)throw std::overflow_error("Native effect frame revision exhausted");
         auto frame=std::make_shared<EffectFrame>();frame->revision=revision_+1;frame->visuals.reserve(order_.size());
-        for(const auto& id:order_){const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));VisualOutput output;output.id=id;output.bank=node->bank;output.visible=node->visible;output.category=node->category;output.debris=node->resource_debris;output.flight=node->resource_flight;output.pieces.reserve(node->pieces.size());for(const auto slot:node->pieces)output.pieces.push_back(pieces_[slot].output);frame->visuals.push_back(std::move(output));}
+        for(const auto& id:order_){const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));VisualOutput output;output.id=id;output.bank=node->bank;output.visible=node->visible;output.category=node->category;output.debris=node->resource_debris;output.flight=node->resource_flight;output.actor_contact=node->actor_contact;output.pieces.reserve(node->pieces.size());for(const auto slot:node->pieces)output.pieces.push_back(pieces_[slot].output);frame->visuals.push_back(std::move(output));}
         revision_=frame->revision;publish(std::move(frame));return report;
     }catch(const std::bad_alloc&){failure_=VisualStatus::no_memory;}
     catch(const std::exception&){failure_=VisualStatus::invalid_profile;}
@@ -594,5 +642,6 @@ void PeriodicVisuals::close()noexcept{
     companions_.reset();
     debris_.reset();
     flights_.reset();
+    channels_.reset();
 }
 }

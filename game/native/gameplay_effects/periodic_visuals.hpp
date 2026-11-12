@@ -5,6 +5,7 @@
 #include "resource_companion.hpp"
 #include "resource_debris.hpp"
 #include "resource_flight.hpp"
+#include "actor_contact_channels.hpp"
 namespace reo::native::gameplay_world {class ResourceFactory;}
 #include "../gameplay_scenario/surface_effects.hpp"
 #include "../gameplay_scenario/periodic_effects.hpp"
@@ -52,6 +53,7 @@ struct VisualOutput {
     std::vector<PieceOutput> pieces;
     std::optional<ResourceDebrisState> debris;
     std::optional<ResourceFlightState> flight;
+    std::optional<ActorContactState> actor_contact;
 };
 struct EffectFrame {std::uint64_t revision{};std::vector<VisualOutput> visuals;};
 enum class VisualStatus {completed,closed,busy,invalid_camera,invalid_profile,no_memory};
@@ -59,7 +61,7 @@ struct VisualReport {VisualStatus status{VisualStatus::completed};std::size_t vi
 // Canonical native visual/resource owner for the admitted periodic family.
 // Simulation calls are serialized; only immutable frame acquisition is shared
 // with rendering. A retained frame/visual cannot retarget a recycled native ID.
-class PeriodicVisuals final:public gameplay_scenario::PeriodicEmitter,public WorkBackend,public SurfaceVisuals,public gameplay_scenario::SurfaceEffects {
+class PeriodicVisuals final:public gameplay_scenario::PeriodicEmitter,public WorkBackend,public SurfaceVisuals,public gameplay_scenario::SurfaceEffects,public ActorContactBackend {
 public:
     explicit PeriodicVisuals(std::shared_ptr<const EffectBank>);
     PeriodicVisuals(std::shared_ptr<const EffectBank>,gameplay_session::Random&);
@@ -94,6 +96,11 @@ public:
     bool flights_bound_to(const gameplay_world::World&)const noexcept;
     DebrisPiece create_resource_flight(const gameplay_actors::EntityId&,const transform_math::Matrix&,std::uint32_t style)noexcept;
     std::optional<ResourceFlightState> resource_flight_state(const gameplay_actors::EntityId&)const noexcept;
+    bool bind_actor_contacts(gameplay_world::World&,ActorContactPoses&)noexcept;
+    bool channels_bound_to(const gameplay_world::World&)const noexcept override;
+    WorkStatus actor_channel(const gameplay_actors::EntityId&,const std::optional<transform_math::Matrix>&,transform_math::Vector,std::uint32_t,std::uint32_t)override;
+    DebrisPiece create_actor_contact(const gameplay_actors::EntityId&,const std::optional<transform_math::Matrix>&,transform_math::Vector,std::uint32_t,std::uint32_t)noexcept;
+    std::optional<ActorContactState> actor_contact_state(const gameplay_actors::EntityId&)const noexcept;
     gameplay_scenario::EmissionResult emit(const gameplay_scenario::PeriodicEmission&)noexcept override;
     WorkCreated create(const WorkRequest&)noexcept override;
     WorkStatus emit_surface(const SurfaceEmission&)noexcept override;
@@ -114,6 +121,8 @@ private:
     struct CompanionRuntime;
     struct DebrisRuntime;
     struct FlightRuntime;
+    struct ChannelRuntime;
+    class ChannelOperations;
     class SurfaceSink;
     struct Piece {bool active{};PieceOutput output;};
     gameplay_actors::EntityStore entities_{{168}};
@@ -126,6 +135,7 @@ private:
     std::unique_ptr<CompanionRuntime> companions_;
     std::unique_ptr<DebrisRuntime> debris_;
     std::unique_ptr<FlightRuntime> flights_;
+    std::unique_ptr<ChannelRuntime> channels_;
     std::shared_ptr<Editing> editing_;
     mutable std::mutex publication_;
     std::shared_ptr<const EffectFrame> published_;
@@ -137,6 +147,7 @@ private:
     void publish(std::shared_ptr<const EffectFrame>)noexcept;
     VisualReport update_impl(transform_math::Vector,const std::optional<transform_math::Matrix>&)noexcept;
     WorkCreated create_impl(const WorkRequest&,bool internal)noexcept;
+    DebrisPiece create_actor_contact_impl(const gameplay_actors::EntityId&,const std::optional<transform_math::Matrix>&,transform_math::Vector,std::uint32_t,std::uint32_t,bool internal)noexcept;
     WorkStatus emit_surface_impl(const SurfaceEmission&,bool internal)noexcept;
     void sample_children(Node&,std::int16_t,transform_math::Vector,const std::optional<transform_math::Matrix>&,VisualReport&);
 };

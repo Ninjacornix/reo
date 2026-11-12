@@ -84,6 +84,9 @@ class ActorModelAsset;
 struct Actor : actors::Entity,actors::HitActor {
     bool active{},visible{};
     std::uint8_t ai_control{},normalized_marker{};
+    // Original signed+C used by contact-style5. Actual full-record clears
+    // establish zero; generic Actor construction does not supply this value.
+    std::optional<std::int16_t> contact_style_discriminator;
     std::optional<gameplay_navigation::ActorRouteState> navigation_route;
     std::optional<gameplay_ai::ExecutionState> ai_execution;
     std::optional<TargetingState> targeting;

@@ -63,8 +63,12 @@ def main():
     p.add_argument('--weapon-actions', action='store_true', help='Focused canonical65EC40/65E750 resource-action comparisons')
     p.add_argument('--weapon-fire', action='store_true', help='Also compare complete65E880 preparation and dispatch with declared effect/UI ports')
     p.add_argument('--resource-flights', action='store_true', help='Focused actual resource flight/room/native-audio owner comparisons')
+    p.add_argument('--contact-styles', action='store_true', help='Complete contact-style dispatch and canonical effect owner comparisons')
+    p.add_argument('--actor-contact-channels', action='store_true', help='Actual571EC0/572030/572290 actor channels through shared pools and weapon poses')
     args = p.parse_args()
+    if args.actor_contact_channels:args.contact_styles=True;args.weapon_fire=True
     if args.resource_flights:args.weapon_actions=True
+    if args.contact_styles:args.weapon_actions=True
     if args.weapon_fire: args.weapon_actions=True
     if args.weapon_actions:
         for name in ['resource_pulses','resource_static','resource_factory','resource_placement','resource_delayed','resource_actions','resource_inventory','resource_content','resource_pairs','resource_recipes','owned_recipes','resource_consumption','resource_wrappers','resource_health','resource_deployment','resource_effects','resource_debris','resource_depletion','stock_wmd_absence','resource_use','weapon_resources','resource_companion_policy','resource_companions']:
@@ -129,11 +133,14 @@ def main():
     if args.resource_debris: pending += [0x1900e0]
     if args.weapon_fire: pending += [0x18fdf0,0x1901a0,0x190100,0x1913e0,0x191500,0x1919d0,0x191a40]
     if args.resource_flights:pending += [0x58e6d0,0x58e850]
+    if args.contact_styles:pending += [0x5dd270,0x653010]
+    if args.actor_contact_channels:pending += [0x571ec0,0x572030,0x572290]
     ports = [0x107c68, 0x18dc50, 0x18dca0, 0x18dc90, 0x1b10c0, 0x1b1110, 0x1b3830, 0x573740]
     if args.resource_companions:
         pending += [0x654180,0x652880,0x654720,0x5df450]
         ports += [0x6b2680,0x1b8c70]
     if args.resource_flights:ports += [0x5795e0,0x57d560,0x1b93d0]
+    if args.contact_styles and not args.actor_contact_channels:ports += [0x571ec0]
     entries = {}
     while pending:
         at = pending.pop()
@@ -274,6 +281,7 @@ def main():
     if args.weapon_actions: units+=['game/native/gameplay_world/weapon_actions.cpp','game/native/gameplay_world/animation_events.cpp']
     if args.weapon_fire: units+=['game/native/gameplay_world/weapon_fire.cpp']
     if args.resource_flights:units+=['game/native/gameplay_world/resource_flight_audio.cpp','game/native/gameplay_world/flight_weapon_effects.cpp']
+    if args.contact_styles:units+=['game/native/gameplay_effects/contact_styles.cpp','game/native/gameplay_world/contact_weapon_effects.cpp']
     if args.resource_ownership: units+=['game/native/gameplay_world/resource_ownership.cpp']
     if args.actor_resource_operations: units+=['game/native/gameplay_world/actor_resource_operations.cpp','game/native/gameplay_world/equipment_notice.cpp','game/native/gameplay_world/resource_auxiliary_lists.cpp']
     if args.actor_terminal: units+=['game/native/gameplay_world/actor_terminal_timer.cpp']
@@ -347,6 +355,10 @@ def main():
         name='tools/native_reconstruction/weapon_fire_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.resource_flights:
         name='tools/native_reconstruction/resource_flight_owner_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.contact_styles:
+        name='tools/native_reconstruction/contact_styles_tests.inc';frozen[name]=(ROOT/name).read_bytes()
+    if args.actor_contact_channels:
+        name='tools/native_reconstruction/actor_contact_owner_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.resource_ownership:
         name='tools/native_reconstruction/resource_ownership_tests.inc';frozen[name]=(ROOT/name).read_bytes()
     if args.actor_resource_operations:
@@ -493,6 +505,14 @@ def main():
         if args.resource_flights:
             for bank,at,size in [('sub',0x2392b8,76),('sub',0x241c00,0x400),('o0',0x38b290,4),('o2',0x7093d8,24),('o2',0x7093f0,108),('o2',0x709460,32)]:
                 base=0x370000 if bank=='o0'else 0x570000;value=main_read(at,size)if bank=='sub'else overlay[bank][at-base:at-base+size];record.setdefault('flight_tables',{})[hex(at)]={'bytes':size,'sha256':hashlib.sha256(value).hexdigest()};init+='{const std::uint8_t data[]{'+','.join(str(v)for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
+        if args.contact_styles:
+            for at,size in [(0x70b5d0,12),(0x73eb80,36)]:
+                value=overlay['o2'][at-0x570000:at-0x570000+size];record.setdefault('contact_style_tables',{})[hex(at)]={'bytes':size,'sha256':hashlib.sha256(value).hexdigest()};init+='{const std::uint8_t data[]{'+','.join(str(v)for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
+            record['declared_ports'].append('Complete5DD270 and ordinary effect lifetimes execute.571EC0 actor-channel construction is a controlled required consumer; other contact styles use the actual canonical work/child owner.')
+        if args.actor_contact_channels:
+            for at,size in [(0x708580,16),(0x7123a0,32),(0x73de08,16)]:
+                value=overlay['o2'][at-0x570000:at-0x570000+size];record.setdefault('actor_contact_tables',{})[hex(at)]={'bytes':size,'sha256':hashlib.sha256(value).hexdigest()};init+='{const std::uint8_t data[]{'+','.join(str(v)for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
+            record['declared_ports'].append('Actor-channel owner cases execute complete571EC0/572030/572290 and actual pools/cache/child sampling; weapon model poses are explicit canonical ResourceModels inputs. Earlier contact-only cases separately capture571EC0.')
         if args.actor_progression:
             for at,size in [(0x71adb0,32),(0x71add0,32),(0x71ad10,32),(0x740478,4)]:
                 value=overlay['o2'][at-0x570000:at-0x570000+size];record.setdefault('gauge_progression_tables',{})[hex(at)]={'bytes':size,'sha256':hashlib.sha256(value).hexdigest()};init+='{const std::uint8_t data[]{'+','.join(str(v)for v in value)+'};std::memcpy(memory+'+str(at)+',data,sizeof data);}'
@@ -609,6 +629,8 @@ def main():
         if args.resource_use: command.insert(1,'-DREO_RESOURCE_USE=1')
         if args.weapon_actions: command.insert(1,'-DREO_WEAPON_ACTIONS_ONLY=1')
         if args.resource_flights:command.insert(1,'-DREO_RESOURCE_FLIGHT_ONLY=1')
+        if args.contact_styles:command.insert(1,'-DREO_CONTACT_STYLES_ONLY=1')
+        if args.actor_contact_channels:command.insert(1,'-DREO_ACTOR_CONTACT_ONLY=1')
         if args.weapon_fire:
             command.insert(1,'-DREO_WEAPON_FIRE=1')
             record['declared_ports'].append('Complete65E880 body and reached math/6B4420 execute;665CA0 feedback and distinct5823E0/6B24F0/5DD270/58E6D0 constructors are controlled ordered effect ports with synchronous action mutations, not newly executed effect implementations.')

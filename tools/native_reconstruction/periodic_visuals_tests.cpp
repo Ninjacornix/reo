@@ -38,6 +38,9 @@ template<class T>void put(std::uint8_t* memory,std::uint32_t at,T value){transfo
 constexpr std::uint32_t model=0x3b85b0,heap=0x800000,parts=0x900000,child_pool=0xb00000;
 bool allocated{};
 bool task_retired{};
+#ifdef REO_CONTACT_STYLES_ONLY
+bool contact_style_port(std::uint8_t*,R5900Context*);
+#endif
 #ifdef REO_RESOURCE_FLIGHT_ONLY
 bool resource_flight_port(std::uint8_t*,R5900Context*);
 #endif
@@ -69,6 +72,9 @@ struct CompanionPolicyCapture {unsigned children{},released{},retired{},spawned{
 #endif
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
     ++calls;const auto done=[&](){context->pc=GPR_U32(context,31);};
+#ifdef REO_CONTACT_STYLES_ONLY
+    if(contact_style_port(memory,context)){done();return;}
+#endif
 #ifdef REO_RESOURCE_FLIGHT_ONLY
     if(resource_flight_port(memory,context)){done();return;}
 #endif
@@ -296,6 +302,12 @@ void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uin
 #ifdef REO_RESOURCE_FLIGHT_ONLY
 #include "tools/native_reconstruction/resource_flight_owner_tests.inc"
 #endif
+#ifdef REO_CONTACT_STYLES_ONLY
+#include "tools/native_reconstruction/contact_styles_tests.inc"
+#endif
+#ifdef REO_ACTOR_CONTACT_ONLY
+#include "tools/native_reconstruction/actor_contact_owner_tests.inc"
+#endif
 #ifdef REO_WEAPON_ACTIONS_ONLY
 #ifdef REO_WEAPON_FIRE
 #include "tools/native_reconstruction/weapon_fire_tests.inc"
@@ -344,6 +356,18 @@ int main(int argc,char** argv)try{
         2
 #endif
     );const auto corpus=load(argv[1]);std::vector<std::uint8_t> ram(0x2000000);auto* memory=ram.data();
+#ifdef REO_CONTACT_STYLES_ONLY
+    compare_contact_styles(corpus,memory);
+#ifdef REO_ACTOR_CONTACT_ONLY
+    compare_actor_contact_owner(corpus,memory);
+#endif
+    std::cout<<"{\"checks\":"<<checks<<",\"contact_cases\":"<<contact_cases<<",\"contact_frames\":"<<contact_frames<<",\"contact_selectors\":"<<contact_selectors<<",\"contact_channels\":"<<contact_channels<<",\"contact_refusals\":"<<contact_refusals
+#ifdef REO_ACTOR_CONTACT_ONLY
+    <<",\"channel_owner_cases\":"<<channel_owner_cases<<",\"channel_owner_frames\":"<<channel_owner_frames<<",\"channel_owner_peak\":"<<channel_owner_peak<<",\"channel_owner_refusals\":"<<channel_owner_refusals
+#endif
+    <<",\"original_helper_calls\":"<<calls<<",\"game_run\":false}\n";
+    return 0;
+#endif
 #ifdef REO_RESOURCE_FLIGHT_ONLY
     compare_resource_flight_owner(corpus,std::filesystem::path(argv[1]).parent_path(),ram);
     std::cout<<"{\"checks\":"<<checks<<",\"flight_owner_cases\":"<<flight_owner_cases<<",\"flight_owner_frames\":"<<flight_owner_frames<<",\"flight_owner_cues\":"<<flight_owner_cues<<",\"flight_pcm_frames\":"<<flight_pcm_frames<<",\"flight_signal_samples\":"<<flight_signal_samples<<",\"flight_owner_refusals\":"<<flight_owner_refusals<<",\"original_helper_calls\":"<<calls<<",\"game_run\":false}\n";

@@ -1,4 +1,5 @@
 #include "weapon_fire.hpp"
+#include "resource_actor_contact_pose.hpp"
 #include "../animation/constraint_math.hpp"
 #include <bit>
 #include <stdexcept>
@@ -25,6 +26,23 @@ animation::Matrix firing_basis(const animation::Matrix& source){
     compose_axes(result,animation::constraint_math::rotation_x(f(0x3fc90fdb)));
     compose_axes(result,source);return result;
 }
+}
+ResourceActorContactPoses::ResourceActorContactPoses(World& world,gameplay_scenario::SceneResources& resources)
+    :world_(world),resources_(resources){if(!bound_to(world))throw std::invalid_argument("Native actor contact pose owners unavailable");}
+bool ResourceActorContactPoses::bound_to(const World& world)const noexcept{return &world==&world_&&!world_.closed();}
+bool ResourceActorContactPoses::rebind(const actors::EntityId& id,gameplay_effects::ActorContactState& state){
+    if(!bound_to(world_))return false;
+    const auto actor=world_.resolve(id);if(!actor)return false;
+    const auto key=resources_.slot(actor->selected_resource);const auto descriptor=key?resources_.get(*key):std::nullopt;
+    const auto model=descriptor?std::dynamic_pointer_cast<ResourceModel>(descriptor->primary):nullptr;
+    if(!model||!model->current())return false;
+    const auto offset=transform_math::direction(model->pose,profile(actor->resource_action).offset);
+    const auto basis=firing_basis(model->pose);
+    // The source always overwrites its stored50 matrix, but does not change
+    // the optional1F0 binding. A NULL binding remains NULL for child sampling.
+    if(state.basis)state.basis=basis;
+    state.base_position={offset.x+model->position.x,offset.y+model->position.y,offset.z+model->position.z};
+    return world_.resolve(id)==actor&&model->current();
 }
 ResourceWeaponFire::ResourceWeaponFire(World& world,gameplay_scenario::SceneResources& resources,
     const gameplay_scenario::ResourceTemplates& templates,animation_events::BasicAudio& audio,
