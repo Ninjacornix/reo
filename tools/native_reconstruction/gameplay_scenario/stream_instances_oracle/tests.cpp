@@ -43,10 +43,23 @@ std::vector<std::uint8_t> load(const char* name){std::ifstream file(name,std::io
 template<class F>void until(F predicate,const char* why){const auto end=std::chrono::steady_clock::now()+10s;while(!predicate()){check(std::chrono::steady_clock::now()<end,why);std::this_thread::yield();}}
 template<class F>struct Operation final:n::adxt_control_owner::Operation {F callback;explicit Operation(F f):callback(std::move(f)){}void run(n::adxt_instances::Instances& value)noexcept override{callback(value);}};
 }
+#ifdef REO_SCENE_VOICE_PREPARATION
+#include "scene_voice_preparation_tests.inc"
+#endif
 int main(int argc,char** argv)try{
-    check(argc==3,"asset/table arguments");const auto asset=load(argv[1]),table_bytes=load(argv[2]);check(table_bytes.size()==4000,"owned attenuation words");std::array<std::uint32_t,1000> table_words{};std::memcpy(table_words.data(),table_bytes.data(),4000);
+    #ifdef REO_SCENE_VOICE_PREPARATION
+    check(argc==5,"scene asset/table arguments");
+#else
+    check(argc==3,"asset/table arguments");
+#endif
+    const auto asset=load(argv[1]),table_bytes=load(argv[2]);check(table_bytes.size()==4000,"owned attenuation words");std::array<std::uint32_t,1000> table_words{};std::memcpy(table_words.data(),table_bytes.data(),4000);
     const auto table=n::adxt_attenuation::Table::from_words(table_words);check(table.status==n::adxt_attenuation::Status::completed,"real attenuation table");
-    auto view=archive(asset,69,true);const auto mono=n::adxt_shared_player::testing::file(1,48000,48000);auto mono_view=archive(mono->bytes,0,false);
+    #ifdef REO_SCENE_VOICE_PREPARATION
+    const auto scene32=load(argv[3]),scene33=load(argv[4]);auto view=scene_archive(asset,scene32,scene33);
+#else
+    auto view=archive(asset,69,true);
+#endif
+    const auto mono=n::adxt_shared_player::testing::file(1,48000,48000);auto mono_view=archive(mono->bytes,0,false);
     auto catalog=std::make_shared<vm::StreamAssetCatalog>();check(catalog->add(0,index(view),"owned-file1-bgm69-fixture-f6fc3d25"),"catalog installs indexed asset");check(catalog->add(1,index(mono_view),"synthetic-mono-fixture"),"catalog installs mono fixture");
     check(catalog->resolve({0,69}).status==vm::StreamStatus::unsupported_profile,"unsealed catalog refuses");catalog->seal();check(!catalog->add(2,index(mono_view),"late"),"sealed catalog immutable");check(catalog->resolve({9,0}).status==vm::StreamStatus::missing_asset,"unknown archive explicit");check(catalog->resolve({0,-1}).status==vm::StreamStatus::missing_asset,"negative member explicit");check(catalog->resolve({0,0}).status==vm::StreamStatus::missing_asset,"empty member explicit");check(view->body_reads==0,"catalog metadata does not read body");
     {auto other=std::make_shared<vm::StreamAssetCatalog>();check(other->add(0,index(view),"owned-file1-bgm69-fixture-f6fc3d25"),"independent same-label catalog");other->seal();const auto a=catalog->resolve({0,69}),b=other->resolve({0,69});check(a.status==vm::StreamStatus::completed&&b.status==vm::StreamStatus::completed&&a.view!=b.view,"catalog domain prevents cross-owner cache alias");check(view->body_reads==0,"scoped lazy residency remains metadata-only");}
@@ -54,7 +67,13 @@ int main(int argc,char** argv)try{
     for(unsigned i=0;i<3;++i){config[i].construction={i==2?1u:2u,{i,i,i,i},table.table};config[i].player.decoder.channels=config[i].construction.channels;config[i].player.decoder.loop_enabled=false;config[i].player.decoder.service_divisor=30;}
     auto owner=std::make_shared<n::adxt_control_owner::Owner>(n::adxt_instances::control::Config{{3},{}});
     check(vm::StreamInstances::create(owner,config,catalog,{0,0,2}).status==vm::StreamStatus::unsupported_profile,"invalid mixer permutation refuses");
-    auto opened=vm::StreamInstances::create(owner,config,catalog,{0,1,2});check(opened.status==vm::StreamStatus::completed&&bool(opened.value),"three actual native instances created");auto adapter=std::move(opened.value);
+    #ifdef REO_SCENE_VOICE_PREPARATION
+    auto voice_loader=std::make_shared<n::audio_clip_loader::Loader>(n::audio_clip_loader::Config{17,17});
+    auto opened=vm::StreamInstances::create(owner,config,catalog,{0,1,2},voice_loader);
+#else
+    auto opened=vm::StreamInstances::create(owner,config,catalog,{0,1,2});
+#endif
+    check(opened.status==vm::StreamStatus::completed&&bool(opened.value),"three actual native instances created");auto adapter=std::move(opened.value);
     check(vm::StreamInstances::create(owner,config,catalog,{0,1,2}).status==vm::StreamStatus::unsupported_profile,"factory refuses occupied native owner");check(adapter->phase(0).value==0,"idle phase");
     check(adapter->instance_available(0).status==vm::StreamStatus::completed&&adapter->instance_available(0).value==1,"prepared readiness uses actual constructed instance");
     check(adapter->start_ready(0).status==vm::StreamStatus::completed&&adapter->start_ready(0).value==0,"idle actual instance has no started source");
@@ -85,6 +104,9 @@ int main(int argc,char** argv)try{
     check(engine.snapshot().channels[0].level==prior_level,"background pump does not advance canonical level");check(vm::stream_accepted(engine.service(1000,*adapter)),"one real engine service advances ramp");check(engine.snapshot().channels[0].level<prior_level&&engine.snapshot().channels[0].current<127,"explicit engine service alone advances call-based ramp");
     check(adapter->inspect(0).starts==starts,"background pump retains current source identity");check(!view->body_on_controller,"replacements retain off-controller body ownership");
     n::adxt_instances::Snapshot observed;Operation snapshot([&](auto& instances){observed=instances.snapshot();});check(owner->run(snapshot)==n::adxt_control_owner::Admission::accepted,"native output snapshot");check(observed.session.output.statistics.output_frames>0&&observed.session.output.statistics.underrun_frames==0,"withheld engine service loses no native output frames");
+    #ifdef REO_SCENE_VOICE_PREPARATION
+    scene_voice_preparation_tests(engine,*adapter,owner);check(!view->body_on_controller,"scene cue body and preparation remain off controller");
+#endif
     const auto failed=adapter->start(0,{7,69},1000);check(failed==vm::StreamStatus::missing_asset,"bad source refuses before replacement");check(adapter->inspect(0).starts==starts,"refused source preserves active instance");check(adapter->phase(3).status==vm::StreamStatus::invalid_channel,"bad channel explicit");
     check(adapter->instance_available(3).status==vm::StreamStatus::invalid_channel&&adapter->start_ready(3).status==vm::StreamStatus::invalid_channel&&adapter->start_inhibit(3,false)==vm::StreamStatus::invalid_channel,"prepared adapter invalid index refuses");
     auto prepared=engine.snapshot();prepared.channels[1].started=1;prepared.channels[1].start_wait=1;prepared.channels[1].paused=1;check(engine.restore(prepared)==vm::StreamStatus::completed,"prepared helper engine-state fixture");
@@ -95,5 +117,12 @@ int main(int argc,char** argv)try{
     const auto& after_preserving=engine.snapshot().channels[0];check(preserved.paused==after_preserving.paused&&preserved.started==after_preserving.started&&preserved.current==after_preserving.current&&preserved.maximum==after_preserving.maximum&&preserved.level==after_preserving.level&&preserved.step==after_preserving.step,"preserving stop leaves canonical engine record untouched");
     const auto stopped_observation=adapter->inspect(0);check(stopped_observation.source&&adapter->start_ready(0).value==int(stopped_observation.source->playback.started),"signed getter bridge observes retained source rather than engine start-request flag");
     check(vm::stream_accepted(adapter->close()),"native child destruction requested");check(adapter->service(1000)==vm::StreamStatus::closed,"closed adapter refuses");check(adapter->instance_available(0).status==vm::StreamStatus::closed&&adapter->start_ready(0).status==vm::StreamStatus::closed&&adapter->start_inhibit(0,false)==vm::StreamStatus::closed,"closed prepared adapter refuses");adapter.reset();owner->request_stop();check(owner->join()==n::adxt_control_owner::Join::completed,"canonical owner joins actual sources");check(owner->report().joined&&owner->report().final->instances==0,"no leaked native instances");
-    std::cout<<"{\"status\":\"passed\",\"checks\":"<<checks<<",\"background_visits\":"<<visits<<",\"body_reads\":"<<view->body_reads<<",\"output_frames\":"<<observed.session.output.statistics.output_frames<<",\"underrun_frames\":"<<observed.session.output.statistics.underrun_frames<<",\"game_tick\":1000,\"game_launched\":false,\"hardware_output\":false}\n";
+    #ifdef REO_SCENE_VOICE_PREPARATION
+    voice_loader->request_stop();check(voice_loader->join(),"native scene loader joins outside canonical control admission");
+#endif
+    std::cout<<"{"
+#ifdef REO_SCENE_VOICE_PREPARATION
+    <<"\"scene_output_frames\":"<<scene_output_frames<<",\"scene_underrun_frames\":"<<scene_underrun_frames<<"," 
+#endif
+    <<"\"status\":\"passed\",\"checks\":"<<checks<<",\"background_visits\":"<<visits<<",\"body_reads\":"<<view->body_reads<<",\"output_frames\":"<<observed.session.output.statistics.output_frames<<",\"underrun_frames\":"<<observed.session.output.statistics.underrun_frames<<",\"game_tick\":1000,\"game_launched\":false,\"hardware_output\":false}\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

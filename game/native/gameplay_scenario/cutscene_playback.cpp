@@ -22,7 +22,7 @@ bool cutscene_acknowledgements_complete(std::uint8_t mode,std::uint8_t mask,std:
 CutscenePlayback::CutscenePlayback(gameplay_update::Owner& owner,StreamChannels& channels,StreamBackend& streams,CutscenePlaybackServices& services)
     :CutscenePlayback(owner.world(),owner.flags(),owner.state.audio_tick,channels,streams,services){}
 CutscenePlayback::CutscenePlayback(gameplay_world::World& world,FlagState& flags,const std::optional<std::uint32_t>& tick,StreamChannels& channels,StreamBackend& streams,CutscenePlaybackServices& services)
-    :world_(world),flags_(flags),audio_tick_(tick),channels_(channels),streams_(streams),services_(services){
+    :world_(world),flags_(flags),audio_tick_(tick),channels_(channels),streams_(streams),voice_(world,channels,streams,tick),services_(services){
     if(world_.closed()||world_.busy()||world_.cutscene_playback_owner_)throw std::invalid_argument("Native cutscene playback World unavailable or already bound");
     world_.cutscene_playback_owner_=this;
 }
@@ -50,7 +50,7 @@ CutscenePlaybackResult CutscenePlayback::advance_inner(){
     const auto leave=[&]{state_.phase=increment(state_.phase);state_.subphase=state_.detail=0;state_.acknowledgement_mask=0;};
     switch(state_.subphase){
     case 0:
-        action(services_.prepare_voice(state_.request,state_.request.mode==1&&state_.request.audio_count!=1));
+        action(stream_status(voice_.prepare(state_.request,state_.request.mode==1&&state_.request.audio_count!=1)));
         state_.subphase=increment(state_.subphase);return{};
     case 1:
         if(!(state_.request.mode==1&&state_.request.audio_count!=1)&&![&]{const auto ready=channels_.prepared_ready(1,streams_);return query({stream_status(ready.status),ready.value});}())return{CutscenePlaybackStatus::waiting};

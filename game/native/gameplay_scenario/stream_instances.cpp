@@ -46,16 +46,16 @@ StreamAsset StreamAssetCatalog::resolve(StreamRequest request)const noexcept{
     }catch(...){return{StreamStatus::unsupported_profile,{}};}
 }
 StreamInstances::StreamInstances(std::shared_ptr<adxt_control_owner::Owner> owner,std::array<StreamInstanceConfig,3> config,
-    std::shared_ptr<const StreamAssetCatalog> catalog):owner_(std::move(owner)),config_(std::move(config)),catalog_(std::move(catalog)){}
+    std::shared_ptr<const StreamAssetCatalog> catalog,std::shared_ptr<audio_clip_loader::Loader> voice_loader):owner_(std::move(owner)),config_(std::move(config)),catalog_(std::move(catalog)),voice_loader_(std::move(voice_loader)){}
 StreamInstancesOpen StreamInstances::create(std::shared_ptr<adxt_control_owner::Owner> owner,std::array<StreamInstanceConfig,3> config,
-    std::shared_ptr<const StreamAssetCatalog> catalog,std::array<std::uint8_t,3> order)noexcept{
+    std::shared_ptr<const StreamAssetCatalog> catalog,std::array<std::uint8_t,3> order,std::shared_ptr<audio_clip_loader::Loader> voice_loader)noexcept{
     if(!owner||!catalog||!catalog->sealed())return{StreamStatus::unsupported_profile,{}};
     std::array<bool,3> seen{};for(const auto index:order){if(index>=3||seen[index])return{StreamStatus::unsupported_profile,{}};seen[index]=true;}
     for(const auto& c:config)if(!c.construction.attenuation_table||c.construction.channels<1||c.construction.channels>2||
         c.player.sequence||c.player.lsc_input||c.player.initial_attenuation||
         (c.player.attenuation_table&&c.player.attenuation_table!=c.construction.attenuation_table))return{StreamStatus::unsupported_profile,{}};
     try{
-        auto value=std::unique_ptr<StreamInstances>(new StreamInstances(std::move(owner),std::move(config),std::move(catalog)));
+        auto value=std::unique_ptr<StreamInstances>(new StreamInstances(std::move(owner),std::move(config),std::move(catalog),std::move(voice_loader)));
         auto result=StreamStatus::fault;Operation setup([&](auto& players){
             if(players.snapshot().instances){result=StreamStatus::unsupported_profile;return;}
             result=mapped(players.start_output());if(result!=StreamStatus::completed)return;
@@ -77,6 +77,7 @@ adxt_instances::Observation StreamInstances::inspect(std::uint8_t index)noexcept
 StreamValue StreamInstances::phase(std::uint8_t index)noexcept{
     if(index>=3)return{StreamStatus::invalid_channel,0};
     if(closed_)return{StreamStatus::closed,0};
+    if(voice_queues_[index])return queued_phase(index,false);
     const auto observed=inspect(index);const auto status=mapped(observed.status);if(!stream_accepted(status))return{status,0};
     if(!started_[index])return{status,0};
     if(observed.replacement_pending)return{status,1};
@@ -91,13 +92,15 @@ StreamStatus StreamInstances::start(std::uint8_t index,StreamRequest request,std
     const auto asset=catalog_->resolve(request);if(asset.status!=StreamStatus::completed)return asset.status;
     adxt_instances::Source source{config_[index].player,asset.view};source.player.initial_tick=tick;
     source.player.decoder.channels=config_[index].construction.channels;source.player.decoder.source_config.byte_length=std::int32_t(asset.view->size());
-    auto result=StreamStatus::fault;Operation operation([&](auto& players){result=mapped(players.start(keys_[index],std::move(source)));});
+    auto retained_queue=voice_queues_[index];
+    auto result=StreamStatus::fault;Operation operation([&](auto& players){if(voice_queues_[index]){result=retire_queue(index,players);if(!stream_accepted(result))return;}result=mapped(players.start(keys_[index],std::move(source)));});
     const auto admission=owner_->run(operation);result=admitted(admission,result);if(stream_accepted(result))started_[index]=true;return result;
 }
 StreamStatus StreamInstances::stop(std::uint8_t index)noexcept{
     if(index>=3)return StreamStatus::invalid_channel;
     if(closed_)return StreamStatus::closed;
-    auto result=StreamStatus::fault;Operation operation([&](auto& players){result=mapped(players.stop(keys_[index]));});
+    auto retained_queue=voice_queues_[index];
+    auto result=StreamStatus::fault;Operation operation([&](auto& players){result=voice_queues_[index]?retire_queue(index,players):mapped(players.stop(keys_[index]));});
     const auto admission=owner_->run(operation);result=admitted(admission,result);if(stream_accepted(result))started_[index]=false;return result;
 }
 StreamStatus StreamInstances::pause(std::uint8_t index,bool value,std::uint32_t tick)noexcept{
@@ -122,6 +125,7 @@ StreamValue StreamInstances::start_ready(std::uint8_t index)noexcept{
     if(index>=3)return{StreamStatus::invalid_channel,0};
     if(closed_)return{StreamStatus::closed,0};
     if(!constructed_[index])return{StreamStatus::unbound,0};
+    if(voice_queues_[index])return queued_phase(index,true);
     auto result=StreamStatus::fault;std::int32_t ready{};
     Operation operation([&](auto& players){const auto observed=players.inspect(keys_[index]);result=mapped(observed.status);
         if(stream_accepted(result)&&!observed.replacement_pending&&observed.source)ready=observed.source->playback.started?1:0;
@@ -136,12 +140,13 @@ StreamStatus StreamInstances::start_inhibit(std::uint8_t index,bool value)noexce
 }
 StreamStatus StreamInstances::service(std::uint32_t tick)noexcept{
     if(closed_)return StreamStatus::closed;
-    auto result=StreamStatus::fault;Operation operation([&](auto& players){result=mapped(players.service(tick));});const auto admission=owner_->run(operation);return admitted(admission,result);
+    auto result=StreamStatus::fault;Operation operation([&](auto& players){const auto queued=service_queues(players,tick);const auto serviced=mapped(players.service(tick));result=!stream_accepted(queued)?queued:!stream_accepted(serviced)?serviced:queued==StreamStatus::pending||serviced==StreamStatus::pending?StreamStatus::pending:StreamStatus::completed;});const auto admission=owner_->run(operation);return admitted(admission,result);
 }
 StreamStatus StreamInstances::close()noexcept{
     if(closed_)return StreamStatus::completed;
+    auto retained_queues=voice_queues_;
     auto result=StreamStatus::completed;Operation operation([&](auto& players){
-        for(std::size_t i=0;i<3;++i)if(constructed_[i]){const auto status=mapped(players.destroy(keys_[i]));
+        for(std::size_t i=0;i<3;++i)if(constructed_[i]){if(voice_queues_[i]){const auto status=retire_queue(std::uint8_t(i),players);if(!stream_accepted(status)){result=status;return;}}const auto status=mapped(players.destroy(keys_[i]));
             if(!stream_accepted(status)){result=status;return;}constructed_[i]=false;started_[i]=false;if(status==StreamStatus::pending)result=status;}
     });const auto admission=owner_->run(operation);result=admitted(admission,result);if(stream_accepted(result)||result==StreamStatus::closed)closed_=true;return result;
 }

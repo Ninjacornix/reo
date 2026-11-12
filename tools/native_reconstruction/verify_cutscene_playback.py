@@ -8,7 +8,7 @@ def main():
  p=argparse.ArgumentParser();p.add_argument('--compiler',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args();out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
  elf=ROOT/'game_data/SLUS_207.65';assert sha(elf)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46';read_main=elf_reader(elf.read_bytes());overlay=ROOT/'build-function-index/owned-overlays/o2.bin';assert sha(overlay)=='45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226';raw=overlay.read_bytes();read=lambda at,n:read_main(at,n)if at<0x570000 else raw[at-0x570000:at-0x570000+n]
  entries={}
- for at in [0x5ee680,0x5ee260,0x5ee940,0x5eeb00,0x5eec50,0x5ef120,0x5eca70,0x5eca80,0x5f1970,0x5f0380,0x5f0230,0x1b02d0,0x1b0300,0x1ae190,0x1ae910,0x1ae9a0,0x1ae740,0x1aeb00,0x132df0,0x132e20,0x1b82a0,0x12a8e8,0x1adf50,0x1adfd0]:
+ for at in [0x5ee680,0x5ee260,0x5ee940,0x6d73f0,0x6d7470,0x6d7520,0x1aea70,0x1adf00,0x5eeb00,0x5eec50,0x5ef120,0x5eca70,0x5eca80,0x5f1970,0x5f0380,0x5f0230,0x1b02d0,0x1b0300,0x1ae190,0x1ae910,0x1ae9a0,0x1ae740,0x1aeb00,0x132df0,0x132e20,0x1b82a0,0x12a8e8,0x1adf50,0x1adfd0]:
   bank='o2'if at>=0x570000 else'sub';directory=ROOT/('recomp/config/output_ovl/o2'if bank=='o2'else'recomp/config/output');entries[at]=next(directory.glob(f'{bank}_{at:08X}_*')).relative_to(ROOT).as_posix()
  originals=sorted(set(entries.values()));proof=[]
  for name in originals:
@@ -17,7 +17,7 @@ def main():
   ('gameplay_world',['world','linked_models','auxiliary_actors','scene_primary_actors','model_poses','model_constraints','bodies','cinematic_objects','cinematic_object_attachment','model_attachments','scripted_motion','cutscene_actor','motion_transforms','surface_orientation','surface_orientation_math','humanoid_motion_bindings']),
   ('gameplay_actors',['entity','input','health']),('gameplay_collision',['collision','response','actors','actor_views']),
   ('animation',['model','model_math','curves','constraints','constraint_math','playback','model_blend','motion_bank','scalar_playback']),('transform_math',['transform_math']),('gameplay_session',['session']),('gameplay_navigation',['bank']),
-  ('gameplay_scenario',['cutscene_playback','cutscene_cues','cutscene_requests','flags','stream_channels','cutscene_actor_tracks','cutscene_actor_commands','cutscene_object_tracks','cutscene_descriptor','scene_resources','resource_templates'])]for name in names]
+  ('gameplay_scenario',['cutscene_playback','cutscene_cues','cutscene_requests','flags','stream_channels','scene_voice_assets','scene_voice_preparation','cutscene_actor_tracks','cutscene_actor_commands','cutscene_object_tracks','cutscene_descriptor','scene_resources','resource_templates'])]for name in names]
  files=set(units);pending=list(units)
  while pending:
   name=pending.pop()
@@ -27,7 +27,7 @@ def main():
    assert dep.is_file()and dep.is_relative_to(ROOT),(name,rel);key=dep.relative_to(ROOT).as_posix()
    if key not in files:files.add(key);pending.append(key)
  helpers=['tools/native_reconstruction/cutscene_playback_tests.cpp','tools/native_reconstruction/verify_cutscene_playback.py','tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp','third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h']
- files=sorted(files)+helpers+originals;before={name:sha(ROOT/name)for name in files};out.mkdir();record=dict(schema=1,status='failed',source_sha256=before,compiler_sha256=sha(a.compiler),original_owned_bodies=proof,game_run=False,installed_in_game=False,stage4_complete=False,limits=['Complete controller/queue/acknowledgement, registered actor/object track owners and native engine-channel state execute; display, prepared audio, movie, scene lifecycle and unported frame-worker primitives are explicit test observations with no default successful native implementation.','Source5EE680 forces7434C8 to38ECA0; event/pose frame alias is compared, with modulo32 simulation increments rather than media timestamps.','This does not establish full scene construction, media readiness adapter, all track consumers or game installation.'])
+ files=sorted(files)+helpers+originals;before={name:sha(ROOT/name)for name in files};out.mkdir();record=dict(schema=1,status='failed',source_sha256=before,compiler_sha256=sha(a.compiler),original_owned_bodies=proof,game_run=False,installed_in_game=False,stage4_complete=False,limits=['Complete controller/queue/acknowledgement, registered actor/object track owners, native engine-channel state and scene voice preparation execute; display, movie, scene lifecycle and unported frame-worker primitives are explicit test observations with no default successful native implementation. Controller preparation uses the legitimate scenario0 missing-name route; the separate preparation policy and physical native qualifiers cover positive owned voice rows and Queue/Loader sources.','Source5EE680 forces7434C8 to38ECA0; event/pose frame alias is compared, with modulo32 simulation increments rather than media timestamps.','This does not establish full scene construction, movie admission, all track consumers or game installation.'])
  try:
   for name in files:
    target=out/'source'/name;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes((ROOT/name).read_bytes())
@@ -37,7 +37,7 @@ def main():
   for name in ['o2_functions.h','ps2_recompiled_functions.h']:(out/name).write_text('#pragma once\n#include "functions.h"\n')
   for name in ['ps2_recompiled_stubs.h','ps2_stubs.h','ps2_syscalls.h']:(out/name).write_text('#pragma once\n')
   constants='inline void owned_constants(std::uint8_t* p){\n';record['owned_constants']={}
-  for at,n in [(0x70c550,64),(0x73ed90,28),(0x234060,512)]:
+  for at,n in [(0x7426b8,64),(0x70c550,64),(0x73ed90,28),(0x234060,512)]:
    data=read(at,n);record['owned_constants'][hex(at)]=data.hex();constants+='{const std::uint8_t b[]{'+','.join(map(str,data))+'};std::memcpy(p+'+str(at)+',b,sizeof b);}\n'
   (out/'owned_constants.hpp').write_text(constants+'}\n');env=dict(os.environ);env['PATH']=str(a.compiler.resolve().parent)+os.pathsep+env.get('PATH','');binary=out/'checks.exe';command=[str(a.compiler),'-std=c++20','-O2','-msse4.1','-ffunction-sections','-fdata-sections','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-label','-Wno-unused-parameter','-Wno-unused-variable','-fno-fast-math','-ffp-contract=off','-I'+str(out),'-I'+str(out/'source'),*[str(out/'source'/name)for name in units],str(out/'source'/helpers[0]),str(out/'original.cpp'),'-Wl,--gc-sections','-o',str(binary)];record['command']=command
   result=subprocess.run(command,env=env,capture_output=True,timeout=240);(out/'compile.txt').write_bytes(result.stdout+result.stderr);assert result.returncode==0,'compile failed'

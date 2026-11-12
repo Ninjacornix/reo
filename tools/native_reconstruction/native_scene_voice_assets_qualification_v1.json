@@ -1,0 +1,746 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "game_run": false,
+  "hardware_output": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "scope": "Complete source6D7520 and all323 ordered native scene voice rows, pinned sound-name mapping.",
+  "receipts": {
+    "llvm": {
+      "path": "build-native-sjuni/scene-voice-resolver-llvm-v4/receipt.json",
+      "sha256": "b533a5e57bccfc825622784a7bbc5854027f05508ee2d3ca679fbc564d1c5297",
+      "receipt": {
+        "schema": 1,
+        "status": "passed",
+        "source_sha256": {
+          "game/native/gameplay_scenario/cutscene_cues.hpp": "858b55316b5e8ad91584a60d191044ac757d9a32e7fa915684affc794f521658",
+          "game/native/gameplay_scenario/cutscene_requests.hpp": "0e2bb1616a57af8001f0c009618209cafe31a815cbeaa1b78d9687efb5df9c3d",
+          "game/native/gameplay_scenario/scene_voice_assets.cpp": "90b588eb4cdc179a1205a531b9b79457adadcadafb57bb3c9e7949d52722f051",
+          "game/native/gameplay_scenario/scene_voice_assets.hpp": "94f3d8606666b33ccee9a930cd5fa14bc20f56ac5645418171a6b8650057669a",
+          "game/native/gameplay_scenario/scene_voice_profile.inc": "57602c9e7149a44c501449c41521707888c70dab241dea9a37cf8881167ed3f7",
+          "game/native/gameplay_scenario/stream_channels.hpp": "ed0066ce4ceae75b864fa54ff05e2d1d5a04ef503b92d5a62992140a8b054ecc",
+          "tools/native_reconstruction/scene_voice_assets_tests.cpp": "e8c7255a4d1d6496ce8b6897b1cbc05472f97f6ab8904afba947860707c6dd72",
+          "tools/native_reconstruction/verify_scene_voice_assets.py": "bf0567ec016eb4e011d6a4c626c3ee155ad3a8980de89a42ce8cc09860674acb",
+          "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f",
+          "third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
+          "recomp/config/output_ovl/o2/o2_006D7520_0x6d7520.cpp": "cbbe82a49146d9e14ca5666e147e41e5f1c4c4a8009d2da9df09558237cf01c6"
+        },
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "original_owned_bodies": [
+          {
+            "role": "complete scene-name resolver body",
+            "path": "recomp/config/output_ovl/o2/o2_006D7520_0x6d7520.cpp",
+            "sha256": "cbbe82a49146d9e14ca5666e147e41e5f1c4c4a8009d2da9df09558237cf01c6",
+            "start": "0x6d7520",
+            "end_exclusive": "0x6d75c8",
+            "matched_comments": 39,
+            "omitted_zero_words": 3,
+            "conflicts": 0,
+            "comparisons": [
+              {
+                "pc": "0x006d7520",
+                "owned_word": "0x27bdffd0",
+                "comment_word": "0x27bdffd0",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7524",
+                "owned_word": "0x3c010032",
+                "comment_word": "0x3c010032",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7528",
+                "owned_word": "0xffbf0020",
+                "comment_word": "0xffbf0020",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d752c",
+                "owned_word": "0x7fb10010",
+                "comment_word": "0x7fb10010",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7530",
+                "owned_word": "0x7fb00000",
+                "comment_word": "0x7fb00000",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7534",
+                "owned_word": "0x942243da",
+                "comment_word": "0x942243da",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7538",
+                "owned_word": "0x14400003",
+                "comment_word": "0x14400003",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d753c",
+                "owned_word": "0x0080882d",
+                "comment_word": "0x0080882d",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7540",
+                "owned_word": "0x1000001c",
+                "comment_word": "0x1000001c",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7544",
+                "owned_word": "0x0000102d",
+                "comment_word": "0x0000102d",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7548",
+                "owned_word": "0x3c040073",
+                "comment_word": "0x3c040073",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d754c",
+                "owned_word": "0x3043ffff",
+                "comment_word": "0x3043ffff",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7550",
+                "owned_word": "0x24842890",
+                "comment_word": "0x24842890",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7554",
+                "owned_word": "0x10000006",
+                "comment_word": "0x10000006",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7558",
+                "owned_word": "0x0000802d",
+                "comment_word": "0x0000802d",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d755c",
+                "owned_word": "0x14430003",
+                "comment_word": "0x14430003",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7560",
+                "owned_word": "0x00000000",
+                "comment_word": null,
+                "status": "omitted_zero"
+              },
+              {
+                "pc": "0x006d7564",
+                "owned_word": "0x10000005",
+                "comment_word": "0x10000005",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7568",
+                "owned_word": "0x8c900004",
+                "comment_word": "0x8c900004",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d756c",
+                "owned_word": "0x24840008",
+                "comment_word": "0x24840008",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7570",
+                "owned_word": "0x8c820000",
+                "comment_word": "0x8c820000",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7574",
+                "owned_word": "0x0441fff9",
+                "comment_word": "0x0441fff9",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7578",
+                "owned_word": "0x00000000",
+                "comment_word": null,
+                "status": "omitted_zero"
+              },
+              {
+                "pc": "0x006d757c",
+                "owned_word": "0x1600000a",
+                "comment_word": "0x1600000a",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7580",
+                "owned_word": "0x0000102d",
+                "comment_word": "0x0000102d",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7584",
+                "owned_word": "0x1000000c",
+                "comment_word": "0x1000000c",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7588",
+                "owned_word": "0xdfbf0020",
+                "comment_word": "0xdfbf0020",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d758c",
+                "owned_word": "0x0c042b9e",
+                "comment_word": "0x0c042b9e",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7590",
+                "owned_word": "0x0220282d",
+                "comment_word": "0x0220282d",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7594",
+                "owned_word": "0x14400003",
+                "comment_word": "0x14400003",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7598",
+                "owned_word": "0x00000000",
+                "comment_word": null,
+                "status": "omitted_zero"
+              },
+              {
+                "pc": "0x006d759c",
+                "owned_word": "0x10000005",
+                "comment_word": "0x10000005",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d75a0",
+                "owned_word": "0x8e020004",
+                "comment_word": "0x8e020004",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d75a4",
+                "owned_word": "0x26100008",
+                "comment_word": "0x26100008",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d75a8",
+                "owned_word": "0x8e040000",
+                "comment_word": "0x8e040000",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d75ac",
+                "owned_word": "0x1480fff7",
+                "comment_word": "0x1480fff7",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d75b0",
+                "owned_word": "0x0000102d",
+                "comment_word": "0x0000102d",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d75b4",
+                "owned_word": "0xdfbf0020",
+                "comment_word": "0xdfbf0020",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d75b8",
+                "owned_word": "0x7bb10010",
+                "comment_word": "0x7bb10010",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d75bc",
+                "owned_word": "0x7bb00000",
+                "comment_word": "0x7bb00000",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d75c0",
+                "owned_word": "0x03e00008",
+                "comment_word": "0x03e00008",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d75c4",
+                "owned_word": "0x27bd0030",
+                "comment_word": "0x27bd0030",
+                "status": "matched"
+              }
+            ]
+          }
+        ],
+        "game_run": false,
+        "installed_in_game": false,
+        "stage4_complete": false,
+        "limits": [
+          "Complete6D7520 executes against the pinned overlay tables and literal strings; strcmp is a declared standard string primitive.",
+          "All323 native profile rows are checked against actual scenario tables and the main complemented sound-name index.",
+          "This does not prepare a voice source, enqueue a playlist, perform source I/O or qualify the actual archive route."
+        ],
+        "owned_constants": {},
+        "command": [
+          "C:\\Users\\Ninjacornix\\AppData\\Local\\OutbreakRecomp\\launcher\\toolchains\\llvm-mingw-20251216-ucrt-x86_64\\bin\\x86_64-w64-mingw32-clang++.exe",
+          "-std=c++20",
+          "-O2",
+          "-msse4.1",
+          "-ffunction-sections",
+          "-fdata-sections",
+          "-Wall",
+          "-Wextra",
+          "-Wpedantic",
+          "-Werror",
+          "-Wno-unused-label",
+          "-Wno-unused-parameter",
+          "-Wno-unused-variable",
+          "-fno-fast-math",
+          "-ffp-contract=off",
+          "-IC:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\scene-voice-resolver-llvm-v4",
+          "-IC:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\scene-voice-resolver-llvm-v4\\source",
+          "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\scene-voice-resolver-llvm-v4\\source\\game\\native\\gameplay_scenario\\scene_voice_assets.cpp",
+          "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\scene-voice-resolver-llvm-v4\\source\\tools\\native_reconstruction\\scene_voice_assets_tests.cpp",
+          "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\scene-voice-resolver-llvm-v4\\original.cpp",
+          "-Wl,--gc-sections",
+          "-o",
+          "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\scene-voice-resolver-llvm-v4\\checks.exe"
+        ],
+        "observed": {
+          "checks": 12688386,
+          "cases": 132104,
+          "matches": 328,
+          "original_calls": 3171619,
+          "profile_rows": 323,
+          "game_run": false
+        },
+        "source_unchanged": true,
+        "output_sha256": {
+          "checks.exe": "886b57bf7324a83b1c737f83cd3d3d3e0f60be964930179e124fdcdb52b63f13",
+          "compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "functions.h": "c84ccccd2f0acda5cba2a53ffc54403b65f7fcc33b829ea4720b0dbad6aa9cd5",
+          "o2_functions.h": "18ab2113389b720f1a51ad476cb2f34a00ec91211264ac5f65c43a05de182de5",
+          "original.cpp": "cbbe82a49146d9e14ca5666e147e41e5f1c4c4a8009d2da9df09558237cf01c6",
+          "original_dispatch.hpp": "3050db31687885784330e05a8e5300bbf08770190e02e89d6eb29bb56224e5a4",
+          "owned-o2.bin": "45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226",
+          "owned_constants.hpp": "fff0ea21de3dc22a00d5513559cf1ef375e529034918a3a5569115675eca17b5",
+          "ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
+          "ps2_recompiled_functions.h": "18ab2113389b720f1a51ad476cb2f34a00ec91211264ac5f65c43a05de182de5",
+          "ps2_recompiled_stubs.h": "aecb9819eb04bf5ad6cd2535cfac9b1bed5ef7946e551eff2224759862e16294",
+          "ps2_runtime.h": "2b30d96f6ee8f9b32ca3d31cb053ba94c583fb6849c75f8979624e35fecc3d7a",
+          "ps2_runtime_macros.h": "2b30d96f6ee8f9b32ca3d31cb053ba94c583fb6849c75f8979624e35fecc3d7a",
+          "ps2_stubs.h": "aecb9819eb04bf5ad6cd2535cfac9b1bed5ef7946e551eff2224759862e16294",
+          "ps2_syscalls.h": "aecb9819eb04bf5ad6cd2535cfac9b1bed5ef7946e551eff2224759862e16294",
+          "reference.hpp": "fd74634f3928ba1b7fe1338a5bf28c26239eeb6acfb881a4dd9bbe86c8ef7260",
+          "run.txt": "7549d170c5b2b04b5815967715f5d4e9b1de530f4315dac5d2b98c2d8d9b387d",
+          "source/game/native/gameplay_scenario/cutscene_cues.hpp": "858b55316b5e8ad91584a60d191044ac757d9a32e7fa915684affc794f521658",
+          "source/game/native/gameplay_scenario/cutscene_requests.hpp": "0e2bb1616a57af8001f0c009618209cafe31a815cbeaa1b78d9687efb5df9c3d",
+          "source/game/native/gameplay_scenario/scene_voice_assets.cpp": "90b588eb4cdc179a1205a531b9b79457adadcadafb57bb3c9e7949d52722f051",
+          "source/game/native/gameplay_scenario/scene_voice_assets.hpp": "94f3d8606666b33ccee9a930cd5fa14bc20f56ac5645418171a6b8650057669a",
+          "source/game/native/gameplay_scenario/scene_voice_profile.inc": "57602c9e7149a44c501449c41521707888c70dab241dea9a37cf8881167ed3f7",
+          "source/game/native/gameplay_scenario/stream_channels.hpp": "ed0066ce4ceae75b864fa54ff05e2d1d5a04ef503b92d5a62992140a8b054ecc",
+          "source/recomp/config/output_ovl/o2/o2_006D7520_0x6d7520.cpp": "cbbe82a49146d9e14ca5666e147e41e5f1c4c4a8009d2da9df09558237cf01c6",
+          "source/third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
+          "source/tools/native_reconstruction/scene_voice_assets_tests.cpp": "e8c7255a4d1d6496ce8b6897b1cbc05472f97f6ab8904afba947860707c6dd72",
+          "source/tools/native_reconstruction/verify_scene_voice_assets.py": "bf0567ec016eb4e011d6a4c626c3ee155ad3a8980de89a42ce8cc09860674acb",
+          "source/tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f"
+        }
+      }
+    },
+    "gcc": {
+      "path": "build-native-sjuni/scene-voice-resolver-gcc-v4/receipt.json",
+      "sha256": "288100a106a7a6114f9b6ee09bec2a34cc9edd8889e2f1195de319b3a3751bae",
+      "receipt": {
+        "schema": 1,
+        "status": "passed",
+        "source_sha256": {
+          "game/native/gameplay_scenario/cutscene_cues.hpp": "858b55316b5e8ad91584a60d191044ac757d9a32e7fa915684affc794f521658",
+          "game/native/gameplay_scenario/cutscene_requests.hpp": "0e2bb1616a57af8001f0c009618209cafe31a815cbeaa1b78d9687efb5df9c3d",
+          "game/native/gameplay_scenario/scene_voice_assets.cpp": "90b588eb4cdc179a1205a531b9b79457adadcadafb57bb3c9e7949d52722f051",
+          "game/native/gameplay_scenario/scene_voice_assets.hpp": "94f3d8606666b33ccee9a930cd5fa14bc20f56ac5645418171a6b8650057669a",
+          "game/native/gameplay_scenario/scene_voice_profile.inc": "57602c9e7149a44c501449c41521707888c70dab241dea9a37cf8881167ed3f7",
+          "game/native/gameplay_scenario/stream_channels.hpp": "ed0066ce4ceae75b864fa54ff05e2d1d5a04ef503b92d5a62992140a8b054ecc",
+          "tools/native_reconstruction/scene_voice_assets_tests.cpp": "e8c7255a4d1d6496ce8b6897b1cbc05472f97f6ab8904afba947860707c6dd72",
+          "tools/native_reconstruction/verify_scene_voice_assets.py": "bf0567ec016eb4e011d6a4c626c3ee155ad3a8980de89a42ce8cc09860674acb",
+          "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f",
+          "third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
+          "recomp/config/output_ovl/o2/o2_006D7520_0x6d7520.cpp": "cbbe82a49146d9e14ca5666e147e41e5f1c4c4a8009d2da9df09558237cf01c6"
+        },
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "original_owned_bodies": [
+          {
+            "role": "complete scene-name resolver body",
+            "path": "recomp/config/output_ovl/o2/o2_006D7520_0x6d7520.cpp",
+            "sha256": "cbbe82a49146d9e14ca5666e147e41e5f1c4c4a8009d2da9df09558237cf01c6",
+            "start": "0x6d7520",
+            "end_exclusive": "0x6d75c8",
+            "matched_comments": 39,
+            "omitted_zero_words": 3,
+            "conflicts": 0,
+            "comparisons": [
+              {
+                "pc": "0x006d7520",
+                "owned_word": "0x27bdffd0",
+                "comment_word": "0x27bdffd0",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7524",
+                "owned_word": "0x3c010032",
+                "comment_word": "0x3c010032",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7528",
+                "owned_word": "0xffbf0020",
+                "comment_word": "0xffbf0020",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d752c",
+                "owned_word": "0x7fb10010",
+                "comment_word": "0x7fb10010",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7530",
+                "owned_word": "0x7fb00000",
+                "comment_word": "0x7fb00000",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7534",
+                "owned_word": "0x942243da",
+                "comment_word": "0x942243da",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7538",
+                "owned_word": "0x14400003",
+                "comment_word": "0x14400003",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d753c",
+                "owned_word": "0x0080882d",
+                "comment_word": "0x0080882d",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7540",
+                "owned_word": "0x1000001c",
+                "comment_word": "0x1000001c",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7544",
+                "owned_word": "0x0000102d",
+                "comment_word": "0x0000102d",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7548",
+                "owned_word": "0x3c040073",
+                "comment_word": "0x3c040073",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d754c",
+                "owned_word": "0x3043ffff",
+                "comment_word": "0x3043ffff",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7550",
+                "owned_word": "0x24842890",
+                "comment_word": "0x24842890",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7554",
+                "owned_word": "0x10000006",
+                "comment_word": "0x10000006",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7558",
+                "owned_word": "0x0000802d",
+                "comment_word": "0x0000802d",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d755c",
+                "owned_word": "0x14430003",
+                "comment_word": "0x14430003",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7560",
+                "owned_word": "0x00000000",
+                "comment_word": null,
+                "status": "omitted_zero"
+              },
+              {
+                "pc": "0x006d7564",
+                "owned_word": "0x10000005",
+                "comment_word": "0x10000005",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7568",
+                "owned_word": "0x8c900004",
+                "comment_word": "0x8c900004",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d756c",
+                "owned_word": "0x24840008",
+                "comment_word": "0x24840008",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7570",
+                "owned_word": "0x8c820000",
+                "comment_word": "0x8c820000",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7574",
+                "owned_word": "0x0441fff9",
+                "comment_word": "0x0441fff9",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7578",
+                "owned_word": "0x00000000",
+                "comment_word": null,
+                "status": "omitted_zero"
+              },
+              {
+                "pc": "0x006d757c",
+                "owned_word": "0x1600000a",
+                "comment_word": "0x1600000a",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7580",
+                "owned_word": "0x0000102d",
+                "comment_word": "0x0000102d",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7584",
+                "owned_word": "0x1000000c",
+                "comment_word": "0x1000000c",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7588",
+                "owned_word": "0xdfbf0020",
+                "comment_word": "0xdfbf0020",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d758c",
+                "owned_word": "0x0c042b9e",
+                "comment_word": "0x0c042b9e",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7590",
+                "owned_word": "0x0220282d",
+                "comment_word": "0x0220282d",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7594",
+                "owned_word": "0x14400003",
+                "comment_word": "0x14400003",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d7598",
+                "owned_word": "0x00000000",
+                "comment_word": null,
+                "status": "omitted_zero"
+              },
+              {
+                "pc": "0x006d759c",
+                "owned_word": "0x10000005",
+                "comment_word": "0x10000005",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d75a0",
+                "owned_word": "0x8e020004",
+                "comment_word": "0x8e020004",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d75a4",
+                "owned_word": "0x26100008",
+                "comment_word": "0x26100008",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d75a8",
+                "owned_word": "0x8e040000",
+                "comment_word": "0x8e040000",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d75ac",
+                "owned_word": "0x1480fff7",
+                "comment_word": "0x1480fff7",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d75b0",
+                "owned_word": "0x0000102d",
+                "comment_word": "0x0000102d",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d75b4",
+                "owned_word": "0xdfbf0020",
+                "comment_word": "0xdfbf0020",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d75b8",
+                "owned_word": "0x7bb10010",
+                "comment_word": "0x7bb10010",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d75bc",
+                "owned_word": "0x7bb00000",
+                "comment_word": "0x7bb00000",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d75c0",
+                "owned_word": "0x03e00008",
+                "comment_word": "0x03e00008",
+                "status": "matched"
+              },
+              {
+                "pc": "0x006d75c4",
+                "owned_word": "0x27bd0030",
+                "comment_word": "0x27bd0030",
+                "status": "matched"
+              }
+            ]
+          }
+        ],
+        "game_run": false,
+        "installed_in_game": false,
+        "stage4_complete": false,
+        "limits": [
+          "Complete6D7520 executes against the pinned overlay tables and literal strings; strcmp is a declared standard string primitive.",
+          "All323 native profile rows are checked against actual scenario tables and the main complemented sound-name index.",
+          "This does not prepare a voice source, enqueue a playlist, perform source I/O or qualify the actual archive route."
+        ],
+        "owned_constants": {},
+        "command": [
+          "C:\\msys64\\mingw64\\bin\\g++.exe",
+          "-std=c++20",
+          "-O2",
+          "-msse4.1",
+          "-ffunction-sections",
+          "-fdata-sections",
+          "-Wall",
+          "-Wextra",
+          "-Wpedantic",
+          "-Werror",
+          "-Wno-unused-label",
+          "-Wno-unused-parameter",
+          "-Wno-unused-variable",
+          "-fno-fast-math",
+          "-ffp-contract=off",
+          "-IC:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\scene-voice-resolver-gcc-v4",
+          "-IC:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\scene-voice-resolver-gcc-v4\\source",
+          "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\scene-voice-resolver-gcc-v4\\source\\game\\native\\gameplay_scenario\\scene_voice_assets.cpp",
+          "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\scene-voice-resolver-gcc-v4\\source\\tools\\native_reconstruction\\scene_voice_assets_tests.cpp",
+          "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\scene-voice-resolver-gcc-v4\\original.cpp",
+          "-Wl,--gc-sections",
+          "-o",
+          "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\scene-voice-resolver-gcc-v4\\checks.exe"
+        ],
+        "observed": {
+          "checks": 12688386,
+          "cases": 132104,
+          "matches": 328,
+          "original_calls": 3171619,
+          "profile_rows": 323,
+          "game_run": false
+        },
+        "source_unchanged": true,
+        "output_sha256": {
+          "checks.exe": "c0cc546914395be224fc9a6d36a0565d306a2fd99da690dfdc3d54ee360998a3",
+          "compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "functions.h": "c84ccccd2f0acda5cba2a53ffc54403b65f7fcc33b829ea4720b0dbad6aa9cd5",
+          "o2_functions.h": "18ab2113389b720f1a51ad476cb2f34a00ec91211264ac5f65c43a05de182de5",
+          "original.cpp": "cbbe82a49146d9e14ca5666e147e41e5f1c4c4a8009d2da9df09558237cf01c6",
+          "original_dispatch.hpp": "3050db31687885784330e05a8e5300bbf08770190e02e89d6eb29bb56224e5a4",
+          "owned-o2.bin": "45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226",
+          "owned_constants.hpp": "fff0ea21de3dc22a00d5513559cf1ef375e529034918a3a5569115675eca17b5",
+          "ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
+          "ps2_recompiled_functions.h": "18ab2113389b720f1a51ad476cb2f34a00ec91211264ac5f65c43a05de182de5",
+          "ps2_recompiled_stubs.h": "aecb9819eb04bf5ad6cd2535cfac9b1bed5ef7946e551eff2224759862e16294",
+          "ps2_runtime.h": "2b30d96f6ee8f9b32ca3d31cb053ba94c583fb6849c75f8979624e35fecc3d7a",
+          "ps2_runtime_macros.h": "2b30d96f6ee8f9b32ca3d31cb053ba94c583fb6849c75f8979624e35fecc3d7a",
+          "ps2_stubs.h": "aecb9819eb04bf5ad6cd2535cfac9b1bed5ef7946e551eff2224759862e16294",
+          "ps2_syscalls.h": "aecb9819eb04bf5ad6cd2535cfac9b1bed5ef7946e551eff2224759862e16294",
+          "reference.hpp": "fd74634f3928ba1b7fe1338a5bf28c26239eeb6acfb881a4dd9bbe86c8ef7260",
+          "run.txt": "7549d170c5b2b04b5815967715f5d4e9b1de530f4315dac5d2b98c2d8d9b387d",
+          "source/game/native/gameplay_scenario/cutscene_cues.hpp": "858b55316b5e8ad91584a60d191044ac757d9a32e7fa915684affc794f521658",
+          "source/game/native/gameplay_scenario/cutscene_requests.hpp": "0e2bb1616a57af8001f0c009618209cafe31a815cbeaa1b78d9687efb5df9c3d",
+          "source/game/native/gameplay_scenario/scene_voice_assets.cpp": "90b588eb4cdc179a1205a531b9b79457adadcadafb57bb3c9e7949d52722f051",
+          "source/game/native/gameplay_scenario/scene_voice_assets.hpp": "94f3d8606666b33ccee9a930cd5fa14bc20f56ac5645418171a6b8650057669a",
+          "source/game/native/gameplay_scenario/scene_voice_profile.inc": "57602c9e7149a44c501449c41521707888c70dab241dea9a37cf8881167ed3f7",
+          "source/game/native/gameplay_scenario/stream_channels.hpp": "ed0066ce4ceae75b864fa54ff05e2d1d5a04ef503b92d5a62992140a8b054ecc",
+          "source/recomp/config/output_ovl/o2/o2_006D7520_0x6d7520.cpp": "cbbe82a49146d9e14ca5666e147e41e5f1c4c4a8009d2da9df09558237cf01c6",
+          "source/third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
+          "source/tools/native_reconstruction/scene_voice_assets_tests.cpp": "e8c7255a4d1d6496ce8b6897b1cbc05472f97f6ab8904afba947860707c6dd72",
+          "source/tools/native_reconstruction/verify_scene_voice_assets.py": "bf0567ec016eb4e011d6a4c626c3ee155ad3a8980de89a42ce8cc09860674acb",
+          "source/tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f"
+        }
+      }
+    }
+  },
+  "results": {
+    "checks": 12688386,
+    "cases": 132104,
+    "matches": 328,
+    "original_calls": 3171619,
+    "profile_rows": 323,
+    "game_run": false
+  },
+  "duplicate_policy": "First matching row, preserving the two identical scenario41/key41_00_0 entries.",
+  "limits": [
+    "Literal profile covers five owned scenario tables; no actor voice-archive mounting claim.",
+    "No filesystem or decoder action in resolver."
+  ]
+}

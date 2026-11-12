@@ -2,6 +2,7 @@
 #include "cutscene_cues.hpp"
 #include "cutscene_descriptor.hpp"
 #include "stream_channels.hpp"
+#include "scene_voice_preparation.hpp"
 #include <memory>
 namespace reo::native::gameplay_update {class Owner;}
 namespace reo::native::gameplay_scenario {
@@ -36,7 +37,6 @@ enum class CutsceneFrameWork {
 class CutscenePlaybackServices {
 public:
     virtual ~CutscenePlaybackServices()=default;
-    virtual CutscenePlaybackStatus prepare_voice(const CutsceneBatch&,bool playlist)=0;
     virtual CutscenePlaybackStatus start_movie(const CutsceneBatch&)=0;
     virtual CutscenePlaybackValue movie_state()=0;
     virtual CutscenePlaybackValue movie_busy()=0;
@@ -76,7 +76,7 @@ public:
     bool busy()const noexcept{return running_;}
 private:
     gameplay_world::World& world_;FlagState& flags_;const std::optional<std::uint32_t>& audio_tick_;
-    StreamChannels& channels_;StreamBackend& streams_;
+    StreamChannels& channels_;StreamBackend& streams_;SceneVoicePreparation voice_;
     CutscenePlaybackServices& services_;CutscenePlaybackState state_;
     bool running_{};
     std::size_t work_calls_{};

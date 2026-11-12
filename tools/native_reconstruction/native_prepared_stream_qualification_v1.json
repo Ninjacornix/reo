@@ -6,8 +6,8 @@
   "installed_in_game": false,
   "stage4_complete": false,
   "source_sha256": {
-    "game/native/gameplay_scenario/stream_channels.cpp": "0d47115b087015c0f4e90287133e4a521360fbdd6999983cda7de8f830d55683",
-    "game/native/gameplay_scenario/stream_channels.hpp": "2d42ba1955ec54c86b1d9e85f19354fe623d6c26182fd5bc48285cec61beddc1",
+    "game/native/gameplay_scenario/stream_channels.cpp": "8a41caf739d99650789bc2c2fe926714389729fc5e50fd70af10029dd0967d98",
+    "game/native/gameplay_scenario/stream_channels.hpp": "ed0066ce4ceae75b864fa54ff05e2d1d5a04ef503b92d5a62992140a8b054ecc",
     "game/native/gameplay_scenario/stream_gain_curve.inc": "98e59700ba81e120e80def2366b9257ca8c7a1e062f73140a691d7980f21cb7b",
     "tools/native_reconstruction/stream_start_tests.cpp": "f09fc7b8acd49c234c22966e70a49a0c34a3890d403cb2d58adb1279ac6b90e5",
     "tools/native_reconstruction/verify_stream_start.py": "8e099ed6de24129dd1eb0bb37dfef76ec4999c1191522ac2a2524cf9c8083563",
@@ -2915,23 +2915,29 @@
     "0x234060": "f0d8ffffe4f1ffff44f3ffff3ef4ffff00f5ffff9ef5ffff24f6ffff98f6fffffff6ffff5af7ffffadf7fffff8f7ffff3ef8ffff7ef8ffffbaf8fffff2f8ffff27f9ffff59f9ffff88f9ffffb4f9ffffdff9ffff07faffff2efaffff53faffff76faffff98faffffb9faffffd8fafffff7faffff14fbffff31fbffff4cfbffff67fbffff81fbffff9afbffffb3fbffffcafbffffe2fbfffff8fbffff0efcffff24fcffff39fcffff4dfcffff61fcffff75fcffff88fcffff9afcffffadfcffffbefcffffd0fcffffe1fcfffff2fcffff03fdffff13fdffff23fdffff32fdffff42fdffff51fdffff60fdffff6efdffff7dfdffff8bfdffff99fdffffa6fdffffb4fdffffc1fdffffcefdffffdbfdffffe8fdfffff4fdffff01feffff0dfeffff19feffff25feffff30feffff3cfeffff47feffff52feffff5dfeffff68feffff73feffff7efeffff88feffff93feffff9dfeffffa7feffffb1feffffbbfeffffc5feffffcffeffffd8feffffe2feffffebfefffff4fefffffefeffff07ffffff10ffffff19ffffff21ffffff2affffff33ffffff3bffffff44ffffff4cffffff54ffffff5dffffff65ffffff6dffffff75ffffff7dffffff85ffffff8dffffff94ffffff9cffffffa3ffffffabffffffb2ffffffbaffffffc1ffffffc8ffffffd0ffffffd7ffffffdeffffffe5ffffffecfffffff3fffffffaffffff00000000"
   },
   "results": {
-    "checks": 1400838,
-    "cases": 73728,
-    "original_calls": 289647,
-    "game_run": false
-  },
-  "receipts": [
-    {
-      "path": "build-native-sjuni/stream-start-llvm-v7/receipt.json",
-      "sha256": "1f61320f15012040cf883e97e1ec495cce15790d91e9ef4cefe3d4aa799358b1",
-      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3"
+    "llvm": {
+      "checks": 1400838,
+      "cases": 73728,
+      "original_calls": 289647,
+      "game_run": false
     },
-    {
-      "path": "build-native-sjuni/stream-start-gcc-v7/receipt.json",
-      "sha256": "c15e8f870f44159f7f42f2b54e13dc7f1ae0cbaf25abfcdfba90540d527a17e4",
-      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5"
+    "gcc": {
+      "checks": 1400838,
+      "cases": 73728,
+      "original_calls": 289647,
+      "game_run": false
     }
-  ],
+  },
+  "receipts": {
+    "llvm": {
+      "path": "build-native-sjuni/stream-start-llvm-v8/receipt.json",
+      "sha256": "31cba7514f664044123e58db6a664e609a12c5fba78a1713d71d24532b4b0d8e"
+    },
+    "gcc": {
+      "path": "build-native-sjuni/stream-start-gcc-v8/receipt.json",
+      "sha256": "8fef5122c229947ce4bc327ba3902d84a412d2054c8ee276099bbe16ee8e5519"
+    }
+  },
   "actual_native_instance_receipts": [
     {
       "path": "build-native-sjuni/stream-prepared-instance-llvm-v1/receipt.json",
@@ -3757,5 +3763,30 @@
     "build-native-sjuni/stream-start-llvm-v5",
     "build-native-sjuni/stream-start-llvm-v6",
     "build-native-sjuni/stream-start-gcc-v6"
-  ]
+  ],
+  "prior_receipts": [
+    [
+      {
+        "path": "build-native-sjuni/stream-start-llvm-v7/receipt.json",
+        "sha256": "1f61320f15012040cf883e97e1ec495cce15790d91e9ef4cefe3d4aa799358b1",
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3"
+      },
+      {
+        "path": "build-native-sjuni/stream-start-gcc-v7/receipt.json",
+        "sha256": "c15e8f870f44159f7f42f2b54e13dc7f1ae0cbaf25abfcdfba90540d527a17e4",
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5"
+      }
+    ]
+  ],
+  "concrete_scene_voice_preparation_qualification": "native_scene_voice_preparation_qualification_v1.json",
+  "current_scene_native_receipts": {
+    "llvm": {
+      "path": "build-native-sjuni/scene-voice-native-llvm-v3/receipt.json",
+      "sha256": "4b11117da2ce45015947bc5d6a76851442c0d9bbcdbe91cb9c1f13a2b8ad01b8"
+    },
+    "gcc": {
+      "path": "build-native-sjuni/scene-voice-native-gcc-v3/receipt.json",
+      "sha256": "c3c49737d13400c3741b2491a7606ee6fc69c30039c0d589bbd79deb29dc3c19"
+    }
+  }
 }

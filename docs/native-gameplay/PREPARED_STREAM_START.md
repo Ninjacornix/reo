@@ -39,6 +39,8 @@ background pumping nor native PCM decoding advances the game controller frame.
 
 [The qualification seal](../../tools/native_reconstruction/native_prepared_stream_qualification_v1.json)
 retains complete word audits, source identities, both helper receipts, both real
-instance receipts and the paired controller v12 integration. It does not prove
-stock scene voice/playlist preparation, movie engine lifecycle, scene entry or
-installation. Those still require their actual native owners; Stage4 is open.
+instance receipts and the current paired controller integration. The later
+[scene voice preparation qualification](SCENE_VOICE_PREPARATION.md) adds the
+complete single-cue/playlist policies and actual two-source native Queue/Loader
+path. Movie engine lifecycle, scene entry and installation still require their
+actual native owners; Stage4 is open.

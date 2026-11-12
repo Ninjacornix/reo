@@ -15,10 +15,12 @@ foreach(part sjuni sjrb resources afs_source_range afs_hierarchy
   string(REPLACE "/" "_" binary_part "${part}")
   add_subdirectory("${REO_ROOT}/game/native/${part}" "${binary_part}" EXCLUDE_FROM_ALL)
 endforeach()
+add_subdirectory("${REO_ROOT}/game/native/audio_cue_queue" "audio_cue_queue" EXCLUDE_FROM_ALL)
 add_executable(stream_instance_checks tests.cpp
+  "${REO_ROOT}/game/native/gameplay_scenario/stream_voice_queue.cpp"
   "${REO_ROOT}/game/native/gameplay_scenario/stream_instances.cpp"
   "${REO_ROOT}/game/native/gameplay_scenario/stream_channels.cpp")
 target_compile_features(stream_instance_checks PRIVATE cxx_std_20)
 target_include_directories(stream_instance_checks PRIVATE "${REO_ROOT}")
-target_link_libraries(stream_instance_checks PRIVATE reo_native_adxt_control_owner reo_native_afs_source_range)
+target_link_libraries(stream_instance_checks PRIVATE reo_native_adxt_control_owner reo_native_afs_source_range reo_native_audio_cue_queue)
 target_compile_options(stream_instance_checks PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)

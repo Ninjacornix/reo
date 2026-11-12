@@ -2,12 +2,15 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <span>
+#include <string_view>
 
 namespace reo::native::gameplay_scenario {
 enum class StreamStatus { completed,pending,closed,busy,invalid_channel,unbound,missing_asset,unsupported_profile,fault };
 constexpr bool stream_accepted(StreamStatus s)noexcept{return s==StreamStatus::completed||s==StreamStatus::pending;}
 struct StreamValue {StreamStatus status{StreamStatus::fault};std::int32_t value{};};
 struct StreamRequest {std::uint32_t archive{};std::int32_t member{};};
+struct StreamCue {StreamRequest source;std::string_view identity;};
 // Primitive native decoder/output operations, not opaque engine-call wrappers.
 // Implementations must use native source identities; no guest RAM/callbacks.
 class StreamBackend {
@@ -24,6 +27,7 @@ public:
     virtual StreamValue instance_available(std::uint8_t)noexcept{return{StreamStatus::unbound,0};}
     virtual StreamValue start_ready(std::uint8_t)noexcept{return{StreamStatus::unbound,0};}
     virtual StreamStatus start_inhibit(std::uint8_t,bool)noexcept{return StreamStatus::unbound;}
+    virtual StreamStatus prepare_cues(std::uint8_t,std::span<const StreamCue>,std::uint32_t)noexcept{return StreamStatus::unbound;}
 };
 struct StreamChannel {
     std::int8_t paused{};std::uint8_t type{},start_wait{},started{};
@@ -49,6 +53,8 @@ public:
     StreamResult request(std::uint8_t channel,std::int32_t member,std::int32_t archive,std::uint32_t tick,StreamBackend&)noexcept;
     StreamResult start(std::uint8_t channel,std::int32_t member,std::int32_t archive,std::uint32_t tick,StreamBackend&)noexcept;
     StreamStatus stop(std::uint8_t,StreamBackend&)noexcept;
+    StreamStatus prepare_start(std::uint8_t,StreamRequest,std::uint32_t tick,StreamBackend&)noexcept;
+    StreamStatus prepare_playlist(std::uint8_t,std::span<const StreamCue>,std::uint32_t tick,StreamBackend&)noexcept;
     StreamValue prepared_ready(std::uint8_t,StreamBackend&)noexcept;
     StreamStatus release_start(std::uint8_t,StreamBackend&)noexcept;
     StreamStatus stop_preserving_state(std::uint8_t,StreamBackend&)noexcept;

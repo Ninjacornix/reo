@@ -79,3 +79,6 @@ target_link_libraries(reo_native_scene_audio PUBLIC reo_native_gameplay_scenario
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_compile_options(reo_native_scene_audio PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
 endif()
+
+target_sources(reo_native_gameplay_scenario PRIVATE scene_voice_assets.cpp stream_voice_queue.cpp scene_voice_preparation.cpp)
+target_link_libraries(reo_native_gameplay_scenario PUBLIC reo_native_audio_cue_queue)

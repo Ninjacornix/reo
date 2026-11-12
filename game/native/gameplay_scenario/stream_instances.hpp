@@ -6,7 +6,10 @@
 #include <string>
 #include <unordered_map>
 
+namespace reo::native::audio_clip_loader {class Loader;}
 namespace reo::native::gameplay_scenario {
+class StreamVoiceQueue;
+struct StreamQueueObservation {StreamStatus status{StreamStatus::unbound};std::uint32_t preparing{},queued{},registered_assets{};std::uint64_t accepted{},submitted{};bool source_submitted{},decoder_ended{},failed{};};
 struct StreamAsset {StreamStatus status{StreamStatus::missing_asset};std::shared_ptr<const resources::ByteView> view;};
 // Immutable archive indexes prepared by the native resource owner before use.
 // Resolution is metadata-only; the source worker loads a retained member body.
@@ -35,7 +38,7 @@ struct StreamInstancesOpen {StreamStatus status{StreamStatus::fault};std::unique
 class StreamInstances final:public StreamBackend {
 public:
     static StreamInstancesOpen create(std::shared_ptr<adxt_control_owner::Owner>,std::array<StreamInstanceConfig,3>,
-        std::shared_ptr<const StreamAssetCatalog>,std::array<std::uint8_t,3> mixer_order)noexcept;
+        std::shared_ptr<const StreamAssetCatalog>,std::array<std::uint8_t,3> mixer_order,std::shared_ptr<audio_clip_loader::Loader> voice_loader={})noexcept;
     ~StreamInstances();
     StreamInstances(const StreamInstances&)=delete;StreamInstances& operator=(const StreamInstances&)=delete;
     StreamValue phase(std::uint8_t)noexcept override;
@@ -47,17 +50,24 @@ public:
     StreamValue instance_available(std::uint8_t)noexcept override;
     StreamValue start_ready(std::uint8_t)noexcept override;
     StreamStatus start_inhibit(std::uint8_t,bool)noexcept override;
+    StreamStatus prepare_cues(std::uint8_t,std::span<const StreamCue>,std::uint32_t)noexcept override;
+    StreamQueueObservation inspect_queue(std::uint8_t)noexcept;
     // Signal native destruction; pending retirements continue under the shared
     // Owner/service worker. This does not join or stop an unrelated outer owner.
     StreamStatus close()noexcept;
     adxt_instances::Observation inspect(std::uint8_t)noexcept;
 private:
-    StreamInstances(std::shared_ptr<adxt_control_owner::Owner>,std::array<StreamInstanceConfig,3>,std::shared_ptr<const StreamAssetCatalog>);
+    StreamInstances(std::shared_ptr<adxt_control_owner::Owner>,std::array<StreamInstanceConfig,3>,std::shared_ptr<const StreamAssetCatalog>,std::shared_ptr<audio_clip_loader::Loader>);
+    StreamStatus retire_queue(std::uint8_t,adxt_instances::Instances&)noexcept;
+    StreamStatus service_queues(adxt_instances::Instances&,std::uint32_t)noexcept;
+    StreamValue queued_phase(std::uint8_t,bool ready)noexcept;
     std::shared_ptr<adxt_control_owner::Owner> owner_;
     std::array<StreamInstanceConfig,3> config_;
     std::array<adxt_instances::Key,3> keys_{};
     std::array<bool,3> constructed_{},started_{};
     std::shared_ptr<const StreamAssetCatalog> catalog_;
+    std::shared_ptr<audio_clip_loader::Loader> voice_loader_;
+    std::array<std::shared_ptr<StreamVoiceQueue>,3> voice_queues_;
     bool closed_{};
 };
 } // namespace reo::native::gameplay_scenario

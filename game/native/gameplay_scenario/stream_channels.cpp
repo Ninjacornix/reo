@@ -60,6 +60,25 @@ StreamStatus StreamChannels::stop(std::uint8_t index,StreamBackend& backend)noex
     if(index>=state_.channels.size())return StreamStatus::invalid_channel;
     state_.channels[index].paused=0;return backend.stop(index);
 }
+StreamStatus StreamChannels::prepare_start(std::uint8_t index,StreamRequest source,std::uint32_t tick,StreamBackend& backend)noexcept{
+    if(index>=state_.channels.size())return StreamStatus::invalid_channel;
+    if(features_.suppress_all)return StreamStatus::completed;
+    const auto available=backend.instance_available(index);if(!stream_accepted(available.status))return available.status;
+    if(!available.value)return available.status;
+    auto& channel=state_.channels[index];auto status=level(index,channel.maximum,backend);if(!stream_accepted(status))return status;
+    channel.start_wait=1;const auto inhibited=backend.start_inhibit(index,true);if(!stream_accepted(inhibited))return inhibited;channel.started=0;
+    const auto started=backend.start(index,source,tick);if(!stream_accepted(started))return started;channel.started=1;
+    return combine(combine(status,inhibited),combine(started,backend.pause(index,false,tick)));
+}
+StreamStatus StreamChannels::prepare_playlist(std::uint8_t index,std::span<const StreamCue> cues,std::uint32_t tick,StreamBackend& backend)noexcept{
+    if(index>=state_.channels.size())return StreamStatus::invalid_channel;
+    auto prepared=StreamStatus::completed;
+    if(!features_.suppress_all){
+        const auto available=backend.instance_available(index);if(!stream_accepted(available.status))return available.status;
+        if(available.value){prepared=backend.prepare_cues(index,cues,tick);if(!stream_accepted(prepared))return prepared;const auto restored=level(index,state_.channels[index].maximum,backend);if(!stream_accepted(restored))return restored;prepared=combine(prepared,restored);}
+    }
+    return combine(prepared,pause(index,tick,backend));
+}
 StreamValue StreamChannels::prepared_ready(std::uint8_t index,StreamBackend& backend)noexcept{
     if(index>=state_.channels.size())return{StreamStatus::invalid_channel,0};
     if(features_.suppress_all)return{StreamStatus::completed,1};
