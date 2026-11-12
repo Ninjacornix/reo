@@ -2,6 +2,7 @@
 #include "pose_cloud.hpp"
 #include "pose_motion.hpp"
 #include "pose_trail_effects.hpp"
+#include "inherited_pose_trails.hpp"
 #include "resource_pose_work.hpp"
 #include "../gameplay_effects/periodic_visuals.hpp"
 #include <fstream>
@@ -52,6 +53,17 @@ int main(int argc,char** argv)try{
             check(trail_visuals.update({0,1,0}).status==e::VisualStatus::completed);const auto trail_frame=trail_visuals.retain();check(bool(trail_frame));
             for(const auto& visual:trail_frame->visuals){const auto state=trail_visuals.particle_state(visual.id);check(state&&state->category==13&&state->mode==0);}
             trail_visuals.close();check(!trails.bound_to(owned_world));
+            auto custom_session=std::make_shared<g::Session>();auto custom_world=std::make_shared<g::World>(profile(),custom_session);custom_world->room=7;g::PoseWorkPool custom_pool(*custom_world);
+            const auto custom_parent=custom_world->spawn_primary(0,std::make_unique<g::Actor>()).id;check(bool(custom_parent));custom_world->resolve(custom_parent)->slot=7;
+            const auto custom_motion=work(custom_pool,16);const auto custom_actor=custom_pool.resolve(custom_motion);custom_actor->contact.related=custom_parent;custom_actor->position={origin->x,origin->y+100,origin->z};
+            e::PeriodicVisuals custom_visuals(bank,custom_session->random);g::InheritedPoseTrailEffects inherited(custom_world,custom_visuals,real_rooms);g::MappedPoseTrailEffects mapped(*custom_world,custom_visuals,real_rooms,&inherited);g::RoomPoseArcs custom_arcs(*custom_world,custom_pool,real_rooms,&mapped);
+            check(custom_pool.update(&custom_arcs).status==g::PoseWorkStatus::completed);check(custom_actor->primary==1&&custom_actor->pose_work->velocity.y==4);
+            check(custom_visuals.update({0,1,0}).status==e::VisualStatus::completed);const auto custom_frame=custom_visuals.retain();check(bool(custom_frame));std::vector<g::actors::EntityId> custom_ids;
+            for(const auto& visual:custom_frame->visuals)if(custom_visuals.inherited_trail_state(visual.id))custom_ids.push_back(visual.id);
+            check(custom_ids.size()==(bank->geometry().resolve(0x86)?5u:0u));
+            check(custom_pool.retire(custom_motion)==g::PoseWorkStatus::completed);check(custom_visuals.update({0,1,0}).status==e::VisualStatus::completed);
+            for(const auto& custom_id:custom_ids){check(!custom_visuals.inherited_trail_state(custom_id));}
+            custom_visuals.close();check(!inherited.bound_to(*custom_world));
             const auto floor=real_rooms.room->floors.floor(*origin);const auto arc_id=work(owned_pool,13);auto arc=owned_pool.resolve(arc_id);arc->primary=1;arc->position={origin->x,floor.height-.5f,origin->z};check(owned_pool.update(&real_arcs).status==g::PoseWorkStatus::completed&&!owned_pool.resolve(arc_id)&&arc->sampled_surface_height==floor.height&&arc->position.y==floor.height);
             const auto stale_id=work(owned_pool,13);arc=owned_pool.resolve(stale_id);arc->primary=1;check(real_rooms.room->ids.retire(real_rooms.room->id.entity)==g::actors::EntityStatus::completed);check(owned_pool.update(&real_arcs).status==g::PoseWorkStatus::unavailable&&owned_pool.resolve(stale_id));check(owned_pool.reset()==g::PoseWorkStatus::completed);++banks;++room_cases;
         }check(banks==6&&profile_refusals==1&&cloud_frames==380&&room_cases==6);

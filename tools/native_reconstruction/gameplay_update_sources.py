@@ -12,7 +12,7 @@ UPDATE_UNITS=[
         ('gameplay_scenario',['interpreter', 'flags', 'offline', 'scene_resources', 'scene_controls', 'content', 'sequence_control', 'lighting', 'stream_channels', 'room_rules', 'scene_models', 'room_scene_input', 'room_scene_owner', 'scene_model_bindings', 'scene_matrix_programs', 'scene_matrix_playback', 'scene_matrix_tables', 'actor_requests', 'room_object_commands', 'periodic_effects', 'resource_templates', 'fog','script_program','actor_inventory_commands','auxiliary_room_rows','cutscene_requests']),
         ('gameplay_update',['update','actor_gauge','navigation','ai','ai_observation','ai_waypoints','script_setup']),
         ('gameplay_collision',['collision', 'response', 'actors', 'actor_views', 'sweep', 'ownership', 'room_objects', 'footprint', 'trace', 'room_geometry', 'object_interactions', 'object_lifetime', 'room_damage']),
-        ('gameplay_effects',['surface_work', 'periodic_visuals', 'geometry', 'tracks', 'resource_companion','resource_debris']),
+        ('gameplay_effects',['surface_work', 'periodic_visuals', 'inherited_trail', 'geometry', 'tracks', 'resource_companion','resource_debris']),
         ('animation',['constraints', 'constraint_math', 'model', 'model_math', 'curves']),
         ('gameplay_lighting',['lights']),
         ('transform_math',['transform_math','heading']),

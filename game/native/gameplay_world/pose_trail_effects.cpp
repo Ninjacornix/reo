@@ -1,4 +1,5 @@
 #include "pose_trail_effects.hpp"
+#include "positioned_pose_trails.hpp"
 #include <bit>
 #include <cmath>
 #include <stdexcept>
@@ -25,6 +26,7 @@ bool MappedPoseTrailEffects::emit_at(const actors::EntityId& owner,const actors:
     std::shared_ptr<Actor> moving;
     if(!point||mode==1){moving=world_.resolve(motion);if(!moving)return false;}
     if(mode==1){
+        if(auto* positioned=dynamic_cast<PositionedPoseTrails*>(inherited_))return positioned->emit_at(owner,motion,mode,point,delay);
         // The current PoseTrails capability represents the actual zero-delay,
         // implicit-position call used by scene pose callbacks. Wider mode1
         // inputs require its extended constructor, never silent narrowing.

@@ -2,6 +2,7 @@ add_library(reo_native_gameplay_effects STATIC tracks.cpp geometry.cpp resource_
 target_sources(reo_native_gameplay_effects PRIVATE resource_flight.cpp)
 target_sources(reo_native_gameplay_effects PRIVATE contact_styles.cpp)
 target_sources(reo_native_gameplay_effects PRIVATE actor_contact_channels.cpp)
+target_sources(reo_native_gameplay_effects PRIVATE inherited_trail.cpp)
 target_compile_features(reo_native_gameplay_effects PUBLIC cxx_std_20)
 target_include_directories(reo_native_gameplay_effects PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 target_link_libraries(reo_native_gameplay_effects PUBLIC reo_native_transform_math reo_native_animation reo_native_gameplay_session)

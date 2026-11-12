@@ -82,6 +82,8 @@ transform_math::Vector toward_camera(transform_math::Vector position,transform_m
     return result;
 }
 struct PeriodicVisuals::Node final:gameplay_scenario::PeriodicVisual {
+    struct Trail {InheritedTrailState state;InheritedTrailRequest binding;};
+    std::optional<Trail> trail;
     std::shared_ptr<const EffectBank> bank;
     std::uint16_t descriptor{};
     std::uint8_t phase{};
@@ -181,6 +183,52 @@ public:
         if(policy[0]!=1.f){node_->attributes=4;node_->uniform={policy[0],policy[0],policy[0]};}
         else node_->attributes=0; // Source does not reset old scale values here.
         return policy[1]==0.f||feedback({policy[2],policy[3],policy[4]},policy[5]);
+    }
+};
+class PeriodicVisuals::TrailOperations final:public InheritedTrailOperations {
+    PeriodicVisuals& owner_;Node& node_;Node::Trail& trail_;
+    transform_math::Vector camera_;const std::optional<transform_math::Matrix>& view_;VisualReport& report_;
+    bool current()const noexcept{
+        const auto& b=trail_.binding;
+        return b.world&&!b.world->closed()&&owner_.bound_to(b.world->session().random)&&b.world->resolve(b.parent)&&b.world->resolve(b.motion);
+    }
+public:
+    TrailOperations(PeriodicVisuals& owner,Node& node,transform_math::Vector camera,const std::optional<transform_math::Matrix>& view,VisualReport& report)
+        :owner_(owner),node_(node),trail_(*node.trail),camera_(camera),view_(view),report_(report){}
+    std::optional<float> floor(transform_math::Vector point)override{
+        const auto& b=trail_.binding;if(!current()||!b.rooms)return{};
+        const auto number=b.world->room;const auto room=b.rooms->retain(number);const auto id=room?room->identity():gameplay_contact_world::RoomId{};
+        if(!room||!id||room->room_number()!=number||!room->current(id)||!current()||b.world->room!=number)return{};
+        const auto sampled=room->geometry().floors.floor({point.x,point.y,point.z},255);
+        return current()&&b.world->room==number&&room->current(id)?std::optional(sampled.height):std::nullopt;
+    }
+    bool contact_cue(transform_math::Vector point)override{
+        const auto& b=trail_.binding;return current()&&b.actions&&b.actions->bound_to(*b.world)&&b.actions->cue(b.parent,point)&&current();
+    }
+    bool contact_burst(transform_math::Vector point)override{
+        const auto& b=trail_.binding;return current()&&b.actions&&b.actions->bound_to(*b.world)&&b.actions->burst(b.parent,point)&&current();
+    }
+    WorkCreated impact(const WorkRequest& request)override{return current()?owner_.create_impl(request,true):WorkCreated{};}
+    bool configure_impact(const WorkCreated& created,transform_math::Vector color,transform_math::Vector scale)override{
+        if(!current()||!created.edit||!finite(color)||!finite(scale))return false;
+        const auto node=std::static_pointer_cast<Node>(owner_.entities_.acquire(created.edit->identity()));
+        if(!node||!node->live||node->periodic)return false;
+        node->flags|=0x40;node->parameters208=color;node->opacity=1;node->uniform=scale;
+        for(const auto slot:node->pieces){auto& piece=owner_.pieces_[slot].output;piece.flags|=0x40;piece.parameters208=color;}
+        return true;
+    }
+    bool sample(const InheritedTrailState& state)override{
+        if(!current())return false;
+        node_.initial_position=state.previous_position;node_.uniform=state.scale;
+        node_.angles={state.angles[0],state.angles[1],state.angles[2]};
+        node_.attributes=state.attributes;node_.feedback_scale=state.feedback_scale;
+        owner_.sample_children(node_,state.age,camera_,view_,report_);
+        for(unsigned i=0;i<node_.pieces.size();++i){
+            auto& piece=owner_.pieces_[node_.pieces[i]].output;
+            const auto& mesh=node_.bank->geometry().meshes()[node_.binding.pieces[i].mesh];
+            for(std::size_t channel=0;channel<mesh.indices.size();++channel)piece.parameters.rotation[2]=add(piece.parameters.rotation[2],state.rotation_offset);
+        }
+        return true;
     }
 };
 PeriodicVisuals::PeriodicVisuals(std::shared_ptr<const EffectBank> bank):bank_(std::move(bank)){
@@ -330,7 +378,37 @@ std::optional<ParticleSnapshot> PeriodicVisuals::particle_state(const gameplay_a
     if(closed_)return{};
     const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));if(!node||!node->particle_mode||!node->category)return{};
     ParticleSnapshot result;result.category=*node->category;result.mode=*node->particle_mode;result.delay=node->delay;result.attributes=node->attributes;result.scale=node->uniform;result.parameters208=node->parameters208;result.opacity=node->opacity;result.feedback_scale=node->feedback_scale;result.flags=node->flags;result.child_count=node->pieces.size();
+    if(node->trail){const auto& state=node->trail->state;result.delay=state.delay;result.attributes=state.attributes;result.scale=state.scale;result.feedback_scale=state.feedback_scale;}
     for(std::size_t i=0;i<node->pieces.size();++i){const auto& piece=pieces_[node->pieces[i]].output;result.children[i]={piece.flags,piece.parameters208};}
+    return result;
+}
+std::optional<InheritedTrailState> PeriodicVisuals::inherited_trail_state(const gameplay_actors::EntityId& id)const noexcept{
+    if(closed_)return{};
+    const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));return node&&node->trail?std::optional(node->trail->state):std::nullopt;
+}
+InheritedTrailBatch PeriodicVisuals::create_inherited_trails(const InheritedTrailRequest& request)noexcept{
+    InheritedTrailBatch result;
+    if(busy_||!admitted()||!request.world||request.world->closed()||!request.rooms||!bound_to(request.world->session().random)||(request.actions&&!request.actions->bound_to(*request.world)))return result;
+    const auto parent=request.world->resolve(request.parent),motion=request.world->resolve(request.motion);
+    if(!parent)return result;
+    std::optional<unsigned> policy;
+    switch(parent->slot){case 7:policy=3;break;case 10:case 30:policy=0;break;case 19:policy=1;break;case 29:policy=2;break;default:result.status=WorkStatus::completed;return result;}
+    if(!motion||!motion->pose_work)return result;
+    const auto position=request.point.value_or(transform_math::Vector{motion->position.x,motion->position.y,motion->position.z});
+    if(!finite(position)||!finite(motion->pose_work->velocity)||!finite(motion->pose_work->acceleration))return result;
+    constexpr std::array<std::uint16_t,4> resources{0x86,0x86,0x7c,0x86};
+    constexpr std::array<unsigned,4> spacing{2,1,3,2};
+    constexpr std::array<std::array<float,6>,4> parameters{{{{.6f,1,.95f,1,.7f,1}},{{.5f,1,.6f,.6f,.45f,.8f}},{{1,0,1,1,1,1}},{{.6f,1,.6f,.6f,.45f,.8f}}}};
+    result.status=WorkStatus::completed;
+    for(unsigned i=0;i<5;++i){
+        ++result.attempted;WorkRequest work;work.position=position;work.effect=resources[*policy];work.update=WorkUpdate::scaled;
+        const auto made=create_impl(work,false);
+        if(made.status!=WorkStatus::completed){result.status=made.status;if(made.status==WorkStatus::unavailable)return result;continue;}
+        const auto edit=std::dynamic_pointer_cast<ParticleEdit>(made.edit);if(!edit||!edit->configure_particle(1,std::bit_cast<std::int16_t>(std::uint16_t(request.delay)),parameters[*policy])){result.status=WorkStatus::unavailable;return result;}
+        const auto node=std::static_pointer_cast<Node>(entities_.acquire(made.edit->identity()));if(!node){result.status=WorkStatus::unavailable;return result;}
+        InheritedTrailState state;state.ordinal=std::uint8_t(i);state.parent_type=parent->slot;state.position=position;state.previous_position=node->initial_position;state.velocity=motion->pose_work->velocity;state.acceleration=motion->pose_work->acceleration;state.angles=motion->orientation;state.scale=node->uniform;state.feedback_scale=node->feedback_scale;state.attributes=node->attributes;state.delay=add(node->delay,int(spacing[*policy]*i));state.remaining=node->remaining;state.age=node->age;
+        node->trail=Node::Trail{state,request};result.identities[i]=made.edit->identity();++result.created;
+    }
     return result;
 }
 bool PeriodicVisuals::bind_resource_flights(gameplay_world::World& world,gameplay_contact_world::RoomResources& rooms,FlightAudio& audio)noexcept{
@@ -525,6 +603,18 @@ VisualReport PeriodicVisuals::update_impl(transform_math::Vector camera,const st
             const auto id=*cursor++;const auto node=std::static_pointer_cast<Node>(entities_.acquire(id));
             if(!node)throw std::logic_error("Native periodic visual identity unexpectedly stale");
             ++report.visited;
+            if(node->trail){
+                auto& binding=node->trail->binding;
+                if(!binding.world||binding.world->closed()||!bound_to(binding.world->session().random))throw std::domain_error("Native inherited trail World unavailable");
+                const auto parent=binding.world->resolve(binding.parent),motion=binding.world->resolve(binding.motion);
+                if(!parent||!motion){retire_node(id);++report.retired;continue;}
+                if(!motion->pose_work)throw std::domain_error("Native inherited trail motion unavailable");
+                TrailOperations operations(*this,*node,camera,view,report);
+                const InheritedTrailMotion input{motion->pose_work->kind,motion->primary,motion->subphase,{motion->position.x,motion->position.y,motion->position.z}};
+                const auto step=advance_inherited_trail(node->trail->state,input,operations,*random_);node->visible=node->trail->state.visible;
+                if(!step.available)throw std::domain_error("Native inherited trail consumer unavailable");
+                if(step.retire){retire_node(id);++report.retired;}continue;
+            }
             if(node->actor_contact){
                 if(!channels_||!channels_bound_to(channels_->world))throw std::logic_error("Native actor contact owners unavailable");
                 const auto parent=channels_->world.resolve(node->channel_parent);

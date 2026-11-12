@@ -2,6 +2,7 @@
 #include "geometry.hpp"
 #include "work.hpp"
 #include "particle_work.hpp"
+#include "inherited_trail_owner.hpp"
 #include "surface_work.hpp"
 #include "resource_companion.hpp"
 #include "resource_debris.hpp"
@@ -105,6 +106,8 @@ public:
     gameplay_scenario::EmissionResult emit(const gameplay_scenario::PeriodicEmission&)noexcept override;
     WorkCreated create(const WorkRequest&)noexcept override;
     std::optional<ParticleSnapshot> particle_state(const gameplay_actors::EntityId&)const noexcept;
+    InheritedTrailBatch create_inherited_trails(const InheritedTrailRequest&)noexcept;
+    std::optional<InheritedTrailState> inherited_trail_state(const gameplay_actors::EntityId&)const noexcept;
     WorkStatus emit_surface(const SurfaceEmission&)noexcept override;
     WorkStatus refresh_companion()noexcept override;
     VisualReport update(transform_math::Vector camera)noexcept;
@@ -126,6 +129,7 @@ private:
     struct ChannelRuntime;
     class ChannelOperations;
     class SurfaceSink;
+    class TrailOperations;
     struct Piece {bool active{};PieceOutput output;};
     gameplay_actors::EntityStore entities_{{168}};
     std::list<gameplay_actors::EntityId> order_;
