@@ -3,6 +3,7 @@
 #include "work.hpp"
 #include "particle_work.hpp"
 #include "inherited_trail_owner.hpp"
+#include "projectile_trail.hpp"
 #include "surface_work.hpp"
 #include "resource_companion.hpp"
 #include "resource_debris.hpp"
@@ -56,6 +57,7 @@ struct VisualOutput {
     std::optional<ResourceDebrisState> debris;
     std::optional<ResourceFlightState> flight;
     std::optional<ActorContactState> actor_contact;
+    std::optional<ProjectileTrailOutput> projectile_trail;
 };
 struct EffectFrame {std::uint64_t revision{};std::vector<VisualOutput> visuals;};
 enum class VisualStatus {completed,closed,busy,invalid_camera,invalid_profile,no_memory};
@@ -105,6 +107,12 @@ public:
     std::optional<ActorContactState> actor_contact_state(const gameplay_actors::EntityId&)const noexcept;
     gameplay_scenario::EmissionResult emit(const gameplay_scenario::PeriodicEmission&)noexcept override;
     WorkCreated create(const WorkRequest&)noexcept override;
+    struct ProjectileTrailCreated {WorkStatus status{WorkStatus::unavailable};gameplay_actors::EntityId id;};
+    // The borrowed World outlives this owner and joined callbacks. The actual
+    // parent lease retains its retired state without retargeting a reused slot.
+    ProjectileTrailCreated create_projectile_trail(gameplay_world::World&,const gameplay_actors::EntityId&,std::uint8_t variant)noexcept;
+    std::optional<ProjectileTrailOutput> projectile_trail_state(const gameplay_actors::EntityId&)const noexcept;
+
     std::optional<ParticleSnapshot> particle_state(const gameplay_actors::EntityId&)const noexcept;
     InheritedTrailBatch create_inherited_trails(const InheritedTrailRequest&)noexcept;
     std::optional<InheritedTrailState> inherited_trail_state(const gameplay_actors::EntityId&)const noexcept;
@@ -130,6 +138,7 @@ private:
     class ChannelOperations;
     class SurfaceSink;
     class TrailOperations;
+    class ProjectileOperations;
     struct Piece {bool active{};PieceOutput output;};
     gameplay_actors::EntityStore entities_{{168}};
     std::list<gameplay_actors::EntityId> order_;

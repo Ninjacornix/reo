@@ -311,6 +311,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
 endif()
 
 add_library(reo_native_linked_flight_pose STATIC linked_resource_flight.cpp linked_flight_effects.cpp packed_actor_audio.cpp pose_weapon_effects.cpp)
+target_sources(reo_native_linked_flight_pose PRIVATE actor_offset_sound_policy.cpp canonical_actor_sounds.cpp)
 
 target_compile_features(reo_native_linked_flight_pose PUBLIC cxx_std_20)
 
@@ -330,6 +331,7 @@ target_sources(reo_native_pose_callbacks PRIVATE inherited_pose_trails.cpp)
 target_sources(reo_native_pose_callbacks PRIVATE pose_parent_flight.cpp pose_parent_flight_policy.cpp)
 target_sources(reo_native_pose_callbacks PRIVATE pose_ground_flight.cpp pose_timed_projectile.cpp pose_timed_projectile_policy.cpp pose_forward_projectile.cpp pose_surface_follower.cpp pose_presets.cpp pose_presets_policy.cpp)
 target_sources(reo_native_pose_callbacks PRIVATE pose_splitting_arc.cpp room_pose_projectiles.cpp)
+target_sources(reo_native_pose_callbacks PRIVATE forward_pose_visuals.cpp)
 
 target_compile_features(reo_native_pose_callbacks PUBLIC cxx_std_20)
 

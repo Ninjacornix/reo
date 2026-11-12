@@ -1,0 +1,186 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_world/actor_offset_sound_policy.hpp": "630d1f5fdbc195d8891875f381c5e09dd18d825c8f4a66b57a71e1a74d96f66e",
+    "game/native/gameplay_world/actor_offset_sound_policy.cpp": "2c626c823873885e4727c89fac6320e7c5ef3482fd0126e8ab56b849ebf16c01",
+    "game/native/gameplay_world/canonical_actor_sounds.hpp": "3fb59d6f0e7df4a39e91ee81d5fac3d8d59a1b3f06e4659004f122b88b595115",
+    "game/native/gameplay_world/canonical_actor_sounds.cpp": "e3ca9e5d8328785d59e92fc0342289e12c2317bcd5206a907198b7ff0ec0cc82",
+    "game/native/gameplay_world/forward_pose_visuals.hpp": "e99d71cf1e0ffe2e9391334107354b0f9b46ae3816b49f896de26b17755b9179",
+    "game/native/gameplay_world/forward_pose_visuals.cpp": "8d157bf69f665d5dedbea010d959ff1671c219ef915fb985dcdda2e048831c17",
+    "game/native/gameplay_effects/periodic_visuals.hpp": "81676b14bc7bf6a9724db8f906025c1a151143405597c52ee60e869fbcdd65d5",
+    "game/native/gameplay_effects/periodic_visuals.cpp": "826d0e3761dd4409928b9d99be0d398987c3dbf6b89258e704fd445d5d100c4f",
+    "game/native/gameplay_effects/projectile_trail.hpp": "42ed632c720ca8667e181c2c8c78fd6f87db35f23588381ef41407585046cb6e",
+    "game/native/gameplay_effects/projectile_trail.cpp": "055104a2e827b828aa2a93f40ceb653022f3351bdd027d4fb142bc424e2c0431",
+    "game/native/gameplay_effects/projectile_trail_owner_tests.cpp": "e88c6856dd5ef0c6d24ad3d6eb825235a9f550717c338244d4a8cfb7be52d764",
+    "tools/native_reconstruction/actor_offset_sound_policy_tests.cpp": "7e87ef3ff6d6ff880818669c9239670083855215a638b48f5b77f9d9eb7266e1",
+    "tools/native_reconstruction/verify_actor_offset_sound_policy.py": "e8705f7c64d5b80865d642fc83e8e8a95471a5e1dd2754ea27489392d387e92f",
+    "tools/native_reconstruction/actor_sound_ownership_tests.cpp": "c34d3050ec818f154040ff0cf0ac5f40563c96d6d35d8c28c49b9a1c15e01f93",
+    "tools/native_reconstruction/verify_actor_sound_ownership.py": "234f625d1d8da854ba5b0e9313fd3d22ca49b845ea4cefbc381613916ebe7456",
+    "tools/native_reconstruction/projectile_trail_tests.cpp": "1d8520c58f12ae41dcca3e3f6bccf8907f7075c70fc70dc9f3879792b7538997",
+    "tools/native_reconstruction/verify_projectile_trail.py": "1c49afc22a108c61c33427a9baddc1eaa84bb5e61d49893937cff800fe5af995",
+    "tools/native_reconstruction/verify_projectile_trail_owner.py": "ed33ab5284cf2d09da45bc9b35aada72f9c6dd49822d6b197fb013d797e57320",
+    "tools/native_reconstruction/verify_projectile_trail_owner_current.py": "c383b45b9431b3b2a915286fb268933f96d262ccb52798f4d21ac5d9c7ac0119",
+    "tools/native_reconstruction/qualify_actor_audio_projectiles.py": "fe8b0c429c8a607ba4b172aa1a21c3baba06bb93c67b31a93c1b9bf71248066f",
+    "docs/native-gameplay/ACTOR_SOUND_CONSUMERS.md": "07c1fdec38c744bc07daf4faf113db11d818571ba450bcb632813768e075ac87",
+    "docs/native-gameplay/PROJECTILE_TRAIL_CONTROLLER.md": "d3cf12c53f65dc6ccb0ed142cd957ee121b75e37bb5f4f411b00230981a28b54"
+  },
+  "cmake": {
+    "game/native/gameplay_effects/CMakeLists.txt": {
+      "qualified_snapshot_sha256": "49ab22418b299eb5ac4b9369e0b56a522cf14d8e666a6f1282b90a6f166fb035",
+      "required_registration": [
+        "target_sources(reo_native_gameplay_effects PRIVATE projectile_trail.cpp)",
+        "add_executable(projectile_trail_owner_tests projectile_trail_owner_tests.cpp)"
+      ]
+    },
+    "game/native/gameplay_world/CMakeLists.txt": {
+      "qualified_snapshot_sha256": "8edc1adf4566818396651b7ec72e4423af4132b84e002e270c67ffb8f6a5506e",
+      "required_registration": [
+        "target_sources(reo_native_linked_flight_pose PRIVATE actor_offset_sound_policy.cpp canonical_actor_sounds.cpp)",
+        "target_sources(reo_native_pose_callbacks PRIVATE forward_pose_visuals.cpp)"
+      ]
+    }
+  },
+  "metadata_producer_seal": {
+    "path": "tools/native_reconstruction/native_actor_sound_state_qualification_v1.json",
+    "sha256": "0fa1b8adb9e7178eba9398fcf832cfe8eaa01702655ecaf96b616317e52b7b2c"
+  },
+  "receipts": {
+    "build-native-sjuni/actor-offset-sound-policy-llvm-v1/receipt.json": {
+      "sha256": "6dd6db60da74c5ca540bf5bea508f0b902ba7cb326c4b3e2816b448cbde1e57b",
+      "observed": {
+        "checks": 1048569,
+        "cases": 262144,
+        "requests": 262140,
+        "silent": 4,
+        "original_calls": 524284,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/actor-sound-ownership-llvm-v5/receipt.json": {
+      "sha256": "e9a4393942bcb25e8b2953ec0f207d2a664e2e0a058f217b031e3f523e66954e",
+      "observed": {
+        "checks": 460732,
+        "cases": 65792,
+        "requests": 65791,
+        "signal_samples": 52842,
+        "owned_banks": 6,
+        "split_passes": 78,
+        "original_calls": 131583,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/projectile-trail-llvm-v2/receipt.json": {
+      "sha256": "449bab8aa99dbe7b03a9d0955be27cf66c983b835589d5152bf7f1a4082b9ba7",
+      "observed": {
+        "checks": 1180669,
+        "cases": 262144,
+        "requests": 510,
+        "retirements": 131072,
+        "known_misses": 340,
+        "original_calls": 393726,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/projectile-trail-owner-current-llvm-v1/receipt.json": {
+      "sha256": "c843492d4bd927af2a9a488e65de38565c5f72ccff67a68c7823eea87a1eaf7a",
+      "observed": {
+        "checks": 1015,
+        "owned_banks": 6,
+        "constructors": 846,
+        "frames": 20,
+        "budget_cases": 5,
+        "identity_cases": 5,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/projectile-trail-owner-llvm-v1/receipt.json": {
+      "sha256": "08ec4430d13db7a29bb2559527d4fe46c50076ff8e11523b6cf333df90431cb3",
+      "observed": {
+        "checks": 1137,
+        "owned_banks": 6,
+        "constructors": 846,
+        "frames": 20,
+        "budget_cases": 5,
+        "identity_cases": 5,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/session-resources-parents-llvm-v1/receipt.json": {
+      "sha256": "cbbf2f31bdb34cb73a3a05b74787e823371117bc722e5a9b26bb8f91f8b5168c",
+      "parent_tests": 31
+    },
+    "build-native-sjuni/actor-offset-sound-policy-gcc-v1/receipt.json": {
+      "sha256": "9e288cdeeb0b36ed6a938e7d6d3aeb5524e2a3b228d9de6665f994c36c0d61b2",
+      "observed": {
+        "checks": 1048569,
+        "cases": 262144,
+        "requests": 262140,
+        "silent": 4,
+        "original_calls": 524284,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/actor-sound-ownership-gcc-v5/receipt.json": {
+      "sha256": "5b2f5a9512ba4a88eb36624442c049074053fb7c9b77014cede385a18faafc01",
+      "observed": {
+        "checks": 460732,
+        "cases": 65792,
+        "requests": 65791,
+        "signal_samples": 52842,
+        "owned_banks": 6,
+        "split_passes": 78,
+        "original_calls": 131583,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/projectile-trail-gcc-v2/receipt.json": {
+      "sha256": "e5802eec02f56822cc957d4f92aea70795d45039aa159c0db437a5daff35f777",
+      "observed": {
+        "checks": 1180669,
+        "cases": 262144,
+        "requests": 510,
+        "retirements": 131072,
+        "known_misses": 340,
+        "original_calls": 393726,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/projectile-trail-owner-current-gcc-v1/receipt.json": {
+      "sha256": "2bb020778d65ba4c42e483ac97b5d9e78222d88ce255b874c96b8b339693a2aa",
+      "observed": {
+        "checks": 1015,
+        "owned_banks": 6,
+        "constructors": 846,
+        "frames": 20,
+        "budget_cases": 5,
+        "identity_cases": 5,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/projectile-trail-owner-gcc-v1/receipt.json": {
+      "sha256": "4625f6604b87246e5608ede5378b40d06eeae8968409f6821dd1018cb7b642cf",
+      "observed": {
+        "checks": 1137,
+        "owned_banks": 6,
+        "constructors": 846,
+        "frames": 20,
+        "budget_cases": 5,
+        "identity_cases": 5,
+        "game_run": false
+      }
+    },
+    "build-native-sjuni/session-resources-parents-gcc-v1/receipt.json": {
+      "sha256": "aea299fb99c5f51ed3aa65cff8ac4607f7ccdb5ff0572a5818d4863c005205c7",
+      "parent_tests": 31
+    }
+  },
+  "limits": [
+    "Audio uses canonical metadata,actualbank/spatial/RNG/PCM owners; nonzero population/attackmetadata producers and appaudiohost remain separate.",
+    "Controller sharesactual168work/256childpools; immutable renderrecipe is aStage5handoff,notpixelparity orinstalledgameplay.",
+    "Specialground/light/follower constructors,terminalframe/physics/behavior,fullstartup/EVBadmissionandendtoendStage4acceptance remainopen."
+  ]
+}
