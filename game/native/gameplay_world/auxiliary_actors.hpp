@@ -32,6 +32,7 @@ private:
     friend class NpcActorConstruction;
     friend class NpcActorUpdates;
     friend class CinematicActorFrames;
+    friend class CinematicActorReactions;
     explicit AuxiliaryActorPool(World&)noexcept;
     struct Slot {actors::EntityId id;std::optional<std::uint8_t> previous,next;std::uint8_t byte_on_reuse{};};
     World& world_;

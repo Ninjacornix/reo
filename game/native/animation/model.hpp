@@ -33,6 +33,7 @@ struct NodeLinks {
 enum class NodeLink {parent,child,sibling};
 struct NodeLinkPatch {std::size_t node{};NodeLink link{};std::optional<std::size_t> target;};
 struct JointPosePatch {std::size_t node{};Matrix world;};
+struct LocalPosePatch {std::size_t node{};Matrix local;};
 // A native mutable model owner, distinct from its canonical actor/object basis.
 // Calls are synchronous and serialized by the enclosing native gameplay owner.
 class Instance {
@@ -47,6 +48,7 @@ public:
     // Detached branches retain their original parent metadata. Reachable
     // parent links must agree with the child/sibling walk used by the source.
     void patch_links(std::span<const NodeLinkPatch>);
+    void patch_links_preserving_world(std::span<const NodeLinkPatch>);
     std::span<const std::uint16_t> track_ids()const noexcept{return track_ids_;}
     // Runtime node routing is instance-owned. Temporary cinematic relabels
     // never mutate the shared authored Skeleton or another model bank.
@@ -75,6 +77,12 @@ public:
     // sampled local pose. Validate and prepare a new immutable snapshot before
     // replacing world matrices; retained snapshots remain independent.
     void patch_world_poses(std::span<const JointPosePatch>);
+    void patch_local_poses(std::span<const LocalPosePatch>);
+    //193240 starts with unit incoming scale;193260 callers can supply the
+    // actual incoming scale. Prepare all local/world changes and publication
+    // before replacing state; retained snapshots and outside nodes survive.
+    void patch_local_poses_and_rebuild(std::span<const LocalPosePatch>,std::size_t subtree,const Matrix& parent,bool include_root_siblings=true,Vector parent_scale={1,1,1});
+    void patch_local_rotation_axes(std::size_t node,transform_math::Angles);
     std::shared_ptr<const JointSnapshot> retain()const noexcept{return snapshot_;}
 private:
     friend class Constraints;

@@ -88,6 +88,9 @@ void Instance::relabel_prefix(std::size_t count,std::uint16_t track){
     if(count>track_ids_.size())throw std::out_of_range("Native model track prefix extent unavailable");
     std::fill_n(track_ids_.begin(),count,track);
 }
+void Instance::patch_links_preserving_world(std::span<const NodeLinkPatch> patches){
+    const auto retained=snapshot_;patch_links(patches);snapshot_=retained;
+}
 void Instance::relabel_prefix(std::span<const std::uint16_t> tracks){
     if(tracks.size()>track_ids_.size())throw std::out_of_range("Native model track layout extent unavailable");
     std::copy(tracks.begin(),tracks.end(),track_ids_.begin());
@@ -144,6 +147,42 @@ void Instance::patch_world_poses(std::span<const JointPosePatch> patches){
     for(const auto& patch:patches)prepared->joints[patch.node]=patch.world;
     for(const auto& patch:patches)nodes_[patch.node].world=patch.world;
     ++revision_;snapshot_=std::move(prepared);
+}
+void Instance::patch_local_poses(std::span<const LocalPosePatch> patches){
+    for(const auto& patch:patches){
+        if(patch.node>=nodes_.size())throw std::out_of_range("Native local patch node unavailable");
+        for(const auto& column:patch.local)for(float value:column)finite(value);
+    }
+    if(patches.empty())return;
+    for(const auto& patch:patches)nodes_[patch.node].local=patch.local;
+    invalidate();
+}
+void Instance::patch_local_poses_and_rebuild(std::span<const LocalPosePatch> patches,std::size_t subtree,const Matrix& parent,bool include_root_siblings,Vector parent_scale){
+    if(!snapshot_)throw std::invalid_argument("Native local patch requires current published pose");
+    if(subtree>=nodes_.size())throw std::out_of_range("Native local subtree unavailable");
+    for(const auto& column:parent)for(float value:column)finite(value);
+    finite(parent_scale.x);finite(parent_scale.y);finite(parent_scale.z);
+    auto next=nodes_;
+    for(const auto& patch:patches){
+        if(patch.node>=next.size())throw std::out_of_range("Native local patch node unavailable");
+        for(const auto& column:patch.local)for(float value:column)finite(value);
+        next[patch.node].local=patch.local;
+    }
+    const auto walk=[&](auto&& self,std::size_t i,const Matrix& incoming,Vector scale,bool siblings)->void{
+        auto& node=next[i];node.world=hierarchical_pose(node,incoming,scale);
+        if(links_[i].child)self(self,*links_[i].child,node.world,{node.parameters[0],node.parameters[1],node.parameters[2]},true);
+        if(siblings&&links_[i].sibling)self(self,*links_[i].sibling,incoming,scale,true);
+    };walk(walk,subtree,parent,parent_scale,include_root_siblings);
+    if(revision_==UINT64_MAX)throw std::overflow_error("Native model snapshot revision exhausted");
+    auto prepared=std::make_shared<JointSnapshot>();prepared->revision=revision_+1;prepared->joints.reserve(next.size());
+    for(const auto& node:next)prepared->joints.push_back(node.world);
+    nodes_.swap(next);++revision_;snapshot_=std::move(prepared);
+}
+void Instance::patch_local_rotation_axes(std::size_t node,transform_math::Angles angles){
+    if(node>=nodes_.size()||!links_[node].parent)throw std::out_of_range("Native local rotation requires parent");
+    const auto parent=*links_[node].parent;auto local=nodes_[node].local;transform_math::reset_euler_axes(local,angles);
+    const LocalPosePatch patch{node,local};const auto& parameters=nodes_[parent].parameters;
+    patch_local_poses_and_rebuild(std::span<const LocalPosePatch>(&patch,1),node,nodes_[parent].world,true,{parameters[0],parameters[1],parameters[2]});
 }
 unsigned advance(FrameRecord& r,float step){
     r.flags&=std::uint8_t(~std::uint8_t(0x60));if(r.flags&0x10)return 0;finite(r.end);finite(step);

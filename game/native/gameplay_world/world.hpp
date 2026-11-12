@@ -7,6 +7,8 @@
 #include "humanoid_motion_bindings.hpp"
 #include "linked_update_state.hpp"
 #include "speech_state.hpp"
+#include "secondary_pose_state.hpp"
+#include "head_reaction_state.hpp"
 #include "../gameplay_actors/entity.hpp"
 #include "../gameplay_actors/reference.hpp"
 #include "../gameplay_actors/hit.hpp"
@@ -58,6 +60,7 @@ struct TargetingState {
     std::uint32_t flags{};
     bool selected_model_point{};
     std::optional<std::uint8_t> model_point{}; // linked-family551, supplied by its actual producer
+    std::optional<std::uint8_t> head_model_point{}; // original552, distinct from551
 };
 struct ActorCollision {
     gameplay_collision::Vec3 local_center,previous_center_offset,displacement;
@@ -84,6 +87,9 @@ struct Actor : actors::Entity,actors::HitActor {
     std::optional<gameplay_navigation::ActorRouteState> navigation_route;
     std::optional<gameplay_ai::ExecutionState> ai_execution;
     std::optional<TargetingState> targeting;
+    std::optional<SecondaryPoseHistory> secondary_pose_history;
+    std::optional<std::uint32_t> secondary_pose_category_override; // FAC; actual producer required
+    std::optional<HeadReactionState> head_reaction;
     std::optional<EnemyState> enemy;
     std::optional<ScriptedActorState> scripted;
     std::optional<NpcActorState> npc;
@@ -229,6 +235,7 @@ class LinkedModelPool;
 class LinkedActorUpdates;
 class NpcActorUpdates;
 class CinematicActorFrames;
+class CinematicActorReactions;
 class CinematicModelPass;
 class CinematicObjectPool;
 class CinematicObjectConstruction;
@@ -322,6 +329,7 @@ private:
     friend class NpcActorUpdates;
     NpcActorUpdates* npc_update_owner_{};
     friend class CinematicActorFrames;
+    friend class CinematicActorReactions;
     CinematicActorFrames* cinematic_frame_owner_{};
     friend class CinematicModelPass;
     friend class CinematicObjectPool;
