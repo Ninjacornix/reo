@@ -4,6 +4,10 @@ Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to put the PC to sleep only after
 Stage4 is fully implemented and verified; do not sleep at component checkpoints.
 
+- [Secondary pose body contacts](SECONDARY_POSE_CONTACTS.md) now reproduce
+  the capsule math and actual ordinary/high four-joint pass. Both compilers
+  pass472,202 focused checks, current World comparisons and five parents.
+  Secondary dynamics, reactions, full scene phases and installation remain open.
 - [Scenario resource identity](SCENARIO_RESOURCE_INDEX.md) now uses actual
   sixteen-byte key/ordinal tables instead of object AFS display names. Paired
   complete packaged-loader/resolver comparisons pass2,013 actual loads; all

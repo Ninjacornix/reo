@@ -32,6 +32,7 @@ struct NodeLinks {
 };
 enum class NodeLink {parent,child,sibling};
 struct NodeLinkPatch {std::size_t node{};NodeLink link{};std::optional<std::size_t> target;};
+struct JointPosePatch {std::size_t node{};Matrix world;};
 // A native mutable model owner, distinct from its canonical actor/object basis.
 // Calls are synchronous and serialized by the enclosing native gameplay owner.
 class Instance {
@@ -70,6 +71,10 @@ public:
     // Equivalent to193240/193260, with real local/world node spaces and
     // source scale propagation. No actor basis is copied into persistent state.
     void rebuild(const Matrix& parent);
+    // Secondary pose consumers alter published joints without rebuilding the
+    // sampled local pose. Validate and prepare a new immutable snapshot before
+    // replacing world matrices; retained snapshots remain independent.
+    void patch_world_poses(std::span<const JointPosePatch>);
     std::shared_ptr<const JointSnapshot> retain()const noexcept{return snapshot_;}
 private:
     friend class Constraints;

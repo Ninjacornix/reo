@@ -132,6 +132,19 @@ void Instance::publish_snapshot(){
     if(revision_==UINT64_MAX)throw std::overflow_error("Native model snapshot revision exhausted");
     auto snapshot=std::make_shared<JointSnapshot>();snapshot->revision=++revision_;snapshot->joints.reserve(nodes_.size());for(const auto& n:nodes_)snapshot->joints.push_back(n.world);snapshot_=std::move(snapshot);
 }
+void Instance::patch_world_poses(std::span<const JointPosePatch> patches){
+    if(!snapshot_)throw std::invalid_argument("Native joint patch requires current published pose");
+    for(const auto& patch:patches){
+        if(patch.node>=nodes_.size())throw std::out_of_range("Native joint patch index unavailable");
+        for(const auto& column:patch.world)for(float value:column)finite(value);
+    }
+    if(patches.empty())return;
+    if(revision_==UINT64_MAX)throw std::overflow_error("Native model snapshot revision exhausted");
+    auto prepared=std::make_shared<JointSnapshot>(*snapshot_);prepared->revision=revision_+1;
+    for(const auto& patch:patches)prepared->joints[patch.node]=patch.world;
+    for(const auto& patch:patches)nodes_[patch.node].world=patch.world;
+    ++revision_;snapshot_=std::move(prepared);
+}
 unsigned advance(FrameRecord& r,float step){
     r.flags&=std::uint8_t(~std::uint8_t(0x60));if(r.flags&0x10)return 0;finite(r.end);finite(step);
     if(r.end==0){r.flags|=0x40;if(r.loop)r.flags|=0x20;return 3;}

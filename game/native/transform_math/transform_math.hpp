@@ -11,7 +11,8 @@ using Angles=std::array<std::uint16_t,3>;
 struct SinCos {float sine{},cosine{};};
 Matrix identity()noexcept;
 float radians(std::uint16_t turn);
-// Finite radians within[-2*pi,2*pi], round-to-nearest FP32 profile. Uses the
+// Finite radians with nonwrapping signed16 winding reduction and round-to-nearest
+// FP32 arithmetic. Uses the
 // admitted original polynomial and reduction, never host sin/cos functions.
 SinCos sin_cos(float);
 // Reset only axis XYZ, preserving W and the fourth column, then apply X,Y,Z.
