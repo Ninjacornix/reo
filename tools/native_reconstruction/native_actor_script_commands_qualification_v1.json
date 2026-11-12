@@ -1,0 +1,431 @@
+{
+  "schema": "reo.native.actor_script_commands.qualification.v1",
+  "status": "passed",
+  "source_sha256": {
+    "game/native/gameplay_ai/CMakeLists.txt": "518a8dfb186010ba0dc6fad7c6b99f1cc7fd296ef4be20a05d4ab1fc2411794a",
+    "game/native/gameplay_scenario/CMakeLists.txt": "f80b999480f47f4448fd419253536438d32b81079c7a868f227d9feeb459d709",
+    "game/native/gameplay_scenario/interpreter.cpp": "2598ced342de70924fe6d7913d75d84befb7219154a68c8a538fe8d37cba43b9",
+    "game/native/gameplay_scenario/interpreter.hpp": "90c368f308bca86b0471b40678bd56a8a17a9c9952b4792dcd2df7a93a1e1e15",
+    "game/native/gameplay_scenario/actor_script_commands.hpp": "a17305fe64549dd380e035666890622015f85656564bca82018211fd5caa9fbd",
+    "tools/native_reconstruction/gameplay_scenario/tests.cpp": "a40feb389dc04c8d981bad3d2618cbb45ee48e03c6609ca5ac59b11c11efeadf",
+    "tools/native_reconstruction/gameplay_scenario/actor_script_vm_tests.inc": "e05283dd421bd6abd91983fa5a956f206c2c49fe65059d99972e7de14ab3ff96",
+    "tools/native_reconstruction/gameplay_scenario/verify.py": "937fdc5124d4eda2e3c951655d7fef452cb829c32d1261ee296085844ac755ad",
+    "docs/native-gameplay/ACTOR_SCRIPT_ROOM_AND_AI.md": "a3380c35a56c53bcfe2bb61ee9ba5367b4aeb17a4928cab2cfbf21f4713f8ddd",
+    "docs/native-gameplay/STAGE4_INTEGRATION_AUDIT.md": "3e9c6954205d063dd8ef2327dfeb7c10fccd50900474e5187ebadb62df592482"
+  },
+  "cohorts": [
+    {
+      "compiler": "llvm",
+      "full_interpreter": {
+        "receipt": {
+          "path": "build-native-sjuni/actor-script-commands-vm-llvm-v2/receipt.json",
+          "sha256": "5a31f109a0d6209d963bd840a896c7cdc7f9cc768c20853081f996fde8bc2654"
+        },
+        "result": {
+          "checks": 564346033,
+          "actor_room_dispatches": 4096,
+          "actor_profile_dispatches": 5880,
+          "actor_script_refusals": 7,
+          "script_audio_vm_dispatches": 11340,
+          "scene_record_parameter_dispatches": 4032
+        },
+        "checked_owned_instruction_comments": 11292
+      },
+      "owned_program_admission": {
+        "receipt": {
+          "path": "build-native-sjuni/actor-script-commands-admission-llvm-v1/receipt.json",
+          "sha256": "1033470592872d1d04b4580782b9aa66f05cd9e68c01bfe90ff95b589056c14f"
+        },
+        "baseline_commit": "17fc84d7",
+        "admitted": {
+          "before": [
+            31,
+            26
+          ],
+          "after": [
+            31,
+            26
+          ]
+        },
+        "evbs": [
+          {
+            "name": "r001.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 1748,
+                "opcode": 368
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3396,
+                "opcode": 417
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 1748,
+                "opcode": 368
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3444,
+                "opcode": 421
+              }
+            ]
+          },
+          {
+            "name": "r002.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3480,
+                "opcode": 342
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3480,
+                "opcode": 342
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3480,
+                "opcode": 342
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3480,
+                "opcode": 342
+              }
+            ]
+          },
+          {
+            "name": "r028.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 224,
+                "opcode": 336
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2168,
+                "opcode": 417
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 288,
+                "opcode": 264
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2216,
+                "opcode": 421
+              }
+            ]
+          },
+          {
+            "name": "r035.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 156,
+                "opcode": 336
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2620,
+                "opcode": 417
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 212,
+                "opcode": 208
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2668,
+                "opcode": 421
+              }
+            ]
+          },
+          {
+            "name": "r041.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4844,
+                "opcode": 342
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4844,
+                "opcode": 342
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4844,
+                "opcode": 342
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4844,
+                "opcode": 342
+              }
+            ]
+          }
+        ]
+      },
+      "current_parents": {
+        "receipt": {
+          "path": "build-native-sjuni/actor-script-commands-parents-llvm-v2/receipt.json",
+          "sha256": "64945bb6275004ad6784601ccf4834eff262f92f68a9845bb4355deac298247f"
+        },
+        "parent_tests": 14,
+        "source_drift": {}
+      }
+    },
+    {
+      "compiler": "gcc",
+      "full_interpreter": {
+        "receipt": {
+          "path": "build-native-sjuni/actor-script-commands-vm-gcc-v2/receipt.json",
+          "sha256": "2eb4a395bc721755019151c8bb82160576fa6445efa64a16e88a68bdc1dd3a4f"
+        },
+        "result": {
+          "checks": 564346033,
+          "actor_room_dispatches": 4096,
+          "actor_profile_dispatches": 5880,
+          "actor_script_refusals": 7,
+          "script_audio_vm_dispatches": 11340,
+          "scene_record_parameter_dispatches": 4032
+        },
+        "checked_owned_instruction_comments": 11292
+      },
+      "owned_program_admission": {
+        "receipt": {
+          "path": "build-native-sjuni/actor-script-commands-admission-gcc-v1/receipt.json",
+          "sha256": "00c1ef8323a21e80807a8b0d083233fd24c648d6caac6038a39113075f021831"
+        },
+        "baseline_commit": "17fc84d7",
+        "admitted": {
+          "before": [
+            31,
+            26
+          ],
+          "after": [
+            31,
+            26
+          ]
+        },
+        "evbs": [
+          {
+            "name": "r001.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 1748,
+                "opcode": 368
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3396,
+                "opcode": 417
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 1748,
+                "opcode": 368
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3444,
+                "opcode": 421
+              }
+            ]
+          },
+          {
+            "name": "r002.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3480,
+                "opcode": 342
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3480,
+                "opcode": 342
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3480,
+                "opcode": 342
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3480,
+                "opcode": 342
+              }
+            ]
+          },
+          {
+            "name": "r028.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 224,
+                "opcode": 336
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2168,
+                "opcode": 417
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 288,
+                "opcode": 264
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2216,
+                "opcode": 421
+              }
+            ]
+          },
+          {
+            "name": "r035.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 156,
+                "opcode": 336
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2620,
+                "opcode": 417
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 212,
+                "opcode": 208
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2668,
+                "opcode": 421
+              }
+            ]
+          },
+          {
+            "name": "r041.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4844,
+                "opcode": 342
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4844,
+                "opcode": 342
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4844,
+                "opcode": 342
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4844,
+                "opcode": 342
+              }
+            ]
+          }
+        ]
+      },
+      "current_parents": {
+        "receipt": {
+          "path": "build-native-sjuni/actor-script-commands-parents-gcc-v2/receipt.json",
+          "sha256": "c125395fa8604796639c7722b95bf4115533c564fbb1f41d8edbe4e8077832f2"
+        },
+        "parent_tests": 14,
+        "source_drift": {}
+      }
+    }
+  ],
+  "source_scope": [
+    "Original693300/666080/702650 ando9 8123E0 bodies execute in the full VM fixture; memcpy/zero-fill library calls are declared oracle ports.",
+    "The unchanged actual native AI execution primitive is linked through a dedicated target; no successful query/provider stub implements these commands.",
+    "These immutable VM/admission/current-parent snapshots precede the separately qualified cinematic close-reentrancy guard and subsequent stream-adapter changes."
+  ],
+  "limitations": [
+    "Bounded primary slots0..7; selector4 aliases selected only for150, not1A1. Negative AI profile pointers remain outside the native admission profile for matching candidates.",
+    "All171 owned banks checked; admitted31ordinary/26offline. All5EVBs remain incomplete at later source semantics.",
+    "No installed native game/session bootstrap, input/network/media adoption, semantic save acceptance or Stage4 completion is claimed."
+  ],
+  "game_launched": false,
+  "installed_in_game": false,
+  "stage4_complete": false
+}

@@ -20,6 +20,7 @@
 #include "surface_effects.hpp"
 #include "script_audio.hpp"
 #include "scene_record_parameters.hpp"
+#include "actor_script_commands.hpp"
 #include "scene_record_commands.hpp"
 #include "../gameplay_world/world.hpp"
 #include <algorithm>
@@ -38,6 +39,7 @@ std::size_t payload_minimum(std::uint32_t op)noexcept{
     switch(op) {
     case 0x80:case 0x81:case 0x164:case 0x165:return 4;
     case 0x166:return 9;
+    case 0x150:case 0x1a1:return 12;
     case 0x73:return 8;
     case 0x88:return 16;
     case 0x89:return 22;
@@ -131,6 +133,16 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
                 if(mode<=2){script_audio_=true;world_=true;
                     audio_requests_.push_back({word(b.data()+at+4),mode,mode==1?word(b.data()+at+12):0});}
             }
+            if(!noop&&op==0x150){
+                const auto selector=word(b.data()+at+4);
+                if(selector>=gameplay_world::World::primary_capacity)throw std::invalid_argument("Native actor room selector");
+                room_actor_selectors_.push_back(selector);
+            }
+            if(!noop&&op==0x1a1){
+                const auto mode=word(b.data()+at+4),selector=word(b.data()+at+8);
+                if(!mode&&selector>=gameplay_world::World::primary_capacity)throw std::invalid_argument("Native actor AI profile selector");
+                actor_profile_requests_.push_back({mode,selector,std::bit_cast<std::int32_t>(word(b.data()+at+12))});
+            }
             low_actor_population_|=!noop&&(op==0x38||op==0x39);
             full_actor_population_|=!noop&&op==0x173;
             npc_inventory_grants_|=!noop&&op==0x3a;
@@ -201,6 +213,14 @@ bool Program::admits_script_audio(const ScriptAudio* audio,const gameplay_world:
 bool Program::admits_scene_record_parameters(const gameplay_world::World* world,const gameplay_update::GameplayMessageSink* messages)const noexcept{
     return !scene_record_parameters_||(world&&scene_record_parameters_ready(*world,messages));
 }
+bool Program::admits_actor_script_commands(const gameplay_world::World* world)const noexcept{
+    if(room_actor_selectors_.empty()&&actor_profile_requests_.empty())return true;
+    if(!world)return false;
+    for(const auto selector:room_actor_selectors_)if(!actor_room_query_ready(*world,selector))return false;
+    for(const auto& request:actor_profile_requests_)
+        if(!actor_weight_profile_ready(*world,request.mode,request.selector,request.profile))return false;
+    return true;
+}
 bool Program::admits_room_counters(const gameplay_world::World* world)const noexcept {
     return !room_counters_ || (world && !world->closed() &&
         world->session().room_contacts.counters_ready(scenario_counter_policy_));
@@ -258,7 +278,7 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     for(std::size_t i=0;i<out.size();++i)if(control_command(std::uint32_t(i)))out[i]={true,false,false,false,false,false,false,false,false,true};
     for(const auto i:{0x70,0x71})out[i]={true,false,false,false,false,false,false,false,false,false,true};
     for(const auto i:{0x104,0x105})out[i]={true,false,false,false,false,false,false,false,false,true};
-    for(const auto i:{0x5a,0x61,0x62,0x65,0x68,0x69,0x6a,0x85,0x86,0x87,0xea,0xf2,0x120,0x121,0x122,0x135,0x155,0x180}){out[i].native_algorithm=true;out[i].world_required=true;}
+    for(const auto i:{0x5a,0x61,0x62,0x65,0x68,0x69,0x6a,0x85,0x86,0x87,0xea,0xf2,0x120,0x121,0x122,0x135,0x150,0x155,0x180}){out[i].native_algorithm=true;out[i].world_required=true;}
     out[0x62].selected_actor_required=true;
     out[0x135].scene_controls_required=true;out[0x135].action_choices_required=true;
     out[0x135].selected_actor_required=true;out[0x155].selected_actor_required=true;
@@ -274,6 +294,7 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
         else if(!offline_bindings[i].same_handler&&i!=0xb&&i!=0xc&&i!=0xe3&&i!=0xed&&i!=0xef&&i!=0x104&&i!=0x105)out[i]={};
         if(i==0x104||i==0x105)out[i].saved_controls_required=true;
     }
+    if(profile==DispatchProfile::offline_actor){out[0x1a1].native_algorithm=true;out[0x1a1].world_required=true;}
     return out;
 }
 Status Interpreter::install(std::size_t id,std::shared_ptr<const Program> p,Position entry)noexcept{
@@ -343,6 +364,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
     if(!c.program->admits_character_remap(providers.world))return{Status::provider_unavailable,0,{},0};
     if(!c.program->admits_script_audio(providers.script_audio,providers.world))return{Status::provider_unavailable,0,{},0};
     if(!c.program->admits_scene_record_parameters(providers.world,providers.messages))return{Status::provider_unavailable,0,{},0};
+    if(!c.program->admits_actor_script_commands(providers.world))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_selected_actor()&&!providers.world->primary(context.selected_actor))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_action_choices()&&!providers.action_choices)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_scenario()&&!providers.world->scenario)return{Status::provider_unavailable,0,{},0};
@@ -648,6 +670,12 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
         case 0x164:if(!providers.flags->write(FlagBank::scene_record_eligibility,value(0),true))return result(Status::provider_unavailable);break;
         case 0x165:if(!clear_scene_record_eligibility(*providers.canonical_flags,*providers.world,value(0)))return result(Status::provider_unavailable);break;
         case 0x166:if(update_scene_record_parameter(*providers.world,std::to_integer<std::uint8_t>(payload[0]),std::to_integer<std::uint8_t>(payload[4]),std::to_integer<std::uint8_t>(payload[8]),providers.messages).status!=SceneRecordParameterStatus::completed)return result(Status::provider_unavailable);break;
+        case 0x150:{++c.condition;
+            const auto matches=actor_room_matches(*providers.world,value(0),std::uint16_t(value(4)),value(8)!=0);
+            if(!matches)return result(Status::provider_unavailable);
+            if(!*matches){const auto status=scan(true);if(status!=Status::completed)return result(status);flow=2;}
+            break;}
+        case 0x1a1:if(!set_actor_weight_profile(*providers.world,value(0),value(4),std::bit_cast<std::int32_t>(value(8))))return result(Status::provider_unavailable);break;
         case 0x73:{
             const auto mode=value(4);
             if(mode<=2){

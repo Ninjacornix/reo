@@ -203,7 +203,7 @@ PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
         check(GPR_U32(c,5)==0x90000);++npc_file_loads;SET_GPR_U32(c,2,1);done(c);
     };
     if(at==0x371ad0||at==0x371b70)return original_scene_mode_port;
-    if(at==0x107ab0||at==0x18dbb0)return +[](std::uint8_t* r,R5900Context* c,PS2Runtime*){const auto d=GPR_U32(c,4),s=GPR_U32(c,5),n=GPR_U32(c,6);check(d<=0x800000&&n<=0x800000-d&&s<=0x800000&&n<=0x800000-s);std::memmove(r+d,r+s,n);done(c);};
+    if(at==0x107ab0||at==0x18dbb0)return +[](std::uint8_t* r,R5900Context* c,PS2Runtime*){const auto d=GPR_U32(c,4),s=GPR_U32(c,5),n=GPR_U32(c,6);check(d<=0x800000&&n<=0x800000-d&&((s<=0x800000&&n<=0x800000-s)||(n==8&&s>=0x828a60&&s<=0x828eb8)));std::memmove(r+d,r+s,n);done(c);};
     if(at==0x107c68)return +[](std::uint8_t* r,R5900Context* c,PS2Runtime*){const auto d=GPR_U32(c,4),n=GPR_U32(c,6);check(d<=0x800000&&n<=0x800000-d);std::memset(r+d,int(GPR_U32(c,5)&255),n);done(c);};
     if(at==0x5f2330)return +[](std::uint8_t* r,R5900Context* c,PS2Runtime* t){
         if(GPR_U32(c,31)==0x694d3c)original_inventory_compact(r,c,t);
@@ -241,12 +241,14 @@ PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
 #include "scene_record_eligibility_vm_tests.inc"
 #include "script_audio_vm_tests.inc"
 #include "scene_record_parameter_vm_tests.inc"
+#include "actor_script_vm_tests.inc"
 int main(int argc,char** argv)try{
     check(argc==5);
     scene_record_eligibility_tests();
     scene_record_retirement_tests();
     script_audio_vm_tests();
     scene_record_parameter_vm_tests();
+    actor_script_vm_tests();
     no_model_vm_tests();
     surface_vm_tests(argv[1]);
     room_counter_vm_tests(argv[2]);
@@ -444,5 +446,6 @@ int main(int argc,char** argv)try{
              <<",\"scene_record_retirement_handlers\":"<<scene_record_retirement_handlers<<",\"scene_record_retirement_dispatches\":"<<scene_record_retirement_dispatches
              <<",\"script_audio_vm_dispatches\":"<<script_audio_vm_dispatches<<",\"script_audio_vm_port_calls\":"<<script_audio_vm_port_calls<<",\"script_audio_vm_frames\":"<<script_audio_vm_frames<<",\"script_audio_vm_signal\":"<<script_audio_vm_signal
              <<",\"scene_record_parameter_dispatches\":"<<scene_record_parameter_dispatches<<",\"scene_record_parameter_packets\":"<<scene_record_parameter_packets
+             <<",\"actor_room_dispatches\":"<<actor_room_dispatches<<",\"actor_profile_dispatches\":"<<actor_profile_dispatches<<",\"actor_script_refusals\":"<<actor_script_refusals
              <<",\"original_numeric_handler_invocations\":65536,\"game_launched\":false}\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

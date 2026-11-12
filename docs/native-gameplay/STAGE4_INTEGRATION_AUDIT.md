@@ -199,6 +199,11 @@ These are complete-import refusals rather than a claim that each command runs
 on every session. Canonical Update message-sink adoption now exists for166;
 concrete native room/session bootstrap and remaining gameplay services remain
 the integration boundary described above.
+The subsequent [150/1A1 cut](ACTOR_SCRIPT_ROOM_AND_AI.md) admits both room
+predicate bindings and the real offline AI profile owner. Coverage becomes
+360/333 while full-bank admission stays31/26. Current five-EVB import
+frontiers are ordinary170/156/108/D0 and offline1A5/156; all remain required
+closure work before a complete scenario bootstrap can be claimed.
 
 The native asset/primary initialization/cache, temporary primary/NPC/object
 ownership, typed tracks, object motion-bank loading and new _H.BIN resource

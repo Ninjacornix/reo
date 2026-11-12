@@ -38,6 +38,7 @@ IDS += ['006BA5C0']
 IDS += ['00694390']
 IDS += ['006943D0','0068F640']
 IDS += ['00694470','005A8F40','00680FB0']
+IDS += ['00693300','00666080','00702650']
 
 PINNED={};PIN_COMMITS={}
 def source_bytes(p):
@@ -67,6 +68,13 @@ def main(a):
         if ident=='005F2330':
             text=text.replace('void o2_005F2330_0x5f2330(', 'void original_inventory_compact(')
         texts.append('\n'.join(l for l in text.splitlines() if not l.startswith('#include')))
+    ai_raw=(ROOT/'build-function-index/owned-overlays/o9.bin').read_bytes()
+    assert hashlib.sha256(ai_raw).hexdigest()=='604126d6edca1b1333948d79d1d2c8d2f2e22f4a233efbdfb769c106dafe7343'
+    ai_source=ROOT/'recomp/config/output_ovl/o9/o9_008123E0_0x8123e0.cpp'
+    ai_text=ai_source.read_text();sources[ai_source.relative_to(ROOT).as_posix()]=sha(ai_source);shutil.copyfile(ai_source,out/ai_source.name)
+    for pc,opcode in re.findall(r'// (0x[0-9a-f]+): (0x[0-9a-f]+)\s',ai_text):
+        assert struct.unpack_from('<I',ai_raw,int(pc,16)-0x810000)[0]==int(opcode,16);words+=1
+    texts.append('\n'.join(line for line in ai_text.splitlines()if not line.startswith('#include')))
     elf_path=Path(os.environ['LOCALAPPDATA'])/'OutbreakRecomp/launcher/imports/file1/25e64b631bbaa0cac9a4822cb66174ff14c3531851d1e502c0a06704379bf446/data/SLUS_207.65'
     elf=elf_path.read_bytes();elf_sha=hashlib.sha256(elf).hexdigest();assert elf_sha=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46'
     phoff=struct.unpack_from('<I',elf,28)[0];phsize,phcount=struct.unpack_from('<HH',elf,42);loads=[struct.unpack_from('<8I',elf,phoff+i*phsize) for i in range(phcount)];loads=[p for p in loads if p[0]==1]
@@ -75,7 +83,7 @@ def main(a):
         at=int(pc,16);segment=next(p for p in loads if p[2]<=at and at+4<=p[2]+p[4]);assert struct.unpack_from('<I',elf,segment[1]+at-segment[2])[0]==int(opcode,16);words+=1
     segment=next(p for p in loads if p[2]<=0x1b3c30 and 0x1b3c38<=p[2]+p[4]);body=elf[segment[1]+0x1b3c30-segment[2]:segment[1]+0x1b3c38-segment[2]]
     assert struct.unpack('<II',body)==(0x03e00008,0);texts.append('\n'.join(l for l in main_text.splitlines() if not l.startswith('#include')))
-    previous_names=set(re.findall(r'\b((?:o2|sub)_[A-Za-z0-9_]+)\(','\n'.join(texts)))|{'sub_00107AB0_0x107ab0'}
+    previous_names=set(re.findall(r'\b((?:o2|o9|sub)_[A-Za-z0-9_]+)\(','\n'.join(texts)))|{'sub_00107AB0_0x107ab0'}
     stream_main=['001BA170','001ADA20','001ADFD0','001ADF50','001AE2E0','001AE3F0','001AE190','001B0340','001B02D0','001B0300','001AEC80','0018F570','0018FDF0','00190A10','001913E0','00191530','001919D0','001B3C40','001D45F0','001B2D80'];stream_functions=set()
     stream_main += ['001A31B0','001A3590','001A35A0','001A35F0']
     stream_main += ['001D1F40']
@@ -86,7 +94,7 @@ def main(a):
             at=int(pc,16);segment=next(p for p in loads if p[2]<=at and at+4<=p[2]+p[4]);assert struct.unpack_from('<I',elf,segment[1]+at-segment[2])[0]==int(opcode,16);words+=1
         texts.append('\n'.join(l for l in source.splitlines() if not l.startswith('#include')));stream_functions.add('sub_'+ident+'_0x'+format(int(ident,16),'x'))
     stream_ports={f'sub_{a:08X}_0x{a:x}' for a in [0x131e38,0x131ef8,0x1327b8,0x132e50,0x133490,0x1b82a0,0x12bef8]}
-    text='\n'.join(texts);names=sorted(set(re.findall(r'\b((?:o2|sub)_[A-Za-z0-9_]+)\(',text))|previous_names|stream_ports)
+    text='\n'.join(texts);names=sorted(set(re.findall(r'\b((?:o2|o9|sub)_[A-Za-z0-9_]+)\(',text))|previous_names|stream_ports)
     unexecuted=set(names)-previous_names-stream_functions-stream_ports
     text+='\n'+'\n'.join('void '+name+'(std::uint8_t*,R5900Context*,PS2Runtime*){throw std::runtime_error("Unexecuted main stream dependency '+name+'");}' for name in sorted(unexecuted))
     declarations=['void '+n+'(std::uint8_t*,R5900Context*,PS2Runtime*);' for n in names]
@@ -116,6 +124,8 @@ def main(a):
     initialization+='inline void owned_object_constants(std::uint8_t* p){const std::array<std::uint8_t,200> b{'+','.join(str(x) for x in footprint)+'};std::memcpy(p+0x723740,b.data(),b.size());}\n'
     request_table=struct.unpack_from('<43I',raw,0x711960-0x570000);assert request_table[0x28]==0x6269b0 and struct.unpack_from('<I',raw,0x711960-0x570000+43*4)[0]==0
     initialization+='inline void owned_request_constants(std::uint8_t* p){const std::array<std::uint32_t,43> b{'+','.join(hex(x)+'u' for x in request_table)+'};std::memcpy(p+0x711960,b.data(),sizeof(b));}\n'
+    profile_bytes=ai_raw[0x828a60-0x810000:0x828a60-0x810000+20*56]
+    initialization+='inline void owned_ai_profile_constants(std::uint8_t* p){const std::array<std::uint8_t,1120> b{'+','.join(str(x)for x in profile_bytes)+'};std::memcpy(p+0x828a60,b.data(),b.size());}\n'
     declarations.append(initialization)
     initialization='inline void owned_enemy_constants(std::uint8_t* p){\n'
     for address,size in [(0x729270,0x1f00),(0x72f820,256),(0x7318c0,0x280)]:
@@ -139,7 +149,7 @@ def main(a):
         initialization+='const std::array<std::uint8_t,'+str(size)+'> bytes_'+str(address)+'{'+','.join(map(str,chunk))+'};std::memcpy(p+'+str(address)+',bytes_'+str(address)+'.data(),'+str(size)+');\n'
     declarations.append(initialization+'}\n')
     (out/'original_declarations.inc').write_text('\n'.join(declarations)+'\n')
-    actual_definitions=set(re.findall(r'^void ((?:o2|sub)_[A-Za-z0-9_]+)\(','\n'.join(texts),re.M));lookup={}
+    actual_definitions=set(re.findall(r'^void ((?:o2|o9|sub)_[A-Za-z0-9_]+)\(','\n'.join(texts),re.M));lookup={}
     for n in names:
         at=int(n.split('_')[-1],16)
         if at not in lookup or n in actual_definitions:lookup[at]=n
@@ -190,6 +200,7 @@ def main(a):
     shutil.copyfile(HERE/'scene_record_eligibility_vm_tests.inc',out/'scene_record_eligibility_vm_tests.inc')
     shutil.copyfile(HERE/'script_audio_vm_tests.inc',out/'script_audio_vm_tests.inc')
     shutil.copyfile(HERE/'scene_record_parameter_vm_tests.inc',out/'scene_record_parameter_vm_tests.inc')
+    shutil.copyfile(HERE/'actor_script_vm_tests.inc',out/'actor_script_vm_tests.inc')
     shutil.copyfile(HERE/'periodic_control_vm_tests.inc',out/'periodic_control_vm_tests.inc')
     shutil.copyfile(HERE/'room_rule_tests.inc',out/'room_rule_tests.inc')
     shutil.copyfile(HERE/'room_object_vm_tests.inc',out/'room_object_vm_tests.inc')
@@ -218,6 +229,7 @@ def main(a):
     units += [(name,ROOT/'game/native/gameplay_scenario'/(name+'.cpp')) for name in ('enemy_descriptors','enemy_routes')]
     units += [('character_remap',ROOT/'game/native/gameplay_scenario/character_remap.cpp')]
     units += [('script_audio',ROOT/'game/native/gameplay_scenario/script_audio.cpp')]
+    units += [('ai_execution',ROOT/'game/native/gameplay_ai/execution.cpp')]
     units += [('audio_'+name,ROOT/'game/native/gameplay_audio'/(name+'.cpp')) for name in ('routing','import','spatial','owner','scenario_cues')]
     units += [('audio_banks_'+name,ROOT/'game/native/audio_banks/v2'/(name+'.cpp')) for name in ('algorithms','session')]
     units += [('enemy_initialization',ROOT/'game/native/gameplay_world/enemy_initialization.cpp')]
@@ -256,6 +268,7 @@ def main(a):
     source_paths.append(HERE/'scene_record_eligibility_vm_tests.inc')
     source_paths.append(HERE/'script_audio_vm_tests.inc')
     source_paths.append(HERE/'scene_record_parameter_vm_tests.inc')
+    source_paths.append(HERE/'actor_script_vm_tests.inc')
     source_paths += [HERE/'surface_vm_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]
     source_paths += [ROOT/'game/native/transform_math/transform_math.hpp',ROOT/'game/native/transform_math/transform_math.cpp']
