@@ -4,6 +4,11 @@ Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to put the PC to sleep only after
 Stage4 is fully implemented and verified; do not sleep at component checkpoints.
 
+- [Standalone scalar animation](SCALAR_ANIMATION_PLAYBACK.md) now preserves
+  the distinct cinematic-object endpoint, loop, completion and sampling rules.
+  Paired comparisons cover2,048 bindings and8,192 updates; channel/topology
+  regressions and five CMake parents pass. Object storage/timelines and actual
+  scene construction/installation remain open.
 - [Cinematic primary model publication](CINEMATIC_MODEL_PUBLICATION.md) now
   implements the actual separate eight-slot pass with current actor bases,
   shared scripted/correction B40 ownership and150 owned correction variants.
