@@ -19,6 +19,11 @@ public:
     virtual StreamStatus pause(std::uint8_t,bool,std::uint32_t tick)noexcept=0;
     virtual StreamStatus attenuation(std::uint8_t,std::int32_t)noexcept=0;
     virtual StreamStatus service(std::uint32_t tick)noexcept=0;
+    // Explicit capabilities for prepared native sources. An older backend
+    // cannot silently manufacture a decoder handle, readiness or start release.
+    virtual StreamValue instance_available(std::uint8_t)noexcept{return{StreamStatus::unbound,0};}
+    virtual StreamValue start_ready(std::uint8_t)noexcept{return{StreamStatus::unbound,0};}
+    virtual StreamStatus start_inhibit(std::uint8_t,bool)noexcept{return StreamStatus::unbound;}
 };
 struct StreamChannel {
     std::int8_t paused{};std::uint8_t type{},start_wait{},started{};
@@ -44,6 +49,9 @@ public:
     StreamResult request(std::uint8_t channel,std::int32_t member,std::int32_t archive,std::uint32_t tick,StreamBackend&)noexcept;
     StreamResult start(std::uint8_t channel,std::int32_t member,std::int32_t archive,std::uint32_t tick,StreamBackend&)noexcept;
     StreamStatus stop(std::uint8_t,StreamBackend&)noexcept;
+    StreamValue prepared_ready(std::uint8_t,StreamBackend&)noexcept;
+    StreamStatus release_start(std::uint8_t,StreamBackend&)noexcept;
+    StreamStatus stop_preserving_state(std::uint8_t,StreamBackend&)noexcept;
     StreamStatus pause(std::uint8_t,std::uint32_t tick,StreamBackend&)noexcept;
     StreamStatus resume_current(std::uint8_t,std::uint32_t tick,StreamBackend&)noexcept;
     StreamStatus level(std::uint8_t,std::int32_t,StreamBackend&)noexcept;

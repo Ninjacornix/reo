@@ -1,0 +1,3761 @@
+{
+  "schema": 1,
+  "status": "prepared stream helper and canonical native-source owner comparisons passed",
+  "game_run": false,
+  "hardware_output": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_scenario/stream_channels.cpp": "0d47115b087015c0f4e90287133e4a521360fbdd6999983cda7de8f830d55683",
+    "game/native/gameplay_scenario/stream_channels.hpp": "2d42ba1955ec54c86b1d9e85f19354fe623d6c26182fd5bc48285cec61beddc1",
+    "game/native/gameplay_scenario/stream_gain_curve.inc": "98e59700ba81e120e80def2366b9257ca8c7a1e062f73140a691d7980f21cb7b",
+    "tools/native_reconstruction/stream_start_tests.cpp": "f09fc7b8acd49c234c22966e70a49a0c34a3890d403cb2d58adb1279ac6b90e5",
+    "tools/native_reconstruction/verify_stream_start.py": "8e099ed6de24129dd1eb0bb37dfef76ec4999c1191522ac2a2524cf9c8083563",
+    "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f",
+    "third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
+    "recomp/config/output/sub_0012A8E8_0x12a8e8.cpp": "d80371ad50e105b518eb01280e47d89218a21eefb457703b01ab8bc8c7e69a70",
+    "recomp/config/output/sub_00132DF0_0x132df0.cpp": "847803ef02244909ed481c5caec75211ce4898e86bef53620547aaf8e03ffd52",
+    "recomp/config/output/sub_00132E20_0x132e20.cpp": "26cc92c0460819a6ef4a0de9f2d63eec06d459920e58a7dce19fc70fff6b330b",
+    "recomp/config/output/sub_001ADFD0_0x1adfd0.cpp": "55feae82055b7395d29d0445f926b66be5b0d693ead02cdd0079873ce1c2e7da",
+    "recomp/config/output/sub_001AE740_0x1ae740.cpp": "fabfcde898f63ccccc6ac7243a03602332d47f37f6efcfabadba8173beb2755d",
+    "recomp/config/output/sub_001AE910_0x1ae910.cpp": "89d74fe4b14785ed327f8467c1b4c2b4fc0455ea420bea74b336f3eb8d9f2eea",
+    "recomp/config/output/sub_001AE9A0_0x1ae9a0.cpp": "36191d040f8c3f0449ee8451e949aa1bcb59a22d05e320e031bba8ba1966980b",
+    "recomp/config/output/sub_001AEB00_0x1aeb00.cpp": "8aec80f24ac9520b12e7883c39353ef03bcdec831138db8aa8a9ae861c5354cf",
+    "recomp/config/output/sub_001B82A0_0x1b82a0.cpp": "c16f7004afd58b395e1cf3a95035b043b4986e1244839ebcbb34afb177fb1156"
+  },
+  "original_owned_bodies": [
+    {
+      "role": "complete prepared stream helper or actual signed getter/setter body",
+      "path": "recomp/config/output/sub_0012A8E8_0x12a8e8.cpp",
+      "sha256": "d80371ad50e105b518eb01280e47d89218a21eefb457703b01ab8bc8c7e69a70",
+      "start": "0x12a8e8",
+      "end_exclusive": "0x12a8f0",
+      "matched_comments": 1,
+      "omitted_zero_words": 1,
+      "conflicts": 0,
+      "comparisons": [
+        {
+          "pc": "0x0012a8e8",
+          "owned_word": "0x03e00008",
+          "comment_word": "0x03e00008",
+          "status": "matched"
+        },
+        {
+          "pc": "0x0012a8ec",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        }
+      ]
+    },
+    {
+      "role": "complete prepared stream helper or actual signed getter/setter body",
+      "path": "recomp/config/output/sub_00132DF0_0x132df0.cpp",
+      "sha256": "847803ef02244909ed481c5caec75211ce4898e86bef53620547aaf8e03ffd52",
+      "start": "0x132df0",
+      "end_exclusive": "0x132e20",
+      "matched_comments": 12,
+      "omitted_zero_words": 0,
+      "conflicts": 0,
+      "comparisons": [
+        {
+          "pc": "0x00132df0",
+          "owned_word": "0x27bdfff0",
+          "comment_word": "0x27bdfff0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x00132df4",
+          "owned_word": "0x14800006",
+          "comment_word": "0x14800006",
+          "status": "matched"
+        },
+        {
+          "pc": "0x00132df8",
+          "owned_word": "0xffbf0000",
+          "comment_word": "0xffbf0000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x00132dfc",
+          "owned_word": "0x3c040024",
+          "comment_word": "0x3c040024",
+          "status": "matched"
+        },
+        {
+          "pc": "0x00132e00",
+          "owned_word": "0xdfbf0000",
+          "comment_word": "0xdfbf0000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x00132e04",
+          "owned_word": "0x2484b450",
+          "comment_word": "0x2484b450",
+          "status": "matched"
+        },
+        {
+          "pc": "0x00132e08",
+          "owned_word": "0x0804a034",
+          "comment_word": "0x0804a034",
+          "status": "matched"
+        },
+        {
+          "pc": "0x00132e0c",
+          "owned_word": "0x27bd0010",
+          "comment_word": "0x27bd0010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x00132e10",
+          "owned_word": "0xdfbf0000",
+          "comment_word": "0xdfbf0000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x00132e14",
+          "owned_word": "0xa0850070",
+          "comment_word": "0xa0850070",
+          "status": "matched"
+        },
+        {
+          "pc": "0x00132e18",
+          "owned_word": "0x03e00008",
+          "comment_word": "0x03e00008",
+          "status": "matched"
+        },
+        {
+          "pc": "0x00132e1c",
+          "owned_word": "0x27bd0010",
+          "comment_word": "0x27bd0010",
+          "status": "matched"
+        }
+      ]
+    },
+    {
+      "role": "complete prepared stream helper or actual signed getter/setter body",
+      "path": "recomp/config/output/sub_00132E20_0x132e20.cpp",
+      "sha256": "26cc92c0460819a6ef4a0de9f2d63eec06d459920e58a7dce19fc70fff6b330b",
+      "start": "0x132e20",
+      "end_exclusive": "0x132e50",
+      "matched_comments": 12,
+      "omitted_zero_words": 0,
+      "conflicts": 0,
+      "comparisons": [
+        {
+          "pc": "0x00132e20",
+          "owned_word": "0x27bdfff0",
+          "comment_word": "0x27bdfff0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x00132e24",
+          "owned_word": "0x14800006",
+          "comment_word": "0x14800006",
+          "status": "matched"
+        },
+        {
+          "pc": "0x00132e28",
+          "owned_word": "0xffbf0000",
+          "comment_word": "0xffbf0000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x00132e2c",
+          "owned_word": "0x3c040024",
+          "comment_word": "0x3c040024",
+          "status": "matched"
+        },
+        {
+          "pc": "0x00132e30",
+          "owned_word": "0x0c04a034",
+          "comment_word": "0x0c04a034",
+          "status": "matched"
+        },
+        {
+          "pc": "0x00132e34",
+          "owned_word": "0x2484b488",
+          "comment_word": "0x2484b488",
+          "status": "matched"
+        },
+        {
+          "pc": "0x00132e38",
+          "owned_word": "0x10000002",
+          "comment_word": "0x10000002",
+          "status": "matched"
+        },
+        {
+          "pc": "0x00132e3c",
+          "owned_word": "0x2402ffff",
+          "comment_word": "0x2402ffff",
+          "status": "matched"
+        },
+        {
+          "pc": "0x00132e40",
+          "owned_word": "0x80820071",
+          "comment_word": "0x80820071",
+          "status": "matched"
+        },
+        {
+          "pc": "0x00132e44",
+          "owned_word": "0xdfbf0000",
+          "comment_word": "0xdfbf0000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x00132e48",
+          "owned_word": "0x03e00008",
+          "comment_word": "0x03e00008",
+          "status": "matched"
+        },
+        {
+          "pc": "0x00132e4c",
+          "owned_word": "0x27bd0010",
+          "comment_word": "0x27bd0010",
+          "status": "matched"
+        }
+      ]
+    },
+    {
+      "role": "complete prepared stream helper or actual signed getter/setter body",
+      "path": "recomp/config/output/sub_001ADFD0_0x1adfd0.cpp",
+      "sha256": "55feae82055b7395d29d0445f926b66be5b0d693ead02cdd0079873ce1c2e7da",
+      "start": "0x1adfd0",
+      "end_exclusive": "0x1ae0c0",
+      "matched_comments": 59,
+      "omitted_zero_words": 1,
+      "conflicts": 0,
+      "comparisons": [
+        {
+          "pc": "0x001adfd0",
+          "owned_word": "0x44851000",
+          "comment_word": "0x44851000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001adfd4",
+          "owned_word": "0x3c0342fe",
+          "comment_word": "0x3c0342fe",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001adfd8",
+          "owned_word": "0x44830800",
+          "comment_word": "0x44830800",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001adfdc",
+          "owned_word": "0x27bdffd0",
+          "comment_word": "0x27bdffd0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001adfe0",
+          "owned_word": "0x468010a0",
+          "comment_word": "0x468010a0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001adfe4",
+          "owned_word": "0xffbf0020",
+          "comment_word": "0xffbf0020",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001adfe8",
+          "owned_word": "0x7fb10010",
+          "comment_word": "0x7fb10010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001adfec",
+          "owned_word": "0x00041040",
+          "comment_word": "0x00041040",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001adff0",
+          "owned_word": "0x7fb00000",
+          "comment_word": "0x7fb00000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001adff4",
+          "owned_word": "0x00441021",
+          "comment_word": "0x00441021",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001adff8",
+          "owned_word": "0x000280c0",
+          "comment_word": "0x000280c0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001adffc",
+          "owned_word": "0x00041880",
+          "comment_word": "0x00041880",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae000",
+          "owned_word": "0x3c02002c",
+          "comment_word": "0x3c02002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae004",
+          "owned_word": "0x24428d78",
+          "comment_word": "0x24428d78",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae008",
+          "owned_word": "0x46011043",
+          "comment_word": "0x46011043",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae00c",
+          "owned_word": "0x00501021",
+          "comment_word": "0x00501021",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae010",
+          "owned_word": "0xc4400000",
+          "comment_word": "0xc4400000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae014",
+          "owned_word": "0x46800020",
+          "comment_word": "0x46800020",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae018",
+          "owned_word": "0x3c02002c",
+          "comment_word": "0x3c02002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae01c",
+          "owned_word": "0x24428dc8",
+          "comment_word": "0x24428dc8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae020",
+          "owned_word": "0x00431021",
+          "comment_word": "0x00431021",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae024",
+          "owned_word": "0x3c030023",
+          "comment_word": "0x3c030023",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae028",
+          "owned_word": "0x8c440000",
+          "comment_word": "0x8c440000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae02c",
+          "owned_word": "0x24634060",
+          "comment_word": "0x24634060",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae030",
+          "owned_word": "0x46000802",
+          "comment_word": "0x46000802",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae034",
+          "owned_word": "0x2402000a",
+          "comment_word": "0x2402000a",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae038",
+          "owned_word": "0x46000024",
+          "comment_word": "0x46000024",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae03c",
+          "owned_word": "0x44050000",
+          "comment_word": "0x44050000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae040",
+          "owned_word": "0x00000000",
+          "comment_word": "0x00000000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae044",
+          "owned_word": "0x30b1007f",
+          "comment_word": "0x30b1007f",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae048",
+          "owned_word": "0x00112880",
+          "comment_word": "0x00112880",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae04c",
+          "owned_word": "0x00651821",
+          "comment_word": "0x00651821",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae050",
+          "owned_word": "0x8c630000",
+          "comment_word": "0x8c630000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae054",
+          "owned_word": "0x0062001a",
+          "comment_word": "0x0062001a",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae058",
+          "owned_word": "0x00000000",
+          "comment_word": "0x00000000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae05c",
+          "owned_word": "0x00000000",
+          "comment_word": "0x00000000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae060",
+          "owned_word": "0x00002812",
+          "comment_word": "0x00002812",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae064",
+          "owned_word": "0x0c04c9ee",
+          "comment_word": "0x0c04c9ee",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae068",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001ae06c",
+          "owned_word": "0x44910000",
+          "comment_word": "0x44910000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae070",
+          "owned_word": "0x3c03002c",
+          "comment_word": "0x3c03002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae074",
+          "owned_word": "0x24638d74",
+          "comment_word": "0x24638d74",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae078",
+          "owned_word": "0x3c02002c",
+          "comment_word": "0x3c02002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae07c",
+          "owned_word": "0x46800020",
+          "comment_word": "0x46800020",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae080",
+          "owned_word": "0x00701821",
+          "comment_word": "0x00701821",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae084",
+          "owned_word": "0xac710000",
+          "comment_word": "0xac710000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae088",
+          "owned_word": "0x24428d80",
+          "comment_word": "0x24428d80",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae08c",
+          "owned_word": "0x00502021",
+          "comment_word": "0x00502021",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae090",
+          "owned_word": "0x3c03002c",
+          "comment_word": "0x3c03002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae094",
+          "owned_word": "0x24638d7c",
+          "comment_word": "0x24638d7c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae098",
+          "owned_word": "0x0000102d",
+          "comment_word": "0x0000102d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae09c",
+          "owned_word": "0x00701821",
+          "comment_word": "0x00701821",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae0a0",
+          "owned_word": "0xe4800000",
+          "comment_word": "0xe4800000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae0a4",
+          "owned_word": "0xac600000",
+          "comment_word": "0xac600000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae0a8",
+          "owned_word": "0xdfbf0020",
+          "comment_word": "0xdfbf0020",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae0ac",
+          "owned_word": "0x7bb10010",
+          "comment_word": "0x7bb10010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae0b0",
+          "owned_word": "0x7bb00000",
+          "comment_word": "0x7bb00000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae0b4",
+          "owned_word": "0x03e00008",
+          "comment_word": "0x03e00008",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae0b8",
+          "owned_word": "0x27bd0030",
+          "comment_word": "0x27bd0030",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae0bc",
+          "owned_word": "0x00000000",
+          "comment_word": "0x00000000",
+          "status": "matched"
+        }
+      ]
+    },
+    {
+      "role": "complete prepared stream helper or actual signed getter/setter body",
+      "path": "recomp/config/output/sub_001AE740_0x1ae740.cpp",
+      "sha256": "fabfcde898f63ccccc6ac7243a03602332d47f37f6efcfabadba8173beb2755d",
+      "start": "0x1ae740",
+      "end_exclusive": "0x1aebe0",
+      "matched_comments": 280,
+      "omitted_zero_words": 16,
+      "conflicts": 0,
+      "comparisons": [
+        {
+          "pc": "0x001ae740",
+          "owned_word": "0x27bdffd0",
+          "comment_word": "0x27bdffd0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae744",
+          "owned_word": "0x00041040",
+          "comment_word": "0x00041040",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae748",
+          "owned_word": "0xffbf0020",
+          "comment_word": "0xffbf0020",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae74c",
+          "owned_word": "0x3c05002c",
+          "comment_word": "0x3c05002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae750",
+          "owned_word": "0x7fb10010",
+          "comment_word": "0x7fb10010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae754",
+          "owned_word": "0x00441021",
+          "comment_word": "0x00441021",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae758",
+          "owned_word": "0x7fb00000",
+          "comment_word": "0x7fb00000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae75c",
+          "owned_word": "0x00041880",
+          "comment_word": "0x00041880",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae760",
+          "owned_word": "0x000280c0",
+          "comment_word": "0x000280c0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae764",
+          "owned_word": "0x24a58d72",
+          "comment_word": "0x24a58d72",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae768",
+          "owned_word": "0x3c02002c",
+          "comment_word": "0x3c02002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae76c",
+          "owned_word": "0x0080882d",
+          "comment_word": "0x0080882d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae770",
+          "owned_word": "0x24428dc8",
+          "comment_word": "0x24428dc8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae774",
+          "owned_word": "0x00431021",
+          "comment_word": "0x00431021",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae778",
+          "owned_word": "0x00b01821",
+          "comment_word": "0x00b01821",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae77c",
+          "owned_word": "0xa0600000",
+          "comment_word": "0xa0600000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae780",
+          "owned_word": "0x8c440000",
+          "comment_word": "0x8c440000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae784",
+          "owned_word": "0x0c04cb7c",
+          "comment_word": "0x0c04cb7c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae788",
+          "owned_word": "0x80650000",
+          "comment_word": "0x80650000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae78c",
+          "owned_word": "0x3c02002c",
+          "comment_word": "0x3c02002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae790",
+          "owned_word": "0x24428d78",
+          "comment_word": "0x24428d78",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae794",
+          "owned_word": "0x00501021",
+          "comment_word": "0x00501021",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae798",
+          "owned_word": "0x8c450000",
+          "comment_word": "0x8c450000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae79c",
+          "owned_word": "0x0c06b7f4",
+          "comment_word": "0x0c06b7f4",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7a0",
+          "owned_word": "0x0220202d",
+          "comment_word": "0x0220202d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7a4",
+          "owned_word": "0x3c03002c",
+          "comment_word": "0x3c03002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7a8",
+          "owned_word": "0x24638d73",
+          "comment_word": "0x24638d73",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7ac",
+          "owned_word": "0x00701821",
+          "comment_word": "0x00701821",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7b0",
+          "owned_word": "0xa0600000",
+          "comment_word": "0xa0600000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7b4",
+          "owned_word": "0xdfbf0020",
+          "comment_word": "0xdfbf0020",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7b8",
+          "owned_word": "0x7bb10010",
+          "comment_word": "0x7bb10010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7bc",
+          "owned_word": "0x7bb00000",
+          "comment_word": "0x7bb00000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7c0",
+          "owned_word": "0x03e00008",
+          "comment_word": "0x03e00008",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7c4",
+          "owned_word": "0x27bd0030",
+          "comment_word": "0x27bd0030",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7c8",
+          "owned_word": "0x00000000",
+          "comment_word": "0x00000000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7cc",
+          "owned_word": "0x00000000",
+          "comment_word": "0x00000000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7d0",
+          "owned_word": "0x27bdff80",
+          "comment_word": "0x27bdff80",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7d4",
+          "owned_word": "0xffbf0070",
+          "comment_word": "0xffbf0070",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7d8",
+          "owned_word": "0x7fb60060",
+          "comment_word": "0x7fb60060",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7dc",
+          "owned_word": "0x7fb50050",
+          "comment_word": "0x7fb50050",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7e0",
+          "owned_word": "0x0080b02d",
+          "comment_word": "0x0080b02d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7e4",
+          "owned_word": "0x7fb40040",
+          "comment_word": "0x7fb40040",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7e8",
+          "owned_word": "0x00a0a82d",
+          "comment_word": "0x00a0a82d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7ec",
+          "owned_word": "0x7fb30030",
+          "comment_word": "0x7fb30030",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7f0",
+          "owned_word": "0x00c0a02d",
+          "comment_word": "0x00c0a02d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7f4",
+          "owned_word": "0x7fb20020",
+          "comment_word": "0x7fb20020",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7f8",
+          "owned_word": "0x00e0982d",
+          "comment_word": "0x00e0982d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae7fc",
+          "owned_word": "0x7fb10010",
+          "comment_word": "0x7fb10010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae800",
+          "owned_word": "0x16a00006",
+          "comment_word": "0x16a00006",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae804",
+          "owned_word": "0x7fb00000",
+          "comment_word": "0x7fb00000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae808",
+          "owned_word": "0x0c06acbc",
+          "comment_word": "0x0c06acbc",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae80c",
+          "owned_word": "0x0280202d",
+          "comment_word": "0x0280202d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae810",
+          "owned_word": "0x0040902d",
+          "comment_word": "0x0040902d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae814",
+          "owned_word": "0x06400033",
+          "comment_word": "0x06400033",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae818",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001ae81c",
+          "owned_word": "0x3c03002c",
+          "comment_word": "0x3c03002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae820",
+          "owned_word": "0x00162080",
+          "comment_word": "0x00162080",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae824",
+          "owned_word": "0x24638dc8",
+          "comment_word": "0x24638dc8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae828",
+          "owned_word": "0x00648821",
+          "comment_word": "0x00648821",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae82c",
+          "owned_word": "0x8e230000",
+          "comment_word": "0x8e230000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae830",
+          "owned_word": "0x1060002c",
+          "comment_word": "0x1060002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae834",
+          "owned_word": "0x2404000e",
+          "comment_word": "0x2404000e",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae838",
+          "owned_word": "0x0c06e0a8",
+          "comment_word": "0x0c06e0a8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae83c",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001ae840",
+          "owned_word": "0x14400028",
+          "comment_word": "0x14400028",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae844",
+          "owned_word": "0x00161840",
+          "comment_word": "0x00161840",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae848",
+          "owned_word": "0x3c02002c",
+          "comment_word": "0x3c02002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae84c",
+          "owned_word": "0x00761821",
+          "comment_word": "0x00761821",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae850",
+          "owned_word": "0x24428d78",
+          "comment_word": "0x24428d78",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae854",
+          "owned_word": "0x000380c0",
+          "comment_word": "0x000380c0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae858",
+          "owned_word": "0x00501021",
+          "comment_word": "0x00501021",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae85c",
+          "owned_word": "0x8c450000",
+          "comment_word": "0x8c450000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae860",
+          "owned_word": "0x0c06b7f4",
+          "comment_word": "0x0c06b7f4",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae864",
+          "owned_word": "0x02c0202d",
+          "comment_word": "0x02c0202d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae868",
+          "owned_word": "0x0c06b9b4",
+          "comment_word": "0x0c06b9b4",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae86c",
+          "owned_word": "0x02c0202d",
+          "comment_word": "0x02c0202d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae870",
+          "owned_word": "0x24020001",
+          "comment_word": "0x24020001",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae874",
+          "owned_word": "0x16a2000f",
+          "comment_word": "0x16a2000f",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae878",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001ae87c",
+          "owned_word": "0x06610007",
+          "comment_word": "0x06610007",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae880",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001ae884",
+          "owned_word": "0x8e240000",
+          "comment_word": "0x8e240000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae888",
+          "owned_word": "0x0280302d",
+          "comment_word": "0x0280302d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae88c",
+          "owned_word": "0x0c04cd24",
+          "comment_word": "0x0c04cd24",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae890",
+          "owned_word": "0x0000282d",
+          "comment_word": "0x0000282d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae894",
+          "owned_word": "0x1000000b",
+          "comment_word": "0x1000000b",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae898",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001ae89c",
+          "owned_word": "0x8e240000",
+          "comment_word": "0x8e240000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8a0",
+          "owned_word": "0x0260282d",
+          "comment_word": "0x0260282d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8a4",
+          "owned_word": "0x0c04cd24",
+          "comment_word": "0x0c04cd24",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8a8",
+          "owned_word": "0x0280302d",
+          "comment_word": "0x0280302d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8ac",
+          "owned_word": "0x10000005",
+          "comment_word": "0x10000005",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8b0",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001ae8b4",
+          "owned_word": "0x8e240000",
+          "comment_word": "0x8e240000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8b8",
+          "owned_word": "0x0240302d",
+          "comment_word": "0x0240302d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8bc",
+          "owned_word": "0x0c04cd24",
+          "comment_word": "0x0c04cd24",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8c0",
+          "owned_word": "0x24050003",
+          "comment_word": "0x24050003",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8c4",
+          "owned_word": "0x3c02002c",
+          "comment_word": "0x3c02002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8c8",
+          "owned_word": "0x24030001",
+          "comment_word": "0x24030001",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8cc",
+          "owned_word": "0x24428d73",
+          "comment_word": "0x24428d73",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8d0",
+          "owned_word": "0x00501021",
+          "comment_word": "0x00501021",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8d4",
+          "owned_word": "0xa0430000",
+          "comment_word": "0xa0430000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8d8",
+          "owned_word": "0x8e240000",
+          "comment_word": "0x8e240000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8dc",
+          "owned_word": "0x0c04cb94",
+          "comment_word": "0x0c04cb94",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8e0",
+          "owned_word": "0x0000282d",
+          "comment_word": "0x0000282d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8e4",
+          "owned_word": "0xdfbf0070",
+          "comment_word": "0xdfbf0070",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8e8",
+          "owned_word": "0x7bb60060",
+          "comment_word": "0x7bb60060",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8ec",
+          "owned_word": "0x7bb50050",
+          "comment_word": "0x7bb50050",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8f0",
+          "owned_word": "0x7bb40040",
+          "comment_word": "0x7bb40040",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8f4",
+          "owned_word": "0x7bb30030",
+          "comment_word": "0x7bb30030",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8f8",
+          "owned_word": "0x7bb20020",
+          "comment_word": "0x7bb20020",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae8fc",
+          "owned_word": "0x7bb10010",
+          "comment_word": "0x7bb10010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae900",
+          "owned_word": "0x7bb00000",
+          "comment_word": "0x7bb00000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae904",
+          "owned_word": "0x03e00008",
+          "comment_word": "0x03e00008",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae908",
+          "owned_word": "0x27bd0080",
+          "comment_word": "0x27bd0080",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae90c",
+          "owned_word": "0x00000000",
+          "comment_word": "0x00000000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae910",
+          "owned_word": "0x27bdffe0",
+          "comment_word": "0x27bdffe0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae914",
+          "owned_word": "0xffbf0010",
+          "comment_word": "0xffbf0010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae918",
+          "owned_word": "0x7fb00000",
+          "comment_word": "0x7fb00000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae91c",
+          "owned_word": "0x0080802d",
+          "comment_word": "0x0080802d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae920",
+          "owned_word": "0x0c06e0a8",
+          "comment_word": "0x0c06e0a8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae924",
+          "owned_word": "0x2404000e",
+          "comment_word": "0x2404000e",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae928",
+          "owned_word": "0x10400003",
+          "comment_word": "0x10400003",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae92c",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001ae930",
+          "owned_word": "0x10000016",
+          "comment_word": "0x10000016",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae934",
+          "owned_word": "0x24020001",
+          "comment_word": "0x24020001",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae938",
+          "owned_word": "0x3c02002c",
+          "comment_word": "0x3c02002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae93c",
+          "owned_word": "0x00101880",
+          "comment_word": "0x00101880",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae940",
+          "owned_word": "0x24428dc8",
+          "comment_word": "0x24428dc8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae944",
+          "owned_word": "0x00431021",
+          "comment_word": "0x00431021",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae948",
+          "owned_word": "0x8c440000",
+          "comment_word": "0x8c440000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae94c",
+          "owned_word": "0x14800003",
+          "comment_word": "0x14800003",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae950",
+          "owned_word": "0x00101840",
+          "comment_word": "0x00101840",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae954",
+          "owned_word": "0x1000000d",
+          "comment_word": "0x1000000d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae958",
+          "owned_word": "0x24020001",
+          "comment_word": "0x24020001",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae95c",
+          "owned_word": "0x3c02002c",
+          "comment_word": "0x3c02002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae960",
+          "owned_word": "0x00701821",
+          "comment_word": "0x00701821",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae964",
+          "owned_word": "0x24428d73",
+          "comment_word": "0x24428d73",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae968",
+          "owned_word": "0x000318c0",
+          "comment_word": "0x000318c0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae96c",
+          "owned_word": "0x00431021",
+          "comment_word": "0x00431021",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae970",
+          "owned_word": "0x80420000",
+          "comment_word": "0x80420000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae974",
+          "owned_word": "0x14400003",
+          "comment_word": "0x14400003",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae978",
+          "owned_word": "0x24020001",
+          "comment_word": "0x24020001",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae97c",
+          "owned_word": "0x10000003",
+          "comment_word": "0x10000003",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae980",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001ae984",
+          "owned_word": "0x0c04cb88",
+          "comment_word": "0x0c04cb88",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae988",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001ae98c",
+          "owned_word": "0xdfbf0010",
+          "comment_word": "0xdfbf0010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae990",
+          "owned_word": "0x7bb00000",
+          "comment_word": "0x7bb00000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae994",
+          "owned_word": "0x03e00008",
+          "comment_word": "0x03e00008",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae998",
+          "owned_word": "0x27bd0020",
+          "comment_word": "0x27bd0020",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae99c",
+          "owned_word": "0x00000000",
+          "comment_word": "0x00000000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9a0",
+          "owned_word": "0x27bdffe0",
+          "comment_word": "0x27bdffe0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9a4",
+          "owned_word": "0xffbf0010",
+          "comment_word": "0xffbf0010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9a8",
+          "owned_word": "0x7fb00000",
+          "comment_word": "0x7fb00000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9ac",
+          "owned_word": "0x0080802d",
+          "comment_word": "0x0080802d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9b0",
+          "owned_word": "0x0c06e0a8",
+          "comment_word": "0x0c06e0a8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9b4",
+          "owned_word": "0x2404000e",
+          "comment_word": "0x2404000e",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9b8",
+          "owned_word": "0x14400009",
+          "comment_word": "0x14400009",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9bc",
+          "owned_word": "0x3c03002c",
+          "comment_word": "0x3c03002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9c0",
+          "owned_word": "0x00102080",
+          "comment_word": "0x00102080",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9c4",
+          "owned_word": "0x24638dc8",
+          "comment_word": "0x24638dc8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9c8",
+          "owned_word": "0x00641821",
+          "comment_word": "0x00641821",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9cc",
+          "owned_word": "0x8c630000",
+          "comment_word": "0x8c630000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9d0",
+          "owned_word": "0x10600003",
+          "comment_word": "0x10600003",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9d4",
+          "owned_word": "0x0200202d",
+          "comment_word": "0x0200202d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9d8",
+          "owned_word": "0x0c06b9d0",
+          "comment_word": "0x0c06b9d0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9dc",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001ae9e0",
+          "owned_word": "0xdfbf0010",
+          "comment_word": "0xdfbf0010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9e4",
+          "owned_word": "0x7bb00000",
+          "comment_word": "0x7bb00000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9e8",
+          "owned_word": "0x03e00008",
+          "comment_word": "0x03e00008",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9ec",
+          "owned_word": "0x27bd0020",
+          "comment_word": "0x27bd0020",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9f0",
+          "owned_word": "0x27bdffd0",
+          "comment_word": "0x27bdffd0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9f4",
+          "owned_word": "0xffbf0020",
+          "comment_word": "0xffbf0020",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9f8",
+          "owned_word": "0x7fb10010",
+          "comment_word": "0x7fb10010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9fc",
+          "owned_word": "0x7fb00000",
+          "comment_word": "0x7fb00000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea00",
+          "owned_word": "0x00a0882d",
+          "comment_word": "0x00a0882d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea04",
+          "owned_word": "0x0080802d",
+          "comment_word": "0x0080802d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea08",
+          "owned_word": "0x0c06e0a8",
+          "comment_word": "0x0c06e0a8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea0c",
+          "owned_word": "0x2404000e",
+          "comment_word": "0x2404000e",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea10",
+          "owned_word": "0x1440000f",
+          "comment_word": "0x1440000f",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea14",
+          "owned_word": "0x3c03002c",
+          "comment_word": "0x3c03002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea18",
+          "owned_word": "0x00102080",
+          "comment_word": "0x00102080",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea1c",
+          "owned_word": "0x24638dc8",
+          "comment_word": "0x24638dc8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea20",
+          "owned_word": "0x00648021",
+          "comment_word": "0x00648021",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea24",
+          "owned_word": "0x8e030000",
+          "comment_word": "0x8e030000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea28",
+          "owned_word": "0x10600009",
+          "comment_word": "0x10600009",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea2c",
+          "owned_word": "0x0220202d",
+          "comment_word": "0x0220202d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea30",
+          "owned_word": "0x0c06acbc",
+          "comment_word": "0x0c06acbc",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea34",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001aea38",
+          "owned_word": "0x0040302d",
+          "comment_word": "0x0040302d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea3c",
+          "owned_word": "0x04c00004",
+          "comment_word": "0x04c00004",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea40",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001aea44",
+          "owned_word": "0x8e040000",
+          "comment_word": "0x8e040000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea48",
+          "owned_word": "0x0c04a9ae",
+          "comment_word": "0x0c04a9ae",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea4c",
+          "owned_word": "0x24050003",
+          "comment_word": "0x24050003",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea50",
+          "owned_word": "0xdfbf0020",
+          "comment_word": "0xdfbf0020",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea54",
+          "owned_word": "0x7bb10010",
+          "comment_word": "0x7bb10010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea58",
+          "owned_word": "0x7bb00000",
+          "comment_word": "0x7bb00000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea5c",
+          "owned_word": "0x03e00008",
+          "comment_word": "0x03e00008",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea60",
+          "owned_word": "0x27bd0030",
+          "comment_word": "0x27bd0030",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea64",
+          "owned_word": "0x00000000",
+          "comment_word": "0x00000000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea68",
+          "owned_word": "0x00000000",
+          "comment_word": "0x00000000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea6c",
+          "owned_word": "0x00000000",
+          "comment_word": "0x00000000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea70",
+          "owned_word": "0x27bdffd0",
+          "comment_word": "0x27bdffd0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea74",
+          "owned_word": "0xffbf0020",
+          "comment_word": "0xffbf0020",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea78",
+          "owned_word": "0x7fb10010",
+          "comment_word": "0x7fb10010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea7c",
+          "owned_word": "0x0080882d",
+          "comment_word": "0x0080882d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea80",
+          "owned_word": "0x7fb00000",
+          "comment_word": "0x7fb00000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea84",
+          "owned_word": "0x0c06e0a8",
+          "comment_word": "0x0c06e0a8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea88",
+          "owned_word": "0x2404000e",
+          "comment_word": "0x2404000e",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea8c",
+          "owned_word": "0x14400017",
+          "comment_word": "0x14400017",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea90",
+          "owned_word": "0x3c03002c",
+          "comment_word": "0x3c03002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea94",
+          "owned_word": "0x00112080",
+          "comment_word": "0x00112080",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea98",
+          "owned_word": "0x24638dc8",
+          "comment_word": "0x24638dc8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aea9c",
+          "owned_word": "0x00648021",
+          "comment_word": "0x00648021",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeaa0",
+          "owned_word": "0x8e040000",
+          "comment_word": "0x8e040000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeaa4",
+          "owned_word": "0x10800011",
+          "comment_word": "0x10800011",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeaa8",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001aeaac",
+          "owned_word": "0x0c04aa3c",
+          "comment_word": "0x0c04aa3c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeab0",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001aeab4",
+          "owned_word": "0x8e040000",
+          "comment_word": "0x8e040000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeab8",
+          "owned_word": "0x0c04aa0c",
+          "comment_word": "0x0c04aa0c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeabc",
+          "owned_word": "0x0000282d",
+          "comment_word": "0x0000282d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeac0",
+          "owned_word": "0x0c04a9e0",
+          "comment_word": "0x0c04a9e0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeac4",
+          "owned_word": "0x8e040000",
+          "comment_word": "0x8e040000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeac8",
+          "owned_word": "0x00111840",
+          "comment_word": "0x00111840",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeacc",
+          "owned_word": "0x3c02002c",
+          "comment_word": "0x3c02002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aead0",
+          "owned_word": "0x00711821",
+          "comment_word": "0x00711821",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aead4",
+          "owned_word": "0x24428d78",
+          "comment_word": "0x24428d78",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aead8",
+          "owned_word": "0x000318c0",
+          "comment_word": "0x000318c0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeadc",
+          "owned_word": "0x00431021",
+          "comment_word": "0x00431021",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeae0",
+          "owned_word": "0x8c450000",
+          "comment_word": "0x8c450000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeae4",
+          "owned_word": "0x0c06b7f4",
+          "comment_word": "0x0c06b7f4",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeae8",
+          "owned_word": "0x0220202d",
+          "comment_word": "0x0220202d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeaec",
+          "owned_word": "0xdfbf0020",
+          "comment_word": "0xdfbf0020",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeaf0",
+          "owned_word": "0x7bb10010",
+          "comment_word": "0x7bb10010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeaf4",
+          "owned_word": "0x7bb00000",
+          "comment_word": "0x7bb00000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeaf8",
+          "owned_word": "0x03e00008",
+          "comment_word": "0x03e00008",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeafc",
+          "owned_word": "0x27bd0030",
+          "comment_word": "0x27bd0030",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb00",
+          "owned_word": "0x27bdffe0",
+          "comment_word": "0x27bdffe0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb04",
+          "owned_word": "0xffbf0010",
+          "comment_word": "0xffbf0010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb08",
+          "owned_word": "0x7fb00000",
+          "comment_word": "0x7fb00000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb0c",
+          "owned_word": "0x0080802d",
+          "comment_word": "0x0080802d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb10",
+          "owned_word": "0x0c06e0a8",
+          "comment_word": "0x0c06e0a8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb14",
+          "owned_word": "0x2404000e",
+          "comment_word": "0x2404000e",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb18",
+          "owned_word": "0x1440000b",
+          "comment_word": "0x1440000b",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb1c",
+          "owned_word": "0x3c03002c",
+          "comment_word": "0x3c03002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb20",
+          "owned_word": "0x00102080",
+          "comment_word": "0x00102080",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb24",
+          "owned_word": "0x24638dc8",
+          "comment_word": "0x24638dc8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb28",
+          "owned_word": "0x00648021",
+          "comment_word": "0x00648021",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb2c",
+          "owned_word": "0x8e040000",
+          "comment_word": "0x8e040000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb30",
+          "owned_word": "0x10800005",
+          "comment_word": "0x10800005",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb34",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001aeb38",
+          "owned_word": "0x0c04aa3a",
+          "comment_word": "0x0c04aa3a",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb3c",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001aeb40",
+          "owned_word": "0x0c04c78e",
+          "comment_word": "0x0c04c78e",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb44",
+          "owned_word": "0x8e040000",
+          "comment_word": "0x8e040000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb48",
+          "owned_word": "0xdfbf0010",
+          "comment_word": "0xdfbf0010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb4c",
+          "owned_word": "0x7bb00000",
+          "comment_word": "0x7bb00000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb50",
+          "owned_word": "0x03e00008",
+          "comment_word": "0x03e00008",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb54",
+          "owned_word": "0x27bd0020",
+          "comment_word": "0x27bd0020",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb58",
+          "owned_word": "0x00000000",
+          "comment_word": "0x00000000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb5c",
+          "owned_word": "0x00000000",
+          "comment_word": "0x00000000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb60",
+          "owned_word": "0x27bdfff0",
+          "comment_word": "0x27bdfff0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb64",
+          "owned_word": "0x3c01002c",
+          "comment_word": "0x3c01002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb68",
+          "owned_word": "0xffbf0000",
+          "comment_word": "0xffbf0000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb6c",
+          "owned_word": "0x8c238dc8",
+          "comment_word": "0x8c238dc8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb70",
+          "owned_word": "0x10600017",
+          "comment_word": "0x10600017",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb74",
+          "owned_word": "0x3c01002c",
+          "comment_word": "0x3c01002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb78",
+          "owned_word": "0x8c258d78",
+          "comment_word": "0x8c258d78",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb7c",
+          "owned_word": "0x0c06b7f4",
+          "comment_word": "0x0c06b7f4",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb80",
+          "owned_word": "0x0000202d",
+          "comment_word": "0x0000202d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb84",
+          "owned_word": "0x0c06b9b4",
+          "comment_word": "0x0c06b9b4",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb88",
+          "owned_word": "0x0000202d",
+          "comment_word": "0x0000202d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb8c",
+          "owned_word": "0x3c01002c",
+          "comment_word": "0x3c01002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb90",
+          "owned_word": "0x24020001",
+          "comment_word": "0x24020001",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb94",
+          "owned_word": "0x8c248dc8",
+          "comment_word": "0x8c248dc8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb98",
+          "owned_word": "0x0000282d",
+          "comment_word": "0x0000282d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb9c",
+          "owned_word": "0x3c01002c",
+          "comment_word": "0x3c01002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeba0",
+          "owned_word": "0x0c04cb94",
+          "comment_word": "0x0c04cb94",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeba4",
+          "owned_word": "0xa0228d73",
+          "comment_word": "0xa0228d73",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeba8",
+          "owned_word": "0x3c040025",
+          "comment_word": "0x3c040025",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aebac",
+          "owned_word": "0x0c06acbc",
+          "comment_word": "0x0c06acbc",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aebb0",
+          "owned_word": "0x2484fe18",
+          "comment_word": "0x2484fe18",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aebb4",
+          "owned_word": "0x0040302d",
+          "comment_word": "0x0040302d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aebb8",
+          "owned_word": "0x2403ffff",
+          "comment_word": "0x2403ffff",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aebbc",
+          "owned_word": "0x10c30004",
+          "comment_word": "0x10c30004",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aebc0",
+          "owned_word": "0x3c01002c",
+          "comment_word": "0x3c01002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aebc4",
+          "owned_word": "0x8c248dc8",
+          "comment_word": "0x8c248dc8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aebc8",
+          "owned_word": "0x0c04cd24",
+          "comment_word": "0x0c04cd24",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aebcc",
+          "owned_word": "0x24050003",
+          "comment_word": "0x24050003",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aebd0",
+          "owned_word": "0xdfbf0000",
+          "comment_word": "0xdfbf0000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aebd4",
+          "owned_word": "0x03e00008",
+          "comment_word": "0x03e00008",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aebd8",
+          "owned_word": "0x27bd0010",
+          "comment_word": "0x27bd0010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aebdc",
+          "owned_word": "0x00000000",
+          "comment_word": "0x00000000",
+          "status": "matched"
+        }
+      ]
+    },
+    {
+      "role": "complete prepared stream helper or actual signed getter/setter body",
+      "path": "recomp/config/output/sub_001AE910_0x1ae910.cpp",
+      "sha256": "89d74fe4b14785ed327f8467c1b4c2b4fc0455ea420bea74b336f3eb8d9f2eea",
+      "start": "0x1ae910",
+      "end_exclusive": "0x1ae99c",
+      "matched_comments": 32,
+      "omitted_zero_words": 3,
+      "conflicts": 0,
+      "comparisons": [
+        {
+          "pc": "0x001ae910",
+          "owned_word": "0x27bdffe0",
+          "comment_word": "0x27bdffe0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae914",
+          "owned_word": "0xffbf0010",
+          "comment_word": "0xffbf0010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae918",
+          "owned_word": "0x7fb00000",
+          "comment_word": "0x7fb00000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae91c",
+          "owned_word": "0x0080802d",
+          "comment_word": "0x0080802d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae920",
+          "owned_word": "0x0c06e0a8",
+          "comment_word": "0x0c06e0a8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae924",
+          "owned_word": "0x2404000e",
+          "comment_word": "0x2404000e",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae928",
+          "owned_word": "0x10400003",
+          "comment_word": "0x10400003",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae92c",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001ae930",
+          "owned_word": "0x10000016",
+          "comment_word": "0x10000016",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae934",
+          "owned_word": "0x24020001",
+          "comment_word": "0x24020001",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae938",
+          "owned_word": "0x3c02002c",
+          "comment_word": "0x3c02002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae93c",
+          "owned_word": "0x00101880",
+          "comment_word": "0x00101880",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae940",
+          "owned_word": "0x24428dc8",
+          "comment_word": "0x24428dc8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae944",
+          "owned_word": "0x00431021",
+          "comment_word": "0x00431021",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae948",
+          "owned_word": "0x8c440000",
+          "comment_word": "0x8c440000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae94c",
+          "owned_word": "0x14800003",
+          "comment_word": "0x14800003",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae950",
+          "owned_word": "0x00101840",
+          "comment_word": "0x00101840",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae954",
+          "owned_word": "0x1000000d",
+          "comment_word": "0x1000000d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae958",
+          "owned_word": "0x24020001",
+          "comment_word": "0x24020001",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae95c",
+          "owned_word": "0x3c02002c",
+          "comment_word": "0x3c02002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae960",
+          "owned_word": "0x00701821",
+          "comment_word": "0x00701821",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae964",
+          "owned_word": "0x24428d73",
+          "comment_word": "0x24428d73",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae968",
+          "owned_word": "0x000318c0",
+          "comment_word": "0x000318c0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae96c",
+          "owned_word": "0x00431021",
+          "comment_word": "0x00431021",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae970",
+          "owned_word": "0x80420000",
+          "comment_word": "0x80420000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae974",
+          "owned_word": "0x14400003",
+          "comment_word": "0x14400003",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae978",
+          "owned_word": "0x24020001",
+          "comment_word": "0x24020001",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae97c",
+          "owned_word": "0x10000003",
+          "comment_word": "0x10000003",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae980",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001ae984",
+          "owned_word": "0x0c04cb88",
+          "comment_word": "0x0c04cb88",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae988",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001ae98c",
+          "owned_word": "0xdfbf0010",
+          "comment_word": "0xdfbf0010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae990",
+          "owned_word": "0x7bb00000",
+          "comment_word": "0x7bb00000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae994",
+          "owned_word": "0x03e00008",
+          "comment_word": "0x03e00008",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae998",
+          "owned_word": "0x27bd0020",
+          "comment_word": "0x27bd0020",
+          "status": "matched"
+        }
+      ]
+    },
+    {
+      "role": "complete prepared stream helper or actual signed getter/setter body",
+      "path": "recomp/config/output/sub_001AE9A0_0x1ae9a0.cpp",
+      "sha256": "36191d040f8c3f0449ee8451e949aa1bcb59a22d05e320e031bba8ba1966980b",
+      "start": "0x1ae9a0",
+      "end_exclusive": "0x1ae9f0",
+      "matched_comments": 19,
+      "omitted_zero_words": 1,
+      "conflicts": 0,
+      "comparisons": [
+        {
+          "pc": "0x001ae9a0",
+          "owned_word": "0x27bdffe0",
+          "comment_word": "0x27bdffe0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9a4",
+          "owned_word": "0xffbf0010",
+          "comment_word": "0xffbf0010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9a8",
+          "owned_word": "0x7fb00000",
+          "comment_word": "0x7fb00000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9ac",
+          "owned_word": "0x0080802d",
+          "comment_word": "0x0080802d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9b0",
+          "owned_word": "0x0c06e0a8",
+          "comment_word": "0x0c06e0a8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9b4",
+          "owned_word": "0x2404000e",
+          "comment_word": "0x2404000e",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9b8",
+          "owned_word": "0x14400009",
+          "comment_word": "0x14400009",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9bc",
+          "owned_word": "0x3c03002c",
+          "comment_word": "0x3c03002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9c0",
+          "owned_word": "0x00102080",
+          "comment_word": "0x00102080",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9c4",
+          "owned_word": "0x24638dc8",
+          "comment_word": "0x24638dc8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9c8",
+          "owned_word": "0x00641821",
+          "comment_word": "0x00641821",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9cc",
+          "owned_word": "0x8c630000",
+          "comment_word": "0x8c630000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9d0",
+          "owned_word": "0x10600003",
+          "comment_word": "0x10600003",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9d4",
+          "owned_word": "0x0200202d",
+          "comment_word": "0x0200202d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9d8",
+          "owned_word": "0x0c06b9d0",
+          "comment_word": "0x0c06b9d0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9dc",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001ae9e0",
+          "owned_word": "0xdfbf0010",
+          "comment_word": "0xdfbf0010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9e4",
+          "owned_word": "0x7bb00000",
+          "comment_word": "0x7bb00000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9e8",
+          "owned_word": "0x03e00008",
+          "comment_word": "0x03e00008",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001ae9ec",
+          "owned_word": "0x27bd0020",
+          "comment_word": "0x27bd0020",
+          "status": "matched"
+        }
+      ]
+    },
+    {
+      "role": "complete prepared stream helper or actual signed getter/setter body",
+      "path": "recomp/config/output/sub_001AEB00_0x1aeb00.cpp",
+      "sha256": "8aec80f24ac9520b12e7883c39353ef03bcdec831138db8aa8a9ae861c5354cf",
+      "start": "0x1aeb00",
+      "end_exclusive": "0x1aeb58",
+      "matched_comments": 20,
+      "omitted_zero_words": 2,
+      "conflicts": 0,
+      "comparisons": [
+        {
+          "pc": "0x001aeb00",
+          "owned_word": "0x27bdffe0",
+          "comment_word": "0x27bdffe0",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb04",
+          "owned_word": "0xffbf0010",
+          "comment_word": "0xffbf0010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb08",
+          "owned_word": "0x7fb00000",
+          "comment_word": "0x7fb00000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb0c",
+          "owned_word": "0x0080802d",
+          "comment_word": "0x0080802d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb10",
+          "owned_word": "0x0c06e0a8",
+          "comment_word": "0x0c06e0a8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb14",
+          "owned_word": "0x2404000e",
+          "comment_word": "0x2404000e",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb18",
+          "owned_word": "0x1440000b",
+          "comment_word": "0x1440000b",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb1c",
+          "owned_word": "0x3c03002c",
+          "comment_word": "0x3c03002c",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb20",
+          "owned_word": "0x00102080",
+          "comment_word": "0x00102080",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb24",
+          "owned_word": "0x24638dc8",
+          "comment_word": "0x24638dc8",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb28",
+          "owned_word": "0x00648021",
+          "comment_word": "0x00648021",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb2c",
+          "owned_word": "0x8e040000",
+          "comment_word": "0x8e040000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb30",
+          "owned_word": "0x10800005",
+          "comment_word": "0x10800005",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb34",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001aeb38",
+          "owned_word": "0x0c04aa3a",
+          "comment_word": "0x0c04aa3a",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb3c",
+          "owned_word": "0x00000000",
+          "comment_word": null,
+          "status": "omitted_zero"
+        },
+        {
+          "pc": "0x001aeb40",
+          "owned_word": "0x0c04c78e",
+          "comment_word": "0x0c04c78e",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb44",
+          "owned_word": "0x8e040000",
+          "comment_word": "0x8e040000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb48",
+          "owned_word": "0xdfbf0010",
+          "comment_word": "0xdfbf0010",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb4c",
+          "owned_word": "0x7bb00000",
+          "comment_word": "0x7bb00000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb50",
+          "owned_word": "0x03e00008",
+          "comment_word": "0x03e00008",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001aeb54",
+          "owned_word": "0x27bd0020",
+          "comment_word": "0x27bd0020",
+          "status": "matched"
+        }
+      ]
+    },
+    {
+      "role": "complete prepared stream helper or actual signed getter/setter body",
+      "path": "recomp/config/output/sub_001B82A0_0x1b82a0.cpp",
+      "sha256": "c16f7004afd58b395e1cf3a95035b043b4986e1244839ebcbb34afb177fb1156",
+      "start": "0x1b82a0",
+      "end_exclusive": "0x1b82b0",
+      "matched_comments": 4,
+      "omitted_zero_words": 0,
+      "conflicts": 0,
+      "comparisons": [
+        {
+          "pc": "0x001b82a0",
+          "owned_word": "0x03e00008",
+          "comment_word": "0x03e00008",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001b82a4",
+          "owned_word": "0x0000102d",
+          "comment_word": "0x0000102d",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001b82a8",
+          "owned_word": "0x00000000",
+          "comment_word": "0x00000000",
+          "status": "matched"
+        },
+        {
+          "pc": "0x001b82ac",
+          "owned_word": "0x00000000",
+          "comment_word": "0x00000000",
+          "status": "matched"
+        }
+      ]
+    }
+  ],
+  "owned_constants": {
+    "0x234060": "f0d8ffffe4f1ffff44f3ffff3ef4ffff00f5ffff9ef5ffff24f6ffff98f6fffffff6ffff5af7ffffadf7fffff8f7ffff3ef8ffff7ef8ffffbaf8fffff2f8ffff27f9ffff59f9ffff88f9ffffb4f9ffffdff9ffff07faffff2efaffff53faffff76faffff98faffffb9faffffd8fafffff7faffff14fbffff31fbffff4cfbffff67fbffff81fbffff9afbffffb3fbffffcafbffffe2fbfffff8fbffff0efcffff24fcffff39fcffff4dfcffff61fcffff75fcffff88fcffff9afcffffadfcffffbefcffffd0fcffffe1fcfffff2fcffff03fdffff13fdffff23fdffff32fdffff42fdffff51fdffff60fdffff6efdffff7dfdffff8bfdffff99fdffffa6fdffffb4fdffffc1fdffffcefdffffdbfdffffe8fdfffff4fdffff01feffff0dfeffff19feffff25feffff30feffff3cfeffff47feffff52feffff5dfeffff68feffff73feffff7efeffff88feffff93feffff9dfeffffa7feffffb1feffffbbfeffffc5feffffcffeffffd8feffffe2feffffebfefffff4fefffffefeffff07ffffff10ffffff19ffffff21ffffff2affffff33ffffff3bffffff44ffffff4cffffff54ffffff5dffffff65ffffff6dffffff75ffffff7dffffff85ffffff8dffffff94ffffff9cffffffa3ffffffabffffffb2ffffffbaffffffc1ffffffc8ffffffd0ffffffd7ffffffdeffffffe5ffffffecfffffff3fffffffaffffff00000000"
+  },
+  "results": {
+    "checks": 1400838,
+    "cases": 73728,
+    "original_calls": 289647,
+    "game_run": false
+  },
+  "receipts": [
+    {
+      "path": "build-native-sjuni/stream-start-llvm-v7/receipt.json",
+      "sha256": "1f61320f15012040cf883e97e1ec495cce15790d91e9ef4cefe3d4aa799358b1",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3"
+    },
+    {
+      "path": "build-native-sjuni/stream-start-gcc-v7/receipt.json",
+      "sha256": "c15e8f870f44159f7f42f2b54e13dc7f1ae0cbaf25abfcdfba90540d527a17e4",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5"
+    }
+  ],
+  "actual_native_instance_receipts": [
+    {
+      "path": "build-native-sjuni/stream-prepared-instance-llvm-v1/receipt.json",
+      "sha256": "46b9ae3191f688ab5f1692cc313e670f81f60e073294e81a3fc49aefee76209c",
+      "receipt": {
+        "status": "passed",
+        "compiler": "C:\\Users\\Ninjacornix\\AppData\\Local\\OutbreakRecomp\\launcher\\toolchains\\llvm-mingw-20251216-ucrt-x86_64\\bin\\x86_64-w64-mingw32-clang++.exe",
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "cmake_sha256": "76129878fe6dc5a2246415d442de8bc01688ff9a48eb5d9498ea374de8b5a086",
+        "ninja_sha256": "5020138b3757035df9dca9a2243624d5810ffa6ae24444bd95f752cbd1b89123",
+        "source_sha256": {
+          "tools/native_reconstruction/gameplay_scenario/stream_instances_oracle/CMakeLists.txt": "0032b4420c0d47543d382b2f0012061d0ca03efa2f2f8b792a04e7d109970513",
+          "tools/native_reconstruction/gameplay_scenario/stream_instances_oracle/tests.cpp": "ed25d318bdd7b1fd1833096e634d9b8e5ed1dbaba0a0879871f719e259132442",
+          "tools/native_reconstruction/gameplay_scenario/verify_stream_instances.py": "5322ddc75a34f480cda5731a473af43e8c0965f2dd5bd3d85b90808ce175be55",
+          "game/native/gameplay_scenario/stream_channels.hpp": "2d42ba1955ec54c86b1d9e85f19354fe623d6c26182fd5bc48285cec61beddc1",
+          "game/native/gameplay_scenario/stream_channels.cpp": "0d47115b087015c0f4e90287133e4a521360fbdd6999983cda7de8f830d55683",
+          "game/native/gameplay_scenario/stream_gain_curve.inc": "98e59700ba81e120e80def2366b9257ca8c7a1e062f73140a691d7980f21cb7b",
+          "game/native/gameplay_scenario/stream_instances.hpp": "e35ecb45beded835564f30f7f7e90bffd74272938a54c888fe4d4bc956af2378",
+          "game/native/gameplay_scenario/stream_instances.cpp": "0364db7b4627c3a2ad862d88076357d07a56bce0a0924cc65e92131a6448c583"
+        },
+        "native_cpp_source_sha256": {
+          "game/native/adx_block/adx_block.cpp": "14a93abdd07a9fb029575c952b66055a2c4c3431818a6c0901e5dd2b27460495",
+          "game/native/adx_block/adx_block_tests.cpp": "0451dbf95d9c6196558342c1bfd732fd4672afdee46fcc5bfd2ef38d2fe9e07e",
+          "game/native/adx_control/predictor_control.cpp": "d1b654fc594275968c4f8ec3a316619b21a8dc9bf13519343678f0c60887ce1f",
+          "game/native/adx_control/predictor_control_tests.cpp": "7749b8858273b1c16df99f2b0c41177927b0ee03ae93ce485b3f8d7cb5978c3e",
+          "game/native/adx_control/predictor_service.cpp": "50f3863f3f4cf623a0eefc04a6c12bc5aa025b48450af43cef7fdfe2e9dbbfdb",
+          "game/native/adx_control/predictor_service_tests.cpp": "4159e69bc4d155270995abb8b52d14cd98dcd093f182d4659d3a574945742abf",
+          "game/native/adx_header/adx_header.cpp": "124147ce7fed57c895c080ece20aae8c8231c67eae07816b481895d4d34f38d4",
+          "game/native/adx_header/adx_header_tests.cpp": "660338cdad88d9b04c03073eebfe355a764b307b507a608cb21cfac0311eb6b6",
+          "game/native/adx_pcm_store/pcm_store.cpp": "2ef48f108a1319794163ab2fc98000da44c48de061fc5299e46c508434ff6bfd",
+          "game/native/adx_pcm_store/pcm_store_tests.cpp": "9c356d7a49362a9677243c44b556e8496d7d1f973ffc67d5fdc7757c0447f1f1",
+          "game/native/adx_pcm_store/v2/pcm_store.cpp": "5d0811bc0fe524d454be097becfa2271025d625d8b253dbf513fd0fd9e47ab5b",
+          "game/native/adx_pcm_store/v2/pcm_store_tests.cpp": "b13e809e1eff566cc4caf778bf74a691b88691b3af6a06cfc66c8857ece7a6e6",
+          "game/native/adx_sequence/clip.cpp": "8563ed054d36f6074fe465545a571d45e32fe8813678ca6f408764c5d297b899",
+          "game/native/adx_sequence/sequence.cpp": "06f1f7d722c74c9e9ecc4cea7fbf7deb582f81719cfa01c9531736ec803e0dcb",
+          "game/native/adx_sequence/sequence_tests.cpp": "aa1a77a2b1fc9b74656eb0d9bcb10a2601566c0ec9bac93502451b2860ba6e2a",
+          "game/native/adx_stereo/adx_stereo.cpp": "3a323a108772aa844594fb2d4e34fb56ef0a522006d90d8b825ead7bd168d55f",
+          "game/native/adx_stereo/adx_stereo_tests.cpp": "3a3b3dc53caabef958306a0fbe04fd2464b319cc2fcf7454e839886db06a79a6",
+          "game/native/adx_window/adx_window.cpp": "479deb13ae9894158b2fcd81d35b9c400c02f0e472f8df6c47f484723a1121f3",
+          "game/native/adx_window/adx_window_tests.cpp": "c9f305e86c7c56da9eba5e2ec0c88bc87519a9c6cc12c83c376961101f198c71",
+          "game/native/adx_window/v2/playback_r2/inherited_tests.cpp": "97953ac1678eb3ea19c6d57075c69661bb7a643d7ad27af40a684711c0e0e197",
+          "game/native/adx_window/v2/playback_r2/stream_window.cpp": "dd41d0aa38a3f6d04d5038d2bb4440bb52f8f1b26979563fd4daab0f13435962",
+          "game/native/adx_window/v2/queue_safe_r3/inherited_tests.cpp": "3be022902b2071ab8436a4444d5fd2844db38f16bd63bcccdcbfb92b942b085c",
+          "game/native/adx_window/v2/queue_safe_r3/stream_window.cpp": "aaa6df45eafab512581e9cd4b3db8963c926dc35e42d545f1917c927fafd69b9",
+          "game/native/adx_window/v2/ready_flag_r1/stream_window.cpp": "d1488337f5e2b2ad57949093669f159feb2647a6003857ba74fbf4aa3699b0d7",
+          "game/native/adx_window/v2/service_r4/quantum_tests.cpp": "f9a79694747790d7ced056160855fa35d9eb1c7f337edff1c64a086e7387d1c9",
+          "game/native/adx_window/v2/service_r4/stream_window.cpp": "4e8ea3da80db13f512a9092067f1d14fd827501dd28f0c9059a52072411ab1db",
+          "game/native/adx_window/v2/stream_window.cpp": "293ec56c474c0abd3a4023477e548f034f8295870c9e0c61f3c59d22f3400065",
+          "game/native/adx_window/v2/stream_window_tests.cpp": "97953ac1678eb3ea19c6d57075c69661bb7a643d7ad27af40a684711c0e0e197",
+          "game/native/adx_workspace/adx_workspace.cpp": "921540694cdb7fd7aa3fdcd3b6a91910f2650b650cd314dad9ae5b10a7afe500",
+          "game/native/adx_workspace/adx_workspace_tests.cpp": "6f436723b0ad1e4017756eb66d77212a6debdcbf313da29d551cbdf376338169",
+          "game/native/adxt_attenuation/attenuation.cpp": "f6d32681f93f53ec5ae53c056dc92ab261d6f789cf146250109126a8e5bdc6b0",
+          "game/native/adxt_attenuation/attenuation_tests.cpp": "b8ea572a7df6dbc1abfadb65471de00c6c9075efce90c3f37caf37ca2d0bca93",
+          "game/native/adxt_clocked_player/inherited_tests.cpp": "e076e8ffed7b6a626449e97b6efb8fa6212297b5623b47b30bbbd139f3e8b7d1",
+          "game/native/adxt_clocked_player/player.cpp": "156f59c3b911d8c1c625c95b8350291c47be78f3c3698edd823a652d1ccfd47b",
+          "game/native/adxt_clocked_player/player_tests.cpp": "cee7fee170a39459fa90a93de5b17890aad5c65abc11f6648ec85820f0c5d0a1",
+          "game/native/adxt_control_owner/owner.cpp": "94f13f8ec88bf1a48728b471676ef4a5d3c9f582f0ae189b8561b125f1371e5d",
+          "game/native/adxt_control_owner/owner_tests.cpp": "ca1d6eb30f4110b7815d9aeb8cda325ec03102636aef584445a16ce394268c23",
+          "game/native/adxt_control_session/control_session.cpp": "224fdbcc10e65c32637e94132ce1f6ae8e1b924e3018dce95eb3cacc7a70c338",
+          "game/native/adxt_control_session/control_session_tests.cpp": "9865950292b653127d18c3b4b8e81d9ef0576557ffb4fff270346b230ee86bb1",
+          "game/native/adxt_estimated_clock/estimated_clock.cpp": "843d20f7d0e0fba68d4bef3fb65465b0c4ded8d85ce06ef82835e3e6e2a2d604",
+          "game/native/adxt_estimated_clock/estimated_clock_tests.cpp": "549d3aa2e52e1f219c1ab3a8ff59f4a096e61b8dca6ab379c7bb4f41a050cf68",
+          "game/native/adxt_instances/game_control_tests.cpp": "489ed61c089735c55300ac5ae1dd869e3f9a084e7931cdc72e41725a94b3588a",
+          "game/native/adxt_instances/instances.cpp": "e0f9f8e30f3dc05e457f2b90297a87acfc399faabdb82f7161d1f3530fd4c44e",
+          "game/native/adxt_instances/instances_tests.cpp": "1669ca60b3538dedb436ae03a648c9debab5ab297787970637a8e293283b6f21",
+          "game/native/adxt_integer_clock/integer_clock.cpp": "2cccf8198fff234e68a308587098594ed2e227ace7206a6812230b7d52074d4b",
+          "game/native/adxt_integer_clock/integer_clock_tests.cpp": "3168b16a609688ff8b58226456fcc3de7c24a7e16962745981e454720e961fbf",
+          "game/native/adxt_lsc_input/input.cpp": "f5c01840fc96bc716d59de0226f8ac1d842a97d803f198542662eaf06310fb95",
+          "game/native/adxt_lsc_input/owner_tests.cpp": "6c291b82eb608ddb9078ef344e4d0ddaee12bf5626b9444854ae0e350b1105da",
+          "game/native/adxt_output_session/session.cpp": "fd09acbc7245b0900a41963fd28baa74e65b04a43558a6eb076c4491fc5062e6",
+          "game/native/adxt_output_session/session_tests.cpp": "5fbfa5f1f1ab499a5a02c0abb49edb41942efc4bee8ef0865a6bf15f69add3dd",
+          "game/native/adxt_phased_player/player.cpp": "7e3c93a3a5f663e43fd847f523e5ed970ff6525029759f4a61a8be03903411e5",
+          "game/native/adxt_phased_player/player_tests.cpp": "b91301c6fcad2d40803eb5cece4242cb663563258b0795b9c278ca92ccb7f67b",
+          "game/native/adxt_playback/playback.cpp": "57ca0798c83b72763a79406b5c2d03c24682333d7d8100c9969095365e0c26fe",
+          "game/native/adxt_playback/playback_tests.cpp": "d9764e92535d774af9ef77fdb007e8a0fa980fd1be13fd19dcaba995bcbad1aa",
+          "game/native/adxt_player/player.cpp": "72c1a06af895e7a7d3b80f42f383a8df5e99c40d46e3c48e384464c8d5ce22b7",
+          "game/native/adxt_player/player_tests.cpp": "4395e907f47593eee4b97e2f3850606d3eb18b923431cfa7dcaa2529093e3fa8",
+          "game/native/adxt_refill/adxt_refill.cpp": "5ed2a85f920b5b80011b1a4bbaab4210a70497ab7f3399aad15b29f51df9cf72",
+          "game/native/adxt_refill/adxt_refill_tests.cpp": "6455980a63bab91ab31b39c8576583a9230b83bb25b95a751b2aaea490067f64",
+          "game/native/adxt_service_group/service_group.cpp": "e377b77ba3724e072b08b0ce43e44972aac1e99f8aab77f2e034bd1535587ce0",
+          "game/native/adxt_service_group/service_group_tests.cpp": "d8fcc7bbf7cc6c6bab2b115c8d0fd2b1eeb38edb4f2d8b8b672a911473752c4d",
+          "game/native/adxt_serviced_clock/completion.cpp": "5c4a5d61a1cfe0244d75a31cb2a91a7d04f6de443d862a791ddcb286331d6683",
+          "game/native/adxt_serviced_clock/completion_tests.cpp": "46f4b41fad374cf0916390e694168b2da0b5bb64b01de5acfc8bcac70d16cf43",
+          "game/native/adxt_shared_player/player.cpp": "c19dc7758d5f258f0b616e7b87968a33be73b01148e788386ca57edc73e9d27d",
+          "game/native/adxt_shared_player/player_tests.cpp": "e37c702714203c855424330a5b42105dedf3610c08b3449db3693ba458087c7c",
+          "game/native/adxt_shared_source/shared_source.cpp": "36b6874d29f73cb166eb3d8a5881b046b57e6a149ec5e3ba42ce957800a7af6a",
+          "game/native/adxt_shared_source/shared_source_tests.cpp": "14974bd04f4ab43a40fca002017da37bcd80936fbd9d364049d352a5ef8374ae",
+          "game/native/adxt_transfer_groups/transfer_groups.cpp": "ce3b7e2ea9509d0de6d10937fca878093d7203fb16a6a36a7fc17d0762e9d822",
+          "game/native/adxt_transfer_groups/transfer_groups_tests.cpp": "7305d972d25248f7f851c55b705775914f1fc614021c1ab129f383a974de4f6e",
+          "game/native/afs_hierarchy/hierarchy.cpp": "106b616c63b3446108e8a3235f5e2534121178fd6acf0da0c481561a6885284b",
+          "game/native/afs_hierarchy/hierarchy_tests.cpp": "9552366d2a8bb9005f40d84b29af001ecaca8a5579dd372a0930d642b3bcd22b",
+          "game/native/afs_source_range/afs_source_range.cpp": "6f0808755ec7c82b5e0a95c403b45d462b27bbe1f1aec98f202fa081ddc9ce90",
+          "game/native/afs_source_range/afs_source_range_tests.cpp": "576f7dce5acc216bb5cb08c56ece1c30e9398835473c092d5ad800e29f12f0f6",
+          "game/native/audio_banks/v2/algorithms.cpp": "4f4dafb01f3e980c958e26a3af6f78a2240860a3951ae039b3ac487507d3e93e",
+          "game/native/audio_banks/v2/budget_tests.cpp": "6e8138e46f0f4ceadddfdf139107c9958a3ae461e6fcd8c542480ce6103e4c7c",
+          "game/native/audio_banks/v2/session.cpp": "026fbd90c0521bf5bd4b8eab514f6174bfab465854acbd7b71d681e0f5421603",
+          "game/native/audio_clip_loader/loader.cpp": "3efbf79ec1da929f36c65637d1a6dd819e4d7ccb0b4d5d0c6129272b87886b74",
+          "game/native/audio_clip_loader/loader_tests.cpp": "f7682cab2684c29fbd8bbeac23e6beb848791374d8337c8b86b9cc68e32de7e8",
+          "game/native/audio_mix_tail/mixer.cpp": "c1ecb4788b723d90c62f61f65235a563ec8a4fcbb047b52d93ef2cfc0fcc26fa",
+          "game/native/audio_mix_tail/mixer_tests.cpp": "dcb03eabf3356db0cfc358204e4d33bc28652580386f7ca439f6df298da3a7af",
+          "game/native/audio_mix_tail/owner_tests.cpp": "3cdc17b9fb8769fed34692ea76a0b7b19aefd14bff82e8759f33c96c9fb64838",
+          "game/native/audio_output/audio_output_owner.cpp": "ead835bd2d09fc427808e99cd374d0e6b4e8e3633c9d98324bc6f21db5f5dc16",
+          "game/native/audio_output/test_audio_output_owner.cpp": "42a2f00abbf99d1e9588ebb84e937000c97de322b8e983fa50c20861ee062556",
+          "game/native/disc_stream/disc_stream.cpp": "9c00be0cd36defa734ef6ee60e0ad3a29f81f6dbec6d5b949e282293b3dba060",
+          "game/native/disc_stream/disc_stream_tests.cpp": "bc900faf345dc5d6c0bb5f0d886ab647ca8aced7037a7e2d21d5cd2e084245b1",
+          "game/native/gameplay_scenario/stream_channels.cpp": "0d47115b087015c0f4e90287133e4a521360fbdd6999983cda7de8f830d55683",
+          "game/native/gameplay_scenario/stream_instances.cpp": "0364db7b4627c3a2ad862d88076357d07a56bce0a0924cc65e92131a6448c583",
+          "game/native/lsc_queue/queue.cpp": "098d0bac9e9f57538766bda36d2441606f36441391c5ba244e8e550a6bf98392",
+          "game/native/lsc_queue/queue_tests.cpp": "30e3c75f65b35862a9baebcb76e1b09684c88cff88f3b59ff7337ba601f9dada",
+          "game/native/pcm/pcm.cpp": "fe31c38f6c276c60c1f1f7cbf5bea2d9132b83c85fd0b49629b0ca721bf4e844",
+          "game/native/pcm/tests/pcm_tests.cpp": "e440289063021b4df67afa2771a2be89d517ab10f9c84d62053325ff055143b4",
+          "game/native/pcm_bridge/session_bridge.cpp": "fcf284fa46a752f07a2f48a019cce8f6f2df8eae7d864aef787ca46854bc9649",
+          "game/native/pcm_bridge/session_bridge_tests.cpp": "d8f8c020df1567585c3bfedc9e7ad4414c7ae0ec88ef0f4d12e75dd4ffc4127e",
+          "game/native/resource_io/async_read_owner.cpp": "09235718523d8fa684bbdd96957376a89482a46c906236a8e233086083b1226a",
+          "game/native/resource_io/async_read_owner_tests.cpp": "098221ac6165f4e97d34409db1036bc8aca51ad5a37d51fbf7a9d13a1f8773ab",
+          "game/native/resources/bounded_view.cpp": "c7c1b618b74f42d6cb6717a3a55fdd5ec44abf6668e6bc43e7673fbe5731de84",
+          "game/native/resources/resource_session.cpp": "40da8f56bca191c39d6bb4dc81e3a0cd82e1d09c1c83c7c702e524cc511ab0fd",
+          "game/native/resources/resource_tests.cpp": "b662576c0f11adca447b2925a9b75a77a2183cc054c7e31836523c068a5bd932",
+          "game/native/resources/virtual_file_view.cpp": "969576395f7a8b0210a836712258ffb11fd2cc846a6934b39374181510c32b98",
+          "game/native/sjrb/sjrb.cpp": "29a888b091cf7284876cabcab0aa78062632e6192d98782edc0b065d926d25a2",
+          "game/native/sjrb/sjrb_tests.cpp": "17e8692f2d42c7f515ae9c013f0aa3930ca03d079a86cbc0bfa072f47357fd98",
+          "game/native/sjuni/sjuni.cpp": "243164a1459da64546ecff59877bed34239232bd8b7fa945b8eb06ebff19f67e",
+          "game/native/sjuni/sjuni_tests.cpp": "49a2c8eb25f682b4251ed5eee08b294d5c752ec1d28e0c5d762094d0bfebb391",
+          "game/native/tasks/serial_worker.cpp": "72911c36d42bbdfdf7ceb4f6e288caa0c8736e57f4dec91bf6465329bfa24e42",
+          "game/native/tasks/serial_worker_tests.cpp": "da4c9c54b7671f6dba6757a2ba2e01e7181a098449d903fb6d75468b6c877ba6"
+        },
+        "native_header_source_sha256": {
+          "game/native/adx_block/adx_block.hpp": "eb671ed8071ebb4e6065ba2ec3fbb41706dcdb0935c6a53c162ad233759db195",
+          "game/native/adx_control/predictor_control.hpp": "5a8e81ea0139029cff05a9ec026372f089c566db5c0d7c4c1ca4465fd3034567",
+          "game/native/adx_control/predictor_service.hpp": "50e90ebc916ebdf79163f15f10e0a05e5298273dad4c77c4cd572808e8751063",
+          "game/native/adx_header/adx_header.hpp": "3a882ddf1e7dd979529c53c9824dcc362d544c3de39304d1d42e0bec44ebfb49",
+          "game/native/adx_header/key_table.inc": "eef27ed9cf01b8e7e916efff2344a110a437b740d38b01c7794fb1eec73c8b7d",
+          "game/native/adx_pcm_store/pcm_store.hpp": "f35df0c86868cb9252eb9be7959a775de1389db574483093a41d39a651375fe9",
+          "game/native/adx_pcm_store/v2/pcm_store.hpp": "41dc84b5b7f3807c057e4ff414575a9ce1ad47a4b7a5a76cb8f7da60a372597a",
+          "game/native/adx_sequence/clip.hpp": "7ec321862b355a792e78f48baf6081571012a5ea6471c3cdc230af4f30c115ab",
+          "game/native/adx_sequence/sequence.hpp": "fcfc5a4fed313f0aea08b3eacfdf0dfb7f398cd9b015b76b2df8b050446ba04f",
+          "game/native/adx_stereo/adx_stereo.hpp": "6cf5c13f765c60b36cf13ac7c9fd74fd0bc09f3ea106f4d640f98bbff157df8b",
+          "game/native/adx_window/adx_window.hpp": "a443e48c83762a1be0c814b346d48d2f250a77154c18f9c5e9af864b8c1fbffe",
+          "game/native/adx_window/v2/playback_r2/stream_window.hpp": "5bd4fbe1edc756ec461ad8ffee1eed09b87245e7fb07e7d0f04d010b222bcfd1",
+          "game/native/adx_window/v2/service_r4/quantum_cases.hpp": "ffc9fbbdac5c86f694f3774aa0afcb5143d56b7075cd0ef38a83cf5675be97b5",
+          "game/native/adx_window/v2/service_r4/stream_window.hpp": "35aeaf4d1e322455cb4e2f9b995ebdf7251470b03ae6b944ab5141bb923310c0",
+          "game/native/adx_window/v2/stream_window.hpp": "8449ce2305583c9b82f47938b2c526204e59786e41af3c825d3c9c508bfb85a0",
+          "game/native/adx_workspace/adx_workspace.hpp": "d835c0c5e5bb3839e27b367f6c7ea4bd825a373078628835d1abb6570ec6e17d",
+          "game/native/adxt_attenuation/attenuation.hpp": "9a234ea0344886434be2f9c303721c0ffc6ee33f71af5eca31e0d2e2f7ff4eda",
+          "game/native/adxt_clocked_player/player.hpp": "507817f5a1c37894d3991cf1b59934e105bec4a63b8362c32c37094abfddeedb",
+          "game/native/adxt_control_owner/owner.hpp": "38247303eca0479ca722e658461d93d4745b46cef4b25e44c361c0e80c9c65fe",
+          "game/native/adxt_control_session/control_session.hpp": "2005ea36ba2ebdf1bc54d8802a968e371760264fb6600bea9e17665298980aa3",
+          "game/native/adxt_estimated_clock/estimated_clock.hpp": "4da48744e9dac493e77d57fb8130e2638bd5a8a40dcc7965652a00663cbfb66b",
+          "game/native/adxt_instances/instances.hpp": "dbd077c0ff730a4155c533c6ba51766aa24d331c8a0549cdf18b8396cd9d9dd9",
+          "game/native/adxt_instances/source_key.hpp": "d58b9960b2ba034079b07e3561201caec68b16b6c66a1c9471e606fa5f5c128c",
+          "game/native/adxt_integer_clock/integer_clock.hpp": "dfffa9ba5a3866a1f0f936a4db0f979802422e5951b00772476b205b21f6c99b",
+          "game/native/adxt_lsc_input/input.hpp": "1a5b77914db1327a4ebebb9b075ddc6ccfaf344c77f86b18daeeec8790c9b0dd",
+          "game/native/adxt_output_session/session.hpp": "2095624d1033c09b92bd6ed7d0e6fa996e8973bf2e911736ac0ab6157781c1dd",
+          "game/native/adxt_phased_player/player.hpp": "4acdcf36ac84bf55ede62fc3a5e882470aaeefa0f9615e97b50fafb25b104a3c",
+          "game/native/adxt_phased_player/test_group.hpp": "ab02736c179cd485126f375187e864cbd2e14db6d66c4f0e4f23a9d70da2a6cf",
+          "game/native/adxt_playback/playback.hpp": "464ce0042549145a7aaa46eefa2afb9ce6fa4d9a7ea42b75abbbabf202a19935",
+          "game/native/adxt_player/player.hpp": "e5e8aa1bdf99a99b130fcaab2b3813a81a68febd34153f10d90afcd805ad374f",
+          "game/native/adxt_player/test_provider.hpp": "f25f878bdd9a4e123b966f79e6e1a727dbed51c0b0ad8e586efffeb1b7e271fe",
+          "game/native/adxt_refill/adxt_refill.hpp": "6b759a639f60751ba7c2caee4c0080f51fe8fe3867d89d3c562753f955289f88",
+          "game/native/adxt_service_group/service_group.hpp": "be771665aea500320892033812db861391f80b50c6f0aef53e6f6cc66ec594f2",
+          "game/native/adxt_serviced_clock/completion.hpp": "ec8998bd82adaedc1a5c7c095345e56e4922c58259e60a09030e64fa400ce55c",
+          "game/native/adxt_shared_player/player.hpp": "de5fb15eb13978879a2ab2076d75c8bdcec3d0073a6948e27124ded40c4894a9",
+          "game/native/adxt_shared_player/test_sources.hpp": "444b305e4c92cfce8c6c238c8656c2c0907aed054f63f7e6da1e4eb48e752fd7",
+          "game/native/adxt_shared_source/shared_source.hpp": "654783eb20af27851ed67b676062eb5d94ba25aa7a16c30ba152500b65fcc99e",
+          "game/native/adxt_transfer_groups/transfer_groups.hpp": "002a7300454c154f0e16c07b788c3ddd163b892b511b98438aa3cca1405b4638",
+          "game/native/afs_hierarchy/hierarchy.hpp": "673d925e0414a108d938c7d45360449237992e6af94438b2bc76cda07a12581b",
+          "game/native/afs_source_range/afs_source_range.hpp": "c8e91b5580c89b38d6a2d35f9444c80d7aecf66e1bee4d9bc441fa361cea1c3b",
+          "game/native/audio_banks/algorithms.hpp": "3b324870afdc42282910fe52f58e1fb3dd137f0550d590d547fd58e8ebd401e9",
+          "game/native/audio_banks/native_transport.hpp": "d5c0175f34f62b7305c30b3ef0eba155cc4c51ecafb33b0ea368813306db838d",
+          "game/native/audio_banks/session.hpp": "69d14f54e7de6d80ccfb0a6b35868bff0dcf33c3aa36a65fbb2bfc6cd7d881e8",
+          "game/native/audio_banks/source_members.inc": "15a9255f036a2658b173ada284a12385e929b66731618f227fe4770eb63c7f71",
+          "game/native/audio_banks/source_mix.inc": "d28e10cdcc91cd4ae2941dd018c17ee902953c92d24a0fdc109fac3ec291f328",
+          "game/native/audio_banks/source_records.inc": "44ea539c47bfd2dc31271c0aa96b9876d73818c9923a9739edae50127287dc0a",
+          "game/native/audio_banks/v2/algorithms.hpp": "4260dcc9546f3f3e17b24b8692da83e3f7d26877d9f5ee6d46c21d1b9696b0fc",
+          "game/native/audio_banks/v2/budget.hpp": "3dbdbc041f77de5ccb1c199759a8d7dd74915131bf73bb36f118e907d0055a18",
+          "game/native/audio_banks/v2/session.hpp": "eb67b3532811549b1348c4bfd7cfdee5b4aac0f0aad4cc99ae336cbe3d798c19",
+          "game/native/audio_banks/v2/test_inputs.hpp": "fb07e04d22c4ba0852ce88a4813aa5c4ce6888bb6ea8aaac571bc87b68b8cb2b",
+          "game/native/audio_clip_loader/loader.hpp": "f35a90d409a8333b074272391d3d556a5afaffa4e0383fde42af22b5e0db7e74",
+          "game/native/audio_mix_tail/mixer.hpp": "aab71312b18beb167cb849d07cd49b4da40d4dd410557dd2a8367f7200ca5414",
+          "game/native/audio_output/audio_output_owner.h": "cbc6cc13c770c1d011ad35ae9707ffe51fae171b1bbffa13dd073f9e112a2102",
+          "game/native/disc_stream/disc_stream.hpp": "bc66b2ac94cbed2c610701180521bb51fd3ab6464bc7262381c5096ee9559cd8",
+          "game/native/gameplay_scenario/action_choices.hpp": "c315448949c2871f01ac954c1c991c026a01e0183717dfca6fe86377230de9be",
+          "game/native/gameplay_scenario/actor_inventory_commands.hpp": "e9af73acaad8a13b0f94b6bee4cdad15e235314f67d6ce7b2496fb3b45529610",
+          "game/native/gameplay_scenario/actor_requests.hpp": "aadfcb722e24437962341a483132b03eef040d334ec0c1742584a503a6faf0e4",
+          "game/native/gameplay_scenario/actor_script_commands.hpp": "a17305fe64549dd380e035666890622015f85656564bca82018211fd5caa9fbd",
+          "game/native/gameplay_scenario/actor_script_predicates.hpp": "d420260e8ee8b74269f9fe727e4402d1cee07af50002ecbb1bf7a3a5796c1faa",
+          "game/native/gameplay_scenario/auxiliary_room_rows.hpp": "01644097b61fbdd9f254eee930e21bdc97b910936f0dcc07ae19b3a718b62745",
+          "game/native/gameplay_scenario/bank_audio.hpp": "627a11f3a44e30d3e28fabd7ead7f3103ee9f5b57f7be74f9a7635b264c59990",
+          "game/native/gameplay_scenario/character_remap.hpp": "987d455add34527b9e9b2cb92a2c5e588b24d1cbe7f84c3e38d4316e62786df9",
+          "game/native/gameplay_scenario/content.hpp": "fa70bf3bb8b05f2b12beb7df1b738412cfd4bdf63ae9b5970517ce7eab419576",
+          "game/native/gameplay_scenario/cutscene_actor_commands.hpp": "65456342727ada2c02c6a22035d970d397aa28e20ec8fda8538a00ae1b13c1b9",
+          "game/native/gameplay_scenario/cutscene_actor_reservations.hpp": "d6f9186a2fb12fa38c68f2f7b12874b6a72d0f7c0485fb6e6c1b0c22c0e2f44d",
+          "game/native/gameplay_scenario/cutscene_actor_tracks.hpp": "6125fb585dc32221681676f6567c0611ea5b417a24b02c4ad66b86c6a74b253f",
+          "game/native/gameplay_scenario/cutscene_command_scales.inc": "b0d55eb7615adc2a78f7518b0c3c6bdf00821916e6d2bd810ef0f362c905ff33",
+          "game/native/gameplay_scenario/cutscene_cues.hpp": "858b55316b5e8ad91584a60d191044ac757d9a32e7fa915684affc794f521658",
+          "game/native/gameplay_scenario/cutscene_descriptor.hpp": "03233684743e02393c3ce5b14c3e67c32898bd0f064aafc5592d6187c372f69a",
+          "game/native/gameplay_scenario/cutscene_object_tracks.hpp": "d082654f97c2aae6e1630875640a2b23781501b02fb85efc6a42c9e24c812c1c",
+          "game/native/gameplay_scenario/cutscene_playback.hpp": "18ca45dc7906b80e56a1f97ca736734590b6f29406a04d1c79a9c9c5db469ce1",
+          "game/native/gameplay_scenario/cutscene_primary_selection.hpp": "c77f822e22ca8d0e5aadf51d71b0e7161d7fda0e93923b92a19f6103a817afcd",
+          "game/native/gameplay_scenario/cutscene_requests.hpp": "0e2bb1616a57af8001f0c009618209cafe31a815cbeaa1b78d9687efb5df9c3d",
+          "game/native/gameplay_scenario/cutscene_roster_preparation.hpp": "51c04892a4111b6929c7dcae507f3aa868404baa291e296ba3096407d6a41c41",
+          "game/native/gameplay_scenario/enemy_descriptors.hpp": "71dc3da9373d22d33cfcda65daf638bdcc055dec9cbd55187410dff6f00198ec",
+          "game/native/gameplay_scenario/enemy_route_profiles.inc": "89022c02b68e1d40a070fc4d2905055fda6e89802e94e5ccd5214a49dc8aaf97",
+          "game/native/gameplay_scenario/enemy_routes.hpp": "a3343d7721b7105ac620509bc71d4e2377f46c45aa40fddaeba23b465d9ce67c",
+          "game/native/gameplay_scenario/enemy_spawn_profiles.inc": "14ffe09f5d0b53b1f081a1c40358cc6d97d614f7b9705bdc7474a0d1c759556b",
+          "game/native/gameplay_scenario/flags.hpp": "265400e86eda349b82fc710a8dcd91b9a82d16e3c71796a94c29c541ec1ecd6b",
+          "game/native/gameplay_scenario/fog.hpp": "0193135175b1122d61d75b075b5f7c4e0816493173d94a375102f12f758fb112",
+          "game/native/gameplay_scenario/interpreter.hpp": "b5c65ae64c926e01ab919f0fef912e77fc37ddb9fff0afa8f2d47a10c66c5c34",
+          "game/native/gameplay_scenario/inventory_compaction.hpp": "81527b60b3570f63df1aef7f9c6663dad37e8addd4ab793eb5c1ac3daa3af7df",
+          "game/native/gameplay_scenario/lighting.hpp": "7358d6e0166de5992233dc0ea9d29b0c0f7b9cdb1c183714fefd2e3a481fa56b",
+          "game/native/gameplay_scenario/model_reference.hpp": "4b512afd9574ead2cca36bc490f5938a557073f043d2b6021c9c51325b18f907",
+          "game/native/gameplay_scenario/model_transform_presets.inc": "1d4049b22be0920234b3efd915fc1b4ddc447a037baf8e76b98e1104a4deab31",
+          "game/native/gameplay_scenario/npc_descriptors.hpp": "807b910faab217184814a15a9059f67fe43037ea0a33bd5d3fa9196edb3ac5fb",
+          "game/native/gameplay_scenario/offline.hpp": "da24f7fcb56a1fb4401e8570da6d68b78f8a176a3a81a18a2fff4b7811fb1551",
+          "game/native/gameplay_scenario/offline_bindings.inc": "b14c1c2ab0df07f1fb70b4df924a9e93efa87ba79f639add7c6ee311b7f96472",
+          "game/native/gameplay_scenario/opcode_bindings.inc": "711c8322eb00f93a156b0b942195356b3527857ee093a9332d7f2d2ea7eb7fb9",
+          "game/native/gameplay_scenario/periodic_effects.hpp": "86e7566896b7c9bd9cc227021ce4a40dc5a802444541adafe61a415353280780",
+          "game/native/gameplay_scenario/resource_collision_profile.inc": "16a75a02a87a5ea00672e874d63f6e2ece10783e4718c342bd92bd1c61b6d1bb",
+          "game/native/gameplay_scenario/resource_collisions.hpp": "e8d0d35159b38a842139595dd7fbcabd1269cc996b9d013614b5e9e6ac97a244",
+          "game/native/gameplay_scenario/resource_templates.hpp": "cb718717fa931a22b761f7c1d5b7af142599801d94e462b7ba92b2a8c207d12c",
+          "game/native/gameplay_scenario/room_actor_assets.hpp": "68a0fffbe445dfbcd2bc6a9a65f4193f85991f739a691c69279a079d37156b84",
+          "game/native/gameplay_scenario/room_object_commands.hpp": "c99fade31b1876c006a7443a3c3ec2dc596d1ba2374953b5ec90271c7132972f",
+          "game/native/gameplay_scenario/room_rules.hpp": "c89ce7bb64076edae07779ff81a2175392de310fec5aa010a1b3447233c0f976",
+          "game/native/gameplay_scenario/room_scene_input.hpp": "f7e90a57a48d5c326c8ec370a42f1d97707d316b428892956ad9c8ef2bac374e",
+          "game/native/gameplay_scenario/room_scene_owner.hpp": "09bcc1e225c09e000d2b361c603ab38f7214da8d7fa19e60e891b4babe45397b",
+          "game/native/gameplay_scenario/saved_controls.hpp": "543fd46f4540d24b93895ed72607464b5931641078891df085b8c860aea01d27",
+          "game/native/gameplay_scenario/scenario_archive.hpp": "30c7191ed873a25ef6ea436490310214886267a10af73466844d994fdb73c326",
+          "game/native/gameplay_scenario/scene_audio_profile.inc": "c5a73180d64c32eee93690976e73894a1b7d6667282f1bd76bb44c7437764603",
+          "game/native/gameplay_scenario/scene_channels.hpp": "c32b8eb0ae4998c472b7c70a2051fd6ce98b283de65a6a83eabc55e5cb20deb4",
+          "game/native/gameplay_scenario/scene_control_routes.hpp": "f20d39cec7ccd8145d803d47ec390babe7d4c365d8c0a73b1a0f777358af35a1",
+          "game/native/gameplay_scenario/scene_control_types.hpp": "3527cc02c44ec72e420e8d6a900ba1e41e1ccd81903042604df50eb777314841",
+          "game/native/gameplay_scenario/scene_controls.hpp": "d006f22268a33e3e60c2b37be1e71e965d4960bf65433a8fe401ffc656416ec6",
+          "game/native/gameplay_scenario/scene_matrix_program_tables.inc": "870d43b3ff76a817e8778f8c76e823c1b1a347b251807787e587869dda105556",
+          "game/native/gameplay_scenario/scene_matrix_programs.hpp": "ba23330053bfd18a137b1ebacdabc3ffbd88dd87352215be2547f359d225db52",
+          "game/native/gameplay_scenario/scene_matrix_tables.hpp": "d7447ead8323ad9737004d6823ef33da4adfab22619d4d35a1f3d0a2870a25b1",
+          "game/native/gameplay_scenario/scene_model_bindings.hpp": "c5ca218f5645af66f166099021ff586671100c5fc824ae205fa6d5c735fd605e",
+          "game/native/gameplay_scenario/scene_models.hpp": "bc649bb75fd935cc42c693070c97b7b1c2d78745f5833f5a72f6e7ddc9c129c8",
+          "game/native/gameplay_scenario/scene_record_attachment.hpp": "65acdd267224d1f0e5ca78a0b1fdd9b95dcb7d27e0ca8ce35f7ac4634fdca3c0",
+          "game/native/gameplay_scenario/scene_record_commands.hpp": "d49b996133590d246d586e12d472111d0770d2b212176a94fecf3d65feec6904",
+          "game/native/gameplay_scenario/scene_record_eligibility.hpp": "8b18e95889895066887081f556750ea267400c61f47ff86246018acd56fbe70b",
+          "game/native/gameplay_scenario/scene_record_parameters.hpp": "b985cad1c0a2a76048099f159c1f29fdb0285460990f8749b9eccf35920a319e",
+          "game/native/gameplay_scenario/scene_resources.hpp": "4f573b5dd219317f6f74f5563776411eee8a3286ad199678b334cc9ea82d1a8f",
+          "game/native/gameplay_scenario/script_audio.hpp": "017c8a1b8e41b4c1b812630c6ce7f2eae09244a1b7a1e30fcb32621b5acf232d",
+          "game/native/gameplay_scenario/script_flow.hpp": "5bf3277dd31a2165dc88e33ae079a206f436f1e53b540c80b836ca0bcb34edab",
+          "game/native/gameplay_scenario/script_program.hpp": "20ada83eae1aa3d9c908c0081460c378d63b3a658cbc07ec29a9695219b0cfab",
+          "game/native/gameplay_scenario/sequence_control.hpp": "32768dccf274c41acca66522714d0cbbed332033b24ba1eef3fb76462c590277",
+          "game/native/gameplay_scenario/session_counters.hpp": "5c159b129055d0dffed7a5f606f19e97b40dad83de4758edbc13b2bd27c8142b",
+          "game/native/gameplay_scenario/stream_channels.hpp": "2d42ba1955ec54c86b1d9e85f19354fe623d6c26182fd5bc48285cec61beddc1",
+          "game/native/gameplay_scenario/stream_gain_curve.inc": "98e59700ba81e120e80def2366b9257ca8c7a1e062f73140a691d7980f21cb7b",
+          "game/native/gameplay_scenario/stream_instances.hpp": "e35ecb45beded835564f30f7f7e90bffd74272938a54c888fe4d4bc956af2378",
+          "game/native/gameplay_scenario/surface_effects.hpp": "40636c39e98c3825f2129613e1f0f8a52fb4f4f269a9a99f880a7e120b510ec7",
+          "game/native/lsc_queue/queue.hpp": "7b4435c38892f2b96990c1ff837f8da14534a709316aa312c382879e134a9b1a",
+          "game/native/pcm/pcm.hpp": "9fe0aff92070569bfd6744856ea438b92099ec38f1875dc660261ef755b659cb",
+          "game/native/pcm/tests/native_facade.hpp": "2798c9c8cbe9bdaf4761a57ec2e79b80b3bea39a2bba216a2250612dab0f55b9",
+          "game/native/pcm_bridge/session_bridge.hpp": "0b7c0b6f70234110035d05757aa93095ea4176b069f55fd581dee00ade31f9f3",
+          "game/native/pcm_bridge/source_hooks.inc": "0ebd44dec4a71f7cf57b2ddecac1122136f98fb98dffa948319e3b4c99988f28",
+          "game/native/pcm_bridge/test_facade.hpp": "c497420948090bde6dbe6db64f61758d923c2a49ddbeadeb4e1ded7926491018",
+          "game/native/resource_io/async_read_owner.hpp": "255ecda439a4f3e7f81bf6ae25335ace563251e400cd413b4f77d774c3262b57",
+          "game/native/resources/bounded_view.hpp": "badad2eeb0a9d43f4dd842b1d8253b8e5f620a130e576a09598fb52801000b04",
+          "game/native/resources/byte_view.hpp": "967f3ef9fab63390f05a95991a46dabbb6a7c0540130c16c35ee67eb498ffddb",
+          "game/native/resources/resource_session.hpp": "0ac5e50af8c08141fabf66b9277bf187a76f7af6bcae065f2ae2b876ce1586ad",
+          "game/native/resources/virtual_file_view.hpp": "e550406fcc5a685c095767df796843c7f9008f80ad064ecd61bc8596687ccb29",
+          "game/native/sjrb/sjrb.hpp": "95263a5391293bd7f4a5d9607cabb57a3ae565ae9eee0d3f38d290f5cc45a37b",
+          "game/native/sjuni/sjuni.hpp": "5d2ae19d35c7a12a8827e9c7b34daaa06671bd4a7b5a12de12864d4af3e669ce",
+          "game/native/tasks/serial_worker.hpp": "72f165f722689b134f4e97d149e16f215c143dff8873108cce816c06c80c7de4"
+        },
+        "owned_asset": {
+          "container": "NETBIO01.DAT",
+          "member": "NETBIO01.DAT/1/69",
+          "names": [
+            "bgm.afs",
+            ""
+          ],
+          "iso_offset": 2218584064,
+          "parent_relative_offset": 231895040,
+          "bytes": 3637248,
+          "container_sha256": "067b0bd9e32f9c3628520faad70f0961874d618f1bb56b7e834f8fd0a41017c2",
+          "sha256": "f6fc3d252472720860b71ebfa8c63536de2ff73726ab0b63fb4bd607a9d62231",
+          "recognition": "adx_structural_header",
+          "adx": {
+            "recognition": "adx_structural_header",
+            "cri_marker": true,
+            "header_bytes": 1796,
+            "encoding": 3,
+            "block_bytes": 18,
+            "bits": 4,
+            "channels": 2,
+            "frequency": 48000,
+            "total_samples": 3231105,
+            "filter": 500,
+            "version": 3,
+            "version_control": 0,
+            "loop": {
+              "status": "fields_read",
+              "count": 2,
+              "enabled": 1,
+              "index": 1,
+              "positions": [
+                224,
+                2048,
+                3225715,
+                3630740
+              ]
+            },
+            "finite_header_profile": true,
+            "profile_checks": {
+              "encoding": true,
+              "block_bytes": true,
+              "bits": true,
+              "channels": true,
+              "version": true,
+              "rate_filter": true,
+              "header_extent": true,
+              "history_extent": true
+            },
+            "reasons": []
+          }
+        },
+        "owned_member_container_offset": 1294479360,
+        "owned_member_copied_sha256": "f6fc3d252472720860b71ebfa8c63536de2ff73726ab0b63fb4bd607a9d62231",
+        "owned_attenuation_table_sha256": "ba7a4e40b40741d52daddb3e80bf6c55d0ddcf93df46580ba6de9ad8c5e9c138",
+        "index_receipt_sha256": "765b03bca36fa7a3c78f57f8bf73bb72f0790d504dd14054e304dff29d570d23",
+        "checks": [
+          {
+            "command": [
+              "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+              "-S",
+              "C:\\Users\\Ninjacornix\\reo\\tools\\native_reconstruction\\gameplay_scenario\\stream_instances_oracle",
+              "-B",
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\stream-prepared-instance-llvm-v1\\build",
+              "-G",
+              "Ninja",
+              "-DCMAKE_BUILD_TYPE=Release",
+              "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+              "-DCMAKE_CXX_COMPILER=C:\\Users\\Ninjacornix\\AppData\\Local\\OutbreakRecomp\\launcher\\toolchains\\llvm-mingw-20251216-ucrt-x86_64\\bin\\x86_64-w64-mingw32-clang++.exe",
+              "-DCMAKE_MAKE_PROGRAM=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe"
+            ],
+            "exit_code": 0,
+            "stdout_sha256": "816027a2113369f12b3c0187aaa616993313770d4f3cc0f843af14a7a64787e9",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "command": [
+              "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+              "--build",
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\stream-prepared-instance-llvm-v1\\build",
+              "--target",
+              "stream_instance_checks",
+              "-j",
+              "2"
+            ],
+            "exit_code": 0,
+            "stdout_sha256": "0920fdb76eabb136956c2125402321a48fdd927139ef660e741a6d706240cac4",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "command": [
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\stream-prepared-instance-llvm-v1\\build\\stream_instance_checks.exe",
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\stream-prepared-instance-llvm-v1\\owned_bgm69.adx",
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\stream-prepared-instance-llvm-v1\\attenuation.bin"
+            ],
+            "exit_code": 0,
+            "stdout_sha256": "7ffc68a662a36d0e0e78c469641a6f7311ed52d8699bf4046b79fcc3d898208e",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ],
+        "result": {
+          "status": "passed",
+          "checks": 1998,
+          "background_visits": 129,
+          "body_reads": 2,
+          "output_frames": 60960,
+          "underrun_frames": 0,
+          "game_tick": 1000,
+          "game_launched": false,
+          "hardware_output": false
+        },
+        "game_launched": false,
+        "hardware_output": false,
+        "installed_in_game": false,
+        "limitations": [
+          "The actual owned ADX payload is routed through a declared synthetic bounded AFS fixture; this is not stock archive-route or live caller admission.",
+          "Native instances/decoder/PCM/submix run offscreen without a physical audio device; no subjective audio claim or game-speed measurement.",
+          "Three-instance mixer order is explicit test input; actual production summation-order authority remains a caller gate.",
+          "2-second source-service test holds the real game tick fixed and does not advance the engine ramp."
+        ]
+      }
+    },
+    {
+      "path": "build-native-sjuni/stream-prepared-instance-gcc-v1/receipt.json",
+      "sha256": "884d29550edc1b32ba03d7cd7d3ffb482f61a9f13c25c015d2856d619a56f5a7",
+      "receipt": {
+        "status": "passed",
+        "compiler": "C:\\msys64\\mingw64\\bin\\g++.exe",
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "cmake_sha256": "76129878fe6dc5a2246415d442de8bc01688ff9a48eb5d9498ea374de8b5a086",
+        "ninja_sha256": "5020138b3757035df9dca9a2243624d5810ffa6ae24444bd95f752cbd1b89123",
+        "source_sha256": {
+          "tools/native_reconstruction/gameplay_scenario/stream_instances_oracle/CMakeLists.txt": "0032b4420c0d47543d382b2f0012061d0ca03efa2f2f8b792a04e7d109970513",
+          "tools/native_reconstruction/gameplay_scenario/stream_instances_oracle/tests.cpp": "ed25d318bdd7b1fd1833096e634d9b8e5ed1dbaba0a0879871f719e259132442",
+          "tools/native_reconstruction/gameplay_scenario/verify_stream_instances.py": "5322ddc75a34f480cda5731a473af43e8c0965f2dd5bd3d85b90808ce175be55",
+          "game/native/gameplay_scenario/stream_channels.hpp": "2d42ba1955ec54c86b1d9e85f19354fe623d6c26182fd5bc48285cec61beddc1",
+          "game/native/gameplay_scenario/stream_channels.cpp": "0d47115b087015c0f4e90287133e4a521360fbdd6999983cda7de8f830d55683",
+          "game/native/gameplay_scenario/stream_gain_curve.inc": "98e59700ba81e120e80def2366b9257ca8c7a1e062f73140a691d7980f21cb7b",
+          "game/native/gameplay_scenario/stream_instances.hpp": "e35ecb45beded835564f30f7f7e90bffd74272938a54c888fe4d4bc956af2378",
+          "game/native/gameplay_scenario/stream_instances.cpp": "0364db7b4627c3a2ad862d88076357d07a56bce0a0924cc65e92131a6448c583"
+        },
+        "native_cpp_source_sha256": {
+          "game/native/adx_block/adx_block.cpp": "14a93abdd07a9fb029575c952b66055a2c4c3431818a6c0901e5dd2b27460495",
+          "game/native/adx_block/adx_block_tests.cpp": "0451dbf95d9c6196558342c1bfd732fd4672afdee46fcc5bfd2ef38d2fe9e07e",
+          "game/native/adx_control/predictor_control.cpp": "d1b654fc594275968c4f8ec3a316619b21a8dc9bf13519343678f0c60887ce1f",
+          "game/native/adx_control/predictor_control_tests.cpp": "7749b8858273b1c16df99f2b0c41177927b0ee03ae93ce485b3f8d7cb5978c3e",
+          "game/native/adx_control/predictor_service.cpp": "50f3863f3f4cf623a0eefc04a6c12bc5aa025b48450af43cef7fdfe2e9dbbfdb",
+          "game/native/adx_control/predictor_service_tests.cpp": "4159e69bc4d155270995abb8b52d14cd98dcd093f182d4659d3a574945742abf",
+          "game/native/adx_header/adx_header.cpp": "124147ce7fed57c895c080ece20aae8c8231c67eae07816b481895d4d34f38d4",
+          "game/native/adx_header/adx_header_tests.cpp": "660338cdad88d9b04c03073eebfe355a764b307b507a608cb21cfac0311eb6b6",
+          "game/native/adx_pcm_store/pcm_store.cpp": "2ef48f108a1319794163ab2fc98000da44c48de061fc5299e46c508434ff6bfd",
+          "game/native/adx_pcm_store/pcm_store_tests.cpp": "9c356d7a49362a9677243c44b556e8496d7d1f973ffc67d5fdc7757c0447f1f1",
+          "game/native/adx_pcm_store/v2/pcm_store.cpp": "5d0811bc0fe524d454be097becfa2271025d625d8b253dbf513fd0fd9e47ab5b",
+          "game/native/adx_pcm_store/v2/pcm_store_tests.cpp": "b13e809e1eff566cc4caf778bf74a691b88691b3af6a06cfc66c8857ece7a6e6",
+          "game/native/adx_sequence/clip.cpp": "8563ed054d36f6074fe465545a571d45e32fe8813678ca6f408764c5d297b899",
+          "game/native/adx_sequence/sequence.cpp": "06f1f7d722c74c9e9ecc4cea7fbf7deb582f81719cfa01c9531736ec803e0dcb",
+          "game/native/adx_sequence/sequence_tests.cpp": "aa1a77a2b1fc9b74656eb0d9bcb10a2601566c0ec9bac93502451b2860ba6e2a",
+          "game/native/adx_stereo/adx_stereo.cpp": "3a323a108772aa844594fb2d4e34fb56ef0a522006d90d8b825ead7bd168d55f",
+          "game/native/adx_stereo/adx_stereo_tests.cpp": "3a3b3dc53caabef958306a0fbe04fd2464b319cc2fcf7454e839886db06a79a6",
+          "game/native/adx_window/adx_window.cpp": "479deb13ae9894158b2fcd81d35b9c400c02f0e472f8df6c47f484723a1121f3",
+          "game/native/adx_window/adx_window_tests.cpp": "c9f305e86c7c56da9eba5e2ec0c88bc87519a9c6cc12c83c376961101f198c71",
+          "game/native/adx_window/v2/playback_r2/inherited_tests.cpp": "97953ac1678eb3ea19c6d57075c69661bb7a643d7ad27af40a684711c0e0e197",
+          "game/native/adx_window/v2/playback_r2/stream_window.cpp": "dd41d0aa38a3f6d04d5038d2bb4440bb52f8f1b26979563fd4daab0f13435962",
+          "game/native/adx_window/v2/queue_safe_r3/inherited_tests.cpp": "3be022902b2071ab8436a4444d5fd2844db38f16bd63bcccdcbfb92b942b085c",
+          "game/native/adx_window/v2/queue_safe_r3/stream_window.cpp": "aaa6df45eafab512581e9cd4b3db8963c926dc35e42d545f1917c927fafd69b9",
+          "game/native/adx_window/v2/ready_flag_r1/stream_window.cpp": "d1488337f5e2b2ad57949093669f159feb2647a6003857ba74fbf4aa3699b0d7",
+          "game/native/adx_window/v2/service_r4/quantum_tests.cpp": "f9a79694747790d7ced056160855fa35d9eb1c7f337edff1c64a086e7387d1c9",
+          "game/native/adx_window/v2/service_r4/stream_window.cpp": "4e8ea3da80db13f512a9092067f1d14fd827501dd28f0c9059a52072411ab1db",
+          "game/native/adx_window/v2/stream_window.cpp": "293ec56c474c0abd3a4023477e548f034f8295870c9e0c61f3c59d22f3400065",
+          "game/native/adx_window/v2/stream_window_tests.cpp": "97953ac1678eb3ea19c6d57075c69661bb7a643d7ad27af40a684711c0e0e197",
+          "game/native/adx_workspace/adx_workspace.cpp": "921540694cdb7fd7aa3fdcd3b6a91910f2650b650cd314dad9ae5b10a7afe500",
+          "game/native/adx_workspace/adx_workspace_tests.cpp": "6f436723b0ad1e4017756eb66d77212a6debdcbf313da29d551cbdf376338169",
+          "game/native/adxt_attenuation/attenuation.cpp": "f6d32681f93f53ec5ae53c056dc92ab261d6f789cf146250109126a8e5bdc6b0",
+          "game/native/adxt_attenuation/attenuation_tests.cpp": "b8ea572a7df6dbc1abfadb65471de00c6c9075efce90c3f37caf37ca2d0bca93",
+          "game/native/adxt_clocked_player/inherited_tests.cpp": "e076e8ffed7b6a626449e97b6efb8fa6212297b5623b47b30bbbd139f3e8b7d1",
+          "game/native/adxt_clocked_player/player.cpp": "156f59c3b911d8c1c625c95b8350291c47be78f3c3698edd823a652d1ccfd47b",
+          "game/native/adxt_clocked_player/player_tests.cpp": "cee7fee170a39459fa90a93de5b17890aad5c65abc11f6648ec85820f0c5d0a1",
+          "game/native/adxt_control_owner/owner.cpp": "94f13f8ec88bf1a48728b471676ef4a5d3c9f582f0ae189b8561b125f1371e5d",
+          "game/native/adxt_control_owner/owner_tests.cpp": "ca1d6eb30f4110b7815d9aeb8cda325ec03102636aef584445a16ce394268c23",
+          "game/native/adxt_control_session/control_session.cpp": "224fdbcc10e65c32637e94132ce1f6ae8e1b924e3018dce95eb3cacc7a70c338",
+          "game/native/adxt_control_session/control_session_tests.cpp": "9865950292b653127d18c3b4b8e81d9ef0576557ffb4fff270346b230ee86bb1",
+          "game/native/adxt_estimated_clock/estimated_clock.cpp": "843d20f7d0e0fba68d4bef3fb65465b0c4ded8d85ce06ef82835e3e6e2a2d604",
+          "game/native/adxt_estimated_clock/estimated_clock_tests.cpp": "549d3aa2e52e1f219c1ab3a8ff59f4a096e61b8dca6ab379c7bb4f41a050cf68",
+          "game/native/adxt_instances/game_control_tests.cpp": "489ed61c089735c55300ac5ae1dd869e3f9a084e7931cdc72e41725a94b3588a",
+          "game/native/adxt_instances/instances.cpp": "e0f9f8e30f3dc05e457f2b90297a87acfc399faabdb82f7161d1f3530fd4c44e",
+          "game/native/adxt_instances/instances_tests.cpp": "1669ca60b3538dedb436ae03a648c9debab5ab297787970637a8e293283b6f21",
+          "game/native/adxt_integer_clock/integer_clock.cpp": "2cccf8198fff234e68a308587098594ed2e227ace7206a6812230b7d52074d4b",
+          "game/native/adxt_integer_clock/integer_clock_tests.cpp": "3168b16a609688ff8b58226456fcc3de7c24a7e16962745981e454720e961fbf",
+          "game/native/adxt_lsc_input/input.cpp": "f5c01840fc96bc716d59de0226f8ac1d842a97d803f198542662eaf06310fb95",
+          "game/native/adxt_lsc_input/owner_tests.cpp": "6c291b82eb608ddb9078ef344e4d0ddaee12bf5626b9444854ae0e350b1105da",
+          "game/native/adxt_output_session/session.cpp": "fd09acbc7245b0900a41963fd28baa74e65b04a43558a6eb076c4491fc5062e6",
+          "game/native/adxt_output_session/session_tests.cpp": "5fbfa5f1f1ab499a5a02c0abb49edb41942efc4bee8ef0865a6bf15f69add3dd",
+          "game/native/adxt_phased_player/player.cpp": "7e3c93a3a5f663e43fd847f523e5ed970ff6525029759f4a61a8be03903411e5",
+          "game/native/adxt_phased_player/player_tests.cpp": "b91301c6fcad2d40803eb5cece4242cb663563258b0795b9c278ca92ccb7f67b",
+          "game/native/adxt_playback/playback.cpp": "57ca0798c83b72763a79406b5c2d03c24682333d7d8100c9969095365e0c26fe",
+          "game/native/adxt_playback/playback_tests.cpp": "d9764e92535d774af9ef77fdb007e8a0fa980fd1be13fd19dcaba995bcbad1aa",
+          "game/native/adxt_player/player.cpp": "72c1a06af895e7a7d3b80f42f383a8df5e99c40d46e3c48e384464c8d5ce22b7",
+          "game/native/adxt_player/player_tests.cpp": "4395e907f47593eee4b97e2f3850606d3eb18b923431cfa7dcaa2529093e3fa8",
+          "game/native/adxt_refill/adxt_refill.cpp": "5ed2a85f920b5b80011b1a4bbaab4210a70497ab7f3399aad15b29f51df9cf72",
+          "game/native/adxt_refill/adxt_refill_tests.cpp": "6455980a63bab91ab31b39c8576583a9230b83bb25b95a751b2aaea490067f64",
+          "game/native/adxt_service_group/service_group.cpp": "e377b77ba3724e072b08b0ce43e44972aac1e99f8aab77f2e034bd1535587ce0",
+          "game/native/adxt_service_group/service_group_tests.cpp": "d8fcc7bbf7cc6c6bab2b115c8d0fd2b1eeb38edb4f2d8b8b672a911473752c4d",
+          "game/native/adxt_serviced_clock/completion.cpp": "5c4a5d61a1cfe0244d75a31cb2a91a7d04f6de443d862a791ddcb286331d6683",
+          "game/native/adxt_serviced_clock/completion_tests.cpp": "46f4b41fad374cf0916390e694168b2da0b5bb64b01de5acfc8bcac70d16cf43",
+          "game/native/adxt_shared_player/player.cpp": "c19dc7758d5f258f0b616e7b87968a33be73b01148e788386ca57edc73e9d27d",
+          "game/native/adxt_shared_player/player_tests.cpp": "e37c702714203c855424330a5b42105dedf3610c08b3449db3693ba458087c7c",
+          "game/native/adxt_shared_source/shared_source.cpp": "36b6874d29f73cb166eb3d8a5881b046b57e6a149ec5e3ba42ce957800a7af6a",
+          "game/native/adxt_shared_source/shared_source_tests.cpp": "14974bd04f4ab43a40fca002017da37bcd80936fbd9d364049d352a5ef8374ae",
+          "game/native/adxt_transfer_groups/transfer_groups.cpp": "ce3b7e2ea9509d0de6d10937fca878093d7203fb16a6a36a7fc17d0762e9d822",
+          "game/native/adxt_transfer_groups/transfer_groups_tests.cpp": "7305d972d25248f7f851c55b705775914f1fc614021c1ab129f383a974de4f6e",
+          "game/native/afs_hierarchy/hierarchy.cpp": "106b616c63b3446108e8a3235f5e2534121178fd6acf0da0c481561a6885284b",
+          "game/native/afs_hierarchy/hierarchy_tests.cpp": "9552366d2a8bb9005f40d84b29af001ecaca8a5579dd372a0930d642b3bcd22b",
+          "game/native/afs_source_range/afs_source_range.cpp": "6f0808755ec7c82b5e0a95c403b45d462b27bbe1f1aec98f202fa081ddc9ce90",
+          "game/native/afs_source_range/afs_source_range_tests.cpp": "576f7dce5acc216bb5cb08c56ece1c30e9398835473c092d5ad800e29f12f0f6",
+          "game/native/audio_banks/v2/algorithms.cpp": "4f4dafb01f3e980c958e26a3af6f78a2240860a3951ae039b3ac487507d3e93e",
+          "game/native/audio_banks/v2/budget_tests.cpp": "6e8138e46f0f4ceadddfdf139107c9958a3ae461e6fcd8c542480ce6103e4c7c",
+          "game/native/audio_banks/v2/session.cpp": "026fbd90c0521bf5bd4b8eab514f6174bfab465854acbd7b71d681e0f5421603",
+          "game/native/audio_clip_loader/loader.cpp": "3efbf79ec1da929f36c65637d1a6dd819e4d7ccb0b4d5d0c6129272b87886b74",
+          "game/native/audio_clip_loader/loader_tests.cpp": "f7682cab2684c29fbd8bbeac23e6beb848791374d8337c8b86b9cc68e32de7e8",
+          "game/native/audio_mix_tail/mixer.cpp": "c1ecb4788b723d90c62f61f65235a563ec8a4fcbb047b52d93ef2cfc0fcc26fa",
+          "game/native/audio_mix_tail/mixer_tests.cpp": "dcb03eabf3356db0cfc358204e4d33bc28652580386f7ca439f6df298da3a7af",
+          "game/native/audio_mix_tail/owner_tests.cpp": "3cdc17b9fb8769fed34692ea76a0b7b19aefd14bff82e8759f33c96c9fb64838",
+          "game/native/audio_output/audio_output_owner.cpp": "ead835bd2d09fc427808e99cd374d0e6b4e8e3633c9d98324bc6f21db5f5dc16",
+          "game/native/audio_output/test_audio_output_owner.cpp": "42a2f00abbf99d1e9588ebb84e937000c97de322b8e983fa50c20861ee062556",
+          "game/native/disc_stream/disc_stream.cpp": "9c00be0cd36defa734ef6ee60e0ad3a29f81f6dbec6d5b949e282293b3dba060",
+          "game/native/disc_stream/disc_stream_tests.cpp": "bc900faf345dc5d6c0bb5f0d886ab647ca8aced7037a7e2d21d5cd2e084245b1",
+          "game/native/gameplay_scenario/stream_channels.cpp": "0d47115b087015c0f4e90287133e4a521360fbdd6999983cda7de8f830d55683",
+          "game/native/gameplay_scenario/stream_instances.cpp": "0364db7b4627c3a2ad862d88076357d07a56bce0a0924cc65e92131a6448c583",
+          "game/native/lsc_queue/queue.cpp": "098d0bac9e9f57538766bda36d2441606f36441391c5ba244e8e550a6bf98392",
+          "game/native/lsc_queue/queue_tests.cpp": "30e3c75f65b35862a9baebcb76e1b09684c88cff88f3b59ff7337ba601f9dada",
+          "game/native/pcm/pcm.cpp": "fe31c38f6c276c60c1f1f7cbf5bea2d9132b83c85fd0b49629b0ca721bf4e844",
+          "game/native/pcm/tests/pcm_tests.cpp": "e440289063021b4df67afa2771a2be89d517ab10f9c84d62053325ff055143b4",
+          "game/native/pcm_bridge/session_bridge.cpp": "fcf284fa46a752f07a2f48a019cce8f6f2df8eae7d864aef787ca46854bc9649",
+          "game/native/pcm_bridge/session_bridge_tests.cpp": "d8f8c020df1567585c3bfedc9e7ad4414c7ae0ec88ef0f4d12e75dd4ffc4127e",
+          "game/native/resource_io/async_read_owner.cpp": "09235718523d8fa684bbdd96957376a89482a46c906236a8e233086083b1226a",
+          "game/native/resource_io/async_read_owner_tests.cpp": "098221ac6165f4e97d34409db1036bc8aca51ad5a37d51fbf7a9d13a1f8773ab",
+          "game/native/resources/bounded_view.cpp": "c7c1b618b74f42d6cb6717a3a55fdd5ec44abf6668e6bc43e7673fbe5731de84",
+          "game/native/resources/resource_session.cpp": "40da8f56bca191c39d6bb4dc81e3a0cd82e1d09c1c83c7c702e524cc511ab0fd",
+          "game/native/resources/resource_tests.cpp": "b662576c0f11adca447b2925a9b75a77a2183cc054c7e31836523c068a5bd932",
+          "game/native/resources/virtual_file_view.cpp": "969576395f7a8b0210a836712258ffb11fd2cc846a6934b39374181510c32b98",
+          "game/native/sjrb/sjrb.cpp": "29a888b091cf7284876cabcab0aa78062632e6192d98782edc0b065d926d25a2",
+          "game/native/sjrb/sjrb_tests.cpp": "17e8692f2d42c7f515ae9c013f0aa3930ca03d079a86cbc0bfa072f47357fd98",
+          "game/native/sjuni/sjuni.cpp": "243164a1459da64546ecff59877bed34239232bd8b7fa945b8eb06ebff19f67e",
+          "game/native/sjuni/sjuni_tests.cpp": "49a2c8eb25f682b4251ed5eee08b294d5c752ec1d28e0c5d762094d0bfebb391",
+          "game/native/tasks/serial_worker.cpp": "72911c36d42bbdfdf7ceb4f6e288caa0c8736e57f4dec91bf6465329bfa24e42",
+          "game/native/tasks/serial_worker_tests.cpp": "da4c9c54b7671f6dba6757a2ba2e01e7181a098449d903fb6d75468b6c877ba6"
+        },
+        "native_header_source_sha256": {
+          "game/native/adx_block/adx_block.hpp": "eb671ed8071ebb4e6065ba2ec3fbb41706dcdb0935c6a53c162ad233759db195",
+          "game/native/adx_control/predictor_control.hpp": "5a8e81ea0139029cff05a9ec026372f089c566db5c0d7c4c1ca4465fd3034567",
+          "game/native/adx_control/predictor_service.hpp": "50e90ebc916ebdf79163f15f10e0a05e5298273dad4c77c4cd572808e8751063",
+          "game/native/adx_header/adx_header.hpp": "3a882ddf1e7dd979529c53c9824dcc362d544c3de39304d1d42e0bec44ebfb49",
+          "game/native/adx_header/key_table.inc": "eef27ed9cf01b8e7e916efff2344a110a437b740d38b01c7794fb1eec73c8b7d",
+          "game/native/adx_pcm_store/pcm_store.hpp": "f35df0c86868cb9252eb9be7959a775de1389db574483093a41d39a651375fe9",
+          "game/native/adx_pcm_store/v2/pcm_store.hpp": "41dc84b5b7f3807c057e4ff414575a9ce1ad47a4b7a5a76cb8f7da60a372597a",
+          "game/native/adx_sequence/clip.hpp": "7ec321862b355a792e78f48baf6081571012a5ea6471c3cdc230af4f30c115ab",
+          "game/native/adx_sequence/sequence.hpp": "fcfc5a4fed313f0aea08b3eacfdf0dfb7f398cd9b015b76b2df8b050446ba04f",
+          "game/native/adx_stereo/adx_stereo.hpp": "6cf5c13f765c60b36cf13ac7c9fd74fd0bc09f3ea106f4d640f98bbff157df8b",
+          "game/native/adx_window/adx_window.hpp": "a443e48c83762a1be0c814b346d48d2f250a77154c18f9c5e9af864b8c1fbffe",
+          "game/native/adx_window/v2/playback_r2/stream_window.hpp": "5bd4fbe1edc756ec461ad8ffee1eed09b87245e7fb07e7d0f04d010b222bcfd1",
+          "game/native/adx_window/v2/service_r4/quantum_cases.hpp": "ffc9fbbdac5c86f694f3774aa0afcb5143d56b7075cd0ef38a83cf5675be97b5",
+          "game/native/adx_window/v2/service_r4/stream_window.hpp": "35aeaf4d1e322455cb4e2f9b995ebdf7251470b03ae6b944ab5141bb923310c0",
+          "game/native/adx_window/v2/stream_window.hpp": "8449ce2305583c9b82f47938b2c526204e59786e41af3c825d3c9c508bfb85a0",
+          "game/native/adx_workspace/adx_workspace.hpp": "d835c0c5e5bb3839e27b367f6c7ea4bd825a373078628835d1abb6570ec6e17d",
+          "game/native/adxt_attenuation/attenuation.hpp": "9a234ea0344886434be2f9c303721c0ffc6ee33f71af5eca31e0d2e2f7ff4eda",
+          "game/native/adxt_clocked_player/player.hpp": "507817f5a1c37894d3991cf1b59934e105bec4a63b8362c32c37094abfddeedb",
+          "game/native/adxt_control_owner/owner.hpp": "38247303eca0479ca722e658461d93d4745b46cef4b25e44c361c0e80c9c65fe",
+          "game/native/adxt_control_session/control_session.hpp": "2005ea36ba2ebdf1bc54d8802a968e371760264fb6600bea9e17665298980aa3",
+          "game/native/adxt_estimated_clock/estimated_clock.hpp": "4da48744e9dac493e77d57fb8130e2638bd5a8a40dcc7965652a00663cbfb66b",
+          "game/native/adxt_instances/instances.hpp": "dbd077c0ff730a4155c533c6ba51766aa24d331c8a0549cdf18b8396cd9d9dd9",
+          "game/native/adxt_instances/source_key.hpp": "d58b9960b2ba034079b07e3561201caec68b16b6c66a1c9471e606fa5f5c128c",
+          "game/native/adxt_integer_clock/integer_clock.hpp": "dfffa9ba5a3866a1f0f936a4db0f979802422e5951b00772476b205b21f6c99b",
+          "game/native/adxt_lsc_input/input.hpp": "1a5b77914db1327a4ebebb9b075ddc6ccfaf344c77f86b18daeeec8790c9b0dd",
+          "game/native/adxt_output_session/session.hpp": "2095624d1033c09b92bd6ed7d0e6fa996e8973bf2e911736ac0ab6157781c1dd",
+          "game/native/adxt_phased_player/player.hpp": "4acdcf36ac84bf55ede62fc3a5e882470aaeefa0f9615e97b50fafb25b104a3c",
+          "game/native/adxt_phased_player/test_group.hpp": "ab02736c179cd485126f375187e864cbd2e14db6d66c4f0e4f23a9d70da2a6cf",
+          "game/native/adxt_playback/playback.hpp": "464ce0042549145a7aaa46eefa2afb9ce6fa4d9a7ea42b75abbbabf202a19935",
+          "game/native/adxt_player/player.hpp": "e5e8aa1bdf99a99b130fcaab2b3813a81a68febd34153f10d90afcd805ad374f",
+          "game/native/adxt_player/test_provider.hpp": "f25f878bdd9a4e123b966f79e6e1a727dbed51c0b0ad8e586efffeb1b7e271fe",
+          "game/native/adxt_refill/adxt_refill.hpp": "6b759a639f60751ba7c2caee4c0080f51fe8fe3867d89d3c562753f955289f88",
+          "game/native/adxt_service_group/service_group.hpp": "be771665aea500320892033812db861391f80b50c6f0aef53e6f6cc66ec594f2",
+          "game/native/adxt_serviced_clock/completion.hpp": "ec8998bd82adaedc1a5c7c095345e56e4922c58259e60a09030e64fa400ce55c",
+          "game/native/adxt_shared_player/player.hpp": "de5fb15eb13978879a2ab2076d75c8bdcec3d0073a6948e27124ded40c4894a9",
+          "game/native/adxt_shared_player/test_sources.hpp": "444b305e4c92cfce8c6c238c8656c2c0907aed054f63f7e6da1e4eb48e752fd7",
+          "game/native/adxt_shared_source/shared_source.hpp": "654783eb20af27851ed67b676062eb5d94ba25aa7a16c30ba152500b65fcc99e",
+          "game/native/adxt_transfer_groups/transfer_groups.hpp": "002a7300454c154f0e16c07b788c3ddd163b892b511b98438aa3cca1405b4638",
+          "game/native/afs_hierarchy/hierarchy.hpp": "673d925e0414a108d938c7d45360449237992e6af94438b2bc76cda07a12581b",
+          "game/native/afs_source_range/afs_source_range.hpp": "c8e91b5580c89b38d6a2d35f9444c80d7aecf66e1bee4d9bc441fa361cea1c3b",
+          "game/native/audio_banks/algorithms.hpp": "3b324870afdc42282910fe52f58e1fb3dd137f0550d590d547fd58e8ebd401e9",
+          "game/native/audio_banks/native_transport.hpp": "d5c0175f34f62b7305c30b3ef0eba155cc4c51ecafb33b0ea368813306db838d",
+          "game/native/audio_banks/session.hpp": "69d14f54e7de6d80ccfb0a6b35868bff0dcf33c3aa36a65fbb2bfc6cd7d881e8",
+          "game/native/audio_banks/source_members.inc": "15a9255f036a2658b173ada284a12385e929b66731618f227fe4770eb63c7f71",
+          "game/native/audio_banks/source_mix.inc": "d28e10cdcc91cd4ae2941dd018c17ee902953c92d24a0fdc109fac3ec291f328",
+          "game/native/audio_banks/source_records.inc": "44ea539c47bfd2dc31271c0aa96b9876d73818c9923a9739edae50127287dc0a",
+          "game/native/audio_banks/v2/algorithms.hpp": "4260dcc9546f3f3e17b24b8692da83e3f7d26877d9f5ee6d46c21d1b9696b0fc",
+          "game/native/audio_banks/v2/budget.hpp": "3dbdbc041f77de5ccb1c199759a8d7dd74915131bf73bb36f118e907d0055a18",
+          "game/native/audio_banks/v2/session.hpp": "eb67b3532811549b1348c4bfd7cfdee5b4aac0f0aad4cc99ae336cbe3d798c19",
+          "game/native/audio_banks/v2/test_inputs.hpp": "fb07e04d22c4ba0852ce88a4813aa5c4ce6888bb6ea8aaac571bc87b68b8cb2b",
+          "game/native/audio_clip_loader/loader.hpp": "f35a90d409a8333b074272391d3d556a5afaffa4e0383fde42af22b5e0db7e74",
+          "game/native/audio_mix_tail/mixer.hpp": "aab71312b18beb167cb849d07cd49b4da40d4dd410557dd2a8367f7200ca5414",
+          "game/native/audio_output/audio_output_owner.h": "cbc6cc13c770c1d011ad35ae9707ffe51fae171b1bbffa13dd073f9e112a2102",
+          "game/native/disc_stream/disc_stream.hpp": "bc66b2ac94cbed2c610701180521bb51fd3ab6464bc7262381c5096ee9559cd8",
+          "game/native/gameplay_scenario/action_choices.hpp": "c315448949c2871f01ac954c1c991c026a01e0183717dfca6fe86377230de9be",
+          "game/native/gameplay_scenario/actor_inventory_commands.hpp": "e9af73acaad8a13b0f94b6bee4cdad15e235314f67d6ce7b2496fb3b45529610",
+          "game/native/gameplay_scenario/actor_requests.hpp": "aadfcb722e24437962341a483132b03eef040d334ec0c1742584a503a6faf0e4",
+          "game/native/gameplay_scenario/actor_script_commands.hpp": "a17305fe64549dd380e035666890622015f85656564bca82018211fd5caa9fbd",
+          "game/native/gameplay_scenario/actor_script_predicates.hpp": "d420260e8ee8b74269f9fe727e4402d1cee07af50002ecbb1bf7a3a5796c1faa",
+          "game/native/gameplay_scenario/auxiliary_room_rows.hpp": "01644097b61fbdd9f254eee930e21bdc97b910936f0dcc07ae19b3a718b62745",
+          "game/native/gameplay_scenario/bank_audio.hpp": "627a11f3a44e30d3e28fabd7ead7f3103ee9f5b57f7be74f9a7635b264c59990",
+          "game/native/gameplay_scenario/character_remap.hpp": "987d455add34527b9e9b2cb92a2c5e588b24d1cbe7f84c3e38d4316e62786df9",
+          "game/native/gameplay_scenario/content.hpp": "fa70bf3bb8b05f2b12beb7df1b738412cfd4bdf63ae9b5970517ce7eab419576",
+          "game/native/gameplay_scenario/cutscene_actor_commands.hpp": "65456342727ada2c02c6a22035d970d397aa28e20ec8fda8538a00ae1b13c1b9",
+          "game/native/gameplay_scenario/cutscene_actor_reservations.hpp": "d6f9186a2fb12fa38c68f2f7b12874b6a72d0f7c0485fb6e6c1b0c22c0e2f44d",
+          "game/native/gameplay_scenario/cutscene_actor_tracks.hpp": "6125fb585dc32221681676f6567c0611ea5b417a24b02c4ad66b86c6a74b253f",
+          "game/native/gameplay_scenario/cutscene_command_scales.inc": "b0d55eb7615adc2a78f7518b0c3c6bdf00821916e6d2bd810ef0f362c905ff33",
+          "game/native/gameplay_scenario/cutscene_cues.hpp": "858b55316b5e8ad91584a60d191044ac757d9a32e7fa915684affc794f521658",
+          "game/native/gameplay_scenario/cutscene_descriptor.hpp": "03233684743e02393c3ce5b14c3e67c32898bd0f064aafc5592d6187c372f69a",
+          "game/native/gameplay_scenario/cutscene_object_tracks.hpp": "d082654f97c2aae6e1630875640a2b23781501b02fb85efc6a42c9e24c812c1c",
+          "game/native/gameplay_scenario/cutscene_playback.hpp": "18ca45dc7906b80e56a1f97ca736734590b6f29406a04d1c79a9c9c5db469ce1",
+          "game/native/gameplay_scenario/cutscene_primary_selection.hpp": "c77f822e22ca8d0e5aadf51d71b0e7161d7fda0e93923b92a19f6103a817afcd",
+          "game/native/gameplay_scenario/cutscene_requests.hpp": "0e2bb1616a57af8001f0c009618209cafe31a815cbeaa1b78d9687efb5df9c3d",
+          "game/native/gameplay_scenario/cutscene_roster_preparation.hpp": "51c04892a4111b6929c7dcae507f3aa868404baa291e296ba3096407d6a41c41",
+          "game/native/gameplay_scenario/enemy_descriptors.hpp": "71dc3da9373d22d33cfcda65daf638bdcc055dec9cbd55187410dff6f00198ec",
+          "game/native/gameplay_scenario/enemy_route_profiles.inc": "89022c02b68e1d40a070fc4d2905055fda6e89802e94e5ccd5214a49dc8aaf97",
+          "game/native/gameplay_scenario/enemy_routes.hpp": "a3343d7721b7105ac620509bc71d4e2377f46c45aa40fddaeba23b465d9ce67c",
+          "game/native/gameplay_scenario/enemy_spawn_profiles.inc": "14ffe09f5d0b53b1f081a1c40358cc6d97d614f7b9705bdc7474a0d1c759556b",
+          "game/native/gameplay_scenario/flags.hpp": "265400e86eda349b82fc710a8dcd91b9a82d16e3c71796a94c29c541ec1ecd6b",
+          "game/native/gameplay_scenario/fog.hpp": "0193135175b1122d61d75b075b5f7c4e0816493173d94a375102f12f758fb112",
+          "game/native/gameplay_scenario/interpreter.hpp": "b5c65ae64c926e01ab919f0fef912e77fc37ddb9fff0afa8f2d47a10c66c5c34",
+          "game/native/gameplay_scenario/inventory_compaction.hpp": "81527b60b3570f63df1aef7f9c6663dad37e8addd4ab793eb5c1ac3daa3af7df",
+          "game/native/gameplay_scenario/lighting.hpp": "7358d6e0166de5992233dc0ea9d29b0c0f7b9cdb1c183714fefd2e3a481fa56b",
+          "game/native/gameplay_scenario/model_reference.hpp": "4b512afd9574ead2cca36bc490f5938a557073f043d2b6021c9c51325b18f907",
+          "game/native/gameplay_scenario/model_transform_presets.inc": "1d4049b22be0920234b3efd915fc1b4ddc447a037baf8e76b98e1104a4deab31",
+          "game/native/gameplay_scenario/npc_descriptors.hpp": "807b910faab217184814a15a9059f67fe43037ea0a33bd5d3fa9196edb3ac5fb",
+          "game/native/gameplay_scenario/offline.hpp": "da24f7fcb56a1fb4401e8570da6d68b78f8a176a3a81a18a2fff4b7811fb1551",
+          "game/native/gameplay_scenario/offline_bindings.inc": "b14c1c2ab0df07f1fb70b4df924a9e93efa87ba79f639add7c6ee311b7f96472",
+          "game/native/gameplay_scenario/opcode_bindings.inc": "711c8322eb00f93a156b0b942195356b3527857ee093a9332d7f2d2ea7eb7fb9",
+          "game/native/gameplay_scenario/periodic_effects.hpp": "86e7566896b7c9bd9cc227021ce4a40dc5a802444541adafe61a415353280780",
+          "game/native/gameplay_scenario/resource_collision_profile.inc": "16a75a02a87a5ea00672e874d63f6e2ece10783e4718c342bd92bd1c61b6d1bb",
+          "game/native/gameplay_scenario/resource_collisions.hpp": "e8d0d35159b38a842139595dd7fbcabd1269cc996b9d013614b5e9e6ac97a244",
+          "game/native/gameplay_scenario/resource_templates.hpp": "cb718717fa931a22b761f7c1d5b7af142599801d94e462b7ba92b2a8c207d12c",
+          "game/native/gameplay_scenario/room_actor_assets.hpp": "68a0fffbe445dfbcd2bc6a9a65f4193f85991f739a691c69279a079d37156b84",
+          "game/native/gameplay_scenario/room_object_commands.hpp": "c99fade31b1876c006a7443a3c3ec2dc596d1ba2374953b5ec90271c7132972f",
+          "game/native/gameplay_scenario/room_rules.hpp": "c89ce7bb64076edae07779ff81a2175392de310fec5aa010a1b3447233c0f976",
+          "game/native/gameplay_scenario/room_scene_input.hpp": "f7e90a57a48d5c326c8ec370a42f1d97707d316b428892956ad9c8ef2bac374e",
+          "game/native/gameplay_scenario/room_scene_owner.hpp": "09bcc1e225c09e000d2b361c603ab38f7214da8d7fa19e60e891b4babe45397b",
+          "game/native/gameplay_scenario/saved_controls.hpp": "543fd46f4540d24b93895ed72607464b5931641078891df085b8c860aea01d27",
+          "game/native/gameplay_scenario/scenario_archive.hpp": "30c7191ed873a25ef6ea436490310214886267a10af73466844d994fdb73c326",
+          "game/native/gameplay_scenario/scene_audio_profile.inc": "c5a73180d64c32eee93690976e73894a1b7d6667282f1bd76bb44c7437764603",
+          "game/native/gameplay_scenario/scene_channels.hpp": "c32b8eb0ae4998c472b7c70a2051fd6ce98b283de65a6a83eabc55e5cb20deb4",
+          "game/native/gameplay_scenario/scene_control_routes.hpp": "f20d39cec7ccd8145d803d47ec390babe7d4c365d8c0a73b1a0f777358af35a1",
+          "game/native/gameplay_scenario/scene_control_types.hpp": "3527cc02c44ec72e420e8d6a900ba1e41e1ccd81903042604df50eb777314841",
+          "game/native/gameplay_scenario/scene_controls.hpp": "d006f22268a33e3e60c2b37be1e71e965d4960bf65433a8fe401ffc656416ec6",
+          "game/native/gameplay_scenario/scene_matrix_program_tables.inc": "870d43b3ff76a817e8778f8c76e823c1b1a347b251807787e587869dda105556",
+          "game/native/gameplay_scenario/scene_matrix_programs.hpp": "ba23330053bfd18a137b1ebacdabc3ffbd88dd87352215be2547f359d225db52",
+          "game/native/gameplay_scenario/scene_matrix_tables.hpp": "d7447ead8323ad9737004d6823ef33da4adfab22619d4d35a1f3d0a2870a25b1",
+          "game/native/gameplay_scenario/scene_model_bindings.hpp": "c5ca218f5645af66f166099021ff586671100c5fc824ae205fa6d5c735fd605e",
+          "game/native/gameplay_scenario/scene_models.hpp": "bc649bb75fd935cc42c693070c97b7b1c2d78745f5833f5a72f6e7ddc9c129c8",
+          "game/native/gameplay_scenario/scene_record_attachment.hpp": "65acdd267224d1f0e5ca78a0b1fdd9b95dcb7d27e0ca8ce35f7ac4634fdca3c0",
+          "game/native/gameplay_scenario/scene_record_commands.hpp": "d49b996133590d246d586e12d472111d0770d2b212176a94fecf3d65feec6904",
+          "game/native/gameplay_scenario/scene_record_eligibility.hpp": "8b18e95889895066887081f556750ea267400c61f47ff86246018acd56fbe70b",
+          "game/native/gameplay_scenario/scene_record_parameters.hpp": "b985cad1c0a2a76048099f159c1f29fdb0285460990f8749b9eccf35920a319e",
+          "game/native/gameplay_scenario/scene_resources.hpp": "4f573b5dd219317f6f74f5563776411eee8a3286ad199678b334cc9ea82d1a8f",
+          "game/native/gameplay_scenario/script_audio.hpp": "017c8a1b8e41b4c1b812630c6ce7f2eae09244a1b7a1e30fcb32621b5acf232d",
+          "game/native/gameplay_scenario/script_flow.hpp": "5bf3277dd31a2165dc88e33ae079a206f436f1e53b540c80b836ca0bcb34edab",
+          "game/native/gameplay_scenario/script_program.hpp": "20ada83eae1aa3d9c908c0081460c378d63b3a658cbc07ec29a9695219b0cfab",
+          "game/native/gameplay_scenario/sequence_control.hpp": "32768dccf274c41acca66522714d0cbbed332033b24ba1eef3fb76462c590277",
+          "game/native/gameplay_scenario/session_counters.hpp": "5c159b129055d0dffed7a5f606f19e97b40dad83de4758edbc13b2bd27c8142b",
+          "game/native/gameplay_scenario/stream_channels.hpp": "2d42ba1955ec54c86b1d9e85f19354fe623d6c26182fd5bc48285cec61beddc1",
+          "game/native/gameplay_scenario/stream_gain_curve.inc": "98e59700ba81e120e80def2366b9257ca8c7a1e062f73140a691d7980f21cb7b",
+          "game/native/gameplay_scenario/stream_instances.hpp": "e35ecb45beded835564f30f7f7e90bffd74272938a54c888fe4d4bc956af2378",
+          "game/native/gameplay_scenario/surface_effects.hpp": "40636c39e98c3825f2129613e1f0f8a52fb4f4f269a9a99f880a7e120b510ec7",
+          "game/native/lsc_queue/queue.hpp": "7b4435c38892f2b96990c1ff837f8da14534a709316aa312c382879e134a9b1a",
+          "game/native/pcm/pcm.hpp": "9fe0aff92070569bfd6744856ea438b92099ec38f1875dc660261ef755b659cb",
+          "game/native/pcm/tests/native_facade.hpp": "2798c9c8cbe9bdaf4761a57ec2e79b80b3bea39a2bba216a2250612dab0f55b9",
+          "game/native/pcm_bridge/session_bridge.hpp": "0b7c0b6f70234110035d05757aa93095ea4176b069f55fd581dee00ade31f9f3",
+          "game/native/pcm_bridge/source_hooks.inc": "0ebd44dec4a71f7cf57b2ddecac1122136f98fb98dffa948319e3b4c99988f28",
+          "game/native/pcm_bridge/test_facade.hpp": "c497420948090bde6dbe6db64f61758d923c2a49ddbeadeb4e1ded7926491018",
+          "game/native/resource_io/async_read_owner.hpp": "255ecda439a4f3e7f81bf6ae25335ace563251e400cd413b4f77d774c3262b57",
+          "game/native/resources/bounded_view.hpp": "badad2eeb0a9d43f4dd842b1d8253b8e5f620a130e576a09598fb52801000b04",
+          "game/native/resources/byte_view.hpp": "967f3ef9fab63390f05a95991a46dabbb6a7c0540130c16c35ee67eb498ffddb",
+          "game/native/resources/resource_session.hpp": "0ac5e50af8c08141fabf66b9277bf187a76f7af6bcae065f2ae2b876ce1586ad",
+          "game/native/resources/virtual_file_view.hpp": "e550406fcc5a685c095767df796843c7f9008f80ad064ecd61bc8596687ccb29",
+          "game/native/sjrb/sjrb.hpp": "95263a5391293bd7f4a5d9607cabb57a3ae565ae9eee0d3f38d290f5cc45a37b",
+          "game/native/sjuni/sjuni.hpp": "5d2ae19d35c7a12a8827e9c7b34daaa06671bd4a7b5a12de12864d4af3e669ce",
+          "game/native/tasks/serial_worker.hpp": "72f165f722689b134f4e97d149e16f215c143dff8873108cce816c06c80c7de4"
+        },
+        "owned_asset": {
+          "container": "NETBIO01.DAT",
+          "member": "NETBIO01.DAT/1/69",
+          "names": [
+            "bgm.afs",
+            ""
+          ],
+          "iso_offset": 2218584064,
+          "parent_relative_offset": 231895040,
+          "bytes": 3637248,
+          "container_sha256": "067b0bd9e32f9c3628520faad70f0961874d618f1bb56b7e834f8fd0a41017c2",
+          "sha256": "f6fc3d252472720860b71ebfa8c63536de2ff73726ab0b63fb4bd607a9d62231",
+          "recognition": "adx_structural_header",
+          "adx": {
+            "recognition": "adx_structural_header",
+            "cri_marker": true,
+            "header_bytes": 1796,
+            "encoding": 3,
+            "block_bytes": 18,
+            "bits": 4,
+            "channels": 2,
+            "frequency": 48000,
+            "total_samples": 3231105,
+            "filter": 500,
+            "version": 3,
+            "version_control": 0,
+            "loop": {
+              "status": "fields_read",
+              "count": 2,
+              "enabled": 1,
+              "index": 1,
+              "positions": [
+                224,
+                2048,
+                3225715,
+                3630740
+              ]
+            },
+            "finite_header_profile": true,
+            "profile_checks": {
+              "encoding": true,
+              "block_bytes": true,
+              "bits": true,
+              "channels": true,
+              "version": true,
+              "rate_filter": true,
+              "header_extent": true,
+              "history_extent": true
+            },
+            "reasons": []
+          }
+        },
+        "owned_member_container_offset": 1294479360,
+        "owned_member_copied_sha256": "f6fc3d252472720860b71ebfa8c63536de2ff73726ab0b63fb4bd607a9d62231",
+        "owned_attenuation_table_sha256": "ba7a4e40b40741d52daddb3e80bf6c55d0ddcf93df46580ba6de9ad8c5e9c138",
+        "index_receipt_sha256": "765b03bca36fa7a3c78f57f8bf73bb72f0790d504dd14054e304dff29d570d23",
+        "checks": [
+          {
+            "command": [
+              "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+              "-S",
+              "C:\\Users\\Ninjacornix\\reo\\tools\\native_reconstruction\\gameplay_scenario\\stream_instances_oracle",
+              "-B",
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\stream-prepared-instance-gcc-v1\\build",
+              "-G",
+              "Ninja",
+              "-DCMAKE_BUILD_TYPE=Release",
+              "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+              "-DCMAKE_CXX_COMPILER=C:\\msys64\\mingw64\\bin\\g++.exe",
+              "-DCMAKE_MAKE_PROGRAM=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe"
+            ],
+            "exit_code": 0,
+            "stdout_sha256": "370f6da3185fde6d7bf0e447759f8d756a14f1747d9db449f360f01e78b56434",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "command": [
+              "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+              "--build",
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\stream-prepared-instance-gcc-v1\\build",
+              "--target",
+              "stream_instance_checks",
+              "-j",
+              "2"
+            ],
+            "exit_code": 0,
+            "stdout_sha256": "ea2944239abcd5a4ef2f60e9e6f4a57c8c195710ab1c397c29cdd9fd1f82c5ac",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "command": [
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\stream-prepared-instance-gcc-v1\\build\\stream_instance_checks.exe",
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\stream-prepared-instance-gcc-v1\\owned_bgm69.adx",
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\stream-prepared-instance-gcc-v1\\attenuation.bin"
+            ],
+            "exit_code": 0,
+            "stdout_sha256": "adabf6d5a6221935aa51a64c34b2fa18d095eea9dc728dd40949b0e8dcb6bf7d",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ],
+        "result": {
+          "status": "passed",
+          "checks": 1391,
+          "background_visits": 128,
+          "body_reads": 2,
+          "output_frames": 60480,
+          "underrun_frames": 0,
+          "game_tick": 1000,
+          "game_launched": false,
+          "hardware_output": false
+        },
+        "game_launched": false,
+        "hardware_output": false,
+        "installed_in_game": false,
+        "limitations": [
+          "The actual owned ADX payload is routed through a declared synthetic bounded AFS fixture; this is not stock archive-route or live caller admission.",
+          "Native instances/decoder/PCM/submix run offscreen without a physical audio device; no subjective audio claim or game-speed measurement.",
+          "Three-instance mixer order is explicit test input; actual production summation-order authority remains a caller gate.",
+          "2-second source-service test holds the real game tick fixed and does not advance the engine ramp."
+        ]
+      }
+    }
+  ],
+  "controller_integration_receipts": [
+    {
+      "path": "build-native-sjuni/cutscene-playback-llvm-v12/receipt.json",
+      "sha256": "766b46ecbe18b32741b8baac3f84a236566bce94e1aa45e0c27b054837fc7240",
+      "observed": {
+        "close_refusals": 129069,
+        "checks": 2445824,
+        "controller_cases": 56173,
+        "advance_cases": 9363,
+        "acknowledgements": 9984,
+        "native_worker_calls": 64279,
+        "refusals": 14,
+        "original_calls": 403343,
+        "game_run": false
+      }
+    },
+    {
+      "path": "build-native-sjuni/cutscene-playback-gcc-v12/receipt.json",
+      "sha256": "8e47e94083e628e39c7bc5386279a1b6ed407a3f7110d962b0d73514883f35e6",
+      "observed": {
+        "close_refusals": 129069,
+        "checks": 2445824,
+        "controller_cases": 56173,
+        "advance_cases": 9363,
+        "acknowledgements": 9984,
+        "native_worker_calls": 64279,
+        "refusals": 14,
+        "original_calls": 403343,
+        "game_run": false
+      }
+    }
+  ],
+  "limits": [
+    "Complete1AE910/1AE9A0/1AE740/1AEB00, signed132E20 getter,132DF0 setter, File1 constant feature gate and empty pre-stop execute in reference.",
+    "Native channel policy is differential; real canonical StreamInstances owner/source integration is qualified separately.",
+    "SDK attenuation and actual decoder stop are declared primitive observations; no physical audio device or game is started.",
+    "The actual owned ADX payload is routed through a declared synthetic bounded AFS fixture; this is not stock archive-route or live caller admission.",
+    "Native instances/decoder/PCM/submix run offscreen without a physical audio device; no subjective audio claim or game-speed measurement.",
+    "Three-instance mixer order is explicit test input; actual production summation-order authority remains a caller gate.",
+    "2-second source-service test holds the real game tick fixed and does not advance the engine ramp."
+  ],
+  "retained_development_runs": [
+    "build-native-sjuni/stream-start-llvm-v1",
+    "build-native-sjuni/stream-start-llvm-v2",
+    "build-native-sjuni/stream-start-llvm-v3",
+    "build-native-sjuni/stream-start-llvm-v4",
+    "build-native-sjuni/stream-start-llvm-v5",
+    "build-native-sjuni/stream-start-llvm-v6",
+    "build-native-sjuni/stream-start-gcc-v6"
+  ]
+}

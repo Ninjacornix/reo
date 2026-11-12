@@ -60,6 +60,29 @@ StreamStatus StreamChannels::stop(std::uint8_t index,StreamBackend& backend)noex
     if(index>=state_.channels.size())return StreamStatus::invalid_channel;
     state_.channels[index].paused=0;return backend.stop(index);
 }
+StreamValue StreamChannels::prepared_ready(std::uint8_t index,StreamBackend& backend)noexcept{
+    if(index>=state_.channels.size())return{StreamStatus::invalid_channel,0};
+    if(features_.suppress_all)return{StreamStatus::completed,1};
+    const auto available=backend.instance_available(index);if(!stream_accepted(available.status))return available;
+    if(!available.value||!state_.channels[index].started)return{available.status,1};
+    return backend.start_ready(index);
+}
+StreamStatus StreamChannels::release_start(std::uint8_t index,StreamBackend& backend)noexcept{
+    if(index>=state_.channels.size())return StreamStatus::invalid_channel;
+    if(features_.suppress_all)return StreamStatus::completed;
+    const auto available=backend.instance_available(index);if(!stream_accepted(available.status))return available.status;
+    if(!available.value)return available.status;
+    auto& channel=state_.channels[index];channel.start_wait=0;
+    const auto released=backend.start_inhibit(index,false);if(!stream_accepted(released))return released;
+    const auto restored=level(index,channel.maximum,backend);if(!stream_accepted(restored))return restored;
+    channel.started=0;return combine(released,restored);
+}
+StreamStatus StreamChannels::stop_preserving_state(std::uint8_t index,StreamBackend& backend)noexcept{
+    if(index>=state_.channels.size())return StreamStatus::invalid_channel;
+    if(features_.suppress_all)return StreamStatus::completed;
+    const auto available=backend.instance_available(index);if(!stream_accepted(available.status))return available.status;
+    return available.value?backend.stop(index):available.status;
+}
 StreamStatus StreamChannels::pause(std::uint8_t index,std::uint32_t tick,StreamBackend& backend)noexcept{
     if(index>=state_.channels.size())return StreamStatus::invalid_channel;
     state_.channels[index].paused=1;return backend.pause(index,true,tick);

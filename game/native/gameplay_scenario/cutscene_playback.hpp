@@ -37,15 +37,11 @@ class CutscenePlaybackServices {
 public:
     virtual ~CutscenePlaybackServices()=default;
     virtual CutscenePlaybackStatus prepare_voice(const CutsceneBatch&,bool playlist)=0;
-    virtual CutscenePlaybackValue voice_ready()=0;
-    virtual CutscenePlaybackStatus release_voice_start()=0;
     virtual CutscenePlaybackStatus start_movie(const CutsceneBatch&)=0;
     virtual CutscenePlaybackValue movie_state()=0;
     virtual CutscenePlaybackValue movie_busy()=0;
     virtual CutscenePlaybackStatus stop_movie()=0;
     virtual CutscenePlaybackStatus retire_movie()=0;
-    //1AEB00 keeps the engine channel record and applies its backend gate.
-    virtual CutscenePlaybackStatus stop_voice_preserving_state()=0;
     virtual CutscenePlaybackStatus stop_stream_tasks()=0;
     virtual CutscenePlaybackStatus fade(bool rising,std::int16_t duration,std::uint32_t color)=0;
     virtual CutscenePlaybackValue fade_finished()=0;

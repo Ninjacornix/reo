@@ -110,6 +110,30 @@ StreamStatus StreamInstances::attenuation(std::uint8_t index,std::int32_t value)
     if(closed_)return StreamStatus::closed;
     auto result=StreamStatus::fault;Operation operation([&](auto& players){result=mapped(players.attenuation(keys_[index],std::bit_cast<std::uint32_t>(value)));});const auto admission=owner_->run(operation);return admitted(admission,result);
 }
+StreamValue StreamInstances::instance_available(std::uint8_t index)noexcept{
+    if(index>=3)return{StreamStatus::invalid_channel,0};
+    if(closed_)return{StreamStatus::closed,0};
+    if(!constructed_[index])return{StreamStatus::completed,0};
+    auto result=StreamStatus::fault;Operation operation([&](auto& players){result=mapped(players.inspect(keys_[index]).status);});
+    const auto admission=owner_->run(operation);result=admitted(admission,result);
+    return{result,stream_accepted(result)?1:0};
+}
+StreamValue StreamInstances::start_ready(std::uint8_t index)noexcept{
+    if(index>=3)return{StreamStatus::invalid_channel,0};
+    if(closed_)return{StreamStatus::closed,0};
+    if(!constructed_[index])return{StreamStatus::unbound,0};
+    auto result=StreamStatus::fault;std::int32_t ready{};
+    Operation operation([&](auto& players){const auto observed=players.inspect(keys_[index]);result=mapped(observed.status);
+        if(stream_accepted(result)&&!observed.replacement_pending&&observed.source)ready=observed.source->playback.started?1:0;
+    });const auto admission=owner_->run(operation);return{admitted(admission,result),ready};
+}
+StreamStatus StreamInstances::start_inhibit(std::uint8_t index,bool value)noexcept{
+    if(index>=3)return StreamStatus::invalid_channel;
+    if(closed_)return StreamStatus::closed;
+    if(!constructed_[index])return StreamStatus::unbound;
+    auto result=StreamStatus::fault;Operation operation([&](auto& players){result=mapped(players.set_start_inhibit(keys_[index],value));});
+    const auto admission=owner_->run(operation);return admitted(admission,result);
+}
 StreamStatus StreamInstances::service(std::uint32_t tick)noexcept{
     if(closed_)return StreamStatus::closed;
     auto result=StreamStatus::fault;Operation operation([&](auto& players){result=mapped(players.service(tick));});const auto admission=owner_->run(operation);return admitted(admission,result);

@@ -53,15 +53,15 @@ CutscenePlaybackResult CutscenePlayback::advance_inner(){
         action(services_.prepare_voice(state_.request,state_.request.mode==1&&state_.request.audio_count!=1));
         state_.subphase=increment(state_.subphase);return{};
     case 1:
-        if(!(state_.request.mode==1&&state_.request.audio_count!=1)&&!query(services_.voice_ready()))return{CutscenePlaybackStatus::waiting};
+        if(!(state_.request.mode==1&&state_.request.audio_count!=1)&&![&]{const auto ready=channels_.prepared_ready(1,streams_);return query({stream_status(ready.status),ready.value});}())return{CutscenePlaybackStatus::waiting};
         if(!state_.request.mode){
-            state_.subphase=3;action(services_.release_voice_start());action(services_.fade(false,1,0xff000000u));action(services_.fullscreen_color(0xff000000u));
+            state_.subphase=3;action(stream_status(channels_.release_start(1,streams_)));action(services_.fade(false,1,0xff000000u));action(services_.fullscreen_color(0xff000000u));
         }else{action(services_.start_movie(state_.request));state_.subphase=increment(state_.subphase);}
         state_.completion_word=state_.frame=0;state_.camera_selection=state_.camera_ended=0;return{};
     case 2:
         if(query(services_.movie_state())!=2)return{CutscenePlaybackStatus::waiting};
         state_.subphase=increment(state_.subphase);
-        if(state_.request.audio_count==1)action(services_.release_voice_start());
+        if(state_.request.audio_count==1)action(stream_status(channels_.release_start(1,streams_)));
         if(state_.request.audio_count>=2){
             if(!audio_tick_)throw Unavailable{CutscenePlaybackStatus::unavailable};
             action(stream_status(channels_.resume_current(1,*audio_tick_,streams_)));
@@ -71,12 +71,12 @@ CutscenePlaybackResult CutscenePlayback::advance_inner(){
         std::uint32_t ended=state_.request.mode?std::uint32_t(query(services_.movie_busy())==0):state_.completion_word;
         if(cutscene_acknowledgements_complete(world.mode,state_.acknowledgement_mask,world.session().single_roster_setup)){
             leave();action(services_.close_actor_notice());stop_stream(1);stop_stream(2);action(services_.stop_stream_tasks());
-            if(state_.request.mode){action(services_.stop_movie());action(services_.retire_movie());action(services_.stop_voice_preserving_state());}
+            if(state_.request.mode){action(services_.stop_movie());action(services_.retire_movie());action(stream_status(channels_.stop_preserving_state(1,streams_)));}
             //5F1B30's conditional message-phase callback is a proved empty return.
             return{};
         }
         if(ended){
-            if(state_.request.mode){action(services_.stop_movie());action(services_.stop_voice_preserving_state());}
+            if(state_.request.mode){action(services_.stop_movie());action(stream_status(channels_.stop_preserving_state(1,streams_)));}
             leave();stop_stream(1);stop_stream(2);action(services_.stop_stream_tasks());action(services_.close_actor_notice());return{};
         }
         // Slots10..14 are literal5EE940 mechanical returns. The remaining

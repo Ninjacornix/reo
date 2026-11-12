@@ -44,6 +44,9 @@ public:
     StreamStatus pause(std::uint8_t,bool,std::uint32_t tick)noexcept override;
     StreamStatus attenuation(std::uint8_t,std::int32_t)noexcept override;
     StreamStatus service(std::uint32_t tick)noexcept override;
+    StreamValue instance_available(std::uint8_t)noexcept override;
+    StreamValue start_ready(std::uint8_t)noexcept override;
+    StreamStatus start_inhibit(std::uint8_t,bool)noexcept override;
     // Signal native destruction; pending retirements continue under the shared
     // Owner/service worker. This does not join or stop an unrelated outer owner.
     StreamStatus close()noexcept;

@@ -22,6 +22,11 @@ order. Offline acknowledgement accepts any nonzero mask. Online acknowledgement
 counts the original participant loop with modulo32 shifts; zero participants
 therefore completes immediately. Signed phase/subphase bytes preserve wrapping.
 
+Prepared voice readiness, start release and preserving stop now call the real
+StreamChannels policy and StreamInstances owner; they are not service callbacks.
+[Their focused qualification](PREPARED_STREAM_START.md) includes actual native
+source loading, inherit/start release and canonical owner admission checks.
+
 Actor and object callback slots call the already registered native
 CutsceneActorTracks and CutsceneObjectTracks owners directly. Missing owners
 refuse; a generic callback cannot manufacture their success. Other frame slots,
@@ -41,13 +46,13 @@ context, original addresses, addressed RAM or recompiled function execution.
 Independent component qualifications remain valid for separately supplied frame
 arguments; those tests do not establish two original controller clocks.
 
-Fresh independent LLVM and GCC v11 cohorts pass identically:2,457,907 checks,
+Fresh independent LLVM and GCC v12 cohorts pass identically:2,445,824 checks,
 56,173 complete outer visits,9,363 inner visits,9,984 acknowledgement patterns,
-256 populated actor/object controller ticks and372,259 original calls. Native
+256 populated actor/object controller ticks and403,343 original calls. Native
 contracts additionally cover duplicate-owner refusal, destructor rebind, closed
 World, missing required track owner and all13 primitive failure prefixes. Both
-receipts attest unchanged source, including141,152 real World.close callback
-refusals per compiler. Earlier v1..v10 development runs remain on disk;
+receipts attest unchanged source, including129,069 real World.close callback
+refusals per compiler. Earlier v1..v11 development runs remain on disk;
 reference entry/tail-wrapper/constant fixture errors were corrected before the
 final pair. The reproducible summary is
 [the qualification seal](../../tools/native_reconstruction/native_cutscene_playback_qualification_v1.json).

@@ -8,7 +8,7 @@ def main():
  p=argparse.ArgumentParser();p.add_argument('--compiler',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args();out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
  elf=ROOT/'game_data/SLUS_207.65';assert sha(elf)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46';read_main=elf_reader(elf.read_bytes());overlay=ROOT/'build-function-index/owned-overlays/o2.bin';assert sha(overlay)=='45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226';raw=overlay.read_bytes();read=lambda at,n:read_main(at,n)if at<0x570000 else raw[at-0x570000:at-0x570000+n]
  entries={}
- for at in [0x5ee680,0x5ee260,0x5ee940,0x5eeb00,0x5eec50,0x5ef120,0x5eca70,0x5eca80,0x5f1970,0x5f0380,0x5f0230,0x1b02d0,0x1b0300,0x1ae190,0x1adf50,0x1adfd0]:
+ for at in [0x5ee680,0x5ee260,0x5ee940,0x5eeb00,0x5eec50,0x5ef120,0x5eca70,0x5eca80,0x5f1970,0x5f0380,0x5f0230,0x1b02d0,0x1b0300,0x1ae190,0x1ae910,0x1ae9a0,0x1ae740,0x1aeb00,0x132df0,0x132e20,0x1b82a0,0x12a8e8,0x1adf50,0x1adfd0]:
   bank='o2'if at>=0x570000 else'sub';directory=ROOT/('recomp/config/output_ovl/o2'if bank=='o2'else'recomp/config/output');entries[at]=next(directory.glob(f'{bank}_{at:08X}_*')).relative_to(ROOT).as_posix()
  originals=sorted(set(entries.values()));proof=[]
  for name in originals:
