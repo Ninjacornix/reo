@@ -1,5 +1,6 @@
 #include "transient_lights.hpp"
 #include "../gameplay_update/update.hpp"
+#include "../gameplay_collision/response.hpp"
 #include <algorithm>
 #include <cmath>
 #include <exception>
@@ -52,16 +53,27 @@ TransientCreated TransientLights::create(const gameplay_actors::EntityId& id,con
     auto& owner=*shared_;if(owner.closed||!owner.update.open())return{TransientStatus::closed,{},{}};
     if(owner.fault!=TransientStatus::completed)return{owner.fault,{},{}};
     const auto actor=owner.update.world().resolve(id);if(!actor)return{};
+    return create_impl(position,actor->surface_material,nullptr);
+}
+TransientCreated TransientLights::create_projectile(const std::array<float,3>& position,const gameplay_collision::response::Grid& floors)noexcept{
+    return create_impl(position,255,&floors);
+}
+TransientCreated TransientLights::create_impl(const std::array<float,3>& position,std::uint8_t material,const gameplay_collision::response::Grid* floors)noexcept{
+    auto& owner=*shared_;if(owner.closed||!owner.update.open())return{TransientStatus::closed,{},{}};
+    if(owner.fault!=TransientStatus::completed)return{owner.fault,{},{}};
     if(!std::all_of(position.begin(),position.end(),[](float value){return std::isfinite(value);}))return{};
     try{
         auto& tasks=owner.update.linked();
         std::erase_if(owner.entries,[&](const auto& entry){return !tasks.contains(entry.handle);});
         const auto work=std::make_shared<Work>(shared_);const auto task=tasks.create(work);
         if(task.status!=gameplay_tasks::Status::completed)return{task.status==gameplay_tasks::Status::full?TransientStatus::task_full:task.status==gameplay_tasks::Status::no_memory?TransientStatus::no_memory:TransientStatus::unavailable,{},{}};
+        // Actual720280 is byte-identical to720240 (52-byte definitions).
+        // Source616F60 samples material only after successful573890 admission.
+        if(floors)material=floors->floor({position[0],position[1],position[2]},255).material;
         const auto definition=transient_definition(position);
-        const auto primary=owner.lights.allocate(&definition,actor->surface_material,0);
+        const auto primary=owner.lights.allocate(&definition,material,0);
         if(primary){const auto handle=owner.lights.handle(*primary);if(!handle){(void)tasks.erase(task.handle);return{};}work->primary=*handle;}
-        const auto auxiliary=owner.lights.allocate_auxiliary(&definition,actor->surface_material);
+        const auto auxiliary=owner.lights.allocate_auxiliary(&definition,material);
         if(auxiliary)work->auxiliary=*auxiliary;
         owner.entries.push_back({task.handle,work});
         return{TransientStatus::completed,task.handle,{bool(work->primary),bool(work->auxiliary)}};

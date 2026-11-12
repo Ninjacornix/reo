@@ -1,0 +1,81 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "game_run": false,
+  "device_opened": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_lighting/transient_lights.hpp": "b4330437e3499d3bc34990e1a227a728bd9aa6f018dd42c2b81ba11b7f0ed652",
+    "game/native/gameplay_lighting/transient_lights.cpp": "8c135cf7867e53e72af7eaf7d5746eb382cc3470f3a626d5c9a7bcf581c49e81",
+    "game/native/gameplay_world/projectile_pose_lights.hpp": "dd5bc65cacf983303bb4e531a7987c1e716b34a66e486303e3c7da80fc19d70f",
+    "game/native/gameplay_world/projectile_pose_lights.cpp": "80aadc7f302c118083513286c8f6914188f79c258b18a4c3a323889ed2e16135",
+    "game/native/gameplay_lighting/projectile_lights_contract_tests.cpp": "ee0760f0fa52aaaeb28286aa9c01ded984d9e89e193785e0ff9e275d4c98d011",
+    "tools/native_reconstruction/transient_light_policy_tests.cpp": "3e50a2dd46889f786af5f32ea617f6c5292b23c604cd7f9bbac8877b1b3da641",
+    "tools/native_reconstruction/projectile_lights_owner_tests.inc": "7b7325ece94e8440ba264d760712834f68f63afe8ea760b612591ca0d8483022",
+    "tools/native_reconstruction/verify_projectile_lights.py": "c514b0172957e909770cc51eaf0af89fb62d058af9e49eb77fd4297aaefe7053",
+    "tools/native_reconstruction/verify_projectile_lights_current.py": "b06ce4c22afb6ec79bf5b95fbaa75c4d02609800664d9aaee894c49d1de4554f",
+    "docs/native-gameplay/PROJECTILE_LIGHTS.md": "7dfd657ce89e909ed2ec8bde8bb31db7fdabc6a0b6986dd0552dc5dd0ec2d36c",
+    "tools/native_reconstruction/qualify_projectile_lights.py": "9c0d7f49c53156a2bb4262e684bd675f05e53d66380bd4999fc824abc0c93833"
+  },
+  "receipts": {
+    "build-native-sjuni/projectile-lights-llvm-v4/receipt.json": {
+      "sha256": "08320637d8e34bf69c27ac9bb6da2296c66b2e17ab8833770839c180fec90f54",
+      "observed": {
+        "checks": 7447301,
+        "cases": 1310720,
+        "releases": 131076,
+        "retirements": 262144,
+        "auxiliary_allocations": 1368,
+        "auxiliary_releases": 342,
+        "auxiliary_refusals": 20,
+        "owner_cases": 77,
+        "owner_frames": 294,
+        "owner_refusals": 7,
+        "projectile_cases": 201,
+        "projectile_frames": 748,
+        "floor_queries": 198,
+        "floor_hits": 189,
+        "original_calls": 3352534,
+        "game_run": false
+      },
+      "parent_tests": null
+    },
+    "build-native-sjuni/projectile-lights-current-llvm-v2/receipt.json": {
+      "sha256": "750ade0e70f57ca4dd00597277124ac99c534f95cb8f8b9c53bda7a90fbb9108",
+      "observed": null,
+      "parent_tests": 32
+    },
+    "build-native-sjuni/projectile-lights-gcc-v4/receipt.json": {
+      "sha256": "692c180b973189337ac0f30b61b59f3240512118588c82ef0a4022e9223afeab",
+      "observed": {
+        "checks": 7447301,
+        "cases": 1310720,
+        "releases": 131076,
+        "retirements": 262144,
+        "auxiliary_allocations": 1368,
+        "auxiliary_releases": 342,
+        "auxiliary_refusals": 20,
+        "owner_cases": 77,
+        "owner_frames": 294,
+        "owner_refusals": 7,
+        "projectile_cases": 201,
+        "projectile_frames": 748,
+        "floor_queries": 198,
+        "floor_hits": 189,
+        "original_calls": 3352534,
+        "game_run": false
+      },
+      "parent_tests": null
+    },
+    "build-native-sjuni/projectile-lights-current-gcc-v2/receipt.json": {
+      "sha256": "f7adebf895a9c9d083f7e4c65c5b83d53cf8e29b02ed985cdf4cca79553b9bcd",
+      "observed": null,
+      "parent_tests": 32
+    }
+  },
+  "cmake_required": [
+    "add_library(reo_native_projectile_light_effects STATIC projectile_pose_lights.cpp)",
+    "add_test(NAME native_projectile_lights_contract COMMAND projectile_lights_contract_tests)"
+  ]
+}

@@ -378,3 +378,18 @@ add_test(NAME native_dialogue_response_contract COMMAND dialogue_response_contra
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_compile_options(dialogue_response_contract_tests PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
 endif()
+
+# Actual6B25B0 projectile lights share the existing canonical task/light pools.
+add_library(reo_native_projectile_light_effects STATIC projectile_pose_lights.cpp)
+target_compile_features(reo_native_projectile_light_effects PUBLIC cxx_std_20)
+target_link_libraries(reo_native_projectile_light_effects PUBLIC reo_native_pose_callbacks reo_native_transient_lights)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(reo_native_projectile_light_effects PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+endif()
+
+add_executable(projectile_lights_contract_tests ../gameplay_lighting/projectile_lights_contract_tests.cpp)
+target_link_libraries(projectile_lights_contract_tests PRIVATE reo_native_projectile_light_effects)
+add_test(NAME native_projectile_lights_contract COMMAND projectile_lights_contract_tests)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(projectile_lights_contract_tests PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+endif()

@@ -8,6 +8,9 @@
 #include <vector>
 namespace l=reo::native::gameplay_lighting;
 unsigned checks{},cases{},calls{},released{},retirements{};
+#ifdef REO_PROJECTILE_LIGHT_OWNER
+bool projectile_floor_port(std::uint8_t*,R5900Context*);
+#endif
 std::array<bool,2> release_mask;bool task_retired{};
 #ifdef REO_TRANSIENT_OWNER
 extern bool transient_owner_mode;
@@ -20,6 +23,9 @@ template<class T>T get(const std::uint8_t* memory,unsigned address){return trans
 template<class T>void put(std::uint8_t* memory,unsigned address,T value){transform_write(memory,address,value);}
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
     ++calls;
+#ifdef REO_PROJECTILE_LIGHT_OWNER
+    if(projectile_floor_port(memory,context)){context->pc=GPR_U32(context,31);return;}
+#endif
 #ifdef REO_TRANSIENT_OWNER
     if(transient_owner_mode){
         if(transient_owner_port(memory,context)){context->pc=GPR_U32(context,31);return;}
@@ -55,7 +61,11 @@ void call(std::uint8_t* memory,unsigned address){
 #ifdef REO_TRANSIENT_OWNER
 #include "tools/native_reconstruction/transient_lights_owner_tests.inc"
 #endif
-int main()try{
+#ifdef REO_PROJECTILE_LIGHT_OWNER
+#include "tools/native_reconstruction/projectile_lights_owner_tests.inc"
+#endif
+int main(int argc,char** argv)try{
+    (void)argc;(void)argv;
     std::vector<std::uint8_t> memory(0x2000000);owned_constants(memory.data());
     const auto definition=l::transient_definition({1,-2,3});auto expected=get<l::Definition>(memory.data(),0x720240);expected.position={1,-2,3};
     check(std::memcmp(&definition,&expected,sizeof definition)==0);
@@ -82,12 +92,18 @@ int main()try{
 #ifdef REO_TRANSIENT_OWNER
     compare_transient_owner(memory.data());
 #endif
+#ifdef REO_PROJECTILE_LIGHT_OWNER
+    check(argc==2);compare_projectile_lights(memory.data(),argv[1]);
+#endif
     std::cout<<"{\"checks\":"<<checks<<",\"cases\":"<<cases<<",\"releases\":"<<released<<",\"retirements\":"<<retirements
 #ifdef REO_AUXILIARY_LIGHT_POOL
         <<",\"auxiliary_allocations\":"<<auxiliary_light_allocations<<",\"auxiliary_releases\":"<<auxiliary_light_releases<<",\"auxiliary_refusals\":"<<auxiliary_light_refusals
 #endif
 #ifdef REO_TRANSIENT_OWNER
         <<",\"owner_cases\":"<<transient_owner_cases<<",\"owner_frames\":"<<transient_owner_frames<<",\"owner_refusals\":"<<transient_owner_refusals
+#endif
+#ifdef REO_PROJECTILE_LIGHT_OWNER
+        <<",\"projectile_cases\":"<<projectile_cases<<",\"projectile_frames\":"<<projectile_frames<<",\"floor_queries\":"<<projectile_queries<<",\"floor_hits\":"<<projectile_hits
 #endif
         <<",\"original_calls\":"<<calls<<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
