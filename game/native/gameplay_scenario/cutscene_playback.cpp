@@ -2,6 +2,7 @@
 #include "cutscene_actor_tracks.hpp"
 #include "cutscene_object_tracks.hpp"
 #include "cutscene_camera.hpp"
+#include "cutscene_display.hpp"
 #include "../gameplay_update/update.hpp"
 #include <bit>
 #include <new>
@@ -42,6 +43,24 @@ CutscenePlaybackStatus CutscenePlayback::unbind_camera()noexcept{
     if(world_.closed())return CutscenePlaybackStatus::closed;
     camera_.reset();return CutscenePlaybackStatus::completed;
 }
+CutscenePlaybackStatus CutscenePlayback::bind_display(std::unique_ptr<CutsceneDisplay>& display)noexcept{
+    if(running_||world_.busy())return CutscenePlaybackStatus::busy;
+    if(world_.closed())return CutscenePlaybackStatus::closed;
+    if(!display||display_||!display->bound_to(state_,world_.session().clock_mode))return CutscenePlaybackStatus::unavailable;
+    display_=std::move(display);return CutscenePlaybackStatus::completed;
+}
+CutscenePlaybackStatus CutscenePlayback::unbind_display()noexcept{
+    if(running_||world_.busy())return CutscenePlaybackStatus::busy;
+    if(world_.closed())return CutscenePlaybackStatus::closed;
+    display_.reset();return CutscenePlaybackStatus::completed;
+}
+CutscenePlaybackStatus CutscenePlayback::fade(bool rising,std::int16_t duration,std::uint32_t color){
+    if(!display_)return services_.fade(rising,duration,color);
+    display_->fade(rising,duration,color);return CutscenePlaybackStatus::completed;
+}
+CutscenePlaybackValue CutscenePlayback::fade_finished(){
+    return display_?CutscenePlaybackValue{CutscenePlaybackStatus::completed,display_->fade_finished()}:services_.fade_finished();
+}
 CutscenePlaybackStatus CutscenePlayback::frame_work(CutsceneFrameWork work,std::int8_t group){
     const auto map=[](CutsceneTrackStatus status){switch(status){case CutsceneTrackStatus::completed:return CutscenePlaybackStatus::completed;case CutsceneTrackStatus::busy:return CutscenePlaybackStatus::busy;case CutsceneTrackStatus::closed:return CutscenePlaybackStatus::closed;case CutsceneTrackStatus::no_memory:return CutscenePlaybackStatus::no_memory;default:return CutscenePlaybackStatus::unavailable;}};
     if(work==CutsceneFrameWork::actor_tracks){
@@ -59,8 +78,11 @@ CutscenePlaybackStatus CutscenePlayback::frame_work(CutsceneFrameWork work,std::
         default:return CutscenePlaybackStatus::unavailable;
         }
     }
-    if(camera_&&work==CutsceneFrameWork::paired_camera)
-        return camera_->sample()?services_.publish_camera(camera_->parameters()):CutscenePlaybackStatus::completed;
+    if(camera_&&work==CutsceneFrameWork::paired_camera){
+        if(!camera_->sample())return CutscenePlaybackStatus::completed;
+        if(!display_)return services_.publish_camera(camera_->parameters());
+        display_->publish(camera_->parameters());return CutscenePlaybackStatus::completed;
+    }
     return services_.frame_work(work,state_,group);
 }
 CutscenePlaybackResult CutscenePlayback::advance_inner(){
@@ -76,7 +98,7 @@ CutscenePlaybackResult CutscenePlayback::advance_inner(){
     case 1:
         if(!(state_.request.mode==1&&state_.request.audio_count!=1)&&![&]{const auto ready=channels_.prepared_ready(1,streams_);return query({stream_status(ready.status),ready.value});}())return{CutscenePlaybackStatus::waiting};
         if(!state_.request.mode){
-            state_.subphase=3;action(stream_status(channels_.release_start(1,streams_)));action(services_.fade(false,1,0xff000000u));action(services_.fullscreen_color(0xff000000u));
+            state_.subphase=3;action(stream_status(channels_.release_start(1,streams_)));action(fade(false,1,0xff000000u));action(services_.fullscreen_color(0xff000000u));
         }else{action(services_.start_movie(state_.request));state_.subphase=increment(state_.subphase);}
         state_.completion_word=state_.frame=0;state_.camera_selection=state_.camera_ended=0;return{};
     case 2:
@@ -87,7 +109,7 @@ CutscenePlaybackResult CutscenePlayback::advance_inner(){
             if(!audio_tick_)throw Unavailable{CutscenePlaybackStatus::unavailable};
             action(stream_status(channels_.resume_current(1,*audio_tick_,streams_)));
         }
-        action(services_.fullscreen_color(0xff000000u));action(services_.fade(false,1,0xff000000u));return{};
+        action(services_.fullscreen_color(0xff000000u));action(fade(false,1,0xff000000u));return{};
     case 3:{
         std::uint32_t ended=state_.request.mode?std::uint32_t(query(services_.movie_busy())==0):state_.completion_word;
         if(cutscene_acknowledgements_complete(world.mode,state_.acknowledgement_mask,world.session().single_roster_setup)){
@@ -142,10 +164,10 @@ CutscenePlaybackResult CutscenePlayback::tick()noexcept{
             if(world.session().cutscene_requests.read_index()==world.session().cutscene_requests.write_index()){
                 state_.phase=0;return{CutscenePlaybackStatus::completed,true,work_calls_};
             }
-            action(services_.fade(true,1,0xff000000u));action(services_.transition_audio_reset());
+            action(fade(true,1,0xff000000u));action(services_.transition_audio_reset());
             state_.phase=increment(state_.phase);state_.subphase=state_.detail=state_.entry_detail=0;break;
         case 3:{
-            if(!query(services_.fade_finished()))return{CutscenePlaybackStatus::waiting,false,work_calls_};
+            if(!query(fade_finished()))return{CutscenePlaybackStatus::waiting,false,work_calls_};
             action(stream_status(channels_.stop(1,streams_)));action(stream_status(channels_.stop(2,streams_)));
             const auto request=collect_cutscene_cues(world_,flags_);if(!request)throw Unavailable{CutscenePlaybackStatus::unavailable};state_.request=*request;
             if(state_.request.mode)state_.voice_requested=1;

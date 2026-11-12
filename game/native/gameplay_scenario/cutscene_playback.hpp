@@ -8,6 +8,7 @@ namespace reo::native::gameplay_update {class Owner;}
 namespace reo::native::gameplay_scenario {
 class CutsceneSpeech;
 class CutsceneCamera;
+class CutsceneDisplay;
 struct CameraParameters;
 // One native controller for source38ECA0. The original7434C8 pointer aliases
 // this record; +8 and global38ECA8 are the SAME simulation frame. Request.mode
@@ -81,6 +82,10 @@ public:
     CutscenePlaybackStatus unbind_camera()noexcept;
     CutsceneCamera* camera()noexcept{return camera_.get();}
     const CutsceneCamera* camera()const noexcept{return camera_.get();}
+    CutscenePlaybackStatus bind_display(std::unique_ptr<CutsceneDisplay>&)noexcept;
+    CutscenePlaybackStatus unbind_display()noexcept;
+    CutsceneDisplay* display()noexcept{return display_.get();}
+    const CutsceneDisplay* display()const noexcept{return display_.get();}
     // The actual5EE680 outer visit and5EE260 substate. Neither starts a game,
     // device nor thread; required media/scene capability failures are returned.
     CutscenePlaybackResult tick()noexcept;
@@ -91,10 +96,13 @@ private:
     StreamChannels& channels_;StreamBackend& streams_;SceneVoicePreparation voice_;
     CutscenePlaybackServices& services_;CutscenePlaybackState state_;
     std::unique_ptr<CutsceneCamera> camera_;
+    std::unique_ptr<CutsceneDisplay> display_;
     bool running_{};
     std::size_t work_calls_{};
     CutscenePlaybackResult advance_inner();
     CutscenePlaybackStatus frame_work(CutsceneFrameWork,std::int8_t group=-1);
+    CutscenePlaybackStatus fade(bool,std::int16_t,std::uint32_t);
+    CutscenePlaybackValue fade_finished();
 };
 bool cutscene_acknowledgements_complete(std::uint8_t mode,std::uint8_t mask,std::uint8_t participants)noexcept;
 }
