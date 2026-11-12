@@ -9,7 +9,11 @@ Each call visits groups and their seven streams in order. It rereads the low
 frame halfword and canonical clock mode for each stream. Nonzero mode compares
 the halved unsigned frame values. A match consumes at most one record, including
 when the next event has the same timestamp. It does not catch up skipped events
-or advance the simulation clock. Kinds0/1/2 dispatch actor commands, including a
+or advance the simulation clock. The complete5EE680 controller aliases7434C8
+to38ECA0; its+8 is global38ECA8, so event dispatch and pose evaluation borrow
+the same simulation counter in that real calling path. Component tests with
+independent inputs qualify the consumer rather than imply two original clocks.
+Kinds0/1/2 dispatch actor commands, including a
 known null actor; other signed kinds skip the command and still advance. The
 followingFFFF timestamp ends that stream. The eighth section is a separate
 header, not an eighth event stream.

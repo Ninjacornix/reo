@@ -7,8 +7,12 @@ CutsceneObjectTracks implements5EF120's seven streams over the actual fixed
 sixteen-object pool. Each stream processes at most one matching record per tick,
 including repeated timestamps and low16 media-frame/half-rate aliases. It advances
 exactly one36-byte record and clears the cursor when the next timestamp isFFFF.
-Media-event time comes from the caller's native media view; this consumer does not
-advance that clock or substitute scene-pose time.
+The component borrows its event frame and advances no clock. The complete
+5EE680/5EE260 controller establishes that7434C8 points to38ECA0: controller+8
+and38ECA8 are the same canonical simulation frame. That real caller supplies
+the same counter to stream dispatch and pose evaluation. Independent component
+fixtures may vary their borrowed arguments to qualify each consumer; they do not
+establish separate clocks in the original controller.
 
 Commands0/1/2/3 now update native pose/activation, semantic visibility, full-word
 motion requests and attachments. Kind0 retains a typed copy of the adjacent pose

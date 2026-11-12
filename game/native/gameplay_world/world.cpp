@@ -5,6 +5,7 @@
 #include "scene_primary_actors.hpp"
 #include "target_metrics.hpp"
 #include "../gameplay_navigation/bank.hpp"
+#include "../gameplay_scenario/cutscene_playback.hpp"
 #include <bit>
 #include <exception>
 #include <stdexcept>
@@ -118,6 +119,7 @@ bool World::busy()const noexcept{
     return updating_||(linked_models_&&linked_models_->busy())||(auxiliary_actors_&&auxiliary_actors_->busy())||(scene_primary_actors_&&scene_primary_actors_->busy());
 }
 Status World::close()noexcept{
+    if(cutscene_playback_owner_&&cutscene_playback_owner_->busy())return Status::busy;
     if(busy())return Status::busy;
     closed_=true;primary_.fill({});
     if(linked_models_)(void)linked_models_->close();

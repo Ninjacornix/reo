@@ -11,8 +11,8 @@ struct CutsceneObjectBinding {
 struct CutsceneObjectTrackGroup:CutsceneObjectBinding {
     std::array<std::shared_ptr<const CutsceneActorStream>,7> streams;
 };
-//5EF120's separate object streams. Media-event frame and pose scene frame
-// remain distinct caller-owned clocks; this consumer advances neither clock.
+//5EF120 object streams borrow a frame and advance no clock. The complete
+//5EE680 controller supplies the same canonical counter to events and pose.
 class CutsceneObjectTracks final {
 public:
     static constexpr std::size_t capacity=16;

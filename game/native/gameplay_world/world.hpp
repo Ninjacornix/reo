@@ -38,7 +38,7 @@
 
 namespace reo::native::animation {class Instance;class Constraints;class Playback;class WeaponProgramBank;}
 namespace reo::native::gameplay_navigation {class Bank;}
-namespace reo::native::gameplay_scenario {class CutsceneActorTracks;class CutsceneObjectTracks;class CutsceneRosterPreparation;}
+namespace reo::native::gameplay_scenario {class CutscenePlayback;class CutsceneActorTracks;class CutsceneObjectTracks;class CutsceneRosterPreparation;}
 namespace reo::native::gameplay_update {class LinkedModelWorkers;}
 namespace reo::native::gameplay_world {
 namespace actors=gameplay_actors;
@@ -321,6 +321,8 @@ private:
     friend class LinkedActorUpdates;
     gameplay_update::LinkedModelWorkers* linked_model_owner_{};
     friend class gameplay_update::LinkedModelWorkers;
+    gameplay_scenario::CutscenePlayback* cutscene_playback_owner_{};
+    friend class gameplay_scenario::CutscenePlayback;
     gameplay_scenario::CutsceneActorTracks* cutscene_tracks_owner_{};
     friend class gameplay_scenario::CutsceneActorTracks;
     gameplay_scenario::CutsceneObjectTracks* cutscene_object_tracks_owner_{};
