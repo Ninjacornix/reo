@@ -37,7 +37,10 @@ bool CutsceneLights::bound_to(const gameplay_world::World& world,const CutsceneP
 CutsceneLightsStatus CutsceneLights::initialize()noexcept{
     if(running_||world_.busy())return CutsceneLightsStatus::busy;
     if(world_.closed())return CutsceneLightsStatus::closed;
-    running_=true;Reset reset{running_};lights_.select(0);for(unsigned index=0;index<32;++index)(void)lights_.create(std::uint8_t(index));
+    running_=true;Reset reset{running_};return initialize_impl();
+}
+CutsceneLightsStatus CutsceneLights::initialize_impl()noexcept{
+    lights_.select(0);for(unsigned index=0;index<32;++index)(void)lights_.create(std::uint8_t(index));
     const auto selected=fog_.select(0);if(selected!=FogStatus::completed)return CutsceneLightsStatus::unavailable;
     physical_epoch_=lights_.reset_epoch();
     for(unsigned index=0;index<32;++index){const auto slot=lights_.allocate(nullptr,0,3);physical_[index]=slot?lights_.handle(*slot):std::nullopt;}

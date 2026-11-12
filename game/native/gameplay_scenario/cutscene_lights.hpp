@@ -4,6 +4,7 @@
 #include "cutscene_descriptor.hpp"
 #include "../gameplay_contact_world/contacts.hpp"
 namespace reo::native::gameplay_scenario {
+namespace content {class ScenarioArchive;}
 struct CutscenePlaybackState;
 struct LightKeyLocation {std::size_t group{},stream{},record{};friend bool operator==(const LightKeyLocation&,const LightKeyLocation&)=default;};
 class PreparedLightTracks final {
@@ -15,6 +16,12 @@ private:std::vector<std::array<std::vector<CutsceneLightKey>,2>> streams_;
 std::shared_ptr<const PreparedLightTracks> prepare_light_tracks(const CutsceneDescriptor&);
 enum class CutsceneLightsStatus {completed,busy,closed,unavailable,no_memory};
 struct CutsceneLightsUpdated {CutsceneLightsStatus status{CutsceneLightsStatus::completed};std::size_t visited{},bound{},sampled{};};
+struct CutsceneRoomLightingLoaded {
+    CutsceneLightsStatus status{CutsceneLightsStatus::unavailable};
+    bool lighting_read{},fog_read{},initialized{};
+    std::optional<LightingImport> lighting_import{};
+    std::optional<FogStatus> fog_import{};
+};
 // Sole original747430/747420 binding owner over the actual Lighting pools.
 // Curve reset6B38D0 does not release physical lights. Pool reset is still owned
 // by Lighting; its generation/epoch invalidates these handles and all borrowers.
@@ -26,6 +33,7 @@ public:
     CutsceneLights(const CutsceneLights&)=delete;
     CutsceneLights& operator=(const CutsceneLights&)=delete;
     CutsceneLightsStatus initialize()noexcept; // complete6B3830
+    CutsceneRoomLightingLoaded load_room(const content::ScenarioArchive&)noexcept; // complete1D4870
     CutsceneLightsStatus install(std::shared_ptr<const PreparedLightTracks>)noexcept;
     CutsceneLightsStatus clear_bindings()noexcept; // complete6B38D0
     CutsceneLightsUpdated tick()noexcept; // complete5EF640/6B3900
@@ -50,5 +58,6 @@ private:
     const CutsceneLightKey* key(LightKeyLocation)const noexcept;
     std::optional<std::uint8_t> material(transform_math::Vector);
     CutsceneLightsStatus bind(LightKeyLocation);
+    CutsceneLightsStatus initialize_impl()noexcept;
 };
 } // namespace reo::native::gameplay_scenario
