@@ -5,6 +5,7 @@
 - Fix level music continuing under cutscenes and FMVs when the game pauses it, such as the File #1 Decisions, Decisions opening (#72). A paused voice now plays out only the audio it had already accepted, as on hardware, instead of everything the stream keeps decoding.
 - Fix File #1 freezes of up to half a second while the game reads from the disc image. Disc reads now complete in the background, as the PS2's CD hardware does, instead of stopping every game thread until the host read finishes. `REO_CD_ASYNC=0` restores the previous synchronous reads. Add an optional developer timing log for audio, disc and movie service stalls.
 - Fix joining a host through its advertised public address (#64).
+- Fix hosting startup after upgrading an older server database (#84). Migrate missing account fields and Outbreak rankings atomically, retaining existing credentials and every original result in an archive table.
 - Add DualShock 4 controller input over USB and Bluetooth.
 - Show an error and exit when the graphics driver does not provide OpenGL 3.3, instead of crashing while opening the game window. Vulkan remains optional; without it the game uses software rendering.
 - Add On, Off and Adaptive vertical sync in Graphics for both games (#85). Default to On and preserve the original game clock. Game build kits must be regenerated so existing installations rebuild with the new display controls.
