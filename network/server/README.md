@@ -58,6 +58,47 @@ Use the upstream README for server configuration and operation. Restart the
 server after applying the patch; an existing process retains its loaded code
 and in-memory sessions.
 
+## Upgrading existing hosting databases (#84)
+
+Patch `0003-sqlite-legacy-schema-migration.patch` fixes the APP service exiting
+with `sqlite3.OperationalError: no such column: sort_key` after an upgrade.
+The old server stored one row per result; RC2 and v1.0.20 expect one row per
+player and board, plus account recovery codes. `CREATE TABLE IF NOT EXISTS`
+alone does not upgrade those existing tables.
+
+The patch upgrades the database on the next hosting startup, without resetting
+accounts or touching game saves. Existing IDs, names, password records, seeds,
+teams and encrypted login keys remain unchanged. Accounts missing the new
+recovery-code field receive individual codes; older stores missing the login-key
+column receive that column too.
+
+All original result rows and their indexes are retained in `records_legacy_v1`.
+The active rankings for both `outbreak` and `outbreak2` are rebuilt in original
+submission order: fastest clears retain the winning result's details and time,
+and the old per-scenario points boards feed the new per-player total. Rows for
+other games or unknown boards stay in the archive without guessing their
+ranking rules. New result submissions update the new composite primary key.
+Reopening an upgraded database does not replay the archive or change recovery
+codes. An existing archive is never overwritten.
+
+Schema inspection and changes run under one `BEGIN IMMEDIATE` transaction. This
+serializes the four services' startup and rolls back all schema/data changes if
+an upgrade fails. The connection allows up to 30 seconds for another SQLite
+writer, and closes its handle after a failed initialization.
+
+The database is `<selected data folder>/hosted-server/opensnap.db` for File #1
+and `<selected data folder>/hosted-server-file2/opensnap.db` for File #2. Windows
+defaults to `data` beside the launcher; `storage.json` beside the launcher records
+a custom location. There is no need to remove or reset these folders with this
+patch. Re-export the server component when packaging the fix so its manifest
+includes the new patched source; no game rebuild is required for this migration.
+
+Regression checks are included in `network/server/tests/test_database_migration.py`
+and run in Server compatibility CI with the exported patched component. They
+exercise real SQLite files, retained authentication/recovery, both editions'
+rankings, updates after migration, repeated/concurrent startup, rollback after
+an injected failure and preservation of an existing archive.
+
 ## What it fixes
 
 After a scenario, the original File #1 meeting-room code queries the roster

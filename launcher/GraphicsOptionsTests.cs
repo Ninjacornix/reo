@@ -5,6 +5,7 @@ namespace Outbreak.Launcher;
 
 internal static class GraphicsOptionsTests {
     internal static void Run(Action<bool, string> check) {
+        MovieDefaults(check);
         var culture = CultureInfo.CurrentCulture;
         try {
             CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("hr-HR");
@@ -55,6 +56,18 @@ internal static class GraphicsOptionsTests {
                           game + " supports every internal scale, fit and anti-aliasing selection");
                 }
             }
+            check(GameSession.GraphicsExitDiagnostic("[BOOT] OpenGL 3.3 is unavailable; not opening the game window.")
+                  ?.Contains("Install the graphics driver", StringComparison.Ordinal) == true,
+                  "Missing OpenGL is identified as a graphics driver error");
+            check(GameSession.GraphicsExitDiagnostic("[GPU-MOVIE] failure boundary=nativeMovieQuiescent detail=Create same-adapter native MPEG decoder")
+                  ?.Contains("turn off Decode movies on the graphics card", StringComparison.Ordinal) == true,
+                  "An actual Direct3D movie decoder failure points to CPU decoding");
+            check(GameSession.GraphicsExitDiagnostic("[run] graphics backend failure: Native DXGI swapchain unavailable; orderly shutdown requested")
+                  ?.Contains("graphics backend failed", StringComparison.Ordinal) == true,
+                  "An orderly graphics backend shutdown is reported as a failure");
+            check(GameSession.GraphicsExitDiagnostic("No D3D11 video device") == null &&
+                  GameSession.GraphicsExitDiagnostic("[GS-BACKEND] requested=parallel selected=software reason=Vulkan device initialization failed") == null,
+                  "Optional capabilities and normal software fallback are not reported as fatal errors");
             var invalid = GraphicsOptions.From(new Settings {
                 InternalResolution = 3, Anisotropy = 7, Brightness = 999,
                 Gamma = double.NaN, AspectRatio = "invalid", ScreenFit = "invalid"
@@ -66,5 +79,37 @@ internal static class GraphicsOptionsTests {
                   && invalid.Environment["REO_DISPLAY_ASPECT"] == "4:3"
                   && invalid.Environment["REO_DISPLAY_FIT"] == "fit", "Invalid graphics values have safe renderer defaults");
         } finally { CultureInfo.CurrentCulture = culture; }
+    }
+    static void MovieDefaults(Action<bool, string> check) {
+        var verified = new MovieDecoderChoice(true, "Verified GPU", "Hardware MPEG-2 decoder available");
+        var cpuDefaults = new[] {
+            new MovieDecoderChoice(false, "NVIDIA", "REO GPU movies can crash"),
+            new MovieDecoderChoice(false, "Intel", "REO GPU movies are untested"),
+            new MovieDecoderChoice(false, "", "Movie decoder check is missing"),
+            new MovieDecoderChoice(false, "GPU", "No compatible MPEG-2 decoder")
+        };
+        var legacyOn = JsonSerializer.Deserialize<Settings>("{\"GpuMovies\":true}")!;
+        var legacyOff = JsonSerializer.Deserialize<Settings>("{\"GpuMovies\":false}")!;
+        check(legacyOn.GpuMoviesChoice == null && verified.UseGpu(legacyOn.GpuMovies, legacyOn.GpuMoviesChoice),
+              "Verified GPUs keep the checked legacy default");
+        check(!verified.UseGpu(legacyOff.GpuMovies, legacyOff.GpuMoviesChoice),
+              "Saved CPU choices are not automatically upgraded to GPU");
+        foreach (var cpu in cpuDefaults) {
+            check(!cpu.UseGpu(legacyOn.GpuMovies, legacyOn.GpuMoviesChoice),
+                  cpu.GpuName + " previously gated CPU playback stays on CPU after migration");
+            check(cpu.UseGpu(false, true), cpu.GpuName + " can be explicitly opted into GPU decoding");
+        }
+        foreach (var probe in cpuDefaults.Append(verified)) {
+            check(!probe.UseGpu(true, false), "Explicit CPU decoding wins over every probe result");
+            var selected = JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(
+                new Settings { GpuMovies = true, GpuMoviesChoice = true }))!;
+            var launch = GraphicsOptions.From(selected);
+            selected.GpuMoviesChoice = false;
+            check(probe.UseGpu(launch.GpuMovies, launch.GpuMoviesChoice),
+                  "Explicit GPU choice round-trips and is captured before asynchronous launch setup");
+        }
+        var unrelatedSave = JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(legacyOn))!;
+        check(unrelatedSave.GpuMoviesChoice == null,
+              "Saving unrelated settings does not turn the legacy default into an explicit GPU choice");
     }
 }
