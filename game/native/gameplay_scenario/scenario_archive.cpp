@@ -8,6 +8,10 @@ namespace reo::native::gameplay_scenario::content {
 namespace {
 constexpr std::array<std::uint16_t,5> scenario_ids{1,2,28,35,41};
 constexpr std::size_t maximum_member_bytes = 32 * 1024 * 1024;
+std::uint32_t sector_extent(std::uint64_t offset,std::uint32_t bytes,std::uint64_t parent)noexcept{
+    const auto rounded=(std::uint64_t(bytes)+2047u)&~std::uint64_t(2047u);
+    return offset<=parent&&rounded<=parent-offset&&rounded<=UINT32_MAX?std::uint32_t(rounded):0;
+}
 
 std::string lower_name(std::string_view name) {
     std::string result(name);
@@ -34,7 +38,7 @@ ScenarioArchive::ScenarioArchive(std::shared_ptr<const reo::assets::Source> arch
         members.reserve(contents.entries.size());
         for (const auto& entry : contents.entries) {
             if (!entry.name.empty())
-                members.push_back({lower_name(entry.name),std::uint64_t(source->offset)+entry.offset,entry.size});
+                members.push_back({lower_name(entry.name),std::uint64_t(source->offset)+entry.offset,entry.size,sector_extent(entry.offset,entry.size,source->size)});
         }
         std::stable_sort(members.begin(),members.end(),[](const Member& a,const Member& b) { return a.name < b.name; });
         std::snprintf(name.data(),name.size(),"r%03u_h.bin",unsigned(scenario_ids[index]));
@@ -51,7 +55,7 @@ ScenarioArchive::ScenarioArchive(std::shared_ptr<const reo::assets::Source> arch
         for(std::size_t ordinal=0;ordinal<count;++ordinal){
             const auto* start=reinterpret_cast<const char*>(raw.data()+8+16*ordinal);
             const auto end=std::find(start,start+16,'\0');const auto& entry=contents.entries[first+ordinal];
-            resources.push_back({std::string(start,end),std::uint64_t(source->offset)+entry.offset,entry.size});
+            resources.push_back({std::string(start,end),std::uint64_t(source->offset)+entry.offset,entry.size,sector_extent(entry.offset,entry.size,source->size)});
         }
         std::stable_sort(resources.begin(),resources.end(),[](const Member& a,const Member& b){return a.name<b.name;});
     }
@@ -78,7 +82,7 @@ Bytes ScenarioArchive::read(const Member& member)const{
     return bytes;
 }
 
-Bytes ScenarioArchive::read_resource(std::uint16_t scenario,std::string_view name)const{
+const ScenarioArchive::Member* ScenarioArchive::resource(std::uint16_t scenario,std::string_view name)const{
     const auto id=std::find(scenario_ids.begin(),scenario_ids.end(),scenario);
     if(id==scenario_ids.end()||name.empty()||name.size()>255||name.find('\0')!=name.npos)return{};
     //1A9D70 selects the suffix after the last forward slash; it looks for a
@@ -94,7 +98,16 @@ Bytes ScenarioArchive::read_resource(std::uint16_t scenario,std::string_view nam
     }
     const auto& resources=resources_[std::size_t(id-scenario_ids.begin())];
     const auto member=std::lower_bound(resources.begin(),resources.end(),key,[](const Member& value,const std::string& key){return value.name<key;});
-    return member==resources.end()||member->name!=key?Bytes{}:read(*member);
+    return member==resources.end()||member->name!=key?nullptr:&*member;
+}
+Bytes ScenarioArchive::read_resource(std::uint16_t scenario,std::string_view name)const{
+    const auto member=resource(scenario,name);return member?read(*member):Bytes{};
+}
+Bytes ScenarioArchive::read_resource_sectors(std::uint16_t scenario,std::string_view name)const{
+    const auto member=resource(scenario,name);if(!member||!member->size)return{};
+    if(!member->storage_bytes)throw std::invalid_argument("Scenario resource sector extent unavailable");
+    if(member->storage_bytes>maximum_member_bytes)throw std::invalid_argument("Scenario resource sectors exceed limit");
+    auto bytes=std::make_shared<std::vector<std::byte>>(member->storage_bytes);archive_->read(member->offset,bytes->size(),bytes->data());return bytes;
 }
 
 std::optional<ScriptBank> ScenarioArchive::scenario_scripts(std::uint16_t scenario) const {

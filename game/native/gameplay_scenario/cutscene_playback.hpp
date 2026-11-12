@@ -10,6 +10,7 @@ class CutsceneSpeech;
 class CutsceneCamera;
 class CutsceneDisplay;
 class CutsceneViewControls;
+class CutsceneLights;
 struct CameraParameters;
 // One native controller for source38ECA0. The original7434C8 pointer aliases
 // this record; +8 and global38ECA8 are the SAME simulation frame. Request.mode
@@ -91,11 +92,15 @@ public:
     CutscenePlaybackStatus unbind_view_controls()noexcept;
     CutsceneViewControls* view_controls()noexcept{return view_controls_.get();}
     const CutsceneViewControls* view_controls()const noexcept{return view_controls_.get();}
+    CutscenePlaybackStatus bind_lights(std::unique_ptr<CutsceneLights>&)noexcept;
+    CutscenePlaybackStatus unbind_lights()noexcept;
+    CutsceneLights* lights()noexcept{return lights_.get();}
+    const CutsceneLights* lights()const noexcept{return lights_.get();}
     // The actual5EE680 outer visit and5EE260 substate. Neither starts a game,
     // device nor thread; required media/scene capability failures are returned.
     CutscenePlaybackResult tick()noexcept;
     CutscenePlaybackResult advance()noexcept;
-    bool busy()const noexcept{return running_;}
+    bool busy()const noexcept{return running_||(light_running_&&*light_running_);}
 private:
     gameplay_world::World& world_;FlagState& flags_;const std::optional<std::uint32_t>& audio_tick_;
     StreamChannels& channels_;StreamBackend& streams_;SceneVoicePreparation voice_;
@@ -103,6 +108,10 @@ private:
     std::unique_ptr<CutsceneCamera> camera_;
     std::unique_ptr<CutsceneDisplay> display_;
     std::unique_ptr<CutsceneViewControls> view_controls_;
+    std::unique_ptr<CutsceneLights> lights_;
+    // Alias the owned worker's real activity flag, including direct borrowed
+    // worker visits. The inline World close guard needs no reverse link unit.
+    const bool* light_running_{};
     bool running_{};
     std::size_t work_calls_{};
     CutscenePlaybackResult advance_inner();

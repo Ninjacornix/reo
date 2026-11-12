@@ -14,8 +14,9 @@ struct CutsceneDescriptorLoaded {
     bool read{},parsed{};
 };
 // One retained descriptor workspace is borrowed by all scene-view consumers.
-// The two loading modes use the same actual authored scenario namespace; the
-// resident route resolves its basename through the current scenario _H index.
+// Nonzero loading mode resolves its basename through the current scenario_H
+// index. Mode0 selects the distinct default romdata compiled name catalogue;
+// that pinned File1 catalogue contains no scene-DM key and returns missing.
 // Movie5EDA40 merging is a separate operation and is not inferred here.
 class CutsceneDescriptorLoader final {
 public:

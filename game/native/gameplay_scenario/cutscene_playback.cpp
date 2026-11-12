@@ -4,6 +4,7 @@
 #include "cutscene_camera.hpp"
 #include "cutscene_display.hpp"
 #include "cutscene_view_controls.hpp"
+#include "cutscene_lights.hpp"
 #include "../gameplay_update/update.hpp"
 #include <bit>
 #include <new>
@@ -30,45 +31,56 @@ CutscenePlayback::CutscenePlayback(gameplay_world::World& world,FlagState& flags
     world_.cutscene_playback_owner_=this;
 }
 CutscenePlayback::~CutscenePlayback(){
-    if(running_)std::terminate();
+    if(busy())std::terminate();
     if(world_.cutscene_playback_owner_==this)world_.cutscene_playback_owner_=nullptr;
 }
 CutscenePlaybackStatus CutscenePlayback::bind_camera(std::unique_ptr<CutsceneCamera>& camera)noexcept{
-    if(running_||world_.busy())return CutscenePlaybackStatus::busy;
+    if(busy()||world_.busy())return CutscenePlaybackStatus::busy;
     if(world_.closed())return CutscenePlaybackStatus::closed;
     if(!camera||camera_||!camera->bound_to(state_))return CutscenePlaybackStatus::unavailable;
     camera_=std::move(camera);return CutscenePlaybackStatus::completed;
 }
 CutscenePlaybackStatus CutscenePlayback::unbind_camera()noexcept{
-    if(running_||world_.busy())return CutscenePlaybackStatus::busy;
+    if(busy()||world_.busy())return CutscenePlaybackStatus::busy;
     if(world_.closed())return CutscenePlaybackStatus::closed;
     camera_.reset();return CutscenePlaybackStatus::completed;
 }
 CutscenePlaybackStatus CutscenePlayback::bind_display(std::unique_ptr<CutsceneDisplay>& display)noexcept{
-    if(running_||world_.busy())return CutscenePlaybackStatus::busy;
+    if(busy()||world_.busy())return CutscenePlaybackStatus::busy;
     if(world_.closed())return CutscenePlaybackStatus::closed;
     if(!display||display_||!display->bound_to(state_,world_.session().clock_mode))return CutscenePlaybackStatus::unavailable;
     display_=std::move(display);return CutscenePlaybackStatus::completed;
 }
 CutscenePlaybackStatus CutscenePlayback::unbind_display()noexcept{
-    if(running_||world_.busy())return CutscenePlaybackStatus::busy;
+    if(busy()||world_.busy())return CutscenePlaybackStatus::busy;
     if(world_.closed())return CutscenePlaybackStatus::closed;
     display_.reset();return CutscenePlaybackStatus::completed;
 }
 CutscenePlaybackStatus CutscenePlayback::bind_view_controls(std::unique_ptr<CutsceneViewControls>& controls)noexcept{
-    if(running_||world_.busy())return CutscenePlaybackStatus::busy;
+    if(busy()||world_.busy())return CutscenePlaybackStatus::busy;
     if(world_.closed())return CutscenePlaybackStatus::closed;
     if(!controls||view_controls_||!controls->bound_to(state_,world_.session().clock_mode))return CutscenePlaybackStatus::unavailable;
     view_controls_=std::move(controls);return CutscenePlaybackStatus::completed;
 }
 CutscenePlaybackStatus CutscenePlayback::unbind_view_controls()noexcept{
-    if(running_||world_.busy())return CutscenePlaybackStatus::busy;
+    if(busy()||world_.busy())return CutscenePlaybackStatus::busy;
     if(world_.closed())return CutscenePlaybackStatus::closed;
     view_controls_.reset();return CutscenePlaybackStatus::completed;
 }
 CutscenePlaybackStatus CutscenePlayback::fullscreen_color(std::uint32_t value){
     if(!view_controls_)return services_.fullscreen_color(value);
     view_controls_->reset_color(value);return CutscenePlaybackStatus::completed;
+}
+CutscenePlaybackStatus CutscenePlayback::bind_lights(std::unique_ptr<CutsceneLights>& lights)noexcept{
+    if(busy()||world_.busy()||(lights&&lights->busy()))return CutscenePlaybackStatus::busy;
+    if(world_.closed())return CutscenePlaybackStatus::closed;
+    if(!lights||lights_||!lights->bound_to(world_,state_))return CutscenePlaybackStatus::unavailable;
+    lights_=std::move(lights);light_running_=&lights_->running_;return CutscenePlaybackStatus::completed;
+}
+CutscenePlaybackStatus CutscenePlayback::unbind_lights()noexcept{
+    if(busy()||world_.busy())return CutscenePlaybackStatus::busy;
+    if(world_.closed())return CutscenePlaybackStatus::closed;
+    light_running_=nullptr;lights_.reset();return CutscenePlaybackStatus::completed;
 }
 CutscenePlaybackStatus CutscenePlayback::fade(bool rising,std::int16_t duration,std::uint32_t color){
     if(!display_)return services_.fade(rising,duration,color);
@@ -78,6 +90,10 @@ CutscenePlaybackValue CutscenePlayback::fade_finished(){
     return display_?CutscenePlaybackValue{CutscenePlaybackStatus::completed,display_->fade_finished()}:services_.fade_finished();
 }
 CutscenePlaybackStatus CutscenePlayback::frame_work(CutsceneFrameWork work,std::int8_t group){
+    if(lights_&&(work==CutsceneFrameWork::light_tracks||work==CutsceneFrameWork::light_interpolation)){
+        const auto status=work==CutsceneFrameWork::light_tracks?lights_->tick().status:lights_->sample(group).status;
+        switch(status){case CutsceneLightsStatus::completed:return CutscenePlaybackStatus::completed;case CutsceneLightsStatus::busy:return CutscenePlaybackStatus::busy;case CutsceneLightsStatus::closed:return CutscenePlaybackStatus::closed;case CutsceneLightsStatus::no_memory:return CutscenePlaybackStatus::no_memory;default:return CutscenePlaybackStatus::unavailable;}
+    }
     if(view_controls_&&(work==CutsceneFrameWork::scene_controls||work==CutsceneFrameWork::fullscreen_curve)){
         const auto status=work==CutsceneFrameWork::scene_controls?view_controls_->tick().status:view_controls_->sample_color();
         switch(status){case CutsceneViewStatus::completed:return CutscenePlaybackStatus::completed;case CutsceneViewStatus::no_memory:return CutscenePlaybackStatus::no_memory;default:return CutscenePlaybackStatus::unavailable;}
@@ -161,7 +177,7 @@ CutscenePlaybackResult CutscenePlayback::advance_inner(){
     }
 }
 CutscenePlaybackResult CutscenePlayback::advance()noexcept{
-    if(running_||world_.busy())return{CutscenePlaybackStatus::busy};
+    if(busy()||world_.busy())return{CutscenePlaybackStatus::busy};
     if(world_.closed())return{CutscenePlaybackStatus::closed};
     running_=true;work_calls_=0;struct Reset{bool& running;~Reset(){running=false;}}reset{running_};
     try{auto result=advance_inner();result.work_calls=work_calls_;return result;}
@@ -170,7 +186,7 @@ CutscenePlaybackResult CutscenePlayback::advance()noexcept{
     catch(...){return{CutscenePlaybackStatus::unavailable,false,work_calls_};}
 }
 CutscenePlaybackResult CutscenePlayback::tick()noexcept{
-    if(running_||world_.busy())return{CutscenePlaybackStatus::busy};
+    if(busy()||world_.busy())return{CutscenePlaybackStatus::busy};
     if(world_.closed())return{CutscenePlaybackStatus::closed};
     running_=true;work_calls_=0;struct Reset{bool& running;~Reset(){running=false;}}reset{running_};
     const auto action=[&](CutscenePlaybackStatus status){++work_calls_;require(status);};

@@ -3,6 +3,7 @@
 #include "game/native/gameplay_scenario/cutscene_camera.hpp"
 #include "game/native/gameplay_scenario/cutscene_display.hpp"
 #include "game/native/gameplay_scenario/cutscene_view_controls.hpp"
+#include "game/native/gameplay_scenario/cutscene_lights.hpp"
 #include "game/native/gameplay_scenario/cutscene_object_tracks.hpp"
 #include "game/native/gameplay_scenario/flags.hpp"
 #include "game/native/gameplay_world/world.hpp"
@@ -13,10 +14,13 @@
 #include <cstdio>
 #include <string_view>
 #include <source_location>
+#include <fstream>
 namespace s=reo::native::gameplay_scenario;namespace w=reo::native::gameplay_world;
 struct Event {unsigned id{};std::int64_t first{},second{},third{};friend bool operator==(const Event&,const Event&)=default;};
 std::vector<Event> native_events,source_events;
 std::uint64_t checks{},controller_cases{},advance_cases{},ack_cases{},calls{},worker_calls{},refusals{};unsigned case_id{};bool compare_bound_camera{},compare_bound_display{},compare_bound_view{};std::uint64_t view_ticks{},view_guards{};std::uint64_t display_ticks{},display_guards{},display_publications{};std::uint64_t camera_ticks{},camera_guards{},camera_publications{};
+bool compare_bound_lights{};const reo::native::gameplay_collision::response::Grid* light_floor{};
+std::uint64_t light_ticks{},light_guards{},light_floor_guards{};
 void check(bool value,std::source_location at=std::source_location::current()){++checks;if(!value)throw std::runtime_error("Cutscene playback case "+std::to_string(case_id)+" line "+std::to_string(at.line()));}
 struct Inputs {int ready{},movie_state{},movie_busy{},fade{},load{};bool mutate_frame{},mutate_clock{};unsigned fail_at{};}inputs;
 constexpr unsigned controller=0x38eca0;
@@ -27,6 +31,7 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
  if(compare_bound_camera){if(context->pc==0x5ee950){o2_005EE950_0x5ee950(memory,context,runtime);return;}if(context->pc==0x5c09a0){o2_005C09A0_0x5c09a0(memory,context,runtime);return;}}
  if(compare_bound_display){switch(context->pc){case 0x375920:o0_00375920_0x375920(memory,context,runtime);return;case 0x1bb5c0:sub_001BB5C0_0x1bb5c0(memory,context,runtime);return;case 0x1bb650:sub_001BB650_0x1bb650(memory,context,runtime);return;case 0x1bb8d0:sub_001BB8D0_0x1bb8d0(memory,context,runtime);return;default:break;}}
  if(compare_bound_view){switch(context->pc){case 0x5ef740:o2_005EF740_0x5ef740(memory,context,runtime);return;case 0x1bbb10:sub_001BBB10_0x1bbb10(memory,context,runtime);return;case 0x1bbba0:sub_001BBBA0_0x1bbba0(memory,context,runtime);return;default:break;}}
+ if(compare_bound_lights){switch(context->pc){case 0x5ef640:o2_005EF640_0x5ef640(memory,context,runtime);return;case 0x6b3bb0:o2_006B3BB0_0x6b3bb0(memory,context,runtime);return;default:break;}}
  switch(context->pc){
 #include "original_dispatch.hpp"
  case 0x10a830:{const auto format=reinterpret_cast<const char*>(memory+GPR_U32(context,5));const auto at=GPR_U32(context,4);check(at<0x2000000-128);int size;if(std::string_view(format)=="%02d_%02d_%d")size=std::snprintf(reinterpret_cast<char*>(memory+at),128,format,GPR_S32(context,6),GPR_S32(context,7),GPR_S32(context,8));else throw std::runtime_error("Unexpected controller voice format");check(size>0&&size<128);done(size);return;}
@@ -43,6 +48,8 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
  case 0x1bb8d0:emit(context->pc);done(inputs.fade);return;
  case 0x1af6a0:emit(context->pc,GPR_U32(context,4));done();return;
  case 0x107c68:if(compare_bound_display&&GPR_U32(context,4)==0x316650){check(GPR_U32(context,5)==0&&GPR_U32(context,6)==32);std::fill_n(memory+0x316650,32,0);done();return;}if(compare_bound_view&&GPR_U32(context,4)==0x316600){check(GPR_U32(context,5)==0&&GPR_U32(context,6)==24);std::fill_n(memory+0x316600,24,0);done();return;}check(GPR_U32(context,4)==0x38edd8&&GPR_U32(context,5)==0&&GPR_U32(context,6)==0x9d8);emit(context->pc);std::fill_n(memory+0x38edd8,0x9d8,0);done();return;
+ case 0x107ab0:{check(compare_bound_lights);const auto target=GPR_U32(context,4),source=GPR_U32(context,5),bytes=GPR_U32(context,6);check(target<=0x2000000&&bytes<=0x2000000-target&&source<=0x2000000&&bytes<=0x2000000-source);std::memmove(memory+target,memory+source,bytes);done(target);return;}
+ case 0x617000:{check(compare_bound_lights&&light_floor&&GPR_U32(context,8)==255&&GPR_U32(context,11)==0);const auto point=transform_read<reo::native::gameplay_collision::Vec3>(memory,GPR_U32(context,4));const auto floor=light_floor->floor(point,255);put(memory,GPR_U32(context,9),floor.material);context->f[0]=floor.height;done();return;}
  case 0x5ecf90:emit(context->pc);put(memory,controller+0x10,1234u);done(inputs.load);return;
  case 0x371b70:case 0x6de480:case 0x371ad0:emit(context->pc);done();return;
  case 0x6de590:emit(context->pc,GPR_U32(context,4),GPR_U32(context,5));check(GPR_U32(context,6)==0&&GPR_U32(context,7)==0);done();return;
@@ -73,9 +80,9 @@ struct Backend final:s::StreamBackend {
  s::StreamStatus service(std::uint32_t)noexcept override{return s::StreamStatus::unbound;}
 };
 struct Services final:s::CutscenePlaybackServices {
- s::CutscenePlayback* playback{};std::unique_ptr<s::CutsceneCamera> camera_attempt;std::unique_ptr<s::CutsceneDisplay> display_attempt;std::unique_ptr<s::CutsceneViewControls> view_attempt;bool camera_available{true};
+ s::CutscenePlayback* playback{};std::unique_ptr<s::CutsceneCamera> camera_attempt;std::unique_ptr<s::CutsceneDisplay> display_attempt;std::unique_ptr<s::CutsceneViewControls> view_attempt;std::unique_ptr<s::CutsceneLights> light_attempt;bool camera_available{true};
  s::CutscenePlaybackState* state{};bool try_close{};unsigned close_refusals{};w::World& world;explicit Services(w::World& value):world(value){}
- s::CutscenePlaybackStatus emit(unsigned id,std::int64_t a=0,std::int64_t b=0,std::int64_t c=0){if(playback){check(playback->unbind_camera()==s::CutscenePlaybackStatus::busy);check(playback->bind_camera(camera_attempt)==s::CutscenePlaybackStatus::busy&&camera_attempt);++camera_guards;check(playback->unbind_display()==s::CutscenePlaybackStatus::busy);check(playback->bind_display(display_attempt)==s::CutscenePlaybackStatus::busy);++display_guards;check(playback->unbind_view_controls()==s::CutscenePlaybackStatus::busy);check(playback->bind_view_controls(view_attempt)==s::CutscenePlaybackStatus::busy);++view_guards;}if(try_close){check(world.close()==w::Status::busy&&!world.closed());++close_refusals;}native_events.push_back({id,a,b,c});return inputs.fail_at&&native_events.size()==inputs.fail_at?s::CutscenePlaybackStatus::unavailable:s::CutscenePlaybackStatus::completed;}
+ s::CutscenePlaybackStatus emit(unsigned id,std::int64_t a=0,std::int64_t b=0,std::int64_t c=0){if(playback){check(playback->unbind_camera()==s::CutscenePlaybackStatus::busy);check(playback->bind_camera(camera_attempt)==s::CutscenePlaybackStatus::busy&&camera_attempt);++camera_guards;check(playback->unbind_display()==s::CutscenePlaybackStatus::busy);check(playback->bind_display(display_attempt)==s::CutscenePlaybackStatus::busy);++display_guards;check(playback->unbind_view_controls()==s::CutscenePlaybackStatus::busy);check(playback->bind_view_controls(view_attempt)==s::CutscenePlaybackStatus::busy);++view_guards;check(playback->unbind_lights()==s::CutscenePlaybackStatus::busy);check(playback->bind_lights(light_attempt)==s::CutscenePlaybackStatus::busy);++light_guards;}if(try_close){check(world.close()==w::Status::busy&&!world.closed());++close_refusals;}native_events.push_back({id,a,b,c});return inputs.fail_at&&native_events.size()==inputs.fail_at?s::CutscenePlaybackStatus::unavailable:s::CutscenePlaybackStatus::completed;}
  s::CutscenePlaybackStatus start_movie(const s::CutsceneBatch&)override{return emit(0x37a1b0);}
  s::CutscenePlaybackValue movie_state()override{return{emit(0x37a9b0),inputs.movie_state};}
  s::CutscenePlaybackValue movie_busy()override{return{emit(0x37aa10),inputs.movie_busy};}
@@ -111,7 +118,9 @@ void compare(std::uint8_t* memory,const s::CutscenePlaybackState& state,const w:
  if(native_events!=source_events){std::cerr<<"event sizes "<<native_events.size()<<','<<source_events.size()<<'\n';for(unsigned i=0;i<std::max(native_events.size(),source_events.size());++i){if(i<native_events.size())std::cerr<<" native "<<std::hex<<native_events[i].id<<std::dec<<' '<<native_events[i].first<<','<<native_events[i].second;if(i<source_events.size())std::cerr<<" source "<<std::hex<<source_events[i].id<<std::dec<<' '<<source_events[i].first<<','<<source_events[i].second;std::cerr<<'\n';}}
  check(native_events==source_events);
 }
-int main()try{
+#include "cutscene_light_controller_tests.inc"
+int main(int argc,char** argv)try{
+ check(argc==2);std::ifstream floor_file(argv[1],std::ios::binary|std::ios::ate);check(bool(floor_file));const auto floor_size=floor_file.tellg();check(floor_size>0);std::vector<std::byte> floor_bytes(static_cast<std::size_t>(floor_size));floor_file.seekg(0);floor_file.read(reinterpret_cast<char*>(floor_bytes.data()),floor_size);check(floor_file.gcount()==floor_size);const auto owned_floor=reo::native::gameplay_collision::response::Grid::import(floor_bytes);
  const auto previous=_mm_getcsr();struct Reset{unsigned previous;~Reset(){_mm_setcsr(previous);}}reset{previous};_mm_setcsr(0x1f80);std::vector<std::uint8_t> memory(0x2000000);owned_constants(memory.data());w::Profile profile;profile.layouts.push_back({});auto session=std::make_shared<w::Session>();w::World world(profile,session);world.scenario=0;for(unsigned i=0;i<8;++i){auto actor=std::make_unique<w::Actor>();actor->character=std::uint8_t(i+1);actor->motion_style=std::uint8_t(i%2);check(world.spawn_primary(i,std::move(actor)).status==w::actors::EntityStatus::completed);}s::FlagState flags;for(unsigned i=0;i<512;++i)check(flags.scenario_owner(i,std::uint8_t(i%9)));s::CutsceneActorTracks actor_tracks(world);s::CutsceneObjectTracks object_tracks(world);check(actor_tracks.install({})==s::CutsceneTrackStatus::completed);check(object_tracks.install({})==s::CutsceneTrackStatus::completed);s::StreamChannels channels(s::file1_stream_gain_curve());Backend backend;Services services(world);std::optional<std::uint32_t> tick=123;s::CutscenePlayback playback(world,flags,tick,channels,backend,services);services.state=&playback.state();services.try_close=true;bool duplicate_refused=false;try{s::CutscenePlayback duplicate(world,flags,tick,channels,backend,services);}catch(const std::invalid_argument&){duplicate_refused=true;}check(duplicate_refused);
  for(unsigned mode:{0u,1u,255u})for(unsigned participants:{0u,1u,2u,3u,4u,7u,8u,9u,31u,32u,33u,128u,255u})for(unsigned mask=0;mask<256;++mask){case_id=unsigned(ack_cases);put(memory.data(),0x3243f2,std::uint8_t(mode));put(memory.data(),0x4bae32,std::uint8_t(participants));put(memory.data(),0x4bae0e,std::uint8_t(mask));check(bool(invoke(memory.data(),0x5f1970))==s::cutscene_acknowledgements_complete(std::uint8_t(mode),std::uint8_t(mask),std::uint8_t(participants)));++ack_cases;}
  for(unsigned i=0;i<65536;++i){case_id=i;auto& state=playback.state();state={};state.phase=std::bit_cast<std::int8_t>(std::uint8_t(i<32768?std::array<unsigned,8>{0,1,1,1,2,3,254,4}[i%8]:1));state.subphase=std::bit_cast<std::int8_t>(std::uint8_t(i<32768?(i/8)%256:(i/8)%4));state.detail=21;state.entry_detail=-5;state.completion_word=i%11==0?17:0;state.frame=std::array<unsigned,8>{0,1,0x7ffffffe,0xffffffffu,100,999,1233,0x80000000u}[(i/11)%8];state.end_frame=std::array<unsigned,4>{0,1000,0x7fffffff,0x80000000u}[(i/23)%4];state.request.mode=std::array<std::uint8_t,4>{0,1,2,255}[(i/29)%4];state.request.audio_count=std::array<unsigned,4>{0,1,2,16}[(i/31)%4];state.request.selector=0;state.request.actor_selection=std::uint16_t(i%512);state.request.current={7,9,0};state.selected_actor=99;state.light_groups=std::int16_t(int(i%5)-1);state.camera_selection=7;state.camera_ended=9;state.cinematic_enabled=5;state.voice_requested=std::uint8_t(i%2);state.acknowledgement_mask=std::uint8_t(i%7==0?255:0);for(unsigned j=0;j<state.request.audio_count;++j)state.request.audio_cues[j]={std::uint8_t(j),std::uint8_t(j+1),std::uint8_t(j+2)};
@@ -166,6 +175,7 @@ int main()try{
   check(playback.unbind_camera()==s::CutscenePlaybackStatus::completed&&!playback.camera());check(playback.unbind_camera()==s::CutscenePlaybackStatus::completed);
  }
 #include "cutscene_view_owner_tests.inc"
+ compare_light_controller(world,flags,channels,services,playback,memory,owned_floor);
  check(services.close_refusals>64000);
- std::cout<<"{\"view_ticks\":"<<view_ticks<<",\"view_guards\":"<<view_guards<<",\"display_ticks\":"<<display_ticks<<",\"display_guards\":"<<display_guards<<",\"display_publications\":"<<display_publications<<",\"camera_ticks\":"<<camera_ticks<<",\"camera_guards\":"<<camera_guards<<",\"camera_publications\":"<<camera_publications<<",\"close_refusals\":"<<services.close_refusals<<",\"checks\":"<<checks<<",\"controller_cases\":"<<controller_cases<<",\"advance_cases\":"<<advance_cases<<",\"acknowledgements\":"<<ack_cases<<",\"native_worker_calls\":"<<worker_calls<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<calls<<",\"game_run\":false}\n";
+ std::cout<<"{\"light_ticks\":"<<light_ticks<<",\"light_guards\":"<<light_guards<<",\"light_floor_guards\":"<<light_floor_guards<<",\"view_ticks\":"<<view_ticks<<",\"view_guards\":"<<view_guards<<",\"display_ticks\":"<<display_ticks<<",\"display_guards\":"<<display_guards<<",\"display_publications\":"<<display_publications<<",\"camera_ticks\":"<<camera_ticks<<",\"camera_guards\":"<<camera_guards<<",\"camera_publications\":"<<camera_publications<<",\"close_refusals\":"<<services.close_refusals<<",\"checks\":"<<checks<<",\"controller_cases\":"<<controller_cases<<",\"advance_cases\":"<<advance_cases<<",\"acknowledgements\":"<<ack_cases<<",\"native_worker_calls\":"<<worker_calls<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<calls<<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<"Case "<<case_id<<": "<<error.what()<<'\n';return 1;}

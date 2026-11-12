@@ -17,12 +17,14 @@ CutsceneDescriptorLoaded CutsceneDescriptorLoader::load(CutscenePlaybackState& s
         if(session_.session_state!=1){
             const auto mode=session_.asset_loading_mode;
             if(!mode||!session_.scenario)return result;
+            // Flags1 selects1AA480's DEFAULT romdata name catalogue. Its
+            // owned1342 compiled keys contain no scene-DM namespace. A file
+            // in the scenario archive cannot satisfy that distinct lookup.
+            if(!*mode){result.status=CutsceneDescriptorLoadStatus::completed;result.value=1;return result;}
             std::array<char,128> name{};const auto cue=state.request.current;
-            if(!*mode)std::snprintf(name.data(),name.size(),"data/edit/eve/r%03u/dm%02u%02u%c.bin",
-                unsigned(*session_.scenario),unsigned(cue.area),unsigned(cue.scene),int(cue.variant)+97);
-            else std::snprintf(name.data(),name.size(),"dm%02u%02u%c.bin",
+            std::snprintf(name.data(),name.size(),"dm%02u%02u%c.bin",
                 unsigned(cue.area),unsigned(cue.scene),int(cue.variant)+97);
-            const auto bytes=archive_.read_resource(*session_.scenario,name.data());
+            const auto bytes=archive_.read_resource_sectors(*session_.scenario,name.data());
             if(!bytes){result.status=CutsceneDescriptorLoadStatus::completed;result.value=1;return result;}
             const auto loaded=workspace_->load(*bytes);
             if(loaded!=DescriptorWorkspaceStatus::completed){

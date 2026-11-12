@@ -42,7 +42,8 @@ def main():
         prior=json.loads((ROOT/'build-native-sjuni/primary-scene-scope-llvm-v4/receipt.json').read_text());archive=Path(prior['commands'][2]['command'][1]);stamp=archive.stat().st_size,archive.stat().st_mtime_ns
         with archive.open('rb')as owned:
             for row in rows:owned.seek(row['offset']);assert hashlib.sha256(owned.read(row['bytes'])).hexdigest()==row['sha256']
-        manifest=out/'scenes.txt';manifest.write_text(''.join(f"{row['offset']} {row['bytes']} {row['layout']['secondary']['offset']} {row['layout']['secondary']['count']}\n"for row in sequence));record['owned_manifest_sha256']=sha(manifest);record['inventory_sha256']=sha(inventory_path);record['owned_descriptor_sha256']={row['name']:row['sha256']for row in rows};record['run_command']=[str(exe),str(archive),str(manifest)]
+        manifest=out/'scenes.txt';manifest.write_text(''.join(f"{row['offset']} {(row['bytes']+2047)//2048*2048} {row['layout']['secondary']['offset']} {row['layout']['secondary']['count']}\n"for row in sequence));record['owned_manifest_sha256']=sha(manifest);record['inventory_sha256']=sha(inventory_path);record['owned_descriptor_sha256']={row['name']:row['sha256']for row in rows};record['run_command']=[str(exe),str(archive),str(manifest)]
+        record['owned_storage_extent']='Actual archive bytes through ceil(logical member bytes/2048)*2048; marker follows sector storage. Logical-prefix v3 fixture remains historical component evidence only.'
         result=subprocess.run(record['run_command'],env=env,capture_output=True,timeout=180);assert stamp==(archive.stat().st_size,archive.stat().st_mtime_ns);(out/'run.txt').write_bytes(result.stdout+result.stderr);assert result.returncode==0,'comparison failed'
         record.update(status='passed',observed=json.loads(result.stdout),source_unchanged=all(sha(ROOT/name)==digest for name,digest in before.items()));assert record['source_unchanged']
     finally:

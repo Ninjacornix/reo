@@ -27,6 +27,7 @@ struct NativeLight {
 };
 LightDescriptor decode_light_descriptor(std::span<const std::byte>);
 struct LightDomain;
+class CutsceneLights;
 class LightHandle final {
 public:
     LightHandle()=default;
@@ -90,6 +91,10 @@ public:
     std::uint8_t auxiliary_count()const noexcept{return auxiliary_count_;}
     std::uint64_t reset_epoch()const noexcept{return reset_epoch_;}
 private:
+    friend class CutsceneLights;
+    bool register_cutscene(CutsceneLights*)noexcept;
+    void unregister_cutscene(CutsceneLights*)noexcept;
+    bool owns_cutscene(const CutsceneLights*)const noexcept;
     std::array<LightingBank,4> banks_{};
     std::array<NativeLight,64> primary_{},auxiliary_{};
     std::array<std::uint8_t,32> bindings_{};

@@ -3,7 +3,7 @@
 #include <stdexcept>
 
 namespace reo::native::gameplay_scenario {
-struct LightDomain {};
+struct LightDomain {mutable CutsceneLights* cutscene_owner{};};
 namespace {
 void extent(std::span<const std::byte> bytes,std::size_t offset,std::size_t size){
     if(offset>bytes.size()||size>bytes.size()-offset)throw std::invalid_argument("Bounded LIG extent");
@@ -22,6 +22,14 @@ LightDescriptor descriptor(std::span<const std::byte> bytes,std::size_t at){
 }
 LightDescriptor decode_light_descriptor(std::span<const std::byte> bytes){if(bytes.size()!=52)throw std::invalid_argument("Native light definition requires52 authored bytes");return descriptor(bytes,0);}
 Lighting::Lighting():domain_(std::make_shared<const LightDomain>()){bindings_.fill(0xff);}
+bool Lighting::register_cutscene(CutsceneLights* owner)noexcept{
+    if(!owner||domain_->cutscene_owner)return false;
+    domain_->cutscene_owner=owner;return true;
+}
+void Lighting::unregister_cutscene(CutsceneLights* owner)noexcept{
+    if(domain_->cutscene_owner==owner)domain_->cutscene_owner=nullptr;
+}
+bool Lighting::owns_cutscene(const CutsceneLights* owner)const noexcept{return domain_->cutscene_owner==owner;}
 LightingImport Lighting::import_lig(std::span<const std::byte> bytes){
     const auto version=word(bytes,0);const auto count=std::bit_cast<std::int32_t>(word(bytes,4));
     if(version!=4){banks_={};return LightingImport::unsupported_version;}

@@ -8,7 +8,7 @@
 #include <iostream>
 #include <source_location>
 namespace s=reo::native::gameplay_scenario;namespace w=reo::native::gameplay_world;
-std::uint64_t checks{},calls{},loads{},reparses{},missing{},sections{},tail_checks{};
+std::uint64_t checks{},calls{},loads{},reparses{},missing{},default_misses{},sections{},tail_checks{};
 unsigned serial{};std::uint16_t current_scenario{};s::CutsceneCue current_cue;std::vector<std::byte> payload;bool absent{};
 void check(bool value,std::source_location at=std::source_location::current()){
     ++checks;if(!value)throw std::runtime_error("Descriptor loader case "+std::to_string(serial)+" line "+std::to_string(at.line()));
@@ -25,11 +25,19 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
         else{check(format=="dm%02d%02d%c.bin");size=std::snprintf(destination,128,format.c_str(),GPR_U32(context,6),GPR_U32(context,7),GPR_U32(context,8));}
         check(size>0&&size<128&&std::string(destination).ends_with(basename()));done(unsigned(size));return;}
     case 0x18dab0:check(name(4).ends_with(basename()));done(absent?0:unsigned(payload.size()));return;
-    case 0x1cc8f0:check(name(4).ends_with(basename())&&GPR_U32(context,6)==1&&GPR_U32(context,7)==(absent?0:payload.size()));
-        if(!absent){std::memcpy(memory+GPR_U32(context,5),payload.data(),payload.size());}done(absent?0:1);return;
-    case 0x1aa1e0:check(GPR_U32(context,4)==current_scenario);transform_write(memory,0x2b16a0,0x123450u);done();return;
-    case 0x1a9f20:check(GPR_U32(context,4)==0x123450&&name(5)==basename()&&GPR_U32(context,7)==0);
-        if(!absent){std::memcpy(memory+GPR_U32(context,6),payload.data(),payload.size());}done(absent?0:unsigned(payload.size()));return;
+    case 0x1aa1e0:{check(GPR_U32(context,4)==current_scenario);transform_write(memory,0x2b16a0,0x123450u);
+        transform_write(memory,0x123450,1u);transform_write(memory,0x12345c,0x140000u);transform_write(memory,0x123464,absent?0u:1u);transform_write(memory,0x123468,0u);transform_write(memory,0x123470,7u);
+        auto key=basename();for(char& c:key){if(c>='a'&&c<='z')c+='A'-'a';if(c=='.')c='_';}std::fill_n(memory+0x140000,16,0);std::memcpy(memory+0x140000,key.data(),key.size());done();return;}
+    case 0x10afc0:{const auto copy=name(5);check(copy.size()<512);std::memcpy(memory+GPR_U32(context,4),copy.c_str(),copy.size()+1);done(GPR_U32(context,4));return;}
+    case 0x10cda8:{auto p=memory+GPR_U32(context,4);for(;*p;++p)if(*p>='a'&&*p<='z')*p+='A'-'a';done(GPR_U32(context,4));return;}
+    case 0x10b158:done(unsigned(name(4).size()));return;
+    case 0x10b7b8:{const auto p=std::strrchr(reinterpret_cast<const char*>(memory+GPR_U32(context,4)),int(GPR_U32(context,5)));done(p?unsigned(reinterpret_cast<const std::uint8_t*>(p)-memory):0u);return;}
+    case 0x10ae78:done(std::uint32_t(std::strcmp(reinterpret_cast<const char*>(memory+GPR_U32(context,4)),reinterpret_cast<const char*>(memory+GPR_U32(context,5)))));return;
+    case 0x107ab0:std::memcpy(memory+GPR_U32(context,4),memory+GPR_U32(context,5),GPR_U32(context,6));done(GPR_U32(context,4));return;
+    case 0x129240:check(!absent&&GPR_U32(context,4)==7&&GPR_U32(context,5)==0);transform_write(memory,0x17000c,0u);transform_write(memory,0x170004,0x180000u);transform_write(memory,0x180010,unsigned(payload.size()));done(0x170000);return;
+    case 0x1297a0:check(GPR_U32(context,4)==0x170000&&GPR_U32(context,5)==payload.size()/2048);std::memcpy(memory+GPR_U32(context,6),payload.data(),payload.size());done();return;
+    case 0x129d48:check(GPR_U32(context,4)==0x170000);done(3);return;
+    case 0x129350:check(GPR_U32(context,4)==0x170000);done();return;
     default:throw std::runtime_error("Unadmitted descriptor loader source call "+std::to_string(context->pc));
     }
 }
@@ -39,6 +47,7 @@ int main(int argc,char** argv)try{
     w::Session session;auto workspace=std::make_shared<s::CutsceneDescriptorWorkspace>();s::CutsceneDescriptorLoader loader(session,archive,workspace);s::CutscenePlaybackState state;
     std::vector<std::uint8_t> memory(0x2000000);owned_constants(memory.data());constexpr unsigned base=0x1000000;
     transform_write(memory.data(),0x324428,base-0x40000u);transform_write(memory.data(),0x38ec98,base);
+    transform_write(memory.data(),0x2b1698,0x130000u);transform_write(memory.data(),0x13000c,0x2322c0u);transform_write(memory.data(),0x130014,1342u);transform_write(memory.data(),0x3243f8,std::uint8_t(255));transform_write(memory.data(),0x3243f9,std::uint8_t(255));
     std::ifstream manifest(argv[2]);check(bool(manifest));unsigned scenario,area,scene,suffix;std::uint64_t offset;std::size_t length;
     std::shared_ptr<const s::CutsceneDescriptor> retained;
     const auto compare=[&](unsigned original,const s::CutsceneDescriptorLoaded& result){
@@ -54,11 +63,13 @@ int main(int argc,char** argv)try{
         for(std::size_t at=0;at+40<=workspace->capacity;at+=40){const auto bytes=workspace->record40(at);check(bytes&&std::memcmp(bytes->data(),memory.data()+base+at,40)==0);++tail_checks;}
     };
     while(manifest>>scenario>>area>>scene>>suffix>>offset>>length){
-        current_scenario=std::uint16_t(scenario);current_cue={std::uint8_t(area),std::uint8_t(scene),std::uint8_t(suffix)};payload.resize(length);source->read(offset,length,payload.data());session.scenario=current_scenario;state.request.current=current_cue;
+        current_scenario=std::uint16_t(scenario);current_cue={std::uint8_t(area),std::uint8_t(scene),std::uint8_t(suffix)};payload.resize((length+2047)/2048*2048);source->read(offset,payload.size(),payload.data());session.scenario=current_scenario;state.request.current=current_cue;
         for(unsigned mode:{0u,1u,255u}){
             ++serial;session.session_state=0;session.asset_loading_mode=std::uint8_t(mode);session.scenario=current_scenario;
             transform_write(memory.data(),0x324200,session.session_state);transform_write(memory.data(),0x3243d7,std::uint8_t(mode));transform_write(memory.data(),0x3243da,current_scenario);transform_write(memory.data(),0x38ecd0,current_cue);absent=false;
-            const auto generation=workspace->generation();const auto original=invoke(memory.data());const auto result=loader.load(state);check(result.read&&result.parsed&&workspace->generation()==generation+1);compare(original,result);++loads;
+            const auto generation=workspace->generation();const auto original=invoke(memory.data());const auto result=loader.load(state);
+            if(!mode){check(!result.read&&!result.parsed&&workspace->generation()==generation);compare(original,result);++default_misses;continue;}
+            check(result.read&&result.parsed&&workspace->generation()==generation+1);compare(original,result);++loads;
             const auto snapshot=loader.descriptor();if(!retained)retained=snapshot;
             if(snapshot->secondary().count){const auto at=snapshot->secondary().offset;check(workspace->consume_frame(at,40));transform_write(memory.data(),base+at+2,std::uint16_t(65535));}
             session.session_state=1;session.asset_loading_mode.reset();session.scenario.reset();transform_write(memory.data(),0x324200,session.session_state);
@@ -66,12 +77,12 @@ int main(int argc,char** argv)try{
             if(snapshot->secondary().count)check(std::memcmp(snapshot->section(snapshot->secondary()).data(),payload.data()+snapshot->secondary().offset,40)==0);
         }
     }
-    check(manifest.eof()&&loads==1644&&reparses==1644&&retained);
+    check(manifest.eof()&&loads==1096&&reparses==1096&&default_misses==548&&retained);
     // Missing reads preserve the previous descriptor and every workspace byte.
     for(unsigned mode:{0u,1u,255u}){session.session_state=0;session.asset_loading_mode=std::uint8_t(mode);session.scenario=0;current_scenario=0;absent=true;transform_write(memory.data(),0x324200,session.session_state);transform_write(memory.data(),0x3243d7,std::uint8_t(mode));transform_write(memory.data(),0x3243da,current_scenario);
         const auto snapshot=loader.descriptor();const auto generation=workspace->generation();const auto original=invoke(memory.data());const auto result=loader.load(state);compare(original,result);check(!result.read&&!result.parsed&&result.value==1&&loader.descriptor()==snapshot&&workspace->generation()==generation);++missing;}
     session.asset_loading_mode.reset();check(loader.load(state).status==s::CutsceneDescriptorLoadStatus::unavailable);
     session.session_state=1;auto empty=std::make_shared<s::CutsceneDescriptorWorkspace>();s::CutsceneDescriptorLoader unbound(session,archive,empty);check(unbound.load(state).status==s::CutsceneDescriptorLoadStatus::unavailable);
     bool refused=false;try{s::CutsceneDescriptorLoader invalid(session,archive,{});}catch(const std::invalid_argument&){refused=true;}check(refused);
-    std::cout<<"{\"checks\":"<<checks<<",\"loads\":"<<loads<<",\"reparses\":"<<reparses<<",\"missing_reads\":"<<missing<<",\"sections\":"<<sections<<",\"retained_tail_checks\":"<<tail_checks<<",\"original_calls\":"<<calls<<",\"game_run\":false}\n";
+    std::cout<<"{\"checks\":"<<checks<<",\"loads\":"<<loads<<",\"reparses\":"<<reparses<<",\"default_archive_misses\":"<<default_misses<<",\"missing_reads\":"<<missing<<",\"sections\":"<<sections<<",\"retained_tail_checks\":"<<tail_checks<<",\"original_calls\":"<<calls<<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
