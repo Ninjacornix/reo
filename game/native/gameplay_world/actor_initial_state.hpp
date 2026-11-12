@@ -13,5 +13,6 @@ inline void initialize_cleared_actor_defaults(Actor& actor)noexcept{
     // Actual5F1290/682D10 record clears cover both61AAA0 history and FAC.
     // Generic Actor construction does not establish either source capability.
     actor.secondary_pose_history=SecondaryPoseHistory{};actor.secondary_pose_category_override=0;
+    actor.surface_transition_flags=0;
 }
 }

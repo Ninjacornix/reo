@@ -1,5 +1,6 @@
 #pragma once
 #include "events.hpp"
+#include "actor_counters.hpp"
 #include <functional>
 #include <span>
 namespace reo::native::gameplay_events {
@@ -18,6 +19,7 @@ private:
     std::vector<RuleGroup> groups_;std::vector<std::int8_t> mapping_;
 };
 struct CompletionState {
+    ActorCounters actors;
     std::array<std::uint32_t,2> completed{};
     std::uint32_t points{};
     std::uint8_t unique_available{};
@@ -32,6 +34,8 @@ class Statistics final {
 public:
     explicit Statistics(std::shared_ptr<const RuleBook> = RuleBook::file1());
     const CompletionState& state()const noexcept{return state_;}
+    bool actor_frame(float distance,std::int16_t current,std::int16_t maximum,std::uint32_t status)noexcept{return state_.initialized&&record_actor_counters(state_.actors,distance,current,maximum,status);}
+    bool resource_use(std::uint32_t action_flags)noexcept{if(!state_.initialized)return false;state_.actors.used_resource=1;if(action_flags&0x10u)++state_.actors.resource_uses;return true;}
     void restore(CompletionState state)noexcept{state_=state;}
     // Reconstructed37B990 completion/seen initialization and actual pool reset.
     // Other counters in that original232-byte block are not claimed here.

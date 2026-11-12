@@ -65,6 +65,8 @@ class SceneMatrixPrograms final
     std::optional<gameplay_collision::delivery::ChannelView>
     channel(std::uint8_t) override;
     std::optional<SceneMatrixChannel> inspect(std::size_t) const noexcept;
+    //5C2F00 writes the actual channel+2 interaction byte after proxy admission.
+    SceneMatrixStatus interaction(std::size_t,std::uint8_t)noexcept;
     SceneMatrixResult select(std::uint32_t authored,
                              SceneMatrixSelection) noexcept;
     SceneMatrixStatus evaluate_first(std::size_t) noexcept;
@@ -72,6 +74,7 @@ class SceneMatrixPrograms final
                                       SceneMatrixSoundSink *) noexcept;
     SceneMatrixStatus source_type(std::size_t,std::uint8_t) noexcept;
     bool bound_to(const SceneControls& controls,const SceneModels& models)const noexcept{return !closed_ && &controls_==&controls && &models_==&models;}
+    bool bound_to_records(const gameplay_scene::Records& records,const FlagState& flags,const std::uint16_t& room)const noexcept{return !closed_&&controls_.records().get()==&records&&&flags_==&flags&&&room_==&room;}
     bool authored_absence_reset_ready()const noexcept;
     void close() noexcept { closed_ = true; }
 

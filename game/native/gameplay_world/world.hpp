@@ -90,6 +90,7 @@ struct Actor : actors::Entity,actors::HitActor {
     std::optional<SecondaryPoseHistory> secondary_pose_history;
     std::optional<std::uint32_t> secondary_pose_category_override; // FAC; actual producer required
     std::optional<HeadReactionState> head_reaction;
+    std::optional<std::uint8_t> surface_transition_flags; // CE2; established by actual record clear
     std::optional<EnemyState> enemy;
     std::optional<ScriptedActorState> scripted;
     std::optional<NpcActorState> npc;
@@ -236,6 +237,7 @@ class LinkedActorUpdates;
 class NpcActorUpdates;
 class CinematicActorFrames;
 class CinematicActorReactions;
+class PrimaryActorPostprocess;
 class CinematicModelPass;
 class CinematicObjectPool;
 class CinematicObjectConstruction;
@@ -330,8 +332,10 @@ private:
     NpcActorUpdates* npc_update_owner_{};
     friend class CinematicActorFrames;
     friend class CinematicActorReactions;
+    friend class PrimaryActorPostprocess;
     CinematicActorFrames* cinematic_frame_owner_{};
     friend class CinematicModelPass;
+    friend class ActorModelPasses;
     friend class CinematicObjectPool;
     friend class CinematicObjectConstruction;
     std::unique_ptr<CinematicObjectPool> cinematic_objects_;

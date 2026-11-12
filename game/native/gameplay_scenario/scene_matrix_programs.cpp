@@ -3,6 +3,11 @@
 #include <cmath>
 #include <limits>
 namespace reo::native::gameplay_scenario {
+SceneMatrixStatus SceneMatrixPrograms::interaction(std::size_t index,std::uint8_t value)noexcept{
+    if(closed_)return SceneMatrixStatus::closed;
+    if(index>=channels_.size()||!channels_[index])return SceneMatrixStatus::invalid_channel;
+    channels_[index]->interaction=value;return SceneMatrixStatus::completed;
+}
 namespace {
 std::uint16_t turn(float radians) {
     // Complete admitted finite191EF0 arithmetic. Its result is consumed as a
