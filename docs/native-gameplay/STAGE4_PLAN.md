@@ -4,6 +4,12 @@ Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification with multiple agents. The user is awake and has revoked the prior
 sleep request: finish Stage4 and do not put the PC to sleep afterward.
 
+- [Canonical pose work](POSE_WORK.md) now supplies the real64-slot domain,
+  resource construction, five concrete update callbacks, contact-matrix projection
+  and callback retirement/reuse order. Both compilers pass2,048 constructors,
+  32,768 callback cases and128 mutation cases; actual current builds and23 parent
+  tests pass. Other pose families and full host/game acceptance remain open.
+
 - [Contact styles and actor channels](CONTACT_EFFECTS.md) now supply5DD270,
   571EC0/572030 and actual572290 weapon-pose refresh through the canonical visual
   pool and firing adapter. Both compilers pass65,536 signed selectors,384 channel

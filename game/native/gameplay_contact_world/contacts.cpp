@@ -57,7 +57,24 @@ delivery::CreatedPacket Invocation::attach(delivery::Packets& packets,
 }
 std::optional<delivery::ShapePose> Invocation::pose(delivery::PacketOwner candidate) {
     auto actor = resolve(candidate);
-    if (!actor || !actor->collision.pose_ready)
+    if (!actor)
+        return {};
+    if (actor->pose_work) {
+        if (!actor->pose_work->update_bound)
+            return {};
+        // The scene pose domain owns its actual full50 matrix. Convert only
+        // for this invocation; do not maintain another canonical actor basis.
+        const auto& matrix = actor->pose_work->basis;
+        auto root = std::make_shared<gameplay_collision::actors::Basis>();
+        root->x = {matrix[0][0], matrix[0][1], matrix[0][2]};
+        root->y = {matrix[1][0], matrix[1][1], matrix[1][2]};
+        root->z = {matrix[2][0], matrix[2][1], matrix[2][2]};
+        root->translation = {matrix[3][0], matrix[3][1], matrix[3][2]};
+        pose_roots_.push_back(root);
+        return delivery::ShapePose{*root, {}, actor->projectile_contact.point,
+                                   actor->projectile_contact.normal, actor->sampled_surface_valid};
+    }
+    if (!actor->collision.pose_ready)
         return {};
     std::span<const gameplay_collision::actors::Basis> joints;
     auto model = actor->model;

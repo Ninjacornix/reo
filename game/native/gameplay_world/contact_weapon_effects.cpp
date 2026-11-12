@@ -24,7 +24,8 @@ bool ContactWeaponEffects::contact_style(const actors::EntityId& id,const animat
     if(!bound_to(world_))return false;
     const auto actor=world_.resolve(id);if(!actor)return false;
     Channels channels(world_,id,channels_);
-    return gameplay_effects::construct_contact_style(work_,{actor->contact_style_discriminator,&channels},basis,point,style)==gameplay_effects::WorkStatus::completed&&world_.resolve(id)==actor;
+    const auto discriminator=actor->pose_work?std::optional(actor->pose_work->timer):actor->contact_style_discriminator;
+    return gameplay_effects::construct_contact_style(work_,{discriminator,&channels},basis,point,style)==gameplay_effects::WorkStatus::completed&&world_.resolve(id)==actor;
 }
 bool ContactWeaponEffects::pose_work(const actors::EntityId& id,const animation::Matrix& basis,animation::Vector point,std::uint32_t resource){return bound_to(world_)&&remaining_&&remaining_->pose_work(id,basis,point,resource);}
 bool ContactWeaponEffects::transient_light(const actors::EntityId& id,animation::Vector point){return bound_to(world_)&&remaining_&&remaining_->transient_light(id,point);}

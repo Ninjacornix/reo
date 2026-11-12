@@ -79,6 +79,7 @@ class Invocation final : public delivery::PacketActors,
     world::WorldModelPoses poses_;
     std::vector<ActorLease> actors_;
     std::vector<PoseLease> pose_leases_;
+    std::vector<std::shared_ptr<const gameplay_collision::actors::Basis>> pose_roots_;
     std::vector<std::shared_ptr<gameplay_scenario::SceneMatrixPrograms>> program_leases_;
     bool started_{};
     std::shared_ptr<world::Actor> resolve(const actors::EntityId&);

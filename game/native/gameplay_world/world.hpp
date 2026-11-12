@@ -8,6 +8,7 @@
 #include "linked_update_state.hpp"
 #include "speech_state.hpp"
 #include "secondary_pose_state.hpp"
+#include "pose_work_state.hpp"
 #include "head_reaction_state.hpp"
 #include "../gameplay_actors/entity.hpp"
 #include "../gameplay_actors/reference.hpp"
@@ -87,6 +88,7 @@ struct Actor : actors::Entity,actors::HitActor {
     // Original signed+C used by contact-style5. Actual full-record clears
     // establish zero; generic Actor construction does not supply this value.
     std::optional<std::int16_t> contact_style_discriminator;
+    std::optional<PoseWorkState> pose_work;
     std::optional<gameplay_navigation::ActorRouteState> navigation_route;
     std::optional<gameplay_ai::ExecutionState> ai_execution;
     std::optional<TargetingState> targeting;
@@ -240,6 +242,7 @@ enum class Stage {
     refresh_grid_position,finish_actor,publish_notice
 };
 class World;
+class PoseWorkPool;
 class LinkedModelPool;
 class LinkedActorUpdates;
 class NpcActorUpdates;
@@ -322,6 +325,8 @@ public:
     std::uint8_t selected_frame_marker{};
     std::uint16_t& frame_shared_counter;
 private:
+    friend class PoseWorkPool;
+    PoseWorkPool* pose_work_owner_{};
     friend class AuxiliaryActorPool;
     friend class ScenePrimaryActorPool;
     actors::EntityStore entities_;

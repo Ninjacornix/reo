@@ -1,0 +1,333 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_world/world.hpp": "a53a568137910fbc4ead0f09d405b5b90cd9b074de8e9d3758035f4bd8a50f4b",
+    "game/native/gameplay_world/pose_work_state.hpp": "a6e9c7cdb0b5874402d91c90803f95f8f23296071f46ed966c788395a5e454f8",
+    "game/native/gameplay_world/pose_work_pool.hpp": "812c1225d3030f612b72540e0f31615e8cc601f3a31db522022d56338efa04bf",
+    "game/native/gameplay_world/pose_work_pool.cpp": "759ab6319cea34d4760bce3c4b2a9249366c30475dd9e5dbaa3cbf4495b8f2c6",
+    "game/native/gameplay_world/resource_pose_work.hpp": "516bc6186147e01b451050e3aabf1d120edc3c090235bfc300b1fa903280e760",
+    "game/native/gameplay_world/resource_pose_work.cpp": "0f37632a60b43ae5fbf002317a3a4c97400b0656668005e7261d97487498a329",
+    "game/native/gameplay_world/resource_pose_updates.hpp": "9b043dc92f48afc7def2e38c3f7180aafceae1b078a55a3803e2d96ec6ad1737",
+    "game/native/gameplay_world/resource_pose_updates.cpp": "39031bdbe69ba773d2385155f547f702495bbc7269c23a98dab3ba91742babed",
+    "game/native/gameplay_world/pose_work_pool_tests.cpp": "e6fd559d940458516587fd42bb9c2ae8f5a5af8d2cfee33a1ac8589e92dfcf4e",
+    "game/native/gameplay_world/contact_weapon_effects.cpp": "fea8608420eb1e5d953600448a1703c678aa332a4e203c9b404ecc4e6fd2715b",
+    "game/native/gameplay_world/CMakeLists.txt": "d7a86ce7b1772c2664a9e4cef0f3b03fcb6cd49b15e67a7bdb25ef29ce9546cd",
+    "game/native/gameplay_effects/pose_lifetime.hpp": "61203645c7d2aa998e01a6f091b931a7712feca0a3a7a2b3572afac324163689",
+    "game/native/gameplay_effects/pose_lifetime.cpp": "68e121095ab455c9c5df27283bee672be752b23a84dfee81459e727968d8268b",
+    "game/native/gameplay_contact_world/contacts.hpp": "2595e6259e11229f89eb9c034680451a8d3777379f7468f84364d83f9800e83b",
+    "game/native/gameplay_contact_world/contacts.cpp": "4f9297fdc965768141196e0b1e3fa729a9bd73561870c70e45ee55356a5527fb",
+    "game/native/gameplay_contact_world/tests.cpp": "b966fda77ebe81f0e9799a66b6fe82bc2d3f466a8ffe45492794d09dbff7005e",
+    "tools/native_reconstruction/pose_lifetime_tests.cpp": "00ea01b6be74af2b0ea33bc1093fdc89a1076dc6104287fdab8bafbe600ba998",
+    "tools/native_reconstruction/verify_pose_lifetime.py": "f663fc83425389c75e970c1a6af757b9f2ae5994e018f3754f2577a73c911258",
+    "tools/native_reconstruction/pose_work_tests.cpp": "047629345b18534a637e4d7a02cab58e92d3d1bea5da92611b7701da5d3fb69f",
+    "tools/native_reconstruction/pose_work_updates_tests.inc": "c3ce08b0c686516898762993aa884db3139b03badd5baea13f276dcefbac0fa1",
+    "tools/native_reconstruction/pose_work_mutation_tests.inc": "76d714c9f10dcb836464e5d9dc2c67a54cd6fe250c0eac0d3afb73857baf7b79",
+    "tools/native_reconstruction/verify_pose_work.py": "5ec958a6d9c832255499c7e0ce8ce75b91d18e1bf61094c6c6223a7860411f1f",
+    "tools/native_reconstruction/verify_pose_work_current.py": "898825ea2e8f02da6118a139fc7671c7a7cfd0f21654d16684298d792ff2352b",
+    "tools/native_reconstruction/qualify_pose_work_v1.py": "fd7708f0c8aca9d9622fa4a34be4f432e5ab91a52b4decfab15661c1b1783f39",
+    "docs/native-gameplay/POSE_WORK.md": "f39a49c6df67c41b793f08840f39be99345431e40803ce960ab695e8c18b9760"
+  },
+  "cohorts": {
+    "llvm": {
+      "lifetime": {
+        "path": "build-native-sjuni/pose-work-lifetime-llvm-v1/receipt.json",
+        "sha256": "4b470c535252efca086b0d2acefa5f3a775629a0244906777b952b98dc8ee009",
+        "observed": {
+          "checks": 51642604,
+          "cases": 16777216,
+          "retirements": 256,
+          "updates": 1310700,
+          "original_calls": 18088172,
+          "game_run": false
+        },
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "subsequent_dependency_changes": {}
+      },
+      "owner": {
+        "path": "build-native-sjuni/pose-work-updates-llvm-v4/receipt.json",
+        "sha256": "c3d44ab7e6e0321db69ab1ad31c2c2d999847946676abf45d1abb4ec0b61ba13",
+        "observed": {
+          "checks": 1343605,
+          "pool_cases": 4096,
+          "factory_cases": 2048,
+          "traversal_cases": 320,
+          "mutation_cases": 128,
+          "mutation_callbacks": 2144,
+          "guards": 34,
+          "update_cases": 32768,
+          "update_retirements": 48,
+          "update_packets": 28,
+          "original_calls": 370144,
+          "game_run": false
+        },
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "subsequent_dependency_changes": {
+          "game/native/gameplay_application/CMakeLists.txt": {
+            "qualified": "93b8213590beb344152b9d3a1de6f92e612ac0f59bdfd86a9c705751d0ddeb0c",
+            "current": "2ddfc24990d3e4aee68860cf6e14c1c6790871ef2716ce66f154357d3aae9e26"
+          },
+          "game/native/gameplay_application/native_session.cpp": {
+            "qualified": "759f82ffef0849d8d646025c724f74f75431837666a5745102bc6878d8d062cc",
+            "current": "1a6574bf66cf4a4fa67fac912d068116f7d4851b3db554ee93e87f79cffb572e"
+          },
+          "game/native/gameplay_application/native_session.hpp": {
+            "qualified": "394d9ddd1debfeb53010972b7d4f7da47e255687c249737236db864ee0ebf334",
+            "current": "785203f0983a8c78329fd1d7f7daf37a1394c7d8c474aaed80462005c7a0cd37"
+          },
+          "game/native/gameplay_application/session_rooms.cpp": {
+            "qualified": "71078746d49f68cef01478f90208ac02057e2f685abdf9226ef5599bdd19459b",
+            "current": "51069c1828aff0774010e21f23261b7477209300a6489bb91737bf99fee2a8ea"
+          },
+          "game/native/gameplay_application/session_rooms_tests.cpp": {
+            "qualified": "5646781bad9d01f4ca17d6513ec36217a28194e77fbebc95a0c5cacc16261d9a",
+            "current": "6a1801761add82392ebafc4159dbf18135036173ce0658ed3c87ec1742299c8b"
+          },
+          "game/native/gameplay_collision/CMakeLists.txt": {
+            "qualified": "ad02c9282c3891963730e2bb758103973dd277932bf33a64a8cdba7e423e5b3c",
+            "current": "03e1a3731d52b2467160a1084b6df4840fd09119e6ca904aeb612f23d5aafe4c"
+          },
+          "game/native/gameplay_collision/room_objects.cpp": {
+            "qualified": "94302623b4d600bbee5a8d955be8462ccf7c43e053de36abb30aa5ab162586d7",
+            "current": "96936583ca6d043781cec79be0a0332c065498bb0ad77665a21681ac0edb4de2"
+          },
+          "game/native/gameplay_collision/room_objects.hpp": {
+            "qualified": "09f60fee4f49ac6958d6b68d314ee7de5a1a1d5bf272182d13bd6bafe2ed5f6a",
+            "current": "fc5dba750a3e29a5f763d9e9fb526943971003988bbe13f3bce43c0088051207"
+          },
+          "game/native/gameplay_contact_world/contacts.cpp": {
+            "qualified": "2b58be3ba98ddfd69629f4f35f9f3e604e47256851b13dec04c00921d5ec8266",
+            "current": "4f9297fdc965768141196e0b1e3fa729a9bd73561870c70e45ee55356a5527fb"
+          },
+          "game/native/gameplay_contact_world/contacts.hpp": {
+            "qualified": "339c36fa5735312827446fe219601638bc994102e13f7978a1df0bee8a7324d2",
+            "current": "2595e6259e11229f89eb9c034680451a8d3777379f7468f84364d83f9800e83b"
+          },
+          "game/native/gameplay_scenario/camera_curves.hpp": {
+            "qualified": "8db2bc81ef65fb72ef83cf0c07ecf1091e013da230f7889f21e93a1df65d0d14",
+            "current": "11c6c36295612329d67cc999a717cee07b04858b898d4c2496e425f7d1b100a8"
+          },
+          "game/native/gameplay_scenario/CMakeLists.txt": {
+            "qualified": "f43ec45b6bca940f869544beeadf0c8922fa6c3dc974506501039b5e55e8fe0a",
+            "current": "d501eb3d95bee1ef5a99a5f4da0f69360f19cb5a5e577a8ab6ec6e9d76ca7fea"
+          },
+          "game/native/gameplay_scenario/cutscene_playback.cpp": {
+            "qualified": "10a6103965aa65b4396a5ee6ba74c30ea18c315969e31c438a6b6aa43caabd87",
+            "current": "8be75e7a3fbb028d3974d7cc58380575d6994a9205d078ce8beb8e48ece74e5c"
+          },
+          "game/native/gameplay_scenario/cutscene_playback.hpp": {
+            "qualified": "22ddc9447c82c76d134bcbb0f8f65e71c12919f3ad595cc2aa9c1e067f182ee8",
+            "current": "f078439119c6723afa636f824db2c319238c8bdfa96a003643eddff67fab19d1"
+          },
+          "game/native/gameplay_world/actor_initial_state.hpp": {
+            "qualified": "51cadee551da64bc921c27ed7e1c42e44a3de103b63e2300b6754736bac70332",
+            "current": "e163ca53b982845de3ea5e74afc6aea80bd810305b718fab2beeadc4828b14c9"
+          },
+          "game/native/gameplay_world/CMakeLists.txt": {
+            "qualified": "07a473d4927672fa4c2fc17c57afa13db353fefb6169e13259ae7808f825da77",
+            "current": "d7a86ce7b1772c2664a9e4cef0f3b03fcb6cd49b15e67a7bdb25ef29ce9546cd"
+          },
+          "game/native/gameplay_world/speech_state.hpp": {
+            "qualified": "00c5fd992974ae0e49ee1585950f54e59e9ebac8e7452ce4906ac45ecc554cb9",
+            "current": "29ef549e1b5b667480c4d5617a80cdcbcb725919f1d4066b254c2494ce02a609"
+          }
+        }
+      },
+      "current": {
+        "path": "build-native-sjuni/pose-work-current-llvm-v1/receipt.json",
+        "sha256": "c4e880723d152874b31bee7638a2a8255d48c8ad9f5c5974133318292d6cc971",
+        "observed": {
+          "checks": 152,
+          "owned_catalog": true,
+          "game_run": false
+        },
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "subsequent_dependency_changes": {
+          "game/native/gameplay_contact_world/contacts.hpp": {
+            "qualified": "339c36fa5735312827446fe219601638bc994102e13f7978a1df0bee8a7324d2",
+            "current": "2595e6259e11229f89eb9c034680451a8d3777379f7468f84364d83f9800e83b"
+          }
+        }
+      }
+    },
+    "gcc": {
+      "lifetime": {
+        "path": "build-native-sjuni/pose-work-lifetime-gcc-v1/receipt.json",
+        "sha256": "ca55bda4b85ac8075675adca23ca35f37ece81d29ab4c1bb11d153b47b106cc2",
+        "observed": {
+          "checks": 51642604,
+          "cases": 16777216,
+          "retirements": 256,
+          "updates": 1310700,
+          "original_calls": 18088172,
+          "game_run": false
+        },
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "subsequent_dependency_changes": {}
+      },
+      "owner": {
+        "path": "build-native-sjuni/pose-work-updates-gcc-v4/receipt.json",
+        "sha256": "89df365dca65bdfe331071eeaaff5f4f695fdd5d43afc68399cec872b410ef76",
+        "observed": {
+          "checks": 1343605,
+          "pool_cases": 4096,
+          "factory_cases": 2048,
+          "traversal_cases": 320,
+          "mutation_cases": 128,
+          "mutation_callbacks": 2144,
+          "guards": 34,
+          "update_cases": 32768,
+          "update_retirements": 48,
+          "update_packets": 28,
+          "original_calls": 370144,
+          "game_run": false
+        },
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "subsequent_dependency_changes": {
+          "game/native/gameplay_application/CMakeLists.txt": {
+            "qualified": "93b8213590beb344152b9d3a1de6f92e612ac0f59bdfd86a9c705751d0ddeb0c",
+            "current": "2ddfc24990d3e4aee68860cf6e14c1c6790871ef2716ce66f154357d3aae9e26"
+          },
+          "game/native/gameplay_application/native_session.cpp": {
+            "qualified": "759f82ffef0849d8d646025c724f74f75431837666a5745102bc6878d8d062cc",
+            "current": "1a6574bf66cf4a4fa67fac912d068116f7d4851b3db554ee93e87f79cffb572e"
+          },
+          "game/native/gameplay_application/native_session.hpp": {
+            "qualified": "394d9ddd1debfeb53010972b7d4f7da47e255687c249737236db864ee0ebf334",
+            "current": "785203f0983a8c78329fd1d7f7daf37a1394c7d8c474aaed80462005c7a0cd37"
+          },
+          "game/native/gameplay_application/session_rooms.cpp": {
+            "qualified": "71078746d49f68cef01478f90208ac02057e2f685abdf9226ef5599bdd19459b",
+            "current": "51069c1828aff0774010e21f23261b7477209300a6489bb91737bf99fee2a8ea"
+          },
+          "game/native/gameplay_application/session_rooms_tests.cpp": {
+            "qualified": "5646781bad9d01f4ca17d6513ec36217a28194e77fbebc95a0c5cacc16261d9a",
+            "current": "6a1801761add82392ebafc4159dbf18135036173ce0658ed3c87ec1742299c8b"
+          },
+          "game/native/gameplay_collision/CMakeLists.txt": {
+            "qualified": "ad02c9282c3891963730e2bb758103973dd277932bf33a64a8cdba7e423e5b3c",
+            "current": "03e1a3731d52b2467160a1084b6df4840fd09119e6ca904aeb612f23d5aafe4c"
+          },
+          "game/native/gameplay_collision/room_objects.cpp": {
+            "qualified": "94302623b4d600bbee5a8d955be8462ccf7c43e053de36abb30aa5ab162586d7",
+            "current": "96936583ca6d043781cec79be0a0332c065498bb0ad77665a21681ac0edb4de2"
+          },
+          "game/native/gameplay_collision/room_objects.hpp": {
+            "qualified": "09f60fee4f49ac6958d6b68d314ee7de5a1a1d5bf272182d13bd6bafe2ed5f6a",
+            "current": "fc5dba750a3e29a5f763d9e9fb526943971003988bbe13f3bce43c0088051207"
+          },
+          "game/native/gameplay_contact_world/contacts.cpp": {
+            "qualified": "2b58be3ba98ddfd69629f4f35f9f3e604e47256851b13dec04c00921d5ec8266",
+            "current": "4f9297fdc965768141196e0b1e3fa729a9bd73561870c70e45ee55356a5527fb"
+          },
+          "game/native/gameplay_contact_world/contacts.hpp": {
+            "qualified": "339c36fa5735312827446fe219601638bc994102e13f7978a1df0bee8a7324d2",
+            "current": "2595e6259e11229f89eb9c034680451a8d3777379f7468f84364d83f9800e83b"
+          },
+          "game/native/gameplay_scenario/camera_curves.hpp": {
+            "qualified": "8db2bc81ef65fb72ef83cf0c07ecf1091e013da230f7889f21e93a1df65d0d14",
+            "current": "11c6c36295612329d67cc999a717cee07b04858b898d4c2496e425f7d1b100a8"
+          },
+          "game/native/gameplay_scenario/CMakeLists.txt": {
+            "qualified": "f43ec45b6bca940f869544beeadf0c8922fa6c3dc974506501039b5e55e8fe0a",
+            "current": "d501eb3d95bee1ef5a99a5f4da0f69360f19cb5a5e577a8ab6ec6e9d76ca7fea"
+          },
+          "game/native/gameplay_scenario/cutscene_playback.cpp": {
+            "qualified": "10a6103965aa65b4396a5ee6ba74c30ea18c315969e31c438a6b6aa43caabd87",
+            "current": "8be75e7a3fbb028d3974d7cc58380575d6994a9205d078ce8beb8e48ece74e5c"
+          },
+          "game/native/gameplay_scenario/cutscene_playback.hpp": {
+            "qualified": "22ddc9447c82c76d134bcbb0f8f65e71c12919f3ad595cc2aa9c1e067f182ee8",
+            "current": "f078439119c6723afa636f824db2c319238c8bdfa96a003643eddff67fab19d1"
+          },
+          "game/native/gameplay_world/actor_initial_state.hpp": {
+            "qualified": "51cadee551da64bc921c27ed7e1c42e44a3de103b63e2300b6754736bac70332",
+            "current": "e163ca53b982845de3ea5e74afc6aea80bd810305b718fab2beeadc4828b14c9"
+          },
+          "game/native/gameplay_world/CMakeLists.txt": {
+            "qualified": "07a473d4927672fa4c2fc17c57afa13db353fefb6169e13259ae7808f825da77",
+            "current": "d7a86ce7b1772c2664a9e4cef0f3b03fcb6cd49b15e67a7bdb25ef29ce9546cd"
+          },
+          "game/native/gameplay_world/speech_state.hpp": {
+            "qualified": "00c5fd992974ae0e49ee1585950f54e59e9ebac8e7452ce4906ac45ecc554cb9",
+            "current": "29ef549e1b5b667480c4d5617a80cdcbcb725919f1d4066b254c2494ce02a609"
+          }
+        }
+      },
+      "current": {
+        "path": "build-native-sjuni/pose-work-current-gcc-v1/receipt.json",
+        "sha256": "1640452ba8ee7821580fb75bdd85129bf86a6f45c452565753dff85fba7a53e4",
+        "observed": {
+          "checks": 152,
+          "owned_catalog": true,
+          "game_run": false
+        },
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "subsequent_dependency_changes": {
+          "game/native/gameplay_contact_world/contacts.hpp": {
+            "qualified": "339c36fa5735312827446fe219601638bc994102e13f7978a1df0bee8a7324d2",
+            "current": "2595e6259e11229f89eb9c034680451a8d3777379f7468f84364d83f9800e83b"
+          }
+        }
+      }
+    }
+  },
+  "current_parent_tests": {
+    "llvm": {
+      "path": "build-native-sjuni/session-rooms-parents-llvm-v4/receipt.json",
+      "sha256": "d5aa8c27c4965d50c187411311b5119031aed956905c1981b731e785111d0c79",
+      "parent_tests": 23
+    },
+    "gcc": {
+      "path": "build-native-sjuni/session-rooms-parents-gcc-v4/receipt.json",
+      "sha256": "c7018b504526d0e254d427e1905e1a2858f54a2e78634e856c51a5fea7cc6faa",
+      "parent_tests": 23
+    }
+  },
+  "current_contact_adapter_syntax": {
+    "llvm": {
+      "command": [
+        "C:\\Users\\Ninjacornix\\AppData\\Local\\OutbreakRecomp\\launcher\\toolchains\\llvm-mingw-20251216-ucrt-x86_64\\bin\\x86_64-w64-mingw32-clang++.exe",
+        "-std=c++20",
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-Werror",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-I.",
+        "-fsyntax-only",
+        "game/native/gameplay_world/contact_weapon_effects.cpp"
+      ],
+      "returncode": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "gcc": {
+      "command": [
+        "C:\\msys64\\mingw64\\bin\\g++.exe",
+        "-std=c++20",
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-Werror",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-I.",
+        "-fsyntax-only",
+        "game/native/gameplay_world/contact_weapon_effects.cpp"
+      ],
+      "returncode": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "limits": [
+    "The original constructor metadata lookups and descriptor attachment are explicit ports; native canonical getters and actual owned Packets/Catalog run.",
+    "Differential tests use immutable SessionRooms v4 native ABI inputs; separate current CMake and parent23 runs prove present build integration.",
+    "Other concrete pose callbacks, generic/preset constructors, complete firing/frame/host adoption, renderer and installed gameplay acceptance remain open."
+  ]
+}

@@ -230,6 +230,30 @@ struct Events final : d::PacketEvents {
     }
 };
 int main() try {
+    {
+        auto owner = world();const auto id = spawn(*owner, 0);
+        const auto actor = owner->resolve(id);actor->pose_work.emplace();
+        actor->model = model(); // This unrelated model must not supply pose joints.
+        auto room = std::make_shared<Room>();Resources resources(room);
+        auto invocation = cw::retain(owner, resources);check(bool(invocation));
+        const auto candidate = invocation->owner(id);check(candidate.has_value());
+        check(!invocation->pose(*candidate));
+        actor->pose_work->update_bound = true;
+        auto& matrix = actor->pose_work->basis;
+        matrix = {{{{2,3,5,7}},{{11,13,17,19}},{{23,29,31,37}},{{41,43,47,1}}}};
+        const auto first = invocation->pose(*candidate);check(first.has_value());
+        check(first->root.x.x == 2 && first->root.x.y == 3 && first->root.x.z == 5 &&
+              first->root.y.x == 11 && first->root.y.y == 13 && first->root.y.z == 17 &&
+              first->root.z.x == 23 && first->root.z.y == 29 && first->root.z.z == 31 &&
+              first->root.translation.x == 41 && first->root.translation.y == 43 &&
+              first->root.translation.z == 47 && first->joints.empty());
+        matrix[0][2] = 999;
+        const auto second = invocation->pose(*candidate);check(second.has_value());
+        check(second->root.x.z == 999 && first->root.x.z == 5);
+        check(owner->retire_primary(0) == a::EntityStatus::completed);
+        const auto replacement = spawn(*owner, 0);check(replacement != id);
+        check(!invocation->pose(*candidate) && first->root.translation.z == 47);
+    }
     for (unsigned n = 0; n < 256; ++n) {
         auto owner = world();
         const auto id = spawn(*owner, 0, std::uint8_t(n));
