@@ -63,9 +63,12 @@ float radians(std::uint16_t turn){
 }
 SinCos sin_cos(float angle){
     require_profile();finite(angle);
-    if(angle< -tau || angle>tau)throw std::domain_error("Native transform radian reduction domain exceeded");
     if(angle<= -pi || !(angle<pi)){
         const float quotient=multiply(angle,value(0x3ea2f983));
+        // The original reduces through a signed16 winding count. Keep its
+        // nonwrapping finite range and reject before the host integer cast.
+        // Authored cinematic rotations can span many complete revolutions.
+        if(quotient< -32768.f||quotient>=32767.f)throw std::domain_error("Native transform radian reduction domain exceeded");
         const int periods=(static_cast<int>(quotient)+(angle>0?1:0))&~1;
         angle=subtract(angle,multiply(float(periods),pi));
     }

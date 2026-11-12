@@ -6,6 +6,7 @@
 namespace t=reo::native::transform_math;
 #include "owned_constants.hpp"
 std::uint64_t checks{},angle_cases{},trig_cases{},euler_cases{},matrix_cases{},direction_cases{},scale_cases{},provider_calls{};
+std::uint64_t wide_trig_cases{};
 void check(bool yes,const char* why){++checks;if(!yes)throw std::runtime_error(why);}
 template<class T>T get(const std::uint8_t* p,std::uint32_t at){return transform_read<T>(p,at);}
 template<class T>void put(std::uint8_t* p,std::uint32_t at,T v){transform_write(p,at,v);}
@@ -51,6 +52,14 @@ int main()try{
     for(auto bits:{0u,0x80000000u,1u,0x80000001u,0x00800000u,0x80800000u,0x3fc90fdau,0x3fc90fdbu,0x3fc90fdcu,0xbfc90fdau,0xbfc90fdbu,0xbfc90fdcu,0x40490fdau,0x40490fdcu,0xc0490fdau,0xc0490fdcu}){
         const auto angle=std::bit_cast<float>(bits);auto c=context(0x18f570);SET_GPR_U32(&c,4,result_at);c.f[12]=angle;sub_0018F570_0x18f570(memory.data(),&c,&runtime);returned(c);const auto expected=get<std::array<float,4>>(memory.data(),result_at);const auto result=t::sin_cos(angle);same(result.sine,expected[0]);same(result.cosine,expected[1]);++trig_cases;
     }
+    const auto compare_wide=[&](float angle){
+        auto c=context(0x18f570);SET_GPR_U32(&c,4,result_at);c.f[12]=angle;sub_0018F570_0x18f570(memory.data(),&c,&runtime);returned(c);
+        const auto expected=get<std::array<float,4>>(memory.data(),result_at);const auto result=t::sin_cos(angle);same(result.sine,expected[0]);same(result.cosine,expected[1]);++wide_trig_cases;
+    };
+    for(int period=-32765;period<=32765;++period){const auto center=float(period)*std::bit_cast<float>(0x40490fdbu);
+        for(const auto angle:{std::nextafter(center,-INFINITY),center,std::nextafter(center,INFINITY)})compare_wide(angle);
+    }
+    for(unsigned i=0;i<65536;++i)compare_wide(float(std::int32_t(random_word(random)%3200001)-1600000)*.0625f);
     const auto number=[&]{return float(std::int32_t(random_word(random)%16385)-8192)*.125f;};
     for(unsigned turn=0;turn<65536;++turn){
         t::Matrix initial;for(auto& col:initial)for(auto& lane:col)lane=number();
@@ -71,10 +80,10 @@ int main()try{
         c=context(0x18fe60);SET_GPR_U32(&c,4,result_at);c.f[12]=v.x;c.f[13]=v.y;c.f[14]=v.z;sub_0018FE60_0x18fe60(memory.data(),&c,&runtime);returned(c);same(t::scale(v),get<t::Matrix>(memory.data(),result_at));++scale_cases;
     }
     bool refused{};try{(void)t::sin_cos(INFINITY);}catch(const std::domain_error&){refused=true;}check(refused,"nonfinite trig input refused");
-    refused=false;try{(void)t::sin_cos(20);}catch(const std::domain_error&){refused=true;}check(refused,"unqualified wider range refused");
+    refused=false;try{(void)t::sin_cos(200000);}catch(const std::domain_error&){refused=true;}check(refused,"unqualified winding-wrap range refused before integer conversion");
     const auto before=t::identity();auto next=before;next[0][0]=INFINITY;const auto invalid=next;refused=false;try{t::compose_euler_axes(next,{1,2,3});}catch(const std::domain_error&){refused=true;}check(refused && std::memcmp(&invalid,&next,sizeof next)==0,"invalid composition leaves destination unpublished");
     _mm_setcsr(0x3f80);refused=false;try{(void)t::radians(1);}catch(const std::domain_error&){refused=true;}check(refused,"nonnearest profile explicitly refused");_mm_setcsr(0x1f80);
     for(auto control:{0x9f80u,0x1fc0u}){_mm_setcsr(control);refused=false;try{(void)t::radians(1);}catch(const std::domain_error&){refused=true;}check(refused,"flush/denormal-zero profile explicitly refused");}_mm_setcsr(0x1f80);
     next=before;auto large=before;next[0][0]=large[0][0]=std::numeric_limits<float>::max();const auto original_large=next;refused=false;try{t::concatenate_left(next,large);}catch(const std::domain_error&){refused=true;}check(refused && std::memcmp(&next,&original_large,sizeof next)==0,"overflow result rejected before matrix publication");
-    std::cout<<"{\"checks\":"<<checks<<",\"angle_cases\":"<<angle_cases<<",\"trig_cases\":"<<trig_cases<<",\"euler_cases\":"<<euler_cases<<",\"matrix_cases\":"<<matrix_cases<<",\"direction_cases\":"<<direction_cases<<",\"scale_cases\":"<<scale_cases<<",\"original_helper_calls\":"<<provider_calls<<",\"original_body_executed\":true,\"game_run\":false}\n";
+    std::cout<<"{\"checks\":"<<checks<<",\"angle_cases\":"<<angle_cases<<",\"trig_cases\":"<<trig_cases<<",\"wide_trig_cases\":"<<wide_trig_cases<<",\"euler_cases\":"<<euler_cases<<",\"matrix_cases\":"<<matrix_cases<<",\"direction_cases\":"<<direction_cases<<",\"scale_cases\":"<<scale_cases<<",\"original_helper_calls\":"<<provider_calls<<",\"original_body_executed\":true,\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

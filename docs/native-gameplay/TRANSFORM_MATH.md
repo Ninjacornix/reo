@@ -1,5 +1,11 @@
 # Native original-polynomial transform math
 
+Current update,2026-11-12: [wider authored animation rotations](WIDE_RADIAN_ANIMATION.md)
+supersede the initial one-revolution bound described below. The finite
+nonwrapping signed16 winding range now passes262,129 additional complete-original
+comparisons and unblocks all74 observed wider-angle object playback pairs.
+Other arithmetic/control limits and the absence of game acceptance still apply.
+
 2026-11-09: `game/native/transform_math` qualifies on LLVM and GCC against complete original helper execution within the declared FP32 profile. It contains ordinary floats, owned matrix/vector values and immutable original coefficient words. It contains no guest memory, CPU context, emulated registers, original instruction execution or host `sin`/`cos` substitution. This closes the math gate identified in [the earlier motion checkpoint](MOTION.md), without claiming physical PS2 exceptional-arithmetic equivalence or game installation.
 
 The original `18F570` helper uses range reduction, an odd polynomial through degree9, then a signed square root for the complementary component. Native code retains the coefficient words from owned ELF span22FE20..22FE3F, their multiplication/addition order, quadrant behavior, zero behavior and original negative-complement clamp. `191F80` conversion is qualified over all unsigned16 angles actually admitted by the Euler wrappers, including signed actor orientations whose low16 bits wrap. Wider arbitrary32-bit helper inputs are not silently added to that profile.
