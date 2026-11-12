@@ -31,9 +31,9 @@ internal static class PortableCompilerSetup {
             if (existing != null)
                 return existing;
         }
-        string parent = Path.Combine(home ?? Settings.Home, "toolchains");
+        string parent = CacheRoot(home ?? Settings.Home);
         Directory.CreateDirectory(parent);
-        using var lease = await Lock(parent, progress, cancel);
+        using var lease = await Lock(LocalGameBuild.Inside(parent, "setup.lock"), progress, cancel);
         string folder = LocalGameBuild.Inside(parent, Name);
         if (await Valid(folder, progress, cancel))
             return folder;
@@ -112,6 +112,25 @@ internal static class PortableCompilerSetup {
                 Directory.Delete(staging, true);
         }
     }
+    internal static string CacheRoot(string home) {
+        Storage.CheckLinks(home);
+        string primary = Path.Combine(home, "toolchains");
+        if (!Redirects(primary))
+            return primary;
+
+        string fallback = Path.Combine(home, "compiler");
+        if (Redirects(fallback))
+            throw new IOException("Both compiler cache folders are linked: " + primary + " and " + fallback +
+                                  ". Use a regular folder for either cache and retry setup.");
+        return fallback;
+
+        static bool Redirects(string path) {
+            try { return BuildPathLinks.Redirects(path, File.GetAttributes(path)); }
+            catch (FileNotFoundException) { return false; }
+            catch (DirectoryNotFoundException) { return false; }
+        }
+    }
+
     static IEnumerable<string> Candidates() {
         foreach (var scope in new[] { EnvironmentVariableTarget.Process,
                                       EnvironmentVariableTarget.User }) {
@@ -199,12 +218,12 @@ internal static class PortableCompilerSetup {
         await using var input = File.OpenRead(path);
         return Convert.ToHexString(await SHA256.HashDataAsync(input, cancel)).ToLowerInvariant();
     }
-    static async Task<FileStream> Lock(string parent, IProgress<ImportProgress>? progress,
+    static async Task<FileStream> Lock(string path, IProgress<ImportProgress>? progress,
                                        CancellationToken cancel) {
         while (true) {
             cancel.ThrowIfCancellationRequested();
             try {
-                return new FileStream(Path.Combine(parent, "setup.lock"), FileMode.OpenOrCreate,
+                return new FileStream(path, FileMode.OpenOrCreate,
                                       FileAccess.ReadWrite, FileShare.None);
             } catch (IOException error) when ((error.HResult & 0xffff) is 32 or 33) {
                 progress?.Report(
