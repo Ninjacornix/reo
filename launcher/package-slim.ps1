@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory=$true)][string]$KitManifest,
     [Parameter(Mandatory=$true)][string]$Server,
     [Parameter(Mandatory=$true)][string]$Output,
-    [string]$Version = '1.0.20',
+    [string]$Version = '1.0.21',
     [string]$ReleaseTag = '',
     [bool]$Prerelease = $true,
     [string]$InputsFile2 = '',
