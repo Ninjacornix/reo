@@ -102,6 +102,16 @@ void reset_euler_axes_xzy(Matrix& matrix,Angles angles){
 void compose_euler_axes(Matrix& matrix,Angles angles){
     require_profile();auto next=matrix;compose(next,angles);matrix=next;
 }
+void compose_euler_radians(Matrix& matrix,Vector angles){
+    require_profile();auto next=matrix;
+    const auto x=sin_cos(angles.x);
+    rotate_axes(next,{{{1,0,0},{0,add(0,x.cosine),add(0,x.sine)},{0,subtract(0,x.sine),add(0,x.cosine)}}});
+    const auto y=sin_cos(angles.y);
+    rotate_axes(next,{{{add(0,y.cosine),0,subtract(0,y.sine)},{0,1,0},{add(0,y.sine),0,add(0,y.cosine)}}});
+    const auto z=sin_cos(angles.z);
+    rotate_axes(next,{{{add(0,z.cosine),add(0,z.sine),0},{subtract(0,z.sine),add(0,z.cosine),0},{0,0,1}}});
+    matrix=next;
+}
 Matrix scale(Vector v){
     require_profile();finite(v.x);finite(v.y);finite(v.z);auto m=identity();m[0][0]=add(0,v.x);m[1][1]=add(0,v.y);m[2][2]=add(0,v.z);return m;
 }

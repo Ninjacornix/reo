@@ -4,6 +4,11 @@ Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to put the PC to sleep only after
 Stage4 is fully implemented and verified; do not sleep at component checkpoints.
 
+- [Cinematic object attachment math](CINEMATIC_OBJECT_ATTACHMENTS.md) now
+  preserves actual node views, normalized axes, distinct position/basis state and
+  the direct-radian rotation path. Paired comparisons pass262,144 attachments
+  over four owned skeletons and all five CMake parents. Actual parent selection,
+  object model-work scale metadata, authored streams and installation remain open.
 - [Sixteen cinematic objects](CINEMATIC_OBJECTS.md) now own separate typed
   storage/reservations, model playback and unclamped pose interpolation through
   World lifetime. Paired comparisons pass16,384 reservations,67,585 pose cases

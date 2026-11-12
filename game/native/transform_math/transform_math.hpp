@@ -20,6 +20,8 @@ void reset_euler_axes(Matrix&,Angles);
 void reset_euler_axes_xzy(Matrix&,Angles);
 // Compose those same rotations onto existing axis XYZ; preserve W/column4.
 void compose_euler_axes(Matrix&,Angles);
+//190A10 consumes caller-computed radians without191F80 turn conversion/wrap.
+void compose_euler_radians(Matrix&,Vector radians);
 Matrix scale(Vector);
 // Ordered four-term column product, left*destination; aliasing is supported.
 void concatenate_left(Matrix& destination,const Matrix& left);

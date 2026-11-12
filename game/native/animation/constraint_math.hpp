@@ -1,6 +1,8 @@
 #pragma once
 #include "model_math.hpp"
 namespace reo::native::animation::constraint_math {
+//191D80-compatible finite XYZ normalization, including its zero-vector policy.
+Vector normalize(Vector);
 Vector add(Vector,Vector);
 Vector subtract(Vector,Vector);
 float squared_length(Vector);

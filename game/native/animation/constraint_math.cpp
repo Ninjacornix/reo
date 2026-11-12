@@ -13,6 +13,7 @@ Vector cross(Vector a,Vector b){return{minus(times(a.y,b.z),times(a.z,b.y)),minu
 Vector normalized(Vector v){const float squared=squared_length(v);const float q=squared>0?finite(1.f/std::sqrt(squared)):std::numeric_limits<float>::max();return{times(v.x,q),times(v.y,q),times(v.z,q)};}
 void axis(Matrix& m,unsigned i,Vector v){m[i]={v.x,v.y,v.z,0};}
 }
+Vector normalize(Vector value){return normalized(value);}
 Vector add(Vector a,Vector b){return{plus(a.x,b.x),plus(a.y,b.y),plus(a.z,b.z)};}
 Vector subtract(Vector a,Vector b){return{minus(a.x,b.x),minus(a.y,b.y),minus(a.z,b.z)};}
 float squared_length(Vector v){return plus(plus(times(v.x,v.x),times(v.y,v.y)),times(v.z,v.z));}
