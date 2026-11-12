@@ -1,5 +1,6 @@
 #include "game/native/gameplay_scenario/cutscene_playback.hpp"
 #include "game/native/gameplay_scenario/cutscene_actor_tracks.hpp"
+#include "game/native/gameplay_scenario/cutscene_camera.hpp"
 #include "game/native/gameplay_scenario/cutscene_object_tracks.hpp"
 #include "game/native/gameplay_scenario/flags.hpp"
 #include "game/native/gameplay_world/world.hpp"
@@ -13,7 +14,7 @@
 namespace s=reo::native::gameplay_scenario;namespace w=reo::native::gameplay_world;
 struct Event {unsigned id{};std::int64_t first{},second{},third{};friend bool operator==(const Event&,const Event&)=default;};
 std::vector<Event> native_events,source_events;
-std::uint64_t checks{},controller_cases{},advance_cases{},ack_cases{},calls{},worker_calls{},refusals{};unsigned case_id{};
+std::uint64_t checks{},controller_cases{},advance_cases{},ack_cases{},calls{},worker_calls{},refusals{};unsigned case_id{};bool compare_bound_camera{};std::uint64_t camera_ticks{},camera_guards{},camera_publications{};
 void check(bool value,std::source_location at=std::source_location::current()){++checks;if(!value)throw std::runtime_error("Cutscene playback case "+std::to_string(case_id)+" line "+std::to_string(at.line()));}
 struct Inputs {int ready{},movie_state{},movie_busy{},fade{},load{};bool mutate_frame{},mutate_clock{};unsigned fail_at{};}inputs;
 constexpr unsigned controller=0x38eca0;
@@ -21,6 +22,7 @@ template<class T>void put(std::uint8_t* memory,unsigned at,const T& value){trans
 std::array<unsigned,16> callback_ids{0x5ee950,0x5eeb00,0x5ef120,0x5ef500,0x5ef8b0,0x5ef640,0x5ef740,0x5efa40,0x5efb80,0x5efae0,0x5efc40,0x5c09a0,0x6b3bb0,0x5c0e50,0x1bbba0,0x5f0110};
 void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
  ++calls;const auto done=[&](int result=0){SET_GPR_S32(context,2,result);context->pc=GPR_U32(context,31);};const auto emit=[&](unsigned id,std::int64_t a=0,std::int64_t b=0,std::int64_t c=0){source_events.push_back({id,a,b,c});};
+ if(compare_bound_camera){if(context->pc==0x5ee950){o2_005EE950_0x5ee950(memory,context,runtime);return;}if(context->pc==0x5c09a0){o2_005C09A0_0x5c09a0(memory,context,runtime);return;}}
  switch(context->pc){
 #include "original_dispatch.hpp"
  case 0x10a830:{const auto format=reinterpret_cast<const char*>(memory+GPR_U32(context,5));const auto at=GPR_U32(context,4);check(at<0x2000000-128);int size;if(std::string_view(format)=="%02d_%02d_%d")size=std::snprintf(reinterpret_cast<char*>(memory+at),128,format,GPR_S32(context,6),GPR_S32(context,7),GPR_S32(context,8));else throw std::runtime_error("Unexpected controller voice format");check(size>0&&size<128);done(size);return;}
@@ -30,6 +32,7 @@ void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runti
  case 0x37aa10:emit(context->pc);done(inputs.movie_busy);return;
  case 0x37a490:case 0x37a4e0:emit(context->pc);done();return;
  case 0x1acf70:case 0x1b4a60:case 0x1b3d90:case 0x5ed340:case 0x5eb8b0:emit(context->pc);done();return;
+ case 0x375920:emit(context->pc);done();return;
  case 0x1bbb10:emit(context->pc,GPR_U32(context,4));done();return;
  case 0x1bb5c0:case 0x1bb650:emit(context->pc,std::int16_t(GPR_U32(context,4)),GPR_U32(context,5));done();return;
  case 0x1bb8d0:emit(context->pc);done(inputs.fade);return;
@@ -65,8 +68,9 @@ struct Backend final:s::StreamBackend {
  s::StreamStatus service(std::uint32_t)noexcept override{return s::StreamStatus::unbound;}
 };
 struct Services final:s::CutscenePlaybackServices {
+ s::CutscenePlayback* playback{};std::unique_ptr<s::CutsceneCamera> camera_attempt;bool camera_available{true};
  s::CutscenePlaybackState* state{};bool try_close{};unsigned close_refusals{};w::World& world;explicit Services(w::World& value):world(value){}
- s::CutscenePlaybackStatus emit(unsigned id,std::int64_t a=0,std::int64_t b=0,std::int64_t c=0){if(try_close){check(world.close()==w::Status::busy&&!world.closed());++close_refusals;}native_events.push_back({id,a,b,c});return inputs.fail_at&&native_events.size()==inputs.fail_at?s::CutscenePlaybackStatus::unavailable:s::CutscenePlaybackStatus::completed;}
+ s::CutscenePlaybackStatus emit(unsigned id,std::int64_t a=0,std::int64_t b=0,std::int64_t c=0){if(playback){check(playback->unbind_camera()==s::CutscenePlaybackStatus::busy);check(playback->bind_camera(camera_attempt)==s::CutscenePlaybackStatus::busy&&camera_attempt);++camera_guards;}if(try_close){check(world.close()==w::Status::busy&&!world.closed());++close_refusals;}native_events.push_back({id,a,b,c});return inputs.fail_at&&native_events.size()==inputs.fail_at?s::CutscenePlaybackStatus::unavailable:s::CutscenePlaybackStatus::completed;}
  s::CutscenePlaybackStatus start_movie(const s::CutsceneBatch&)override{return emit(0x37a1b0);}
  s::CutscenePlaybackValue movie_state()override{return{emit(0x37a9b0),inputs.movie_state};}
  s::CutscenePlaybackValue movie_busy()override{return{emit(0x37aa10),inputs.movie_busy};}
@@ -76,6 +80,7 @@ struct Services final:s::CutscenePlaybackServices {
  s::CutscenePlaybackStatus fade(bool rising,std::int16_t duration,std::uint32_t color)override{return emit(rising?0x1bb5c0:0x1bb650,duration,color);}
  s::CutscenePlaybackValue fade_finished()override{return{emit(0x1bb8d0),inputs.fade};}
  s::CutscenePlaybackStatus fullscreen_color(std::uint32_t color)override{return emit(0x1bbb10,color);}
+ s::CutscenePlaybackStatus publish_camera(s::CameraParameters&)override{++camera_publications;const auto status=emit(0x375920);return camera_available?status:s::CutscenePlaybackStatus::unavailable;}
  s::CutscenePlaybackStatus transition_audio_reset()override{return emit(0x1af6a0,0);}
  s::CutscenePlaybackStatus select_scene(s::CutscenePlaybackState& value)override{if(value.request.mode==1){auto status=emit(0x371b70);if(status!=s::CutscenePlaybackStatus::completed)return status;return emit(0x6de480);}auto status=emit(0x371ad0);if(status!=s::CutscenePlaybackStatus::completed)return status;return emit(0x6de590,value.request.current.area,value.request.current.scene);}
  s::CutscenePlaybackStatus close_actor_notice()override{return emit(0x1b4a60);}
@@ -121,6 +126,38 @@ int main()try{
   s::CutscenePlayback guarded(missing,flags,tick,channels,backend,required);guarded.state().phase=1;guarded.state().subphase=3;guarded.state().end_frame=1000;const auto result=guarded.tick();check(result.status==s::CutscenePlaybackStatus::unavailable&&!guarded.busy()&&guarded.state().frame==0);++refusals;
  }s::CutscenePlayback rebound(missing,flags,tick,channels,backend,required);check(missing.close()==w::Status::completed);check(rebound.tick().status==s::CutscenePlaybackStatus::closed);}
 
+ {
+  s::Fog fog({});std::array<std::byte,4> ignored{};check(fog.import_fog(ignored)==s::FogStatus::unsupported_version);
+  s::CutscenePlaybackState foreign;auto foreign_camera=std::make_unique<s::CutsceneCamera>(foreign,fog,s::CameraParameters{});
+  check(playback.bind_camera(foreign_camera)==s::CutscenePlaybackStatus::unavailable&&foreign_camera);
+  auto native_camera=std::make_unique<s::CutsceneCamera>(playback.state(),fog,s::CameraParameters{});
+  auto* borrowed=native_camera.get();check(playback.bind_camera(native_camera)==s::CutscenePlaybackStatus::completed&&!native_camera&&playback.camera()==borrowed);
+  auto duplicate_camera=std::make_unique<s::CutsceneCamera>(playback.state(),fog,s::CameraParameters{});
+  check(playback.bind_camera(duplicate_camera)==s::CutscenePlaybackStatus::unavailable&&duplicate_camera);
+  services.camera_attempt=std::move(duplicate_camera);services.playback=&playback;
+  std::array<std::byte,32> selections{};std::array<std::array<std::byte,112>,2> curves{};
+  const auto write=[](auto& bytes,unsigned at,auto value){std::memcpy(bytes.data()+at,&value,sizeof value);};
+  write(selections,18,std::uint16_t(65535));write(selections,12,std::uint8_t(255));
+  for(unsigned stream=0;stream<2;++stream){write(curves[stream],1,std::uint8_t(stream));write(curves[stream],58,std::uint16_t(65535));write(curves[stream],4,reo::native::transform_math::Vector{float(stream+1),float(stream+2),float(stream+3)});write(curves[stream],20,45.f);write(curves[stream],24,0x12345678u);}
+  const std::array<std::array<std::span<const std::byte>,2>,1> spans{{{curves[0],curves[1]}}};
+  auto prepared=s::PreparedCameraTracks::import(selections,spans);
+  check(actor_tracks.install({})==s::CutsceneTrackStatus::completed&&object_tracks.install({})==s::CutsceneTrackStatus::completed);
+  for(unsigned clock=0;clock<256;++clock){
+   case_id=80000+clock;auto& state=playback.state();state={};state.phase=1;state.subphase=3;state.end_frame=1000;world.mode=0;session->clock_mode=std::uint8_t(clock);session->single_roster_setup=1;inputs={1,2,1,1,0,false,false,0};
+   check(borrowed->install(prepared)==s::CutsceneCameraStatus::completed);borrowed->parameters()={};project(memory.data(),state,world,flags,channels);
+   put(memory.data(),0x3901a8,0xc10000u);std::memcpy(memory.data()+0xc10000,selections.data(),selections.size());
+   std::fill_n(memory.data()+0x3900a0,32*8,0);std::fill_n(memory.data()+0x3240e0,176,0);
+   for(unsigned stream=0;stream<2;++stream){put(memory.data(),0x3900a0+stream*4,0xc11000u+stream*0x100u);std::memcpy(memory.data()+0xc11000+stream*0x100,curves[stream].data(),curves[stream].size());}
+   put(memory.data(),0x38ec90,0u);put(memory.data(),0x38ec94,0u);put(memory.data(),0x3240bd,std::uint8_t(255));
+   native_events.clear();source_events.clear();compare_bound_camera=true;invoke(memory.data(),0x5ee680);const auto result=playback.tick();compare_bound_camera=false;
+   check(result.status==s::CutscenePlaybackStatus::completed);compare(memory.data(),state,world,channels);
+   const auto& params=borrowed->parameters();check(params.pose.eye.x==transform_read<float>(memory.data(),0x324138)&&params.pose.aim.z==transform_read<float>(memory.data(),0x32414c)&&params.lens==transform_read<float>(memory.data(),0x324180)&&params.pose.roll==transform_read<unsigned>(memory.data(),0x32418c));++camera_ticks;
+  }
+  check(camera_publications==256&&camera_guards>256);services.playback=nullptr;
+  services.camera_available=false;auto& state=playback.state();state={};state.phase=1;state.subphase=3;state.end_frame=1000;
+  check(borrowed->install(prepared)==s::CutsceneCameraStatus::completed);const auto result=playback.tick();check(result.status==s::CutscenePlaybackStatus::unavailable&&state.frame==0&&borrowed->parameters().lens==45.f);++refusals;
+  check(playback.unbind_camera()==s::CutscenePlaybackStatus::completed&&!playback.camera());check(playback.unbind_camera()==s::CutscenePlaybackStatus::completed);
+ }
  check(services.close_refusals>64000);
- std::cout<<"{\"close_refusals\":"<<services.close_refusals<<",\"checks\":"<<checks<<",\"controller_cases\":"<<controller_cases<<",\"advance_cases\":"<<advance_cases<<",\"acknowledgements\":"<<ack_cases<<",\"native_worker_calls\":"<<worker_calls<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<calls<<",\"game_run\":false}\n";
+ std::cout<<"{\"camera_ticks\":"<<camera_ticks<<",\"camera_guards\":"<<camera_guards<<",\"camera_publications\":"<<camera_publications<<",\"close_refusals\":"<<services.close_refusals<<",\"checks\":"<<checks<<",\"controller_cases\":"<<controller_cases<<",\"advance_cases\":"<<advance_cases<<",\"acknowledgements\":"<<ack_cases<<",\"native_worker_calls\":"<<worker_calls<<",\"refusals\":"<<refusals<<",\"original_calls\":"<<calls<<",\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<"Case "<<case_id<<": "<<error.what()<<'\n';return 1;}

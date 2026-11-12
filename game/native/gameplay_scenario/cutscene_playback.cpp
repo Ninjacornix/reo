@@ -1,6 +1,7 @@
 #include "cutscene_playback.hpp"
 #include "cutscene_actor_tracks.hpp"
 #include "cutscene_object_tracks.hpp"
+#include "cutscene_camera.hpp"
 #include "../gameplay_update/update.hpp"
 #include <bit>
 #include <new>
@@ -30,6 +31,17 @@ CutscenePlayback::~CutscenePlayback(){
     if(running_)std::terminate();
     if(world_.cutscene_playback_owner_==this)world_.cutscene_playback_owner_=nullptr;
 }
+CutscenePlaybackStatus CutscenePlayback::bind_camera(std::unique_ptr<CutsceneCamera>& camera)noexcept{
+    if(running_||world_.busy())return CutscenePlaybackStatus::busy;
+    if(world_.closed())return CutscenePlaybackStatus::closed;
+    if(!camera||camera_||!camera->bound_to(state_))return CutscenePlaybackStatus::unavailable;
+    camera_=std::move(camera);return CutscenePlaybackStatus::completed;
+}
+CutscenePlaybackStatus CutscenePlayback::unbind_camera()noexcept{
+    if(running_||world_.busy())return CutscenePlaybackStatus::busy;
+    if(world_.closed())return CutscenePlaybackStatus::closed;
+    camera_.reset();return CutscenePlaybackStatus::completed;
+}
 CutscenePlaybackStatus CutscenePlayback::frame_work(CutsceneFrameWork work,std::int8_t group){
     const auto map=[](CutsceneTrackStatus status){switch(status){case CutsceneTrackStatus::completed:return CutscenePlaybackStatus::completed;case CutsceneTrackStatus::busy:return CutscenePlaybackStatus::busy;case CutsceneTrackStatus::closed:return CutscenePlaybackStatus::closed;case CutsceneTrackStatus::no_memory:return CutscenePlaybackStatus::no_memory;default:return CutscenePlaybackStatus::unavailable;}};
     if(work==CutsceneFrameWork::actor_tracks){
@@ -40,6 +52,15 @@ CutscenePlaybackStatus CutscenePlayback::frame_work(CutsceneFrameWork work,std::
         if(!world_.cutscene_object_tracks_owner_)return CutscenePlaybackStatus::unavailable;
         return map(world_.cutscene_object_tracks_owner_->tick(state_.frame).status);
     }
+    if(camera_&&work==CutsceneFrameWork::camera_selection){
+        switch(camera_->select(world_.session().clock_mode)){
+        case CutsceneCameraStatus::completed:return CutscenePlaybackStatus::completed;
+        case CutsceneCameraStatus::no_memory:return CutscenePlaybackStatus::no_memory;
+        default:return CutscenePlaybackStatus::unavailable;
+        }
+    }
+    if(camera_&&work==CutsceneFrameWork::paired_camera)
+        return camera_->sample()?services_.publish_camera(camera_->parameters()):CutscenePlaybackStatus::completed;
     return services_.frame_work(work,state_,group);
 }
 CutscenePlaybackResult CutscenePlayback::advance_inner(){

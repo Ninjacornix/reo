@@ -1,4 +1,4 @@
-add_library(reo_native_transform_math STATIC transform_math.cpp heading.cpp)
+add_library(reo_native_transform_math STATIC transform_math.cpp heading.cpp direction_basis.cpp)
 target_compile_features(reo_native_transform_math PUBLIC cxx_std_20)
 target_include_directories(reo_native_transform_math PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")

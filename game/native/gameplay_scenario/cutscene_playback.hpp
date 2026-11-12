@@ -7,6 +7,8 @@
 namespace reo::native::gameplay_update {class Owner;}
 namespace reo::native::gameplay_scenario {
 class CutsceneSpeech;
+class CutsceneCamera;
+struct CameraParameters;
 // One native controller for source38ECA0. The original7434C8 pointer aliases
 // this record; +8 and global38ECA8 are the SAME simulation frame. Request.mode
 // is both controller byte2F and38ECCF, including the movie/scene branch gate.
@@ -46,6 +48,9 @@ public:
     virtual CutscenePlaybackStatus fade(bool rising,std::int16_t duration,std::uint32_t color)=0;
     virtual CutscenePlaybackValue fade_finished()=0;
     virtual CutscenePlaybackStatus fullscreen_color(std::uint32_t)=0;
+    // Actual375920 projection and renderer publication after a bound native
+    // camera evaluator. Absence refuses at that reached boundary.
+    virtual CutscenePlaybackStatus publish_camera(CameraParameters&){return CutscenePlaybackStatus::unavailable;}
     virtual CutscenePlaybackStatus transition_audio_reset()=0;
     //5F0380 follows cue collection with the actual371AD0/371B70 and room
     //6DE590/6DE480 route. Collection alone does not qualify those effects.
@@ -69,6 +74,13 @@ public:
     CutscenePlayback& operator=(const CutscenePlayback&)=delete;
     CutscenePlaybackState& state()noexcept{return state_;}
     const CutscenePlaybackState& state()const noexcept{return state_;}
+    // Move ownership only after accepting this controller's exact state.
+    // A refused bind retains caller ownership. Borrowed access expires at
+    // unbind/destruction; the controller's state outlives its camera owner.
+    CutscenePlaybackStatus bind_camera(std::unique_ptr<CutsceneCamera>&)noexcept;
+    CutscenePlaybackStatus unbind_camera()noexcept;
+    CutsceneCamera* camera()noexcept{return camera_.get();}
+    const CutsceneCamera* camera()const noexcept{return camera_.get();}
     // The actual5EE680 outer visit and5EE260 substate. Neither starts a game,
     // device nor thread; required media/scene capability failures are returned.
     CutscenePlaybackResult tick()noexcept;
@@ -78,6 +90,7 @@ private:
     gameplay_world::World& world_;FlagState& flags_;const std::optional<std::uint32_t>& audio_tick_;
     StreamChannels& channels_;StreamBackend& streams_;SceneVoicePreparation voice_;
     CutscenePlaybackServices& services_;CutscenePlaybackState state_;
+    std::unique_ptr<CutsceneCamera> camera_;
     bool running_{};
     std::size_t work_calls_{};
     CutscenePlaybackResult advance_inner();
