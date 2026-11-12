@@ -93,3 +93,32 @@ The authoritative ordinary caller `5FED00` runs model passes `3769F0`,
 `376AE0`, and `376B80` before `66A3A0`, then calls `6832F0`. Initial room
 setup `5EB780` uses the same four-pass sequence. Integration must retain these
 positions; `66A2E0` is a separate phase.
+
+`gameplay_update::ActorPostprocessWorkers` adopts the worker at the existing
+`Worker::primary_actor_postprocess` position in `Owner::run_workers`. It
+constructs the actual pass from that exact Update owner's World, flags, and
+completion statistics. The scene program must bind the same records, flags,
+and room reference. Foreign or closed Update owners refuse. Remaining phases,
+buttons and effects retain their explicitly supplied owner, and a reached
+postprocess refusal propagates rather than being counted as completed work.
+The last detailed report survives a failure and clears at the next queue-reset
+phase or explicit adapter close.
+
+The adapter's focused test executes 32 canonical Update traversals, verifies
+model phases precede postprocessing and hit regions follow it, and observes
+the shared statistics owner advance. It also checks foreign identity,
+missing-attack refusal, known-zero continuation, report reset, owner close,
+and retained actor lifetime. Other frame workers are declared test
+surroundings; this does not qualify their gameplay behavior. The focused
+fixture uses the already proved session-one head fast return and an unchanged
+secondary selection. The complete outer cohort above checks real head resets
+with owned model assets separately.
+
+Paired immutable CMake snapshots
+`actor-postprocess-workers-{gcc,llvm}-v4` each pass 977 checks over those 32
+canonical owner traversals. The adapter, canonical Update/World, statistics,
+and outer-worker domain hashes match current source. The receipts retain their
+complete source manifests and explicitly record concurrent changes to stream
+channels and the separate model-worker adapter. Those unrelated changes are
+outside this adoption proof; the combined current parent cohort verifies
+their final composition. Earlier failed build snapshots remain retained.
