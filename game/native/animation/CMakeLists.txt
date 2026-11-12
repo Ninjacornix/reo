@@ -8,3 +8,5 @@ target_link_libraries(reo_native_animation PUBLIC reo_native_transform_math)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_compile_options(reo_native_animation PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
 endif()
+
+target_sources(reo_native_animation PRIVATE facial_curves.cpp)

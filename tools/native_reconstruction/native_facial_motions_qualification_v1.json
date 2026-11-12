@@ -1,0 +1,322 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "scope": "Actual File1 facial namespace/sector workspace, five curves, eight-instance reset/preload/claim/update, native model track4 world-pose patching and corrected5EEC50 cue binding.",
+  "game_run": false,
+  "device_opened": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/animation/facial_curves.hpp": "a6e1254362fb46e1047ec4e8810e90b9c7eebe45b3ef0a419c77390c06167ab1",
+    "game/native/animation/facial_curves.cpp": "d8a2856648a6508a7c1996c8e8fb36d5f161926824cf0dafc3ae4944a669b6f0",
+    "game/native/animation/CMakeLists.txt": "b4ef3b207c409ad3a11f1165dc71a6fd0d1440a415109157e605bfed2665eba3",
+    "game/native/gameplay_scenario/facial_assets.hpp": "33ab1663a4d21eb0d0c5b99459fc4676c0df38d00647db98bbcb45d12d137880",
+    "game/native/gameplay_scenario/facial_assets.cpp": "590e211d86840eb1b0c9d2bab2c77e925dd1b31966ec7bfcac7bf996dcb65f93",
+    "game/native/gameplay_scenario/facial_asset_catalogue.inc": "a548adcefdcdb6178f344c54a8e8152804846e4ff26e014b6fe95585b88baffd",
+    "game/native/gameplay_scenario/facial_motions.hpp": "18343b959164a5b6f7c9410c28a2b8098a0fe8e7632150f1e6517da3776dee4a",
+    "game/native/gameplay_scenario/facial_motions.cpp": "75bf56d93c1b39050e12d57a99d9f58afc415f377a63b0fe101f0454987eb53b",
+    "game/native/gameplay_scenario/facial_motions_assets_tests.cpp": "a434c01a91adcd7742e41acd5a3b69f47a56b27b3782e0ebbf7f6fc82025a124",
+    "game/native/gameplay_scenario/cutscene_playback.hpp": "f5feae8423dc552df1703b3f7af2b1329f5577eec78c93190c57183fc6c3477d",
+    "game/native/gameplay_scenario/cutscene_playback.cpp": "94bb0bc0887be63fb7cfceaad5dfe0c16efb364795f20babaf2732a17f9b2f35",
+    "game/native/gameplay_scenario/CMakeLists.txt": "491ffe5f18d2afb4b4edd10f0b4a9a924c74bf0644808fed40285caf05e30aa8",
+    "tools/native_reconstruction/animation/facial_curves_tests.cpp": "31268a8e2923bc16173068d7c87fcf7b77ca845b9c41c2d994482dd81317fff0",
+    "tools/native_reconstruction/animation/verify_facial_curves.py": "a31035af1617e48b7e54888469d58783cee202ba3f0199dd193d9709707e6202",
+    "tools/native_reconstruction/audit_facial_resources.py": "e964330b18d96ef5b18cb45d7576bceddabd3fc01b2c0e5cfac9c73bb7f2d817",
+    "tools/native_reconstruction/facial_assets_tests.cpp": "0372af82aec407bd0ed39bb371b326b45ac6ad7fef136f1fbbdd8f75bb7184d1",
+    "tools/native_reconstruction/verify_facial_assets.py": "be3a912b05c125f0856ea43b63a189de18b3b455405bf56c0526b08c453c2dcd",
+    "tools/native_reconstruction/facial_motions_tests.cpp": "84255de151f075d9bca240c92fab38d48be27d14739c66064d5bf9d755686cbb",
+    "tools/native_reconstruction/verify_facial_motions.py": "af2773291444832cf9e11ab4388cfe258abd3c2c5763c3af5d532bed6e3f22c4",
+    "tools/native_reconstruction/verify_facial_motions_current.py": "679ec9e967ed974310cbe01bceeb816edebc56f467e3ffc00a35691025600b96",
+    "tools/native_reconstruction/qualify_facial_motions_v1.py": "0d0c8d5495408eea37eca26fad72dc94e84f5053e2042c7280cc339bb6a2f260",
+    "docs/native-gameplay/FACIAL_MOTIONS.md": "215397fd0c91d61b8c8c59389d1011e7e444c23ef535b8443507177f0acd4cb1"
+  },
+  "matching_qualified_snapshots": {
+    "game/native/animation/facial_curves.hpp": [
+      "curves_llvm",
+      "curves_gcc",
+      "assets_llvm",
+      "assets_gcc",
+      "owner_caller_llvm",
+      "owner_caller_gcc",
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "game/native/animation/facial_curves.cpp": [
+      "curves_llvm",
+      "curves_gcc",
+      "assets_llvm",
+      "assets_gcc",
+      "owner_caller_llvm",
+      "owner_caller_gcc",
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "game/native/animation/CMakeLists.txt": [
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "game/native/gameplay_scenario/facial_assets.hpp": [
+      "assets_llvm",
+      "assets_gcc",
+      "owner_caller_llvm",
+      "owner_caller_gcc",
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "game/native/gameplay_scenario/facial_assets.cpp": [
+      "assets_llvm",
+      "assets_gcc",
+      "owner_caller_llvm",
+      "owner_caller_gcc",
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "game/native/gameplay_scenario/facial_asset_catalogue.inc": [
+      "assets_llvm",
+      "assets_gcc",
+      "owner_caller_llvm",
+      "owner_caller_gcc",
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "game/native/gameplay_scenario/facial_motions.hpp": [
+      "owner_caller_llvm",
+      "owner_caller_gcc",
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "game/native/gameplay_scenario/facial_motions.cpp": [
+      "owner_caller_llvm",
+      "owner_caller_gcc",
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "game/native/gameplay_scenario/facial_motions_assets_tests.cpp": [
+      "current_assets_llvm",
+      "current_assets_gcc"
+    ],
+    "game/native/gameplay_scenario/cutscene_playback.hpp": [
+      "owner_caller_llvm",
+      "owner_caller_gcc",
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "game/native/gameplay_scenario/cutscene_playback.cpp": [
+      "owner_caller_llvm",
+      "owner_caller_gcc",
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "game/native/gameplay_scenario/CMakeLists.txt": [
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "tools/native_reconstruction/animation/facial_curves_tests.cpp": [
+      "curves_llvm",
+      "curves_gcc"
+    ],
+    "tools/native_reconstruction/animation/verify_facial_curves.py": [
+      "curves_llvm",
+      "curves_gcc"
+    ],
+    "tools/native_reconstruction/facial_assets_tests.cpp": [
+      "assets_llvm",
+      "assets_gcc"
+    ],
+    "tools/native_reconstruction/verify_facial_assets.py": [
+      "assets_llvm",
+      "assets_gcc"
+    ],
+    "tools/native_reconstruction/facial_motions_tests.cpp": [
+      "owner_caller_llvm",
+      "owner_caller_gcc"
+    ],
+    "tools/native_reconstruction/verify_facial_motions.py": [
+      "owner_caller_llvm",
+      "owner_caller_gcc"
+    ],
+    "tools/native_reconstruction/verify_facial_motions_current.py": [
+      "current_assets_llvm",
+      "current_assets_gcc"
+    ]
+  },
+  "inventory": {
+    "path": "build-native-sjuni/facial-resource-inventory-v2/receipt.json",
+    "sha256": "2346590dd4c627fc9b4e9d3a3d46fa89d02289af47d099c9b89771242aa130a0"
+  },
+  "receipts": {
+    "curves_llvm": {
+      "path": "build-native-sjuni/facial-curves-llvm-v2/receipt.json",
+      "sha256": "b4bd12fab8321ff24673864c229d953d2b669a6febaca0fa3de40c08965d940a",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 5166787,
+        "batch_cases": 65536,
+        "updates": 137237,
+        "samples": 86729,
+        "retirements": 50508,
+        "owned_assets": 33,
+        "owned_updates": 21649,
+        "original_calls": 87218,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_drift": null
+    },
+    "curves_gcc": {
+      "path": "build-native-sjuni/facial-curves-gcc-v2/receipt.json",
+      "sha256": "087038d02490c11a7d9b0ee3060a836ee05f4ef80033236424b0d4ea670795b6",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 5166787,
+        "batch_cases": 65536,
+        "updates": 137237,
+        "samples": 86729,
+        "retirements": 50508,
+        "owned_assets": 33,
+        "owned_updates": 21649,
+        "original_calls": 87218,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_drift": null
+    },
+    "assets_llvm": {
+      "path": "build-native-sjuni/facial-assets-llvm-v1/receipt.json",
+      "sha256": "15fb0c633f09e4728174f003ab67606566a13218d7010804cec1915fe589d855",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 421715,
+        "assets": 51,
+        "sector_bytes_compared": 419840,
+        "retained_leases": 51,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_drift": {}
+    },
+    "assets_gcc": {
+      "path": "build-native-sjuni/facial-assets-gcc-v1/receipt.json",
+      "sha256": "5274884b4a9f5be2def4cf2b2a6d94df5faf98d9a03db6865db53051c7511972",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 421715,
+        "assets": 51,
+        "sector_bytes_compared": 419840,
+        "retained_leases": 51,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_drift": {}
+    },
+    "owner_caller_llvm": {
+      "path": "build-native-sjuni/facial-motions-llvm-v6/receipt.json",
+      "sha256": "b72e45a823623655de86dd48d76ad67e1e00981a86faad26923adf3f48a437f7",
+      "compiler_sha256": null,
+      "observed": {
+        "checks": 2968252,
+        "owned_clips": 33,
+        "loads": 100,
+        "claims": 43,
+        "frames": 21656,
+        "model_patches": 150234,
+        "callback_guards": 105,
+        "original_calls": 1825103,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_drift": {}
+    },
+    "owner_caller_gcc": {
+      "path": "build-native-sjuni/facial-motions-gcc-v6/receipt.json",
+      "sha256": "7be8a706d7ad24daa29615998d508ef6199cffe32b5f5a24c36f0a5f0fa36d26",
+      "compiler_sha256": null,
+      "observed": {
+        "checks": 2968252,
+        "owned_clips": 33,
+        "loads": 100,
+        "claims": 43,
+        "frames": 21656,
+        "model_patches": 150234,
+        "callback_guards": 105,
+        "original_calls": 1825103,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_drift": {}
+    },
+    "current_assets_llvm": {
+      "path": "build-native-sjuni/facial-motions-current-llvm-v1/receipt.json",
+      "sha256": "36f3b782e0c57d20cfbfa5a5afef656729d6060abf1f1d7658b7a600f5064772",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 4715696,
+        "owned_clips": 33,
+        "frames": 21649,
+        "model_patches": 129696,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_drift": {}
+    },
+    "current_assets_gcc": {
+      "path": "build-native-sjuni/facial-motions-current-gcc-v1/receipt.json",
+      "sha256": "dd39218e200e9b0c718dec68114fe6ed9a4ee57f884685a0ac29a879b2f17213",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 4715696,
+        "owned_clips": 33,
+        "frames": 21649,
+        "model_patches": 129696,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_drift": {}
+    },
+    "current_parents_llvm": {
+      "path": "build-native-sjuni/dialogue-response-parents-llvm-v2/receipt.json",
+      "sha256": "fb459355017ecd8067ffadd84035dfe099b9a25548a0208fd2abc1ad529fcd32",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": null,
+      "parent_tests": 30,
+      "source_drift": {}
+    },
+    "current_parents_gcc": {
+      "path": "build-native-sjuni/dialogue-response-parents-gcc-v2/receipt.json",
+      "sha256": "ea00d85dcb6552c9a4d16f11369ad5f809bbbeba3968fe38a7f24d9f201225d7",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": null,
+      "parent_tests": 30,
+      "source_drift": {}
+    }
+  },
+  "limits": [
+    "Twelve complete original entries execute in the owner/caller comparison. Formatter10A830, SDK sector transfer1CC8F0 and the failed voice boundary1ADB30 are declared fixture ports in that cohort. The separate actual File1 reader compares every sector byte; SDK scheduling and complete real speech playback are not claimed.",
+    "All33 actual LIPs, all18 actual MAT/base-NBD pairs and all548 descriptor preload bounds are inventoried. Actual caller admission consumes six track4 nodes; HP03/HN39 unused nonfinite ordinal6 remains preserved. Finite consumed FP32 and increasing-time profile only; no physical PS2 exceptional arithmetic claim.",
+    "The bounded64KiB asset workspace preserves physical sector overlap and old bytes. All32LIP metadata records execute; the unsafe33rd original aliasing route refuses. Matrix capacity beyond8, arbitrary replacement assets or unproved caller metadata remain outside profile.",
+    "The actual controller now passes current.area for38ECD0. Claim is admitted during the original actor-track traversal while its own running/closed/sole-binding guards remain. A failed voice callback preserves its real facial prefix and returns unavailable overall.",
+    "The worker tick still belongs to actual5FF1B0 after6BBBA0; full outer orchestration, concrete speech consumer, complete scene entry/movie/renderer services and fullStep4 application installation remain separate work."
+  ]
+}

@@ -127,3 +127,11 @@ target_sources(reo_native_gameplay_scenario PRIVATE scene_voice_assets.cpp strea
 target_sources(reo_native_gameplay_scenario PRIVATE actor_voice_archive_assets.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE dialogue_assets.cpp text_cache.cpp dialogue_response_program.cpp)
 target_link_libraries(reo_native_gameplay_scenario PUBLIC reo_native_audio_cue_queue)
+
+target_sources(reo_native_gameplay_scenario PRIVATE facial_assets.cpp facial_motions.cpp)
+
+add_executable(facial_motions_assets_tests facial_motions_assets_tests.cpp)
+target_link_libraries(facial_motions_assets_tests PRIVATE reo_native_gameplay_scenario)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(facial_motions_assets_tests PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+endif()
