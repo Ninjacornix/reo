@@ -46,5 +46,6 @@ the actual interface. Earlier failures and snapshots remain available.
 [The seal](../../tools/native_reconstruction/native_cutscene_display_qualification_v1.json)
 records scoped source identities and ten exact receipts. Display configuration
 startup, task installation, complete fullscreen/scene/movie lifecycle and renderer
-installation remain distinct work. New unregistered fullscreen/workspace/view
-control units are excluded; no game run or full Step4 completion is claimed.
+installation remain distinct work. This seal predates the later
+[fullscreen/workspace/view adoption](CUTSCENE_VIEW_CONTROLS.md), which has its own
+qualification. No game run or full Step4 completion is claimed.
