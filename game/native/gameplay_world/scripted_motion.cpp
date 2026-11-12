@@ -1,10 +1,12 @@
 #include "scripted_motion.hpp"
+#include "../animation/primary_motion_routing.hpp"
+#include <algorithm>
 #include <cmath>
 #include <stdexcept>
 namespace reo::native::gameplay_world {
 namespace {
 animation::Playback& playback(Actor& actor){
-    if(!actor.animation||actor.animation->model()!=actor.model)
+    if(!actor.model||!actor.animation||actor.animation->model()!=actor.model)
         throw std::runtime_error("Native scripted actor animation/model unavailable");
     return *actor.animation;
 }
@@ -13,6 +15,14 @@ const animation::MotionBank& bank(const std::shared_ptr<const animation::MotionB
     if(!value)throw std::runtime_error("Native scripted motion bank unavailable");
     return *value;
 }
+void clear_primary_route(Actor& actor,std::size_t count){
+    auto& model=*actor.model;
+    // Binding consumes every current track0 node after clearing the prefix.
+    // Refuse an unproved outside-prefix participant before changing routing.
+    if(count>model.track_ids().size()||std::any_of(model.track_ids().begin()+count,model.track_ids().end(),[](auto track){return track==0;}))
+        throw std::runtime_error("Native primary motion prefix cardinality unavailable");
+    animation::clear_primary_motion_tracks(model,actor.model_pose_class,count);
+}
 void configure(World& world,Actor& actor,const animation::MotionBank& resource,std::int16_t motion,float duration){
     if(resource.kind()==animation::MotionBankKind::sparse)
         throw std::runtime_error("Native scripted configuration requires strided scene motion data");
@@ -20,8 +30,19 @@ void configure(World& world,Actor& actor,const animation::MotionBank& resource,s
     auto& state=playback(actor);
     const animation::MotionClock clock{world.session().clock_mode,actor.category,actor.motion_rate};
     if(resource.track_count()==1){
-        if(!resource.find(std::uint16_t(motion),0))
+        const auto block=resource.find(std::uint16_t(motion),0);
+        if(!block)
             throw std::runtime_error("Native scripted whole-model motion token unavailable");
+        const auto clip=block->clip();
+        if(animation::primary_motion_compatible(actor.category,actor.model_pose_class,clip->tracks().size())){
+            clear_primary_route(actor,clip->tracks().size());
+            (void)state.configure(resource,motion,0,0,duration,clock,root(actor));
+            animation::restore_primary_motion_tracks(*actor.model,actor.model_pose_class);
+            auto& timing=state.channel(animation::ModelBank::primary,0).timing;
+            timing.loop=std::int8_t(clip->looping());timing.restart=clip->looping()?clip->loop_start():0;
+            if(timing.restart<0)timing.restart=0;
+            return;
+        }
         (void)state.configure_whole(resource,motion,0,duration,clock,root(actor));
         return;
     }
@@ -44,7 +65,13 @@ void advance(World& world,Actor& actor,const animation::MotionBank& resource,flo
         if(resource.kind()==animation::MotionBankKind::sparse||resource.first_track()!=0||
            !resource.find(state.channel(animation::ModelBank::primary,0).selector,0))
             throw std::runtime_error("Native scripted whole-model motion binding unavailable");
-        (void)state.advance_whole(step,mode,root(actor));return;
+        const auto clip=resource.find(state.channel(animation::ModelBank::primary,0).selector,0)->clip();
+        if(animation::primary_motion_compatible(actor.category,actor.model_pose_class,clip->tracks().size())){
+            clear_primary_route(actor,clip->tracks().size());
+            (void)state.advance_primary(0,step,mode,root(actor));
+            animation::restore_primary_motion_tracks(*actor.model,actor.model_pose_class);
+        }else (void)state.advance_whole(step,mode,root(actor));
+        return;
     }
     const unsigned first=resource.first_track(),end=first+resource.track_count();
     for(unsigned track=first+1;track<end;++track)(void)state.advance_primary(std::uint16_t(track),step,mode,root(actor));
@@ -54,8 +81,8 @@ void advance(World& world,Actor& actor,const animation::MotionBank& resource,flo
 void ScriptedActorMotion::tick(const actors::EntityId& id){
     if(world_.humanoid_motion_source_closed())throw std::runtime_error("Native scripted motion content owner closed");
     const auto actor=world_.resolve(id);
-    if(!actor||!actor->scripted||actor->category!=2)
-        throw std::runtime_error("Native scripted linked actor unavailable");
+    if(!actor||!actor->scripted||actor->category>2)
+        throw std::runtime_error("Native scripted actor family unavailable");
     auto& control=*actor->scripted;
     actor->contact_flags|=0x17;
     if(actor->phase==0){

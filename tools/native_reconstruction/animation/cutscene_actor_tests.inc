@@ -1,5 +1,6 @@
 #include "game/native/gameplay_world/cutscene_actor.hpp"
 std::uint64_t cutscene_actor_calls{},cutscene_actor_gate_calls{},cutscene_actor_refusals{};
+std::uint64_t primary_cutscene_actor_calls{};
 void cutscene_actor_composition(g::World& world,const g::actors::EntityId& id,
                                g::ScriptedActorMotion& motion,unsigned variant,
                                std::vector<std::uint8_t>& ram){
@@ -37,7 +38,7 @@ void cutscene_actor_composition(g::World& world,const g::actors::EntityId& id,
                 check(std::memcmp(&pair.first,ram.data()+actor+pair.second,12)==0,"cutscene canonical pose basis and translation");
             check(std::memcmp(&value->candidate_direction,ram.data()+actor+0xa8,12)==0&&value->collision.pose_ready,"cutscene forward direction and real pose publication");
         }
-        ++cutscene_actor_calls;
+        if(value->category<2)++primary_cutscene_actor_calls;else ++cutscene_actor_calls;
     }
 }
 void cutscene_actor_gate_tests(std::vector<std::uint8_t>& ram){

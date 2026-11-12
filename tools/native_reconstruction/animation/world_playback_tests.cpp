@@ -107,6 +107,8 @@ int main(int argc, char** argv) try {
     npc_update_failure_tests();
     std::fill(ram.begin(),ram.end(),0);owned_constants(ram.data());put(ram.data(),0x294e00,t::identity());
     scripted_motion_tests(raw_banks,skeletons,ram);
+    scripted_motion_tests(raw_banks,skeletons,ram,0);
+    scripted_motion_tests(raw_banks,skeletons,ram,1);
     linked_expiry_tests(ram);
 
     cutscene_command_tests(ram);
@@ -704,10 +706,17 @@ int main(int argc, char** argv) try {
               << ",\"dual_application_cases\":" << dual_cases
               << ",\"metadata_observations\":" << profile_cases
               << ",\"scripted_motion_cases\":" << scripted_motion_cases
+              << ",\"primary_scripted_cases\":" << primary_scripted_cases
+              << ",\"primary_scripted_ticks\":" << primary_scripted_ticks
+              << ",\"primary_scripted_refusals\":" << primary_scripted_refusals
+              << ",\"primary_scripted_positive_tracks\":" << primary_scripted_positive_tracks
+              << ",\"primary_scripted_metadata\":" << primary_scripted_metadata
+              << ",\"primary_scripted_profile_refusals\":" << primary_scripted_profile_refusals
               << ",\"scripted_motion_ticks\":" << scripted_motion_ticks
               << ",\"scripted_motion_refusals\":" << scripted_motion_refusals
               << ",\"scripted_positive_tracks\":" << scripted_positive_tracks
               << ",\"cutscene_actor_calls\":" << cutscene_actor_calls
+              << ",\"primary_cutscene_actor_calls\":" << primary_cutscene_actor_calls
               << ",\"cutscene_actor_gate_calls\":" << cutscene_actor_gate_calls
               << ",\"cutscene_actor_refusals\":" << cutscene_actor_refusals
               << ",\"linked_actor_cases\":" << linked_actor_cases

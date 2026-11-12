@@ -2,10 +2,15 @@
 #include "game/native/gameplay_world/linked_models.hpp"
 #include "cutscene_actor_tests.inc"
 std::uint64_t scripted_motion_cases{},scripted_motion_ticks{},scripted_motion_refusals{},scripted_positive_tracks{};
+std::uint64_t primary_scripted_cases{},primary_scripted_ticks{},primary_scripted_refusals{},primary_scripted_positive_tracks{},primary_scripted_metadata{};
+std::uint64_t primary_scripted_profile_refusals{};
+bool primary_scripted_reference{};
 void linked_actor_composition(g::World&,const g::actors::EntityId&,g::ScriptedMotionBanks,unsigned,std::vector<std::uint8_t>&);
 void scripted_motion_tests(const std::vector<std::vector<std::byte>>& banks,
                            const std::vector<std::vector<std::byte>>& skeletons,
-                           std::vector<std::uint8_t>& ram){
+                           std::vector<std::uint8_t>& ram,unsigned family=2){
+    const bool previous_reference=primary_scripted_reference;primary_scripted_reference=family<2;
+    struct Reset{bool previous;~Reset(){primary_scripted_reference=previous;}}reset{previous_reference};
     struct Input {std::vector<std::byte> raw,skeleton;unsigned key{};};
     std::vector<Input> inputs;
     for(unsigned asset=2;asset<banks.size();++asset){
@@ -97,15 +102,16 @@ void scripted_motion_tests(const std::vector<std::vector<std::byte>>& banks,
             put(ram.data(),additive_at+0xfa4+2*additive_key,row);put(ram.data(),additive_at+4+2*(row+2),additive_token);
 
             g::World world(world_profile(),std::make_shared<g::Session>());
-            const auto id=world.linked_models().allocate(true).id;const auto current=world.resolve(id);
+            const auto id=family==2?world.linked_models().allocate(true).id:world.spawn_primary(0,std::make_unique<g::Actor>()).id;const auto current=world.resolve(id);
             check(bool(current),"scripted callback uses actual World linked actor");
-            current->category=2;current->model=std::make_shared<a::Instance>(skeleton);
+            current->category=std::uint8_t(family);current->model=std::make_shared<a::Instance>(skeleton);
             current->animation=std::make_shared<a::Playback>(current->model);
             current->animation->resources_known=true;current->animation->channel_count=std::uint8_t((variant/8)%6);
             current->scripted.emplace();auto& control=*current->scripted;
             control.motion_rate_mode=std::bit_cast<std::int8_t>(std::uint8_t(variant));
             control.motion_selector=std::int8_t(key);control.motion_blend_duration=std::array{0.f,3.5f,-5.f,.25f}[(variant/2)%4];
             current->model_pose_class=std::uint8_t(variant%4==2?1:variant%3);
+            if(family<2)current->model_pose_class=std::uint8_t(skeleton->nodes().size()==73);
             if(variant%4==1)control.track_two_motion=-1;
             else if(variant%4==2||((variant%4==0)&&skeleton->nodes().size()==36))control.track_two_motion=std::int16_t(additive_key);
             current->contact_flags=0xa400;current->motion_class=5;current->motion_rate=2;
@@ -130,17 +136,37 @@ void scripted_motion_tests(const std::vector<std::vector<std::byte>>& banks,
                 const auto selected=control.motion_rate_mode==1?mode_one:other;
                 check(current->animation->resources[0]==selected&&get<std::uint32_t>(ram.data(),actor+0x514)==(control.motion_rate_mode==1?mode_one_at:other_at),"exact-one resource selection differs from nonzero rate selection");
                 records(*current->animation,ram,{current->root_motion_delta.x,current->root_motion_delta.y,current->root_motion_delta.z});
-                if(pending>0&&current->model_pose_class!=1)++scripted_positive_tracks;
-                ++scripted_motion_ticks;
+                if(pending>0&&current->model_pose_class!=1){if(family==2)++scripted_positive_tracks;else ++primary_scripted_positive_tracks;}
+                if(family==2)++scripted_motion_ticks;else ++primary_scripted_ticks;
             }
             cutscene_actor_composition(world,id,motion,variant,ram);
-            linked_actor_composition(world,id,{mode_one,other,additive},variant,ram);
+            if(family==2)linked_actor_composition(world,id,{mode_one,other,additive},variant,ram);
             const auto lease=current;const auto flags=current->contact_flags;
-            check(world.linked_models().reset()==g::LinkedStatus::completed,"scripted actor retirement");
+            if(family==2)check(world.linked_models().reset()==g::LinkedStatus::completed,"scripted actor retirement");
+            else check(world.retire_primary(0)==g::actors::EntityStatus::completed,"controlled primary callback retirement");
             bool refused{};try{motion.tick(id);}catch(const std::runtime_error&){refused=true;}
             check(refused&&lease->contact_flags==flags,"retired callback refuses before old actor mutation");
-            ++scripted_motion_refusals;++scripted_motion_cases;
+            if(family==2){++scripted_motion_refusals;++scripted_motion_cases;}
+            else{++primary_scripted_refusals;++primary_scripted_cases;}
         }
+    }
+    if(family<2){
+        check(primary_scripted_positive_tracks!=0,"primary callback consumes actual positive additive tracks");
+        auto supplied=std::make_shared<a::MotionBank>();supplied->load_strided(inputs.front().raw,200,0,"owned primary diagnostic input");
+        check(supplied->find(inputs.front().key,0)->clip()->tracks().size()==36,"diagnostic case uses an actual ordinary primary clip");
+        for(bool detached:{false,true}){
+            g::World world(world_profile(),std::make_shared<g::Session>());const auto id=world.spawn_primary(0,std::make_unique<g::Actor>()).id;const auto value=world.resolve(id);
+            value->category=std::uint8_t(family);value->scripted.emplace();value->scripted->motion_rate_mode=1;value->scripted->motion_selector=std::int16_t(inputs.front().key);
+            value->model=std::make_shared<a::Instance>(player_skeleton);value->animation=std::make_shared<a::Playback>(value->model);value->model_pose_class=2;
+            const auto previous=std::vector<std::uint16_t>(value->model->track_ids().begin(),value->model->track_ids().end());
+            if(detached){value->model_pose_class=0;value->model.reset();}
+            g::ScriptedActorMotion motion(world,{supplied,supplied,{}});bool refused{};
+            try{motion.tick(id);}catch(const std::exception&){refused=true;}
+            check(refused&&value->phase==1&&value->contact_flags==0x17,"unavailable primary layout/model preserves explicit callback prefix and fails visibly");
+            if(!detached)check(std::equal(previous.begin(),previous.end(),value->model->track_ids().begin()),"unadmitted class2 does not write function words as node routing");
+            ++primary_scripted_profile_refusals;
+        }
+        return;
     }
     check(scripted_positive_tracks!=0,"actual owned positive track-two animation consumed");
     cutscene_actor_gate_tests(ram);
@@ -154,7 +180,7 @@ void scripted_motion_tests(const std::vector<std::vector<std::byte>>& banks,
         value->animation->resources_known=true;value->contact_flags=0xa400;
         g::ScriptedActorMotion motion(world,{});
         if(failure==0)value->scripted.reset();
-        if(failure==1)value->category=0;
+        if(failure==1)value->category=3;
         if(failure==2)value->animation.reset();
         if(failure==3)value->animation=std::make_shared<a::Playback>(std::make_shared<a::Instance>(player_skeleton));
         if(failure==4)value->phase=1;

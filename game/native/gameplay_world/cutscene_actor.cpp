@@ -19,7 +19,7 @@ void CutsceneActor::tick(const actors::EntityId& id){
     const auto actor=world_.resolve(id);
     if(!actor)throw std::runtime_error("Native cutscene actor identity unavailable");
     if(actor->primary!=6)return;
-    if(!actor->scripted||actor->category!=2)throw std::runtime_error("Native cutscene actor state unavailable");
+    if(!actor->scripted||actor->category>2)throw std::runtime_error("Native cutscene actor state unavailable");
     auto& state=*actor->scripted;
     if(state.cue_phase==1){actor->visible=true;state.cue_phase=2;}
     else if(state.cue_phase!=2)return;

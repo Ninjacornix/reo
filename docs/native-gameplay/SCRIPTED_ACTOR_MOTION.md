@@ -59,3 +59,8 @@ Scene bank loading, native cutscene scheduling and game installation remain open
 the actor's C94 mask4 suppresses it. The renderer's linked traversal is a
 different pass. Those caller boundaries need their own composition checks.
 Step4 remains incomplete and no performance improvement is claimed measured.
+
+The [primary callback follow-up](PRIMARY_CUTSCENE_CALLBACK.md) now supplies the
+verified class0/1 temporary track-routing path and categories0/1 callbacks.
+Sparse scene banks remain unavailable; linked-family behavior is retained.
+Actual cinematic traversal and full scene ownership remain separate work.

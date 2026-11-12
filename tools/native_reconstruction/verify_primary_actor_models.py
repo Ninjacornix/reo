@@ -25,6 +25,10 @@ def main():
     for name,include in [('primary-actor-member','primary_actor_members.inc'),('humanoid-motion-member','humanoid_motion_members.inc')]:
         path=ROOT/f'build-native-sjuni/{name}-profile-v1/receipt.json';profile=json.loads(path.read_bytes());assert profile['status']=='passed'and sha(ROOT/'game/native/gameplay_world'/include)==profile['output_sha256']
         profiles[name]=dict(receipt=str(path),sha256=sha(path));inputs.extend(profile['rows']if name.startswith('primary')else [r for r in profile['rows']if r['character']!=255 or r['index']in [0,1]])
+    scripted_path=ROOT/'build-native-sjuni/scripted-motion-member-profile-v1/receipt.json';scripted=json.loads(scripted_path.read_bytes());assert scripted['status']=='passed'and sha(ROOT/'game/native/gameplay_world/scripted_motion_members.inc')==scripted['output_sha256']
+    profiles['scripted-motion-member']=dict(receipt=str(scripted_path),sha256=sha(scripted_path))
+    for row in scripted['rows']:
+        name=('HD'if row['kind']==2 else'D')+f"{row['clip']:02}"+('FACE'if row['kind']==1 else'')+'.BIN';inputs.append(dict(row,name=name))
     archive=args.data_root/'NETBIO00.DAT';stamp=archive.stat().st_size,archive.stat().st_mtime_ns;assets=[]
     with archive.open('rb')as stream:
         outer=read_toc(stream,0);indices=[i for i,(name,_)in enumerate(outer[2])if name.lower()=='romdata_usa.afs'];assert len(indices)==1;base=outer[0][indices[0]][0];directory=read_toc(stream,base)

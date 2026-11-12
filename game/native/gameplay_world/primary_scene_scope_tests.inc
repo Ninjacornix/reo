@@ -3,6 +3,18 @@ void scene_scopes(const char* archive,const char* manifest){
     namespace s=reo::native::gameplay_scenario;
     auto source=std::make_shared<reo::assets::Source>(archive);g::ActorAssets assets(source);g::HumanoidMotionAssets content(source);s::content::ScenarioArchive input(source);
     const auto base=content.ensure_base(content.initial_banks(false));const std::array<std::uint8_t,8> characters{0,1,2,3,4,5,6,7};const auto banks=content.overlay(1,characters,*base);
+    struct MotionChoice {std::uint16_t scenario{},clip{};std::int16_t key{};};std::array<std::optional<MotionChoice>,2> motion_choices;
+    for(const auto& member:g::file1_scripted_motion_members()){
+        if(member.kind!=0)continue;
+        const auto loaded=content.scene(member.scenario,member.clip,*banks);const auto& body=loaded.banks->scripted().mode_one;
+        if(!body||body->first_track()!=0||body->track_count()!=1)continue;
+        for(unsigned key=0;key<100;++key){
+            const auto block=body->find(key,0);if(!block)continue;
+            try{const auto count=block->clip()->tracks().size();if(count==36&&!motion_choices[0])motion_choices[0]=MotionChoice{member.scenario,member.clip,std::int16_t(key)};if(count==73&&!motion_choices[1])motion_choices[1]=MotionChoice{member.scenario,member.clip,std::int16_t(key)};}catch(const std::invalid_argument&){}
+        }
+        if(motion_choices[0]&&motion_choices[1])break;
+    }
+    check(motion_choices[0].has_value()&&motion_choices[1].has_value());
     struct Case {std::shared_ptr<const s::CutsceneDescriptor> descriptor;std::size_t group;unsigned character,model_class,kind;};
     std::vector<Case> cases;std::array<std::array<unsigned,2>,2> counts{};std::ifstream rows(manifest);check(bool(rows));unsigned scenario,sequence,variant,suffix,version;
     while(rows>>scenario>>sequence>>variant>>suffix>>version){
@@ -48,6 +60,29 @@ void scene_scopes(const char* archive,const char* manifest){
         if(!item.model_class){check(!applied.replaced&&!applied.character_released&&temporary->model->local_translation(0).x==12);++scene_scope_reuses;}
         else{check(applied.replaced);++scene_scope_rebuilds;}
         check(temporary->animation->channel(a::ModelBank::primary,0).selector==(source_slot?95:70));
+        const auto choice_motion=motion_choices[item.model_class].value();const auto scene_motion=content.scene(choice_motion.scenario,choice_motion.clip,*motions.snapshot());
+        if(item.model_class==1&&source_slot==0&&detached_scene_motion_refusals==0){
+            check(!main->model&&main->animation&&!main->animation->model());
+            const auto ordinary=motion_choices[0].value();const auto supplied=content.scene(ordinary.scenario,ordinary.clip,*banks);
+            for(unsigned family:{0u,1u}){
+                auto copied=g::copy_actor_owned(*main);check(copied.status==g::ActorCopyStatus::completed&&copied.actor->animation&&!copied.actor->model&&!copied.actor->animation->model());
+                g::World detached_world(profile(),std::make_shared<g::Session>());
+                const auto id=detached_world.spawn_primary(0,std::move(copied.actor)).id;const auto value=detached_world.resolve(id);
+                value->category=std::uint8_t(family);value->phase=0;value->scripted.emplace();value->scripted->motion_rate_mode=1;value->scripted->motion_selector=ordinary.key;value->root_motion_delta={4,5,6};
+                g::ScriptedActorMotion detached_motion(detached_world,supplied.banks->scripted());bool refused{};
+                try{detached_motion.tick(id);}catch(const std::runtime_error&){refused=true;}
+                check(refused&&value->phase==1&&!value->model&&!value->animation->model()&&value->root_motion_delta.x==4&&value->root_motion_delta.y==5&&value->root_motion_delta.z==6);
+                ++detached_scene_motion_refusals;check(detached_world.close()==g::Status::completed);
+            }
+        }
+        check(motions.publish(scene_motion.banks).status==g::HumanoidPublicationStatus::completed);
+        temporary->scripted->motion_rate_mode=1;temporary->scripted->motion_selector=choice_motion.key;temporary->scripted->motion_blend_duration=2.5f;
+        g::ScriptedActorMotion motion(world,scene_motion.banks->scripted());
+        const reo::native::gameplay_collision::response::Grid floors{};g::CutsceneActor callback(world,motion,floors);
+        const auto previous_pause=world.paused;world.paused=1;temporary->scripted->cue_phase=1;temporary->scripted->request_flags|=2;
+        for(unsigned tick=0;tick<4;++tick){callback.tick(constructed.id);check(temporary->phase==1&&temporary->scripted->cue_phase==2&&temporary->visible&&temporary->collision.pose_ready&&temporary->animation->resources[0]==scene_motion.banks->scripted().mode_one&&temporary->animation->model()==temporary->model&&temporary->model==owner.resident(0).primary);++scene_scope_motion_ticks;}
+        world.paused=previous_pause;
+        ++scene_scope_motion_cases;
         temporary->model->local_translation(0,{321,654,987});const auto retained=owner.resident(0);
         check(owner.return_scene_models(*scope)==g::PrimaryModelStatus::unavailable&&owner.release_scene_model(*scope,0,content).status==g::PrimaryModelStatus::unavailable);++scene_scope_refusals;
         check(pool.initialize()==g::ScenePrimaryStatus::model_in_use);

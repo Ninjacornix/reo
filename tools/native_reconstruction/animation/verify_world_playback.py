@@ -40,6 +40,7 @@ def main():
    if key not in native:native.add(key);pending.append(key)
  native=sorted(native);helpers=['tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp','tools/native_reconstruction/animation/world_playback_tests.cpp','tools/native_reconstruction/animation/verify_world_playback.py','tools/native_reconstruction/animation/playback_tests.cpp'];helpers+=['tools/native_reconstruction/animation/npc_update_tests.inc','tools/native_reconstruction/animation/common_actor_frame_tests.inc','tools/native_reconstruction/animation/npc_skeleton_tests.inc','tools/native_reconstruction/animation/cutscene_descriptor_tests.inc','tools/native_reconstruction/animation/cutscene_actor_track_tests.inc','tools/native_reconstruction/animation/cutscene_actor_command_tests.inc','tools/native_reconstruction/animation/linked_actor_update_tests.inc','third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h','tools/native_reconstruction/effect_work_sources.py','tools/native_reconstruction/animation/scripted_motion_tests.inc','tools/native_reconstruction/animation/cutscene_actor_tests.inc'];files=native+helpers+originals+[getter];before={n:sha(ROOT/n)for n in files};out.mkdir(parents=True)
  record=dict(schema=1,status='failed',source_sha256=before,compiler_sha256=sha(a.compiler),corpus=dict(path=str(corpus_receipt),sha256=sha(corpus_receipt)),original_owned_bodies=proof,game_run=False)
+ record['primary_scripted_ports']=['Only the controlled category0/1 cases resolve1A0D70 through the same bounded packed-header fixture identities. Packing and complete67BFF0/5D1F20/5D2240/track helpers execute; existing linked-family lookup paths remain unchanged.']
  try:
   for n in files:
    target=out/'source'/n;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes((ROOT/n).read_bytes())
@@ -62,6 +63,7 @@ def main():
   for at,size in [(0x22fe20,32),(0x241c78,40),(0x241e90,4)]:
    raw=read(at,size);record['owned_constants'][hex(at)]=raw.hex();init+=' {const std::uint8_t bytes[]{'+','.join(str(v)for v in raw)+'};std::memcpy(p+'+str(at)+',bytes,sizeof bytes);}\n'
   raw=o0raw[0xfd80:0xfd81];assert raw==bytes([5]);record['owned_constants']['0x37fd80']=raw.hex();init+=' p[0x37fd80]=5;\n'
+  raw=overlay[0x70ad60-0x570000:0x70ad60-0x570000+320];record['owned_constants']['0x70ad60']=raw.hex();init+=' {const std::uint8_t bytes[]{'+','.join(str(v)for v in raw)+'};std::memcpy(p+0x70ad60,bytes,sizeof bytes); }\n'
   profile_path=ROOT/'build-native-sjuni/model-scale-profile-v1/receipt.json';profile=json.loads(profile_path.read_bytes());assert profile['status']=='passed'and hashlib.sha256((ROOT/'game/native/gameplay_world/model_scale_profile.inc').read_bytes()).hexdigest()==profile['output_sha256'];record['scale_profile']=dict(path=str(profile_path),sha256=sha(profile_path))
   correction={}
   for at,count,stride in [(0x71ae00,8,12),(0x73eae0,3,4),(0x70afc0,16,4),(0x73eaf8,1,4),(0x73eb00,1,4)]:
