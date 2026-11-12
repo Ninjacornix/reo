@@ -1,0 +1,2227 @@
+{
+  "schema": 1,
+  "status": "qualified_native_sp_response_definitions_and_conditions",
+  "stage4_complete": false,
+  "game_run": false,
+  "audio_device_opened": false,
+  "source_sha256": {
+    "game/native/gameplay_scenario/dialogue_response_program.hpp": "2aad10ffc593868bba1e7e4aa5cfe179d1a69cdbd9d55b71dfa906840c406db2",
+    "game/native/gameplay_scenario/dialogue_response_program.cpp": "039df1f44b989c6c74e99ffc1417f50f102fe9596bd5b4977d32283df9a63ac0",
+    "game/native/gameplay_world/dialogue_conditions.hpp": "be0069fc7631ce749bcaced31713810977182aa98b7986323732405781c8f592",
+    "game/native/gameplay_world/dialogue_conditions.cpp": "2be1985611288d8275f4ad7d12009b5954e04b79b66be4b10f38df76067ade1a",
+    "game/native/gameplay_world/dialogue_inventory_traits.hpp": "2f9723899eff9d8e3d22360586b33c8fcb966e7bba4e2f4b8a8f6b24dd07ae75",
+    "game/native/gameplay_world/dialogue_inventory_traits.cpp": "aa647b30a43b2e97a4868517f56fb642aa350c6d13537683115d8f72bc2253e0",
+    "game/native/gameplay_world/dialogue_partner_characters.hpp": "dde74b033e57ad0314c962b660491b82edea237b7f75847ef30679685ced5858",
+    "game/native/gameplay_world/dialogue_partner_characters.cpp": "4701323650ba7d6dd2fd92d7b2d2b2b575262004eb948e2ecabe83e73c2fc1a1",
+    "game/native/gameplay_world/dialogue_pool.hpp": "39cb48b9eab05a6970bddd9a490bc2f440dce2ac02bdb0cb722bc70cdff72775",
+    "game/native/gameplay_world/dialogue_pool.cpp": "e3aef3ded52b7bff5d3a032d121cc86282c66b1c2118a4f0c603bd888175e8f6",
+    "game/native/gameplay_world/dialogue_flag_durations.hpp": "c93eb45c1a32ee235811a00acd9db7fd6e5a5370606e51b7d6b765918f9e40eb",
+    "game/native/gameplay_world/speech_state.hpp": "cc1486f37ee0ca4555047e74d88f64cef865cbbeebcbc03bcf92352bc0e0eb8c",
+    "game/native/gameplay_world/actor_initial_state.hpp": "ef7ab380f8d6f55f0a4bd433152cfebc903aa166240f6218e786bbe3861ade18",
+    "game/native/gameplay_world/primary_actor_records_tests.cpp": "f29e67a37b691efb703eb7d4180992007f22332c2f4948c36817dd5bb1580e02",
+    "game/native/gameplay_world/dialogue_response_contract_tests.cpp": "5446ec20a47196b6ca9029d4e4cd3d76c241c9f87e61d2b1ddde72c8bed7bc69",
+    "tools/native_reconstruction/dialogue_response_program_tests.cpp": "6b065ccdfb969d964c00f5db931e5c90ee6fa9c9d04dac8c8cdb61bff0b2979a",
+    "tools/native_reconstruction/verify_dialogue_response_program.py": "208794555d9bed50a4df471995a6bb7b69eb47771ba7e46c5d25b4762a74c95c",
+    "tools/native_reconstruction/dialogue_conditions_tests.cpp": "ac2e5e6313be583ade0787035b9d9ba68c070d850f73786852b652aa1bf961cd",
+    "tools/native_reconstruction/verify_dialogue_conditions.py": "03829bb9bbaf782927f1470dd04e6e8da35f341c9b179097634dea56f65bc953",
+    "tools/native_reconstruction/dialogue_flag_durations_tests.cpp": "366ba5fe833346a2a7cc7268ede479ce7a9fd845ed0f12fe286204091e5e8a22",
+    "tools/native_reconstruction/verify_dialogue_flag_durations.py": "b01099b83c8ffb54d21f520994d3b572c558d37b2312ed9f322fa141586e0285",
+    "tools/native_reconstruction/dialogue_flag_pool_tests.cpp": "fdcccc474ca0c71554e9d8cc9bdb44d4e48f3929a6bf0051db54e4bc0dddbb36",
+    "tools/native_reconstruction/verify_dialogue_flag_pool.py": "c07e301da90ce3a9dc0e34b3be6a71a94a509647c9e9abd12550c837ce0cbc1c",
+    "tools/native_reconstruction/dialogue_inventory_traits_tests.cpp": "f481194377defea89b8c727a4d6f82fc9583e3f8536116b4a0e1ac0b0c9e2d7a",
+    "tools/native_reconstruction/verify_dialogue_inventory_traits.py": "16d1997868c4f7c34e3d05949106a627af4f4c35d16b065536fe23c109056597",
+    "tools/native_reconstruction/dialogue_partner_characters_tests.cpp": "0624f1c2317c61a27a6062917eb2b98a9c9b42cf846e0b1b1e119dfec3f090e6",
+    "tools/native_reconstruction/verify_dialogue_partner_characters.py": "433f6e24c3a3ed1112e2719ec020b6c6feabbb9f4f4a360cebdf8a1e753e5fd8",
+    "tools/native_reconstruction/dialogue_pool_tests.cpp": "14dcf999d7e1765af67a6fc6668b1c04d52c12dd94b1f262a69d3ebbb986e206",
+    "tools/native_reconstruction/cached_dialogue_pool_tests.cpp": "77b27a0e5d572b97fd00638522396151918fd3a8edb8e309742a5d89574e64dc",
+    "tools/native_reconstruction/qualify_dialogue_response_conditions_v1.py": "f924080ebbc5ef1f3142e6cf761fc1006edf12f5e3e241504cfa24c2c0cfc6ea",
+    "docs/native-gameplay/DIALOGUE_RESPONSE_CONDITIONS.md": "4de06476ce90bd82283b1e02749d4943c625d941e79bdfe0dbe3ba8b405867f5"
+  },
+  "owned_cmake_fragments": {
+    "game/native/gameplay_scenario/CMakeLists.txt": {
+      "text": "target_sources(reo_native_gameplay_scenario PRIVATE dialogue_assets.cpp text_cache.cpp dialogue_response_program.cpp)\n",
+      "sha256": "ea241c26016bd89da7bdfdc0a00100255c11b488aeeb036b54d420fb88576047"
+    },
+    "game/native/gameplay_world/CMakeLists.txt": {
+      "text": "add_library(reo_native_dialogue STATIC dialogue_records.cpp dialogue_pool.cpp cached_dialogue_presentation.cpp dialogue_conditions.cpp dialogue_inventory_traits.cpp dialogue_partner_characters.cpp)\nadd_executable(dialogue_response_contract_tests dialogue_response_contract_tests.cpp)\n\ntarget_link_libraries(dialogue_response_contract_tests PRIVATE reo_native_dialogue)\nadd_test(NAME native_dialogue_response_contract COMMAND dialogue_response_contract_tests)\nif(CMAKE_CXX_COMPILER_ID MATCHES \"Clang|GNU\")\n    target_compile_options(dialogue_response_contract_tests PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)\nendif()\n",
+      "sha256": "f87bc057bd54951d9524d47883593ce8e7bb72457dc99eb3830b9e5f7697b52c"
+    }
+  },
+  "results": {
+    "program": {
+      "checks": 4358844,
+      "owned_banks": 270,
+      "complete_original_getters": 1620000,
+      "authored_response_rows": 79859,
+      "source_calls": 1620270,
+      "retained_program_lifetimes": 1,
+      "malformed_refusals": 5,
+      "alias_profiles": 1,
+      "game_run": false
+    },
+    "conditions_and_pool": {
+      "complete_condition_cases": 398664,
+      "condition_entry_interruptions": 3528,
+      "checks": 3915944,
+      "complete_constructors": 787,
+      "complete_pool_updates": 1176,
+      "source_calls": 1002137,
+      "record_clears": 48,
+      "native_guards": 289,
+      "retained_text_lifetimes": 2,
+      "controlled_interruptions": 0,
+      "authored_effect_writes": 560,
+      "literal_records": 1,
+      "capacity_refusals": 1,
+      "game_run": false,
+      "audio_device_opened": false
+    },
+    "durations": {
+      "checks": 2101248,
+      "complete_original_steps": 4096,
+      "source_calls": 4096,
+      "counter_comparisons": 2097152,
+      "game_run": false
+    },
+    "durations_in_pool": {
+      "checks": 2298936,
+      "complete_constructors": 787,
+      "complete_pool_updates": 1176,
+      "source_calls": 101560,
+      "record_clears": 48,
+      "native_guards": 289,
+      "retained_text_lifetimes": 2,
+      "controlled_interruptions": 0,
+      "authored_effect_writes": 560,
+      "literal_records": 1,
+      "capacity_refusals": 1,
+      "game_run": false,
+      "audio_device_opened": false
+    },
+    "inventory_traits": {
+      "checks": 1181211,
+      "complete_original_cases": 393216,
+      "source_calls": 428632,
+      "owned_template_banks": 5,
+      "controlled_template_banks": 1,
+      "capability_checks": 7,
+      "game_run": false
+    },
+    "partner_segment": {
+      "checks": 8203,
+      "complete_original_inactive_profiles": 3475,
+      "overflow_prefix_profiles": 621,
+      "source_calls": 4096,
+      "native_capability_checks": 3,
+      "game_run": false
+    },
+    "actual_full_clears": {
+      "checks": 2237276,
+      "complete_source_clears": 64,
+      "canonical_bootstraps": 64,
+      "capacity_refusals": 8,
+      "busy_proofs": 1,
+      "lifetimes": 512,
+      "game_run": false
+    }
+  },
+  "owned_condition_kind_counts": {
+    "0": 7591,
+    "1": 11233,
+    "2": 4130,
+    "6": 206,
+    "8": 30,
+    "9": 70,
+    "10": 3639,
+    "12": 112,
+    "13": 8,
+    "14": 45503,
+    "16": 6309,
+    "17": 1554,
+    "18": 11139,
+    "19": 15979,
+    "20": 960,
+    "21": 32512,
+    "22": 480,
+    "23": 2918,
+    "24": 2222,
+    "25": 11635,
+    "26": 2853,
+    "31": 7,
+    "33": 36,
+    "35": 3970,
+    "44": 29494,
+    "46": 16800,
+    "47": 1041,
+    "48": 8400,
+    "255": 98605
+  },
+  "owned_sp_assets": [
+    {
+      "member": "NETBIO00.DAT/1/1478",
+      "name": "sp010000.bin",
+      "offset": 571901952,
+      "bytes": 73080,
+      "sha256": "34d798d8cae67e135a0a430235917afc4ac48a1292d4a4795d61219d166a13b3"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1479",
+      "name": "sp010001.bin",
+      "offset": 571975680,
+      "bytes": 73012,
+      "sha256": "5212194d3bcf738e1bc284c16cf9e8b627faed70a1e97cb367b642405f11f766"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1480",
+      "name": "sp010002.bin",
+      "offset": 572049408,
+      "bytes": 73128,
+      "sha256": "4775e6cfe60180d40664ca0d372e276e7fa02548c8ad023a2614b032c9c1fd42"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1481",
+      "name": "sp010003.bin",
+      "offset": 572123136,
+      "bytes": 72604,
+      "sha256": "ea0d5323bcd6358750169f1ea0668ee62a274a05317c17b5ca0fc4b3e46f4d0f"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1482",
+      "name": "sp010004.bin",
+      "offset": 572196864,
+      "bytes": 72060,
+      "sha256": "7ab615e96fc99c37d0970b00e8249ad7ecca5f21c54d943f98b5b381ce69ed4f"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1483",
+      "name": "sp010005.bin",
+      "offset": 572270592,
+      "bytes": 73692,
+      "sha256": "19558e497642997cab3f3be83c4a011b115ce48737de3e1ed2e27f79ade438de"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1484",
+      "name": "sp010006.bin",
+      "offset": 572344320,
+      "bytes": 73012,
+      "sha256": "70ea6c25e1b23a77b57f6449df0b7547c410e79463f16d6f4210b2a934a4bde7"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1485",
+      "name": "sp010007.bin",
+      "offset": 572418048,
+      "bytes": 72916,
+      "sha256": "f7ffab1e9d087e4c4351bfe24445bb4d34405191022c51a577f875af8c992752"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1486",
+      "name": "sp010008.bin",
+      "offset": 572491776,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1487",
+      "name": "sp010100.bin",
+      "offset": 572540928,
+      "bytes": 73964,
+      "sha256": "90083ef2e5dd015ac01a1602db819b01f8662edd2199a6739b43f0298137525f"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1488",
+      "name": "sp010101.bin",
+      "offset": 572616704,
+      "bytes": 73964,
+      "sha256": "70d7161934265b2d9b1fe37eab01d4bacbee472651fcd52fa3470d5a70c9b48b"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1489",
+      "name": "sp010102.bin",
+      "offset": 572692480,
+      "bytes": 74012,
+      "sha256": "81a59422f6ef722e2a7f36498eff6d394c4935db6702810c100a9c2d00b6f488"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1490",
+      "name": "sp010103.bin",
+      "offset": 572768256,
+      "bytes": 73488,
+      "sha256": "79e0b7e4b2298c815b60837b07de759c5c159fa6576b6d3cc65d65deeed42c41"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1491",
+      "name": "sp010104.bin",
+      "offset": 572841984,
+      "bytes": 72944,
+      "sha256": "ad80a8d5fed7f379c8973514718cae58f89275dd95d7bdeb06c8e9af3512dbf5"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1492",
+      "name": "sp010105.bin",
+      "offset": 572915712,
+      "bytes": 74372,
+      "sha256": "49fb2bed31196b97e347cda6d2167c9ad313c6414fdb2a65991f4c20101c3312"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1493",
+      "name": "sp010106.bin",
+      "offset": 572991488,
+      "bytes": 73828,
+      "sha256": "7e51c67ca624e34e00f3330d0dcee20161db22a47cf2bcb03b73acc836fbd3d8"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1494",
+      "name": "sp010107.bin",
+      "offset": 573067264,
+      "bytes": 73820,
+      "sha256": "7a46f36dd7061f8191c03e16441207b8258dab7550ffac00d107c0db03621b8c"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1495",
+      "name": "sp010108.bin",
+      "offset": 573143040,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1496",
+      "name": "sp010200.bin",
+      "offset": 573192192,
+      "bytes": 75624,
+      "sha256": "b42d00421c839e3a6039802f7c2bfb0a02e7516ae5db6838a37107105a2bfe68"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1497",
+      "name": "sp010201.bin",
+      "offset": 573267968,
+      "bytes": 75216,
+      "sha256": "8341a7e567132035531201d086f2aedefa24c3d12f01f7f4690ebaf6288ec8c6"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1498",
+      "name": "sp010202.bin",
+      "offset": 573343744,
+      "bytes": 75196,
+      "sha256": "9a93fcb3553eab0f0d58b3dfad1687121795adf2f75dda68bf0437f42cd79d6d"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1499",
+      "name": "sp010203.bin",
+      "offset": 573419520,
+      "bytes": 75420,
+      "sha256": "d4b9cd56b534531b0c897a9bf13ff16bd58a35354fdde35e614213b190d37107"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1500",
+      "name": "sp010204.bin",
+      "offset": 573495296,
+      "bytes": 74196,
+      "sha256": "f7961dc279aabfca4d974f6191099ed47955f207293ae92810f808af4db4f291"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1501",
+      "name": "sp010205.bin",
+      "offset": 573571072,
+      "bytes": 75080,
+      "sha256": "3b274040ae4518e864a05585d9178ac0164e751c87b6d0635e2678ea6e46be78"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1502",
+      "name": "sp010206.bin",
+      "offset": 573646848,
+      "bytes": 75692,
+      "sha256": "72b0cdf99e93cf7599ceccf78bf7f8d8d2509024db6dfe23f08baf644e47420f"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1503",
+      "name": "sp010207.bin",
+      "offset": 573722624,
+      "bytes": 75236,
+      "sha256": "358d0d37b38d8ab1a4e3e19a6c0ce26bb6b59be7193fbeb666b3ff77b7abc64c"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1504",
+      "name": "sp010208.bin",
+      "offset": 573798400,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1505",
+      "name": "sp010300.bin",
+      "offset": 573847552,
+      "bytes": 71612,
+      "sha256": "5c9a80dff2572e3696cb79bb21ea07fbd0e25cdf27aa166529ce8ad3d67b134a"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1506",
+      "name": "sp010301.bin",
+      "offset": 573919232,
+      "bytes": 71612,
+      "sha256": "d1260099fc0810492280dd6ab18922ec6c3fb88b106518363cf95a47b30d5a67"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1507",
+      "name": "sp010302.bin",
+      "offset": 573990912,
+      "bytes": 71660,
+      "sha256": "813883eddcd15fd9984e41cac6be419218e5f32e5409957503b89fc8569ae9d9"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1508",
+      "name": "sp010303.bin",
+      "offset": 574062592,
+      "bytes": 71136,
+      "sha256": "a9fd9e779b7c985d2b52d9977403975d37efb4ac2ed9c353586acad669b46d38"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1509",
+      "name": "sp010304.bin",
+      "offset": 574134272,
+      "bytes": 70660,
+      "sha256": "a0050e4f03dca0450790a94f88cff00c7a97c20a18e61c7b30973316917e6540"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1510",
+      "name": "sp010305.bin",
+      "offset": 574205952,
+      "bytes": 72020,
+      "sha256": "b3cec7d06af334960f77de0de5efbe0ad7adfbfd46dc733be650f56212f10436"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1511",
+      "name": "sp010306.bin",
+      "offset": 574279680,
+      "bytes": 71612,
+      "sha256": "92d549d7697175185b2a760d9b572934b6e3a58244a66d98b1c565e0247b44d3"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1512",
+      "name": "sp010307.bin",
+      "offset": 574351360,
+      "bytes": 72652,
+      "sha256": "b80dc92a46ae91f1e68bd3b7a63800390e982c86862b7d1bb65b4143e09e7320"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1513",
+      "name": "sp010308.bin",
+      "offset": 574425088,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1514",
+      "name": "sp010400.bin",
+      "offset": 574474240,
+      "bytes": 73380,
+      "sha256": "d1719efad0d7c07a75592f8492882ce44179dafc23cce6e767f778c303c6b3b4"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1515",
+      "name": "sp010401.bin",
+      "offset": 574547968,
+      "bytes": 73380,
+      "sha256": "92838cff0133664f422b42fd7e96366793c623c72cfb20a49e24c69f73169784"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1516",
+      "name": "sp010402.bin",
+      "offset": 574621696,
+      "bytes": 73428,
+      "sha256": "e08c05a005bd12af5fa5804865f4137c673707d065cbccc05429bbf32c9666b3"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1517",
+      "name": "sp010403.bin",
+      "offset": 574695424,
+      "bytes": 72564,
+      "sha256": "8b3f5ea5aa99c57fe009e6872a933e1ebb31e45c721fc9278e997453babf8a21"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1518",
+      "name": "sp010404.bin",
+      "offset": 574769152,
+      "bytes": 72224,
+      "sha256": "3440418d218e32776002a1a43529d7e4a69d2e7b21ad38f3113639e91c55e554"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1519",
+      "name": "sp010405.bin",
+      "offset": 574842880,
+      "bytes": 73448,
+      "sha256": "886be6e1e01c919444a1305e57f3d16d4a66ae64498b6cad2b07033a7addfbfb"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1520",
+      "name": "sp010406.bin",
+      "offset": 574916608,
+      "bytes": 73312,
+      "sha256": "00d1c8f245d72271442c22210a94e8dc0a37931649d93049af2bede890de4b40"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1521",
+      "name": "sp010407.bin",
+      "offset": 574990336,
+      "bytes": 73448,
+      "sha256": "8d4cfb5b86e7da1bf8809771b8c4040547d9f454905e3c5255f916524f4141f7"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1522",
+      "name": "sp010408.bin",
+      "offset": 575064064,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1523",
+      "name": "sp010500.bin",
+      "offset": 575113216,
+      "bytes": 73312,
+      "sha256": "62b9ad26bc34876ed347e77c72f8240d3f1c816d779d5124ed8e98c6c3b909bf"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1524",
+      "name": "sp010501.bin",
+      "offset": 575186944,
+      "bytes": 72904,
+      "sha256": "78b48b47b307405bfb92dfc0328d81e8fcc0b34f8d9b0f2ac37891d96f7534c4"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1525",
+      "name": "sp010502.bin",
+      "offset": 575260672,
+      "bytes": 73020,
+      "sha256": "e0a06bd2a36e74efc867c61e6abb92947c563e693fcf5809fa55061838c160d2"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1526",
+      "name": "sp010503.bin",
+      "offset": 575334400,
+      "bytes": 72632,
+      "sha256": "1f02c85ae6df6887f960c5368848de4313375d30575dd880dce0debe61a11c2e"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1527",
+      "name": "sp010504.bin",
+      "offset": 575408128,
+      "bytes": 71612,
+      "sha256": "74f0596f2592f6f2e4988b7fe2fc3e0b4e4311843c52e3766645ed16af889d13"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1528",
+      "name": "sp010505.bin",
+      "offset": 575479808,
+      "bytes": 73276,
+      "sha256": "9d3b01bf68e1a08d14f457fc0ebc4d5ea69c152f7d7d880d427691b0e7d5183c"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1529",
+      "name": "sp010506.bin",
+      "offset": 575553536,
+      "bytes": 73040,
+      "sha256": "214a88984c627c7ed13290c98b355a6efb28b25054a2ecec1f1280ce807e1764"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1530",
+      "name": "sp010507.bin",
+      "offset": 575627264,
+      "bytes": 73380,
+      "sha256": "33157b389e2665682d0a4f8e539c90d8e1b48b05f966940bc70a7a6f349d82a9"
+    },
+    {
+      "member": "NETBIO00.DAT/1/1531",
+      "name": "sp010508.bin",
+      "offset": 575700992,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/3/995",
+      "name": "sp020000.bin",
+      "offset": 627040256,
+      "bytes": 69300,
+      "sha256": "265b6cd9bd93c229f7b65f273557db4022ea7698551d20977a009044d50e033b"
+    },
+    {
+      "member": "NETBIO00.DAT/3/996",
+      "name": "sp020001.bin",
+      "offset": 627109888,
+      "bytes": 69300,
+      "sha256": "7554450655d1d3e6dd280c8789f1a440b34ba22e71a73edeb308e10a08c11317"
+    },
+    {
+      "member": "NETBIO00.DAT/3/997",
+      "name": "sp020002.bin",
+      "offset": 627179520,
+      "bytes": 69348,
+      "sha256": "9ffa2b81d3a7a4bad7b1860b80195cff0b64d2851d9395e2c3ed6d97591a3034"
+    },
+    {
+      "member": "NETBIO00.DAT/3/998",
+      "name": "sp020003.bin",
+      "offset": 627249152,
+      "bytes": 68824,
+      "sha256": "a0b5f95f4013fb2a84b9d5c221db6ca9ae7905f610161a51bab322756f7fd09d"
+    },
+    {
+      "member": "NETBIO00.DAT/3/999",
+      "name": "sp020004.bin",
+      "offset": 627318784,
+      "bytes": 68280,
+      "sha256": "0dc1f29d426928f5b64815431e5f60a5f08e3c379289ecfaeafb42a54ebe3441"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1000",
+      "name": "sp020005.bin",
+      "offset": 627388416,
+      "bytes": 69708,
+      "sha256": "b67cd0b490426a92579e8a98a799d1d31ff8a0d649c7c1f3884c0507f1608ae1"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1001",
+      "name": "sp020006.bin",
+      "offset": 627460096,
+      "bytes": 69300,
+      "sha256": "e8627a9e31a8fcf8149d8cb1bf429ec33411c4f4cedd5c05abdc5a9dc823c29b"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1002",
+      "name": "sp020007.bin",
+      "offset": 627529728,
+      "bytes": 69504,
+      "sha256": "8eaef9f9764d704b08fc425653a2d00f96f20ae6954607ff326e08fb360b6553"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1003",
+      "name": "sp020008.bin",
+      "offset": 627599360,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1004",
+      "name": "sp020100.bin",
+      "offset": 627648512,
+      "bytes": 73788,
+      "sha256": "7e991a5fc6ce11b764947dd2156dd6fd76a69fd45a0ee7022c2362e690780157"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1005",
+      "name": "sp020101.bin",
+      "offset": 627724288,
+      "bytes": 73788,
+      "sha256": "da5f8938693b482e37cd4e224bde6507bfe0c9754309843eb19a475201c6b480"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1006",
+      "name": "sp020102.bin",
+      "offset": 627800064,
+      "bytes": 73836,
+      "sha256": "73f079bb381d8c4333eb42140a8f76f27f6602f59be51f3b2e72d34f188461b3"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1007",
+      "name": "sp020103.bin",
+      "offset": 627875840,
+      "bytes": 73312,
+      "sha256": "4db5a44c417be122ef5da04e0600a40254ee593e89f5c7ea0109bc68a317d7d6"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1008",
+      "name": "sp020104.bin",
+      "offset": 627949568,
+      "bytes": 72564,
+      "sha256": "9730a0912d16e96a581c4c7b8c16c839d03a880831e5aa652413acdc75d903b7"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1009",
+      "name": "sp020105.bin",
+      "offset": 628023296,
+      "bytes": 74196,
+      "sha256": "c6038b4fa7e30ffee29de05e674f99a6e6efda724c91df91707347d0d4c6d883"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1010",
+      "name": "sp020106.bin",
+      "offset": 628099072,
+      "bytes": 73720,
+      "sha256": "87bf024e875a738fe01296580eef0ae6bf45d7ba36e1e1c9875c787a2dcb20f6"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1011",
+      "name": "sp020107.bin",
+      "offset": 628172800,
+      "bytes": 73992,
+      "sha256": "5d9d7e9cf9f71d87788a584b4cb5f8a91b0c74d9a94674c5c5c6820063e97eb2"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1012",
+      "name": "sp020108.bin",
+      "offset": 628248576,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1013",
+      "name": "sp020200.bin",
+      "offset": 628297728,
+      "bytes": 72632,
+      "sha256": "4212f3c6f486fe8103e0a1c6e923c66d313a7f5f9a2bebee92faf04339711eb4"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1014",
+      "name": "sp020201.bin",
+      "offset": 628371456,
+      "bytes": 72632,
+      "sha256": "abef0866a541b2334ce4010081951feb4ed6c4416d57b1379c5009241d3a6cb3"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1015",
+      "name": "sp020202.bin",
+      "offset": 628445184,
+      "bytes": 72680,
+      "sha256": "a9c544271e708464f2c97f53b224d94138c9d9346c18df10d982bec7a59fb332"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1016",
+      "name": "sp020203.bin",
+      "offset": 628518912,
+      "bytes": 72156,
+      "sha256": "d27ab99ae7f6b8044a7973b12671b2d1d7a8b42b4b24c4e9062ad62ee855ec04"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1017",
+      "name": "sp020204.bin",
+      "offset": 628592640,
+      "bytes": 71680,
+      "sha256": "84e20e2de73c5272bd2caac6e877bb12c9aefecb708a29d790b421f11acf9311"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1018",
+      "name": "sp020205.bin",
+      "offset": 628664320,
+      "bytes": 73040,
+      "sha256": "6b45a8cb36db1910814f49d1ccdf19e66253d79c3d8dbc89544fa770ef1ae1f3"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1019",
+      "name": "sp020206.bin",
+      "offset": 628738048,
+      "bytes": 72700,
+      "sha256": "5199a32d09d215e02ca40a6dfd40e834e1f4eae62ad386dbceac86edb7d66e48"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1020",
+      "name": "sp020207.bin",
+      "offset": 628811776,
+      "bytes": 72836,
+      "sha256": "054c17d1a9daf2d189a4f6afca4bdd02035b8de10e345bb4986db25627e265a5"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1021",
+      "name": "sp020208.bin",
+      "offset": 628885504,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1022",
+      "name": "sp020300.bin",
+      "offset": 628934656,
+      "bytes": 69776,
+      "sha256": "55032333f480e34eb2b6de3b943e58c1e0018c6d9fdeb4e642e0031f7f5ff2d5"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1023",
+      "name": "sp020301.bin",
+      "offset": 629006336,
+      "bytes": 69776,
+      "sha256": "a1febf6f056d05515d9ab411c4d6e887a892d40e40548399e5010633e0fee951"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1024",
+      "name": "sp020302.bin",
+      "offset": 629078016,
+      "bytes": 69824,
+      "sha256": "ad09ca81058de3de46c61dce1549b58e85b262ae517024518fb862bf72905cf9"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1025",
+      "name": "sp020303.bin",
+      "offset": 629149696,
+      "bytes": 69300,
+      "sha256": "6fe59f87749692d7127f495dca8e48a8a279edb5b911d9868a195b0039d14fb5"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1026",
+      "name": "sp020304.bin",
+      "offset": 629219328,
+      "bytes": 68824,
+      "sha256": "4f0eb746fa989e20b6494955ad74ab1afc24e7bd7fdfa261ae8cf6026d7249da"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1027",
+      "name": "sp020305.bin",
+      "offset": 629288960,
+      "bytes": 70184,
+      "sha256": "f1738a15882d4262ea9783a09584d97ba8993343a95b37492ed6d7f1ec5117c9"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1028",
+      "name": "sp020306.bin",
+      "offset": 629360640,
+      "bytes": 69776,
+      "sha256": "cdebc0e6fa8f7c91d063cb7ac043cf0a2ecf800cbcc93ea6cf3990ae005d72c9"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1029",
+      "name": "sp020307.bin",
+      "offset": 629432320,
+      "bytes": 69980,
+      "sha256": "b76980e8b0204bd9796bf3f0ddb51c15638a6ce8d9010c9f9307ceedf8e381f1"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1030",
+      "name": "sp020308.bin",
+      "offset": 629504000,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1031",
+      "name": "sp020400.bin",
+      "offset": 629553152,
+      "bytes": 68144,
+      "sha256": "30a450f1ff8f03270ef27ebcf5b745104dc684729c7f788e9650aa438ebd5b2d"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1032",
+      "name": "sp020401.bin",
+      "offset": 629622784,
+      "bytes": 68144,
+      "sha256": "1f1c7cb14320a9c3c87dbffde0934c1a3ec12e61cdba3cf518454e4322b44949"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1033",
+      "name": "sp020402.bin",
+      "offset": 629692416,
+      "bytes": 68192,
+      "sha256": "a2022a21b6855fe6cf0b9bf24d6f1f8899a70e057df3242a864f6b8fd9f8c799"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1034",
+      "name": "sp020403.bin",
+      "offset": 629762048,
+      "bytes": 67668,
+      "sha256": "36b93a2884d1391a58dd0549108ba5a30bbc20d930965d7cc2f6fbe822646f36"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1035",
+      "name": "sp020404.bin",
+      "offset": 629831680,
+      "bytes": 67192,
+      "sha256": "60db5c9022713fe08de6d46117bf531ceae73128c014970bf1f6ee45fdbe8da7"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1036",
+      "name": "sp020405.bin",
+      "offset": 629899264,
+      "bytes": 68552,
+      "sha256": "a7fe53a68a47749b919540580d6f25dfdf8350a7dc10c6026c6cffc02bdb0f80"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1037",
+      "name": "sp020406.bin",
+      "offset": 629968896,
+      "bytes": 68144,
+      "sha256": "7665fa89e29a287059d5e95bca622722d4265c2ee25d60e6c0013b8bd30de6ad"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1038",
+      "name": "sp020407.bin",
+      "offset": 630038528,
+      "bytes": 68348,
+      "sha256": "ad77b755d3d864b5fe920db79fe2991be2c09c2ccb79d5ba8c39c7d13fe0baba"
+    },
+    {
+      "member": "NETBIO00.DAT/3/1039",
+      "name": "sp020408.bin",
+      "offset": 630108160,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/5/781",
+      "name": "sp280000.bin",
+      "offset": 689688576,
+      "bytes": 70388,
+      "sha256": "c2bd8beb658cf7efc15478df51938846e2bd93c954589535dacf32def14fd75c"
+    },
+    {
+      "member": "NETBIO00.DAT/5/782",
+      "name": "sp280001.bin",
+      "offset": 689760256,
+      "bytes": 70252,
+      "sha256": "565b34b1b1c6becf4510f80896717eb76eadfe86578002d1690ae7bd3a9b841a"
+    },
+    {
+      "member": "NETBIO00.DAT/5/783",
+      "name": "sp280002.bin",
+      "offset": 689831936,
+      "bytes": 70300,
+      "sha256": "7d2a97923f6917372cdaa865136021dadf9fad40780d4bb0ef806ac474a9c275"
+    },
+    {
+      "member": "NETBIO00.DAT/5/784",
+      "name": "sp280003.bin",
+      "offset": 689903616,
+      "bytes": 69776,
+      "sha256": "582b87a46621c6ad4d913043d63265648b1d5883496924d46cd438414c00bf8d"
+    },
+    {
+      "member": "NETBIO00.DAT/5/785",
+      "name": "sp280004.bin",
+      "offset": 689975296,
+      "bytes": 68960,
+      "sha256": "0a6292cdbfd4e6842a4702368bb9b0f05ec54a02b0fb842b144b2bcf975bf071"
+    },
+    {
+      "member": "NETBIO00.DAT/5/786",
+      "name": "sp280005.bin",
+      "offset": 690044928,
+      "bytes": 70660,
+      "sha256": "38a35660728da20e8580b312ab6b5879f7e8667d7e124ee8891a4340eb9ebdde"
+    },
+    {
+      "member": "NETBIO00.DAT/5/787",
+      "name": "sp280006.bin",
+      "offset": 690116608,
+      "bytes": 69912,
+      "sha256": "23eba49ff67cb11cf17fb3575beb9978bf39227d1a715ae59de7f2ab037b34c9"
+    },
+    {
+      "member": "NETBIO00.DAT/5/788",
+      "name": "sp280007.bin",
+      "offset": 690188288,
+      "bytes": 70524,
+      "sha256": "69a0a7eda941da77c9cba516ae3972b4d390132da6be14fee98d5cebc8e37a79"
+    },
+    {
+      "member": "NETBIO00.DAT/5/789",
+      "name": "sp280008.bin",
+      "offset": 690259968,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/5/790",
+      "name": "sp280100.bin",
+      "offset": 690309120,
+      "bytes": 72020,
+      "sha256": "ce053020dff276e457e231b0bc115aa4edfc7bf7d917244f1ca71bc19b5fb109"
+    },
+    {
+      "member": "NETBIO00.DAT/5/791",
+      "name": "sp280101.bin",
+      "offset": 690382848,
+      "bytes": 72360,
+      "sha256": "f8cb6260f350ad99c3e19dd107e44b0b28b7680af41e2114fcf2b7507d276f1a"
+    },
+    {
+      "member": "NETBIO00.DAT/5/792",
+      "name": "sp280102.bin",
+      "offset": 690456576,
+      "bytes": 72564,
+      "sha256": "82b9d6a586ee0569d39665c01ee6217124d1993ddc9a0cb7d5a60eb53eaf7edd"
+    },
+    {
+      "member": "NETBIO00.DAT/5/793",
+      "name": "sp280103.bin",
+      "offset": 690530304,
+      "bytes": 72088,
+      "sha256": "e73ace5dfba38de40d64ebc8d8667b6a9ab2177d8ed270e01c6757c528d56b8a"
+    },
+    {
+      "member": "NETBIO00.DAT/5/794",
+      "name": "sp280104.bin",
+      "offset": 690604032,
+      "bytes": 70524,
+      "sha256": "32ed0424923b4dd7703ad3d6fb73828d2a8314a352dc0bbddcee379448924e47"
+    },
+    {
+      "member": "NETBIO00.DAT/5/795",
+      "name": "sp280105.bin",
+      "offset": 690675712,
+      "bytes": 72748,
+      "sha256": "321b3f1a87a571d2b1745dce9850faf2411896725d32928618c72ba3f9e032b8"
+    },
+    {
+      "member": "NETBIO00.DAT/5/796",
+      "name": "sp280106.bin",
+      "offset": 690749440,
+      "bytes": 71612,
+      "sha256": "bb152aa27e1b3f18b40004af6f6ad867160f8b40fc94e15a4fc6456a2394f54d"
+    },
+    {
+      "member": "NETBIO00.DAT/5/797",
+      "name": "sp280107.bin",
+      "offset": 690821120,
+      "bytes": 72224,
+      "sha256": "27482861c4cb4055872fea7d0639f57596e194c3a7a71f918607ccba141630ca"
+    },
+    {
+      "member": "NETBIO00.DAT/5/798",
+      "name": "sp280108.bin",
+      "offset": 690894848,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/5/799",
+      "name": "sp280200.bin",
+      "offset": 690944000,
+      "bytes": 70116,
+      "sha256": "3c89f1052c3a64d4c3e26d85faa609526b5ab7b5d3f8a6dcfcae513729737a9c"
+    },
+    {
+      "member": "NETBIO00.DAT/5/800",
+      "name": "sp280201.bin",
+      "offset": 691015680,
+      "bytes": 70116,
+      "sha256": "1dcfc5328b6324ad49d0ee0c5622478487cba295d169b0ad12646151f8280af5"
+    },
+    {
+      "member": "NETBIO00.DAT/5/801",
+      "name": "sp280202.bin",
+      "offset": 691087360,
+      "bytes": 70184,
+      "sha256": "dee6a4bbe1779ce417ad034d9de59c684c20e7321f869b143c88e053baa08fa7"
+    },
+    {
+      "member": "NETBIO00.DAT/5/802",
+      "name": "sp280203.bin",
+      "offset": 691159040,
+      "bytes": 69708,
+      "sha256": "a99ee45063405b2cf3e82e7a84e604387c451cc6c56e962c8f82ea4549803170"
+    },
+    {
+      "member": "NETBIO00.DAT/5/803",
+      "name": "sp280204.bin",
+      "offset": 691230720,
+      "bytes": 68688,
+      "sha256": "7d08c3d6a6445ac3d6739a83c38fcc47349ebd39a80513090e674c5428aafc84"
+    },
+    {
+      "member": "NETBIO00.DAT/5/804",
+      "name": "sp280205.bin",
+      "offset": 691300352,
+      "bytes": 70456,
+      "sha256": "81964abb331ef53d9f3c6fd006ae40f6fc09ac63114c9af54bef206efe2cf397"
+    },
+    {
+      "member": "NETBIO00.DAT/5/805",
+      "name": "sp280206.bin",
+      "offset": 691372032,
+      "bytes": 69776,
+      "sha256": "3b6317c20854d0c85be7fd3e3712472979edcffa479aed53a55c98d9c221349b"
+    },
+    {
+      "member": "NETBIO00.DAT/5/806",
+      "name": "sp280207.bin",
+      "offset": 691443712,
+      "bytes": 70388,
+      "sha256": "ef76caf2642c81c350051c08d3599f51175bd21b256fe42ff9e153567db8a53b"
+    },
+    {
+      "member": "NETBIO00.DAT/5/807",
+      "name": "sp280208.bin",
+      "offset": 691515392,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/5/808",
+      "name": "sp280300.bin",
+      "offset": 691564544,
+      "bytes": 67668,
+      "sha256": "e855330987a11dee22f014a0ad6f8a0dda19bb0ea6e99d0ca7f6aad88bbc342c"
+    },
+    {
+      "member": "NETBIO00.DAT/5/809",
+      "name": "sp280301.bin",
+      "offset": 691634176,
+      "bytes": 67668,
+      "sha256": "5b08e8ade0e0e40c6a7391a5ddf98b62488e274f99b93b030650765a41d6f58b"
+    },
+    {
+      "member": "NETBIO00.DAT/5/810",
+      "name": "sp280302.bin",
+      "offset": 691703808,
+      "bytes": 67716,
+      "sha256": "39d6930697c6cf97785b527d52aa1abca23abb4dd318e544f7e44bacae0c8db1"
+    },
+    {
+      "member": "NETBIO00.DAT/5/811",
+      "name": "sp280303.bin",
+      "offset": 691773440,
+      "bytes": 67192,
+      "sha256": "ea7919c45792e090213457cabf422f8fba304c52822874185d202bc7623dbe57"
+    },
+    {
+      "member": "NETBIO00.DAT/5/812",
+      "name": "sp280304.bin",
+      "offset": 691841024,
+      "bytes": 66648,
+      "sha256": "c25af4d71cf5c485d64e88670918b77b55f6f1cb89506464d4e41849b2f83169"
+    },
+    {
+      "member": "NETBIO00.DAT/5/813",
+      "name": "sp280305.bin",
+      "offset": 691908608,
+      "bytes": 68076,
+      "sha256": "92376686132412e84262c2568e0b8ead8eee235e7967279b5e62bd5ca5aaf020"
+    },
+    {
+      "member": "NETBIO00.DAT/5/814",
+      "name": "sp280306.bin",
+      "offset": 691978240,
+      "bytes": 67600,
+      "sha256": "dcb73c23064b44ce0103de9c9273124e0b081570a1c15330e7bf1ed2edbfd389"
+    },
+    {
+      "member": "NETBIO00.DAT/5/815",
+      "name": "sp280307.bin",
+      "offset": 692047872,
+      "bytes": 67804,
+      "sha256": "e21dde55ae05aafd40a1f34ef6a961ba9d0c97b65f10c1d27ac857bef181b7d9"
+    },
+    {
+      "member": "NETBIO00.DAT/5/816",
+      "name": "sp280308.bin",
+      "offset": 692117504,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/7/824",
+      "name": "sp350000.bin",
+      "offset": 752977920,
+      "bytes": 70048,
+      "sha256": "23cf26fe89d54a9940ff363ce9abb4e056f9f75d65d6135db1737d9b9781b9f1"
+    },
+    {
+      "member": "NETBIO00.DAT/7/825",
+      "name": "sp350001.bin",
+      "offset": 753049600,
+      "bytes": 70456,
+      "sha256": "6b94d73c6807f553e7b44f373a236d313be817429b3d58215caf7f461817d056"
+    },
+    {
+      "member": "NETBIO00.DAT/7/826",
+      "name": "sp350002.bin",
+      "offset": 753121280,
+      "bytes": 70436,
+      "sha256": "43397e1b888654c665eb3d333244f952ad725a891ab798afad152ae0934f0c6f"
+    },
+    {
+      "member": "NETBIO00.DAT/7/827",
+      "name": "sp350003.bin",
+      "offset": 753192960,
+      "bytes": 69708,
+      "sha256": "aa276e47fa3748da8f2c2950180896ef7a8befbbc0304e1acd9fede3df888f48"
+    },
+    {
+      "member": "NETBIO00.DAT/7/828",
+      "name": "sp350004.bin",
+      "offset": 753264640,
+      "bytes": 68892,
+      "sha256": "6699ece1226df9962fddf2cf5cac5edd684d8eec3d9d970ad7155499d75a57e2"
+    },
+    {
+      "member": "NETBIO00.DAT/7/829",
+      "name": "sp350005.bin",
+      "offset": 753334272,
+      "bytes": 71068,
+      "sha256": "dab4bb84e0809fdee6c82426227a71f05ac705c08047ce8d0fce9fd95d0adf7c"
+    },
+    {
+      "member": "NETBIO00.DAT/7/830",
+      "name": "sp350006.bin",
+      "offset": 753405952,
+      "bytes": 69796,
+      "sha256": "157211b36facc25e003bb33a71f503c5448c548fe247c4d1bbcc1088b7e8dfb7"
+    },
+    {
+      "member": "NETBIO00.DAT/7/831",
+      "name": "sp350007.bin",
+      "offset": 753477632,
+      "bytes": 70252,
+      "sha256": "5fcd82717c0f295d3adb5e40e5d709a45285a031671ef76824f3b0ef1357c54b"
+    },
+    {
+      "member": "NETBIO00.DAT/7/832",
+      "name": "sp350008.bin",
+      "offset": 753549312,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/7/833",
+      "name": "sp350100.bin",
+      "offset": 753598464,
+      "bytes": 71952,
+      "sha256": "713d108510dc9992f037cb7190740bd56104c7a6a530507d53251e28edbe573c"
+    },
+    {
+      "member": "NETBIO00.DAT/7/834",
+      "name": "sp350101.bin",
+      "offset": 753672192,
+      "bytes": 72156,
+      "sha256": "5707906389efcd311b7f329d03b80bcc82e72005816799a6f3fd861859a6cffc"
+    },
+    {
+      "member": "NETBIO00.DAT/7/835",
+      "name": "sp350102.bin",
+      "offset": 753745920,
+      "bytes": 72816,
+      "sha256": "beaa2e1c046b6bc50f90a63273a673aea96b1ab7072a23f9ba747eb27e9d8291"
+    },
+    {
+      "member": "NETBIO00.DAT/7/836",
+      "name": "sp350103.bin",
+      "offset": 753819648,
+      "bytes": 71680,
+      "sha256": "7070ac64e6922c2fe89fd4f55d2b017ecd5d767058bcbab0c19a8a4ff4609cdc"
+    },
+    {
+      "member": "NETBIO00.DAT/7/837",
+      "name": "sp350104.bin",
+      "offset": 753891328,
+      "bytes": 70660,
+      "sha256": "8ef15de8d8168598daabb5b655d282e6fba3514baf51d127bde6e456c038e1f7"
+    },
+    {
+      "member": "NETBIO00.DAT/7/838",
+      "name": "sp350105.bin",
+      "offset": 753963008,
+      "bytes": 72768,
+      "sha256": "c2698bb3889a05cc9d41ede1b26f1c9f6c98becdab63f558ac023816c7300b7d"
+    },
+    {
+      "member": "NETBIO00.DAT/7/839",
+      "name": "sp350106.bin",
+      "offset": 754036736,
+      "bytes": 72020,
+      "sha256": "fffeed1531c15bba7b49d35309ae4967cf8b60863e158e4bbe79958f13988831"
+    },
+    {
+      "member": "NETBIO00.DAT/7/840",
+      "name": "sp350107.bin",
+      "offset": 754110464,
+      "bytes": 72428,
+      "sha256": "cbccf99a5db028d6ad2f1a8810eefd8a9c585cc45c6370451ec071b914bc1bb5"
+    },
+    {
+      "member": "NETBIO00.DAT/7/841",
+      "name": "sp350108.bin",
+      "offset": 754184192,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/7/842",
+      "name": "sp350200.bin",
+      "offset": 754233344,
+      "bytes": 71204,
+      "sha256": "7c02b75c6fe92e418406157e5ba87e22e946d349b79071b9b5098fe0099c97b8"
+    },
+    {
+      "member": "NETBIO00.DAT/7/843",
+      "name": "sp350201.bin",
+      "offset": 754305024,
+      "bytes": 71204,
+      "sha256": "b762099e8c7a75d3e9920d9d603b1384d58921bb4b2798a8f4aa62b370c7ad2d"
+    },
+    {
+      "member": "NETBIO00.DAT/7/844",
+      "name": "sp350202.bin",
+      "offset": 754376704,
+      "bytes": 71524,
+      "sha256": "a28f3290094ae8125be759982633d818888280eaf8c6723cfdb5ca784949ddc7"
+    },
+    {
+      "member": "NETBIO00.DAT/7/845",
+      "name": "sp350203.bin",
+      "offset": 754448384,
+      "bytes": 70796,
+      "sha256": "0c0a31bb9fb3d914d66e45436dd3c5e78be414c1fa3c406973ad31bb621f9097"
+    },
+    {
+      "member": "NETBIO00.DAT/7/846",
+      "name": "sp350204.bin",
+      "offset": 754520064,
+      "bytes": 69980,
+      "sha256": "4055b121ad1cc313ecd471d879ebe1cf48e254fd954badac4dc50e6b4c44dd2a"
+    },
+    {
+      "member": "NETBIO00.DAT/7/847",
+      "name": "sp350205.bin",
+      "offset": 754591744,
+      "bytes": 71612,
+      "sha256": "1d74714878bb9081d14f7391ff1e87a7507cf86fcef0bb0976255d1d6b0a718a"
+    },
+    {
+      "member": "NETBIO00.DAT/7/848",
+      "name": "sp350206.bin",
+      "offset": 754663424,
+      "bytes": 70660,
+      "sha256": "e6b6b59a3160865b8fa69eb394442727bd963a9a52a636ae988e391edc0813b9"
+    },
+    {
+      "member": "NETBIO00.DAT/7/849",
+      "name": "sp350207.bin",
+      "offset": 754735104,
+      "bytes": 71408,
+      "sha256": "9ca4499b50133e917eb3315116e28a24dfc8bae17d578d6f370a81c064630203"
+    },
+    {
+      "member": "NETBIO00.DAT/7/850",
+      "name": "sp350208.bin",
+      "offset": 754806784,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/7/851",
+      "name": "sp350300.bin",
+      "offset": 754855936,
+      "bytes": 69300,
+      "sha256": "c6f2cd3982744a1a49dd9d4a5b39cc0acfecddbd0a70c25bb7a49a1dba88a28a"
+    },
+    {
+      "member": "NETBIO00.DAT/7/852",
+      "name": "sp350301.bin",
+      "offset": 754925568,
+      "bytes": 69300,
+      "sha256": "1a56cb581a74906a28a941772f09f9bcf9e3b869f6b62e1bcf1187a8d85ebad0"
+    },
+    {
+      "member": "NETBIO00.DAT/7/853",
+      "name": "sp350302.bin",
+      "offset": 754995200,
+      "bytes": 69348,
+      "sha256": "dfe8ac966ee339c3a520576e8edff48ce25b530c7568688a7ba4443897d93686"
+    },
+    {
+      "member": "NETBIO00.DAT/7/854",
+      "name": "sp350303.bin",
+      "offset": 755064832,
+      "bytes": 68824,
+      "sha256": "2da2c77161db5f24b85b02c33eb12b884c9e04a3de6c675f99230423586611a5"
+    },
+    {
+      "member": "NETBIO00.DAT/7/855",
+      "name": "sp350304.bin",
+      "offset": 755134464,
+      "bytes": 68348,
+      "sha256": "81060c70b5cbe9cc923529d9c9d75eae662e82492ff5373a69b4a64134ebe42d"
+    },
+    {
+      "member": "NETBIO00.DAT/7/856",
+      "name": "sp350305.bin",
+      "offset": 755204096,
+      "bytes": 69708,
+      "sha256": "9f8576376c29322f9c51536d8523db7b88ecce80934abdca2e4fd2518c442efd"
+    },
+    {
+      "member": "NETBIO00.DAT/7/857",
+      "name": "sp350306.bin",
+      "offset": 755275776,
+      "bytes": 69300,
+      "sha256": "2905046c02c93a9aa703da0ff888c15fd3fcbced193caccdd34b000bfec193d1"
+    },
+    {
+      "member": "NETBIO00.DAT/7/858",
+      "name": "sp350307.bin",
+      "offset": 755345408,
+      "bytes": 69504,
+      "sha256": "ffff31beb62d2d51a12c6d0f694b012d4d5dd8f190374f09e9fdef2ce993f3fe"
+    },
+    {
+      "member": "NETBIO00.DAT/7/859",
+      "name": "sp350308.bin",
+      "offset": 755415040,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/7/860",
+      "name": "sp350400.bin",
+      "offset": 755464192,
+      "bytes": 69164,
+      "sha256": "9dc0207ddea4bf246eb28e337d262702b7a1e965b67d020995230159d5df7c53"
+    },
+    {
+      "member": "NETBIO00.DAT/7/861",
+      "name": "sp350401.bin",
+      "offset": 755533824,
+      "bytes": 69096,
+      "sha256": "3cdd19638ec2ca8a5d4fcd89c7dc3ccfb2e2118115369a2361f1e088f77ed976"
+    },
+    {
+      "member": "NETBIO00.DAT/7/862",
+      "name": "sp350402.bin",
+      "offset": 755603456,
+      "bytes": 69756,
+      "sha256": "e10e5a2af73fe55e6a0ac8c4f4b98f9e227698b038c2ae24bb7ea9813850033a"
+    },
+    {
+      "member": "NETBIO00.DAT/7/863",
+      "name": "sp350403.bin",
+      "offset": 755675136,
+      "bytes": 70252,
+      "sha256": "10df2c9327ecf3708dbfc4e31801e43b791139d1c322994c3079162455622301"
+    },
+    {
+      "member": "NETBIO00.DAT/7/864",
+      "name": "sp350404.bin",
+      "offset": 755746816,
+      "bytes": 67804,
+      "sha256": "4790c4eeb07f53134d67836d27b79c74afa3f8cf0e4b83189d8c8198f5ef3e06"
+    },
+    {
+      "member": "NETBIO00.DAT/7/865",
+      "name": "sp350405.bin",
+      "offset": 755816448,
+      "bytes": 70780,
+      "sha256": "abcb92445b30918c2087ada291acc7264fb6e7ce0364b3e21ee0c6f6a8034781"
+    },
+    {
+      "member": "NETBIO00.DAT/7/866",
+      "name": "sp350406.bin",
+      "offset": 755888128,
+      "bytes": 68756,
+      "sha256": "093424cb951aed7b7ecfa5e4513080896aa1a1aca527bff35da98eda99a69ef1"
+    },
+    {
+      "member": "NETBIO00.DAT/7/867",
+      "name": "sp350407.bin",
+      "offset": 755957760,
+      "bytes": 69640,
+      "sha256": "7839c88e18f6b85038da78ef2cf206fad64217988e38b1afd35d9c5f4834a6dc"
+    },
+    {
+      "member": "NETBIO00.DAT/7/868",
+      "name": "sp350408.bin",
+      "offset": 756029440,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/7/869",
+      "name": "sp350500.bin",
+      "offset": 756078592,
+      "bytes": 69368,
+      "sha256": "85d5f255192e909dde9c5cdbeab1499451e6c29f8f9b28afbd79c9090111291b"
+    },
+    {
+      "member": "NETBIO00.DAT/7/870",
+      "name": "sp350501.bin",
+      "offset": 756148224,
+      "bytes": 69368,
+      "sha256": "f15aa41ad2b2c11baceab4ee4cf0aaa22c7a26b3d51d775c66a107e0def0569d"
+    },
+    {
+      "member": "NETBIO00.DAT/7/871",
+      "name": "sp350502.bin",
+      "offset": 756217856,
+      "bytes": 69756,
+      "sha256": "6e90246e3db2cccc6b53bddc804e97921c4157fec690dde1b3ecb7a8cfcfb6ad"
+    },
+    {
+      "member": "NETBIO00.DAT/7/872",
+      "name": "sp350503.bin",
+      "offset": 756289536,
+      "bytes": 68892,
+      "sha256": "6ebcde6cef6b27e1548788ef8cf2f79fcc25dfcf207b667112360ded00df4226"
+    },
+    {
+      "member": "NETBIO00.DAT/7/873",
+      "name": "sp350504.bin",
+      "offset": 756359168,
+      "bytes": 68280,
+      "sha256": "d42b7a9efd3ade0e407f1bb6211f4705cc7aa16a9f8fa68fe3b26d479091eaf6"
+    },
+    {
+      "member": "NETBIO00.DAT/7/874",
+      "name": "sp350505.bin",
+      "offset": 756428800,
+      "bytes": 69776,
+      "sha256": "6f77b497f2861c5bab43be2933d10fea9e22b98edd063f1dd943c2a4d14aeb71"
+    },
+    {
+      "member": "NETBIO00.DAT/7/875",
+      "name": "sp350506.bin",
+      "offset": 756500480,
+      "bytes": 69368,
+      "sha256": "b69bd4b3f5bb795629b95ac090ece21343622136a90714c19b2c229848f2dee5"
+    },
+    {
+      "member": "NETBIO00.DAT/7/876",
+      "name": "sp350507.bin",
+      "offset": 756570112,
+      "bytes": 69572,
+      "sha256": "f9c06a017ed72448f8b0b4e747f134042d7ba9bfdaf4ba1afc6aadfa344c10bd"
+    },
+    {
+      "member": "NETBIO00.DAT/7/877",
+      "name": "sp350508.bin",
+      "offset": 756639744,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/7/878",
+      "name": "sp350600.bin",
+      "offset": 756688896,
+      "bytes": 68416,
+      "sha256": "4cba6c944e589172f6f044aca8168fa4cbffe4ce5a5cb133a1aec47b94a7f550"
+    },
+    {
+      "member": "NETBIO00.DAT/7/879",
+      "name": "sp350601.bin",
+      "offset": 756758528,
+      "bytes": 68416,
+      "sha256": "3868bc576e85b5c8a22c22f9340cd70efc0324bb185d31cb723218c2b347ae13"
+    },
+    {
+      "member": "NETBIO00.DAT/7/880",
+      "name": "sp350602.bin",
+      "offset": 756828160,
+      "bytes": 68464,
+      "sha256": "f88c8c174d4d6a4b4eb97fd48d5948e6b1b250b1dd90ce6fa36cce4587e3ed87"
+    },
+    {
+      "member": "NETBIO00.DAT/7/881",
+      "name": "sp350603.bin",
+      "offset": 756897792,
+      "bytes": 67940,
+      "sha256": "0be8432b566e32407f8034676de79e7000b0d8a548a2da76530d99998cfde29f"
+    },
+    {
+      "member": "NETBIO00.DAT/7/882",
+      "name": "sp350604.bin",
+      "offset": 756967424,
+      "bytes": 67464,
+      "sha256": "7c2d30c6ca6076ea050670f52c8ed2c623f82ab496437be601a349067e02576c"
+    },
+    {
+      "member": "NETBIO00.DAT/7/883",
+      "name": "sp350605.bin",
+      "offset": 757035008,
+      "bytes": 68824,
+      "sha256": "460a9a2b414772358036f4a80676e59f3e6487a1ffa300cfeae420a2bce946bd"
+    },
+    {
+      "member": "NETBIO00.DAT/7/884",
+      "name": "sp350606.bin",
+      "offset": 757104640,
+      "bytes": 68416,
+      "sha256": "7b2163969c0dd3c30063e16af45e26c8a875bce058df836c092a8f4002f36f88"
+    },
+    {
+      "member": "NETBIO00.DAT/7/885",
+      "name": "sp350607.bin",
+      "offset": 757174272,
+      "bytes": 68620,
+      "sha256": "4c5b4be262adc9a774a8905120b683cf6a2317c414592d98aeb20109b59c9253"
+    },
+    {
+      "member": "NETBIO00.DAT/7/886",
+      "name": "sp350608.bin",
+      "offset": 757243904,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1625",
+      "name": "sp410000.bin",
+      "offset": 863873024,
+      "bytes": 71136,
+      "sha256": "408f0db8f65df6183a68fb589ff2244df9cd0767179ad52b93e4d834b2b61daa"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1626",
+      "name": "sp410001.bin",
+      "offset": 863944704,
+      "bytes": 70864,
+      "sha256": "2aa680604af90ffc8bc3fc7ac44caed1c1e8ba97c7963fb71d557e9e2d31d926"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1627",
+      "name": "sp410002.bin",
+      "offset": 864016384,
+      "bytes": 71728,
+      "sha256": "1d8f19d61210feab6aa729db30d93836d1a95fc9c3dbeeb4ac22ffc99df3e6a3"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1628",
+      "name": "sp410003.bin",
+      "offset": 864090112,
+      "bytes": 70320,
+      "sha256": "304d24652a22465022ec0956156bca7e1d9ec1d3eb236e1b33542d888f7b768e"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1629",
+      "name": "sp410004.bin",
+      "offset": 864161792,
+      "bytes": 69572,
+      "sha256": "af403933c6a16656d72070c159fbc0958caf7ff510f25da83b478b6cb4671d9a"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1630",
+      "name": "sp410005.bin",
+      "offset": 864231424,
+      "bytes": 71340,
+      "sha256": "6014808324f926dae52623dc7b2f653f42d46894c8b0ab286d4a4c289a80ccce"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1631",
+      "name": "sp410006.bin",
+      "offset": 864303104,
+      "bytes": 70864,
+      "sha256": "ebce4b97a9cf00d8a6131a60d97f8f340685a81d5bb0e348464c34119a55ae09"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1632",
+      "name": "sp410007.bin",
+      "offset": 864374784,
+      "bytes": 71136,
+      "sha256": "ce991c2bee2cf73c7adc07425436c2ac392526277ca999bd7ede8259dca6b8e9"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1633",
+      "name": "sp410008.bin",
+      "offset": 864446464,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1634",
+      "name": "sp410100.bin",
+      "offset": 864495616,
+      "bytes": 75284,
+      "sha256": "0b00630c825203da7c3ed6f15f2708188cc126d928d68f1090e40aa3f5c20133"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1635",
+      "name": "sp410101.bin",
+      "offset": 864571392,
+      "bytes": 75236,
+      "sha256": "99143e51c172baf79863c2ac755bca742df4a957c82f52eb189ebeb4d39bc513"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1636",
+      "name": "sp410102.bin",
+      "offset": 864647168,
+      "bytes": 75284,
+      "sha256": "91e371dc35aa37ddc87cd336baf9ffe24bb45028ef5b5e8649c8eb659d2e8974"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1637",
+      "name": "sp410103.bin",
+      "offset": 864722944,
+      "bytes": 74760,
+      "sha256": "6944737dfc93d67870d8b26e237d1fd49119c40af13b5b8956677a01684992e1"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1638",
+      "name": "sp410104.bin",
+      "offset": 864798720,
+      "bytes": 72992,
+      "sha256": "3c4f9d0a01f1ba5c9eaca80cb54abea1dac8050886a8a083726ed61e0e5ceaa3"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1639",
+      "name": "sp410105.bin",
+      "offset": 864872448,
+      "bytes": 75644,
+      "sha256": "497ff04c0c5020caf12a117c73fa2e3df74743544706ed7f37a6dd3a4ff290ee"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1640",
+      "name": "sp410106.bin",
+      "offset": 864948224,
+      "bytes": 74964,
+      "sha256": "7536180b533b185ede3bd30fb4da42650a8c44878cf08dbfccc675dc50fa147d"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1641",
+      "name": "sp410107.bin",
+      "offset": 865024000,
+      "bytes": 75440,
+      "sha256": "11d02c1b3e51b11bd774207c73ebd2b331d62714e63cc19fc5b728402fe4aecf"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1642",
+      "name": "sp410108.bin",
+      "offset": 865099776,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1643",
+      "name": "sp410200.bin",
+      "offset": 865148928,
+      "bytes": 71272,
+      "sha256": "51019a26a707deeb16384292c4dbb77f1a8fdf76d07ca6a6ced0a6983971e33d"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1644",
+      "name": "sp410201.bin",
+      "offset": 865220608,
+      "bytes": 71272,
+      "sha256": "5f69c48c5a40fa2d9043e8205d05e88a5168004fd9e0777f51a5f904977232a4"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1645",
+      "name": "sp410202.bin",
+      "offset": 865292288,
+      "bytes": 71340,
+      "sha256": "7850800d530f6b1af2b5199b579245426277cb812cade18ec2764e43a305a4dc"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1646",
+      "name": "sp410203.bin",
+      "offset": 865363968,
+      "bytes": 70796,
+      "sha256": "0635c8a537432c5952a4b61975587c7948d048a4ce9fb8cf1a09cc3ff5f4e3a7"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1647",
+      "name": "sp410204.bin",
+      "offset": 865435648,
+      "bytes": 69776,
+      "sha256": "8b448e3b573a8d00c6ab43fe29ebe32888eef4d0bafce16b21447b9abca8df74"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1648",
+      "name": "sp410205.bin",
+      "offset": 865507328,
+      "bytes": 71612,
+      "sha256": "97cf01b9289d2beb75501108543a7439474180fb0a392bd84fe2188b819f99ce"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1649",
+      "name": "sp410206.bin",
+      "offset": 865579008,
+      "bytes": 71204,
+      "sha256": "69818e3eac3f173a1f1bff20dba92ff7be9ac1ae15f843eb00081ed686e56c25"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1650",
+      "name": "sp410207.bin",
+      "offset": 865650688,
+      "bytes": 71408,
+      "sha256": "42a69f535a70936b8f3246bd17422d70d7b2dc6a0959b73a79147cfb03296202"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1651",
+      "name": "sp410208.bin",
+      "offset": 865722368,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1652",
+      "name": "sp410300.bin",
+      "offset": 865771520,
+      "bytes": 70524,
+      "sha256": "ff1bff1ec4492a482053bf54a0762191a4f9f7e5d8cd3961186cffe83e496beb"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1653",
+      "name": "sp410301.bin",
+      "offset": 865843200,
+      "bytes": 70524,
+      "sha256": "d2cb173b5ca62c04b46d78581e4541236544d95c53e85935d6322d43295f0cab"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1654",
+      "name": "sp410302.bin",
+      "offset": 865914880,
+      "bytes": 70572,
+      "sha256": "122ae100fc8445df0d7fcc54174a04f10e36675b9a511b61f40c688f1abcbb42"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1655",
+      "name": "sp410303.bin",
+      "offset": 865986560,
+      "bytes": 70048,
+      "sha256": "439996507cf818154ab3cbd5b105a36c92ce6ca0f5657411c951feedd276f909"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1656",
+      "name": "sp410304.bin",
+      "offset": 866058240,
+      "bytes": 69504,
+      "sha256": "d8dd041d77c130fc447965d016e4c4badee9c8f340fabd9fa64949bbe2335928"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1657",
+      "name": "sp410305.bin",
+      "offset": 866127872,
+      "bytes": 70932,
+      "sha256": "b396d7f30169a087a0d833f6726fc76a7790d1334dd0be942b4ce6692af4adaf"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1658",
+      "name": "sp410306.bin",
+      "offset": 866199552,
+      "bytes": 70456,
+      "sha256": "e31d061832f6c257e494829629ea8cfe6a02e18d5ff05298cae8388351053bd6"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1659",
+      "name": "sp410307.bin",
+      "offset": 866271232,
+      "bytes": 70728,
+      "sha256": "d92ae931cd77ffe3ace51289278b8d550e6b739506aa05be470898d3a73b92ae"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1660",
+      "name": "sp410308.bin",
+      "offset": 866342912,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1661",
+      "name": "sp410400.bin",
+      "offset": 866392064,
+      "bytes": 69164,
+      "sha256": "919b73cbe456a6f0070c6a869b1a54d9a662e71e9d925217bf7c874c2689cbba"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1662",
+      "name": "sp410401.bin",
+      "offset": 866461696,
+      "bytes": 69164,
+      "sha256": "4a58fe026927de85966899c91015e92c9c8924c19cedc7a6cd6b0210c454d887"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1663",
+      "name": "sp410402.bin",
+      "offset": 866531328,
+      "bytes": 69212,
+      "sha256": "531ec150f30b2f9a45371320676763e2c5edd792dda9d5c0d59c0577d707841d"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1664",
+      "name": "sp410403.bin",
+      "offset": 866600960,
+      "bytes": 68688,
+      "sha256": "daba07261e88cb0e0fae61817e56c60d2de6e4f06b1e2d1041f77804b8e42d51"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1665",
+      "name": "sp410404.bin",
+      "offset": 866670592,
+      "bytes": 68212,
+      "sha256": "99c0ec7e1b8420d5d16e5c60fb7692dd796769cc741a4260dc91ff7b1a5fc6e7"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1666",
+      "name": "sp410405.bin",
+      "offset": 866740224,
+      "bytes": 69572,
+      "sha256": "436e6d51240ecb65f0d83d3e504bdb9a32f9634ff6ab6e299825c542b408bdf8"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1667",
+      "name": "sp410406.bin",
+      "offset": 866809856,
+      "bytes": 69164,
+      "sha256": "68086962b390ca14fe71c825902e1a23ef0c81c1edda51294ccacc936495ad69"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1668",
+      "name": "sp410407.bin",
+      "offset": 866879488,
+      "bytes": 69368,
+      "sha256": "569e90410aa832aced95d2f0636a6268f9f12962ccc69ab88f5422f2c0617574"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1669",
+      "name": "sp410408.bin",
+      "offset": 866949120,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1670",
+      "name": "sp410500.bin",
+      "offset": 866998272,
+      "bytes": 70388,
+      "sha256": "1683eaab2ea08ad77f092f729620ea7b4094ae6923f1ea1f32ba6be610c69dfb"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1671",
+      "name": "sp410501.bin",
+      "offset": 867069952,
+      "bytes": 70388,
+      "sha256": "8875bcd3ef42628eb2412f632dbbbf3ff0b4567762fba6d3dce0f2d70bf65d0f"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1672",
+      "name": "sp410502.bin",
+      "offset": 867141632,
+      "bytes": 70436,
+      "sha256": "18595e1422e94b09a2b45bac4a286278ae52ff522c39bcd6edd1a2840e7a9323"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1673",
+      "name": "sp410503.bin",
+      "offset": 867213312,
+      "bytes": 69912,
+      "sha256": "d118f9efc8907a74869d9a7acce23d09d719be94c897da3d2a32e8278e0b02da"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1674",
+      "name": "sp410504.bin",
+      "offset": 867284992,
+      "bytes": 69300,
+      "sha256": "46b1a1a9bfe6d21267b652a89494606d5e2709fca397c7807282fc3bfe1de3a8"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1675",
+      "name": "sp410505.bin",
+      "offset": 867354624,
+      "bytes": 70728,
+      "sha256": "fe5fe38b4a683eb2e18addf2f4086229afe8a013a6948b37f9f95ee0ce97dd6b"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1676",
+      "name": "sp410506.bin",
+      "offset": 867426304,
+      "bytes": 70252,
+      "sha256": "c172d0d88ced4e253acd0d88bc49b2a5004f43ec825689d5203cb4d9e58abebb"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1677",
+      "name": "sp410507.bin",
+      "offset": 867497984,
+      "bytes": 70524,
+      "sha256": "f6f36f4fab2269c1aa08e5e5efbd3a4b5456ff8422a6a53f7436d61adb08e3d1"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1678",
+      "name": "sp410508.bin",
+      "offset": 867569664,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1679",
+      "name": "sp410600.bin",
+      "offset": 867618816,
+      "bytes": 70184,
+      "sha256": "8fd4fd9c4a0d06184d413e8c619e49e964d64286e5a51e20bbf38eeb7d3f100b"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1680",
+      "name": "sp410601.bin",
+      "offset": 867690496,
+      "bytes": 69640,
+      "sha256": "952911e7882bb5dafaab32ce01e3acdbfc161343c755632ac7585adbd18395ba"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1681",
+      "name": "sp410602.bin",
+      "offset": 867762176,
+      "bytes": 69144,
+      "sha256": "4c11d9a622b4f649cb5607759b67404b7f92fe7b83cc9ba52f42189579536ef7"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1682",
+      "name": "sp410603.bin",
+      "offset": 867831808,
+      "bytes": 69028,
+      "sha256": "dcf4b33956d1c99e7ff13f69c5cc5d42ba8395a5767741bcd1086763152faea7"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1683",
+      "name": "sp410604.bin",
+      "offset": 867901440,
+      "bytes": 68076,
+      "sha256": "eb0d2af8b5c022f6d8d6fcece95de0ecb1fdab78b1a1d0e9a9f03a788cefe7a9"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1684",
+      "name": "sp410605.bin",
+      "offset": 867971072,
+      "bytes": 70252,
+      "sha256": "5bf8054284ef68ce08c59376e34feb19486aba05220f5b7ce2099dc960c76343"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1685",
+      "name": "sp410606.bin",
+      "offset": 868042752,
+      "bytes": 68484,
+      "sha256": "bf443be70500b3cc9f38241a789e650c5906a78c0b48442afa26b559abc14ddf"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1686",
+      "name": "sp410607.bin",
+      "offset": 868112384,
+      "bytes": 69776,
+      "sha256": "d9a410884d84013878fa0b28e10998c05e27142d09f7b30ad4814dfd555a7345"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1687",
+      "name": "sp410608.bin",
+      "offset": 868184064,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1688",
+      "name": "sp410700.bin",
+      "offset": 868233216,
+      "bytes": 68620,
+      "sha256": "548ab2af6f721d238c4d19919499a573e17c42c8c0540a26609fce060a9c5ec8"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1689",
+      "name": "sp410701.bin",
+      "offset": 868302848,
+      "bytes": 68620,
+      "sha256": "20d0704ae60553fd165729b2b1a85bf45120b0ec8183627e002f21161d1aea49"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1690",
+      "name": "sp410702.bin",
+      "offset": 868372480,
+      "bytes": 68668,
+      "sha256": "0af643050e89b1fa19a86343213ef9df7f64032d8965b394e889626c67f91979"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1691",
+      "name": "sp410703.bin",
+      "offset": 868442112,
+      "bytes": 68076,
+      "sha256": "2b1ae7914bd5bfa450856692943ff8058f8a6bfd2ffbb2b0f6793e1bc7809ca3"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1692",
+      "name": "sp410704.bin",
+      "offset": 868511744,
+      "bytes": 67532,
+      "sha256": "425dd04ee16bc841636e64f2c8ae27c341fb8c004ba77aba1b035c992e15dfcb"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1693",
+      "name": "sp410705.bin",
+      "offset": 868579328,
+      "bytes": 69028,
+      "sha256": "0a9e9b5541e716b2e7f75a7d1c618357a954cbe87dbffab217437ac3c83ce0b2"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1694",
+      "name": "sp410706.bin",
+      "offset": 868648960,
+      "bytes": 68484,
+      "sha256": "5085b1df6b109c07cdb409b3a66d70ed6e2cd624af6e62ad7a9c79ab9faff557"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1695",
+      "name": "sp410707.bin",
+      "offset": 868718592,
+      "bytes": 68756,
+      "sha256": "45750e805acd1e712d098d8e5d08b3686317d1fe86aad115c4435b62e5ee35c5"
+    },
+    {
+      "member": "NETBIO00.DAT/9/1696",
+      "name": "sp410708.bin",
+      "offset": 868788224,
+      "bytes": 48928,
+      "sha256": "dfbe9f1eb80209e5164e9b533c663b7b0a2e88740f87d93e88976a1bcb6f2d91"
+    }
+  ],
+  "receipts": [
+    {
+      "domain": "program",
+      "path": "build-native-sjuni/dialogue-response-program-gcc-v2/receipt.json",
+      "sha256": "567a8d9502cc1782826fbd9787302eb8c21a619e6015600993e8f105107b1aed",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "program",
+      "path": "build-native-sjuni/dialogue-response-program-llvm-v2/receipt.json",
+      "sha256": "3457db5d86ff774f87f377f5961df39971a33e5cfdd07fab4a15633ca0b3a39e",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "conditions_and_pool",
+      "path": "build-native-sjuni/dialogue-conditions-gcc-v7/receipt.json",
+      "sha256": "a55cde827d9ea98596abb843b83d618df1775335880b0df78f35d242c3cbfdf4",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "conditions_and_pool",
+      "path": "build-native-sjuni/dialogue-conditions-llvm-v7/receipt.json",
+      "sha256": "fe5100bf1e000079d1b3a917c813be9870010086fa5332633746f7eece3aadf0",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "durations",
+      "path": "build-native-sjuni/dialogue-flag-durations-gcc-v3/receipt.json",
+      "sha256": "a392535676845c37fc2d04f804dd33d78a1418fe948f18567150b918481ab547",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "durations",
+      "path": "build-native-sjuni/dialogue-flag-durations-llvm-v3/receipt.json",
+      "sha256": "adeab7d0089c5962eb639e846810589b166a5d6361d258384cf01048e2d46bcf",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "durations_in_pool",
+      "path": "build-native-sjuni/dialogue-flag-pool-gcc-v2/receipt.json",
+      "sha256": "19ef5db98c167ddf9d91b5b902ae9ecb9397d5414c594055688dff47d78302e1",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "durations_in_pool",
+      "path": "build-native-sjuni/dialogue-flag-pool-llvm-v2/receipt.json",
+      "sha256": "77b7c471bba72d11b4313f65bb6fe7ad591c34cd212b667a50d049104515cf7f",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "inventory_traits",
+      "path": "build-native-sjuni/dialogue-inventory-traits-gcc-v1/receipt.json",
+      "sha256": "4c8f8b36e0f15f6bf0778d63b0bd4d98524b70d868759337c07a4a5658c5913f",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "inventory_traits",
+      "path": "build-native-sjuni/dialogue-inventory-traits-llvm-v1/receipt.json",
+      "sha256": "91f7e4dc05f6195b218c99cab11e4600b98f62d3bd82f079049ccf0994781a07",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "partner_segment",
+      "path": "build-native-sjuni/dialogue-partner-characters-gcc-v1/receipt.json",
+      "sha256": "1e899174cab870341816ee8980e4a95be81cf9185f4b0a64c3168db954c48f7d",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "partner_segment",
+      "path": "build-native-sjuni/dialogue-partner-characters-llvm-v1/receipt.json",
+      "sha256": "8b2576e9a4e9f220a086dc47661ec337230529c49544e85f74b4f6813aaeae86",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "actual_full_clears",
+      "path": "build-native-sjuni/dialogue-partner-full-clears-gcc-v1/receipt.json",
+      "sha256": "47e5ee37b76362a68b02aa95fa56ee558daf8244a758e9bf4798d60198e07afc",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "actual_full_clears",
+      "path": "build-native-sjuni/dialogue-partner-full-clears-llvm-v1/receipt.json",
+      "sha256": "6c9e231ed723b10dcf4b02f425aad521f13d46e8192dfb15dec32be862decdb7",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    }
+  ],
+  "current_contract_receipts": [
+    {
+      "path": "build-native-sjuni/scenario-events-parents-gcc-v1/receipt.json",
+      "sha256": "7f7a2622d0e10b3aaecd18b260de54ba2920b8532f8b9893011d647c912e9737",
+      "purpose": "Current strict CMake graph with native_dialogue_response_contract."
+    },
+    {
+      "path": "build-native-sjuni/scenario-events-parents-llvm-v1/receipt.json",
+      "sha256": "e0bebf89ab7e578012af9e415c399e2eb26f84649e6d59f1d1b6e51d0049a409",
+      "purpose": "Current strict CMake graph with native_dialogue_response_contract."
+    }
+  ],
+  "retained_failures": [
+    {
+      "path": "build-native-sjuni/dialogue-response-program-gcc-v1/receipt.json",
+      "sha256": "e7ff5c65e638167dfc5efc44d35ae41f58cee80c90e104d3bf5db8c7ea6efc38",
+      "reason": "Strict fixture indentation compile failure."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-response-program-llvm-v1/receipt.json",
+      "sha256": "77004bbbf46b94055e947a67a7db8a19da860ebdfb3cdb6b24e95572399e0e94",
+      "reason": "Fixture assumed selection zero existed in every bank; corrected to a retained nonempty selection."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-flag-durations-gcc-v1/receipt.json",
+      "sha256": "45628f2f1927f7bbd30de559270d297cd0c2e6c266e4545960afdc4aa83e20f5",
+      "reason": "Reference fixture lacked signed shift macros."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-flag-durations-gcc-v2/receipt.json",
+      "sha256": "e50b881b4fd29d2c4bb184d329f470f5e3e9e3ea211c38f5dcab336b1167c629",
+      "reason": "Fixture omitted vector include."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-conditions-gcc-v2/receipt.json",
+      "sha256": "e841977cddf11c5c788c8c4d8504f9bc3c76b356055a51240f7abd2aa256f8d6",
+      "reason": "Timed out in original nonadvancing inactive auxiliary-node branch; retained complete source and logs."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-conditions-llvm-v2/receipt.json",
+      "sha256": "ea1ae4b2bea0ca2f2015bbc5faad2e3c4ef2e9414b33ec238a09b7bb29939d25",
+      "reason": "Same diagnosed original inactive-node loop."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-conditions-gcc-v3/receipt.json",
+      "sha256": "9ca993efcd18277f291222888f4fc84ff124ba7e2c107396c7ffd36ddd909fe1",
+      "reason": "Repeated source-loop timeout retained before the controlled input observer was installed."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-conditions-llvm-v3/receipt.json",
+      "sha256": "2ecb0ba55c3c41273e34ca55fd00deb39fed99114ed76ec2729116cf19a3f8e5",
+      "reason": "Repeated source-loop timeout retained."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-conditions-gcc-v5/receipt.json",
+      "sha256": "a7cf6b1a7619a34984b43f25cbb5e2886aba504c2fe5ee28d7c53a2976195c1a",
+      "reason": "Fixture lacked explicit SceneResources include."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-conditions-llvm-v5/receipt.json",
+      "sha256": "363022c7eb1ce1c1040380a057cb0dc58aa9b1b86d4c2fbdfe814932f272992c",
+      "reason": "Same fixture-only missing include."
+    }
+  ],
+  "superseded_evidence": [
+    "Earlier dialogue pool/cache seals retain historical source hashes. Their prefix-field projection is superseded by the corrected B99 motion_style mapping in the integrated conditions v7 and flag-pool v2 pairs.",
+    "Initial limited condition v1/v2 evidence is superseded: source54F is motion_class, not response_class140.",
+    "The resource trait helper5B5350 is distinct from scenario flag5F8330 and bounded byte flag5709B0."
+  ],
+  "limits": [
+    "All condition kinds present in the270 owned SP banks are represented. Additional dispatcher kinds using unproduced phase-dependent scratch remain explicit unsupported profiles.",
+    "The actual inactive-node branches in5F80F0/5F81A0 do not advance. Original bodies remain unchanged; test-only observers interrupt at the first reached inactive input. Native returns unsupported_profile without inventing a retail result.",
+    "The partner helper is the actual6B819C..8218 segment within complete6B8130. Complete original inactive profiles execute; active request/cooldown/response selection is not replaced by this segment. A fifth other character refuses before DB0 overwrite, preserving four completed writes.",
+    "Complete6B7610 is executed only as a projection onto represented canonical speech/record/flag/duration fields. Other response-monitor/timer roles are not established by this owner.",
+    "Outer6B7E40, live reply/monitor state, complete1D41F0 bank publication, actual visibility initialization and later text rendering still require their actual producers/consumers. No complete application-frame or full Stage4 acceptance is claimed."
+  ]
+}

@@ -35,6 +35,8 @@ public:
     DialoguePoolUpdated update(const DialogueGates&)noexcept; //6B9590
     std::optional<DialogueRecord> record(std::size_t)const;
     std::optional<bool> flag(std::uint16_t)const noexcept;
+    std::optional<std::int32_t> flag_duration(std::uint16_t)const noexcept;
+    DialogueStatus advance_flag_durations()noexcept; //complete6B80A0, no pause gate in this helper
     std::optional<std::array<std::int16_t,2>> selected_counts()const noexcept{return initialized_&&counts_[0]&&counts_[1]?std::optional(std::array<std::int16_t,2>{*counts_[0],*counts_[1]}):std::nullopt;}
 private:
     std::optional<bool> gates(const DialogueGates&)const noexcept;
@@ -52,6 +54,7 @@ private:
     // Complete owned SPM profiles use only authored IDs0..511. Higher source
     // bit indices require their actual larger owner before they can be used.
     std::array<std::uint32_t,16> flags_{};
+    std::array<std::int32_t,512> flag_ticks_{}; //74E868, initialized by actual6B7610 clear
     bool initialized_{},running_{};
 };
 } // namespace reo::native::gameplay_world

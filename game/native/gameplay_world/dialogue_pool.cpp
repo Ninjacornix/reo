@@ -1,4 +1,5 @@
 #include "dialogue_pool.hpp"
+#include "dialogue_flag_durations.hpp"
 #include <bit>
 #include <cmath>
 #include <exception>
@@ -26,7 +27,7 @@ void DialoguePool::clear_records_unchecked()noexcept{records_={};counts_[0]=0;se
 DialogueStatus DialoguePool::initialize_owned_state()noexcept{
     if(world_.closed())return DialogueStatus::closed;
     if(running_||world_.busy())return DialogueStatus::busy;
-    initialized_=false;banks_.reset();flags_={};previous_secondary_actor_.reset();primary_actor_.reset();selected_sequences_={};clear_records_unchecked();
+    initialized_=false;banks_.reset();flags_={};flag_ticks_={};previous_secondary_actor_.reset();primary_actor_.reset();selected_sequences_={};clear_records_unchecked();
     const auto population=world_.session().primary_population;if(!population||*population>World::primary_capacity)return DialogueStatus::unavailable;
     for(std::size_t i=0;i<*population;++i){const auto actor=world_.primary(i);if(!actor)return DialogueStatus::unavailable;actor->speech.selection=SpeechSelection{0,0,0,0,0};actor->speech.gauge_notice=0;actor->speech.dialogue_delay=0;}
     initialized_=true;return DialogueStatus::completed;
@@ -45,6 +46,13 @@ DialogueStatus DialoguePool::banks(std::shared_ptr<const DialogueBanks> value)no
 }
 std::optional<DialogueRecord> DialoguePool::record(std::size_t index)const{return initialized_&&index<records_.size()?std::optional(records_[index]):std::nullopt;}
 std::optional<bool> DialoguePool::flag(std::uint16_t value)const noexcept{if(!initialized_||value>=512)return{};return bool(flags_[value/32]&(1u<<(value%32)));}
+std::optional<std::int32_t> DialoguePool::flag_duration(std::uint16_t value)const noexcept{return initialized_&&value<flag_ticks_.size()?std::optional(flag_ticks_[value]):std::nullopt;}
+DialogueStatus DialoguePool::advance_flag_durations()noexcept{
+    if(world_.closed())return DialogueStatus::closed;
+    if(running_||world_.busy())return DialogueStatus::busy;
+    if(!initialized_)return DialogueStatus::unavailable;
+    advance_dialogue_flag_durations(flags_,flag_ticks_);return DialogueStatus::completed;
+}
 DialogueConstructed DialoguePool::construct(const actors::EntityId& id,const DialogueGates& inputs)noexcept{
     DialogueConstructed report;const auto fail=[&](DialogueStatus status){report.status=status;return report;};
     if(world_.closed())return fail(DialogueStatus::closed);
@@ -76,8 +84,8 @@ DialogueConstructed DialoguePool::construct(const actors::EntityId& id,const Dia
     if(actor->category==0&&actor->slot==world_.selected_actor)value.channel=1;
     value.voice=-1;value.actor=id;value.voice=cue->voice;value.literal=0;report.original_return=1;
     if(text->body.size()>=2&&text->body[0]==std::byte{0x81}&&text->body[1]==std::byte{0x69}){value.literal=1;report.original_return=0;}
-    value.prefix={std::byte{'<'},std::byte{'c'},std::byte(actor->class_marker?0x3c:0x3b),std::byte{'>'}};
-    if(actor->category==0&&actor->slot==world_.selected_actor)value.prefix[2]=std::byte(actor->class_marker?0x3a:0x39);
+    value.prefix={std::byte{'<'},std::byte{'c'},std::byte(actor->motion_style?0x3c:0x3b),std::byte{'>'}};
+    if(actor->category==0&&actor->slot==world_.selected_actor)value.prefix[2]=std::byte(actor->motion_style?0x3a:0x39);
     for(const auto effect:text->effects){if(effect==0xffff)break;const auto flag=effect&0x7fffu;if(flag>=512)return fail(DialogueStatus::unsupported_profile);
         const auto mask=1u<<(flag%32);if(effect&0x8000)flags_[flag/32]|=mask;else flags_[flag/32]&=~mask;++report.effects;}
     return report;

@@ -16,5 +16,6 @@ inline void initialize_cleared_actor_defaults(Actor& actor)noexcept{
     actor.surface_transition_flags=0;
     actor.contact_style_discriminator=0;
     actor.speech.dialogue_delay=0;actor.speech.display_style=0;
+    actor.speech.partner_characters=std::array<std::int8_t,4>{};
 }
 }
