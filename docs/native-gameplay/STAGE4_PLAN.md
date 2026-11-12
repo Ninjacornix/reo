@@ -1,8 +1,41 @@
 # Stage 4: native gameplay and scheduling
 
 Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
-verification. The latest user instruction is to put the PC to sleep only after
-Stage4 is fully implemented and verified; do not sleep at component checkpoints.
+verification with multiple agents. The user is awake and has revoked the prior
+sleep request: finish Stage4 and do not put the PC to sleep afterward.
+
+- [Scene record parameter commands](SCENE_RECORD_PARAMETERS.md) now compose
+  opcode166, the actual message queue/receiver, canonical Update message-sink
+  adoption and ignored-send outcomes. Both compilers pass full source/queue/VM
+  comparisons and thirteen current parent tests. Full script-bank admission
+  improves from28/23 to31/26 ordinary/offline banks out of171; no scenario EVB
+  is fully admitted. Later startup commands and production installation remain open.
+- [Script scenario audio](SCRIPT_SCENARIO_AUDIO.md) now implements opcode73
+  through the real native bank owner, cue tables and canonical session/RNG.
+  The corrected eight-slot profile passes23,726 complete original command/audio
+  cases and11,340 ordinary/offline dispatches per compiler, including mixed PCM.
+  Scenario bank assignment, camera publication and installed acceptance remain open.
+- [Head reactions](HEAD_REACTION.md) now cover all seven modes, actual target
+  selection, constructor state, the5ECBE0 cinematic pass and ordinary head
+  selection. Both compilers pass1,205,826 checks, including full cinematic
+  passes and target/RNG continuations. Full ordinary postprocessing, the scene
+  controller and a coherent native game remain open.
+- [Secondary dynamics](SECONDARY_POSE_DYNAMICS.md) now implement the actual
+  four owned spring/history profiles, selector, topology publication and
+  source-backed constructor zero state. Both compilers pass complete original
+  continuation/selector and model API comparisons. This supersedes the older
+  body-contact checkpoint's missing-dynamics/reactions limit, while complete
+  frame/session ownership and installed acceptance remain open.
+- [Ordinary postprocess prerequisites](PRIMARY_ACTOR_POSTPROCESS.md)
+  reconstruct the actual scene trigger consumer, surface transitions and
+  canonical statistics tail. These use the real shared records, flags, grid,
+  channels and statistics owner. The complete outer phase and its reached
+  weapon work are still being integrated.
+
+Older entries retain their checkpoint-specific limits; the newer entries above
+supersede those limits only for the components they explicitly qualify. The
+[integration ownership audit](STAGE4_INTEGRATION_AUDIT.md) still identifies the
+missing native session entry and terminal consumers required for completion.
 
 - [Secondary pose body contacts](SECONDARY_POSE_CONTACTS.md) now reproduce
   the capsule math and actual ordinary/high four-joint pass. Both compilers

@@ -223,6 +223,12 @@ target_link_libraries(gameplay_collision_phase_tests PRIVATE reo_native_gameplay
 add_test(NAME native_gameplay_collision_phase COMMAND gameplay_collision_phase_tests)
 
 add_library(reo_native_model_attachments STATIC model_attachments.cpp resource_programs.cpp resource_models.cpp resource_frames.cpp resource_static_assets.cpp resource_factory.cpp inventory.cpp resource_use.cpp resource_contents.cpp resource_pairs.cpp resource_recipes.cpp resource_ownership.cpp actor_resource_operations.cpp resource_auxiliary_lists.cpp actor_terminal_timer.cpp)
+add_library(reo_native_actor_model_passes STATIC actor_model_passes.cpp)
+target_compile_features(reo_native_actor_model_passes PUBLIC cxx_std_20)
+target_link_libraries(reo_native_actor_model_passes PUBLIC reo_native_model_attachments)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(reo_native_actor_model_passes PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+endif()
 add_library(reo_native_animation_event_consumers STATIC animation_primitives.cpp)
 target_sources(reo_native_animation_event_consumers PRIVATE equipment_notice.cpp)
 add_library(reo_native_owned_resource_recipes STATIC owned_resource_recipes.cpp resource_consumption.cpp resource_health_effects.cpp resource_deployment.cpp resource_effects.cpp resource_depletion.cpp actor_gauge_progression.cpp actor_recovery.cpp)

@@ -71,6 +71,7 @@ class WorldResourceAttachments final {
     WorldResourceAttachments(World& world, gameplay_scenario::SceneResources& resources,
                              const gameplay_scenario::ResourceTemplates& templates)
         : world_(world), resources_(resources), templates_(templates) {}
+    bool bound_to(const World& world)const noexcept{return &world_==&world&&!world_.closed();}
     // Complete662DB0. A zero resource ID or known absent attachment/model returns;
     // foreign/stale owners, unknown capability kinds and unadmitted indices refuse.
     void bind(const actors::EntityId&, std::uint32_t resource, std::uint32_t node);

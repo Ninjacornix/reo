@@ -1,0 +1,142 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_world/actor_model_passes.hpp": "cf533439326eab1f279ddfa386e7933e972269a83a6b730fe38f99143780f3a2",
+    "game/native/gameplay_world/actor_model_passes.cpp": "7964e1e10487a17421bdafd0252ead86c9e58b4d259fb48084f33aae4a40622b",
+    "game/native/gameplay_update/actor_model_workers.hpp": "ba686cbe181f1a83795974d1cae203f4dfa7899d59d3c37aab1e3350810942ff",
+    "game/native/gameplay_update/actor_model_workers.cpp": "573cd983e26b80cd9564e3b2e7e69d993703622d313c4cbf148dcbc8c85f373e",
+    "game/native/gameplay_update/actor_model_workers_tests.cpp": "b9eea31744bda634c27d34721973d85ef35e5010a4d50c6cde7e52bc7300d503",
+    "tools/native_reconstruction/animation/actor_model_passes_tests.inc": "be9146f9449243baef2ed002d1d4588766bb9e104902f362b3bb19b366c89401",
+    "tools/native_reconstruction/animation/constrained_attachment_tests.cpp": "0bade6eb62962f162ef4358a9c91f4314511a7bddc37af5b7b96b05cbbea8383",
+    "tools/native_reconstruction/animation/verify_constrained_attachments.py": "0b53c17c7c48145ac04416710bcc182d488f96ca0e06b8cc8b61361df7becb29",
+    "docs/native-gameplay/ACTOR_MODEL_PASSES.md": "2f27ab7f4e17a79d8e468d0273823186a3a87ae9d48e9ea0d09bfab0ceafb5a4",
+    "tools/native_reconstruction/qualify_actor_model_passes_v1.py": "4d11e806316cd61764ced8d13a4b0557655c25e32b7a5834e04ee38f0aef624a"
+  },
+  "cohorts": {
+    "llvm": {
+      "path": "build-native-sjuni/actor-model-passes-llvm-v5/receipt.json",
+      "sha256": "29835d583842a356acafab15d917ca92025d45773986a42f4767d04247ef1ed7",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "primary_model_passes": 512,
+        "auxiliary_model_passes": 512,
+        "model_pass_leases": 928,
+        "model_pass_refusals": 4,
+        "checks": 873149,
+        "attachment_cases": 1600,
+        "surface_one_queries": 480,
+        "ground_cases": 800,
+        "raised_cases": 178,
+        "sample_cases": 600,
+        "floor_calls": 960,
+        "floor_hits": 780,
+        "pause_patterns": 255,
+        "joint_cases": 173831,
+        "ownership_cases": 1,
+        "original_helper_calls": 11976168,
+        "game_run": false
+      },
+      "subsequent_dependency_changes": {
+        "game/native/gameplay_scenario/cutscene_playback.hpp": {
+          "qualified": "08e5d564012ec1d8c2f1a57a31e4025fc727d091bc69a5fee917194bd7990e34",
+          "current": "18ca45dc7906b80e56a1f97ca736734590b6f29406a04d1c79a9c9c5db469ce1"
+        },
+        "game/native/gameplay_scenario/stream_channels.hpp": {
+          "qualified": "6b9dda39228d221ae1fc629ca82a8c1feb0b74e95ebe8815ca83059bd2b790e6",
+          "current": "2d42ba1955ec54c86b1d9e85f19354fe623d6c26182fd5bc48285cec61beddc1"
+        },
+        "game/native/gameplay_world/actor_initial_state.hpp": {
+          "qualified": "1ee837ea66118f0afc7c1c9e6db6ab95c874a967567481597ca67d8f30a27942",
+          "current": "4312ae0da0ded489141d4a5bc25923facf2ca92cb3ae20a0b927d694ded6eb23"
+        },
+        "game/native/gameplay_world/auxiliary_actors.hpp": {
+          "qualified": "1e275c4051bb6afb0500fbce8309d6c57946ffdc02f28a6ced79fe333f689f71",
+          "current": "8cf9ad3964feb9ec42cf1b31a15956a8d0510f2ffec5502fda8f51da6c18105b"
+        },
+        "game/native/gameplay_world/world.hpp": {
+          "qualified": "3deeb101ca24053701585eaffe9a9af233e3c2a31526aad434ba5f4a8236352c",
+          "current": "e551ef34a9707f91b19268f5b7c774cdd8a5f5c3445ce04b93f2b640522bd9f1"
+        }
+      }
+    },
+    "gcc": {
+      "path": "build-native-sjuni/actor-model-passes-gcc-v5/receipt.json",
+      "sha256": "f3feb55f0557b70cac738744c6632f94ec4603bc06046724f9af530b8037874d",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "primary_model_passes": 512,
+        "auxiliary_model_passes": 512,
+        "model_pass_leases": 928,
+        "model_pass_refusals": 4,
+        "checks": 873149,
+        "attachment_cases": 1600,
+        "surface_one_queries": 480,
+        "ground_cases": 800,
+        "raised_cases": 178,
+        "sample_cases": 600,
+        "floor_calls": 960,
+        "floor_hits": 780,
+        "pause_patterns": 255,
+        "joint_cases": 173831,
+        "ownership_cases": 1,
+        "original_helper_calls": 11976168,
+        "game_run": false
+      },
+      "subsequent_dependency_changes": {
+        "game/native/gameplay_scenario/cutscene_playback.hpp": {
+          "qualified": "08e5d564012ec1d8c2f1a57a31e4025fc727d091bc69a5fee917194bd7990e34",
+          "current": "18ca45dc7906b80e56a1f97ca736734590b6f29406a04d1c79a9c9c5db469ce1"
+        },
+        "game/native/gameplay_scenario/stream_channels.hpp": {
+          "qualified": "6b9dda39228d221ae1fc629ca82a8c1feb0b74e95ebe8815ca83059bd2b790e6",
+          "current": "2d42ba1955ec54c86b1d9e85f19354fe623d6c26182fd5bc48285cec61beddc1"
+        },
+        "game/native/gameplay_world/actor_initial_state.hpp": {
+          "qualified": "1ee837ea66118f0afc7c1c9e6db6ab95c874a967567481597ca67d8f30a27942",
+          "current": "4312ae0da0ded489141d4a5bc25923facf2ca92cb3ae20a0b927d694ded6eb23"
+        },
+        "game/native/gameplay_world/auxiliary_actors.hpp": {
+          "qualified": "1e275c4051bb6afb0500fbce8309d6c57946ffdc02f28a6ced79fe333f689f71",
+          "current": "8cf9ad3964feb9ec42cf1b31a15956a8d0510f2ffec5502fda8f51da6c18105b"
+        },
+        "game/native/gameplay_world/world.hpp": {
+          "qualified": "3deeb101ca24053701585eaffe9a9af233e3c2a31526aad434ba5f4a8236352c",
+          "current": "e551ef34a9707f91b19268f5b7c774cdd8a5f5c3445ce04b93f2b640522bd9f1"
+        }
+      }
+    }
+  },
+  "current_worker_parent_regressions": {
+    "llvm": {
+      "path": "build-native-sjuni/actor-predicates-ai-counter-parents-llvm-v1/receipt.json",
+      "sha256": "82b60d3e2858162e98d790b5de074236ed5e564ace3795046796945934811e9d",
+      "tests": 16,
+      "worker_binary": "build-native-sjuni/gameplay-native-llvm-v1/gameplay_update/actor_model_workers_tests.exe",
+      "worker_binary_sha256": "382dd50bda1d9cc2f19c0355cd59ff75cc17b572c50acef2b2fb522ee5b69060",
+      "worker_test_source_sha256_at_seal": "b9eea31744bda634c27d34721973d85ef35e5010a4d50c6cde7e52bc7300d503"
+    },
+    "gcc": {
+      "path": "build-native-sjuni/actor-predicates-ai-counter-parents-gcc-v1/receipt.json",
+      "sha256": "bd38cf9a6ff848c17182ce154cc92aca7596f4f5c6183f1c58df663e95fa1f0e",
+      "tests": 16,
+      "worker_binary": "build-native-sjuni/gameplay-native-gcc-v1/gameplay_update/actor_model_workers_tests.exe",
+      "worker_binary_sha256": "ed6ceadeec3efcff2e68bd68aba35332fa7a446657792172d1456e0f2ad636df",
+      "worker_test_source_sha256_at_seal": "b9eea31744bda634c27d34721973d85ef35e5010a4d50c6cde7e52bc7300d503"
+    }
+  },
+  "preserved_draft_receipts": [
+    "build-native-sjuni/actor-model-passes-llvm-v1/receipt.json",
+    "build-native-sjuni/actor-model-passes-llvm-v2/receipt.json",
+    "build-native-sjuni/actor-model-passes-llvm-v4/receipt.json"
+  ],
+  "limits": [
+    "Traversal cases deliberately share one imported model to expose ordering; independent ground/resource composition also executes in the same cohort.",
+    "The worker test uses explicit fixture providers for remaining frame work; it does not migrate those providers.",
+    "Immutable model source snapshots retain exact identities; subsequent dependency changes are recorded and current parent tests qualify worker adoption.",
+    "No complete room/session construction, rendering migration or native installed-game acceptance claim."
+  ]
+}

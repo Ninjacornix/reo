@@ -6,7 +6,7 @@ from audit_retail_effect_descriptors import compare_source,elf_reader
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 
 def main():
- p=argparse.ArgumentParser();p.add_argument('--compiler',type=Path,required=True);p.add_argument('--corpus',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--floor-receipt',type=Path,required=True);a=p.parse_args();out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
+ p=argparse.ArgumentParser();p.add_argument('--compiler',type=Path,required=True);p.add_argument('--corpus',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--floor-receipt',type=Path,required=True);p.add_argument('--actor-passes',action='store_true');a=p.parse_args();out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni')
  corpus=a.corpus.resolve();corpus_receipt=corpus/'receipt.json';cr=json.loads(corpus_receipt.read_bytes());assert cr['clips']==59 and cr['skeletons']==2
  for n,h in cr['output_sha256'].items():assert sha(corpus/n)==h
  elf=ROOT/'game_data/SLUS_207.65';assert sha(elf)=='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46';read=elf_reader(elf.read_bytes())
@@ -28,6 +28,8 @@ def main():
  for n in originals:
   begin,end=[int(v,16)for v in re.search(r'// Address: (0x[0-9a-f]+) - (0x[0-9a-f]+)',(ROOT/n).read_text()).groups()];proof.append(compare_source('complete original skeleton/model/frame/root or math body',n,begin,end,read if begin<0x370000 else (lambda at,size:o0raw[at-0x370000:at-0x370000+size])if begin<0x570000 else lambda at,size:overlay[at-0x570000:at-0x570000+size]))
  native_cpp=['game/native/'+n for n in ['animation/constraints.cpp','animation/constraint_math.cpp','animation/model.cpp','animation/model_math.cpp','animation/curves.cpp','transform_math/transform_math.cpp','gameplay_world/model_poses.cpp','gameplay_world/model_constraints.cpp','gameplay_world/linked_models.cpp','gameplay_world/auxiliary_actors.cpp','gameplay_world/scene_primary_actors.cpp','gameplay_world/world.cpp','gameplay_world/bodies.cpp','gameplay_actors/entity.cpp','gameplay_actors/input.cpp','gameplay_actors/health.cpp','gameplay_collision/collision.cpp','gameplay_collision/response.cpp','gameplay_collision/actors.cpp','gameplay_collision/actor_views.cpp','gameplay_world/model_attachments.cpp','gameplay_scenario/resource_templates.cpp','gameplay_scenario/scene_resources.cpp']]
+ native_cpp+=['game/native/gameplay_navigation/bank.cpp']
+ if a.actor_passes:native_cpp+=['game/native/gameplay_world/actor_model_passes.cpp']
  native=set(native_cpp);pending=list(native_cpp)
  while pending:
   n=pending.pop()
@@ -35,6 +37,8 @@ def main():
    dep=((ROOT/n).parent/rel).resolve();dep=dep if dep.is_file()else(ROOT/rel).resolve();assert dep.is_relative_to(ROOT/'game/native')and dep.is_file();key=dep.relative_to(ROOT).as_posix()
    if key not in native:native.add(key);pending.append(key)
  native=sorted(native);helpers=['tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp','tools/native_reconstruction/animation/constrained_attachment_tests.cpp','tools/native_reconstruction/animation/verify_constrained_attachments.py'];files=native+helpers+originals;before={n:sha(ROOT/n)for n in files};out.mkdir(parents=True)
+ if a.actor_passes:
+  helpers+=['tools/native_reconstruction/animation/actor_model_passes_tests.inc'];files+=helpers[-1:];before[helpers[-1]]=sha(ROOT/helpers[-1])
  record=dict(schema=1,status='failed',source_sha256=before,compiler_sha256=sha(a.compiler),corpus=dict(path=str(corpus_receipt),sha256=sha(corpus_receipt)),original_owned_bodies=proof,game_run=False)
  try:
   for n in files:
@@ -59,7 +63,7 @@ def main():
   for index,bits in profile['variant_scale_bits']:
    at=0x716444+20*index;raw=overlay[at-0x570000:at-0x570000+4];assert int.from_bytes(raw,'little')==bits;correction[hex(at)]=raw.hex();init+=' {const std::uint8_t bytes[]{'+','.join(str(v)for v in raw)+'};std::memcpy(p+'+str(at)+',bytes,sizeof bytes); }\n'
   record['correction_tables']=correction
-  floor_receipt=a.floor_receipt.resolve();floorq=json.loads(floor_receipt.read_bytes());assert floorq['results']['checks']==205015
+  floor_receipt=a.floor_receipt.resolve();floorq=json.loads(floor_receipt.read_bytes());assert floorq['status']=='native capsule/floor/grid response focused comparisons passed' and floorq['results']['checks'] in (205015,270963)
   for n in ['game/native/gameplay_collision/response.hpp','game/native/gameplay_collision/response.cpp']:assert sha(ROOT/n)==floorq['source_sha256'][n]
   archive=ROOT/'iso/Resident Evil - Outbreak (v2.00).iso';chosen=[];package=[];record['floor_image']=str(archive)
   for name in ['g0010100.bin','g0022205.bin','g0280200.bin','g0350100.bin','g0410100.bin']:
@@ -78,6 +82,7 @@ def main():
    raw=overlay[at-0x570000:at-0x570000+size];record['attachment_constants'][hex(at)]={'bytes':size,'sha256':hashlib.sha256(raw).hexdigest()};init+='{const std::uint8_t b[]{'+','.join(map(str,raw))+'};std::memcpy(p+'+str(at)+',b,sizeof b); }\n'
   (out/'owned_constants.hpp').write_text(init+'}\n');(out/'owned_clips.bin').write_bytes((corpus/'owned_clips.bin').read_bytes());(out/'owned_skeletons.bin').write_bytes((corpus/'owned_skeletons.bin').read_bytes())
   env=dict(os.environ);env['PATH']=str(a.compiler.resolve().parent)+os.pathsep+env.get('PATH','');binary=out/'checks.exe';command=[str(a.compiler),'-std=c++20','-O2','-msse4.1','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-label','-Wno-unused-parameter','-fno-fast-math','-ffp-contract=off','-I'+str(out),'-I'+str(out/'source'),*[str(out/'source'/n)for n in native_cpp],str(out/'tests.cpp'),'-o',str(binary)];record['command']=command
+  if a.actor_passes:command+=['-DREO_ACTOR_MODEL_PASSES=1']
   r=subprocess.run(command,env=env,capture_output=True,text=True,timeout=180);(out/'compile.txt').write_text(r.stdout+r.stderr);assert r.returncode==0,'compile failed'
   r=subprocess.run([str(binary),str(out/'owned_clips.bin'),str(out/'owned_skeletons.bin'),str(out/'owned_floors.bin'),str(out/'owned_templates.bin')],env=env,capture_output=True,text=True,timeout=120);(out/'run.txt').write_text(r.stdout+r.stderr);assert r.returncode==0,'comparison failed'
   record.update(status='passed',observed=json.loads(r.stdout),binary_sha256=sha(binary),source_unchanged=all(sha(ROOT/n)==h for n,h in before.items()));assert record['source_unchanged']

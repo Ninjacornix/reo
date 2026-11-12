@@ -229,6 +229,9 @@ void direct_create(std::uint8_t* ram, unsigned index, unsigned mode, unsigned fi
     original_transform_port(ram, &ctx, &rt);
     check(ctx.pc == 0xabcdef, "complete original two-link constructor return");
 }
+#ifdef REO_ACTOR_MODEL_PASSES
+#include "tools/native_reconstruction/animation/actor_model_passes_tests.inc"
+#endif
 int main(int argc, char** argv) try {
     check(argc == 5, "owned model and floor packages required");
     const auto old = _mm_getcsr();
@@ -244,6 +247,9 @@ int main(int argc, char** argv) try {
     put(ram.data(), 0x294e00, t::identity());
     const auto clips = load(argv[1]);
     const auto skeletons = load(argv[2]);
+#ifdef REO_ACTOR_MODEL_PASSES
+    compare_actor_model_passes(skeletons,ram);
+#endif
     const auto floor_bytes = load(argv[3]);
     const auto template_sections = load(argv[4]);
     check(template_sections.size() == floor_bytes.size(), "actual scenario template/floor pairs");
@@ -510,7 +516,12 @@ int main(int argc, char** argv) try {
     check(surface_one_queries > 0, "distinct source174==1 branch actually executes");
     check(raised_cases > 0 && floor_hits > 0,
           "real imported floor hits and actual raised endpoint solver exercised");
-    std::cout << "{\"checks\":" << checks << ",\"attachment_cases\":" << attachment_cases
+    std::cout << "{";
+#ifdef REO_ACTOR_MODEL_PASSES
+    std::cout << "\"primary_model_passes\":" << primary_model_pass_cases << ",\"auxiliary_model_passes\":" << auxiliary_model_pass_cases
+              << ",\"model_pass_leases\":" << actor_model_pass_leases << ",\"model_pass_refusals\":" << actor_model_pass_refusals << ',';
+#endif
+    std::cout << "\"checks\":" << checks << ",\"attachment_cases\":" << attachment_cases
               << ",\"surface_one_queries\":" << surface_one_queries
               << ",\"ground_cases\":" << ground_cases << ",\"raised_cases\":" << raised_cases
               << ",\"sample_cases\":" << sample_cases << ",\"floor_calls\":" << floor_calls
