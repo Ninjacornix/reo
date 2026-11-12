@@ -158,6 +158,10 @@ Stage4 is fully implemented and verified; do not sleep at component checkpoints.
   paired blending, constraints and pose publication. Both compilers pass the
   coupled original comparisons and current World/model-lifetime regressions.
   Secondary-pose selector/chain ownership and actual scene scheduling remain open.
+- [Secondary-pose link restoration](SECONDARY_POSE_LINK_RESTORE.md) now supplies
+  the actual61A6A0 table/gate policy and typed61B1A0 recipes. Paired full-body
+  comparisons pass with real player and HN54/HN88 inputs and explicit profile2
+  limits. Secondary-chain solving and actual temporary/auxiliary traversal remain open.
 - The [scene NPC loading-mode correction](CUTSCENE_NPC_CONSTRUCTION.md) separates
   asset-loading mode3243D7 from pause4BADF8. Paired current cohorts pass4,384 scene
   cases with independent inputs; the earlier fixture conflated the two and its
