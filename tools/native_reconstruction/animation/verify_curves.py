@@ -36,9 +36,12 @@ def main():
   for at,size in [(0x22fe20,32),(0x241c78,40),(0x241e90,4)]:
    raw=read(at,size);record['owned_constants'][hex(at)]=raw.hex();init+=' {const std::uint8_t bytes[]{'+','.join(str(v)for v in raw)+'};std::memcpy(p+'+str(at)+',bytes,sizeof bytes);}\n'
   (out/'owned_constants.hpp').write_text(init+'}\n');(out/'owned_clips.bin').write_bytes((corpus/'owned_clips.bin').read_bytes())
+  inventory=ROOT/'build-native-sjuni/audio-asset-inventory/file1-v1/members.json';assert sha(inventory)=='276264fd0f5d14e8e0ef1e17f008560d611c6ca30c2ad811259a004b7a54fbc2';item=next(x for x in json.loads(inventory.read_bytes())if x['member']=='NETBIO00.DAT/0/854')
+  with (ROOT/'iso/Resident Evil - Outbreak (v2.00).iso').open('rb')as f:f.seek(item['iso_offset']);raw=f.read(item['bytes'])
+  assert len(raw)==item['bytes']and hashlib.sha256(raw).hexdigest()==item['sha256'];table=int.from_bytes(raw[12:16],'little');start=int.from_bytes(raw[table:table+4],'little');size=int.from_bytes(raw[start+8:start+12],'little');assert 20<=size<=len(raw)-start;extra=raw[start:start+size];(out/'owned_object_clip.bin').write_bytes(extra);record['extra_owned_clip']=dict(member=item['member'],bank_sha256=item['sha256'],offset=start,bytes=size,sha256=hashlib.sha256(extra).hexdigest())
   env=dict(os.environ);env['PATH']=str(a.compiler.resolve().parent)+os.pathsep+env.get('PATH','');binary=out/'checks.exe';command=[str(a.compiler),'-std=c++20','-O2','-msse4.1','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-label','-Wno-unused-parameter','-fno-fast-math','-ffp-contract=off','-I'+str(out),'-I'+str(out/'source'),str(out/'source'/native[1]),str(out/'source'/native[3]),str(out/'tests.cpp'),'-o',str(binary)];record['command']=command
   r=subprocess.run(command,env=env,capture_output=True,text=True,timeout=180);(out/'compile.txt').write_text(r.stdout+r.stderr);assert r.returncode==0,'compile failed'
-  r=subprocess.run([str(binary),str(out/'owned_clips.bin')],env=env,capture_output=True,text=True,timeout=120);(out/'run.txt').write_text(r.stdout+r.stderr);assert r.returncode==0,'comparison failed'
+  r=subprocess.run([str(binary),str(out/'owned_clips.bin'),str(out/'owned_object_clip.bin')],env=env,capture_output=True,text=True,timeout=120);(out/'run.txt').write_text(r.stdout+r.stderr);assert r.returncode==0,'comparison failed'
   record.update(status='passed',observed=json.loads(r.stdout),binary_sha256=sha(binary),source_unchanged=all(sha(ROOT/n)==h for n,h in before.items()));assert record['source_unchanged']
  finally:
   record['output_sha256']={p.relative_to(out).as_posix():sha(p)for p in out.rglob('*')if p.is_file()and p.name!='receipt.json'};(out/'receipt.json').write_text(json.dumps(record,indent=2)+'\n')

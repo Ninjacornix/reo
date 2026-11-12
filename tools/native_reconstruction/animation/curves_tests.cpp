@@ -53,7 +53,7 @@ std::vector<std::byte> synthetic(unsigned format){
  return b;
 }
 int main(int argc,char** argv)try{
- check(argc==2,"owned clips input required");const auto old=_mm_getcsr();struct Reset{unsigned old;~Reset(){_mm_setcsr(old);}}reset{old};_mm_setcsr(0x1f80);std::vector<std::uint8_t> ram(0x2000000);owned_constants(ram.data());
+ check(argc==3,"owned ordinary and cinematic clip inputs required");const auto old=_mm_getcsr();struct Reset{unsigned old;~Reset(){_mm_setcsr(old);}}reset{old};_mm_setcsr(0x1f80);std::vector<std::uint8_t> ram(0x2000000);owned_constants(ram.data());
  for(unsigned format:{0x11u,0x12u,0x13u,0x21u,0x22u,0x23u}){auto raw=synthetic(format);compare_clip(ram,raw);}
  // Complete original sole-key branch never reads cubic/mixed tangent payloads.
  for(unsigned format:{0x22u,0x23u})for(std::uint32_t payload:{0xffc00000u,0x7f800000u,0xff800000u}){
@@ -62,10 +62,17 @@ int main(int argc,char** argv)try{
   write(8,unsigned(raw.size()));write(28,24+stride);write(36,1);write(40,12+stride);
   const unsigned tangent=44+(format==0x23?4:0)+8;write(tangent,payload);write(tangent+4,payload);
   compare_clip(ram,raw);++unused_tangent_cases;
-  auto used=synthetic(format);std::memcpy(used.data()+tangent,&payload,4);bool refused{};
-  try{(void)a::Clip::import_raw(used);}catch(const std::domain_error&){refused=true;}
-  check(refused,"actually used multi-key nonfinite tangent remains refused");++used_tangent_refusals;
+  auto endpoints=synthetic(format);std::memcpy(endpoints.data()+tangent,&payload,4);std::memcpy(endpoints.data()+tangent+3*stride+4,&payload,4);
+  compare_clip(ram,endpoints);++unused_tangent_cases;
+  // Segment1 is cubic for both formats: its outgoing and key2 incoming
+  // tangents are actually consumed, unlike either outer endpoint tangent.
+  for(const auto used_at:{tangent+stride+4,tangent+2*stride}){
+   auto used=synthetic(format);std::memcpy(used.data()+used_at,&payload,4);bool refused{};
+   try{(void)a::Clip::import_raw(used);}catch(const std::domain_error&){refused=true;}
+   check(refused,"actually used multi-key nonfinite tangent remains refused");++used_tangent_refusals;
+  }
  }
+ std::ifstream extra(argv[2],std::ios::binary);check(bool(extra),"owned object clip input opens");std::vector<char> extra_bytes((std::istreambuf_iterator<char>(extra)),{});check(!extra.bad()&&!extra_bytes.empty(),"complete owned object clip input");compare_clip(ram,std::as_bytes(std::span(extra_bytes)));
  std::ifstream f(argv[1],std::ios::binary);std::uint32_t count{};f.read(reinterpret_cast<char*>(&count),4);check(count==59,"bounded owned corpus identity");for(unsigned i=0;i<count;++i){std::uint32_t size{};f.read(reinterpret_cast<char*>(&size),4);check(size>0&&size<0x400000,"bounded owned clip extent");std::vector<std::byte> raw(size);f.read(reinterpret_cast<char*>(raw.data()),size);check(bool(f),"complete owned clip bytes");try{compare_clip(ram,raw);}catch(const std::exception& e){throw std::runtime_error("Owned clip "+std::to_string(i)+": "+e.what());}}
  for(unsigned mode=0;mode<5;++mode){auto raw=synthetic(0x12);if(mode==0)raw.resize(19);if(mode==1){std::uint32_t zero=0;std::memcpy(raw.data()+36,&zero,4);}if(mode==2){std::uint32_t inactive=0x00120008;std::memcpy(raw.data()+32,&inactive,4);}if(mode==3){std::int16_t t=-1;std::memcpy(raw.data()+44+8+2,&t,2);}if(mode==4){std::uint32_t unsupported=0x80140008;std::memcpy(raw.data()+32,&unsupported,4);}bool refused{};try{(void)a::Clip::import_raw(raw);}catch(const std::invalid_argument&){refused=true;}check(refused,"malformed/undefined clip admission is explicit");++admission_cases;}
  std::cout<<"{\"checks\":"<<checks<<",\"clips\":"<<clip_cases<<",\"curves\":"<<curve_cases<<",\"samples\":"<<sample_cases<<",\"parameter_cases\":"<<parameter_cases<<",\"admission_cases\":"<<admission_cases<<",\"original_helper_calls\":"<<helper_calls<<",\"unused_tangent_cases\":"<<unused_tangent_cases<<",\"used_tangent_refusals\":"<<used_tangent_refusals<<",\"owned_clips\":"<<count<<",\"game_run\":false}\n";
