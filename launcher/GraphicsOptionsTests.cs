@@ -56,6 +56,18 @@ internal static class GraphicsOptionsTests {
                           game + " supports every internal scale, fit and anti-aliasing selection");
                 }
             }
+            check(GameSession.GraphicsExitDiagnostic("[BOOT] OpenGL 3.3 is unavailable; not opening the game window.")
+                  ?.Contains("Install the graphics driver", StringComparison.Ordinal) == true,
+                  "Missing OpenGL is identified as a graphics driver error");
+            check(GameSession.GraphicsExitDiagnostic("[GPU-MOVIE] failure boundary=nativeMovieQuiescent detail=Create same-adapter native MPEG decoder")
+                  ?.Contains("turn off Decode movies on the graphics card", StringComparison.Ordinal) == true,
+                  "An actual Direct3D movie decoder failure points to CPU decoding");
+            check(GameSession.GraphicsExitDiagnostic("[run] graphics backend failure: Native DXGI swapchain unavailable; orderly shutdown requested")
+                  ?.Contains("graphics backend failed", StringComparison.Ordinal) == true,
+                  "An orderly graphics backend shutdown is reported as a failure");
+            check(GameSession.GraphicsExitDiagnostic("No D3D11 video device") == null &&
+                  GameSession.GraphicsExitDiagnostic("[GS-BACKEND] requested=parallel selected=software reason=Vulkan device initialization failed") == null,
+                  "Optional capabilities and normal software fallback are not reported as fatal errors");
             var invalid = GraphicsOptions.From(new Settings {
                 InternalResolution = 3, Anisotropy = 7, Brightness = 999,
                 Gamma = double.NaN, AspectRatio = "invalid", ScreenFit = "invalid"

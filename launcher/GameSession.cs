@@ -13,6 +13,7 @@ public sealed class GameSession {
     public string? NetworkStatus { get; private set; }
     volatile string? graphicsStatus;
     public string? GraphicsStatus => graphicsStatus;
+    Task<string?> graphicsExitDiagnostic = Task.FromResult<string?>(null);
     TaskCompletionSource graphicsReady = new(TaskCreationOptions.RunContinuationsAsynchronously);
     internal Task WaitForGraphicsReadyAsync(TimeSpan timeout) => graphicsReady.Task.WaitAsync(timeout);
     public string? MovieStatus { get; private set; }
@@ -372,10 +373,7 @@ public sealed class GameSession {
             _ = Task.Run(() => ControllerHealth.Run(lightProcess, discElf, controller, lightLogs));
         if (OperatingSystem.IsWindows()) _ = Task.Run(() => ControllerRumble.Trace(lightProcess, controller, lightLogs));
         _ = Pump(Process.StandardOutput, stdout);
-        _ = Pump(Process.StandardError, stderr, line => {
-            ObserveGraphicsLine(line);
-            account?.Observe(line);
-        });
+        graphicsExitDiagnostic = ObserveStandardError(Process.StandardError, stderr, account);
         await File.WriteAllTextAsync(
             Path.Combine(Logs, "launch.json"),
             JsonSerializer.Serialize(
@@ -543,6 +541,44 @@ public sealed class GameSession {
             int.TryParse(counts[1], out int total) && total > 0 && done >= 0 && done <= total)
             graphicsStatus = $"Preparing graphics · {(long)done * 100 / total}%";
     }
+    async Task<string?> ObserveStandardError(StreamReader input, StreamWriter output, AutomaticAccount? account) {
+        string? diagnostic = null;
+        await Pump(input, output, line => {
+            ObserveGraphicsLine(line);
+            diagnostic ??= GraphicsExitDiagnostic(line);
+            account?.Observe(line);
+        }).ConfigureAwait(false);
+        return diagnostic;
+    }
+
+    internal async Task<string> ExitStatusAsync(int exitCode) {
+        string? diagnostic = null;
+        try {
+            // The process can exit before the final line of stderr reaches the launcher.
+            diagnostic = await graphicsExitDiagnostic.WaitAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        } catch (Exception error) when (error is IOException or TimeoutException) {
+            // A pipe or log failure must not hide the process exit itself.
+        }
+        return randomizerStopReason ?? diagnostic ?? (exitCode == 0
+            ? "The game has closed. Your session logs have been saved."
+            : $"The game closed unexpectedly (exit code {exitCode}). Open Log for details.");
+    }
+
+    internal static string? GraphicsExitDiagnostic(string line) {
+        if (line.StartsWith("[BOOT] OpenGL 3.3 is unavailable;", StringComparison.Ordinal))
+            return "OpenGL 3.3 is unavailable · Install the graphics driver for your GPU and try again. Open Log for details.";
+
+        bool backendFailure = line.StartsWith("[run] graphics backend failure: ", StringComparison.Ordinal);
+        if (backendFailure || line.StartsWith("[GPU-MOVIE] failure boundary=", StringComparison.Ordinal) ||
+            line.StartsWith("[CRASH]", StringComparison.Ordinal)) {
+            if (line.Contains("Create same-adapter native MPEG decoder", StringComparison.Ordinal) ||
+                line.Contains("No hardware MPEG decoder on actual GS adapter LUID", StringComparison.Ordinal) ||
+                line.Contains("Requested native movie has no actual GS owner service", StringComparison.Ordinal))
+                return "GPU movie decoding failed · In Graphics, turn off Decode movies on the graphics card and try again. Open Log for details.";
+        }
+        return backendFailure ? "The game graphics backend failed · Open Log for the graphics error." : null;
+    }
+
     internal static async Task Pump(StreamReader input, StreamWriter output,
                                     Action<string>? observe = null) {
         using (output) {
