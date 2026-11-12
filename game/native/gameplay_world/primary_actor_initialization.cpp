@@ -46,6 +46,9 @@ PrimaryInitializationStatus PrimaryActorInitialization::defaults(World& world,ac
             const auto previous_resources=actor->animation->resources;auto previous_state=std::move(actor->primary_state);
             (void)previous_resources;(void)previous_state;
             actor->primary_state=std::move(state);actor->active=true;actor->contact.authored_id=actor->slot;actor->category=0;actor->character=character;
+            // Grant the cleared humanoid owner on first native initialization;
+            // model reload/default restoration preserves established head state.
+            if(!actor->head_reaction)actor->head_reaction.emplace();
             if(substitution){const auto status=apply_primary_custom_statistics(*actor,world.session().random);if(status!=PrimaryInitializationStatus::completed)return status;}
             else{
                 actor->motion_style=std::bit_cast<std::uint8_t>(definition.motion_style);actor->motion_subtype=definition.motion_subtype;

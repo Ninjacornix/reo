@@ -159,6 +159,8 @@ void constructors() {
     check(a->animation->channel_count==0&&a->animation->resources_known&&!a->animation->resources[0]&&!a->animation->resources[1]&&!a->animation->resources[2]);
     check(a->linked_frame&&a->linked_frame->center_cache_state==0&&a->linked_frame->transient_marker==0);
     check(a->targeting&&a->targeting->flags==0&&!a->targeting->selected_model_point&&a->targeting->model_point==0);
+    check(a->targeting->head_model_point==0&&b->targeting->head_model_point==0);
+    a->targeting->head_model_point=7;check(b->targeting->head_model_point==0);
     check(a->model_asset==prepared->asset()&&a->scripted&&a->scripted->model_group==0x34);
     check(a->scripted->part_visibility==std::vector<std::uint8_t>({1,1,1}));
     check(a->scripted->color==std::array<std::uint8_t,4>{255,255,255,255}&&a->scripted->alpha_mode==-1&&a->scripted->alpha==255);
@@ -193,6 +195,7 @@ void constructors() {
     check(owner.linked_models().remaining()==remaining&&scheduler.size()==32);
     check(owner.close()==world::Status::completed);
     check(a->model&&a->scripted&&a->model_asset==prepared->asset());
+    check(a->targeting->head_model_point==7);
     check(factory.create(*prepared).status==u::ScriptedConstructionStatus::unavailable);
 }
 
@@ -302,6 +305,7 @@ void owned(const std::filesystem::path& archive,const std::filesystem::path& man
             const auto actor=actors.resolve(made.id);
             check(actor&&actor->model_asset==asset&&actor->model&&actor->model->nodes().size()==nodes);
             check(actor->scripted&&actor->scripted->part_visibility.size()==parts);
+            check(actor->targeting&&actor->targeting->head_model_point==0);
             check(actor->scripted->render.bank==selected&&actor->model!=instance);
             actor->model->rebuild(reo::native::transform_math::identity());
             check(actor->model->retain()&&actor->model->retain()->joints.size()==nodes);

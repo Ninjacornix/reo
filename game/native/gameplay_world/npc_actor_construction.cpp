@@ -49,6 +49,8 @@ NpcConstructed NpcActorConstruction::create(const PreparedNpcActor& prepared)noe
         if(created.status!=AuxiliaryStatus::completed)return{};
         const auto actor=world_.resolve(created.id);const auto& definition=prepared.definition_;
         actor->active=true;actor->category=1;actor->character=prepared.character_;
+        //682D10 cleared the full NPC record before this humanoid constructor.
+        actor->head_reaction.emplace();
         actor->model_variant=definition.id;actor->model_pose_class=prepared.model_class_;
         actor->current=actor->maximum=definition.health;actor->motion_style=definition.motion_style;actor->motion_subtype=definition.motion_subtype;
         actor->model_scale={definition.scale,definition.scale,definition.scale};actor->motion_multiplier=1;
@@ -59,7 +61,7 @@ NpcConstructed NpcActorConstruction::create(const PreparedNpcActor& prepared)noe
         actor->collision.body_definition=body;actor->collision.local_center=actor->collision.previous_local_center=shape.center;
         actor->collision.radius=actor->collision.previous_radius=shape.radius;actor->collision.interpolation_target=shape;
         actor->contact.regions=std::move(regions);actor->auxiliary_status|=2;actor->room=world_.room;
-        actor->targeting=TargetingState{0,false,std::uint8_t(0)};
+        actor->targeting=TargetingState{0,false,std::uint8_t(0),std::uint8_t(0)};
         return{NpcConstructionStatus::completed,created.id};
     }catch(const std::bad_alloc&){return{NpcConstructionStatus::no_memory,{}};}
     catch(const std::exception&){return{};}
