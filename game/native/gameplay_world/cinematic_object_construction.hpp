@@ -35,6 +35,11 @@ public:
         const gameplay_scenario::CutsceneDescriptor&,gameplay_scenario::CutsceneCue,
         const CinematicObjectAssets&);
     CinematicObjectsConstructed create(const PreparedCinematicObjects&)noexcept;
+    //5F0610 reserves all descriptor objects before5ECF90 later acquires their
+    // models. Keep these phases distinct when composing the complete caller.
+    CinematicObjectsConstructed reserve(const PreparedCinematicObjects&)noexcept;
+    CinematicObjectsConstructed construct_reserved(const PreparedCinematicObjects&,
+        std::span<const gameplay_scenario::CutsceneObjectBinding>)noexcept;
 private:World& world_;
 };
 }

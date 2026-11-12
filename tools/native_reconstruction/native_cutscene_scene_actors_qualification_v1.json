@@ -1,0 +1,120 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "scope": "Owned cinematic actor/model construction and queued reset composition; object reservation precedes later model acquisition.",
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_scenario/cutscene_scene_actors.hpp": "85d6f5b2e182cb34d1594abef393000bd257572cc90ea0979a1b26e1095233fa",
+    "game/native/gameplay_scenario/cutscene_scene_actors.cpp": "2d0731589e15abc04cefe708eec5873d73c76093b503ce76c8c9dbb9b569cbf3",
+    "game/native/gameplay_world/cinematic_object_construction.hpp": "d0490e81a6396b438e5b56a60d202aea4fbda1a3fe44cd83bc2a7d154ac9f7a5",
+    "game/native/gameplay_world/cinematic_object_construction.cpp": "31758a675bbe215a52112556d68d0cd0755a2b92ab9e964ca78e2b40ce1195e1",
+    "tools/native_reconstruction/cutscene_scene_actors_tests.cpp": "4f16700a61aea20d600da2738c40b06bf3b3b483d279d5d742388b00475b4198",
+    "tools/native_reconstruction/verify_cutscene_scene_actors.py": "d0ba63f3f24a9e518103e6aa2ee7195c77aaa12d7791a9639199dc232a110852"
+  },
+  "receipts": {
+    "private_llvm": {
+      "path": "build-native-sjuni/cutscene-scene-actors-llvm-v10/receipt.json",
+      "sha256": "52557d98fc21f1297dbe878a7ae761c2ef33e625a4dff9650d5f8ffd4bc2afb6",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "result": {
+        "missing_models": [
+          "Native cinematic object required named asset unavailable: obj07_01_a_00.nbd",
+          "Native cinematic object required named asset unavailable: obj99_99_a_00.nbd"
+        ],
+        "checks": 3415,
+        "scenes": 30,
+        "primary": 52,
+        "npcs": 52,
+        "scripted": 148,
+        "objects": 74,
+        "queue_transitions": 30,
+        "parameters": 4,
+        "refusals": 152,
+        "retained_models": 326,
+        "game_run": false
+      },
+      "source_drift": null,
+      "native_archive_count": 62
+    },
+    "private_gcc": {
+      "path": "build-native-sjuni/cutscene-scene-actors-gcc-v10/receipt.json",
+      "sha256": "8767fd65e22ffdcfe8c18acc33175bf510a4e19788bd868b7dd6c0bdbba83db1",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "result": {
+        "missing_models": [
+          "Native cinematic object required named asset unavailable: obj07_01_a_00.nbd",
+          "Native cinematic object required named asset unavailable: obj99_99_a_00.nbd"
+        ],
+        "checks": 3415,
+        "scenes": 30,
+        "primary": 52,
+        "npcs": 52,
+        "scripted": 148,
+        "objects": 74,
+        "queue_transitions": 30,
+        "parameters": 4,
+        "refusals": 152,
+        "retained_models": 326,
+        "game_run": false
+      },
+      "source_drift": null,
+      "native_archive_count": 62
+    },
+    "current_cmake_llvm": {
+      "path": "build-native-sjuni/session-rooms-scene-actors-llvm-v1/receipt.json",
+      "sha256": "13bf7590e347ca24021137fd5ac1be57b76896b2600eaf05c4a7b3ca04550c47",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "result": {
+        "missing_models": [
+          "Native cinematic object required named asset unavailable: obj07_01_a_00.nbd",
+          "Native cinematic object required named asset unavailable: obj99_99_a_00.nbd"
+        ],
+        "checks": 3415,
+        "scenes": 30,
+        "primary": 52,
+        "npcs": 52,
+        "scripted": 148,
+        "objects": 74,
+        "queue_transitions": 30,
+        "parameters": 4,
+        "refusals": 152,
+        "retained_models": 326,
+        "game_run": false
+      },
+      "source_drift": {},
+      "native_archive_count": 63
+    },
+    "current_cmake_gcc": {
+      "path": "build-native-sjuni/session-rooms-scene-actors-gcc-v1/receipt.json",
+      "sha256": "0a791f3ec32e50a37cedbc0d689b511b58a27c96615ee8d68a8a60bc24ff4c26",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "result": {
+        "missing_models": [
+          "Native cinematic object required named asset unavailable: obj07_01_a_00.nbd",
+          "Native cinematic object required named asset unavailable: obj99_99_a_00.nbd"
+        ],
+        "checks": 3415,
+        "scenes": 30,
+        "primary": 52,
+        "npcs": 52,
+        "scripted": 148,
+        "objects": 74,
+        "queue_transitions": 30,
+        "parameters": 4,
+        "refusals": 152,
+        "retained_models": 326,
+        "game_run": false
+      },
+      "source_drift": {},
+      "native_archive_count": 63
+    }
+  },
+  "limits": [
+    "Thirty owned 0950 descriptors complete two construction epochs each; two additional selected descriptors explicitly refuse missing named models without changing canonical bindings. This is not all536 model-complete descriptors.",
+    "Private immutable snapshots retain their recorded older common schema; current CMake cohorts compile the final shared World/model closure and report no drift.",
+    "Existing qualified model/initializer/motion components are composed; complete original5ECF90/5ED340/5ED770 lifecycle bodies are not newly dynamically compared here.",
+    "Room/resource/media/renderer entry and exit workers remain required. Older descriptor layouts and missing named assets are not converted or substituted."
+  ]
+}

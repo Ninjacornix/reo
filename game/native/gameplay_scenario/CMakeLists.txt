@@ -1,4 +1,21 @@
 add_library(reo_native_gameplay_scenario STATIC interpreter.cpp flags.cpp offline.cpp scene_resources.cpp scene_controls.cpp content.cpp sequence_control.cpp lighting.cpp stream_channels.cpp stream_instances.cpp scene_models.cpp scene_model_bindings.cpp periodic_effects.cpp room_rules.cpp room_object_commands.cpp actor_requests.cpp scene_control_routes.cpp scene_matrix_programs.cpp scene_matrix_tables.cpp scene_matrix_playback.cpp)
+
+# Scene actor lifecycle composes the existing model/constructor owners above
+# the core Scenario layer; it does not introduce a reverse actor dependency.
+add_library(reo_native_cutscene_scene_actors STATIC cutscene_scene_actors.cpp)
+target_compile_features(reo_native_cutscene_scene_actors PUBLIC cxx_std_20)
+target_link_libraries(reo_native_cutscene_scene_actors PUBLIC
+    reo_native_gameplay_update reo_native_primary_actor_models
+    reo_native_npc_actor_construction reo_native_scripted_actor_construction
+    reo_native_cinematic_object_assets)
+add_executable(cutscene_scene_actors_tests
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../tools/native_reconstruction/cutscene_scene_actors_tests.cpp)
+target_include_directories(cutscene_scene_actors_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
+target_link_libraries(cutscene_scene_actors_tests PRIVATE reo_native_cutscene_scene_actors)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(reo_native_cutscene_scene_actors PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+    target_compile_options(cutscene_scene_actors_tests PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
+endif()
 target_sources(reo_native_gameplay_scenario PRIVATE script_audio.cpp)
 target_link_libraries(reo_native_gameplay_scenario PUBLIC reo_native_gameplay_audio reo_native_model_attachments)
 
