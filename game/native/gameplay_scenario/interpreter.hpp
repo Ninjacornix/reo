@@ -8,6 +8,7 @@
 #include <span>
 #include <vector>
 namespace reo::native::gameplay_world { class World; }
+namespace reo::native::gameplay_update { class GameplayMessageSink; }
 
 namespace reo::native::gameplay_scenario {
 class FlagState;
@@ -75,6 +76,8 @@ public:
     bool needs_forced_terminal()const noexcept{return forced_terminal_;}
     bool needs_script_audio()const noexcept{return script_audio_;}
     bool admits_script_audio(const ScriptAudio*,const gameplay_world::World*)const noexcept;
+    bool needs_scene_record_parameters()const noexcept{return scene_record_parameters_;}
+    bool admits_scene_record_parameters(const gameplay_world::World*,const gameplay_update::GameplayMessageSink*)const noexcept;
     bool needs_scenario_counter_policy()const noexcept{return scenario_counter_policy_;}
     bool admits_room_counters(const gameplay_world::World*)const noexcept;
     bool admits_inventory_grants(const gameplay_world::World*,const SceneResources*,const ResourceTemplates*)const noexcept;
@@ -96,6 +99,7 @@ private:
     bool forced_terminal_{};
     bool character_remap_{};
     bool script_audio_{};
+    bool scene_record_parameters_{};
     struct AudioRequest {std::uint32_t event{},mode{},actor{};};
     std::vector<AudioRequest> audio_requests_;
     DispatchProfile profile_{};
@@ -131,14 +135,14 @@ public:
     virtual std::optional<std::int32_t> query(std::uint32_t id)noexcept=0;
 };
 struct Providers {Flags* flags{};gameplay_tasks::FlagTimers* timers{};Signals* signals{};FlagState* canonical_flags{};
-    SceneResources* scene_resources{};SceneEffects* scene_effects{};SceneOwners* scene_owners{};SessionCounters* session_counters{};SequenceControl* sequences{};Lighting* lighting{};SceneChannels* scene_channels{};SceneControls* scene_controls{};ControlEffects* control_effects{};StreamChannels* streams{};StreamBackend* stream_backend{};SavedControlRecords* saved_controls{};gameplay_world::World* world{};ActionChoices* action_choices{};SceneModels* models{};RoomObjectCommands* room_objects{};PeriodicEffects* periodic_effects{};SurfaceEffects* surface_effects{};const ResourceTemplates* resource_templates{};ForcedActorTerminal* forced_terminal{};ScriptAudio* script_audio{};};
+    SceneResources* scene_resources{};SceneEffects* scene_effects{};SceneOwners* scene_owners{};SessionCounters* session_counters{};SequenceControl* sequences{};Lighting* lighting{};SceneChannels* scene_channels{};SceneControls* scene_controls{};ControlEffects* control_effects{};StreamChannels* streams{};StreamBackend* stream_backend{};SavedControlRecords* saved_controls{};gameplay_world::World* world{};ActionChoices* action_choices{};SceneModels* models{};RoomObjectCommands* room_objects{};PeriodicEffects* periodic_effects{};SurfaceEffects* surface_effects{};const ResourceTemplates* resource_templates{};ForcedActorTerminal* forced_terminal{};ScriptAudio* script_audio{};gameplay_update::GameplayMessageSink* messages{};};
 struct TickContext {bool enabled{true};bool alternate_mode{};std::uint8_t selected_actor{};std::uint16_t current_room{};
     // Caller-provided actual SDK/audio service tick, distinct from task passes
     // or the simulation clock. Never inferred from host elapsed time.
     std::optional<std::uint32_t> stream_tick{};};
 struct OfflineDispatch {std::uint32_t actor_category{},room_relation{};std::uint16_t actor_room{};};
 struct TickResult {Status status{Status::completed};std::size_t operations{};Position position;std::uint32_t opcode{};};
-struct OpcodeCoverage {bool native_algorithm{};bool flags_required{},timers_required{},signals_required{},scene_resources_required{},session_counters_required{},sequences_required{},lighting_required{},scene_channels_required{},scene_controls_required{},streams_required{},saved_controls_required{},world_required{},selected_actor_required{},action_choices_required{},models_required{},scenario_required{},canonical_flags_required{},room_objects_required{},room_object_lifetime_required{},room_object_queries_required{},periodic_effects_required{},surface_effects_required{},script_audio_required{};};
+struct OpcodeCoverage {bool native_algorithm{};bool flags_required{},timers_required{},signals_required{},scene_resources_required{},session_counters_required{},sequences_required{},lighting_required{},scene_channels_required{},scene_controls_required{},streams_required{},saved_controls_required{},world_required{},selected_actor_required{},action_choices_required{},models_required{},scenario_required{},canonical_flags_required{},room_objects_required{},room_object_lifetime_required{},room_object_queries_required{},periodic_effects_required{},surface_effects_required{},script_audio_required{},scene_record_parameters_required{};};
 class Interpreter {
 public:
     static constexpr std::size_t channel_count=6;

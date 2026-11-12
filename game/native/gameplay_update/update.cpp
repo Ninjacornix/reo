@@ -82,6 +82,9 @@ scenario::CutsceneTracksUpdated Owner::run_cutscene_actor_tracks(const std::uint
     return cutscene_actor_tracks_->tick(frame,scene,speech);
 }
 Status Owner::run_script(std::size_t channel,scenario::Providers providers,std::size_t budget,Result& result)noexcept{
+    auto* messages=publication_.message_sink();
+    if(providers.messages&&providers.messages!=messages)return Status::script_failure;
+    providers.messages=messages;
     providers.flags=&flags_;providers.canonical_flags=&flags_;providers.timers=&timers_;
     if(providers.action_choices&&providers.action_choices!=&choices_)return Status::script_failure;
     providers.action_choices=&choices_;

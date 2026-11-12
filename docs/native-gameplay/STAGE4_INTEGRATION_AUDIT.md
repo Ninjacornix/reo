@@ -190,6 +190,16 @@ first refusal. Actual native gameplay callers remain uninstalled.
 
 ## Explicit exclusions and evidence limits
 
+The later [166 command/queue qualification](SCENE_RECORD_PARAMETERS.md) replaces
+the initial coverage frontier for implemented `73`, `164`, `165` and `166`.
+Complete native Program admission now checks all171 owned banks and admits
+31ordinary/26offline, versus28/23 at baseline42b792a2. The five EVBs still
+refuse later source-owned semantics: ordinary170/156/150 and offline1A1/156.
+These are complete-import refusals rather than a claim that each command runs
+on every session. Canonical Update message-sink adoption now exists for166;
+concrete native room/session bootstrap and remaining gameplay services remain
+the integration boundary described above.
+
 The native asset/primary initialization/cache, temporary primary/NPC/object
 ownership, typed tracks, object motion-bank loading and new _H.BIN resource
 lookup already exist and should be integrated, not reimplemented. Outstanding

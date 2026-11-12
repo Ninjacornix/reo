@@ -16,6 +16,7 @@ struct EnemyDescriptor {
     std::int16_t health{},maximum{};
     std::int8_t actor_marker{}; // expanded record21
     std::uint8_t room{},owner_mode{},parameter1f{},parameter20{},parameter5{},parameter23{};
+    std::uint8_t parameter2e{}; // expanded record2E; script166/channel5 type6 value, separate from authored parameter23
     std::array<std::uint8_t,10> auxiliary_ids{};
     std::int8_t parameter21{},route_position{};
     std::uint16_t route_wait{};

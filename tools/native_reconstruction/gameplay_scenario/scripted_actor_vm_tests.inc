@@ -99,6 +99,7 @@ void scripted_actor_constructor_tests(){
             const auto at=0x90000u;
             check(actor->active==bool(ram[at])&&actor->visible==bool(ram[at+1])&&actor->category==ram[at+2]&&actor->slot==ram[at+3]);
             check(actor->scripted->model_group==ram[at+0x31]&&actor->model_pose_class==ram[at+0x54d]&&actor->linked_model_variant==fixture_read<std::uint16_t>(ram.data(),at+0xbba));
+            check(actor->targeting&&actor->targeting->head_model_point&&*actor->targeting->head_model_point==ram[at+0x552]);
             check(std::bit_cast<std::uint32_t>(actor->motion_multiplier)==fixture_read<std::uint32_t>(ram.data(),at+0xf0));
             check(actor->model_scale.x==scale->scale&&actor->model_scale.x==fixture_read<float>(ram.data(),at+0xb4)&&actor->model_scale.y==fixture_read<float>(ram.data(),at+0xb8)&&actor->model_scale.z==fixture_read<float>(ram.data(),at+0xbc));
             check(fixture_read<std::uint32_t>(ram.data(),at+0x14)==0x6ba880&&fixture_read<std::uint32_t>(ram.data(),at+0x18)==0x371ef0);

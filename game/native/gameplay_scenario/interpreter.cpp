@@ -19,6 +19,7 @@
 #include "periodic_effects.hpp"
 #include "surface_effects.hpp"
 #include "script_audio.hpp"
+#include "scene_record_parameters.hpp"
 #include "scene_record_commands.hpp"
 #include "../gameplay_world/world.hpp"
 #include <algorithm>
@@ -36,6 +37,7 @@ std::uint32_t word(const std::byte* p)noexcept{
 std::size_t payload_minimum(std::uint32_t op)noexcept{
     switch(op) {
     case 0x80:case 0x81:case 0x164:case 0x165:return 4;
+    case 0x166:return 9;
     case 0x73:return 8;
     case 0x88:return 16;
     case 0x89:return 22;
@@ -181,6 +183,7 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
             if(surface_command&&bytes-4<20)throw std::invalid_argument("Truncated native surface command");
             surface_effects_|=surface_command;
             flags_|=coverage[op].flags_required;timers_|=coverage[op].timers_required;signals_|=coverage[op].signals_required;
+            scene_record_parameters_|=coverage[op].scene_record_parameters_required;
             scene_resources_|=coverage[op].scene_resources_required;session_counters_|=coverage[op].session_counters_required;
             sequences_|=coverage[op].sequences_required;lighting_|=coverage[op].lighting_required;scene_channels_|=coverage[op].scene_channels_required;
             scene_controls_|=coverage[op].scene_controls_required;streams_|=coverage[op].streams_required;saved_controls_|=coverage[op].saved_controls_required;
@@ -194,6 +197,9 @@ bool Program::admits_script_audio(const ScriptAudio* audio,const gameplay_world:
     if(!audio||!world||!audio->bound_to(*world))return false;
     for(const auto& request:audio_requests_)if(!audio->ready(request.event,request.mode,request.actor))return false;
     return true;
+}
+bool Program::admits_scene_record_parameters(const gameplay_world::World* world,const gameplay_update::GameplayMessageSink* messages)const noexcept{
+    return !scene_record_parameters_||(world&&scene_record_parameters_ready(*world,messages));
 }
 bool Program::admits_room_counters(const gameplay_world::World* world)const noexcept {
     return !room_counters_ || (world && !world->closed() &&
@@ -226,6 +232,7 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     out[0x165].native_algorithm=true;out[0x165].flags_required=true;
     out[0x165].canonical_flags_required=true;out[0x165].world_required=true;
     out[0x73].native_algorithm=true;out[0x73].script_audio_required=true;
+    out[0x166].native_algorithm=true;out[0x166].world_required=true;out[0x166].scene_record_parameters_required=true;
     for(const auto i:{0x46,0x47,0x48})out[i]={true,false,false,true};
     out[0x45]={true,false,true,false};
     for(std::size_t i=0x30;i<=0x37;++i)out[i]={true,false,false,false,true};
@@ -335,6 +342,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
     if(!c.program->admits_actor_roster(providers.world))return{Status::provider_unavailable,0,{},0};
     if(!c.program->admits_character_remap(providers.world))return{Status::provider_unavailable,0,{},0};
     if(!c.program->admits_script_audio(providers.script_audio,providers.world))return{Status::provider_unavailable,0,{},0};
+    if(!c.program->admits_scene_record_parameters(providers.world,providers.messages))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_selected_actor()&&!providers.world->primary(context.selected_actor))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_action_choices()&&!providers.action_choices)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_scenario()&&!providers.world->scenario)return{Status::provider_unavailable,0,{},0};
@@ -639,6 +647,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
         case 0x44:if(value(0)<128&&!providers.flags->write(FlagBank::bounded_byte,value(0),true))return result(Status::provider_unavailable);break;
         case 0x164:if(!providers.flags->write(FlagBank::scene_record_eligibility,value(0),true))return result(Status::provider_unavailable);break;
         case 0x165:if(!clear_scene_record_eligibility(*providers.canonical_flags,*providers.world,value(0)))return result(Status::provider_unavailable);break;
+        case 0x166:if(update_scene_record_parameter(*providers.world,std::to_integer<std::uint8_t>(payload[0]),std::to_integer<std::uint8_t>(payload[4]),std::to_integer<std::uint8_t>(payload[8]),providers.messages).status!=SceneRecordParameterStatus::completed)return result(Status::provider_unavailable);break;
         case 0x73:{
             const auto mode=value(4);
             if(mode<=2){

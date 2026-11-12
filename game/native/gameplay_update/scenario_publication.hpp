@@ -15,6 +15,10 @@ struct ScenarioOwnerMessage {
     MessageRoute route{};std::uint16_t flag{};std::uint8_t value{};
     static constexpr unsigned channel=5,type=0,length=8,options=0,dispatch_mode=4;
 };
+struct SceneRecordParameterMessage {
+    MessageRoute route{};std::uint8_t ordinal{},value{};
+    static constexpr unsigned channel=5,type=6,length=6,options=0,dispatch_mode=4;
+};
 struct ResourceOperationMessage {
     MessageRoute route{};std::uint16_t resource{};std::uint8_t actor{},operation{};
     static constexpr unsigned channel=5,type=9,length=8,options=0,dispatch_mode=4;
@@ -116,6 +120,10 @@ class GameplayMessageSink : public RoomClaimSink {
 public:
     virtual ~GameplayMessageSink()=default;
     virtual bool send(const ScenarioOwnerMessage&)noexcept=0;
+    virtual bool send(const SceneRecordParameterMessage&)noexcept{return false;}
+    // Required only for the actual routed166 branch. A closed or unrelated
+    // sink cannot qualify merely by inheriting an unsupported send overload.
+    virtual bool scene_record_parameters_ready()const noexcept{return false;}
     virtual bool send(const ResourceOperationMessage&)noexcept=0;
     virtual bool send(const ResourcePositionMessage&)noexcept=0;
     virtual bool send(const ActorStatusMessage&)noexcept=0;
@@ -140,6 +148,7 @@ public:
 class StatePublication final:public gameplay_world::LinkedExpirySink {
 public:
     StatePublication(gameplay_world::World& world,gameplay_scenario::FlagState& flags,GameplayMessageSink* messages=nullptr,const gameplay_collision::room_objects::Owner* objects=nullptr):world_(world),flags_(flags),messages_(messages),objects_(objects){}
+    GameplayMessageSink* message_sink()const noexcept{return messages_;}
     bool expired(const gameplay_world::LinkedExpiryNotice& notice)noexcept override {
         return notice.mode<2&&messages_&&messages_->send(ActorExpiryMessage{notice.mode==0?MessageRoute::mode_zero:MessageRoute::mode_one,notice.ordinal});
     }

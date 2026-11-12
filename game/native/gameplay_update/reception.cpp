@@ -26,6 +26,14 @@ ReceptionResult ActorReception::receive(const ActorStatusMessage& message,bool l
     const auto admitted=begin(message.channel,local_echo);if(!admitted.actor)return{admitted.status,{}};
     auto& actor=*admitted.actor;actor.status=message.status;actor.current=message.health;return finish(actor);
 }
+ReceptionResult ActorReception::receive(const SceneRecordParameterMessage& message,bool)noexcept{
+    if(world_.closed())return{ReceptionStatus::unavailable,{}};
+    const auto phase=world_.session().message_phase;if(phase!=1&&phase!=2)return{};
+    // Complete67DD40 case6. This channel5 record update has none of the actor
+    // channel/local-echo/selected-status/equipment admission or tail effects.
+    world_.session().enemy_descriptors.record(message.ordinal)->parameter2e=message.value;
+    return{};
+}
 ReceptionResult ActorReception::receive(const ActorAlignmentMessage& message,bool local_echo)noexcept{
     const auto admitted=begin(message.channel,local_echo);if(!admitted.actor)return{admitted.status,{}};
     auto& actor=*admitted.actor;actor.alignment_target=message.target;return finish(actor);

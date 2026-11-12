@@ -37,6 +37,7 @@ IDS += ['005D0C90']
 IDS += ['006BA5C0']
 IDS += ['00694390']
 IDS += ['006943D0','0068F640']
+IDS += ['00694470','005A8F40','00680FB0']
 
 PINNED={};PIN_COMMITS={}
 def source_bytes(p):
@@ -78,6 +79,7 @@ def main(a):
     stream_main=['001BA170','001ADA20','001ADFD0','001ADF50','001AE2E0','001AE3F0','001AE190','001B0340','001B02D0','001B0300','001AEC80','0018F570','0018FDF0','00190A10','001913E0','00191530','001919D0','001B3C40','001D45F0','001B2D80'];stream_functions=set()
     stream_main += ['001A31B0','001A3590','001A35A0','001A35F0']
     stream_main += ['001D1F40']
+    stream_main += ['001AFDD0','001B0310']
     for ident in stream_main:
         p=next((ROOT/'recomp/config/output').glob('sub_'+ident+'_*'));source=p.read_text();sources[p.relative_to(ROOT).as_posix()]=sha(p);shutil.copyfile(p,out/p.name)
         for pc,opcode in re.findall(r'// (0x[0-9a-f]+): (0x[0-9a-f]+)\s',source):
@@ -187,6 +189,7 @@ def main(a):
     shutil.copyfile(HERE/'scripted_actor_vm_tests.inc',out/'scripted_actor_vm_tests.inc')
     shutil.copyfile(HERE/'scene_record_eligibility_vm_tests.inc',out/'scene_record_eligibility_vm_tests.inc')
     shutil.copyfile(HERE/'script_audio_vm_tests.inc',out/'script_audio_vm_tests.inc')
+    shutil.copyfile(HERE/'scene_record_parameter_vm_tests.inc',out/'scene_record_parameter_vm_tests.inc')
     shutil.copyfile(HERE/'periodic_control_vm_tests.inc',out/'periodic_control_vm_tests.inc')
     shutil.copyfile(HERE/'room_rule_tests.inc',out/'room_rule_tests.inc')
     shutil.copyfile(HERE/'room_object_vm_tests.inc',out/'room_object_vm_tests.inc')
@@ -252,6 +255,7 @@ def main(a):
     source_paths += [HERE/'scripted_actor_vm_tests.inc',ROOT/'runtime/assets/virtual_afs.h']
     source_paths.append(HERE/'scene_record_eligibility_vm_tests.inc')
     source_paths.append(HERE/'script_audio_vm_tests.inc')
+    source_paths.append(HERE/'scene_record_parameter_vm_tests.inc')
     source_paths += [HERE/'surface_vm_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]
     source_paths += [ROOT/'game/native/transform_math/transform_math.hpp',ROOT/'game/native/transform_math/transform_math.cpp']

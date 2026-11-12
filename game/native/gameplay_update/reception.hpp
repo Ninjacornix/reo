@@ -15,6 +15,7 @@ class ActorReception final {
 public:
     ActorReception(gameplay_world::World&,gameplay_collision::room_objects::Owner* = nullptr,gameplay_weapon_resources::Equipment* = nullptr,gameplay_world::InventoryPresence* = nullptr);
     ReceptionResult receive(const ActorStatusMessage&,bool local_echo=false)noexcept;
+    ReceptionResult receive(const SceneRecordParameterMessage&,bool local_echo=false)noexcept;
     ReceptionResult receive(const ActorAlignmentMessage&,bool local_echo=false)noexcept;
     ReceptionResult receive(const ActorInteractionMessage&,bool local_echo=false)noexcept;
     ReceptionResult receive(const ActorInteractionRequestMessage&,bool local_echo=false)noexcept;

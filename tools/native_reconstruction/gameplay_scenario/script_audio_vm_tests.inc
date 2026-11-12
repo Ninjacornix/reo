@@ -46,7 +46,7 @@ void script_audio_vm_tests(){
     vm_audio::SpatialContext spatial;spatial.world_to_screen=reo::native::transform_math::identity();spatial.world_to_screen[0][0]=.25f;spatial.world_to_screen[3][0]=320;
     vm::ScriptAudio frontend(actors.world,owner,spatial);VmAudioGain gain;VmAudioPort port{&reference,&spatial};
     active_vm_audio_port=&port;struct ResetPort{~ResetPort(){active_vm_audio_port=nullptr;}}reset;
-    for(unsigned index=0;index<4;++index){auto actor=actors.world.primary(index);actor->position={float(index*350+25),float(-int(index)*100),float(index*75)};
+    for(unsigned index=0;index<8;++index){auto actor=actors.world.primary(index);actor->position={float(index*350+25),float(-int(index)*100),float(index*75)};
         std::memcpy(ram.data()+0x4a5c30+0x10e0*index+0x38,&actor->position,12);}
     NoticeSink notifications;vm::FlagState flags(&notifications);
     const std::array<std::array<std::int32_t,3>,4> points{{{0,0,0},{1200,-300,200},{10000,0,0},{16777217,-16777217,8388609}}};
@@ -55,7 +55,7 @@ void script_audio_vm_tests(){
         const vm_banks::Command stop=vm_banks::StopAll{false};check(actual->apply({&stop,1}).status==vm_banks::Status::ok&&expected->apply({&stop,1}).status==vm_banks::Status::ok);
         const reo::native::gameplay_session::RandomState seed{std::uint16_t(91+event),std::uint16_t(37+selector),0};actors.session->random.restore(seed);expected_random.restore(seed);
         actors.session->scenario=port.scenario=std::uint16_t(scenario);actors.session->last_scenario_audio=port.last=0xa51c;port.calls=0;
-        actors.world.selected_actor=std::uint8_t(event%4);ram[0x4baded]=actors.world.selected_actor;ram[0x3243e8]=1;
+        actors.world.selected_actor=std::uint8_t((event+category+relation)%8);ram[0x4baded]=actors.world.selected_actor;ram[0x3243e8]=1;
         fixture_write<std::uint32_t>(ram.data(),0x75a4b0,category);fixture_write<std::uint32_t>(ram.data(),0x75a4c0,relation);
         std::vector<std::byte> bytes;
         if(mode==1)emit(bytes,0x73,{event,mode,selector});
@@ -87,7 +87,7 @@ void script_audio_vm_tests(){
     for(bool offline:{false,true})for(unsigned category=0;category<(offline?5u:1u);++category)for(unsigned relation=0;relation<(offline?4u:1u);++relation)
     for(unsigned scenario:{0u,1u,2u,28u,35u,41u})for(unsigned event:{0u,1u,8u,31u,127u,207u}){
         run(offline,category,relation,scenario,event,0,0,{});
-        for(unsigned actor=0;actor<5;++actor)run(offline,category,relation,scenario,event,1,actor,{});
+        for(unsigned actor=0;actor<8;++actor)run(offline,category,relation,scenario,event,1,actor,{});
         for(auto point:points)run(offline,category,relation,scenario,event,2,0,point);
         run(offline,category,relation,scenario,event,3,0,{});run(offline,category,relation,scenario,event,UINT32_MAX,0,{});
     }
@@ -100,7 +100,7 @@ void script_audio_vm_tests(){
     };
     actors.session->scenario=1;vm::Providers providers;providers.world=&actors.world;providers.script_audio=&frontend;
     refusal(0,0,0,{});auto missing=providers;missing.world=nullptr;refusal(0,0,0,missing);missing=providers;missing.script_audio=nullptr;refusal(0,0,0,missing);
-    refusal(208,0,0,providers);refusal(0,1,5,providers);
+    refusal(208,0,0,providers);refusal(0,1,8,providers);
     ActorFixture foreign;missing=providers;missing.world=&foreign.world;refusal(0,0,0,missing);
     actors.session->scenario.reset();refusal(0,0,0,providers);
     for(auto bytes:std::array<std::vector<std::byte>,2>{[]{std::vector<std::byte> b;emit(b,0x73,{0});return b;}(),[]{std::vector<std::byte>b;emit(b,0x73,{0,2,1});return b;}()}){

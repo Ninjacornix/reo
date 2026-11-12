@@ -37,7 +37,8 @@ def main(args):
             if resolved and resolved.is_relative_to(ROOT/'game/native'):pending.append(resolved)
     for name,data in sources.items():
         path=out/'source'/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(data)
-    before=subprocess.check_output(['git','show',BASELINE+':game/native/gameplay_scenario/interpreter.cpp'],cwd=ROOT)
+    baseline_commit=args.baseline_commit or BASELINE
+    before=subprocess.check_output(['git','show',baseline_commit+':game/native/gameplay_scenario/interpreter.cpp'],cwd=ROOT)
     baseline=out/'before_interpreter.cpp';baseline.write_bytes(before)
     rows=json.loads((ROOT/'build-native-sjuni/gameplay-script-content-llvm-v21/inventory.json').read_text())
     manifest=[];identities=[]
@@ -83,18 +84,21 @@ def main(args):
     for index,row in enumerate(rows):
         if row['format']=='E':
             original=results['before']['banks'][index];native=results['after']['banks'][index]
-            assert original[0]['status']==2 and original[0]['opcode']==(0x156 if row['name']=='r041.evb' else 0x164)
-            assert all(value['opcode']!=0x164 for value in native)
+            if baseline_commit==BASELINE:
+                assert original[0]['status']==2 and original[0]['opcode']==(0x156 if row['name']=='r041.evb' else 0x164)
+            assert all(value['opcode']!=int(args.cut,16) for value in native)
             evbs.append(dict(name=row['name'],before=original,after=native))
     assert len(evbs)==5
-    assert [[sum(mask) for mask in results[label]['coverage']] for label in ('before','after')]==[[355,327],[356,328]]
+    expected=[list(map(int,value.split(','))) for value in (args.expected_before_coverage,args.expected_after_coverage)]
+    assert [[sum(mask) for mask in results[label]['coverage']] for label in ('before','after')]==expected
     accepted={label:[sum(row[p]['status']==0 for row in result['banks']) for p in (0,1)] for label,result in results.items()}
     drift={name:sha((ROOT/name).read_bytes()) for name,data in sources.items() if (ROOT/name).read_bytes()!=data}
     receipt=dict(schema='reo.native.scene_record_eligibility.admission.v1',status='passed',compiler=str(compiler),compiler_sha256=sha(compiler.read_bytes()),source_sha256={name:sha(data) for name,data in sources.items()},
-        baseline_commit=BASELINE,baseline_interpreter_sha256=sha(before),commands=commands,members=identities,evbs=evbs,admitted=accepted,
+        baseline_commit=baseline_commit,cut_opcode=args.cut,baseline_interpreter_sha256=sha(before),commands=commands,members=identities,evbs=evbs,admitted=accepted,
         native_library_sha256=library_sha,current_shared_source_drift=drift,source_frozen=True,game_launched=False,installed_in_game=False,stage4_complete=False)
     (out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
     print(json.dumps(dict(status='passed',admitted=accepted,evbs=evbs,current_shared_source_drift=drift)))
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--compiler',required=True);parser.add_argument('--output',type=Path,required=True);parser.add_argument('--native-build',type=Path,required=True);parser.add_argument('--source-snapshot',type=Path);main(parser.parse_args())
+    parser=argparse.ArgumentParser();parser.add_argument('--compiler',required=True);parser.add_argument('--output',type=Path,required=True);parser.add_argument('--native-build',type=Path,required=True);parser.add_argument('--source-snapshot',type=Path)
+    parser.add_argument('--baseline-commit');parser.add_argument('--cut',default='164');parser.add_argument('--expected-before-coverage',default='355,327');parser.add_argument('--expected-after-coverage',default='356,328');main(parser.parse_args())

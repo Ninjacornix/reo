@@ -14,6 +14,7 @@ template<class Visitor> void visit_enemy(const vm::EnemyDescriptor& descriptor,V
     visit(0x22,descriptor.room);visit(0x26,descriptor.owner_mode);visit(0x27,descriptor.ordinal);
     visit(0x29,descriptor.parameter1f);visit(0x2a,descriptor.parameter20);visit(0x2b,descriptor.parameter5);
     visit(0x2d,descriptor.parameter23);
+    visit(0x2e,descriptor.parameter2e);
     for(unsigned index=0;index<10;++index)visit(0x2f+index,descriptor.auxiliary_ids[index]);
     visit(0x3a,descriptor.parameter21);visit(0x3c,descriptor.route_wait);
     visit(0x40,descriptor.route_position);visit(0x41,descriptor.parameter24);visit(0x42,descriptor.route_seed);

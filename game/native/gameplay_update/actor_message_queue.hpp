@@ -4,7 +4,7 @@
 namespace reo::native::gameplay_update {
 enum class ActorQueueStatus {completed,closed,busy,unavailable};
 struct ActorQueueDrain {ActorQueueStatus status{ActorQueueStatus::completed};std::size_t consumed{},pending{};};
-// Bounded simulation-owner queue for the admitted native actor messages. It
+// Bounded simulation-owner queue for admitted actor and scene-record messages. It
 // owns typed values, with no allocation on enqueue and no retained caller stack.
 // Unsupported message families and missing room routing remain unavailable.
 class ActorMessageQueue final:public GameplayMessageSink {
@@ -15,6 +15,8 @@ public:
     bool send(const ResourceOperationMessage&)noexcept override{return false;}
     bool send(const ResourcePositionMessage&)noexcept override{return false;}
     bool send(const ActorStatusMessage&)noexcept override;
+    bool send(const SceneRecordParameterMessage&)noexcept override;
+    bool scene_record_parameters_ready()const noexcept override{return !closed_;}
     bool send(const ActorAlignmentMessage&)noexcept override;
     bool send(const ActorInteractionMessage&)noexcept override;
     bool send(const ActorInteractionRequestMessage&)noexcept override;
@@ -28,7 +30,7 @@ public:
     std::size_t pending()const noexcept{return count_;}
     std::size_t capacity()const noexcept{return slots_.size();}
 private:
-    using Message=std::variant<ActorStatusMessage,ActorAlignmentMessage,ActorInteractionMessage,ActorInventoryMessage,ActorResourcePairMessage,ActorRoomObjectMessage,ActorPeerMessage,ActorSpeechMessage,ActorInteractionRequestMessage>;
+    using Message=std::variant<ActorStatusMessage,ActorAlignmentMessage,ActorInteractionMessage,ActorInventoryMessage,ActorResourcePairMessage,ActorRoomObjectMessage,ActorPeerMessage,ActorSpeechMessage,ActorInteractionRequestMessage,SceneRecordParameterMessage>;
     ActorReception& receiver_;
     std::vector<std::optional<Message>> slots_;
     std::size_t head_{},count_{};

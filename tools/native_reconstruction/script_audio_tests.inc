@@ -4,7 +4,7 @@ void compare_script_audio(std::vector<std::uint8_t>& memory,const std::filesyste
     source.read(reinterpret_cast<char*>(tables.data()),tables.size());check(bool(source));std::copy(tables.begin(),tables.end(),memory.begin()+0x730ba0);
     audio_world::Profile profile;profile.layouts.push_back({0x100,0x10,0x20});
     auto session=std::make_shared<audio_world::Session>();auto world=std::make_shared<audio_world::World>(profile,session);
-    for(unsigned i=0;i<4;++i){check(world->spawn_primary(i,std::make_unique<audio_world::Actor>()).status==audio_world::actors::EntityStatus::completed);world->primary(i)->position={float(50+500*i),float(-20*int(i)),float(30*i)};}
+    for(unsigned i=0;i<audio_world::World::primary_capacity;++i){check(world->spawn_primary(i,std::make_unique<audio_world::Actor>()).status==audio_world::actors::EntityStatus::completed);world->primary(i)->position={float(50+500*i),float(-20*int(i)),float(30*i)};}
     auto engine=std::make_shared<b::Session>();b::Session reference;a::Owner owner(engine,session->random);const auto bytes=frontend_snd();
     check(owner.install(owner.begin_bank(2),bytes).status==a::Status::completed);
     const auto imported=a::import_snd(bytes,2);check(imported.status==a::Status::completed);const auto& parts=imported.value.parts;
@@ -24,8 +24,8 @@ void compare_script_audio(std::vector<std::uint8_t>& memory,const std::filesyste
         original_events.clear();const s::RandomState seed{std::uint16_t(31+selector),std::uint16_t(217+cue),0};session->random.restore(seed);
         write(memory.data(),0x3244b0,seed.primary);write(memory.data(),0x3244b8,seed.secondary);memory[0x2b8de8]=seed.observed;
         session->scenario=std::uint16_t(scenario);write(memory.data(),0x3243da,std::uint16_t(scenario));
-        world->selected_actor=std::uint8_t(cue%4);memory[0x4baded]=world->selected_actor;
-        for(unsigned i=0;i<4;++i){auto actor=world->primary(i);std::memcpy(memory.data()+0x4a5c30+0x10e0*i+0x38,&actor->position,12);}
+        world->selected_actor=std::uint8_t(cue%audio_world::World::primary_capacity);memory[0x4baded]=world->selected_actor;
+        for(unsigned i=0;i<audio_world::World::primary_capacity;++i){auto actor=world->primary(i);std::memcpy(memory.data()+0x4a5c30+0x10e0*i+0x38,&actor->position,12);}
         session->last_scenario_audio=0xa57c;write(memory.data(),0x316550,std::uint16_t(0xa57c));
         constexpr unsigned payload=0x220000;write(memory.data(),payload,cue);write(memory.data(),payload+4,mode);
         write(memory.data(),payload+8,mode==1?selector:std::bit_cast<std::uint32_t>(coordinates[0]));
@@ -46,7 +46,7 @@ void compare_script_audio(std::vector<std::uint8_t>& memory,const std::filesyste
     };
     for(unsigned scenario:{0u,1u,2u,28u,35u,41u})for(unsigned cue=0;cue<208;++cue){
         run(scenario,cue,0,0,{});
-        for(unsigned actor=0;actor<5;++actor)run(scenario,cue,1,actor,{});
+        for(unsigned actor=0;actor<audio_world::World::primary_capacity;++actor)run(scenario,cue,1,actor,{});
         for(auto point:locations)run(scenario,cue,2,0,point);
         for(unsigned mode:{3u,0x80000000u,UINT32_MAX})run(scenario,cue,mode,UINT32_MAX,{});
     }
@@ -60,7 +60,7 @@ void compare_script_audio(std::vector<std::uint8_t>& memory,const std::filesyste
     check(!frontend.bound_to(other));++script_audio_refusals;
     bool refused=false;try{audio_scenario::ScriptAudio wrong(other,owner,spatial);}catch(const std::invalid_argument&){refused=true;}check(refused);++script_audio_refusals;
     session->scenario=1;for(unsigned cue:{208u,255u,UINT32_MAX}){const auto before=session->last_scenario_audio;check(!frontend.ready(cue,0)&&!frontend.command(cue,0)&&session->last_scenario_audio==before);++script_audio_refusals;}
-    for(unsigned actor:{5u,UINT32_MAX}){check(!frontend.ready(0,1,actor)&&!frontend.command(0,1,actor));++script_audio_refusals;}
+    for(unsigned actor:{8u,UINT32_MAX}){check(!frontend.ready(0,1,actor)&&!frontend.command(0,1,actor));++script_audio_refusals;}
     check(world->retire_primary(3)==audio_world::actors::EntityStatus::completed);check(!frontend.ready(0,1,3)&&!frontend.command(0,1,3));++script_audio_refusals;
     session->scenario.reset();check(!frontend.command(0,0)&&frontend.command(UINT32_MAX,3));++script_audio_refusals;
     world->close();check(!frontend.bound_to(*world)&&!frontend.command(0,0));++script_audio_refusals;

@@ -3,6 +3,7 @@
 namespace reo::native::gameplay_update {
 ActorMessageQueue::ActorMessageQueue(ActorReception& receiver,std::size_t capacity):receiver_(receiver),slots_(capacity){if(!capacity)throw std::invalid_argument("Native actor message queue requires positive capacity");}
 bool ActorMessageQueue::send(const ActorStatusMessage& value)noexcept{return enqueue(value);}
+bool ActorMessageQueue::send(const SceneRecordParameterMessage& value)noexcept{return enqueue(value);}
 bool ActorMessageQueue::send(const ActorAlignmentMessage& value)noexcept{return enqueue(value);}
 bool ActorMessageQueue::send(const ActorInteractionMessage& value)noexcept{return enqueue(value);}
 bool ActorMessageQueue::send(const ActorInteractionRequestMessage& value)noexcept{return enqueue(value);}

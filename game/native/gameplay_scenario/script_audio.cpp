@@ -16,7 +16,7 @@ bool ScriptAudio::ready(std::uint32_t event,std::uint32_t mode,std::uint32_t act
     try{(void)gameplay_audio::scenario_cue(*world_.session().scenario,event);}catch(...){return false;}
     if(mode!=1)return true;
     if(actor==4)actor=world_.selected_actor;
-    return actor<4&&bool(world_.primary(actor));
+    return actor<gameplay_world::World::primary_capacity&&bool(world_.primary(actor));
 }
 bool ScriptAudio::command(std::uint32_t event,std::uint32_t mode,std::uint32_t actor,
                           std::array<std::int32_t,3> coordinates)noexcept{
