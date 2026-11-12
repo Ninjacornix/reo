@@ -4,6 +4,12 @@ Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to put the PC to sleep only after
 Stage4 is fully implemented and verified; do not sleep at component checkpoints.
 
+- [Authored cinematic object streams](CUTSCENE_OBJECT_TRACKS.md) now dispatch
+  all four command kinds through actual object/actor/model ownership, retain
+  typed pose keys and preserve exact media-frame/cursor cadence. Paired cohorts
+  pass2,048 ticks and17,451 processed records; all726 owned object groups import
+  exactly. Lifetime regressions and five parents pass. Actual construction,
+  parent metadata, complete scene phases and native game installation remain open.
 - [Cinematic object attachment math](CINEMATIC_OBJECT_ATTACHMENTS.md) now
   preserves actual node views, normalized axes, distinct position/basis state and
   the direct-radian rotation path. Paired comparisons pass262,144 attachments

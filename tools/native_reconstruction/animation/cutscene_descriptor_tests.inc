@@ -1,4 +1,5 @@
 #include "game/native/gameplay_scenario/cutscene_descriptor.hpp"
+std::uint64_t object_track_descriptor_groups{};
 std::uint64_t cutscene_descriptors{},cutscene_descriptor_sections{},cutscene_descriptor_streams{},cutscene_descriptor_refusals{},cutscene_descriptor_partial{},cutscene_parameter_groups{},cutscene_parameters{};
 void descriptor_equal(const std::vector<std::byte>& bytes,std::vector<std::uint8_t>& ram){
     constexpr std::uint32_t base=0x1000000;
@@ -51,6 +52,12 @@ void descriptor_equal(const std::vector<std::byte>& bytes,std::vector<std::uint8
     for(unsigned group=0;group<tracks.size();++group)for(unsigned stream=0;stream<7;++stream){
         const auto raw=d.section(d.actor_groups()[group][stream]);
         check(tracks[group].streams[stream]&&tracks[group].streams[stream]->size()==raw.size()/36,"actual empty versus retained stream");++cutscene_descriptor_streams;
+    }
+    std::vector<cue::CutsceneObjectBinding> object_bindings(d.object_groups().size());const auto object_tracks=d.object_tracks(object_bindings);
+    check(object_tracks.size()==d.object_groups().size(),"descriptor prepares actual object groups without inventing model bindings");
+    for(unsigned group=0;group<object_tracks.size();++group){
+        for(unsigned stream=0;stream<7;++stream){const auto raw=d.section(d.object_groups()[group][stream]);const auto& value=*object_tracks[group].streams[stream];check(value.size()==raw.size()/36,"actual object stream extent");for(unsigned record=0;record<value.size();++record)check(std::memcmp(value.record(record).data(),raw.data()+36*record,36)==0,"owned object stream bytes retained exactly");}
+        ++object_track_descriptor_groups;
     }
     for(unsigned group=0;group<d.actor_groups().size();++group){
         // Each data reducer is compared at original slot0, avoiding unrelated

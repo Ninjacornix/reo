@@ -60,7 +60,12 @@ holes that would shift first-free allocation. The literal demo model/texture
 formats are source-verified. Candidate requests derived from descriptor filenames
 find452 exact named model occurrences;274 remain unresolved. Filename candidates
 are not proof of live scene request identity, aliases or actual load attempts.
-The descriptor's header words4/8/12 must not be substituted for the request bytes.
+The descriptor's header words4/8/12 must not be substituted for the request bytes. The later
+[Cinematic object stream/load audit](CUTSCENE_OBJECT_TRACKS.md) establishes that
+the destination scenario from the first header word is applied before object path
+formatting. With that destination and the separate request sequence,671 of726
+candidate occurrences match;55 remain unresolved. This supersedes treating all
+274 same-archive misses as unresolved runtime destinations.
 
 Evidence: tools/native_reconstruction/native_cinematic_objects_qualification_v1.json.
 

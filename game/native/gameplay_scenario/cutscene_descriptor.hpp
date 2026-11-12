@@ -1,5 +1,6 @@
 #pragma once
 #include "cutscene_actor_tracks.hpp"
+#include "cutscene_object_tracks.hpp"
 namespace reo::native::gameplay_scenario::content {class ScenarioArchive;}
 namespace reo::native::gameplay_scenario {
 struct CutsceneSection {std::uint32_t offset{},count{};std::uint16_t stride{};};
@@ -33,6 +34,7 @@ public:
     // Actor construction supplies real native bindings. This preparation
     // copies the seven command streams; the eighth remains a header view.
     std::vector<CutsceneActorTrackGroup> actor_tracks(std::span<const CutsceneActorBinding>)const;
+    std::vector<CutsceneObjectTrackGroup> object_tracks(std::span<const CutsceneObjectBinding>)const;
     //5F0B50's bounded first15 entries in stream3. Their gameplay role is
     // deliberately left numeric until the downstream consumer owns it.
     std::vector<CutsceneActorParameter> actor_parameters(std::size_t group)const;
