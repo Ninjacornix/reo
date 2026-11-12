@@ -4,6 +4,12 @@ Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to put the PC to sleep only after
 Stage4 is fully implemented and verified; do not sleep at component checkpoints.
 
+- [Cinematic object construction](CINEMATIC_OBJECT_CONSTRUCTION.md) now prepares
+  retained assets/streams and reserves/builds through the actual World pool.
+  Paired comparisons pass2,144 scene object constructions and2,684 objects with
+  stream installation.536 candidate descriptor requests prepare;12 retain55
+  unresolved model occurrences. Current World/lifetime/five-parent regressions
+  pass. Motion-bank publication, full scene phases and installed acceptance remain open.
 - [Cinematic object assets](CINEMATIC_OBJECT_ASSETS.md) now retain actual archive
   definitions, independent instances and distinct inverse bind data. Both
   compilers pass452 imports,450 actual filename reads and1,808 controlled

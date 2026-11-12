@@ -63,6 +63,9 @@ CinematicObjectReserved CinematicObjectPool::reserve_inactive()noexcept{
     if(!pool_)return{};
     running_=world_.updating_=true;
     struct Reset{bool& a;bool& b;~Reset(){b=false;a=false;}}reset{running_,world_.updating_};
+    return reserve_locked();
+}
+CinematicObjectReserved CinematicObjectPool::reserve_locked()noexcept{
     for(unsigned slot=0;slot<capacity;++slot){
         const auto value=resolve(ids_[slot]);if(!value)return{CinematicObjectStatus::unavailable};
         if(value->active||value->reserved)continue;

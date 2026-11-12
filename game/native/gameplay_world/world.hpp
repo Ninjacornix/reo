@@ -231,6 +231,7 @@ class NpcActorUpdates;
 class CinematicActorFrames;
 class CinematicModelPass;
 class CinematicObjectPool;
+class CinematicObjectConstruction;
 class AuxiliaryActorPool;
 class TargetMetricCache;
 class PrimaryActorModels;
@@ -324,6 +325,7 @@ private:
     CinematicActorFrames* cinematic_frame_owner_{};
     friend class CinematicModelPass;
     friend class CinematicObjectPool;
+    friend class CinematicObjectConstruction;
     std::unique_ptr<CinematicObjectPool> cinematic_objects_;
     friend class HumanoidMotionOwner;
     friend class PrimaryActorInitialization;

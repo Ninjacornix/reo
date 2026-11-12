@@ -4,6 +4,8 @@
 #include "../gameplay_scene/record_pool.hpp"
 #include <exception>
 namespace reo::native::gameplay_world {
+class CinematicObjectAsset;
+class CinematicObjectConstruction;
 // Two adjacent authored36-byte pose records. Native values retain no relocated
 // pointer; the final record may be followed by only its sentinel header.
 struct CinematicObjectPose {
@@ -22,6 +24,9 @@ struct CinematicObject {
     transform_math::Angles angles{};
     animation::Matrix basis{};
     std::shared_ptr<animation::Instance> model;
+    std::shared_ptr<const CinematicObjectAsset> model_asset;
+    std::array<std::uint8_t,8> part_visibility{};
+    std::uint32_t authored_model{};
     animation::FrameRecord timing;
     std::optional<CinematicObjectPose> pose;
     std::uint32_t motion{},flags{};
@@ -61,6 +66,8 @@ public:
     }
 private:
     friend class World;
+    friend class CinematicObjectConstruction;
+    CinematicObjectReserved reserve_locked()noexcept;
     explicit CinematicObjectPool(World& world)noexcept:world_(world){}
     using Storage=gameplay_scene::RecordPool<CinematicObject>;
     World& world_;std::unique_ptr<Storage> pool_;
