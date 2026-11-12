@@ -19,12 +19,12 @@ def main():
   # Their unprojected calls get throwing wrappers, not fabricated bodies.
   if at!=0x1920a0:pending.extend(int(x,16)for x in re.findall(r'// 0x[0-9a-f]+: 0x[0-9a-f]+\s+(?:jal|j)\s+func_([0-9A-Fa-f]+)',path.read_text()))
  originals=sorted(set(entries.values()));proof=[]
- callers=['recomp/config/output_ovl/o2/o2_0066B8E0_0x66b8e0.cpp','recomp/config/output_ovl/o2/o2_00683B90_0x683b90.cpp']
+ callers=['recomp/config/output_ovl/o2/o2_0066B8E0_0x66b8e0.cpp','recomp/config/output_ovl/o2/o2_00683B90_0x683b90.cpp','recomp/config/output_ovl/o2/o2_00682D10_0x682d10.cpp','recomp/config/output_ovl/o2/o2_005F1290_0x5f1290.cpp']
  for name in callers:
-  begin,end=[int(x,16)for x in re.search(r'// Address: (0x[0-9a-f]+) - (0x[0-9a-f]+)',(ROOT/name).read_text()).groups()];proof.append(compare_source('actual61A620 initialization caller',name,begin,end,read))
+  begin,end=[int(x,16)for x in re.search(r'// Address: (0x[0-9a-f]+) - (0x[0-9a-f]+)',(ROOT/name).read_text()).groups()];proof.append(compare_source('actual history/record-clear initialization caller',name,begin,end,read))
  for name in originals:
   begin,end=[int(x,16)for x in re.search(r'// Address: (0x[0-9a-f]+) - (0x[0-9a-f]+)',(ROOT/name).read_text()).groups()];proof.append(compare_source('complete secondary pose selector/dynamics/math body',name,begin,end,read))
- units=['game/native/animation/secondary_pose_math.cpp','game/native/animation/constraint_math.cpp','game/native/transform_math/transform_math.cpp','game/native/animation/model.cpp','game/native/animation/model_math.cpp','game/native/animation/curves.cpp','game/native/gameplay_world/secondary_pose_contacts.cpp','game/native/gameplay_world/secondary_pose_dynamics.cpp','game/native/transform_math/heading.cpp'];native=set(units);pending=list(units)
+ units=['game/native/animation/secondary_pose_math.cpp','game/native/animation/constraint_math.cpp','game/native/transform_math/transform_math.cpp','game/native/animation/model.cpp','game/native/animation/model_math.cpp','game/native/animation/curves.cpp','game/native/gameplay_world/secondary_pose_contacts.cpp','game/native/gameplay_world/secondary_pose_dynamics.cpp','game/native/transform_math/heading.cpp'];native=set(units+['game/native/gameplay_world/actor_initial_state.hpp']);pending=list(native)
  while pending:
   name=pending.pop()
   for rel in re.findall(r'^#include "([^"]+)"',(ROOT/name).read_text(),re.M):

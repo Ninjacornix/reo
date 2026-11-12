@@ -15,6 +15,8 @@ void compare(std::uint8_t* memory,const g::World& world,const g::AuxiliaryActorP
     check(!raw&&count==10-pool.remaining());const auto flags=pool.attachment_flags();for(unsigned i=0;i<4;++i)check(flags[i]==bool(memory[0x3b59d8+i]));
 }
 void cleared(std::uint8_t* memory,unsigned raw,const g::Actor& actor){
+    check(actor.secondary_pose_category_override==0&&actor.secondary_pose_history.has_value()&&get<unsigned>(memory,raw+0xfac)==0);
+    for(unsigned joint=0;joint<2;++joint){const auto& v=actor.secondary_pose_history->displacement[joint];check(v.x==0&&v.y==0&&v.z==0&&get<unsigned>(memory,raw+0xe58+36*joint)==0&&get<unsigned>(memory,raw+0xe5c+36*joint)==0&&get<unsigned>(memory,raw+0xe60+36*joint)==0);}
     check(!actor.active&&!actor.visible&&!actor.status&&!actor.current&&!actor.maximum&&actor.gauge_value==0&&actor.interaction_resource==0&&actor.aim_pitch_adjustment==0&&actor.aim_target_pitch==0&&actor.aim_target_index==0);
     check(!get<unsigned>(memory,raw+0xba0)&&!get<unsigned>(memory,raw+0xbac)&&!get<std::uint16_t>(memory,raw+0x544)&&!get<std::uint16_t>(memory,raw+0x546));
     check(actor.motion_rate==0&&actor.model_scale.x==0&&actor.model_scale.y==0&&actor.model_scale.z==0&&actor.surface_kind==0&&actor.surface_material==0&&actor.surface_normal.y==0&&actor.contact.damage_scale==0&&actor.contact.source_related==reo::native::gameplay_collision::delivery::Identity{0,0}&&!actor.alignment_target);

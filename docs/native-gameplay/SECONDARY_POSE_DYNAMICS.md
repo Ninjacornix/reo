@@ -70,3 +70,18 @@ This evidence covers finite FP32 operation under the existing native arithmetic
 profile, not physical PS2 exceptional floating point behavior. It proves these
 native helpers and their source order; scene installation, a full Stage 4
 acceptance, and a game run require their separate integration evidence.
+
+`initialize_cleared_actor_defaults` now establishes zero FAC and zero history
+for actual cleared-record owners. The complete `5F1290` (0x10E0 bytes) and
+`682D10` (0x1170 bytes) clears cover both fields; generic `Actor` construction
+still leaves them unknown. Paired v18 receipts add these complete source audits
+and cleared-state admission checks (4,249,171 checks each). Scene-primary pool
+tests also verify dirty old history/override values survive retained leases while
+the replacement starts cleared. The auxiliary pool original-body comparison
+checks the same zero fields on every initial allocation and reuse.
+
+The other actual `61A620` callers remain distinct: `66B8E0` is secondary-action
+entry zero, and `683B90` instantiates 64 room auxiliary descriptors. Neither is
+the cinematic NPC constructor. `1AFF90` in action entry is a mode-routed network
+room-ownership claim (`o9:811970` / `o8:811140`), not an audio request; complete
+entry adoption requires that real provider and its `66B960` continuation.

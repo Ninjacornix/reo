@@ -1,4 +1,5 @@
 #include "game/native/gameplay_world/secondary_pose_dynamics.hpp"
+#include "game/native/gameplay_world/actor_initial_state.hpp"
 #include "game/native/animation/model.hpp"
 #include "reference.hpp"
 #include "functions.h"
@@ -60,6 +61,7 @@ int main(int argc,char** argv)try{
         w::Actor value;value.active=active;value.visible=visible;value.contact_flags=std::uint16_t(flags);value.appearance_variant=std::uint8_t(appearance);value.character=7;value.model=std::make_shared<a::Instance>(skeletons[0]);value.model->rebuild(t::identity());w::reset_secondary_pose_history(value);project(memory.data(),value);put(memory.data(),0x324200,std::int16_t(0));put(memory.data(),0x4badf8,std::uint8_t(1));invoke(memory.data(),0x61a820,actor);const auto result=w::update_secondary_pose(value,0,1);check(result==w::SecondaryPoseStatus::unchanged||result==w::SecondaryPoseStatus::applied);compare(memory.data(),value);++gates;
     }
     w::Actor missing;missing.active=missing.visible=true;check(!w::select_secondary_pose_dynamics(missing,1,0).available);check(w::apply_secondary_pose_dynamics(missing,0)==w::SecondaryPoseStatus::unavailable);++refusals;
+    w::Actor cleared;check(!cleared.secondary_pose_history&&!cleared.secondary_pose_category_override);w::initialize_cleared_actor_defaults(cleared);check(cleared.secondary_pose_category_override==0&&cleared.secondary_pose_history.has_value());for(const auto& v:cleared.secondary_pose_history->displacement)check(v.x==0&&v.y==0&&v.z==0);
     auto model=std::make_shared<a::Instance>(skeletons[0]);model->rebuild(t::identity());const auto snapshot=model->retain();const auto before=std::vector<a::NodePose>(model->nodes().begin(),model->nodes().end());auto invalid=t::identity();invalid[0][0]=std::numeric_limits<float>::infinity();bool caught{};try{model->patch_local_poses_and_rebuild(std::array<a::LocalPosePatch,1>{{{21,invalid}}},21,t::identity());}catch(const std::domain_error&){caught=true;}check(caught&&model->retain()==snapshot&&std::memcmp(before.data(),model->nodes().data(),before.size()*sizeof(a::NodePose))==0);++refusals;
     caught=false;try{model->patch_local_poses(std::array<a::LocalPosePatch,2>{{{21,t::identity()},{model->nodes().size(),t::identity()}}});}catch(const std::out_of_range&){caught=true;}check(caught&&model->retain()==snapshot&&std::memcmp(before.data(),model->nodes().data(),before.size()*sizeof(a::NodePose))==0);++refusals;
     caught=false;try{model->patch_local_poses_and_rebuild({},21,t::identity(),true,{0,1,1});}catch(const std::domain_error&){caught=true;}check(caught&&model->retain()==snapshot&&std::memcmp(before.data(),model->nodes().data(),before.size()*sizeof(a::NodePose))==0);++refusals;

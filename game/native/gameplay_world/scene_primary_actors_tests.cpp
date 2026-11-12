@@ -34,6 +34,8 @@ void compare_masks(g::World& world,g::ScenePrimaryActorPool& pool){
         const auto actor=world.resolve(pool.identity_at(i));check(actor&&!actor->active&&!actor->visible&&actor->category==0&&actor->slot==i);
         check(actor->motion_rate==0&&actor->model_scale.x==0&&actor->model_scale.y==0&&actor->model_scale.z==0&&actor->motion_multiplier==0);
         check(!actor->model&&!actor->animation&&!actor->constraints&&!actor->primary_state&&!actor->scripted);
+        check(actor->secondary_pose_category_override==0&&actor->secondary_pose_history.has_value());
+        for(const auto& v:actor->secondary_pose_history->displacement)check(v.x==0&&v.y==0&&v.z==0);
         for(unsigned byte=0;byte<0x10e0;++byte)check(memory[base+i*0x10e0+byte]==(byte==3?i:0));
     }
     for(unsigned encoding:{1u,2u,128u,255u})for(unsigned mask=0;mask<256;++mask){
@@ -61,6 +63,8 @@ void lifecycle(){
     g::World world(profile(),std::make_shared<g::Session>());auto& pool=world.scene_primary_actors();
     check(!pool.initialized()&&!pool.identity_at(0)&&pool.find_inactive().status==g::ScenePrimaryStatus::uninitialized);
     const auto main=world.spawn_primary(0,std::make_unique<g::Actor>()).id;const auto auxiliary=world.auxiliary_actors().allocate(0).id;
+    check(!world.resolve(main)->secondary_pose_history&&!world.resolve(main)->secondary_pose_category_override);
+    check(world.resolve(auxiliary)->secondary_pose_history.has_value()&&world.resolve(auxiliary)->secondary_pose_category_override==0);
     check(pool.initialize()==g::ScenePrimaryStatus::completed&&pool.initialized()&&!pool.identity_at(8));
     check(!pool.physical_slot(main)&&!pool.physical_slot(auxiliary)&&world.identity(0)==main);
     g::World foreign(profile(),std::make_shared<g::Session>());check(foreign.scene_primary_actors().initialize()==g::ScenePrimaryStatus::completed);
@@ -69,8 +73,9 @@ void lifecycle(){
 #ifdef REO_SCENE_PRIMARY_ORIGINAL
     compare_masks(world,pool);
 #endif
-    const auto old_id=pool.identity_at(0);auto old=world.resolve(old_id);old->character=42;
+    const auto old_id=pool.identity_at(0);auto old=world.resolve(old_id);old->character=42;old->secondary_pose_category_override=43;old->secondary_pose_history->displacement[1]={1,2,3};
     check(pool.initialize()==g::ScenePrimaryStatus::completed&&!world.resolve(old_id)&&old->character==42&&pool.identity_at(0)!=old_id&&!pool.physical_slot(old_id));
+    check(world.resolve(pool.identity_at(0))->secondary_pose_category_override==0&&world.resolve(pool.identity_at(0))->secondary_pose_history->displacement[1].x==0&&old->secondary_pose_category_override==43&&old->secondary_pose_history->displacement[1].x==1);
     // An asset lease can have external ownership callbacks. They must observe
     // the complete new pool while recursive mutation is refused.
     for(unsigned repetition=0;repetition<32;++repetition){
