@@ -99,7 +99,7 @@ try {
             Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $licenses ($framework.name + '-' + $_.Name))
         }
     }
-    @{ format=2; version='1.0.20'; releaseTag=('ci-' + $Commit.Substring(0,12)); platform='win-x64';
+    @{ format=2; version='1.0.21'; releaseTag=('ci-' + $Commit.Substring(0,12)); platform='win-x64';
        prerelease=$true; kind='launcher-preview'; revision=$Commit; containsGameBuildKits=$false } |
         ConvertTo-Json | Set-Content -LiteralPath (Join-Path $publish 'distribution.json') -Encoding UTF8
     & git archive HEAD --format=zip ('--output=' + (Join-Path $publish 'project-source.zip'))

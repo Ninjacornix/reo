@@ -1,14 +1,23 @@
 # Changelog
 
-## Unreleased
+## v1.0.21-rc0 prerelease - 2026-11-12
 
-- Fix level music continuing under cutscenes and FMVs when the game pauses it, such as the File #1 Decisions, Decisions opening (#72). A paused voice now plays out only the audio it had already accepted, as on hardware, instead of everything the stream keeps decoding.
+- Add On, Off and Adaptive vertical sync in Graphics for both games (#85). Default to On and preserve the original game clock. Game build kits must be regenerated so existing installations rebuild with the new display controls.
+- Unlock the 25 hidden File #3 NPCs (including HUNK and HUNK:B) in File #2 solo play via a standalone **Unlock File #3 characters** cheat toggle and solo **Unlock everything** (#91, #71).
+- Fix File #1 **Unlock everything** character and costume bitmasks to include File #3 characters, exclude the 14 blank slots and grant only valid costume variants (#73).
+- Stop paused music from continuing to play under FMVs and cutscenes, such as the File #1 **Decisions, Decisions** opening (#72).
+- Fix joining File #2 co-op sessions from the launcher when the host has no randomizer enabled (#94).
+- Migrate legacy hosted-server SQLite databases (`sort_key` and account recovery fields) automatically before startup, preserving accounts and rebuilding fastest-clear rankings (#84).
+- Use a separate regular `compiler` cache directory when the managed `toolchains` folder is a symbolic link or junction (#93).
+- Keep the GPU movie decoding checkbox enabled across all probe results and honor explicit CPU/GPU selections while preserving safe CPU defaults (#85).
+- Surface actionable OpenGL 3.3, GPU movie decoder and graphics backend failure details in the launcher after game exit (#90).
+
+## v1.0.20 - 2026-11-04
+
 - Fix File #1 freezes of up to half a second while the game reads from the disc image. Disc reads now complete in the background, as the PS2's CD hardware does, instead of stopping every game thread until the host read finishes. `REO_CD_ASYNC=0` restores the previous synchronous reads. Add an optional developer timing log for audio, disc and movie service stalls.
 - Fix joining a host through its advertised public address (#64).
-- Fix hosting startup after upgrading an older server database (#84). Migrate missing account fields and Outbreak rankings atomically, retaining existing credentials and every original result in an archive table.
 - Add DualShock 4 controller input over USB and Bluetooth.
 - Show an error and exit when the graphics driver does not provide OpenGL 3.3, instead of crashing while opening the game window. Vulkan remains optional; without it the game uses software rendering.
-- Add On, Off and Adaptive vertical sync in Graphics for both games (#85). Default to On and preserve the original game clock. Game build kits must be regenerated so existing installations rebuild with the new display controls.
 - Show shared setup progress over the current launcher page without shrinking its content or duplicating progress in notifications or Game files. Keep detail and compact elapsed/ETA information on one line below the bar, and use a normal completion message when the game exits successfully. Import completion and error notifications remain available.
 - Resume interrupted compiler downloads, retry temporary connection failures, and time out only when network progress stops. Keep partial downloads across Import attempts and allow optional idle-timeout/retry settings or a verified manually downloaded compiler archive (#60).
 - Move Windows, macOS and Linux to the shared Avalonia/.NET 10 launcher. Bundle the Windows runtime by default and compare complete RC tags when checking and installing updates. Older RC0/RC1 installations require a manual upgrade.
