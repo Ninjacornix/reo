@@ -44,6 +44,19 @@ void scalar_playback_tests(const std::vector<std::vector<std::byte>>& banks,cons
             }
         }
     }
+    for(unsigned extra=1;extra<=8;++extra)for(unsigned clock=0;clock<2;++clock)for(float start:{0.f,.5f,6.f,17.f}){
+        const auto definition=a::Skeleton::import_raw(skeletons.front());const auto node_count=unsigned(definition->nodes().size()),track_count=node_count+extra;
+        std::vector<std::byte> raw(20+40*track_count);auto* data=reinterpret_cast<std::uint8_t*>(raw.data());put(data,0,1u);put(data,4,track_count);put(data,8,unsigned(raw.size()));put(data,12,extra&1u);put(data,16,2.5f);
+        for(unsigned i=0;i<track_count;++i){const auto at=20+40*i;put(data,at,0x80000000u);put(data,at+4,1u);put(data,at+8,40u);put(data,at+12,0x80210040u);put(data,at+16,2u);put(data,at+20,28u);put(data,at+24,0.f);put(data,at+28,0.f);put(data,at+32,float(i+1));put(data,at+36,i+1==track_count?17.f:5.f);}
+        const auto clip=a::Clip::import_raw(raw);a::Instance prefix(definition);prefix.relabel_prefix(node_count,0);
+        bool strict_refused{};try{prefix.bind(0,clip);}catch(const std::invalid_argument&){strict_refused=true;}check(strict_refused,"exact actor bind still refuses a trailing clip suffix");++scalar_prefix_refusals;
+        std::fill_n(ram.data()+nodes,node_count*400,0);std::memcpy(ram.data()+0x400000,skeletons.front().data(),skeletons.front().size());call(ram.data(),0x1a2e00,0x10000,skeleton_resource,0x400000);call(ram.data(),0x193380,nodes,1);
+        for(unsigned i=0;i<node_count;++i)put(ram.data(),nodes+400*i+0xc6,std::uint16_t(0));
+        resources={0,skeleton_resource,0x900000};std::memcpy(ram.data()+0x500000,raw.data(),raw.size());call(ram.data(),0x1a1fd0,0x18000,resources[2],0x500000);
+        a::FrameRecord record{3,7,2,-1,73};export_record(record);a::bind_scalar_frame(prefix,record,clip,start);call(ram.data(),0x58c810,nodes,timing,2,0,start);compare_record(record);compare_nodes(prefix,ram,false);check(record.end==17,"unused trailing tracks still supply original clip timing metadata");++scalar_prefix_bindings;
+        ram[0x3243cc]=std::uint8_t(clock);
+        for(float step:{-.5f,0.f,.5f,18.f}){const auto status=a::advance_scalar_frame(prefix,record,step,std::uint8_t(clock));const auto expected=call(ram.data(),0x58c8a0,nodes,timing,0,0,step);check(status==std::bit_cast<std::int8_t>(std::uint8_t(GPR_U32(&expected,2))),"prefix scalar timing and status");compare_record(record);compare_nodes(prefix,ram,false);++scalar_prefix_ticks;}
+    }
     a::Instance model(a::Skeleton::import_raw(skeletons.front()));a::FrameRecord record{0,1,0,0,255};
     bool refused{};try{a::bind_scalar_frame(model,record,{},0);}catch(const std::invalid_argument&){refused=true;}
     check(refused&&record.flags==255,"unadmitted absent clip is explicit failure");++scalar_refusals;

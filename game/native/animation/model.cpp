@@ -93,9 +93,15 @@ void Instance::relabel_prefix(std::span<const std::uint16_t> tracks){
     std::copy(tracks.begin(),tracks.end(),track_ids_.begin());
 }
 void Instance::bind(std::uint16_t track,std::shared_ptr<const Clip> clip){
+    bind_matching(track,std::move(clip),false);
+}
+void Instance::bind_prefix(std::uint16_t track,std::shared_ptr<const Clip> clip){
+    bind_matching(track,std::move(clip),true);
+}
+void Instance::bind_matching(std::uint16_t track,std::shared_ptr<const Clip> clip,bool allow_trailing){
     if(!clip)throw std::invalid_argument("Native model requires owned motion clip");
     std::size_t count=0;for(auto i:traversal_)count+=track_ids_[i]==track;
-    if(!count||clip->tracks().size()!=count)throw std::invalid_argument("Native motion/model track cardinality mismatch");
+    if(!count||clip->tracks().size()<count||(!allow_trailing&&clip->tracks().size()!=count))throw std::invalid_argument("Native motion/model track cardinality mismatch");
     invalidate();std::size_t ordinal=0;for(auto i:traversal_)if(track_ids_[i]==track)bindings_[i]=Binding{clip,ordinal++};
 }
 void Instance::clear(std::uint16_t track){invalidate();for(auto i:traversal_)if(track_ids_[i]==track)bindings_[i].reset();}

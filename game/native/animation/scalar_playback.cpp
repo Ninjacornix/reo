@@ -7,7 +7,7 @@ void bind_scalar_frame(Instance& model,FrameRecord& record,std::shared_ptr<const
     if(!clip)throw std::invalid_argument("Native scalar playback requires an admitted clip");
     if(!std::isfinite(frame))throw std::domain_error("Native scalar playback finite initial frame required");
     record.frame=frame;
-    model.bind(0,clip);model.sample(0,frame);
+    model.bind_prefix(0,clip);model.sample(0,frame);
     record.end=clip->last_frame();record.restart=clip->loop_start();record.loop=std::int8_t(clip->looping());
     if(record.restart<0)record.restart=0;
 }

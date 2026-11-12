@@ -4,6 +4,11 @@ Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to put the PC to sleep only after
 Stage4 is fully implemented and verified; do not sleep at component checkpoints.
 
+- [Scalar prefix playback](SCALAR_PREFIX_PLAYBACK.md) now permits unused trailing
+  clip tracks with original binding/sampling/timing parity. Both compilers pass
+  playback, World and five-parent regressions. Controlled object playback now
+  completes1,296 of1,356 pairs;60 too-few-track pairs and12 missing-model
+  descriptor requests remain open. Full scene ownership and installation remain open.
 - [Unused curve endpoint tangents](CURVE_ENDPOINT_TANGENTS.md) now preserve
   actual owned cubic/mixed sampling while skipping first-incoming/final-outgoing
   fields that no segment consumes. Paired full-source curve/playback/parent

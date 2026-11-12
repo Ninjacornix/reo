@@ -54,6 +54,10 @@ public:
     // Bind matches the selected subtree's track IDs in original DFS order.
     // Admission requires one clip track for each matching model node.
     void bind(std::uint16_t track,std::shared_ptr<const Clip>);
+    //192BF0 consumes one clip track per matching node and ignores a retained
+    // trailing clip suffix. Fewer clip tracks remain unavailable. Exact bind
+    // above stays the admission contract for existing actor channel callers.
+    void bind_prefix(std::uint16_t track,std::shared_ptr<const Clip>);
     void clear(std::uint16_t track);
     void sample(std::uint16_t track,float frame);
     void sample_all(float frame);
@@ -81,6 +85,7 @@ private:
     std::shared_ptr<const JointSnapshot> snapshot_;
     std::uint64_t revision_{};
     void sample_node(std::size_t,float);
+    void bind_matching(std::uint16_t,std::shared_ptr<const Clip>,bool allow_trailing);
     void publish_snapshot();
     void invalidate()noexcept{snapshot_.reset();}
 };
