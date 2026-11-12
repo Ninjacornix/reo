@@ -1,3 +1,4 @@
+#include "cinematic_objects.hpp"
 #include "world.hpp"
 #include "linked_models.hpp"
 #include "auxiliary_actors.hpp"
@@ -122,6 +123,7 @@ Status World::close()noexcept{
     if(linked_models_)(void)linked_models_->close();
     if(auxiliary_actors_)(void)auxiliary_actors_->close();
     if(scene_primary_actors_)(void)scene_primary_actors_->close();
+    if(cinematic_objects_)(void)cinematic_objects_->close();
     if(navigation_)navigation_->close();
     if(target_metrics_)target_metrics_->close();
     entities_.shutdown();return Status::completed;

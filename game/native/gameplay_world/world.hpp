@@ -230,6 +230,7 @@ class LinkedActorUpdates;
 class NpcActorUpdates;
 class CinematicActorFrames;
 class CinematicModelPass;
+class CinematicObjectPool;
 class AuxiliaryActorPool;
 class TargetMetricCache;
 class PrimaryActorModels;
@@ -264,6 +265,7 @@ public:
     LinkedModelPool& linked_models();
     AuxiliaryActorPool& auxiliary_actors();
     ScenePrimaryActorPool& scene_primary_actors();
+    CinematicObjectPool& cinematic_objects();
     gameplay_navigation::Bank& navigation();
     TargetMetricCache& target_metrics();
     std::shared_ptr<Actor> primary(std::size_t)const noexcept;
@@ -319,6 +321,8 @@ private:
     friend class CinematicActorFrames;
     CinematicActorFrames* cinematic_frame_owner_{};
     friend class CinematicModelPass;
+    friend class CinematicObjectPool;
+    std::unique_ptr<CinematicObjectPool> cinematic_objects_;
     friend class HumanoidMotionOwner;
     friend class PrimaryActorInitialization;
     friend class PrimaryActorModels;

@@ -4,6 +4,12 @@ Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification. The latest user instruction is to put the PC to sleep only after
 Stage4 is fully implemented and verified; do not sleep at component checkpoints.
 
+- [Sixteen cinematic objects](CINEMATIC_OBJECTS.md) now own separate typed
+  storage/reservations, model playback and unclamped pose interpolation through
+  World lifetime. Paired comparisons pass16,384 reservations,67,585 pose cases
+  and1,024 model passes; lifetime regressions and five parents pass. The owned
+  header audit finds726 valid object groups, maximum11. Actual object loading,
+  authored streams, attachment, full scene lifetime and installation remain open.
 - [Standalone scalar animation](SCALAR_ANIMATION_PLAYBACK.md) now preserves
   the distinct cinematic-object endpoint, loop, completion and sampling rules.
   Paired comparisons cover2,048 bindings and8,192 updates; channel/topology
