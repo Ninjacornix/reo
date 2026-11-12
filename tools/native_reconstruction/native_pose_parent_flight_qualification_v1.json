@@ -1,0 +1,375 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "game_run": false,
+  "device_opened": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_world/pose_parent_flight.hpp": "9367ac229c628ee5031960692332820f087dc8a4f3e39c4ee2e01b0047cfc468",
+    "game/native/gameplay_world/pose_parent_flight.cpp": "aa08ac32e45dbc46a4fdb44c04fa51a531840a30a4ababfd758aa664aa424ff8",
+    "game/native/gameplay_world/pose_parent_flight_policy.cpp": "5c7827dddb86cb44aa8c3026bc2c98f2ccad8bf803f8d28e38eddcba8fb492ef",
+    "game/native/gameplay_world/pose_callbacks_contract_tests.cpp": "41a0bc9e7393189b4169aa0330403876ca068870d25ca6a24b8b07c29934f750",
+    "game/native/gameplay_world/CMakeLists.txt": "a2b40adbd011ea3126f496fe7fdad15e256a2f224519fa5c3345972163d6308b",
+    "tools/native_reconstruction/pose_parent_flight_tests.cpp": "4acad6a7bbe33ee162fd3a3f2e4f711969bd66991581cf4301d73c4176f81ab4",
+    "tools/native_reconstruction/verify_pose_parent_flight.py": "daeb34e53f081029646cbcf30455627e42706fd10eb79f3ef73fabba667ef4a2",
+    "tools/native_reconstruction/verify_pose_callbacks_current.py": "62db9e4a0ab03ce234ef2522c38fd4eefdbe6275a5986a081a633a612ba5a981",
+    "tools/native_reconstruction/qualify_pose_parent_flight_v1.py": "7be9b105ee61ced954ffcaf762ef37b27cf9914c6cf294ffdcafa734d62431eb",
+    "docs/native-gameplay/PARENT_POSE_FLIGHT.md": "10fca4aeb821d5a1457ae21d8a10b4d7f3b07e1cf3576fe096644951d44ddcce"
+  },
+  "cohorts": {
+    "llvm": {
+      "policy": {
+        "path": "build-native-sjuni/pose-parent-flight-llvm-v1/receipt.json",
+        "sha256": "9f2017c0fcac4dd1cd7fb62202f8bdeefc67d7dec6648d816d7525d66089b165",
+        "observed": {
+          "checks": 4023213,
+          "cases": 524288,
+          "retirements": 74037,
+          "floor_queries": 196610,
+          "trails": 262148,
+          "sounds": 74037,
+          "original_calls": 1393267,
+          "game_run": false
+        },
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "subsequent_dependency_changes": {
+          "game/native/gameplay_application/CMakeLists.txt": {
+            "qualified": "93b8213590beb344152b9d3a1de6f92e612ac0f59bdfd86a9c705751d0ddeb0c",
+            "current": "6ec719f20721918cd60752b5a8fef44064adc6b12b3eb172f84c25dbe66cd6de"
+          },
+          "game/native/gameplay_application/native_session.cpp": {
+            "qualified": "759f82ffef0849d8d646025c724f74f75431837666a5745102bc6878d8d062cc",
+            "current": "43d0e6b4b67aa36df88da6d999f5ad071e85e4fc04ef2979e1bc12a04a1cf840"
+          },
+          "game/native/gameplay_application/native_session.hpp": {
+            "qualified": "394d9ddd1debfeb53010972b7d4f7da47e255687c249737236db864ee0ebf334",
+            "current": "6e7f404552e5b94d0202a24b6e3b028d04df3fd89ef764e23759e0e43095e463"
+          },
+          "game/native/gameplay_application/session_rooms.cpp": {
+            "qualified": "71078746d49f68cef01478f90208ac02057e2f685abdf9226ef5599bdd19459b",
+            "current": "fe4ca49d18506458087b45a1b79c964f00c486cc57efb585fa5ad3cd0cb4b802"
+          },
+          "game/native/gameplay_application/session_rooms_tests.cpp": {
+            "qualified": "5646781bad9d01f4ca17d6513ec36217a28194e77fbebc95a0c5cacc16261d9a",
+            "current": "8cb052f87d8233bfd30d96c5bd7319500acd152df434d6271bd4f674c4103d1d"
+          },
+          "game/native/gameplay_collision/CMakeLists.txt": {
+            "qualified": "ad02c9282c3891963730e2bb758103973dd277932bf33a64a8cdba7e423e5b3c",
+            "current": "03e1a3731d52b2467160a1084b6df4840fd09119e6ca904aeb612f23d5aafe4c"
+          },
+          "game/native/gameplay_collision/room_objects.cpp": {
+            "qualified": "94302623b4d600bbee5a8d955be8462ccf7c43e053de36abb30aa5ab162586d7",
+            "current": "96936583ca6d043781cec79be0a0332c065498bb0ad77665a21681ac0edb4de2"
+          },
+          "game/native/gameplay_collision/room_objects.hpp": {
+            "qualified": "09f60fee4f49ac6958d6b68d314ee7de5a1a1d5bf272182d13bd6bafe2ed5f6a",
+            "current": "fc5dba750a3e29a5f763d9e9fb526943971003988bbe13f3bce43c0088051207"
+          },
+          "game/native/gameplay_contact_world/contacts.cpp": {
+            "qualified": "2b58be3ba98ddfd69629f4f35f9f3e604e47256851b13dec04c00921d5ec8266",
+            "current": "4f9297fdc965768141196e0b1e3fa729a9bd73561870c70e45ee55356a5527fb"
+          },
+          "game/native/gameplay_contact_world/contacts.hpp": {
+            "qualified": "339c36fa5735312827446fe219601638bc994102e13f7978a1df0bee8a7324d2",
+            "current": "2595e6259e11229f89eb9c034680451a8d3777379f7468f84364d83f9800e83b"
+          },
+          "game/native/gameplay_effects/CMakeLists.txt": {
+            "qualified": "1ddf8ce0f43f1dd8492e83f7ca4a71bf8ddda322986ba44360b87368c40bc209",
+            "current": "695f4657eb2dbc6e829e95efbae28440bfa75d90e5664aa1243631069da3c3a7"
+          },
+          "game/native/gameplay_effects/periodic_visuals.cpp": {
+            "qualified": "aa7665ba29f9174752513bc36d8825cb689871d184c6a65438bf8cb7efbca15d",
+            "current": "d91064c127b4e64866e591127ab51a29c63336cb189c09691d89cd18fdaf8946"
+          },
+          "game/native/gameplay_effects/periodic_visuals.hpp": {
+            "qualified": "1efa7f8653f721259e0b8037a174b57fcd15affcbe4049adb66320ee47e8d792",
+            "current": "e36e4abc847fb99657cb261418b2bd695043968fd790c726807fe9542bee9463"
+          },
+          "game/native/gameplay_scenario/camera_curves.hpp": {
+            "qualified": "8db2bc81ef65fb72ef83cf0c07ecf1091e013da230f7889f21e93a1df65d0d14",
+            "current": "11c6c36295612329d67cc999a717cee07b04858b898d4c2496e425f7d1b100a8"
+          },
+          "game/native/gameplay_scenario/CMakeLists.txt": {
+            "qualified": "f43ec45b6bca940f869544beeadf0c8922fa6c3dc974506501039b5e55e8fe0a",
+            "current": "1561f7471f416665fc50d5d0a68952a92fc2d5ee12c567c47d8d48bec41b06a2"
+          },
+          "game/native/gameplay_scenario/cutscene_playback.cpp": {
+            "qualified": "10a6103965aa65b4396a5ee6ba74c30ea18c315969e31c438a6b6aa43caabd87",
+            "current": "9f3d246cfd7e26569867466c178b687bccf2941834747236e5ad8d7baa318af8"
+          },
+          "game/native/gameplay_scenario/cutscene_playback.hpp": {
+            "qualified": "22ddc9447c82c76d134bcbb0f8f65e71c12919f3ad595cc2aa9c1e067f182ee8",
+            "current": "78034aa12f2cd1b665d9a4ba11a6530f42941c7bfee96e0711cb83fe91321c10"
+          },
+          "game/native/gameplay_scenario/interpreter.cpp": {
+            "qualified": "b33739621ef871904d75094f0476cbc59cf992e5a95df24c877d14e581bece57",
+            "current": "7868182e72ba25efa69a477d920ce361652e7aab22c2493e0248991e7bd9238a"
+          },
+          "game/native/gameplay_scenario/interpreter.hpp": {
+            "qualified": "5ae6ca3d11e5d185896c5fd309e9a35409b428e46246083c2b07f269bda8f28d",
+            "current": "d19c779f89c79c761d38fabb87385552ab032e459bd6353134c11d4158006b0d"
+          },
+          "game/native/gameplay_scenario/lighting.cpp": {
+            "qualified": "06fe7b0fcae827212f5c4fbc210134a380003e67551b236345838511875da091",
+            "current": "bf8e077058caf77a13d452ebddb000e179c3bc8217f3b8b8103bfd83baeaaf5c"
+          },
+          "game/native/gameplay_scenario/lighting.hpp": {
+            "qualified": "28b3b621e74454186f481c3cb5e28af8208487200873cb45779ee5894900f512",
+            "current": "7028f186057604844337c5d6c64301cf1093183319b9e02fa7f4c78a8da1c1c9"
+          },
+          "game/native/gameplay_scenario/scenario_archive.cpp": {
+            "qualified": "1176876a4f7abc075b4a2a365a27f8f03d80af73f67f7c8af0c842a198ae4ea7",
+            "current": "d0ca35cd23bf410cf5f6e783758a8066442737f853aa97609711c6ae4c5cda9b"
+          },
+          "game/native/gameplay_scenario/scenario_archive.hpp": {
+            "qualified": "30c7191ed873a25ef6ea436490310214886267a10af73466844d994fdb73c326",
+            "current": "76a60be0a4da6ea0a25e9954806e72ea00d4c1297211cd21696f8b90674ee62b"
+          },
+          "game/native/gameplay_tasks/events.cpp": {
+            "qualified": "9484ac9948008e45ad2ca06986e5f8c2fca3865bd98be8f13eda422904dc9dd1",
+            "current": "f1f4ec1bf528f70a8dcac5e2a1203368581d777ee6144df7739002eaabf4fd9c"
+          },
+          "game/native/gameplay_tasks/events.hpp": {
+            "qualified": "260ab6be125b53baca6d7dcf82f1c08771989d1630b47b9d78a19847bd227597",
+            "current": "f47183bf9ffc18b3f7f6376467284919b0aa05ebc9249bc31d5f5ee7420e7e35"
+          },
+          "game/native/gameplay_update/update.cpp": {
+            "qualified": "7ad283ac5d769e506b078d5096799e8e4981ae5e92982cb5c3b00cea61303621",
+            "current": "bf9376482b06da524ea6bc7e86f6cc4bcab089079f3a1a6702c69fa83020a274"
+          },
+          "game/native/gameplay_update/update.hpp": {
+            "qualified": "83b23d5afb3a6ad07e3b2911d2ff16d8da30404d3c1dede3738cb0f0250fece5",
+            "current": "5b5eaef7f5e8d6d788de246f3a17e76b48e1d82c779d9c93eb17f56603c7d895"
+          },
+          "game/native/gameplay_world/actor_initial_state.hpp": {
+            "qualified": "51cadee551da64bc921c27ed7e1c42e44a3de103b63e2300b6754736bac70332",
+            "current": "07626ca305383648d58f1b26740c017a0126fcd17b5eb585b61d7a849e29f646"
+          },
+          "game/native/gameplay_world/CMakeLists.txt": {
+            "qualified": "07a473d4927672fa4c2fc17c57afa13db353fefb6169e13259ae7808f825da77",
+            "current": "a2b40adbd011ea3126f496fe7fdad15e256a2f224519fa5c3345972163d6308b"
+          },
+          "game/native/gameplay_world/speech_state.hpp": {
+            "qualified": "00c5fd992974ae0e49ee1585950f54e59e9ebac8e7452ce4906ac45ecc554cb9",
+            "current": "091d13b2a5630bf6771aaa00b7cf555f0d81d84845b4b5dfa8307e3cc049e539"
+          },
+          "game/native/gameplay_world/world.hpp": {
+            "qualified": "a53a568137910fbc4ead0f09d405b5b90cd9b074de8e9d3758035f4bd8a50f4b",
+            "current": "2f918fe5899a5f8a25de76340b7b18fe5b68076154329f46499170f369322915"
+          },
+          "tools/native_reconstruction/verify_session_rooms.py": {
+            "qualified": "37d9882e79c2e4e310bad9b4ba36df8cc7d7949f0dc462a8c51320b55572a3c3",
+            "current": "476b2839a8554294fd01c817dcf37c4973843fbe14c34cfeb761bb5b3b8ee46d"
+          },
+          "game/native/gameplay_world/resource_pose_work.cpp": {
+            "qualified": "0f37632a60b43ae5fbf002317a3a4c97400b0656668005e7261d97487498a329",
+            "current": "7da5988f9825261630830b8716eb01966a9857fad40389030f3897292a19eacc"
+          },
+          "game/native/gameplay_world/resource_pose_work.hpp": {
+            "qualified": "516bc6186147e01b451050e3aabf1d120edc3c090235bfc300b1fa903280e760",
+            "current": "44073c430193e67ee7f7eb835f7a2967a1106f5b2dd2d392e9d2e7af37b99b75"
+          }
+        }
+      },
+      "current": {
+        "path": "build-native-sjuni/pose-callbacks-current-llvm-v6/receipt.json",
+        "sha256": "59ad7a9f4c264bdfd2c113d45ce0d9acb9522b07a85a4dc80b85455d5ba9252c",
+        "observed": {
+          "checks": 1615,
+          "owned_banks": 6,
+          "cloud_frames": 380,
+          "room_cases": 6,
+          "profile_refusals": 1,
+          "game_run": false
+        },
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "subsequent_dependency_changes": {
+          "game/native/gameplay_world/CMakeLists.txt": {
+            "qualified": "56029750fac857be2db0b5dba23077451ff57ecc436c91ea1e95351850182c66",
+            "current": "a2b40adbd011ea3126f496fe7fdad15e256a2f224519fa5c3345972163d6308b"
+          }
+        }
+      }
+    },
+    "gcc": {
+      "policy": {
+        "path": "build-native-sjuni/pose-parent-flight-gcc-v1/receipt.json",
+        "sha256": "32654238a79ddade1c4ae2153f2ae09066e2330c1c9ef7b2e8ad477841a2451b",
+        "observed": {
+          "checks": 4023213,
+          "cases": 524288,
+          "retirements": 74037,
+          "floor_queries": 196610,
+          "trails": 262148,
+          "sounds": 74037,
+          "original_calls": 1393267,
+          "game_run": false
+        },
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "subsequent_dependency_changes": {
+          "game/native/gameplay_application/CMakeLists.txt": {
+            "qualified": "93b8213590beb344152b9d3a1de6f92e612ac0f59bdfd86a9c705751d0ddeb0c",
+            "current": "6ec719f20721918cd60752b5a8fef44064adc6b12b3eb172f84c25dbe66cd6de"
+          },
+          "game/native/gameplay_application/native_session.cpp": {
+            "qualified": "759f82ffef0849d8d646025c724f74f75431837666a5745102bc6878d8d062cc",
+            "current": "43d0e6b4b67aa36df88da6d999f5ad071e85e4fc04ef2979e1bc12a04a1cf840"
+          },
+          "game/native/gameplay_application/native_session.hpp": {
+            "qualified": "394d9ddd1debfeb53010972b7d4f7da47e255687c249737236db864ee0ebf334",
+            "current": "6e7f404552e5b94d0202a24b6e3b028d04df3fd89ef764e23759e0e43095e463"
+          },
+          "game/native/gameplay_application/session_rooms.cpp": {
+            "qualified": "71078746d49f68cef01478f90208ac02057e2f685abdf9226ef5599bdd19459b",
+            "current": "fe4ca49d18506458087b45a1b79c964f00c486cc57efb585fa5ad3cd0cb4b802"
+          },
+          "game/native/gameplay_application/session_rooms_tests.cpp": {
+            "qualified": "5646781bad9d01f4ca17d6513ec36217a28194e77fbebc95a0c5cacc16261d9a",
+            "current": "8cb052f87d8233bfd30d96c5bd7319500acd152df434d6271bd4f674c4103d1d"
+          },
+          "game/native/gameplay_collision/CMakeLists.txt": {
+            "qualified": "ad02c9282c3891963730e2bb758103973dd277932bf33a64a8cdba7e423e5b3c",
+            "current": "03e1a3731d52b2467160a1084b6df4840fd09119e6ca904aeb612f23d5aafe4c"
+          },
+          "game/native/gameplay_collision/room_objects.cpp": {
+            "qualified": "94302623b4d600bbee5a8d955be8462ccf7c43e053de36abb30aa5ab162586d7",
+            "current": "96936583ca6d043781cec79be0a0332c065498bb0ad77665a21681ac0edb4de2"
+          },
+          "game/native/gameplay_collision/room_objects.hpp": {
+            "qualified": "09f60fee4f49ac6958d6b68d314ee7de5a1a1d5bf272182d13bd6bafe2ed5f6a",
+            "current": "fc5dba750a3e29a5f763d9e9fb526943971003988bbe13f3bce43c0088051207"
+          },
+          "game/native/gameplay_contact_world/contacts.cpp": {
+            "qualified": "2b58be3ba98ddfd69629f4f35f9f3e604e47256851b13dec04c00921d5ec8266",
+            "current": "4f9297fdc965768141196e0b1e3fa729a9bd73561870c70e45ee55356a5527fb"
+          },
+          "game/native/gameplay_contact_world/contacts.hpp": {
+            "qualified": "339c36fa5735312827446fe219601638bc994102e13f7978a1df0bee8a7324d2",
+            "current": "2595e6259e11229f89eb9c034680451a8d3777379f7468f84364d83f9800e83b"
+          },
+          "game/native/gameplay_effects/CMakeLists.txt": {
+            "qualified": "1ddf8ce0f43f1dd8492e83f7ca4a71bf8ddda322986ba44360b87368c40bc209",
+            "current": "695f4657eb2dbc6e829e95efbae28440bfa75d90e5664aa1243631069da3c3a7"
+          },
+          "game/native/gameplay_effects/periodic_visuals.cpp": {
+            "qualified": "aa7665ba29f9174752513bc36d8825cb689871d184c6a65438bf8cb7efbca15d",
+            "current": "d91064c127b4e64866e591127ab51a29c63336cb189c09691d89cd18fdaf8946"
+          },
+          "game/native/gameplay_effects/periodic_visuals.hpp": {
+            "qualified": "1efa7f8653f721259e0b8037a174b57fcd15affcbe4049adb66320ee47e8d792",
+            "current": "e36e4abc847fb99657cb261418b2bd695043968fd790c726807fe9542bee9463"
+          },
+          "game/native/gameplay_scenario/camera_curves.hpp": {
+            "qualified": "8db2bc81ef65fb72ef83cf0c07ecf1091e013da230f7889f21e93a1df65d0d14",
+            "current": "11c6c36295612329d67cc999a717cee07b04858b898d4c2496e425f7d1b100a8"
+          },
+          "game/native/gameplay_scenario/CMakeLists.txt": {
+            "qualified": "f43ec45b6bca940f869544beeadf0c8922fa6c3dc974506501039b5e55e8fe0a",
+            "current": "1561f7471f416665fc50d5d0a68952a92fc2d5ee12c567c47d8d48bec41b06a2"
+          },
+          "game/native/gameplay_scenario/cutscene_playback.cpp": {
+            "qualified": "10a6103965aa65b4396a5ee6ba74c30ea18c315969e31c438a6b6aa43caabd87",
+            "current": "9f3d246cfd7e26569867466c178b687bccf2941834747236e5ad8d7baa318af8"
+          },
+          "game/native/gameplay_scenario/cutscene_playback.hpp": {
+            "qualified": "22ddc9447c82c76d134bcbb0f8f65e71c12919f3ad595cc2aa9c1e067f182ee8",
+            "current": "78034aa12f2cd1b665d9a4ba11a6530f42941c7bfee96e0711cb83fe91321c10"
+          },
+          "game/native/gameplay_scenario/interpreter.cpp": {
+            "qualified": "b33739621ef871904d75094f0476cbc59cf992e5a95df24c877d14e581bece57",
+            "current": "7868182e72ba25efa69a477d920ce361652e7aab22c2493e0248991e7bd9238a"
+          },
+          "game/native/gameplay_scenario/interpreter.hpp": {
+            "qualified": "5ae6ca3d11e5d185896c5fd309e9a35409b428e46246083c2b07f269bda8f28d",
+            "current": "d19c779f89c79c761d38fabb87385552ab032e459bd6353134c11d4158006b0d"
+          },
+          "game/native/gameplay_scenario/lighting.cpp": {
+            "qualified": "06fe7b0fcae827212f5c4fbc210134a380003e67551b236345838511875da091",
+            "current": "bf8e077058caf77a13d452ebddb000e179c3bc8217f3b8b8103bfd83baeaaf5c"
+          },
+          "game/native/gameplay_scenario/lighting.hpp": {
+            "qualified": "28b3b621e74454186f481c3cb5e28af8208487200873cb45779ee5894900f512",
+            "current": "7028f186057604844337c5d6c64301cf1093183319b9e02fa7f4c78a8da1c1c9"
+          },
+          "game/native/gameplay_scenario/scenario_archive.cpp": {
+            "qualified": "1176876a4f7abc075b4a2a365a27f8f03d80af73f67f7c8af0c842a198ae4ea7",
+            "current": "d0ca35cd23bf410cf5f6e783758a8066442737f853aa97609711c6ae4c5cda9b"
+          },
+          "game/native/gameplay_scenario/scenario_archive.hpp": {
+            "qualified": "30c7191ed873a25ef6ea436490310214886267a10af73466844d994fdb73c326",
+            "current": "76a60be0a4da6ea0a25e9954806e72ea00d4c1297211cd21696f8b90674ee62b"
+          },
+          "game/native/gameplay_tasks/events.cpp": {
+            "qualified": "9484ac9948008e45ad2ca06986e5f8c2fca3865bd98be8f13eda422904dc9dd1",
+            "current": "f1f4ec1bf528f70a8dcac5e2a1203368581d777ee6144df7739002eaabf4fd9c"
+          },
+          "game/native/gameplay_tasks/events.hpp": {
+            "qualified": "260ab6be125b53baca6d7dcf82f1c08771989d1630b47b9d78a19847bd227597",
+            "current": "f47183bf9ffc18b3f7f6376467284919b0aa05ebc9249bc31d5f5ee7420e7e35"
+          },
+          "game/native/gameplay_update/update.cpp": {
+            "qualified": "7ad283ac5d769e506b078d5096799e8e4981ae5e92982cb5c3b00cea61303621",
+            "current": "bf9376482b06da524ea6bc7e86f6cc4bcab089079f3a1a6702c69fa83020a274"
+          },
+          "game/native/gameplay_update/update.hpp": {
+            "qualified": "83b23d5afb3a6ad07e3b2911d2ff16d8da30404d3c1dede3738cb0f0250fece5",
+            "current": "5b5eaef7f5e8d6d788de246f3a17e76b48e1d82c779d9c93eb17f56603c7d895"
+          },
+          "game/native/gameplay_world/actor_initial_state.hpp": {
+            "qualified": "51cadee551da64bc921c27ed7e1c42e44a3de103b63e2300b6754736bac70332",
+            "current": "07626ca305383648d58f1b26740c017a0126fcd17b5eb585b61d7a849e29f646"
+          },
+          "game/native/gameplay_world/CMakeLists.txt": {
+            "qualified": "07a473d4927672fa4c2fc17c57afa13db353fefb6169e13259ae7808f825da77",
+            "current": "a2b40adbd011ea3126f496fe7fdad15e256a2f224519fa5c3345972163d6308b"
+          },
+          "game/native/gameplay_world/speech_state.hpp": {
+            "qualified": "00c5fd992974ae0e49ee1585950f54e59e9ebac8e7452ce4906ac45ecc554cb9",
+            "current": "091d13b2a5630bf6771aaa00b7cf555f0d81d84845b4b5dfa8307e3cc049e539"
+          },
+          "game/native/gameplay_world/world.hpp": {
+            "qualified": "a53a568137910fbc4ead0f09d405b5b90cd9b074de8e9d3758035f4bd8a50f4b",
+            "current": "2f918fe5899a5f8a25de76340b7b18fe5b68076154329f46499170f369322915"
+          },
+          "tools/native_reconstruction/verify_session_rooms.py": {
+            "qualified": "37d9882e79c2e4e310bad9b4ba36df8cc7d7949f0dc462a8c51320b55572a3c3",
+            "current": "476b2839a8554294fd01c817dcf37c4973843fbe14c34cfeb761bb5b3b8ee46d"
+          },
+          "game/native/gameplay_world/resource_pose_work.cpp": {
+            "qualified": "0f37632a60b43ae5fbf002317a3a4c97400b0656668005e7261d97487498a329",
+            "current": "7da5988f9825261630830b8716eb01966a9857fad40389030f3897292a19eacc"
+          },
+          "game/native/gameplay_world/resource_pose_work.hpp": {
+            "qualified": "516bc6186147e01b451050e3aabf1d120edc3c090235bfc300b1fa903280e760",
+            "current": "44073c430193e67ee7f7eb835f7a2967a1106f5b2dd2d392e9d2e7af37b99b75"
+          }
+        }
+      },
+      "current": {
+        "path": "build-native-sjuni/pose-callbacks-current-gcc-v6/receipt.json",
+        "sha256": "b389a536381c5ca70531a4d48cbf0934d7711791a47f723d8811dc720d48a238",
+        "observed": {
+          "checks": 1615,
+          "owned_banks": 6,
+          "cloud_frames": 380,
+          "room_cases": 6,
+          "profile_refusals": 1,
+          "game_run": false
+        },
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "subsequent_dependency_changes": {
+          "game/native/gameplay_world/CMakeLists.txt": {
+            "qualified": "56029750fac857be2db0b5dba23077451ff57ecc436c91ea1e95351850182c66",
+            "current": "a2b40adbd011ea3126f496fe7fdad15e256a2f224519fa5c3345972163d6308b"
+          }
+        }
+      }
+    }
+  },
+  "limits": [
+    "Actual1B9310 offset sound needs source33/554 construction metadata and concrete consumer.",
+    "Pure floor/trail/sound/retirement calls are observations; actual room/pool/trail composition is separately exercised by current CMake contracts.",
+    "Whole frame/session installation, remaining callbacks and gameplay acceptance remain open."
+  ]
+}

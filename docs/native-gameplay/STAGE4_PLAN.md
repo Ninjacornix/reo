@@ -4,6 +4,10 @@ Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification with multiple agents. The user is awake and has revoked the prior
 sleep request: finish Stage4 and do not put the PC to sleep afterward.
 
+- [Parent-gated pose flight](PARENT_POSE_FLIGHT.md) now supplies kind18 through
+  the real pose/room/trail owners, including ordered source comparisons,
+  invalid-launch retirement and explicit missing sound metadata refusal.
+  Remaining callbacks/actions and whole-game acceptance remain open.
 - [Pose timing](POSE_TIMING.md) now reads the existing actual linked-pass
   clock factor through a read-only capability. Both compilers pass the complete
   empty-population producer and actual linked-pass-to-kind11 contracts. This

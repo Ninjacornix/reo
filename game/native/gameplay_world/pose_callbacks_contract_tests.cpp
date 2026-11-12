@@ -5,6 +5,7 @@
 #include "inherited_pose_trails.hpp"
 #include "linked_pose_timing.hpp"
 #include "linked_updates.hpp"
+#include "pose_parent_flight.hpp"
 #include "resource_pose_work.hpp"
 #include "../gameplay_effects/periodic_visuals.hpp"
 #include <fstream>
@@ -70,6 +71,14 @@ int main(int argc,char** argv)try{
             custom_session->clock_mode=9;check(!actual_quantum.read());check(linked.run().status==g::LinkedUpdateStatus::completed&&actual_quantum.read()==2);
             custom_session->clock_mode=0;check(actual_quantum.read()==2);check(linked.run().status==g::LinkedUpdateStatus::completed&&actual_quantum.read()==1);
             g::PoseMotionUpdates actual_motion(*custom_world,custom_pool,&actual_quantum);const auto vertical_id=work(custom_pool,11);check(custom_pool.update(&actual_motion).status==g::PoseWorkStatus::completed&&custom_pool.resolve(vertical_id)->pose_work->timer==179);check(custom_pool.reset()==g::PoseWorkStatus::completed);
+            g::RoomParentPoseFlight parent_flights(*custom_world,custom_pool,real_rooms,&mapped);const auto parent_actor=custom_world->resolve(custom_parent);parent_actor->primary=2;parent_actor->secondary=0;
+            const auto parent_flight_id=work(custom_pool,18);const auto flying=custom_pool.resolve(parent_flight_id);flying->contact.related=custom_parent;flying->position={origin->x,origin->y+100,origin->z};
+            for(unsigned frame=0;frame<8;++frame){check(custom_pool.update(&parent_flights).status==g::PoseWorkStatus::completed);check(custom_visuals.update({0,1,0}).status==e::VisualStatus::completed);}
+            check(custom_pool.resolve(parent_flight_id)&&flying->primary==1&&flying->pose_work->velocity.y==-2.f);check(custom_pool.reset()==g::PoseWorkStatus::completed);
+            const auto failed_launch=work(custom_pool,18);const auto invalid=custom_pool.resolve(failed_launch);invalid->contact.related=custom_parent;invalid->visible=true;parent_actor->primary=0;
+            check(custom_pool.update(&parent_flights).status==g::PoseWorkStatus::completed&&invalid->primary==255&&invalid->pose_work->lifetime==1&&invalid->visible);check(custom_pool.update(&parent_flights).status==g::PoseWorkStatus::completed&&!custom_pool.resolve(failed_launch)&&!invalid->visible);
+            const auto audio_id=work(custom_pool,18);const auto audio_prefix=custom_pool.resolve(audio_id);audio_prefix->primary=1;audio_prefix->contact.related=custom_parent;const auto sampled_floor=real_rooms.room->floors.floor(*origin);audio_prefix->position={origin->x,sampled_floor.height-.5f,origin->z};
+            check(custom_pool.update(&parent_flights).status==g::PoseWorkStatus::unavailable&&custom_pool.resolve(audio_id)&&audio_prefix->primary==1&&audio_prefix->sampled_surface_height==sampled_floor.height);check(custom_pool.reset()==g::PoseWorkStatus::completed);
             custom_visuals.close();check(!inherited.bound_to(*custom_world));
             const auto floor=real_rooms.room->floors.floor(*origin);const auto arc_id=work(owned_pool,13);auto arc=owned_pool.resolve(arc_id);arc->primary=1;arc->position={origin->x,floor.height-.5f,origin->z};check(owned_pool.update(&real_arcs).status==g::PoseWorkStatus::completed&&!owned_pool.resolve(arc_id)&&arc->sampled_surface_height==floor.height&&arc->position.y==floor.height);
             const auto stale_id=work(owned_pool,13);arc=owned_pool.resolve(stale_id);arc->primary=1;check(real_rooms.room->ids.retire(real_rooms.room->id.entity)==g::actors::EntityStatus::completed);check(owned_pool.update(&real_arcs).status==g::PoseWorkStatus::unavailable&&owned_pool.resolve(stale_id));check(owned_pool.reset()==g::PoseWorkStatus::completed);++banks;++room_cases;
