@@ -230,6 +230,9 @@ struct Session : actors::HitSession {
     std::uint8_t single_roster_setup{}; // original4BAE32, set by mode-zero roster initialization
     gameplay_ai::ControlRequests ai_control_requests;
     gameplay_session::ActivityState activity;
+    //4BAE8A: imported from actual launch selection37F330 (frontend318B65).
+    // Generic construction does not establish the authored difficulty.
+    std::optional<std::uint8_t> difficulty;
 };
 struct Profile {
     std::vector<input::Remap> layouts;

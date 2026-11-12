@@ -68,6 +68,9 @@ public:
     NativeSession(const NativeSession&)=delete;
     NativeSession& operator=(const NativeSession&)=delete;
     SessionStatus install_room(gameplay_scenario::content::RoomId);
+    // Exact37F330 difficulty subproducer; the host supplies its actual selected
+    // frontend byte. This does not claim the remaining launch side effects.
+    SessionStatus import_launch_difficulty(std::uint8_t)noexcept;
     ScriptStep step_room_script(std::size_t maximum_operations=4096);
     FrameStep advance(gameplay_update::PhaseServices*,gameplay_world::Services*,
                       std::size_t script_budget=4096,std::size_t task_budget=1024);

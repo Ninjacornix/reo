@@ -248,6 +248,7 @@ PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
 #include "script_resource_parameter_vm_tests.inc"
 #include "script_resource_activation_vm_tests.inc"
 #include "scenario_events_vm_tests.inc"
+#include "difficulty_vm_tests.inc"
 int main(int argc,char** argv)try{
     check(argc==5);
     scene_record_eligibility_tests();
@@ -259,6 +260,7 @@ int main(int argc,char** argv)try{
     script_resource_parameter_vm_tests();
     script_resource_activation_vm_tests();
     scenario_events_vm_tests();
+    difficulty_vm_tests();
     no_model_vm_tests();
     surface_vm_tests(argv[1]);
     room_counter_vm_tests(argv[2]);
@@ -461,5 +463,6 @@ int main(int argc,char** argv)try{
              <<",\"resource_parameter_dispatches\":"<<resource_parameter_dispatches<<",\"resource_parameter_releases\":"<<resource_parameter_releases<<",\"resource_parameter_refusals\":"<<resource_parameter_refusals
              <<",\"resource_activation_dispatches\":"<<resource_activation_dispatches<<",\"resource_activation_constructed\":"<<resource_activation_constructed<<",\"resource_activation_refusals\":"<<resource_activation_refusals
              <<",\"scenario_event_dispatches\":"<<scenario_event_dispatches<<",\"scenario_event_refusals\":"<<scenario_event_refusals
+             <<",\"difficulty_dispatches\":"<<difficulty_dispatches<<",\"difficulty_refusals\":"<<difficulty_refusals
              <<",\"original_numeric_handler_invocations\":65536,\"game_launched\":false}\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

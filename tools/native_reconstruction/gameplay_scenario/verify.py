@@ -43,6 +43,7 @@ IDS += ['00693920','00702A60']
 IDS += ['006949A0','005B4380','005B1850','00591BE0','005F2180','005F2120','005F22C0','005B1A90','00590D80']
 IDS += ['00694D70','00592E90','00591400','00590C70','00590BE0']
 IDS += ['00691010','005B92B0']
+IDS += ['00691AE0']
 
 PINNED={};PIN_COMMITS={}
 def source_bytes(p):
@@ -50,7 +51,7 @@ def source_bytes(p):
     return PINNED[name] if name in PINNED else p.read_bytes()
 def sha(p):return hashlib.sha256(source_bytes(p)).hexdigest()
 def invoke(command,out,label):
-    p=subprocess.run(command,capture_output=True,text=True,timeout=120)
+    p=subprocess.run(command,capture_output=True,text=True,timeout=600)
     (out/(label+'.stdout.txt')).write_text(p.stdout);(out/(label+'.stderr.txt')).write_text(p.stderr)
     if p.returncode:raise RuntimeError(label+' failed: '+p.stderr[-5000:])
     return dict(command=command,exit_code=p.returncode,stdout_sha256=sha(out/(label+'.stdout.txt')),stderr_sha256=sha(out/(label+'.stderr.txt')))
@@ -145,6 +146,9 @@ def main(a):
     actor_queries=struct.unpack_from('<8I',raw,0x7408f0-0x570000)
     assert actor_queries==(0x693a44,0x693a8c,0x693ad4,0x693b80,0x693b2c,0x693b58,0x693ae8,0x693bc0)
     declarations.append('inline constexpr std::array<std::uint32_t,8> original_actor_query_table{'+','.join(hex(x)for x in actor_queries)+'};')
+    difficulty_table=struct.unpack_from('<6I',raw,0x7408b0-0x570000)
+    assert difficulty_table==(0x691b38,0x691b54,0x691b70,0x691b90,0x691bb0,0x691bd0)
+    declarations.append('inline void owned_difficulty_constants(std::uint8_t* p){const std::array<std::uint32_t,6> values{'+','.join(hex(x)+'u'for x in difficulty_table)+'};std::memcpy(p+0x7408b0,values.data(),sizeof(values));}')
     initialization='inline void owned_enemy_constants(std::uint8_t* p){\n'
     for address,size in [(0x729270,0x1f00),(0x72f820,256),(0x7318c0,0x280)]:
         chunk=raw[address-0x570000:address-0x570000+size]
@@ -223,6 +227,7 @@ def main(a):
     shutil.copyfile(HERE/'script_resource_parameter_vm_tests.inc',out/'script_resource_parameter_vm_tests.inc')
     shutil.copyfile(HERE/'script_resource_activation_vm_tests.inc',out/'script_resource_activation_vm_tests.inc')
     shutil.copyfile(HERE/'scenario_events_vm_tests.inc',out/'scenario_events_vm_tests.inc')
+    shutil.copyfile(HERE/'difficulty_vm_tests.inc',out/'difficulty_vm_tests.inc')
     shutil.copyfile(HERE/'periodic_control_vm_tests.inc',out/'periodic_control_vm_tests.inc')
     shutil.copyfile(HERE/'room_rule_tests.inc',out/'room_rule_tests.inc')
     shutil.copyfile(HERE/'room_object_vm_tests.inc',out/'room_object_vm_tests.inc')
@@ -311,6 +316,7 @@ def main(a):
     source_paths.append(HERE/'script_resource_parameter_vm_tests.inc')
     source_paths.append(HERE/'script_resource_activation_vm_tests.inc')
     source_paths.append(HERE/'scenario_events_vm_tests.inc')
+    source_paths.append(HERE/'difficulty_vm_tests.inc')
     source_paths.append(ROOT/'tools/native_reconstruction/comparison_objects.py')
     source_paths += [HERE/'surface_vm_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]

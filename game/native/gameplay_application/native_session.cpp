@@ -8,7 +8,7 @@
 namespace reo::native::gameplay_application {
 namespace {
 namespace scenario=gameplay_scenario;
-bool minimal_room_providers(const scenario::Program& program)noexcept{
+bool minimal_room_providers(const scenario::Program& program,const gameplay_world::World& world)noexcept{
     // This concrete composition admits the retained room providers and the
     // canonical Update event factory. Other owners are attached explicitly as the
     // application expands; a parser-admitted program alone is insufficient.
@@ -19,7 +19,7 @@ bool minimal_room_providers(const scenario::Program& program)noexcept{
         !program.needs_periodic_effects()&&!program.needs_surface_effects()&&!program.needs_forced_terminal()&&
         !program.needs_script_audio()&&!program.needs_scene_record_parameters()&&!program.needs_resource_parameters()&&!program.needs_resource_activation()&&
         program.admits_room_counters(nullptr)&&program.admits_inventory_grants(nullptr,nullptr,nullptr)&&
-        program.admits_actor_roster(nullptr)&&program.admits_character_remap(nullptr)&&program.admits_actor_script_commands(nullptr);
+        program.admits_actor_roster(nullptr)&&program.admits_character_remap(nullptr)&&program.admits_actor_script_commands(nullptr)&&program.admits_difficulty(&world);
 }
 }
 struct NativeSession::RoomState final:gameplay_scenario::ControlEffects {
@@ -129,6 +129,11 @@ gameplay_scenario::Providers NativeSession::providers()noexcept{
     result.scenario_events=&update_.scenario_events();
     return result;
 }
+SessionStatus NativeSession::import_launch_difficulty(std::uint8_t selected)noexcept{
+    if(!open())return SessionStatus::closed;
+    if(running_||update_.busy())return SessionStatus::busy;
+    session_->difficulty=selected;return SessionStatus::completed;
+}
 SessionStatus NativeSession::install_room(gameplay_scenario::content::RoomId id){
     if(!open())return SessionStatus::closed;
     if(running_||update_.busy()||world_.busy())return SessionStatus::busy;
@@ -141,7 +146,7 @@ SessionStatus NativeSession::install_room(gameplay_scenario::content::RoomId id)
         const auto admitted=gameplay_scenario::content::admit_script_program(bank,world_.mode==0?
             gameplay_scenario::DispatchProfile::offline_actor:gameplay_scenario::DispatchProfile::ordinary);
         if(admitted.status!=gameplay_scenario::content::ScriptAdmission::admitted||!admitted.program)return SessionStatus::unsupported_script;
-        if(!minimal_room_providers(*admitted.program))return SessionStatus::missing_providers;
+        if(!minimal_room_providers(*admitted.program,world_))return SessionStatus::missing_providers;
         const auto scene=room->section(10),lig=room->section(11);
         if(!scene||!lig)return SessionStatus::missing_providers;
         gameplay_scenario::Lighting prepared_lighting;

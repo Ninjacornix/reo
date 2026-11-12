@@ -88,6 +88,8 @@ public:
     bool admits_resource_activation(const ScriptResourceActivation*,const gameplay_world::World*,const SceneResources*,const ResourceTemplates*)const noexcept;
     bool needs_scenario_events()const noexcept{return scenario_events_;}
     bool admits_scenario_events(const ScenarioEvents*,const gameplay_world::World*)const noexcept;
+    bool needs_difficulty()const noexcept{return difficulty_;}
+    bool admits_difficulty(const gameplay_world::World*)const noexcept;
     bool needs_scenario_counter_policy()const noexcept{return scenario_counter_policy_;}
     bool admits_room_counters(const gameplay_world::World*)const noexcept;
     bool admits_inventory_grants(const gameplay_world::World*,const SceneResources*,const ResourceTemplates*)const noexcept;
@@ -121,6 +123,7 @@ private:
     struct ResourceParameterRequest {std::uint16_t resource{};std::int16_t quantity{};};
     std::vector<ResourceParameterRequest> resource_parameter_requests_;
     bool resource_activation_{};
+    bool difficulty_{};
     bool scenario_events_{};
     DispatchProfile profile_{};
 };

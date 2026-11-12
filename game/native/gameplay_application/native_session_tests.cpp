@@ -47,6 +47,11 @@ struct ClosingActor final:world::Actor {
 void fixtures(){
     Notifications notices;application::NativeSession session(fixture_archive(),profile(),notices);
     check(session.open());
+    check(!session.world().session().difficulty);
+    for(unsigned value=0;value<256;++value){
+        check(session.import_launch_difficulty(std::uint8_t(value))==application::SessionStatus::completed);
+        check(session.world().session().difficulty==value);
+    }
     check(session.world().session().timing==&session.update());
     check(session.scene_records()==session.scene_controls().records());
     check(session.scene_records()==session.scene_proxies().records());
@@ -63,6 +68,7 @@ void fixtures(){
     check(session.install_room({41,73,0})==application::SessionStatus::closed);
     check(session.advance(nullptr,nullptr).status==application::SessionStatus::closed);
     check(session.close()==application::SessionStatus::completed);
+    check(session.import_launch_difficulty(0)==application::SessionStatus::closed&&session.world().session().difficulty==255);
 }
 void canonical_step(){
     Notifications notices;world::World native_world(profile(),std::make_shared<world::Session>());update::Owner owner(native_world,notices);
