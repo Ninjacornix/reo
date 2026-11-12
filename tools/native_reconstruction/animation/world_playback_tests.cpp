@@ -1,10 +1,13 @@
 #include "game/native/gameplay_world/animation.hpp"
 #include <functional>
+#include <filesystem>
 struct R5900Context;struct PS2Runtime;
 void npc_update_original_port(std::uint8_t*,R5900Context*,PS2Runtime*);
 void common_actor_original_port(std::uint8_t*,R5900Context*,PS2Runtime*);
 void linked_actor_original_port(std::uint8_t*,R5900Context*,PS2Runtime*);
 void cutscene_command_original_port(std::uint8_t*,R5900Context*,PS2Runtime*);
+void cinematic_frame_original_port(std::uint8_t*,R5900Context*,PS2Runtime*);
+void cinematic_behavior_original_extra(std::uint8_t*,R5900Context*);
 #define PLAYBACK_ACTOR_ADDRESS 0x4a5c30
 #define main standalone_playback_main
 #include "tools/native_reconstruction/animation/playback_tests.cpp"
@@ -87,6 +90,7 @@ void body_equal(const g::Actor& value, const std::vector<std::uint8_t>& ram) {
 #include "cutscene_descriptor_tests.inc"
 #include "npc_skeleton_tests.inc"
 #include "common_actor_frame_tests.inc"
+#include "cinematic_actor_frames_tests.inc"
 #include "npc_update_tests.inc"
 int main(int argc, char** argv) try {
     check(argc >= 4 && argc <= 6, "owned World animation inputs required");
@@ -105,6 +109,7 @@ int main(int argc, char** argv) try {
     common_actor_frame_tests(ram);
     npc_update_tests(ram);
     npc_update_failure_tests();
+    cinematic_actor_frame_tests(load((std::filesystem::path(argv[0]).parent_path()/"owned_secondary_skeletons.bin").string().c_str()),ram);
     std::fill(ram.begin(),ram.end(),0);owned_constants(ram.data());put(ram.data(),0x294e00,t::identity());
     scripted_motion_tests(raw_banks,skeletons,ram);
     scripted_motion_tests(raw_banks,skeletons,ram,0);
@@ -752,6 +757,11 @@ int main(int argc, char** argv) try {
               << ",\"npc_pool_actors\":" << npc_pool_actors
               << ",\"npc_attachment_cases\":" << npc_attachment_cases
               << ",\"common_actor_cases\":" << common_actor_cases
+              << ",\"cinematic_frame_cases\":" << cinematic_frame_cases
+              << ",\"cinematic_frame_calls\":" << cinematic_frame_calls
+              << ",\"cinematic_frame_restores\":" << cinematic_frame_restores
+              << ",\"cinematic_frame_mutations\":" << cinematic_frame_mutations
+              << ",\"cinematic_frame_refusals\":" << cinematic_frame_refusals
               << ",\"common_actor_refusals\":" << common_actor_refusals
               << ",\"npc_skeleton_cases\":" << npc_skeleton_cases
               << ",\"npc_skeleton_nodes\":" << npc_skeleton_nodes

@@ -5,6 +5,7 @@ std::vector<std::pair<std::uint8_t,std::uint8_t>> linked_original_notices;
 bool linked_original_order_capture{};
 std::vector<std::uint32_t> linked_original_order;
 void linked_actor_original_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
+    if(context->pc==0x61a6a0||context->pc==0x61b1a0||context->pc==0x66a2e0){cinematic_frame_original_port(memory,context,runtime);return;}
     if(primary_scripted_reference&&context->pc==0x1a0d70){
         const auto token=GPR_U32(context,4);check(token>0&&token<resources.size(),"primary scripted packed-header identity seam");
         SET_GPR_U32(context,2,resources[token]);context->pc=GPR_U32(context,31);++primary_scripted_metadata;return;

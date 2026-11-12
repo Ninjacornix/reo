@@ -18,6 +18,7 @@ void common_actor_original_port(std::uint8_t* memory,R5900Context* context,PS2Ru
         put(memory,at+0x4e4,g::Position{float(common_actor_seed%9)*.125f,-.25f,.5f});
         put(memory,at+0x54a,std::uint16_t(common_actor_seed%2?8:0));
         if(common_actor_mutate_inhibition)memory[0x4b9d13]=1;
+        cinematic_behavior_original_extra(memory,context);
     }
     context->pc=GPR_U32(context,31);
 }

@@ -162,6 +162,11 @@ Stage4 is fully implemented and verified; do not sleep at component checkpoints.
   the actual61A6A0 table/gate policy and typed61B1A0 recipes. Paired full-body
   comparisons pass with real player and HN54/HN88 inputs and explicit profile2
   limits. Secondary-chain solving and actual temporary/auxiliary traversal remain open.
+- [Cinematic actor frames](CINEMATIC_ACTOR_FRAMES.md) now own the specific5ECAE0
+  temporary-player/auxiliary traversal, actual link restoration and common-frame
+  root/basis work. Both compilers compare callback order and same-pass mutation,
+  with explicit behavior ports and failure boundaries. Phase scheduling, actual
+  behavior/action dispatch, model publication and secondary chains remain open.
 - The [scene NPC loading-mode correction](CUTSCENE_NPC_CONSTRUCTION.md) separates
   asset-loading mode3243D7 from pause4BADF8. Paired current cohorts pass4,384 scene
   cases with independent inputs; the earlier fixture conflated the two and its

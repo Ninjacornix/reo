@@ -228,6 +228,7 @@ class World;
 class LinkedModelPool;
 class LinkedActorUpdates;
 class NpcActorUpdates;
+class CinematicActorFrames;
 class AuxiliaryActorPool;
 class TargetMetricCache;
 class PrimaryActorModels;
@@ -314,6 +315,8 @@ private:
     friend class CommonActorFrame;
     friend class NpcActorUpdates;
     NpcActorUpdates* npc_update_owner_{};
+    friend class CinematicActorFrames;
+    CinematicActorFrames* cinematic_frame_owner_{};
     friend class HumanoidMotionOwner;
     friend class PrimaryActorInitialization;
     friend class PrimaryActorModels;

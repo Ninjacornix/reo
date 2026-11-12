@@ -2,6 +2,7 @@ add_library(reo_native_gameplay_world STATIC world.cpp behavior.cpp surfaces.cpp
 target_compile_features(reo_native_gameplay_world PUBLIC cxx_std_20)
 target_sources(reo_native_gameplay_world PRIVATE scene_primary_actors.cpp)
 target_sources(reo_native_gameplay_world PRIVATE secondary_pose_links.cpp)
+target_sources(reo_native_gameplay_world PRIVATE cinematic_actor_frames.cpp)
 target_sources(reo_native_gameplay_world PRIVATE actor_ownership_copy.cpp)
 add_executable(scene_primary_actors_tests scene_primary_actors_tests.cpp)
 target_include_directories(scene_primary_actors_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
