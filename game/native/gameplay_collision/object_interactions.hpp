@@ -20,6 +20,9 @@ public:
     void request_primary(const ObjectId&,std::uint16_t heading)noexcept;
     void clear_secondary(const ObjectId&)noexcept;
     void decay(const ObjectId&)noexcept;
+    //6AD4E0 active-record prefix, after the preceding scene lifetime retired.
+    // Coordinates, occupancy count and authored placement flags stay canonical.
+    bool initialize_scene_slot(const ObjectId&)noexcept;
     Parameters parameters(std::uint8_t source_slot)const noexcept;
     static std::uint8_t direction(std::uint16_t heading)noexcept;
 private:

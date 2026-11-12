@@ -25,7 +25,8 @@ struct NativeSession::RoomState final:gameplay_scenario::ControlEffects {
     std::shared_ptr<gameplay_scene::Records> records=std::make_shared<gameplay_scene::Records>(128);
     gameplay_scenario::SceneControls controls{records};
     gameplay_collision::ownership::Proxies proxies{records};
-    gameplay_actors::EntityStore entities;
+    gameplay_actors::EntityStore room_identity{{1}};
+    gameplay_actors::EntityStore entities{{64}};
     gameplay_actors::EntityId identity;
     std::optional<gameplay_scenario::content::RoomId> room;
     std::optional<gameplay_scenario::content::RdtDirectory> directory;
@@ -36,13 +37,16 @@ struct NativeSession::RoomState final:gameplay_scenario::ControlEffects {
     gameplay_scenario::RoomSceneGlobals globals;
     std::shared_ptr<const gameplay_scenario::RoomSceneInput> input;
     std::unique_ptr<gameplay_scenario::RoomSceneOwner> owner;
+    std::shared_ptr<gameplay_collision::room_objects::Owner> object_owner;
+    std::unique_ptr<gameplay_collision::room_objects::Scene> objects;
+    gameplay_collision::room_objects::SceneResult objects_result;
     gameplay_scenario::SceneMatrixStatus effects_status{gameplay_scenario::SceneMatrixStatus::completed};
     static gameplay_scenario::RoomModelRemap absent_remap()noexcept{
         gameplay_scenario::RoomModelRemap result;result.fill(255);return result;
     }
     RoomState(gameplay_update::Owner& update,gameplay_world::World& world):
         models({},absent_remap()),bindings(models,entities),matrices(controls,models,bindings,update.flags(),world.room){
-        const auto created=entities.create(std::make_unique<Tag>());
+        const auto created=room_identity.create(std::make_unique<Tag>());
         if(created.status!=gameplay_actors::EntityStatus::completed)throw std::bad_alloc();
         identity=created.id;
     }
@@ -57,7 +61,8 @@ struct NativeSession::RoomState final:gameplay_scenario::ControlEffects {
         if(result.status!=gameplay_scenario::SceneMatrixStatus::completed)effects_status=result.status;
     }
     void close()noexcept{
-        owner.reset();matrices.close();(void)bindings.close();entities.shutdown();
+        if(objects)(void)objects->close();
+        owner.reset();matrices.close();(void)bindings.close();entities.shutdown();room_identity.shutdown();
     }
 };
 NativeSession::NativeSession(std::shared_ptr<const reo::assets::Source> archive,gameplay_world::Profile profile,
@@ -70,7 +75,7 @@ NativeSession::~NativeSession(){if(close()==SessionStatus::busy)std::terminate()
 NativeSession::RoomLease::RoomLease(std::shared_ptr<NativeSession> host,std::shared_ptr<RoomState> state):
     host_(std::move(host)),state_(std::move(state)){}
 bool NativeSession::RoomLease::current()const noexcept{
-    if(!host_->open()||host_->room_state_!=state_||!state_->room||!state_->entities.acquire(state_->identity)||!state_->matrices.inspect(0))return false;
+    if(!host_->open()||host_->room_state_!=state_||!state_->room||!state_->room_identity.acquire(state_->identity)||!state_->matrices.inspect(0))return false;
     const auto id=*state_->room;
     return host_->room_&&host_->room_->scenario==id.scenario&&host_->room_->room==id.room&&host_->room_->variant==id.variant&&
         host_->world_.scenario==id.scenario&&host_->world_.room==id.room;
@@ -80,6 +85,24 @@ gameplay_scenario::content::RoomId NativeSession::RoomLease::room()const noexcep
 std::shared_ptr<gameplay_world::World> NativeSession::RoomLease::world()const noexcept{return {host_,&host_->world_};}
 std::shared_ptr<gameplay_scenario::SceneMatrixPrograms> NativeSession::RoomLease::programs()const noexcept{return {shared_from_this(),&state_->matrices};}
 const gameplay_scenario::content::RdtDirectory& NativeSession::RoomLease::directory()const noexcept{return *state_->directory;}
+NativeSession::RoomLease::ObjectContext NativeSession::RoomLease::object_context()const noexcept{
+    return {state_->entities,state_->proxies,state_->bindings,state_->models};
+}
+gameplay_collision::room_objects::SceneResult NativeSession::RoomLease::initialize_objects(
+    std::shared_ptr<gameplay_collision::room_objects::Owner> objects,
+    const gameplay_collision::response::Grid& walls,const gameplay_collision::response::Grid& floors,
+    gameplay_collision::response::Filter filter){
+    using gameplay_collision::room_objects::SceneStatus;
+    if(!current()||!objects||!objects->initialized())return {SceneStatus::unavailable_owner};
+    if(state_->objects)return state_->objects_result;
+    state_->object_owner=std::move(objects);
+    state_->objects=std::make_unique<gameplay_collision::room_objects::Scene>(*state_->object_owner,
+        state_->entities,state_->proxies,state_->bindings,walls,floors);
+    state_->objects_result=state_->objects->initialize(room().room,filter);return state_->objects_result;
+}
+std::shared_ptr<gameplay_collision::room_objects::Scene> NativeSession::RoomLease::object_scene()const noexcept{
+    return state_->objects?std::shared_ptr<gameplay_collision::room_objects::Scene>(shared_from_this(),state_->objects.get()):nullptr;
+}
 std::shared_ptr<SessionRoomGeometry>& NativeSession::RoomLease::geometry_cache()const noexcept{return state_->geometry;}
 std::shared_ptr<NativeSession::RoomLease> NativeSession::retain_room(std::shared_ptr<NativeSession> host)noexcept{
     if(host.get()!=this||!open()||!room_||!room_state_->matrices.inspect(0))return {};

@@ -76,3 +76,9 @@ Stage4 acceptance requirements.
 The subsequent [retained object binding](SESSION_OBJECT_BINDING.md) now connects
 this same placement table to Update publication and NativeSession reception,
 with actual native type9 queue tests. Model/proxy construction remains explicit.
+
+The [complete object Scene](ROOM_OBJECT_SCENE.md) subsequently adopts the
+actual6AD4E0 caller into that retained room graph. RoomInvocation now derives
+its dynamic triangles and source instance-selection count from this owner,
+and refuses it after explicit retirement. Saved model-pose production remains
+an explicit requirement for rooms with matching placements.

@@ -120,6 +120,11 @@ void owned(const std::filesystem::path& path){
         auto id=room->identity();check(bool(id)&&room->current(id));
         check(room->room_number()==73&&room->programs().get()==&host->scene_matrices());
         auto lease=host->retain_room(host);check(lease&&lease->world().get()==&host->world());
+        auto object_scene=lease->object_scene();check(object_scene&&object_scene->open()&&object_scene->count()==0);
+        const auto context=lease->object_context();
+        check(context.entities.size()==0&&&context.proxies==&host->scene_proxies()&&&context.models==&host->scene_models());
+        for(unsigned i=0;i<64;++i)check(bool(context.entities.create(std::make_unique<reo::native::gameplay_actors::Entity>()).id));
+        check(context.entities.create(std::make_unique<reo::native::gameplay_actors::Entity>()).status==reo::native::gameplay_actors::EntityStatus::full);
         check(!host->retain_room({}));
         const auto& geometry=room->geometry();
         check(host->world().session().collision_disabled_mask==0);
@@ -185,19 +190,25 @@ void owned(const std::filesystem::path& path){
         host->world().room=73;check(room->current(id));
         check(host->install_room({41,73,0})==a::SessionStatus::completed);++rooms;
         check(!room->current(id)&&!lease->current());
+        check(!object_scene->open());
         check(room->geometry().walls.triangles().size()==wall_count);
         auto replacement=resources.retain(73);check(replacement&&replacement->identity()!=id);
+        auto replacement_lease=host->retain_room(host);check(replacement_lease&&replacement_lease->object_context().entities.size()==0);
+        auto replacement_scene=replacement_lease->object_scene();check(replacement_scene&&replacement_scene->open());
         check(&replacement->geometry().objects==objects&&host->world().session().collision_disabled_mask==0);
         check(!flight->floor({},{ }).available);
         // Matrix leases themselves retain World/Update, even after the room
         // invocation and application caller references are released.
         auto matrices=replacement->programs();std::weak_ptr<a::NativeSession> weak=host;
+        check(replacement_scene->close()==c::room_objects::InstanceStatus::complete);
+        check(!replacement->current(replacement->identity())&&!resources.retain(73));
         host->scene_matrices().close();
         check(!replacement->current(replacement->identity())&&!resources.retain(73));
         check(replacement->geometry().walls.triangles().size()==wall_count);
         check(host->close()==a::SessionStatus::completed);
         check(!replacement->current(replacement->identity())&&replacement->geometry().walls.triangles().size()==wall_count);
         host.reset();lease.reset();room.reset();replacement.reset();same.reset();flight.reset();
+        object_scene.reset();replacement_scene.reset();replacement_lease.reset();
         check(!weak.expired()&&bool(matrices));
         matrices.reset();check(weak.expired());
     }

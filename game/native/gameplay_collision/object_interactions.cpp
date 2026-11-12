@@ -1,6 +1,11 @@
 #include "object_interactions.hpp"
 #include <bit>
 namespace reo::native::gameplay_collision::room_objects {
+bool InteractionOwner::initialize_scene_slot(const ObjectId& id)noexcept{
+    auto* object=edit(id);if(!object)return false;
+    object->instance={};object->proxies={};object->control_flags&=~2u;
+    object->requests=0;object->direction=0;object->secondary_direction=0;return true;
+}
 namespace {std::int8_t narrow(int n){return std::bit_cast<std::int8_t>(std::uint8_t(n));}}
 std::optional<ObjectId> InteractionOwner::masked(std::uint8_t slot)const noexcept{if(!owner_.domain_)return{};const auto index=slot&31;return owner_.objects_[index].active?std::optional<ObjectId>(owner_.id(index)):std::nullopt;}
 std::optional<std::uint8_t> InteractionOwner::source_ordinal(const ObjectId& id)const noexcept{return owner_.ordinal(id);}

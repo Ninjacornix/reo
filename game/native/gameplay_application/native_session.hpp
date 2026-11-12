@@ -7,6 +7,7 @@
 #include "../gameplay_scenario/room_scene_owner.hpp"
 #include "../gameplay_update/update.hpp"
 #include "../gameplay_update/reception.hpp"
+#include "../gameplay_collision/object_scene.hpp"
 
 namespace reo::native::gameplay_application {
 class SessionRooms;
@@ -34,12 +35,24 @@ public:
     // Its opaque identity retires at replacement, even while old data is held.
     class RoomLease final:public std::enable_shared_from_this<RoomLease> {
     public:
+        struct ObjectContext {
+            gameplay_actors::EntityStore& entities;
+            gameplay_collision::ownership::Proxies& proxies;
+            gameplay_scenario::SceneModelBindings& bindings;
+            gameplay_scenario::SceneModels& models;
+        };
         bool current()const noexcept;
         gameplay_actors::EntityId identity()const noexcept;
         gameplay_scenario::content::RoomId room()const noexcept;
         std::shared_ptr<gameplay_world::World> world()const noexcept;
         std::shared_ptr<gameplay_scenario::SceneMatrixPrograms> programs()const noexcept;
         const gameplay_scenario::content::RdtDirectory& directory()const noexcept;
+        ObjectContext object_context()const noexcept;
+        gameplay_collision::room_objects::SceneResult initialize_objects(
+            std::shared_ptr<gameplay_collision::room_objects::Owner>,
+            const gameplay_collision::response::Grid&,const gameplay_collision::response::Grid&,
+            gameplay_collision::response::Filter);
+        std::shared_ptr<gameplay_collision::room_objects::Scene> object_scene()const noexcept;
     private:
         std::shared_ptr<NativeSession> host_;
         std::shared_ptr<RoomState> state_;

@@ -1,0 +1,152 @@
+{
+  "schema": "reo.native.room_object_scene.qualification.v1",
+  "status": "passed",
+  "source_sha256": {
+    "game/native/gameplay_application/native_session.hpp": "785203f0983a8c78329fd1d7f7daf37a1394c7d8c474aaed80462005c7a0cd37",
+    "game/native/gameplay_application/native_session.cpp": "1a6574bf66cf4a4fa67fac912d068116f7d4851b3db554ee93e87f79cffb572e",
+    "game/native/gameplay_application/session_rooms.cpp": "51069c1828aff0774010e21f23261b7477209300a6489bb91737bf99fee2a8ea",
+    "game/native/gameplay_application/session_rooms_tests.cpp": "6a1801761add82392ebafc4159dbf18135036173ce0658ed3c87ec1742299c8b",
+    "game/native/gameplay_collision/CMakeLists.txt": "03e1a3731d52b2467160a1084b6df4840fd09119e6ca904aeb612f23d5aafe4c",
+    "game/native/gameplay_collision/object_interactions.hpp": "080504ac8d10808713607ea7fe2b1aa46382bddb576ab54d4b510da03c19c8ef",
+    "game/native/gameplay_collision/object_interactions.cpp": "26df623bcffe71636fe6e4bcff3bdb0c6dc22ef9f123c0d474f1a676570fcbd0",
+    "game/native/gameplay_collision/object_lifetime.hpp": "a124f8a5b327cfdb1e0462cf7691e18dbf97b921cfa7cf60f2798c269d7e7db3",
+    "game/native/gameplay_collision/object_lifetime.cpp": "f66a1e3dccd5c5d9b8a38e91d285180bed39355da0aec7c09279d5cb7387008d",
+    "game/native/gameplay_collision/room_objects.hpp": "fc5dba750a3e29a5f763d9e9fb526943971003988bbe13f3bce43c0088051207",
+    "game/native/gameplay_collision/room_objects.cpp": "96936583ca6d043781cec79be0a0332c065498bb0ad77665a21681ac0edb4de2",
+    "game/native/gameplay_collision/object_scene.hpp": "7fcd44631ce0eee0effa9fbe0de9973cf26c71a8c67785c687ba5efc4018080b",
+    "game/native/gameplay_collision/object_scene.cpp": "23f5f6db859e0626720ec9c0bb6ebf7c361464505c5dbdae4fa59e3da56cdf06",
+    "game/native/gameplay_collision/object_scene_tests.cpp": "226de8849da2866fa2215932e8a51114bf08edb70b1ed4517ae16ddfdd5d6bdd",
+    "tools/native_reconstruction/verify_object_scene.py": "06b946bc34a3c8d5197f40b5c7676c332a77c91a8799685755c0845a7e8da649",
+    "docs/native-gameplay/ROOM_OBJECT_SCENE.md": "67a28501009df08d588491cc1c23c6ea8239fdf4cbe3ea1f11a51897c25a72d5",
+    "docs/native-gameplay/STAGE4_INTEGRATION_AUDIT.md": "f5b857a406928a917b8b805d17783decf2ecf73e1a35be04222f66bbd1b6a145",
+    "docs/native-gameplay/NATIVE_SESSION_APPLICATION.md": "d9cc404921c6e88b37fa3749b296fd7041497e7ffc8534b86fb15e5d995f50e3",
+    "docs/native-gameplay/SESSION_ROOM_RESOURCES.md": "fcba0ee387ca1b93cd8aca2d1a0418090cff7bdac3d0b4261ac6330f5cd5c08b"
+  },
+  "cohorts": [
+    {
+      "compiler": "llvm",
+      "receipts": {
+        "outer": {
+          "path": "build-native-sjuni/room-object-scene-llvm-v4/receipt.json",
+          "sha256": "8a8ea0e5e8f1b32e814d0459611ba4124a88e7cadbfb45d9f73baadc055403e1"
+        },
+        "application": {
+          "path": "build-native-sjuni/session-rooms-llvm-v5/receipt.json",
+          "sha256": "93a52e9459ad3278e6b851739815fcbe9b8aca23863253a49421ec8fb859d3a9"
+        },
+        "parents": {
+          "path": "build-native-sjuni/session-rooms-parents-llvm-v4/receipt.json",
+          "sha256": "d5aa8c27c4965d50c187411311b5119031aed956905c1981b731e785111d0c79"
+        }
+      },
+      "outer": {
+        "checks": 68132,
+        "outer_cases": 28,
+        "selected": 33,
+        "constructed": 22,
+        "pool_full_cases": 7,
+        "inactive_grid_cases": 7,
+        "maximum_error": 0,
+        "game_launched": false
+      },
+      "outer_inputs": 107,
+      "original_bodies": 53,
+      "application": {
+        "status": "passed",
+        "checks": 21718,
+        "rooms": 4,
+        "queries": 586,
+        "hits": 328,
+        "original_calls": 0,
+        "game_launched": false
+      },
+      "independent_original": {
+        "status": "passed",
+        "checks": 31990,
+        "rooms": 4,
+        "queries": 586,
+        "hits": 328,
+        "original_calls": 10250,
+        "game_launched": false
+      },
+      "application_inputs": 703,
+      "native_archives": 57,
+      "parent_tests": 23,
+      "parent_inputs": 721
+    },
+    {
+      "compiler": "gcc",
+      "receipts": {
+        "outer": {
+          "path": "build-native-sjuni/room-object-scene-gcc-v4/receipt.json",
+          "sha256": "f41c09a500bdd2ce33f99e049d0367c2bfce1100c9ffeeb1cc47cd09de1ae31e"
+        },
+        "application": {
+          "path": "build-native-sjuni/session-rooms-gcc-v5/receipt.json",
+          "sha256": "01b7b19ee0d24de46f15227c151345e47cce8b1e7bb4153d1fd7bf05feb724a4"
+        },
+        "parents": {
+          "path": "build-native-sjuni/session-rooms-parents-gcc-v4/receipt.json",
+          "sha256": "c7018b504526d0e254d427e1905e1a2858f54a2e78634e856c51a5fea7cc6faa"
+        }
+      },
+      "outer": {
+        "checks": 68132,
+        "outer_cases": 28,
+        "selected": 33,
+        "constructed": 22,
+        "pool_full_cases": 7,
+        "inactive_grid_cases": 7,
+        "maximum_error": 0,
+        "game_launched": false
+      },
+      "outer_inputs": 107,
+      "original_bodies": 53,
+      "application": {
+        "status": "passed",
+        "checks": 21718,
+        "rooms": 4,
+        "queries": 586,
+        "hits": 328,
+        "original_calls": 0,
+        "game_launched": false
+      },
+      "independent_original": {
+        "status": "passed",
+        "checks": 31990,
+        "rooms": 4,
+        "queries": 586,
+        "hits": 328,
+        "original_calls": 10250,
+        "game_launched": false
+      },
+      "application_inputs": 703,
+      "native_archives": 57,
+      "parent_tests": 23,
+      "parent_inputs": 721
+    }
+  ],
+  "game_launched": false,
+  "device_opened": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "dependencies": [
+    {
+      "path": "tools/native_reconstruction/native_gameplay_object_lifetime_qualification_v1.json",
+      "sha256": "fc153ae4973af5f185616963943f63d15c03c274d32ae4b34f886e24a867c854"
+    },
+    {
+      "path": "tools/native_reconstruction/native_session_object_binding_qualification_v1.json",
+      "sha256": "9f5ea2716b9f42804c5e272ec8534149ee451eb773690d170f1583ad9434fae8"
+    }
+  ],
+  "limitations": [
+    "The positive-instance outer comparison supplies controlled initial model poses and physical remapping equally to both implementations; authored startup values are not inferred.",
+    "Production SessionRooms admits the real zero-current-object branch; positive current-room placements still require the actual static saved-model-pose producer.",
+    "The direct oracle retains the explicitly declared surrounding math/floor/trace ports from the prior lower ownership proof; complete original physics/rendering is not newly established.",
+    "The current application comparison original-call counts belong to wall loaders and collision-mask producers and are not new original object-message or object-outer calls.",
+    "NativeSession complete frame behavior/physics, remaining scenario scripts, installed host integration and semantic saves remain open.",
+    "Parent v3 harness collection stopped before parent build on its NativeSession-only assertion; v4 uses the separate pose target actual Ninja/quoted-include closure.",
+    "Production code uses typed native owners and matrices; original CPU/register/RAM representations exist only in the separate offline oracle."
+  ]
+}

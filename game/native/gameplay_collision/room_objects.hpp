@@ -58,6 +58,10 @@ public:
     std::vector<ObjectId> objects()const;
     const Type* type(std::uint16_t)const noexcept;
     bool install_grid(std::uint16_t room,std::span<const std::byte>);
+    //6AD820 grid clear: preserve canonical scenario placements and the separate
+    // occupancy workspace. The room Scene owns the accompanying count reset.
+    void reset_room_grid()noexcept;
+    std::optional<std::uint16_t> grid_room()const noexcept{return grid_?std::optional<std::uint16_t>(room_):std::nullopt;}
     const Grid* grid()const noexcept{return grid_?&*grid_:nullptr;}
     bool initialized()const noexcept{return initialized_;}
     // Published source ordinals address the canonical32-record table, including

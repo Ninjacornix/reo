@@ -317,3 +317,14 @@ typed type9 queue composition and scope/lifetime checks. It leaves actual
 object construction and the saved/current model-pose producer as the immediate
 next integration boundary, rather than claiming those consumers from binding
 alone.
+
+The [room object Scene](ROOM_OBJECT_SCENE.md) now implements the complete
+6AD4E0 outer owner and6AD820 grid retirement, using the actual existing
+instance/proxy/model-binding graph. NativeSession retains it and preserves
+all64 physical instance slots independently of room identity. The complete
+original comparison exposed and corrected premature native object-center
+publication during grid import. Positive-instance source comparisons pass
+with explicitly supplied model-pose/remapping preconditions. Production
+SessionRooms executes the real zero-current-object branch; initial saved
+model-pose ownership and the ordinary static room-model asset path remain
+the specific restriction on positive-instance rooms.

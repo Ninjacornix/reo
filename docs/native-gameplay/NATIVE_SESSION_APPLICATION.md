@@ -80,3 +80,9 @@ qualified SessionStartup application owner also composes actual roster startup
 against these same World/Update owners; it does not duplicate the session.
 The [object binding owner](SESSION_OBJECT_BINDING.md) now also retains the
 canonical scenario placement table in publication and concrete reception.
+
+The [room object Scene](ROOM_OBJECT_SCENE.md) now uses the room's actual
+model/proxy graph and a full64-slot object entity store. Its separate room
+identity cannot consume an object slot. The admitted room runs the complete
+zero-current-object outer caller; initial saved model poses still restrict
+rooms that require real instances.

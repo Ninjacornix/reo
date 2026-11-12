@@ -77,6 +77,7 @@ class InteractionOwner::Lifetime final {
         return dynamic_;
     }
     void rebuild_dynamic();
+    InstanceStatus append_dynamic(const ObjectId&,response::Filter);
     void close() noexcept;
     InstanceStatus close_checked()noexcept;
 

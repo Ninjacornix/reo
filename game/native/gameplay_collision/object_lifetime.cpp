@@ -194,6 +194,21 @@ void InteractionOwner::Lifetime::rebuild_dynamic() {
         return;
     dynamic_ = room_geometry::build_dynamic(owner, owner.room_, walls_, {});
 }
+InstanceStatus InteractionOwner::Lifetime::append_dynamic(const ObjectId& id,response::Filter filter){
+    if(closed_||closing_)return InstanceStatus::closed;
+    const auto& owner=interactions_.owner_;const auto* object=owner.get(id);
+    if(!object)return InstanceStatus::invalid_object;
+    if(!owner.grid_)return InstanceStatus::missing_grid;
+    const auto prism=room_geometry::prism(owner,*object,walls_,filter,dynamic_.triangles());
+    if(prism.status==trace::SamplingStatus::capacity||prism.status==trace::SamplingStatus::nonprogress){
+        dynamic_.status=prism.status;return InstanceStatus::numeric_refused;
+    }
+    for(const auto& triangle:prism.triangles){++dynamic_.attempted;
+        if(dynamic_.count<dynamic_.storage.size())dynamic_.storage[dynamic_.count++]=triangle;
+        else ++dynamic_.dropped;
+    }
+    return InstanceStatus::complete;
+}
 InstanceResult InteractionOwner::Lifetime::enable(std::int8_t key) {
     if (closed_ || closing_)
         return {InstanceStatus::closed};

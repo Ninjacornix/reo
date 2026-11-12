@@ -34,7 +34,7 @@ struct SessionRoomGeometry {
     collision::response::Grid walls,floors;
     collision::regions::World regions;
     std::shared_ptr<collision::room_objects::Owner> objects;
-    collision::room_geometry::Dynamic dynamic;
+    bool ready{};
     SessionRoomGeometry(collision::response::Grid w,collision::response::Grid f,
         collision::regions::World r,std::shared_ptr<collision::room_objects::Owner> o):
         walls(std::move(w)),floors(std::move(f)),regions(std::move(r)),objects(std::move(o)){}
@@ -43,22 +43,30 @@ namespace {
 class Invocation final:public gameplay_contact_world::RoomInvocation {
     std::shared_ptr<NativeSession::RoomLease> lease_;
     std::shared_ptr<SessionRoomGeometry> data_;
+    std::shared_ptr<collision::room_objects::Scene> objects_;
+    mutable collision::room_geometry::Dynamic dynamic_view_;
     mutable gameplay_world::CollisionRoom geometry_;
 public:
     Invocation(std::shared_ptr<NativeSession::RoomLease> lease,std::shared_ptr<SessionRoomGeometry> data):
-        lease_(std::move(lease)),data_(std::move(data)),
-        geometry_{data_->walls,data_->floors,data_->regions,*data_->objects,{},data_->dynamic.triangles(),false,false}{
+        lease_(std::move(lease)),data_(std::move(data)),objects_(lease_->object_scene()),
+        geometry_{data_->walls,data_->floors,data_->regions,*data_->objects,{},{},false,false}{
         geometry_.filter=filter(lease_->world()->session(),*lease_->programs());
+        dynamic_view_=objects_->dynamic();geometry_.dynamic=dynamic_view_.triangles();
+        geometry_.objects_enabled=objects_->count()!=0;
     }
     gameplay_contact_world::RoomId identity()const noexcept override{return {lease_->identity()};}
     bool current(gameplay_contact_world::RoomId id)const noexcept override{
-        return id==identity()&&lease_->current()&&bool(lease_->world()->session().collision_disabled_mask);
+        return id==identity()&&lease_->current()&&objects_->open()&&bool(lease_->world()->session().collision_disabled_mask);
     }
     std::uint16_t room_number()const noexcept override{return lease_->room().room;}
     const gameplay_world::CollisionRoom& geometry()const override{
         // Retired data remains readable. Only a current invocation observes the
         // live canonical filter; a retired invocation preserves its last view.
-        if(current(identity()))geometry_.filter=filter(lease_->world()->session(),*lease_->programs());
+        if(current(identity())){
+            geometry_.filter=filter(lease_->world()->session(),*lease_->programs());
+            dynamic_view_=objects_->dynamic();geometry_.dynamic=dynamic_view_.triangles();
+            geometry_.objects_enabled=objects_->count()!=0;
+        }
         return geometry_;
     }
     std::shared_ptr<gameplay_scenario::SceneMatrixPrograms> programs()const override{return lease_->programs();}
@@ -84,6 +92,13 @@ std::shared_ptr<gameplay_contact_world::RoomInvocation> SessionRooms::retain(std
     const auto host=session_.lock();if(!host)return {};
     status_=RoomResourcesStatus::unavailable_room;
     auto lease=host->retain_room(host);if(!lease||lease->room().room!=room)return {};
+    const auto bind_objects=[&](const std::shared_ptr<collision::room_objects::Owner>& objects){
+        if(host->update().room_objects()==objects.get()&&host->reception().room_objects()==objects.get())return true;
+        status_=RoomResourcesStatus::object_binding_refused;
+        if(host->update().busy()||host->world().busy())return false;
+        if(host->update().bind_room_objects(lease->room().scenario,objects)!=gameplay_update::Status::completed)return false;
+        return host->reception().bind_room_objects(lease->room().scenario,objects);
+    };
     try{
         auto& cached=lease->geometry_cache();
         if(!cached){
@@ -108,30 +123,30 @@ std::shared_ptr<gameplay_contact_world::RoomInvocation> SessionRooms::retain(std
                 objects=std::make_shared<collision::room_objects::Owner>(collision::room_objects::Owner::import(*type_bytes,*placement_bytes));
             }
             //745D60 counts actual6AD4E0 instances, not imported placements.
-            // Until that construction/proxy lifecycle is attached, only an
-            // authored room without matching placements has a proved zero.
+            // The complete construction/proxy owner is attached below, but
+            // initial saved model poses still require their room producer.
+            // Only a room without matching placements has a proved zero.
             for(const auto& object:objects->objects())if(objects->get(object)->room==id.room){
                 status_=RoomResourcesStatus::unavailable_object_instances;return {};
             }
             auto prepared=std::make_shared<SessionRoomGeometry>(std::move(walls),std::move(floors),std::move(regions),objects);
+            if(!bind_objects(objects))return {};
+            objects->reset_room_grid();
+            if(const auto grid=lease->directory().section(14))(void)objects->install_grid(id.room,*grid);
             //6161E0:616250 resets this canonical word at wall installation.
             // A generic Session remains unknown; retaining cached geometry
             // never repeats this producer or overwrites later mask changes.
             host->world().session().collision_disabled_mask=0;
-            prepared->dynamic=collision::room_geometry::build_dynamic(*objects,id.room,prepared->walls,
-                filter(host->world().session(),*lease->programs()));
-            if(prepared->dynamic.status!=collision::trace::SamplingStatus::complete){
-                status_=RoomResourcesStatus::unsupported_dynamic;return {};
-            }
             cached=std::move(prepared);
+            const auto initialized=lease->initialize_objects(objects,cached->walls,cached->floors,
+                filter(host->world().session(),*lease->programs()));
+            cached->ready=initialized.status==collision::room_objects::SceneStatus::complete;
         }
+        if(!cached->ready){status_=RoomResourcesStatus::unavailable_object_instances;return {};}
+        const auto scene=lease->object_scene();
+        if(!scene||!scene->open()){status_=RoomResourcesStatus::unavailable_object_instances;return {};}
         if(!host->world().session().collision_disabled_mask){status_=RoomResourcesStatus::unavailable_geometry;return {};}
-        if(host->update().room_objects()!=cached->objects.get()||host->reception().room_objects()!=cached->objects.get()){
-            status_=RoomResourcesStatus::object_binding_refused;
-            if(host->update().busy()||host->world().busy())return {};
-            if(host->update().bind_room_objects(lease->room().scenario,cached->objects)!=gameplay_update::Status::completed)return {};
-            if(!host->reception().bind_room_objects(lease->room().scenario,cached->objects))return {};
-        }
+        if(!bind_objects(cached->objects))return {};
         auto result=std::make_shared<Invocation>(std::move(lease),cached);
         status_=RoomResourcesStatus::completed;return result;
     }catch(const std::invalid_argument&){status_=RoomResourcesStatus::unavailable_geometry;return {};}
