@@ -224,3 +224,58 @@ made. Stage 5 renderer replacement and Stage 6 compatibility deletion remain
 separate, but Stage 4 completion requires actual native gameplay callers and
 semantic save ownership, not an interpreter/register/RAM engine with native
 function names.
+
+## Concrete application composition after the 156/1A5 checkpoint
+
+A current native `Program` probe reads and hash-checks all 171 owned archive
+members, constructs both dispatch profiles, and asks their actual provider
+admission predicates. Its read-only evidence is
+`build-native-sjuni/native-session-provider-probe-v1/receipt.json` and
+`requirements.json`. The uniquely smallest admitted room bank is still
+`r0417300.rdt`, in both profiles: sequences, lighting, scene channels, scene
+controls, World, scenario identity and canonical flags. Its 16-block closure
+does not request stream, selected-actor, model, periodic or surface providers.
+This is complete script admission evidence, not geometry, actor construction,
+whole-scenario bootstrap or frame-execution evidence.
+
+The smallest concrete application owner should retain `ScenarioArchive`, a
+shared `gameplay_world::Session`, `World`, `gameplay_update::Owner`,
+`SequenceControl`, `Lighting`, `SceneChannels` and `SceneControls`. Canonical
+flags must come from `Owner::flags()` rather than a second bank. Scenario is
+the existing `Session::scenario` optional mirrored by `World::scenario`; it is
+not a missing service class. Retain the room-bank backing and bind it using
+`Owner::load_room_scripts(archive, RoomId{41,73,0}, 1)`, which routes to existing
+`bind_room_scripts`. The ordinary second room entry uses channel5; offline
+room channels1..3 use existing coordinator rules. The actual native provider
+map points at these retained owners. Script stepping must not claim a full
+simulation tick or advance the simulation clock.
+
+The public Update constructor is
+`Owner(World&, FlagNotifications&, shared_ptr<const RuleBook>, GameplayMessageSink*, const room_objects::Owner*)`.
+Its full frame entry points are
+`run_workers(Services&, world::Services&, Providers, script_budget, task_budget)`
+and `advance(PhaseServices&, world::Services&, Providers, script_budget, task_budget)`.
+No terminal production `BehaviorServices::dispatch` implementation exists:
+current behavior/motion classes decorate another service. Supplying empty
+workers or successful no-op physics would falsify this boundary. A concrete
+application owner can install and step the actual admitted room script now,
+while full-frame entry explicitly refuses until real terminal behavior,
+physics, required workers, room geometry and actor assets are bound.
+
+The native host-input source already exists at `runtime/input/input.h`:
+`reo::Input::get_pad(port)` exposes typed `DualShock2State` after normal host
+polling. A future native adapter should feed `ControllerFrame` through the
+canonical native controller routing. Exact axis/pressure normalization still
+needs source comparison; the existing production RAM packet writers are not
+an acceptable NativeSession implementation.
+
+The [opcode170 cut](SCRIPT_RESOURCE_PARAMETERS.md) now passes paired complete
+original dispatcher/native owner qualification and current17-parent cohorts.
+All171-bank admission remains31/26; r001 advances to174 at block2+2508.
+The next scenario-bank cuts remain authored uses: ordinary `174`, `D0`, `108`
+and offline `1A8`. For D0, the owned r035 kind11 offline callback is5B8880,
+which calls the already native contact-visual impact path5DD6F0; the missing
+layer is a concrete typed scenario-event task factory/state owner and the
+other required callback families. Opcode108 also reaches inventory UI close,
+whose complete application owner is absent. These are subsequent work items,
+not reasons to defer creating the concrete application owner.

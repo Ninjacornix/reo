@@ -19,6 +19,7 @@
 #include "periodic_effects.hpp"
 #include "surface_effects.hpp"
 #include "script_audio.hpp"
+#include "script_resource_parameters.hpp"
 #include "scene_record_parameters.hpp"
 #include "actor_script_commands.hpp"
 #include "actor_script_predicates.hpp"
@@ -42,6 +43,7 @@ std::size_t payload_minimum(std::uint32_t op)noexcept{
     case 0x166:return 9;
     case 0x150:case 0x1a1:return 12;
     case 0x156:return 20;
+    case 0x170:return 6;
     case 0x73:return 8;
     case 0x88:return 16;
     case 0x89:return 22;
@@ -155,6 +157,7 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
                 actor_condition_requests_.push_back({mode,selector,query,parameter});
             }
             actor_ai_counter_|=!noop&&op==0x1a5;
+            if(!noop&&op==0x170)resource_parameter_requests_.push_back({std::uint16_t(word(b.data()+at+4)),std::bit_cast<std::int16_t>(std::uint16_t(word(b.data()+at+8)))});
             low_actor_population_|=!noop&&(op==0x38||op==0x39);
             full_actor_population_|=!noop&&op==0x173;
             npc_inventory_grants_|=!noop&&op==0x3a;
@@ -236,6 +239,16 @@ bool Program::admits_actor_script_commands(const gameplay_world::World* world,co
     if(actor_ai_counter_&&!actor_ai_counter_ready(*world))return false;
     return true;
 }
+bool Program::admits_resource_parameter_commands(const gameplay_world::World* world,const ScriptResourceParameters* parameters,
+    const SceneResources* resources,const ResourceTemplates* templates)const noexcept{
+    if(resource_parameter_requests_.empty())return true;
+    if(!world)return false;
+    for(const auto& request:resource_parameter_requests_){
+        if(script_resource_parameter_noop(*world,request.resource))continue;
+        if(!parameters||!parameters->bound_to(*world,resources,templates)||!parameters->ready(request.resource,request.quantity))return false;
+    }
+    return true;
+}
 bool Program::admits_room_counters(const gameplay_world::World* world)const noexcept {
     return !room_counters_ || (world && !world->closed() &&
         world->session().room_contacts.counters_ready(scenario_counter_policy_));
@@ -293,7 +306,7 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     for(std::size_t i=0;i<out.size();++i)if(control_command(std::uint32_t(i)))out[i]={true,false,false,false,false,false,false,false,false,true};
     for(const auto i:{0x70,0x71})out[i]={true,false,false,false,false,false,false,false,false,false,true};
     for(const auto i:{0x104,0x105})out[i]={true,false,false,false,false,false,false,false,false,true};
-    for(const auto i:{0x5a,0x61,0x62,0x65,0x68,0x69,0x6a,0x85,0x86,0x87,0xea,0xf2,0x120,0x121,0x122,0x135,0x150,0x155,0x156,0x180}){out[i].native_algorithm=true;out[i].world_required=true;}
+    for(const auto i:{0x5a,0x61,0x62,0x65,0x68,0x69,0x6a,0x85,0x86,0x87,0xea,0xf2,0x120,0x121,0x122,0x135,0x150,0x155,0x156,0x170,0x180}){out[i].native_algorithm=true;out[i].world_required=true;}
     out[0x62].selected_actor_required=true;
     out[0x135].scene_controls_required=true;out[0x135].action_choices_required=true;
     out[0x135].selected_actor_required=true;out[0x155].selected_actor_required=true;
@@ -380,6 +393,7 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
     if(!c.program->admits_script_audio(providers.script_audio,providers.world))return{Status::provider_unavailable,0,{},0};
     if(!c.program->admits_scene_record_parameters(providers.world,providers.messages))return{Status::provider_unavailable,0,{},0};
     if(!c.program->admits_actor_script_commands(providers.world,providers.canonical_flags))return{Status::provider_unavailable,0,{},0};
+    if(!c.program->admits_resource_parameter_commands(providers.world,providers.resource_parameters,providers.scene_resources,providers.resource_templates))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_selected_actor()&&!providers.world->primary(context.selected_actor))return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_action_choices()&&!providers.action_choices)return{Status::provider_unavailable,0,{},0};
     if(c.program->needs_scenario()&&!providers.world->scenario)return{Status::provider_unavailable,0,{},0};
@@ -697,6 +711,10 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
             if(!*matches){const auto status=scan(true);if(status!=Status::completed)return result(status);flow=2;}
             break;}
         case 0x1a5:if(!set_actor_ai_counter(*providers.world,value(0)))return result(Status::provider_unavailable);break;
+        case 0x170:
+            if(!script_resource_parameter_noop(*providers.world,std::uint16_t(value(0)))&&
+               providers.resource_parameters->command(std::uint16_t(value(0)),signed_half(4))!=SceneStatus::completed)return result(Status::provider_unavailable);
+            break;
         case 0x73:{
             const auto mode=value(4);
             if(mode<=2){

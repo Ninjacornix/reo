@@ -40,6 +40,7 @@ IDS += ['006943D0','0068F640']
 IDS += ['00694470','005A8F40','00680FB0']
 IDS += ['00693300','00666080','00702650']
 IDS += ['00693920','00702A60']
+IDS += ['006949A0','005B4380','005B1850','00591BE0','005F2180','005F2120','005F22C0','005B1A90','00590D80']
 
 PINNED={};PIN_COMMITS={}
 def source_bytes(p):
@@ -66,8 +67,9 @@ def main(a):
         p=next((ROOT/'recomp/config/output_ovl/o2').glob('o2_'+ident+'_*'));text=p.read_text();sources[p.relative_to(ROOT).as_posix()]=sha(p);shutil.copyfile(p,out/p.name)
         for pc,opcode in re.findall(r'// (0x[0-9a-f]+): (0x[0-9a-f]+)\s',text):
             assert struct.unpack_from('<I',raw,int(pc,16)-0x570000)[0]==int(opcode,16),(p,pc);words+=1
-        if ident=='005F2330':
-            text=text.replace('void o2_005F2330_0x5f2330(', 'void original_inventory_compact(')
+        aliases={'005F2330':'original_inventory_compact','005B1850':'original_resource_release','00591BE0':'original_resource_deactivate','005F2180':'original_inventory_detach'}
+        if ident in aliases:
+            text=text.replace('void o2_'+ident+'_0x'+format(int(ident,16),'x')+'(', 'void '+aliases[ident]+'(')
         texts.append('\n'.join(l for l in text.splitlines() if not l.startswith('#include')))
     ai_raw=(ROOT/'build-function-index/owned-overlays/o9.bin').read_bytes()
     assert hashlib.sha256(ai_raw).hexdigest()=='604126d6edca1b1333948d79d1d2c8d2f2e22f4a233efbdfb769c106dafe7343'
@@ -99,7 +101,8 @@ def main(a):
     unexecuted=set(names)-previous_names-stream_functions-stream_ports
     text+='\n'+'\n'.join('void '+name+'(std::uint8_t*,R5900Context*,PS2Runtime*){throw std::runtime_error("Unexecuted main stream dependency '+name+'");}' for name in sorted(unexecuted))
     declarations=['void '+n+'(std::uint8_t*,R5900Context*,PS2Runtime*);' for n in names]
-    declarations.append('void original_inventory_compact(std::uint8_t*,R5900Context*,PS2Runtime*);')
+    for alias in ['original_inventory_compact','original_resource_release','original_resource_deactivate','original_inventory_detach']:
+        declarations.append('void '+alias+'(std::uint8_t*,R5900Context*,PS2Runtime*);')
     fallback=raw[0x7174d0-0x570000:0x7174e4-0x570000]
     declarations.append('inline constexpr std::array<std::uint8_t,20> original_cutscene_fallback{'+','.join(str(v) for v in fallback)+'};')
     table=struct.unpack_from('<432I',raw,0x717830-0x570000)
@@ -206,6 +209,7 @@ def main(a):
     shutil.copyfile(HERE/'scene_record_parameter_vm_tests.inc',out/'scene_record_parameter_vm_tests.inc')
     shutil.copyfile(HERE/'actor_script_vm_tests.inc',out/'actor_script_vm_tests.inc')
     shutil.copyfile(HERE/'actor_predicate_vm_tests.inc',out/'actor_predicate_vm_tests.inc')
+    shutil.copyfile(HERE/'script_resource_parameter_vm_tests.inc',out/'script_resource_parameter_vm_tests.inc')
     shutil.copyfile(HERE/'periodic_control_vm_tests.inc',out/'periodic_control_vm_tests.inc')
     shutil.copyfile(HERE/'room_rule_tests.inc',out/'room_rule_tests.inc')
     shutil.copyfile(HERE/'room_object_vm_tests.inc',out/'room_object_vm_tests.inc')
@@ -234,6 +238,9 @@ def main(a):
     units += [(name,ROOT/'game/native/gameplay_scenario'/(name+'.cpp')) for name in ('enemy_descriptors','enemy_routes')]
     units += [('character_remap',ROOT/'game/native/gameplay_scenario/character_remap.cpp')]
     units += [('script_audio',ROOT/'game/native/gameplay_scenario/script_audio.cpp')]
+    units += [('resource_collisions',ROOT/'game/native/gameplay_scenario/resource_collisions.cpp'),('weapon_curve',ROOT/'game/native/animation/weapon_program.cpp')]
+    units += [('script_resource_parameters',ROOT/'game/native/gameplay_scenario/script_resource_parameters.cpp')]
+    units += [('resource_owner_'+name,ROOT/'game/native/gameplay_world'/(name+'.cpp')) for name in ['resource_frames','resource_factory','resource_static_assets','inventory']]
     units += [('ai_execution',ROOT/'game/native/gameplay_ai/execution.cpp')]
     units += [('audio_'+name,ROOT/'game/native/gameplay_audio'/(name+'.cpp')) for name in ('routing','import','spatial','owner','scenario_cues')]
     units += [('audio_banks_'+name,ROOT/'game/native/audio_banks/v2'/(name+'.cpp')) for name in ('algorithms','session')]
@@ -275,6 +282,7 @@ def main(a):
     source_paths.append(HERE/'scene_record_parameter_vm_tests.inc')
     source_paths.append(HERE/'actor_script_vm_tests.inc')
     source_paths.append(HERE/'actor_predicate_vm_tests.inc')
+    source_paths.append(HERE/'script_resource_parameter_vm_tests.inc')
     source_paths += [HERE/'surface_vm_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]
     source_paths += [ROOT/'game/native/transform_math/transform_math.hpp',ROOT/'game/native/transform_math/transform_math.cpp']
@@ -334,3 +342,4 @@ def main(a):
     (out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps(dict(status='passed',checks=receipt['result']['checks'],original_invocations=receipt['result']['original_dispatch_invocations'],coverage={k:v['count'] for k,v in receipt['result']['coverage'].items()},instruction_comments=words,output=str(out))))
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--compiler',required=True);p.add_argument('--output',required=True,type=Path);p.add_argument('--pin-domain-commit');p.add_argument('--pin-effects-commit');main(p.parse_args())
+

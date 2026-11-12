@@ -31,6 +31,10 @@ public:
     void rebind(const ResourceModelId&,std::uint16_t content);
     bool bind_companions(gameplay_effects::PeriodicVisuals&)noexcept;
     bool bound_to(const World& world,const ResourceModels& models)const noexcept{return frames_.open()&&&frames_.world_==&world&&&models_==&models;}
+    bool bound_to(const World& world,const gameplay_scenario::SceneResources& resources,
+                  const gameplay_scenario::ResourceTemplates& templates,const ResourceModels& models)const noexcept{
+        return bound_to(world,models)&&&frames_.resources_==&resources&&&templates_==&templates;
+    }
     std::shared_ptr<const gameplay_collision::response::Grid> room_floor(std::uint16_t room)const noexcept{return frames_.open()&&frames_.world_.room==room&&scene_room_==room?floors_:nullptr;}
     // Retains the actual immutable floor grid for this room and validates the
     // canonical shared scene owner. A later room change invalidates admission.

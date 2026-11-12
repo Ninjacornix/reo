@@ -192,9 +192,11 @@ void sub_00132E50_0x132e50(std::uint8_t* r,R5900Context* c,PS2Runtime*){stream_o
 void sub_00133490_0x133490(std::uint8_t* r,R5900Context* c,PS2Runtime*){stream_original_event(r,1,stream_original_channel(c),GPR_S32(c,5),GPR_S32(c,6));done(c);}
 void sub_001B82A0_0x1b82a0(std::uint8_t*,R5900Context* c,PS2Runtime*){SET_GPR_U32(c,2,0);done(c);}
 void sub_0012BEF8_0x12bef8(std::uint8_t*,R5900Context*,PS2Runtime*){throw std::runtime_error("Unexpected VM stream service");}
+void o2_005C12A0_0x5c12a0(std::uint8_t*,R5900Context*,PS2Runtime*){throw std::runtime_error("Unexecuted secondary model retirement");}
 void original_scene_mode_port(std::uint8_t*,R5900Context*,PS2Runtime*);
-namespace {PS2Runtime::Function constructor_port(std::uint32_t);PS2Runtime::Function script_audio_port(std::uint32_t);PS2Runtime::Function scene_parameter_port(std::uint32_t);}
+namespace {PS2Runtime::Function resource_parameter_port(std::uint32_t);PS2Runtime::Function constructor_port(std::uint32_t);PS2Runtime::Function script_audio_port(std::uint32_t);PS2Runtime::Function scene_parameter_port(std::uint32_t);}
 PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
+    if(const auto port=resource_parameter_port(at))return port;
     if(const auto port=constructor_port(at))return port;
     if(const auto port=script_audio_port(at))return port;
     if(const auto port=scene_parameter_port(at))return port;
@@ -243,6 +245,7 @@ PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
 #include "scene_record_parameter_vm_tests.inc"
 #include "actor_script_vm_tests.inc"
 #include "actor_predicate_vm_tests.inc"
+#include "script_resource_parameter_vm_tests.inc"
 int main(int argc,char** argv)try{
     check(argc==5);
     scene_record_eligibility_tests();
@@ -251,6 +254,7 @@ int main(int argc,char** argv)try{
     scene_record_parameter_vm_tests();
     actor_script_vm_tests();
     actor_predicate_vm_tests();
+    script_resource_parameter_vm_tests();
     no_model_vm_tests();
     surface_vm_tests(argv[1]);
     room_counter_vm_tests(argv[2]);
@@ -450,5 +454,6 @@ int main(int argc,char** argv)try{
              <<",\"scene_record_parameter_dispatches\":"<<scene_record_parameter_dispatches<<",\"scene_record_parameter_packets\":"<<scene_record_parameter_packets
              <<",\"actor_room_dispatches\":"<<actor_room_dispatches<<",\"actor_profile_dispatches\":"<<actor_profile_dispatches<<",\"actor_script_refusals\":"<<actor_script_refusals
              <<",\"actor_condition_dispatches\":"<<actor_condition_dispatches<<",\"actor_ai_counter_dispatches\":"<<actor_ai_counter_dispatches<<",\"actor_predicate_refusals\":"<<actor_predicate_refusals
+             <<",\"resource_parameter_dispatches\":"<<resource_parameter_dispatches<<",\"resource_parameter_releases\":"<<resource_parameter_releases<<",\"resource_parameter_refusals\":"<<resource_parameter_refusals
              <<",\"original_numeric_handler_invocations\":65536,\"game_launched\":false}\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
