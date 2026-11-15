@@ -372,9 +372,9 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
         completed[unit['id']] = obj
         reused += cached
         print(f"Compiled {len(completed)}/{len(units)} ({reused} cached)", flush=True)
-    if preflight:
-        if failures:
-            raise RuntimeError(f"Portable preflight failed in {len(failures)} units; see {logs}")
+    if preflight and failures:
+        raise RuntimeError(f"Portable preflight failed in {len(failures)} units; see {logs}")
+    if preflight and not any(not u.get("archive") for u in units):
         print(f"Preflight compiled {len(completed)} runtime units; no game was linked", flush=True)
         return
     link_inputs = []
@@ -392,6 +392,8 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
     archive_inputs = []
     for name, members in archives.items():
         target = objects / (name + ".lib")
+        if target.exists():
+            target.unlink()
         response = objects / (name + ".rsp")
         response.write_text(response_text(members, portable),
                             encoding="utf-8" if portable else "utf-16")
@@ -403,9 +405,42 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
         if result.returncode:
             raise compiler_failure(f"Archive {name}", result.returncode, archive_log)
         archive_inputs.append(str(target))
-    args = [str(completed[u["id"]]) for u in units if not u.get("archive")] + archive_inputs + link_inputs
+    direct_objects = [str(completed[u["id"]]) for u in units if not u.get("archive")]
+    preflight_cleanup = []
+    if preflight:
+        defined_guest = {Path(s).stem for u in units for s in u.get("sources", [])
+                         if s.startswith("{generated}/")}
+        guest_pattern = re.compile(rb"(?:sub|entry|o\d+)_[0-9A-Fa-f]+_0x[0-9a-f]+")
+        guest_symbols = {m.decode("ascii") for obj_path in completed.values()
+                         for m in guest_pattern.findall(Path(obj_path).read_bytes())} - defined_guest
+        stub_cpp = objects / "preflight-guest-stubs.cpp"
+        stub_obj = objects / "preflight-guest-stubs.obj"
+        stub_log = logs / "preflight-guest-stubs.log"
+        stub_lines = [
+            "#include <cstdint>",
+            "struct R5900Context;",
+            "class PS2Runtime;",
+            "void registerAllFunctions(PS2Runtime&) {}",
+            "void registerOverlayFunctions(PS2Runtime&) {}",
+            "void reoRegisterExtraFunctions(PS2Runtime&) {}",
+            "void reoRegisterOverlays(PS2Runtime&) {}",
+            *[f"void {sym}(uint8_t*, R5900Context*, PS2Runtime*) {{}}" for sym in sorted(guest_symbols)],
+        ]
+        stub_cpp.write_text("\n".join(stub_lines) + "\n", encoding="utf-8")
+        stub_cmd = ([str(compiler), "-c", *source_flags(False, portable=True), "-o", str(stub_obj), str(stub_cpp)]
+                    if portable else [str(compiler), *source_flags(False), "/Fo" + str(stub_obj), str(stub_cpp)])
+        with stub_log.open("wb") as log:
+            result = run(stub_cmd, env=env, stdout=log, stderr=subprocess.STDOUT)
+        if result.returncode:
+            raise compiler_failure("Compile preflight guest stubs", result.returncode, stub_log)
+        direct_objects.append(str(stub_obj))
+        preflight_cleanup.extend([stub_cpp, stub_obj])
+    link_target = objects / "preflight-link.exe" if preflight else output / "reo_recomp.exe"
+    if preflight:
+        preflight_cleanup.append(link_target)
+    args = direct_objects + archive_inputs + link_inputs
     args += [expand(arg) for arg in plan.get("linkOptions", [])]
-    args += ["/NOLOGO", "/INCREMENTAL:NO", "/OUT:" + str(output / "reo_recomp.exe")]
+    args += ["/NOLOGO", "/INCREMENTAL:NO", "/OUT:" + str(link_target)]
     if portable:
         libraries = []
         for value in plan.get("linkOptions", []):
@@ -425,18 +460,27 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
             if result.returncode:
                 raise compiler_failure(f"Resource {resource.name}", result.returncode, resource_log)
             resources.append(str(target))
-        args = [str(completed[u["id"]]) for u in units if not u.get("archive")]
+        args = list(direct_objects)
         args += resources + ["-Wl,--start-group", *archive_inputs, *link_inputs,
-                             *libraries, "-Wl,--end-group", "-mwindows", "-o", str(output / "reo_recomp.exe")]
-    response = work / "local-game-link.rsp"
+                             *libraries, "-Wl,--end-group", "-mwindows", "-o", str(link_target)]
+    response = (objects / "preflight-link.rsp") if preflight else (work / "local-game-link.rsp")
+    if preflight:
+        preflight_cleanup.append(response)
     response.write_text(response_text(args, portable),
                         encoding="utf-8" if portable else "utf-16")
-    print("Linking locally generated game", flush=True)
+    print("Linking preflight runtime units" if preflight else "Linking locally generated game", flush=True)
     with (logs / "link.log").open("wb") as log:
         result = run([str(linker), "@" + str(response)], env=env, stdout=log,
                                 stderr=subprocess.STDOUT)
-    if result.returncode:
-        raise compiler_failure("Game linking", result.returncode, logs / "link.log")
+    try:
+        if result.returncode:
+            raise compiler_failure("Game linking", result.returncode, logs / "link.log")
+    finally:
+        for path in preflight_cleanup:
+            path.unlink(missing_ok=True)
+    if preflight:
+        print(f"Preflight compiled and link-verified {len(completed)} runtime units; no game was linked", flush=True)
+        return
     for entry in plan.get("copyOutputs", []):
         source = source_file(entry["source"])
         relative = Path(entry["destination"])

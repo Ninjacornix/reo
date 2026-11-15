@@ -115,6 +115,48 @@ class ReleaseTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'Private'):
                 release.verify_kit(kit, self.root / 'manifest.json', game)
 
+    def test_unapplied_sdk_patch_or_missing_pause_now_in_kit_is_refused(self):
+        patch_path = 'source/third_party/patches/ps2recomp/0120-audio-paused-voice-drains-only-accepted-pcm.patch'
+        patch_bytes = (
+            b'diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h '
+            b'b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h\n'
+            b'--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h\n'
+            b'+++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h\n'
+            b'@@ -1,1 +1,2 @@\n'
+            b' void drain(uint32_t voice);\n'
+            b'+void pauseNow(uint32_t voice, bool paused);\n'
+            b'diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp '
+            b'b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp\n'
+            b'--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp\n'
+            b'+++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp\n'
+            b'@@ -1,1 +1,2 @@\n'
+            b' void drain(uint32_t voice) {}\n'
+            b'+void pauseNow(uint32_t voice, bool paused) {}\n'
+        )
+        cri_h = 'source/third_party/PS2Recomp/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h'
+        cri_cpp = 'source/third_party/PS2Recomp/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp'
+        audio_h = 'source/recomp/overrides/reo_audio.h'
+        unpatched = {
+            patch_path: patch_bytes,
+            audio_h: b'ps2_cri_audio::pauseNow(handle, on == 1u);\n',
+            cri_h: b'void drain(uint32_t voice);\n',
+            cri_cpp: b'void drain(uint32_t voice) {}\n',
+        }
+        manifest = {'format': 1, 'architecture': 'win-x64', 'toolchain': 'llvm-mingw',
+                    'elfSha256': release.ELFS['file1'], 'files': inventory(unpatched)}
+        kit = self.root / 'unpatched.zip'
+        kit.write_bytes(zipped({**unpatched, 'build-kit.json': json.dumps(manifest).encode()}))
+        with self.assertRaisesRegex(ValueError, 'Unapplied SDK patch'):
+            release.verify_kit(kit, self.root / 'manifest.json', 'file1')
+        patched = {
+            **unpatched,
+            cri_h: b'void drain(uint32_t voice);\nvoid pauseNow(uint32_t voice, bool paused);\n',
+            cri_cpp: b'void drain(uint32_t voice) {}\nvoid pauseNow(uint32_t voice, bool paused) {}\n',
+        }
+        manifest['files'] = inventory(patched)
+        kit.write_bytes(zipped({**patched, 'build-kit.json': json.dumps(manifest).encode()}))
+        release.verify_kit(kit, self.root / 'manifest.json', 'file1')
+
     def make_plan(self, publication='publish', prerelease=True):
         tag = 'v1.0.20-rc3' if prerelease else 'v1.0.20'
         plan = release.options(tag, prerelease, publication)

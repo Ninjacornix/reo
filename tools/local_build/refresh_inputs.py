@@ -34,6 +34,47 @@ def sha(path):
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
+def apply_sdk_patch(sdk_dir, patch_path):
+    """Apply a PS2Recomp patch to sdk_dir and verify every targeted file changed.
+
+    Running `git apply` from a subdirectory inside a git working tree without a
+    matching `--directory` prefix causes git to silently skip hunks outside `cwd`.
+    Always resolve the enclosing git top-level (or pass `--unsafe-paths` outside
+    git) and verify that every `+++ b/<target>` file digest actually changes.
+    """
+    sdk_dir, patch_path = Path(sdk_dir).resolve(), Path(patch_path).resolve()
+    raw = patch_path.read_bytes().replace(b'\r\n', b'\n')
+    targets = []
+    for line in raw.decode('utf-8', errors='replace').splitlines():
+        if line.startswith('+++ b/'):
+            rel = line[6:].strip()
+            target = (sdk_dir / rel).resolve()
+            if not target.is_relative_to(sdk_dir):
+                raise ValueError('Patch target escapes SDK root: ' + rel)
+            if rel not in targets:
+                targets.append(rel)
+    if not targets:
+        raise ValueError('Source patch contains no target files: ' + str(patch_path))
+    before = {rel: sha(sdk_dir / rel) if (sdk_dir / rel).is_file() else None for rel in targets}
+    top = subprocess.run(['git', 'rev-parse', '--show-toplevel'], cwd=sdk_dir,
+                         capture_output=True, text=True)
+    if top.returncode == 0:
+        top_path = Path(top.stdout.strip()).resolve()
+        directory = sdk_dir.relative_to(top_path).as_posix()
+        command = ['git', 'apply', '--directory=' + directory]
+        cwd = top_path
+    else:
+        command = ['git', 'apply', '--unsafe-paths', '--directory=' + sdk_dir.as_posix()]
+        cwd = sdk_dir
+    subprocess.run([*command, '--check', '-'], input=raw, cwd=cwd, check=True)
+    subprocess.run([*command, '-'], input=raw, cwd=cwd, check=True)
+    for rel in targets:
+        target = sdk_dir / rel
+        if not target.is_file() or sha(target) == before[rel]:
+            raise ValueError('Source patch did not modify target file: ' + rel)
+    return targets
+
+
 def refresh(kit, output, recompiler, root, archive=None, dependency_sources=None, version=None,
             updated_sources=(), added_sources=(), added_shaders=(), source_patches=(),
             updated_metadata=(), added_units=()):
@@ -91,10 +132,7 @@ def refresh(kit, output, recompiler, root, archive=None, dependency_sources=None
         patch = (root / name).resolve()
         if not patch.is_relative_to(root) or not patch.is_file():
             raise ValueError('Source patch must be a repository file: ' + name)
-        directory = (output / 'source/third_party/PS2Recomp').relative_to(root).as_posix()
-        command = ['git', 'apply', '--directory=' + directory]
-        subprocess.run([*command, '--check', str(patch)], cwd=root, check=True)
-        subprocess.run([*command, str(patch)], cwd=root, check=True)
+        apply_sdk_patch(output / 'source/third_party/PS2Recomp', patch)
     for name in added_sources:
         target = (output / 'source' / name).resolve()
         if not target.is_relative_to(output / 'source') or target.exists():
