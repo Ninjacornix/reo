@@ -1,6 +1,7 @@
 """Package verified existing game inputs; publish only for a pushed version tag."""
 import argparse
 import hashlib
+import io
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -109,6 +110,38 @@ def verify_files(archive, inventory, manifest_name):
         raise ValueError('Archive contains unlisted files.')
 
 
+def verify_kit_patches(archive, members, game):
+    for name in sorted(members):
+        if not name.endswith('.patch') or not name.startswith(('source/third_party/patches/ps2recomp/',
+                                                               'notices/source-updates/')):
+            continue
+        target = None
+        added = {}
+        for line in archive.read(name).decode('utf-8', errors='replace').splitlines():
+            if line.startswith('+++ b/'):
+                target = line[6:].strip()
+                added.setdefault(target, [])
+            elif target and line.startswith('+') and not line.startswith('+++'):
+                text = line[1:].strip()
+                if text:
+                    added[target].append(text)
+        for rel, lines in added.items():
+            if not rel.startswith(('ps2xRuntime/', 'ps2xRecomp/include/')):
+                continue
+            kit_path = 'source/third_party/PS2Recomp/' + rel
+            if kit_path not in members:
+                raise ValueError(f'Missing SDK target in {game} kit for {name}: {kit_path}')
+            body = archive.read(kit_path).decode('utf-8', errors='replace')
+            if any(line not in body for line in lines):
+                raise ValueError(f'Unapplied SDK patch in {game} kit: {name} -> {rel}')
+    audio_override = 'source/recomp/overrides/reo_audio.h'
+    if audio_override in members and b'pauseNow' in archive.read(audio_override):
+        for suffix in ('CriAudio.h', 'CriAudio.cpp'):
+            cri = 'source/third_party/PS2Recomp/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/' + suffix
+            if cri not in members or b'pauseNow' not in archive.read(cri):
+                raise ValueError(f'Audio override in {game} kit requires patched {suffix}.')
+
+
 def verify_kit(path, manifest_path, game):
     with zipfile.ZipFile(path) as archive:
         manifest_bytes = archive.read('build-kit.json')
@@ -117,11 +150,14 @@ def verify_kit(path, manifest_path, game):
                 manifest.get('toolchain') != 'llvm-mingw' or manifest.get('elfSha256') != ELFS[game]):
             raise ValueError('Incompatible sealed ' + game + ' kit.')
         verify_files(archive, manifest['files'], 'build-kit.json')
-        for name in entries(archive):
+        members = entries(archive)
+        for name in members:
             if (PurePosixPath(name).suffix.lower() in ('.iso', '.elf', '.obj', '.bin', '.ps2', '.db') or
                     PurePosixPath(name).name.lower() in ('reo_recomp.exe', 'reo_recomp_file2.exe', 'reo_launcher_game.exe')):
                 raise ValueError('Private/game-derived content in input kit: ' + name)
-        Path(manifest_path).write_bytes(manifest_bytes)
+        verify_kit_patches(archive, members, game)
+        if manifest_path is not None:
+            Path(manifest_path).write_bytes(manifest_bytes)
 
 
 def check_reuse(changed):
@@ -147,6 +183,8 @@ def verify_package(path, tag=None, prerelease=None, source=None):
             if (PurePosixPath(name).suffix.lower() in ('.iso', '.elf', '.obj', '.db', '.ps2') or
                     PurePosixPath(name).name.lower() in ('reo_recomp.exe', 'reo_recomp_file2.exe', 'reo_launcher_game.exe')):
                 raise ValueError('Private game content in player package.')
+        for game, kit_name in (('file1', 'build-inputs.zip'), ('file2', 'build-inputs-file2.zip')):
+            verify_kit(io.BytesIO(archive.read(kit_name)), None, game)
         distribution = json.loads(archive.read('distribution.json').decode('utf-8-sig'))
         if tag is not None and (distribution.get('releaseTag') != tag or
                                distribution.get('prerelease') is not prerelease or

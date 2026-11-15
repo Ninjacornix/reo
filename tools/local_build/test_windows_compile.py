@@ -185,6 +185,55 @@ class WindowsCompileTests(unittest.TestCase):
                 compile_plan(kit, generated, work, output, 7, preflight=True)
             self.assertEqual(hashlib.sha256((output / 'reo_recomp.exe').read_bytes()).hexdigest(), saved)
 
+    def test_preflight_links_authored_and_runtime_units_and_catches_missing_runtime_symbols(self):
+        with tempfile.TemporaryDirectory(prefix='reo-preflight-link-') as folder:
+            root = Path(folder)
+            kit, generated, work, output = [root / name for name in ['kit', 'generated', 'work', 'output']]
+            kit.mkdir(); generated.mkdir()
+            compiler = Path(os.environ['REO_TEST_CXX'])
+            for name in ['ps2_runtime.h', 'ps2_runtime_macros.h', 'source_instruction_access.hpp']:
+                (generated / name).write_text('#pragma once\n')
+            authored = generated / 'authored.cpp'
+            authored.write_text(
+                '#include <cstdint>\n'
+                'struct R5900Context; class PS2Runtime;\n'
+                'void registerAllFunctions(PS2Runtime&);\n'
+                'void sub_00132E50_0x132e50(uint8_t*, R5900Context*, PS2Runtime*);\n'
+                'namespace ps2_cri_audio { void pauseNow(uint32_t voice, bool paused); }\n'
+                'int main() {\n'
+                '    PS2Runtime* rt = nullptr;\n'
+                '    if (rt) { registerAllFunctions(*rt); sub_00132E50_0x132e50(nullptr, nullptr, rt); }\n'
+                '    ps2_cri_audio::pauseNow(1u, true);\n'
+                '    return 0;\n'
+                '}\n'
+            )
+            runtime_cpp = generated / 'cri_audio.cpp'
+            runtime_cpp.write_text('#include <cstdint>\nnamespace ps2_cri_audio { void drain(uint32_t) {} }\n')
+            plan = {
+                'format': 1, 'runtimeAbi': 'preflight-link-fixture', 'toolchain': 'llvm-mingw',
+                'compiler': '{kit}/toolchain/bin/' + compiler.name,
+                'archiver': '{kit}/toolchain/bin/llvm-ar.exe',
+                'resourceCompiler': '{kit}/toolchain/bin/x86_64-w64-mingw32-windres.exe',
+                'externalToolchain': True,
+                'externalCompilerSha256': hashlib.sha256(compiler.read_bytes()).hexdigest(),
+                'compileOptions': ['/I{generated}'],
+                'units': [
+                    {'id': 'authored0', 'sources': ['{generated}/authored.cpp']},
+                    {'id': 'runtime0', 'sources': ['{generated}/cri_audio.cpp'], 'archive': 'runtime'},
+                ],
+                'sourceGroups': [{'id': 'main', 'root': '{generated}/functions', 'pattern': '*.cpp', 'batch': 8}],
+                'copyOutputs': [],
+            }
+            (kit / 'compile-plan.json').write_text(json.dumps(plan))
+            with self.assertRaisesRegex(RuntimeError, r'Game linking failed.*pauseNow'):
+                compile_plan(kit, generated, work, output, 2, preflight=True)
+            runtime_cpp.write_text(
+                '#include <cstdint>\n'
+                'namespace ps2_cri_audio { void drain(uint32_t) {} void pauseNow(uint32_t, bool) {} }\n'
+            )
+            compile_plan(kit, generated, work, output, 2, preflight=True)
+            self.assertFalse((output / 'reo_recomp.exe').exists())
+
 
 if __name__ == '__main__':
     unittest.main()
