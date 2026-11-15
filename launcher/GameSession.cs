@@ -581,6 +581,9 @@ public sealed class GameSession {
                 line.Contains("Requested native movie has no actual GS owner service", StringComparison.Ordinal))
                 return "GPU movie decoding failed · In Graphics, turn off Decode movies on the graphics card and try again. Open Log for details.";
         }
+        if (backendFailure && (line.Contains("Native DXGI swapchain unavailable", StringComparison.Ordinal) ||
+                               line.Contains("Win32 Vulkan swapchain", StringComparison.Ordinal)))
+            return "The game graphics backend failed to create a presentation swapchain · Update your GPU driver or rebuild the game in Game files. Open Log for details.";
         return backendFailure ? "The game graphics backend failed · Open Log for the graphics error." : null;
     }
 

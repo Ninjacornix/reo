@@ -74,8 +74,13 @@ internal static class GraphicsOptionsTests {
                   ?.Contains("turn off Decode movies on the graphics card", StringComparison.Ordinal) == true,
                   "An actual Direct3D movie decoder failure points to CPU decoding");
             check(GameSession.GraphicsExitDiagnostic("[run] graphics backend failure: Native DXGI swapchain unavailable; orderly shutdown requested")
-                  ?.Contains("graphics backend failed", StringComparison.Ordinal) == true,
-                  "An orderly graphics backend shutdown is reported as a failure");
+                  ?.Contains("graphics backend failed", StringComparison.Ordinal) == true &&
+                  GameSession.GraphicsExitDiagnostic("[run] graphics backend failure: Native DXGI swapchain unavailable; orderly shutdown requested")
+                  ?.Contains("Update your GPU driver or rebuild", StringComparison.Ordinal) == true,
+                  "An orderly graphics backend shutdown is reported as a failure with swapchain guidance");
+            check(GameSession.GraphicsExitDiagnostic("[run] graphics backend failure: paraLLEl-GS initialization failed; orderly shutdown requested")
+                  == "The game graphics backend failed · Open Log for the graphics error.",
+                  "Other graphics backend failures preserve the general backend diagnostic");
             check(GameSession.GraphicsExitDiagnostic("No D3D11 video device") == null &&
                   GameSession.GraphicsExitDiagnostic("[GS-BACKEND] requested=parallel selected=software reason=Vulkan device initialization failed") == null,
                   "Optional capabilities and normal software fallback are not reported as fatal errors");

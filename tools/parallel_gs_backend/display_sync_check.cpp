@@ -71,6 +71,29 @@ int main() try {
     require(selectPresentMode(Mode::Off, {VK_PRESENT_MODE_FIFO_KHR, VK_PRESENT_MODE_MAILBOX_KHR}) ==
                 VK_PRESENT_MODE_MAILBOX_KHR,
             "Off can fall back to mailbox");
+    using reo_gpu_present::supportsDxgiExternalHandles;
+    require(supportsDxgiExternalHandles(true, true, true, VK_EXTERNAL_SEMAPHORE_FEATURE_IMPORTABLE_BIT,
+                                        true, VK_EXTERNAL_MEMORY_FEATURE_IMPORTABLE_BIT),
+            "DXGI interop is eligible when D3D12 fence and resource import are both supported");
+    require(!supportsDxgiExternalHandles(true, true, true, 0, true,
+                                         VK_EXTERNAL_MEMORY_FEATURE_IMPORTABLE_BIT),
+            "Missing D3D12 fence import (#8 on Intel Iris Xe 0.404.1994) selects Vulkan WSI");
+    require(!supportsDxgiExternalHandles(true, true, true,
+                                         VK_EXTERNAL_SEMAPHORE_FEATURE_IMPORTABLE_BIT, false,
+                                         VK_EXTERNAL_MEMORY_FEATURE_IMPORTABLE_BIT) &&
+                !supportsDxgiExternalHandles(true, true, true,
+                                             VK_EXTERNAL_SEMAPHORE_FEATURE_IMPORTABLE_BIT, true, 0),
+            "Missing D3D12 shared image import (#40 on Intel Iris Xe 0.404.1994) selects Vulkan WSI");
+    require(!supportsDxgiExternalHandles(false, true, true,
+                                         VK_EXTERNAL_SEMAPHORE_FEATURE_IMPORTABLE_BIT, true,
+                                         VK_EXTERNAL_MEMORY_FEATURE_IMPORTABLE_BIT) &&
+                !supportsDxgiExternalHandles(true, false, true,
+                                             VK_EXTERNAL_SEMAPHORE_FEATURE_IMPORTABLE_BIT, true,
+                                             VK_EXTERNAL_MEMORY_FEATURE_IMPORTABLE_BIT) &&
+                !supportsDxgiExternalHandles(true, true, false,
+                                             VK_EXTERNAL_SEMAPHORE_FEATURE_IMPORTABLE_BIT, true,
+                                             VK_EXTERNAL_MEMORY_FEATURE_IMPORTABLE_BIT),
+            "Missing device LUID, external extensions or timeline semaphores selects Vulkan WSI");
     std::cout << "PASS " << checks << " display sync checks\n";
     return 0;
 } catch (const std::exception& error) {
