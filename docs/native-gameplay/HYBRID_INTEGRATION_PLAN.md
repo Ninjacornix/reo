@@ -194,6 +194,33 @@ inside one process instead:
 - Higher camera modes (`5BE9A0`, `Worker::camera_modes`) stay recompiled until
   their prepared batch is qualified (level A).
 
+Step 1 result (2026-11-16) — adapter `recomp/overrides/native_camera/`, build flag
+`REO_BUILD_NATIVE_ROOM_CAMERA`, switch `REO_NATIVE_ROOM_CAMERA=1|shadow|shadow-writes`.
+Hooks o2 `5BED30` and `5BE3E0` (records import) through
+`registerOverlayFunction(0x570000, …, id 3)`; links the Stage 4 native archives
+from `build-native-sjuni/gameplay-native-llvm-v1` (57 archives, +0.3 MB exe).
+Kit v3 = v2 + adapter unit (template: save adapter unit) + 54 native headers +
+archives as `authored-runtime` independent inputs.
+
+| Run (Outbreak opening, room 1) | Calls | Result |
+|---|---|---|
+| `shadow` | 757 | 756 compared, **0 mismatched**, 1 refused |
+| `shadow-writes` (byte-precise, renderer-attributed) | 485 | 483 compared, 0 mismatched; see below |
+| native (`=1`) | 752 | 751 native, 1 fallback; same movement profile as off/shadow runs |
+
+- The one refusal is the first call of the room: no camera chosen yet
+  (condition 255, selection 0); native returns `unavailable`, original runs.
+- Original writes outside the declared outputs, after excluding writes made inside
+  `0x1AF780`: `0x323EDC–0x323EE6` and `0x324050–51` once (first call only, which
+  native refuses anyway), and 2-byte fields at `0x2B081C/87C/89C/8FC`. The
+  `0x2B0800` block also changed between camera calls in 388/484 checks, so it has
+  another (concurrent) writer and is not a camera output.
+- Movement totals differ run to run (164.8 / 806.6 / 758.7) because the driver
+  times input by wall clock; per-step movement is identical across runs.
+- Coverage is one room. Level C for the camera needs shadow runs across room
+  transitions, cinematic hand-offs and the other camera record types (the
+  fixture test covers all 166 rooms, the game run does not yet).
+
 ### Step 2 — frame cadence investigation (60 fps / interpolation, #11, #41)
 
 - Not a swap. Identify where the 30 Hz game update and the presentation are

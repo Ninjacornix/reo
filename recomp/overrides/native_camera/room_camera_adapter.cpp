@@ -147,7 +147,10 @@ public:
     std::uint64_t mismatch_rows{};
     std::vector<WriteRange> unexpected;
     std::vector<std::uint8_t> before, renderer_before;
-    std::vector<std::uint32_t> renderer_blocks;  // 32-byte blocks written inside 0x1AF780 this call
+    std::vector<std::uint32_t> renderer_blocks;
+    static constexpr std::uint32_t watch_at = 0x2b0800, watch_bytes = 0x100;
+    std::array<std::uint8_t, watch_bytes> watch_after{};bool watch_valid{};
+    std::uint64_t watch_changed_between_calls{}, watch_checks{};  // 32-byte blocks written inside 0x1AF780 this call
 
     std::shared_ptr<const s::RoomCameraRecords> records;
     bool records_installed{};
@@ -416,6 +419,9 @@ public:
             (unsigned long long)counts.import_refused, (unsigned long long)counts.no_records,
             (unsigned long long)counts.unexpected_write_calls, (unsigned long long)counts.refused_projection,
             (unsigned long long)counts.refused_unavailable, (unsigned long long)counts.refused_numeric);
+        if (mode == Mode::shadow_writes)
+            std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-WATCH] block=0x%06x checks=%llu changed_between_calls=%llu\n",
+                         watch_at, (unsigned long long)watch_checks, (unsigned long long)watch_changed_between_calls);
         const auto shown = std::min<std::uint64_t>(mismatch_rows, mismatches.size());
         for (std::uint64_t i = 0; i < shown; ++i)
             std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-MISMATCH] field=%s index=%u native=0x%08x original=0x%08x\n",
@@ -526,12 +532,19 @@ void camera_hook(std::uint8_t* ram, R5900Context* ctx, PS2Runtime* rt) {
     }
 
     // Shadow: original authoritative.
-    if (b->mode == Mode::shadow_writes) std::memcpy(b->before.data(), ram, b->before.size());
+    if (b->mode == Mode::shadow_writes) {
+        if (b->watch_valid) { ++b->watch_checks;
+            if (std::memcmp(b->watch_after.data(), ram + Binding::watch_at, Binding::watch_bytes)) ++b->watch_changed_between_calls; }
+        std::memcpy(b->before.data(), ram, b->before.size());
+    }
     std::vector<Event> original_events;
     recording = &original_events;
     try { run_original_camera(ram, ctx, rt); } catch (...) { recording = nullptr; throw; }
     recording = nullptr;
-    if (b->mode == Mode::shadow_writes) b->record_unexpected_writes(entry_sp);
+    if (b->mode == Mode::shadow_writes) {
+        b->record_unexpected_writes(entry_sp);
+        std::memcpy(b->watch_after.data(), ram + Binding::watch_at, Binding::watch_bytes); b->watch_valid = true;
+    }
     if (!native_ok) { ++b->counts.refused; return; }
     ++b->counts.compared;
     if (!b->compare(g, *fog, original_events)) ++b->counts.mismatched;
