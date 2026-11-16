@@ -1,7 +1,8 @@
 diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+index dcd0073..45de678 100644
 --- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
 +++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
-@@ -10,6 +10,7 @@
+@@ -12,6 +12,7 @@
  #include <deque>
  #include <mutex>
  #include <unordered_map>
@@ -9,7 +10,7 @@ diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp b/ps2xRunt
  
  // Private diagnostic bridge; no runtime header or public layout changes.
  namespace ps2_reo_sound { void reportAudioPaths(); }
-@@ -27,6 +28,7 @@ struct Voice {
+@@ -217,6 +218,7 @@ struct Voice {
      uint32_t left=0,right=0,channels=0,frequency=48000,volume=256;
      float mixerGain=1;
      bool playing=false,draining=false; double phase=0; // draining: stopped by the game, plays out accepted PCM
@@ -17,7 +18,7 @@ diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp b/ps2xRunt
      uint64_t lateSamples=0, skippedSamples=0, startNs=0, firstNs=0, startByte=0;
      bool firstReported=false;
      uint64_t pathActive=0,pathValid=0,pathSignal=0,pathSkipped=0;
-@@ -35,6 +37,7 @@ struct Voice {
+@@ -225,6 +227,7 @@ struct Voice {
  std::mutex mutex;
  std::unordered_map<uint32_t,Channel> channels;
  std::unordered_map<uint32_t,Voice> voices;
@@ -25,7 +26,7 @@ diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp b/ps2xRunt
  AudioStream stream{};
  bool ready=false;
  bool externalClock=false;
-@@ -72,9 +75,13 @@ void renderLocked(float* dst, unsigned frames) {
+@@ -262,9 +265,13 @@ void renderLocked(float* dst, unsigned frames) {
                  li->second.pcm.pop_front();li->second.consumed+=2;
                  if(v.channels>1){ri->second.pcm.pop_front();ri->second.consumed+=2;}
                  --v.lateSamples;++v.skippedSamples;
@@ -40,7 +41,7 @@ diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp b/ps2xRunt
                  (v.channels>1 && (ri==channels.end() || ri->second.pcm.empty())))) {
                  v.draining=false;v.playing=false;v.lateSamples=0;v.phase=0;continue; // drained: really stop
              }
-@@ -97,6 +104,7 @@ void renderLocked(float* dst, unsigned frames) {
+@@ -287,6 +294,7 @@ void renderLocked(float* dst, unsigned frames) {
                  if (li->second.pcm.empty() || (v.channels>1 && ri->second.pcm.empty())) break;
                  li->second.pcm.pop_front(); li->second.consumed+=2;
                  if (v.channels>1) { ri->second.pcm.pop_front();ri->second.consumed+=2; }
@@ -48,8 +49,8 @@ diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp b/ps2xRunt
                  v.phase-=1.0;
              }
          }
-@@ -234,6 +242,9 @@ bool queue(uint32_t key,const uint8_t* bytes,uint32_t length,uint64_t& endByte)
- void configure(uint32_t voice,uint32_t left,uint32_t right,uint32_t nch,uint32_t freq,uint32_t vol,bool playing) {
+@@ -447,6 +455,9 @@ void configure(uint32_t voice,uint32_t left,uint32_t right,uint32_t nch,uint32_t
+     if(backend_detail::invoke_void<&BackendApiV1::configure>(voice,left,right,nch,freq,vol,playing))return;
      ensureOutput();std::lock_guard<std::mutex> lock(mutex);tickLocked();
      auto& v=voices[voice];
 +    // The RNA state is re-applied every tick and still says "playing" until the PS2RNA
@@ -58,9 +59,9 @@ diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp b/ps2xRunt
      if (playing) v.draining=false;
      else if (v.draining) playing=true; // drain() requested: keep playing until the queue empties
      v.left=left;v.right=right;v.channels=std::min(nch,2u);
-@@ -263,11 +274,25 @@ void configure(uint32_t voice,uint32_t left,uint32_t right,uint32_t nch,uint32_t
- // configure(playing=false) alone remains an immediate pause/stop that retains or discards nothing.
+@@ -477,11 +488,26 @@ void configure(uint32_t voice,uint32_t left,uint32_t right,uint32_t nch,uint32_t
  void drain(uint32_t voice) {
+     if(backend_detail::invoke_void<&BackendApiV1::drain>(voice))return;
      std::lock_guard<std::mutex> lock(mutex);
 +    if (pausedMidStream.erase(voice)) return; // a real pause: stop now, keep the queue for the resume
      auto it=voices.find(voice);
@@ -75,6 +76,7 @@ diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp b/ps2xRunt
 +// must not drain the queued PCM, which belongs to the resumed stream.
 +// The PS2RNA stop command follows a frame later; stop the host voice now, so a stream the
 +// game starts and pauses at once (to prime it) is never heard.
++// Legacy host mixer only; a selected native audio backend owns its own voice state.
 +void pauseNow(uint32_t voice,bool paused) {
 +    std::lock_guard<std::mutex> lock(mutex);
 +    if (!paused) { pausedMidStream.erase(voice);return; } // resumed before the stop arrived
@@ -82,24 +84,26 @@ diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp b/ps2xRunt
 +    const auto it=voices.find(voice);
 +    if (it!=voices.end()) { it->second.playing=false;it->second.draining=false;it->second.lateSamples=0; }
  }
- size_t queuedSamples(uint32_t key) { std::lock_guard<std::mutex> lock(mutex);auto i=channels.find(key);return i==channels.end()?0:i->second.pcm.size(); }
- uint64_t consumed(uint32_t key) { std::lock_guard<std::mutex> lock(mutex);tickLocked();auto i=channels.find(key);return i==channels.end()?0:i->second.consumed; }
-@@ -276,9 +301,9 @@ void discard(uint32_t key) { std::lock_guard<std::mutex> lock(mutex);auto i=chan
- // Keep shared channel queues and other voices intact; ring ownership is separate.
+ size_t queuedSamples(uint32_t key) { const auto selected=backend_detail::invoke_result<&BackendApiV1::queued_samples>(size_t(0),key);if(selected.native)return selected.value; std::lock_guard<std::mutex> lock(mutex);auto i=channels.find(key);return i==channels.end()?0:i->second.pcm.size(); }
+ uint64_t consumed(uint32_t key) { const auto selected=backend_detail::invoke_result<&BackendApiV1::consumed>(uint64_t(0),key);if(selected.native)return selected.value; std::lock_guard<std::mutex> lock(mutex);tickLocked();auto i=channels.find(key);return i==channels.end()?0:i->second.consumed; }
+@@ -491,10 +517,10 @@ void discard(uint32_t key) { if(backend_detail::invoke_void<&BackendApiV1::disca
  void release(uint32_t voice) {
+     if(backend_detail::invoke_void<&BackendApiV1::release>(voice))return;
      std::lock_guard<std::mutex> lock(mutex);
 -    voices.erase(voice);
 +    voices.erase(voice);pausedMidStream.erase(voice);
  }
--void reset() { std::lock_guard<std::mutex> lock(mutex);reoAudioResetStreams();channels.clear();voices.clear();externalClock=false;lastTick=std::chrono::steady_clock::now(); }
-+void reset() { std::lock_guard<std::mutex> lock(mutex);reoAudioResetStreams();channels.clear();voices.clear();pausedMidStream.clear();externalClock=false;lastTick=std::chrono::steady_clock::now(); }
- void shutdown() {
-     if (ready && IsAudioDeviceReady()) { StopAudioStream(stream);UnloadAudioStream(stream); }
-     ready=false;stream={};reset();
+ namespace {
+-void resetLegacyState() { std::lock_guard<std::mutex> lock(mutex);reoAudioResetStreams();channels.clear();voices.clear();externalClock=false;lastTick=std::chrono::steady_clock::now(); }
++void resetLegacyState() { std::lock_guard<std::mutex> lock(mutex);reoAudioResetStreams();channels.clear();voices.clear();pausedMidStream.clear();externalClock=false;lastTick=std::chrono::steady_clock::now(); }
+ }
+ bool resetBeforeRuntimeRun(PS2Runtime& runtime) noexcept {
+     auto setup=runtime.acquirePreRunSetup();
 diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h
+index fe3248c..240484d 100644
 --- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h
 +++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h
-@@ -14,6 +14,10 @@ uint64_t consumed(uint32_t key);
+@@ -18,6 +18,10 @@ uint64_t consumed(uint32_t key);
  void render(float* stereo, unsigned frames);
  void discard(uint32_t key);
  void drain(uint32_t voice);
