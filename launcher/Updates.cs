@@ -25,8 +25,8 @@ public record UpdatePlan(string Work, string Source, string Target, string Versi
 public static partial class Updates {
     public const string Repository = "https://github.com/Ninjacornix/reo";
     public const string LatestApi = "https://api.github.com/repos/Ninjacornix/reo/releases/latest";
-    public const string DefaultVersion = "1.0.20";
-    public const string DisplayName = "1.0 RC2";
+    public const string DefaultVersion = "1.0.21";
+    public const string DisplayName = "1.0.21 RC0";
     // The exact build: a release's tag (v1.0.20-rc0 shows as 1.0.20-rc0), or a developer build.
     public static string BuildLabel(string root) {
         try {

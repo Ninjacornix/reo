@@ -54,6 +54,8 @@ public partial class MainWindow : Window {
         AspectRatio.SelectedIndex = Math.Max(0, Array.IndexOf(DisplayOptions.AspectChoices,
             (settings.ResolvedAspect, settings.ResolvedWidescreen)));
         ScreenFit.SelectedIndex = Array.IndexOf(DisplayOptions.Fits, settings.ResolvedFit);
+        VSync.SelectedIndex = settings.ResolvedVSync switch { "off" => 1, "adaptive" => 2,
+                                                              _ => 0 };
         UpdateScreenFitHint();
         Fullscreen.IsChecked = settings.Fullscreen;
         PerformanceOverlay.IsChecked = settings.PerformanceOverlay;
@@ -180,6 +182,11 @@ public partial class MainWindow : Window {
         if (WindowSize.SelectedItem is OutputSize outputSize)
             settings.WindowSize = Array.IndexOf(DisplayOptions.Sizes, outputSize);
         settings.LinearFilter = Filter.SelectedIndex == 0;
+        settings.VSync = VSync.SelectedIndex switch {
+            1 => "off",
+            2 => "adaptive",
+            _ => "on"
+        };
         var aspect = DisplayOptions.AspectChoices[
             Math.Clamp(AspectRatio.SelectedIndex, 0, DisplayOptions.AspectChoices.Length - 1)];
         settings.AspectRatio = aspect.Aspect;
@@ -248,7 +255,7 @@ public partial class MainWindow : Window {
         BackupButton.IsEnabled = !updating && !running && !launching && !backingUp;
         RefreshCardAvailability();
         if (previousRunning && !running) {
-            Status.Text = $"Game closed · Exit code {game.Process!.ExitCode} · Session logs saved";
+            _ = ShowGameExitStatus(game.Process!, Status.Text);
             LaunchButton.Content = PlayButtonLabel;
             LaunchButton.IsEnabled = true;
             controller.SessionEnabled = false;
@@ -264,9 +271,14 @@ public partial class MainWindow : Window {
                 Status.Text = "Game running";
             graphicsPreparing = false;
         }
-        if (game.NetworkStatus != null && !graphicsPreparing)
-            Status.Text = game.NetworkStatus;
+        if (running && !graphicsPreparing && game.NetworkStatus is { } network)
+            Status.Text = network;
         if (slowUiTick == 0) RefreshPerformanceNotification();
+    }
+    async Task ShowGameExitStatus(Process process, string? previousStatus) {
+        string message = await game.ExitStatusAsync(process.ExitCode);
+        if (ReferenceEquals(game.Process, process) && !launching && Status.Text == previousStatus)
+            Status.Text = message;
     }
     async void LaunchGame(object? sender, RoutedEventArgs e) {
         string mode = settings.ResolvedCoopMode;

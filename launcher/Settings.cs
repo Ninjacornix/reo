@@ -17,6 +17,9 @@ public sealed partial class Settings {
     [System.Text.Json.Serialization.JsonIgnore]
     public string ResolvedLauncherFont => LauncherFont is "segoe-ui" or "tahoma" ? LauncherFont : "outbreak";
     public bool Fullscreen { get; set; }
+    public string VSync { get; set; } = "on";
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string ResolvedVSync => VSync is "off" or "adaptive" ? VSync : "on";
     public bool PerformanceOverlay { get; set; }
     public string AspectRatio { get; set; } = "4:3";
     // Widen the game camera to the selected ratio instead of stretching the 4:3 view.

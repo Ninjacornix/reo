@@ -9,7 +9,18 @@ internal static class GraphicsOptionsTests {
         var culture = CultureInfo.CurrentCulture;
         try {
             CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("hr-HR");
+            check(GraphicsOptions.From(new Settings()).Environment["REO_VSYNC"] == "on",
+                  "Existing settings default to synchronized presentation");
             foreach (string game in new[] { "file1", "file2" }) {
+                foreach (string? mode in new string?[] { "on", "off", "adaptive", "invalid", null }) {
+                    var saved = JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(
+                        new Settings { SelectedGame = game, VSync = mode! }))!;
+                    var captured = GraphicsOptions.From(saved);
+                    saved.VSync = "off";
+                    check(captured.Environment["REO_VSYNC"] ==
+                              (mode is "off" or "adaptive" ? mode : "on"),
+                          game + " persists and captures VSync with safe fallback");
+                }
                 var settings = new Settings {
                     SelectedGame = game, Fullscreen = true, WindowSize = 6,
                     InternalResolution = 4, AspectRatio = "16:9", ScreenFit = "fill",
@@ -56,6 +67,23 @@ internal static class GraphicsOptionsTests {
                           game + " supports every internal scale, fit and anti-aliasing selection");
                 }
             }
+            check(GameSession.GraphicsExitDiagnostic("[BOOT] OpenGL 3.3 is unavailable; not opening the game window.")
+                  ?.Contains("Install the graphics driver", StringComparison.Ordinal) == true,
+                  "Missing OpenGL is identified as a graphics driver error");
+            check(GameSession.GraphicsExitDiagnostic("[GPU-MOVIE] failure boundary=nativeMovieQuiescent detail=Create same-adapter native MPEG decoder")
+                  ?.Contains("turn off Decode movies on the graphics card", StringComparison.Ordinal) == true,
+                  "An actual Direct3D movie decoder failure points to CPU decoding");
+            check(GameSession.GraphicsExitDiagnostic("[run] graphics backend failure: Native DXGI swapchain unavailable; orderly shutdown requested")
+                  ?.Contains("graphics backend failed", StringComparison.Ordinal) == true &&
+                  GameSession.GraphicsExitDiagnostic("[run] graphics backend failure: Native DXGI swapchain unavailable; orderly shutdown requested")
+                  ?.Contains("Update your GPU driver or rebuild", StringComparison.Ordinal) == true,
+                  "An orderly graphics backend shutdown is reported as a failure with swapchain guidance");
+            check(GameSession.GraphicsExitDiagnostic("[run] graphics backend failure: paraLLEl-GS initialization failed; orderly shutdown requested")
+                  == "The game graphics backend failed · Open Log for the graphics error.",
+                  "Other graphics backend failures preserve the general backend diagnostic");
+            check(GameSession.GraphicsExitDiagnostic("No D3D11 video device") == null &&
+                  GameSession.GraphicsExitDiagnostic("[GS-BACKEND] requested=parallel selected=software reason=Vulkan device initialization failed") == null,
+                  "Optional capabilities and normal software fallback are not reported as fatal errors");
             var invalid = GraphicsOptions.From(new Settings {
                 InternalResolution = 3, Anisotropy = 7, Brightness = 999,
                 Gamma = double.NaN, AspectRatio = "invalid", ScreenFit = "invalid"

@@ -18,9 +18,12 @@ struct PS2Runtime {
 constexpr uint32_t PS2_RAM_SIZE=32u*1024u*1024u;
 #define GPR_U32(ctx,n) ((ctx)->r[n])
 #include "../../recomp/overrides/reo_audio.h"
-unsigned frameCalls=0,streamCalls=0;
+unsigned frameCalls=0,streamCalls=0,pauseCalls=0;
 void originalFrame(uint8_t*,R5900Context*,PS2Runtime*) { ++frameCalls; }
 void originalStream(uint8_t*,R5900Context*,PS2Runtime*) { ++streamCalls; }
+void originalPause(uint8_t*,R5900Context*,PS2Runtime*) { ++pauseCalls; }
+std::vector<std::pair<uint32_t,bool>> pauseNowCalls;
+namespace ps2_cri_audio { void pauseNow(uint32_t voice,bool paused) { pauseNowCalls.push_back({voice,paused}); } }
 
 unsigned checks=0;
 float bridgeApiRoundtrip();
@@ -75,8 +78,9 @@ int main() {
         check(equal(reoAudioBankGain(1,0,0),.2f),"SFX bank classification");
         PS2Runtime runtime;runtime.functions[frameAddress]=::originalFrame;
         runtime.functions[streamAddress]=::originalStream;
+        runtime.functions[pauseAddress]=::originalPause;
         reo::audio::install(runtime);
-        check(runtime.registrations==std::vector<uint32_t>({frameAddress,streamAddress}),"Exact edition-specific hook registrations");
+        check(runtime.registrations==std::vector<uint32_t>({frameAddress,streamAddress,pauseAddress}),"Exact edition-specific hook registrations");
         std::vector<uint8_t> ram(PS2_RAM_SIZE);R5900Context ctx;
         ctx.pc=frameAddress;runtime.functions.at(ctx.pc)(ram.data(),&ctx,&runtime);
         check(frameCalls==1,"Original frame service forwards once");
@@ -97,6 +101,18 @@ int main() {
         ctx.pc=streamAddress;ctx.r[4]=PS2_RAM_SIZE-8;
         runtime.functions.at(ctx.pc)(ram.data(),&ctx,&runtime);
         check(streamCalls==calls+1,"An invalid guest pointer still forwards the original stream service once");
+        // ADXT_Pause(adxt, on): only a pause of a stream still decoding (status 3) is a
+        // mid-stream pause; end-of-clip pauses (status 4) keep the speech-tail drain (#72).
+        ctx.pc=pauseAddress;ctx.r[4]=0x1000;ctx.r[5]=1;ram[0x1001]=3;ram[0x1072]=0;
+        runtime.functions.at(ctx.pc)(ram.data(),&ctx,&runtime);
+        check(pauseCalls==1 && pauseNowCalls==std::vector<std::pair<uint32_t,bool>>({{handle,true}}),
+              "Mid-stream ADXT_Pause stops the host voice and forwards once");
+        ram[0x1001]=4;runtime.functions.at(ctx.pc)(ram.data(),&ctx,&runtime);
+        check(pauseCalls==2 && pauseNowCalls.size()==1,"End-of-clip pause keeps the speech-tail drain");
+        ram[0x1001]=3;ram[0x1072]=1;runtime.functions.at(ctx.pc)(ram.data(),&ctx,&runtime);
+        check(pauseCalls==3 && pauseNowCalls.size()==1,"Pausing an already paused stream changes nothing");
+        ctx.r[5]=0;runtime.functions.at(ctx.pc)(ram.data(),&ctx,&runtime);
+        check(pauseCalls==4 && pauseNowCalls.back()==std::pair<uint32_t,bool>(handle,false),"ADXT_Pause resume releases the pause");
 #if defined(REO_GAME_FILE2)
         check(equal(reoAudioBankGain(12,0,file2StartVoiceBank),.3f),"File2 selection speech uses its verified bank identity");
         check(equal(reoAudioBankGain(12,0,startVoiceBank),.2f),"File1 bank identity cannot classify File2 enemy audio as speech");

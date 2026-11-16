@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace Outbreak.Launcher;
 public sealed partial class Controller {
-    sealed record PhysicalPad(Pad Pad, string Transport);
+    sealed record PhysicalPad(Pad Pad, string Transport, PadModel Model);
     readonly Dictionary<nint, string> deviceNames = new();
     readonly Dictionary<string, PhysicalPad> dualSense = new(StringComparer.OrdinalIgnoreCase);
     readonly Func<RawInputPads.Snapshot?> discoverPads;
@@ -20,11 +20,13 @@ public sealed partial class Controller {
         config = value;
     }
     public IReadOnlyList<InputDevice> AvailableDevices =>
-        dualSense.Select((d, i) =>
-                        new InputDevice("ps:" + d.Key,
-                                        "DualSense" + (dualSense.Count > 1 ? " " + (i + 1) : "") +
-                                            (d.Value.Transport == "Unknown" ? "" : " (" + d.Value.Transport + ")"),
-                                        "playstation"))
+        dualSense
+            .Select((d, i) => new InputDevice(
+                        "ps:" + d.Key,
+                        (d.Value.Model == PadModel.DualShock4 ? "DualShock 4" : "DualSense") +
+                            (dualSense.Count > 1 ? " " + (i + 1) : "") +
+                            (d.Value.Transport == "Unknown" ? "" : " (" + d.Value.Transport + ")"),
+                        "playstation"))
             .Concat(xbox.Keys.Order().Select(
                 slot => new InputDevice("xbox:" + slot, "Xbox / XInput controller " + (slot + 1),
                                         "xbox")))

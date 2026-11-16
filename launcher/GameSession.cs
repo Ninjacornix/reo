@@ -13,6 +13,7 @@ public sealed class GameSession {
     public string? NetworkStatus { get; private set; }
     volatile string? graphicsStatus;
     public string? GraphicsStatus => graphicsStatus;
+    Task<string?> graphicsExitDiagnostic = Task.FromResult<string?>(null);
     TaskCompletionSource graphicsReady = new(TaskCreationOptions.RunContinuationsAsynchronously);
     internal Task WaitForGraphicsReadyAsync(TimeSpan timeout) => graphicsReady.Task.WaitAsync(timeout);
     public string? MovieStatus { get; private set; }
@@ -383,10 +384,7 @@ public sealed class GameSession {
             _ = Task.Run(() => ControllerHealth.Run(lightProcess, discElf, controller, lightLogs));
         if (OperatingSystem.IsWindows()) _ = Task.Run(() => ControllerRumble.Trace(lightProcess, controller, lightLogs));
         _ = Pump(Process.StandardOutput, stdout);
-        _ = Pump(Process.StandardError, stderr, line => {
-            ObserveGraphicsLine(line);
-            account?.Observe(line);
-        });
+        graphicsExitDiagnostic = ObserveStandardError(Process.StandardError, stderr, account);
         if (recording != null) {
             var recordedProcess = Process;
             _ = Task.Run(() => {
@@ -508,6 +506,7 @@ public sealed class GameSession {
     }
     internal const string EscapeCheatCapability = "[CHEATS-ESCAPE-1] active countdown frozen";
     internal const string OnlineUnlockCapability = "[CHEATS-ONLINE-UNLOCK-1] progression";
+    internal const string File3CheatCapability = "[CHEATS-FILE3-NPCS-1] hidden characters";
     internal static void VerifyCheatCompatibility(string image, string gameId, IEnumerable<string> manifest, bool online = false) {
         var lines = manifest.ToHashSet(StringComparer.Ordinal);
         if (gameId == "file2" && !HasMarker(image, "[CHEATS-FILE2-1] health infection ammo data"))
@@ -516,6 +515,10 @@ public sealed class GameSession {
             throw new IOException("Unlock everything needs the updated game build. Rebuild or update the game.");
         if (online && lines.Contains("builtin unlock") && !HasMarker(image, OnlineUnlockCapability))
             throw new IOException("Online Unlock everything needs the updated game build. Rebuild or update the selected game in Game files.");
+        if (lines.Contains("builtin file3") && (gameId != "file2" || online))
+            throw new IOException("Unlock File #3 characters requires File #2 in Play alone.");
+        if (lines.Contains("builtin file3") && !HasMarker(image, File3CheatCapability))
+            throw new IOException("Unlock File #3 characters needs the updated game build. Rebuild or update the game.");
         if (lines.Contains("builtin points") && !HasMarker(image, PointsCheatCapability))
             throw new IOException("Max results points needs the updated game build. Rebuild or update the game.");
         if (lines.Contains("builtin escape") && !HasMarker(image, EscapeCheatCapability))
@@ -562,6 +565,47 @@ public sealed class GameSession {
             int.TryParse(counts[1], out int total) && total > 0 && done >= 0 && done <= total)
             graphicsStatus = $"Preparing graphics · {(long)done * 100 / total}%";
     }
+    async Task<string?> ObserveStandardError(StreamReader input, StreamWriter output, AutomaticAccount? account) {
+        string? diagnostic = null;
+        await Pump(input, output, line => {
+            ObserveGraphicsLine(line);
+            diagnostic ??= GraphicsExitDiagnostic(line);
+            account?.Observe(line);
+        }).ConfigureAwait(false);
+        return diagnostic;
+    }
+
+    internal async Task<string> ExitStatusAsync(int exitCode) {
+        string? diagnostic = null;
+        try {
+            // The process can exit before the final line of stderr reaches the launcher.
+            diagnostic = await graphicsExitDiagnostic.WaitAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        } catch (Exception error) when (error is IOException or TimeoutException) {
+            // A pipe or log failure must not hide the process exit itself.
+        }
+        return randomizerStopReason ?? diagnostic ?? (exitCode == 0
+            ? "The game has closed. Your session logs have been saved."
+            : $"The game closed unexpectedly (exit code {exitCode}). Open Log for details.");
+    }
+
+    internal static string? GraphicsExitDiagnostic(string line) {
+        if (line.StartsWith("[BOOT] OpenGL 3.3 is unavailable;", StringComparison.Ordinal))
+            return "OpenGL 3.3 is unavailable · Install the graphics driver for your GPU and try again. Open Log for details.";
+
+        bool backendFailure = line.StartsWith("[run] graphics backend failure: ", StringComparison.Ordinal);
+        if (backendFailure || line.StartsWith("[GPU-MOVIE] failure boundary=", StringComparison.Ordinal) ||
+            line.StartsWith("[CRASH]", StringComparison.Ordinal)) {
+            if (line.Contains("Create same-adapter native MPEG decoder", StringComparison.Ordinal) ||
+                line.Contains("No hardware MPEG decoder on actual GS adapter LUID", StringComparison.Ordinal) ||
+                line.Contains("Requested native movie has no actual GS owner service", StringComparison.Ordinal))
+                return "GPU movie decoding failed · In Graphics, turn off Decode movies on the graphics card and try again. Open Log for details.";
+        }
+        if (backendFailure && (line.Contains("Native DXGI swapchain unavailable", StringComparison.Ordinal) ||
+                               line.Contains("Win32 Vulkan swapchain", StringComparison.Ordinal)))
+            return "The game graphics backend failed to create a presentation swapchain · Update your GPU driver or rebuild the game in Game files. Open Log for details.";
+        return backendFailure ? "The game graphics backend failed · Open Log for the graphics error." : null;
+    }
+
     internal static async Task Pump(StreamReader input, StreamWriter output,
                                     Action<string>? observe = null) {
         using (output) {

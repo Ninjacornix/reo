@@ -143,14 +143,23 @@ int main() {
     check((word(ram.data(), 0x323bd8) & 0x1f) == 0x1f);
     check((word(ram.data(), 0x321ef4) & 0x1f) == 0x1f);
     check((ram[0x31fb83] & 0x0c) == 0x0c && (ram[0x31fb7f] & 5) == 5);
+    // Issue #73: exact File #1 costume variants and NPC IDs 0-89 only.
+    auto npc = [&](unsigned id) { return (ram[0x31fb6c + id / 8] >> (id % 8)) & 1; };
+    check(npc(3) && npc(4) && npc(0) && npc(89)); // HUNK:B, HUNK, MAC, Mr.BLACK
+    for (unsigned id = 90; id < 128; ++id) check(!npc(id)); // no unnamed characters
+    check(ram[0x31fb64] == 1 && ram[0x31fb69] == 3); // Kevin has no type C; Alyssa does
     for (uint32_t a = 0; a < ram.size(); ++a) {
-        const bool characterBits = (a >= 0x31fb64 && a < 0x31fb6c) ||
-                                   (a >= 0x31fb6d && a < 0x31fb79);
+        constexpr uint8_t costumes[8] = {1, 1, 1, 1, 1, 3, 3, 3};
         bool collectionBits = false;
         for (unsigned bank = 0; bank < 3; ++bank)
             for (uint32_t start : {0x323bf4u, 0x323c54u})
                 collectionBits |= a >= start + bank * 32 && a < start + bank * 32 + 24;
-        if (characterBits || collectionBits) {
+        if (a >= 0x31fb64 && a < 0x31fb6c) {
+            if (ram[a] != costumes[a - 0x31fb64]) throw std::runtime_error("Wrong costume unlock");
+        } else if (a >= 0x31fb6c && a < 0x31fb7c) {
+            const uint8_t expected = a < 0x31fb77 ? 0xff : a == 0x31fb77 ? 0x03 : 0x00;
+            if (ram[a] != expected) throw std::runtime_error("Wrong extra-character unlock");
+        } else if (collectionBits) {
             if (ram[a] != 0xff) throw std::runtime_error("Missing progression unlock");
         } else if (a == 0x31fb83) {
             if (ram[a] != (beforeUnlock[a] | 0x0c)) throw std::runtime_error("Difficulty bits changed");

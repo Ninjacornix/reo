@@ -36,8 +36,8 @@ internal static class ProgressionUnlockTests {
             var settings = new Settings { SelectedGame = "file2", CoopMode = "offline",
                 CheatsEnabled = true, EnabledCheats = new() { "builtin.file2.unlock" } };
             string exported = Cheats.Export(settings, root);
-            check(File.ReadAllLines(exported).SequenceEqual(new[] { "REO-CHEATS-2", "builtin unlock" }),
-                  "File #2 unlocks export without enabling health, infection or ammunition cheats");
+            check(File.ReadAllLines(exported).SequenceEqual(new[] { "REO-CHEATS-2", "builtin unlock", "builtin file3" }),
+                  "File #2 solo progression includes hidden NPCs without enabling gameplay cheats");
             foreach (string mode in new[] { "host", "join" }) {
                 settings.CoopMode = mode;
                 string online = Cheats.Export(settings, root);

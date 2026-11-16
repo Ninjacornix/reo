@@ -12,7 +12,12 @@
 #include "smaa/resident_smaa.hpp"
 #include "movie_frame_signal.h"
 #include "runtime/gs/performance.h"
+#include "runtime/gs/display_sync.h"
+#include "presentation_mode.h"
+#include <algorithm>
 #include <chrono>
+#include <limits>
+#include <string>
 
 namespace ps2_ipu {
 extern std::atomic<uint32_t> g_dbgCsc; // CPU movie route: IPU colour conversions
@@ -24,6 +29,13 @@ namespace reo_gpu_present {
 class ResidentDxgiPresenter {
     Vulkan::Device& device_;
     std::unique_ptr<Vulkan::DXGIInteropSwapchain> swapchain_;
+    VkSurfaceKHR surface_ = VK_NULL_HANDLE;
+    VkSwapchainKHR vkSwapchain_ = VK_NULL_HANDLE;
+    std::vector<Vulkan::ImageHandle> vkImages_;
+    std::vector<Vulkan::ImageViewHandle> vkViews_;
+    std::vector<Vulkan::Semaphore> vkPresented_;
+    unsigned requestedWidth_ = 0, requestedHeight_ = 0;
+    bool outdated_ = false;
     Vulkan::Program* program_ = nullptr;
     std::unique_ptr<ResidentSmaa> smaa_;
     Vulkan::ImageHandle heldSource_, target_;
@@ -36,6 +48,246 @@ class ResidentDxgiPresenter {
     unsigned movieSwitches_ = 0;
     std::chrono::steady_clock::time_point lastMovieFrame_{};
     reo::performance::Meter performance_;
+    reo::display_sync::Adaptive adaptiveSync_;
+    HMONITOR syncMonitor_ = nullptr;
+    double refreshHz_ = 0;
+    std::chrono::steady_clock::time_point refreshChecked_{};
+    bool displaySynchronized_ = true;
+    unsigned syncLogs_ = 0;
+
+    static void requireVk(VkResult result, const char* operation) {
+        if (result != VK_SUCCESS)
+            throw std::runtime_error(std::string(operation) + " failed: " + std::to_string(result));
+    }
+    bool canUseDxgiInterop() const {
+        if (const char* backend = std::getenv("REO_PRESENT_BACKEND");
+            backend && (std::strcmp(backend, "vulkan") == 0 || std::strcmp(backend, "vk") == 0))
+            return false;
+        const auto& features = device_.get_device_features();
+        if (!features.vk11_props.deviceLUIDValid || !features.supports_external ||
+            !features.vk12_features.timelineSemaphore ||
+            !vkGetPhysicalDeviceExternalSemaphoreProperties ||
+            !vkGetPhysicalDeviceImageFormatProperties2)
+            return false;
+        const VkPhysicalDevice gpu = device_.get_physical_device();
+        VkExternalSemaphoreProperties semaProps{VK_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_PROPERTIES};
+        VkPhysicalDeviceExternalSemaphoreInfo semaInfo{
+            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SEMAPHORE_INFO, nullptr,
+            VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D12_FENCE_BIT};
+        vkGetPhysicalDeviceExternalSemaphoreProperties(gpu, &semaInfo, &semaProps);
+        VkExternalImageFormatProperties externalProps{
+            VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES};
+        VkImageFormatProperties2 formatProps{VK_STRUCTURE_TYPE_IMAGE_FORMAT_PROPERTIES_2,
+                                             &externalProps};
+        VkPhysicalDeviceExternalImageFormatInfo externalInfo{
+            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_IMAGE_FORMAT_INFO, nullptr,
+            VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT};
+        VkPhysicalDeviceImageFormatInfo2 formatInfo{
+            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_FORMAT_INFO_2,
+            &externalInfo,
+            VK_FORMAT_B8G8R8A8_UNORM,
+            VK_IMAGE_TYPE_2D,
+            VK_IMAGE_TILING_OPTIMAL,
+            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+            0};
+        const bool formatSupported =
+            vkGetPhysicalDeviceImageFormatProperties2(gpu, &formatInfo, &formatProps) == VK_SUCCESS;
+        return supportsDxgiExternalHandles(
+            features.vk11_props.deviceLUIDValid == VK_TRUE, features.supports_external,
+            features.vk12_features.timelineSemaphore == VK_TRUE,
+            semaProps.externalSemaphoreFeatures, formatSupported,
+            externalProps.externalMemoryProperties.externalMemoryFeatures);
+    }
+    void destroyVulkanSwapchain() {
+        device_.wait_idle();
+        heldSource_.reset();
+        vkPresented_.clear();
+        vkViews_.clear();
+        vkImages_.clear();
+        if (vkSwapchain_)
+            device_.get_device_table().vkDestroySwapchainKHR(device_.get_device(), vkSwapchain_,
+                                                             nullptr);
+        vkSwapchain_ = VK_NULL_HANDLE;
+    }
+    void destroyVulkanSurface() {
+        destroyVulkanSwapchain();
+        if (surface_)
+            vkDestroySurfaceKHR(device_.get_instance(), surface_, nullptr);
+        surface_ = VK_NULL_HANDLE;
+    }
+    void createVulkanSurface(HWND window) {
+        struct Win32SurfaceInfo {
+            VkStructureType sType;
+            const void* pNext;
+            VkFlags flags;
+            HINSTANCE hinstance;
+            HWND hwnd;
+        };
+        using CreateWin32Surface = VkResult(VKAPI_PTR*)(VkInstance, const Win32SurfaceInfo*,
+                                                        const VkAllocationCallbacks*,
+                                                        VkSurfaceKHR*);
+        const auto create = reinterpret_cast<CreateWin32Surface>(
+            vkGetInstanceProcAddr(device_.get_instance(), "vkCreateWin32SurfaceKHR"));
+        if (!create)
+            throw std::runtime_error("VK_KHR_win32_surface was not enabled");
+        auto instance = reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(window, GWLP_HINSTANCE));
+        if (!instance)
+            instance = GetModuleHandleW(nullptr);
+        const Win32SurfaceInfo info{VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR, nullptr, 0,
+                                    instance, window};
+        requireVk(create(device_.get_instance(), &info, nullptr, &surface_),
+                  "Win32 Vulkan surface");
+        VkBool32 supported = VK_FALSE;
+        requireVk(vkGetPhysicalDeviceSurfaceSupportKHR(
+                      device_.get_physical_device(),
+                      device_.get_queue_info().family_indices[Vulkan::QUEUE_INDEX_GRAPHICS],
+                      surface_, &supported),
+                  "Win32 Vulkan present support");
+        if (!supported)
+            throw std::runtime_error(
+                "The existing graphics queue cannot present to this Win32 window");
+    }
+    void attachVulkan(HWND window, unsigned width, unsigned height) {
+        if (!outdated_ && window_ == window && requestedWidth_ == width &&
+            requestedHeight_ == height && vkSwapchain_ != VK_NULL_HANDLE)
+            return;
+        destroyVulkanSwapchain();
+        if (window_ != window || !surface_) {
+            destroyVulkanSurface();
+            createVulkanSurface(window);
+        }
+        VkSurfaceCapabilitiesKHR capabilities{};
+        requireVk(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device_.get_physical_device(), surface_,
+                                                            &capabilities),
+                  "Win32 surface capabilities");
+        if (!(capabilities.supportedUsageFlags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT))
+            throw std::runtime_error("The Win32 Vulkan surface cannot receive GPU rendering");
+        uint32_t count = 0;
+        requireVk(vkGetPhysicalDeviceSurfaceFormatsKHR(device_.get_physical_device(), surface_,
+                                                       &count, nullptr),
+                  "Win32 surface format count");
+        std::vector<VkSurfaceFormatKHR> formats(count);
+        requireVk(vkGetPhysicalDeviceSurfaceFormatsKHR(device_.get_physical_device(), surface_,
+                                                       &count, formats.data()),
+                  "Win32 surface formats");
+        VkFormat format = VK_FORMAT_UNDEFINED;
+        for (const auto& entry : formats)
+            if ((entry.format == VK_FORMAT_B8G8R8A8_UNORM ||
+                 entry.format == VK_FORMAT_R8G8B8A8_UNORM || entry.format == VK_FORMAT_UNDEFINED) &&
+                entry.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+                format =
+                    entry.format == VK_FORMAT_UNDEFINED ? VK_FORMAT_B8G8R8A8_UNORM : entry.format;
+                break;
+            }
+        if (format == VK_FORMAT_UNDEFINED)
+            throw std::runtime_error("Win32 Vulkan presentation requires a UNORM surface");
+        VkExtent2D extent = capabilities.currentExtent;
+        if (extent.width == std::numeric_limits<uint32_t>::max() || extent.width == 0 ||
+            extent.height == 0)
+            extent = {std::clamp(width, std::max(1u, capabilities.minImageExtent.width),
+                                 std::max(width, capabilities.maxImageExtent.width)),
+                      std::clamp(height, std::max(1u, capabilities.minImageExtent.height),
+                                 std::max(height, capabilities.maxImageExtent.height))};
+        uint32_t imageCount = std::max(3u, capabilities.minImageCount);
+        if (capabilities.maxImageCount)
+            imageCount = std::min(imageCount, capabilities.maxImageCount);
+        uint32_t modeCount = 0;
+        requireVk(vkGetPhysicalDeviceSurfacePresentModesKHR(device_.get_physical_device(), surface_,
+                                                            &modeCount, nullptr),
+                  "Win32 present mode count");
+        std::vector<VkPresentModeKHR> modes(modeCount);
+        requireVk(vkGetPhysicalDeviceSurfacePresentModesKHR(device_.get_physical_device(), surface_,
+                                                            &modeCount, modes.data()),
+                  "Win32 present modes");
+        VkSwapchainCreateInfoKHR info{VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};
+        info.surface = surface_;
+        info.minImageCount = imageCount;
+        info.imageFormat = format;
+        info.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+        info.imageExtent = extent;
+        info.imageArrayLayers = 1;
+        info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+                          (capabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+        info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        info.preTransform = capabilities.currentTransform;
+        info.compositeAlpha = static_cast<VkCompositeAlphaFlagBitsKHR>(
+            capabilities.supportedCompositeAlpha & (~capabilities.supportedCompositeAlpha + 1u));
+        info.presentMode = configuredPresentMode(modes);
+        info.clipped = VK_TRUE;
+        const auto& table = device_.get_device_table();
+        requireVk(table.vkCreateSwapchainKHR(device_.get_device(), &info, nullptr, &vkSwapchain_),
+                  "Win32 Vulkan swapchain");
+        requireVk(table.vkGetSwapchainImagesKHR(device_.get_device(), vkSwapchain_, &count, nullptr),
+                  "Win32 swapchain image count");
+        std::vector<VkImage> handles(count);
+        requireVk(table.vkGetSwapchainImagesKHR(device_.get_device(), vkSwapchain_, &count,
+                                                handles.data()),
+                  "Win32 swapchain images");
+        for (auto handle : handles) {
+            auto imageInfo =
+                Vulkan::ImageCreateInfo::render_target(extent.width, extent.height, format);
+            imageInfo.usage = info.imageUsage;
+            imageInfo.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+            auto image = device_.wrap_image(imageInfo, handle);
+            if (!image)
+                throw std::runtime_error("Cannot wrap Win32 Vulkan swapchain image");
+            Vulkan::ImageViewCreateInfo viewInfo{};
+            viewInfo.image = image.get();
+            viewInfo.format = format;
+            viewInfo.view_type = VK_IMAGE_VIEW_TYPE_2D;
+            viewInfo.levels = 1;
+            viewInfo.layers = 1;
+            auto view = device_.create_image_view(viewInfo);
+            if (!view)
+                throw std::runtime_error("Cannot create Win32 Vulkan swapchain image view");
+            vkImages_.push_back(std::move(image));
+            vkViews_.push_back(std::move(view));
+        }
+        vkPresented_.resize(vkImages_.size());
+        window_ = window;
+        width_ = extent.width;
+        height_ = extent.height;
+        requestedWidth_ = width;
+        requestedHeight_ = height;
+        if (smaa_)
+            smaa_->resize(width_, height_);
+        outdated_ = false;
+    }
+
+    bool displaySync() {
+        const auto mode = reo::display_sync::configured();
+        const auto now = std::chrono::steady_clock::now();
+        const HMONITOR monitor = mode == reo::display_sync::Mode::Adaptive
+                                     ? MonitorFromWindow(window_, MONITOR_DEFAULTTONEAREST)
+                                     : nullptr;
+        if (mode == reo::display_sync::Mode::Adaptive &&
+            (monitor != syncMonitor_ || now - refreshChecked_ > std::chrono::seconds(1))) {
+            MONITORINFOEXW info{};
+            info.cbSize = sizeof(info);
+            DEVMODEW display{};
+            display.dmSize = sizeof(display);
+            const double refreshHz =
+                GetMonitorInfoW(monitor, &info) &&
+                        EnumDisplaySettingsW(info.szDevice, ENUM_CURRENT_SETTINGS, &display) &&
+                        display.dmDisplayFrequency > 1
+                    ? double(display.dmDisplayFrequency)
+                    : 0;
+            if (monitor != syncMonitor_ || refreshHz != refreshHz_)
+                adaptiveSync_ = {};
+            refreshHz_ = refreshHz;
+            syncMonitor_ = monitor;
+            refreshChecked_ = now;
+        }
+        const bool synchronized = adaptiveSync_.synchronized(
+            mode, std::chrono::duration<double>(now.time_since_epoch()).count(), refreshHz_);
+        if ((!syncLogs_ || synchronized != displaySynchronized_) && syncLogs_ < 12) {
+            ++syncLogs_;
+            std::fprintf(stderr, "[DISPLAY-SYNC] DXGI requested=%s interval=%d refresh=%.2fHz\n",
+                         reo::display_sync::name(mode), synchronized ? 1 : 0, refreshHz_);
+        }
+        displaySynchronized_ = synchronized;
+        return synchronized;
+    }
     struct Parameters {
         uint32_t sourceWidth, sourceHeight, destinationWidth, destinationHeight, linear;
         uint32_t fps = 0, frameMs = 0, ups = 0;
@@ -121,9 +373,15 @@ class ResidentDxgiPresenter {
         const char* aa = std::getenv("REO_POST_AA");
         if (aa && std::strcmp(aa, "smaa") == 0)
             smaa_ = std::make_unique<ResidentSmaa>(device_, vertex);
-        swapchain_ = std::make_unique<Vulkan::DXGIInteropSwapchain>();
-        if (!swapchain_->init_interop_device(device_))
-            throw std::runtime_error("Existing-device Granite DXGI interop unavailable");
+        if (canUseDxgiInterop()) {
+            auto candidate = std::make_unique<Vulkan::DXGIInteropSwapchain>();
+            if (candidate->init_interop_device(device_))
+                swapchain_ = std::move(candidate);
+        }
+        if (!swapchain_)
+            std::fprintf(stderr,
+                         "[GS-PRESENT] D3D12-Vulkan external interop unavailable; using native "
+                         "Win32 Vulkan swapchain\n");
     }
     ResidentDxgiPresenter(const ResidentDxgiPresenter&) = delete;
     ~ResidentDxgiPresenter() {
@@ -132,6 +390,7 @@ class ResidentDxgiPresenter {
         targetView_.reset();
         target_.reset();
         swapchain_.reset();
+        destroyVulkanSurface();
     }
 
     // Swap chain creation failed: record what the window was, so a user's stderr.log
@@ -168,8 +427,18 @@ class ResidentDxgiPresenter {
     void attach(HWND window, unsigned width, unsigned height) {
         if (!window || !width || !height || width > 16384 || height > 16384)
             throw std::invalid_argument("Invalid presentation target");
+        if (!swapchain_) {
+            try {
+                attachVulkan(window, width, height);
+                return;
+            } catch (...) {
+                describeWindow(window, width, height);
+                throw;
+            }
+        }
         if (window_ == window && width_ == width && height_ == height)
             return;
+        adaptiveSync_ = {};
         device_.wait_idle();
         targetView_.reset();
         target_.reset();
@@ -178,8 +447,17 @@ class ResidentDxgiPresenter {
         // user brightness/gamma is applied once in the presentation shader.
         VkSurfaceFormatKHR format{VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR};
         if (!swapchain_->init_swapchain(window, format, width, height, 3)) {
-            describeWindow(window, width, height);
-            throw std::runtime_error("Native DXGI swapchain unavailable");
+            std::fprintf(stderr,
+                         "[GS-PRESENT] DXGI interop swapchain unavailable; falling back to native "
+                         "Win32 Vulkan swapchain\n");
+            swapchain_.reset();
+            try {
+                attachVulkan(window, width, height);
+                return;
+            } catch (...) {
+                describeWindow(window, width, height);
+                throw std::runtime_error("Native DXGI swapchain unavailable");
+            }
         }
         auto imageInfo = Vulkan::ImageCreateInfo::render_target(width, height, format.format);
         imageInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
@@ -199,6 +477,8 @@ class ResidentDxgiPresenter {
         window_ = window;
         width_ = width;
         height_ = height;
+        requestedWidth_ = width;
+        requestedHeight_ = height;
         if (smaa_)
             smaa_->resize(width, height);
     }
@@ -207,54 +487,48 @@ class ResidentDxgiPresenter {
     // Granite's queued image dependencies preserve source completion. The real
     // DXGI acquire/release timeline protects its shared render target. Pacing is
     // the caller's existing guest VBlank clock; do not add a second sleep clock.
-    Vulkan::Fence present(const Vulkan::ImageHandle& merged, bool displayVsync = false,
-                          bool linear = false) {
-        if (!window_ || !merged)
-            throw std::invalid_argument("Missing resident scanout");
+    void recordPresentPass(Vulkan::CommandBuffer& cmd, const Vulkan::ImageHandle& merged,
+                           Vulkan::Image& targetImage, Vulkan::ImageView& targetView,
+                           bool externalTarget, bool linear) {
         const auto& source = merged->get_create_info();
-        if (source.format != VK_FORMAT_R8G8B8A8_UNORM && source.format != VK_FORMAT_B8G8R8A8_UNORM)
-            throw std::runtime_error("Resident presentation requires merged UNORM bytes");
-        Vulkan::Semaphore acquire;
-        if (!swapchain_->acquire(acquire) || !acquire)
-            throw std::runtime_error("DXGI acquire failed");
-        acquire->signal_external();
-        if (!swapchain_->wait_latency(2))
-            throw std::runtime_error("DXGI latency wait failed");
-        // Public queue wait; no Device WSI private state/access is used.
-        device_.add_wait_semaphore(Vulkan::CommandBuffer::Type::Generic, std::move(acquire),
-                                   VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, true);
-        auto cmd = device_.request_command_buffer();
-        cmd->image_barrier(*merged, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
-                           VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                           VK_ACCESS_2_MEMORY_WRITE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                           VK_ACCESS_2_SHADER_SAMPLED_READ_BIT);
+        cmd.image_barrier(*merged, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+                          VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                          VK_ACCESS_2_MEMORY_WRITE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                          VK_ACCESS_2_SHADER_SAMPLED_READ_BIT);
         const uint32_t layout = currentLayout();
         if (smaa_)
-            smaa_->prepare(*cmd, *merged, program_, linear, layout);
-        cmd->acquire_image_barrier(
-            *target_, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
+            smaa_->prepare(cmd, *merged, program_, linear, layout);
+        if (externalTarget)
+            cmd.acquire_image_barrier(targetImage, VK_IMAGE_LAYOUT_GENERAL,
+                                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                                      VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
+        else
+            cmd.image_barrier(targetImage, VK_IMAGE_LAYOUT_UNDEFINED,
+                              VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                              VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0,
+                              VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                              VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
         Vulkan::RenderPassInfo pass{};
         pass.num_color_attachments = 1;
-        pass.color_attachments[0] = targetView_.get();
+        pass.color_attachments[0] = &targetView;
         pass.store_attachments = 1;
-
-        cmd->begin_render_pass(pass);
-        cmd->set_opaque_state();
-        cmd->set_cull_mode(VK_CULL_MODE_NONE);
-        cmd->set_depth_test(false, false);
-        cmd->set_blend_enable(false);
+        cmd.begin_render_pass(pass);
+        cmd.set_opaque_state();
+        cmd.set_cull_mode(VK_CULL_MODE_NONE);
+        cmd.set_depth_test(false, false);
+        cmd.set_blend_enable(false);
         static const bool fxaa = [] {
             const char* value = std::getenv("REO_POST_AA");
             return value && std::strcmp(value, "fxaa") == 0;
         }();
         if (smaa_)
-            smaa_->bindBlend(*cmd);
+            smaa_->bindBlend(cmd);
         else {
-            cmd->set_program(program_);
-            cmd->set_texture(0, 0, merged->get_view(),
-                             (linear || fxaa) ? Vulkan::StockSampler::LinearClamp
-                                              : Vulkan::StockSampler::NearestClamp);
+            cmd.set_program(program_);
+            cmd.set_texture(0, 0, merged->get_view(),
+                            (linear || fxaa) ? Vulkan::StockSampler::LinearClamp
+                                             : Vulkan::StockSampler::NearestClamp);
         }
         static const uint32_t color = (colorPercent("REO_BRIGHTNESS", 0.5f, 1.5f) << 8u) |
                                       (colorPercent("REO_GAMMA", 0.5f, 2.0f) << 16u);
@@ -276,19 +550,93 @@ class ResidentDxgiPresenter {
                 std::fprintf(stderr, "[PERFORMANCE-OVERLAY] fps=%.1f frame_ms=%.1f ups=%.1f\n",
                     reading.fps / 10.0, reading.frameMs / 10.0, reading.ups / 10.0);
         }
-        cmd->push_constants(&parameters, 0, sizeof(parameters));
-        cmd->draw(3);
-        cmd->end_render_pass();
+        cmd.push_constants(&parameters, 0, sizeof(parameters));
+        cmd.draw(3);
+        cmd.end_render_pass();
         // Pinned DXGIInteropSwapchain::present performs the actual external
         // release from PRESENT to GENERAL after waiting this signaled semaphore.
-        cmd->image_barrier(
-            *target_, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0);
+        cmd.image_barrier(targetImage, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                          VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                          VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+                          externalTarget ? VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+                                         : VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                          0);
+    }
+    Vulkan::Fence presentVulkan(const Vulkan::ImageHandle& merged, bool linear,
+                                unsigned retries = 0) {
+        if (!vkSwapchain_)
+            throw std::runtime_error("Missing Win32 Vulkan swapchain");
+        auto acquire = device_.request_legacy_semaphore();
+        uint32_t index = 0;
+        const auto& table = device_.get_device_table();
+        auto result = table.vkAcquireNextImageKHR(device_.get_device(), vkSwapchain_, UINT64_MAX,
+                                                  acquire->get_semaphore(), VK_NULL_HANDLE, &index);
+        if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+            if (retries >= 2)
+                throw std::runtime_error("Win32 Vulkan surface changed repeatedly during acquire");
+            outdated_ = true;
+            attachVulkan(window_, requestedWidth_, requestedHeight_);
+            return presentVulkan(merged, linear, retries + 1);
+        }
+        if (result != VK_SUBOPTIMAL_KHR)
+            requireVk(result, "Acquire Win32 Vulkan swapchain image");
+        outdated_ = result == VK_SUBOPTIMAL_KHR;
+        acquire->signal_external();
+        acquire->set_signal_is_foreign_queue();
+        device_.add_wait_semaphore(Vulkan::CommandBuffer::Type::Generic, std::move(acquire),
+                                   VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, true);
+        auto priorPresent = std::move(vkPresented_.at(index));
+        auto cmd = device_.request_command_buffer();
+        recordPresentPass(*cmd, merged, *vkImages_.at(index), *vkViews_.at(index), false, linear);
+        device_.submit(cmd);
+        auto release = device_.request_legacy_semaphore();
+        Vulkan::Fence drawComplete;
+        device_.submit_empty(Vulkan::CommandBuffer::Type::Generic, &drawComplete, release.get());
+        const VkSemaphore signal = release->get_semaphore();
+        VkPresentInfoKHR presentInfo{VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
+        presentInfo.waitSemaphoreCount = 1;
+        presentInfo.pWaitSemaphores = &signal;
+        presentInfo.swapchainCount = 1;
+        presentInfo.pSwapchains = &vkSwapchain_;
+        presentInfo.pImageIndices = &index;
+        result = table.vkQueuePresentKHR(
+            device_.get_queue_info().queues[Vulkan::QUEUE_INDEX_GRAPHICS], &presentInfo);
+        release->wait_external();
+        vkPresented_[index] = std::move(release);
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+            outdated_ = true;
+        else
+            requireVk(result, "Win32 Vulkan queue presentation");
+        heldSource_ = merged;
+        ++submitted_;
+        return drawComplete;
+    }
+
+    Vulkan::Fence present(const Vulkan::ImageHandle& merged, bool displayVsync = false,
+                          bool linear = false) {
+        if (!window_ || !merged)
+            throw std::invalid_argument("Missing resident scanout");
+        const auto& source = merged->get_create_info();
+        if (source.format != VK_FORMAT_R8G8B8A8_UNORM && source.format != VK_FORMAT_B8G8R8A8_UNORM)
+            throw std::runtime_error("Resident presentation requires merged UNORM bytes");
+        if (!swapchain_)
+            return presentVulkan(merged, linear);
+        Vulkan::Semaphore acquire;
+        if (!swapchain_->acquire(acquire) || !acquire)
+            throw std::runtime_error("DXGI acquire failed");
+        acquire->signal_external();
+        if (!swapchain_->wait_latency(2))
+            throw std::runtime_error("DXGI latency wait failed");
+        // Public queue wait; no Device WSI private state/access is used.
+        device_.add_wait_semaphore(Vulkan::CommandBuffer::Type::Generic, std::move(acquire),
+                                   VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, true);
+        auto cmd = device_.request_command_buffer();
+        recordPresentPass(*cmd, merged, *target_, *targetView_, true, linear);
         Vulkan::Semaphore release;
         Vulkan::Fence drawComplete;
         device_.submit(cmd, &drawComplete, 1, &release);
-        if (!release || !swapchain_->present(std::move(release), displayVsync))
+        if (!release || !swapchain_->present(std::move(release), displayVsync || displaySync()))
             throw std::runtime_error("DXGI GPU present failed");
         heldSource_ = merged;
         ++submitted_;

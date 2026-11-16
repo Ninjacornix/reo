@@ -88,7 +88,7 @@ public static class LanDiscovery {
                 }
                 var game = describe();
                 bool discovery = request.Buffer.AsSpan().SequenceEqual(QueryFor(game.GameId));
-                bool mods = game.GameId == "file1" && request.Buffer.Length == RandomizerSession.QueryPrefix.Length + 16 &&
+                bool mods = request.Buffer.Length == RandomizerSession.QueryPrefix.Length + 16 &&
                             request.Buffer.AsSpan().StartsWith(RandomizerSession.QueryPrefix);
                 if (!discovery && !mods)
                     continue;

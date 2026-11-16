@@ -8,6 +8,9 @@ on:
     paths: ['launcher/**', 'tools/launcher/**', '.github/workflows/shared-launcher.yml']
 permissions:
   contents: read
+concurrency:
+  group: universal-launcher-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   shared:
     strategy:
@@ -83,7 +86,9 @@ jobs:
           python -m pip install --quiet pillow
           python tools/launcher/compare_parity.py build-launcher/parity
       - name: Publish results to ci/parity-results
-        if: always()
+        # Pull requests (including forks) keep their captures as artifacts. Their token may be
+        # read-only, and unmerged PR code must not publish to the repository's results branch.
+        if: ${{ !cancelled() && github.event_name != 'pull_request' && hashFiles('build-launcher/parity/**') != '' }}
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

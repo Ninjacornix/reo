@@ -31,7 +31,7 @@ int main(int argc, char** argv) try {
                 if (file2) return (address >= 0x2feea8 && address < 0x2feec0) || address == 0x2feec3 || address == 0x2feec5 ||
                     (address >= 0x2ff8c8 && address < 0x2ff8cc) ||
                     (address >= 0x30022c && address < 0x300230) || (address >= 0x300248 && address < 0x300310);
-                if ((address >= 0x31fb64 && address < 0x31fb6c) || (address >= 0x31fb6d && address < 0x31fb79) ||
+                if ((address >= 0x31fb64 && address < 0x31fb7c) ||
                     (address >= 0x321ef4 && address < 0x321ef8) ||
                     address == 0x31fb7f || address == 0x31fb83 || (address >= 0x323bd8 && address < 0x323bdc)) return true;
                 for (unsigned bank = 0; bank < 3; ++bank)

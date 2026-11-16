@@ -87,13 +87,20 @@ static class CoopAutomationTests {
         check(LanDiscovery.Decode(Encoding.ASCII.GetBytes(
             "REO-LAN!1{\"name\":\"Kevin\",\"address\":\"127.0.0.1\",\"version\":\"1\",\"room\":true,\"signup\":10128,\"game\":\"file2\"}")) == null,
               "Legacy replies cannot advertise File #2 to File #1 clients");
-        using (new LanDiscovery.Responder(() => secondGame)) {
+        var secondSession = RandomizerSession.Create(secondGame.Name, new(), "file2");
+        using (new LanDiscovery.Responder(() => secondGame, () => secondSession)) {
             var matching = Task.Run(() => LanDiscovery.Ask("127.0.0.1", TimeSpan.FromMilliseconds(250),
                 CancellationToken.None, "file2")).GetAwaiter().GetResult();
             var mismatched = Task.Run(() => LanDiscovery.Ask("127.0.0.1", TimeSpan.FromMilliseconds(150),
                 CancellationToken.None, "file1")).GetAwaiter().GetResult();
             check(matching == secondGame && mismatched == null,
                   "File #2 host answers only File #2 discovery requests");
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            var guest = new Settings { SelectedGame = "file2", CoopMode = "join", CoopHost = "127.0.0.1",
+                                       JoinHostName = secondGame.Name };
+            var session = RandomizerSession.Resolve(guest, new(), timeout.Token).GetAwaiter().GetResult();
+            check(session.Bytes.SequenceEqual(secondSession) && session.Mods.Count == 0,
+                  "File #2 guest can join an unmodded host through the launcher responder");
         }
         using (new LanDiscovery.Responder(() => game)) {
             var mismatched = Task.Run(() => LanDiscovery.Ask("127.0.0.1", TimeSpan.FromMilliseconds(150),

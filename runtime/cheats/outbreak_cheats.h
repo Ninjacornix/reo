@@ -3,7 +3,7 @@
 
 namespace reo::cheats {
 enum Builtin : unsigned { FullHealth = 1, NoInfection = 2, InfiniteAmmo = 4, UnlockEverything = 8,
-                          MaxResultsPoints = 16, InfiniteEscapeTime = 32 };
+                          MaxResultsPoints = 16, InfiniteEscapeTime = 32, UnlockFile3Characters = 64 };
 inline constexpr uint32_t maximumResultsPoints = 999999999u;
 struct Program {
     std::vector<Write> writes;
@@ -37,6 +37,8 @@ inline Program parseProgram(std::istream& input) {
                 result.builtins |= MaxResultsPoints;
             else if (name == "escape")
                 result.builtins |= InfiniteEscapeTime;
+            else if (name == "file3")
+                result.builtins |= UnlockFile3Characters;
             else
                 throw std::runtime_error("Unknown built-in cheat");
         } else
@@ -113,6 +115,16 @@ inline BuiltinResult applyBuiltins(unsigned flags, uint8_t* r, Game game = Game:
         unlockFile2(r);
         result.unlocks = true;
     }
+    if (file2 && (flags & UnlockFile3Characters)) {
+        // SLUS-20984: the 25 named NPC IDs outside the original progression masks.
+        // The name table at 0x219690 ends at ID 92. The getter at 0x59c550 uses
+        // each ID as its bit index in the save's NPC availability words.
+        constexpr uint32_t file3Masks[] = {0x8430033du, 0x00243007u, 0x00003f04u};
+        for (unsigned i = 0; i < 3; ++i) {
+            const uint32_t address = 0x2feeb0 + 4 * i;
+            setWord(r, address, word(r, address) | file3Masks[i]);
+        }
+    }
     if (!file2 && (flags & UnlockEverything)) {
         // Verified NTSC-U v2.00 save/progression fields. The scenario menu
         // 581820 tests +4078 in the save structure rooted at 31FB60; the
@@ -122,8 +134,21 @@ inline BuiltinResult applyBuiltins(unsigned flags, uint8_t* r, Game game = Game:
         // offline scenario menu's +4078 bank. Preserve all non-scenario bits.
         setWord(r, 0x321ef4, word(r, 0x321ef4) | 0x1fu);
         // Costume and NPC bitsets, without touching reward points or options.
-        for (uint32_t a = 0x31fb64; a < 0x31fb6c; ++a) r[a] = 0xff;
-        for (uint32_t a = 0x31fb6d; a < 0x31fb79; ++a) r[a] = 0xff;
+        // Write exact values so saves altered by the old all-ones unlock are
+        // repaired (issue #73).
+        // Costumes: overlay-1 purchase table 58B580 grants bit 0 to all eight
+        // characters and bit 1 to characters 5-7 only; character select 584D90
+        // offers the default plus these bits. Other bits are invalid variants
+        // (Kevin "type C" loaded an uncontrollable Yoko).
+        constexpr uint8_t costumes[8] = {1, 1, 1, 1, 1, 3, 3, 3};
+        for (unsigned i = 0; i < 8; ++i) r[0x31fb64 + i] = costumes[i];
+        // Extra characters: 584D90 lists every set bit of the 128 at +C as an
+        // NPC ID, and 1C1E40 names only IDs 0-89 (0-7 are the File #3
+        // characters MAC..ARNOLD, including HUNK). Set exactly IDs 0-89;
+        // IDs 90-127 have no character and showed as blank entries.
+        for (uint32_t a = 0x31fb6c; a < 0x31fb77; ++a) r[a] = 0xff;
+        r[0x31fb77] = 0x03;
+        for (uint32_t a = 0x31fb78; a < 0x31fb7c; ++a) r[a] = 0;
         r[0x31fb83] |= 0x0c;
         r[0x31fb7f] |= 0x05; // Purchased bonus-mode availability, not current mode.
         // 57C4C0/57C530: available/purchased collection bits, three banks

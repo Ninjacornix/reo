@@ -1,0 +1,140 @@
+--- a/opensnap/storage/sqlite.py
++++ b/opensnap/storage/sqlite.py
+@@ -4,7 +4,9 @@
+ import sqlite3
+ import threading
+ 
+-from opensnap.storage.sql import Row
++from opensnap.core.accounts import generate_recovery_code
++from opensnap.core.records import Ranking
++from opensnap.storage.sql import Row, _RECORD_UPDATES
+ 
+ 
+ class SqliteConnection:
+@@ -14,9 +16,18 @@
+ 
+     def __init__(self, path: str | Path) -> None:
+         self._lock = threading.Lock()
+-        self._connection = sqlite3.connect(path, check_same_thread=False)
++        self._connection = sqlite3.connect(path, timeout=30, check_same_thread=False)
+         self._connection.row_factory = sqlite3.Row
+-        self._setup_schema()
++        try:
++            # The launcher starts four processes sharing this file. Inspect and
++            # upgrade under one writer lock, and roll back the whole schema on
++            # failure rather than leaving a partially upgraded account store.
++            with self._connection:
++                self._connection.execute('BEGIN IMMEDIATE')
++                self._setup_schema()
++        except BaseException:
++            self._connection.close()
++            raise
+ 
+     def execute(self, query: str, parameters: tuple[object, ...] = ()) -> None:
+         self._write(query, parameters)
+@@ -52,7 +63,8 @@
+             return int(cursor.lastrowid or 0)
+ 
+     def _setup_schema(self) -> None:
+-        self.execute(
++        execute = self._connection.execute
++        execute(
+             'CREATE TABLE IF NOT EXISTS users ('
+             'user_id INTEGER PRIMARY KEY, '
+             'username TEXT NOT NULL UNIQUE, '
+@@ -63,7 +75,15 @@
+             'recovery_code TEXT NOT NULL'
+             ')'
+         )
+-        self.execute(
++        columns = self._columns('users')
++        if 'kage_login_key' not in columns:
++            execute('ALTER TABLE users ADD COLUMN kage_login_key TEXT')
++        if 'recovery_code' not in columns:
++            execute("ALTER TABLE users ADD COLUMN recovery_code TEXT NOT NULL DEFAULT ''")
++            for row in execute('SELECT user_id FROM users').fetchall():
++                execute('UPDATE users SET recovery_code = ? WHERE user_id = ?',
++                        (generate_recovery_code(), row['user_id']))
++        execute(
+             'CREATE TABLE IF NOT EXISTS session_handoffs ('
+             'serial INTEGER PRIMARY KEY AUTOINCREMENT, '
+             'session_id INTEGER NOT NULL UNIQUE, '
+@@ -75,8 +95,9 @@
+             'sequence_number INTEGER NOT NULL DEFAULT 0'
+             ')'
+         )
+-        self.execute('CREATE INDEX IF NOT EXISTS session_handoffs_endpoint ON session_handoffs (host, port)')
+-        self.execute(
++        execute('CREATE INDEX IF NOT EXISTS session_handoffs_endpoint ON session_handoffs (host, port)')
++        legacy = self._archive_legacy_records()
++        execute(
+             'CREATE TABLE IF NOT EXISTS records ('
+             'game TEXT NOT NULL, '
+             'board TEXT NOT NULL, '
+@@ -89,11 +110,13 @@
+             'PRIMARY KEY (game, board, user_id)'
+             ')'
+         )
+-        self.execute('CREATE INDEX IF NOT EXISTS records_rank ON records (game, board, sort_key, reached_at, user_id)')
+-        self.execute(
++        execute('CREATE INDEX IF NOT EXISTS records_rank ON records (game, board, sort_key, reached_at, user_id)')
++        execute(
+             'CREATE TABLE IF NOT EXISTS boards (game TEXT NOT NULL, board TEXT NOT NULL, PRIMARY KEY (game, board))'
+         )
+-        self.execute(
++        if legacy:
++            self._import_legacy_records()
++        execute(
+             'CREATE TABLE IF NOT EXISTS online_players ('
+             'session_id INTEGER PRIMARY KEY, '
+             'game TEXT NOT NULL, '
+@@ -104,4 +127,48 @@
+             'login_serial INTEGER NOT NULL'
+             ')'
+         )
+-        self.execute('CREATE INDEX IF NOT EXISTS online_players_game ON online_players (game, login_serial)')
++        execute('CREATE INDEX IF NOT EXISTS online_players_game ON online_players (game, login_serial)')
++
++    def _columns(self, table: str) -> set[str]:
++        # Callers supply only constant schema identifiers.
++        return {str(row['name']) for row in self._connection.execute(f'PRAGMA table_info({table})')}
++
++    def _archive_legacy_records(self) -> bool:
++        columns = self._columns('records')
++        if 'record_id' not in columns:
++            return False
++        required = {'record_id', 'game', 'board', 'user_id', 'player', 'score', 'details', 'recorded_at'}
++        if not required <= columns:
++            raise sqlite3.DatabaseError('Unrecognized legacy records schema; migration rolled back')
++        # Keep every original submission, including boards not understood by
++        # this Outbreak-specific migration. Never replace an existing archive.
++        self._connection.execute('ALTER TABLE records RENAME TO records_legacy_v1')
++        self._connection.execute('DROP INDEX IF EXISTS records_rank')
++        return True
++
++    def _import_legacy_records(self) -> None:
++        execute = self._connection.execute
++        rows = execute('SELECT * FROM records_legacy_v1 ORDER BY record_id')
++        for row in rows:
++            game, board = str(row['game']), str(row['board'])
++            if game not in ('outbreak', 'outbreak2'):
++                continue
++            if board.startswith('clear-'):
++                ranking = Ranking.LOWEST
++            elif board == 'points' or (board.startswith('points-') and board[7:].isdigit()):
++                board, ranking = 'points', Ranking.TOTAL
++            else:
++                continue
++            score = int(row['score'])
++            sort_key = score if ranking is Ranking.LOWEST else -score
++            # Replay submission order with the current store's exact update
++            # rules, retaining the winning clear's details/time and summing
++            # result points across the old per-scenario points boards.
++            execute(
++                'INSERT INTO records (game, board, user_id, player, score, sort_key, reached_at, details) '
++                'VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (game, board, user_id) DO UPDATE SET '
++                + _RECORD_UPDATES[ranking],
++                (game, board, row['user_id'], row['player'], score, sort_key,
++                 row['recorded_at'], row['details']),
++            )
++            execute('INSERT OR IGNORE INTO boards (game, board) VALUES (?, ?)', (game, board))

@@ -15,26 +15,30 @@ public sealed class CheatGroup {
 }
 public record CheatWrite(int Place, uint Address, int Size, ulong Value);
 public static class Cheats {
-    public static List<CheatGroup> Builtins(string game) =>
-        game is not ("file1" or "file2")
-            ? new()
-            : new List<CheatGroup> {
-                  new() { Id = $"builtin.{game}.health", Builtin = "health", Name = "Full health",
-                          Description = "Keeps your living character at maximum health." },
-                  new() { Id = $"builtin.{game}.infection", Builtin = "infection",
-                          Name = "No infection",
-                          Description = "Keeps your character's virus gauge at zero." },
-                  new() { Id = $"builtin.{game}.ammo", Builtin = "ammo", Name = "Infinite ammunition",
-                          Description = "Keeps carried firearms loaded to their normal capacity." },
-                  new() { Id = $"builtin.{game}.unlock", Builtin = "unlock", Name = "Unlock everything",
-                          Description = game == "file1"
-                              ? "Unlocks all File #1 scenarios, difficulties, costumes, NPC characters and collection extras. Available in Play alone and co-op. Saving can keep these unlocks."
-                              : "Unlocks all File #2 scenarios, difficulties, costumes, NPC characters and collection extras. Available in Play alone and co-op. Saving can keep these unlocks." },
-                  new() { Id = $"builtin.{game}.points", Builtin = "points", Name = "Max results points",
-                          Description = "Keeps spendable results points at 999,999,999. Saving can retain the balance." },
-                  new() { Id = $"builtin.{game}.escape", Builtin = "escape", Name = "Infinite escape time",
-                          Description = "Stops active escape countdowns." }
-              };
+    public static List<CheatGroup> Builtins(string game) {
+        if (game is not ("file1" or "file2"))
+            return new();
+        var groups = new List<CheatGroup> {
+            new() { Id = $"builtin.{game}.health", Builtin = "health", Name = "Full health",
+                    Description = "Keeps your living character at maximum health." },
+            new() { Id = $"builtin.{game}.infection", Builtin = "infection", Name = "No infection",
+                    Description = "Keeps your character's virus gauge at zero." },
+            new() { Id = $"builtin.{game}.ammo", Builtin = "ammo", Name = "Infinite ammunition",
+                    Description = "Keeps carried firearms loaded to their normal capacity." },
+            new() { Id = $"builtin.{game}.unlock", Builtin = "unlock", Name = "Unlock everything",
+                    Description = game == "file1"
+                        ? "Unlocks all File #1 scenarios, difficulties, costumes, NPC characters and collection extras. Available in Play alone and co-op. Saving can keep these unlocks."
+                        : "Unlocks File #2 progression in Play alone and co-op. Play alone also includes the hidden File #3 characters. Saving can keep these unlocks." },
+            new() { Id = $"builtin.{game}.points", Builtin = "points", Name = "Max results points",
+                    Description = "Keeps spendable results points at 999,999,999. Saving can retain the balance." },
+            new() { Id = $"builtin.{game}.escape", Builtin = "escape", Name = "Infinite escape time",
+                    Description = "Stops active escape countdowns." }
+        };
+        if (game == "file2")
+            groups.Add(new CheatGroup { Id = "builtin.file2.file3", Builtin = "file3", Name = "Unlock File #3 characters",
+                Description = "Unlocks 25 hidden NPCs, including HUNK and HUNK:B. Regular unlocks still follow normal progression. Available in Play alone. Saving can keep these unlocks." });
+        return groups;
+    }
     internal const string OnlineRestriction = "Only Unlock everything is available in co-op. Other cheats require Play alone; deselect them or disable cheats before hosting or joining.";
     // Progression unlocks change menu/save availability, rather than player stats
     // or shared gameplay. Imported writes are never classified by their label.
@@ -173,6 +177,9 @@ public static class Cheats {
         if (settings.ResolvedCoopMode != "offline" &&
             (writes.Count != 0 || builtins.Any(builtin => builtin != "builtin unlock")))
             throw new IOException(OnlineRestriction);
+        if (settings.Game.Id == "file2" && settings.ResolvedCoopMode == "offline" &&
+            builtins.Contains("builtin unlock") && !builtins.Contains("builtin file3"))
+            builtins.Add("builtin file3");
         if (writes.Count > 4096)
             throw new IOException("Select fewer cheats (4096 write limit).");
         string file = Path.Combine(logs, "cheats.txt");

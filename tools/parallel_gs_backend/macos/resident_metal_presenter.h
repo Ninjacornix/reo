@@ -1,6 +1,7 @@
 #pragma once
 #include "device.hpp"
 #include "command_buffer.hpp"
+#include "../presentation_mode.h"
 #include "../smaa/resident_smaa.hpp"
 #include <algorithm>
 #include <cmath>
@@ -202,10 +203,7 @@ class ResidentMetalPresenter {
         require(vkGetPhysicalDeviceSurfacePresentModesKHR(device_.get_physical_device(), surface_,
                                                           &modeCount, modes.data()),
                 "Present modes");
-        info.presentMode =
-            std::find(modes.begin(), modes.end(), VK_PRESENT_MODE_MAILBOX_KHR) != modes.end()
-                ? VK_PRESENT_MODE_MAILBOX_KHR
-                : VK_PRESENT_MODE_FIFO_KHR;
+        info.presentMode = configuredPresentMode(modes);
         info.clipped = VK_TRUE;
         const auto& table = device_.get_device_table();
         require(table.vkCreateSwapchainKHR(device_.get_device(), &info, nullptr, &swapchain_),

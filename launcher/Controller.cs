@@ -86,7 +86,8 @@ public sealed partial class Controller : IDisposable {
         if (deviceNames.TryGetValue(device.Handle, out string? previous) && previous != device.Path)
             RemoveDualSense(device.Handle);
         deviceNames[device.Handle] = device.Path;
-        if (!dualSense.ContainsKey(device.Path)) dualSense[device.Path] = new(new Pad(), device.Transport);
+        if (!dualSense.ContainsKey(device.Path))
+            dualSense[device.Path] = new(new Pad(), device.Transport, device.Model);
     }
     void RefreshDualSense() {
         if (discoverPads() is not { } snapshot) return;
@@ -130,26 +131,39 @@ public sealed partial class Controller : IDisposable {
         return 0;
     }
     internal bool AcceptReport(nint device, byte[] bytes) {
-        if (!deviceNames.TryGetValue(device, out string? path) || !TryParse(bytes, 0, out Pad pad)) return false;
+        if (!deviceNames.TryGetValue(device, out string? path) ||
+            !dualSense.TryGetValue(path, out var known) ||
+            !TryParse(bytes, known.Model, 0, out Pad pad))
+            return false;
         Reports++;
-        Transport = bytes[0] == 0x31 || bytes.Length is 10 or 78 ? "Bluetooth" : "USB";
-        dualSense[path] = new(pad, Transport);
+        // USB input is always report 0x01 at exactly 64 bytes; any other accepted report is Bluetooth.
+        Transport = bytes[0] == 1 && bytes.Length == 64 ? "USB" : "Bluetooth";
+        dualSense[path] = known with { Pad = pad, Transport = Transport };
         return true;
     }
-    // Input report layouts documented by SDL's PS5 HID driver. Light output uses
+    // Input report layouts documented by SDL's PS4 and PS5 HID drivers. Light output uses
     // a separate shared handle; no pairing, exclusive handle or virtual driver.
-    public static bool TryParse(byte[] data, int deadZone, out Pad pad) {
+    public static bool TryParse(byte[] data, PadModel model, int deadZone, out Pad pad) {
         pad = new();
-        if (data.Length < 10 || !(data[0] == 1 && data.Length is 10 or 64 or 78 ||
-                                  data[0] == 0x31 && data.Length == 78))
+        if (data.Length < 10)
             return false;
-        // Windows may pad the basic Bluetooth report to 78 bytes. Its controls
-        // still use the compact layout, not the enhanced report's offsets.
-        bool simple = data[0] == 1 && data.Length is 10 or 78;
-        int offset = data[0] == 0x31 ? 2 : data[0] == 1 ? 1 : -1;
-        if (offset < 0 || (!simple && data.Length < offset + 10))
+        // Left stick offset, and whether buttons come before the triggers (compact layout).
+        var (offset, compact) = (model, data[0]) switch {
+            // Windows may pad the basic Bluetooth report to 78 bytes. Its controls
+            // still use the compact layout, not the enhanced report's offsets.
+            (PadModel.DualSense, 1) when data.Length is 10 or 78 => (1, true),
+            (PadModel.DualSense, 1) when data.Length == 64 => (1, false),
+            (PadModel.DualSense, 0x31) when data.Length == 78 => (2, false),
+            // DualShock 4 is compact on USB and Bluetooth. Bluetooth reports 0x11-0x19 add two
+            // header bytes, and bit 7 of the first one marks that controller data is present.
+            (PadModel.DualShock4, 1) => (1, true),
+            (PadModel.DualShock4, >= 0x11 and <= 0x19)
+                when data.Length >= 78 && (data[1] & 0x80) != 0 => (3, true),
+            _ => (-1, false)
+        };
+        if (offset < 0)
             return false;
-        int buttons = offset + (simple ? 4 : 7);
+        int buttons = offset + (compact ? 4 : 7);
         byte a = data[buttons], b = data[buttons + 1];
         ushort bits = 0;
         int hat = a & 15;
@@ -190,7 +204,7 @@ public sealed partial class Controller : IDisposable {
                     : Math.Sign(v) * (magnitude - threshold) * 32767 / (32767 - threshold);
             return (short)Math.Clamp(invert ? -v : v, -32768, 32767);
         }
-        int triggers = offset + (simple ? 7 : 4);
+        int triggers = offset + (compact ? 7 : 4);
         pad = new(bits, data[triggers], data[triggers + 1], Axis(data[offset], false),
                   Axis(data[offset + 1], true), Axis(data[offset + 2], false),
                   Axis(data[offset + 3], true));
@@ -239,8 +253,10 @@ public sealed partial class Controller : IDisposable {
         rumble.Update(device, motors);
         Volatile.Write(ref rumbleObservation, new(SessionEnabled, device.Name, device.Available, motors));
         int rgb = SessionEnabled ? Volatile.Read(ref healthLight) : 0x0040ff;
-        bool playstation = device.Available && device.Kind == "playstation" &&
-                           dualSense[device.Id[3..]].Transport != "Unknown";
+        // DualSenseLight writes DualSense output reports only; a DualShock 4 stays input-only.
+        bool playstation =
+            device.Available && device.Kind == "playstation" &&
+            dualSense[device.Id[3..]] is { Model: PadModel.DualSense, Transport: not "Unknown" };
         light.Update(playstation ? device.Id[3..] : null,
                      playstation && dualSense[device.Id[3..]].Transport == "Bluetooth",
                      new((byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb), motors);

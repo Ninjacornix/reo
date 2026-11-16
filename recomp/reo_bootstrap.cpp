@@ -78,6 +78,8 @@
 #error Choose one complete native audio backend candidate
 #endif
 #endif
+#include "overrides/reo_display_probe.h"
+#include "overrides/reo_display_sync.h"
 
 #include "overrides/actor_first_nonfinite.h"
 #include "overrides/ground_query_origin.h"
@@ -1260,6 +1262,17 @@ int main(int argc, char* argv[]) {
         if (backgroundMediaTest) SetConfigFlags(FLAG_WINDOW_HIDDEN);
     }
 #endif
+#if !defined(__APPLE__) && !defined(PLATFORM_VITA)
+    if (!std::getenv("REO_HEADLESS") && !reo_display_probe::openGl33Available()) {
+        fprintf(stderr, "[BOOT] OpenGL 3.3 is unavailable; not opening the game window. %s\n",
+                reo_display_probe::kMessage);
+#ifdef _WIN32
+        MessageBoxA(nullptr, reo_display_probe::kMessage, "Resident Evil Outbreak",
+                    MB_OK | MB_ICONERROR);
+#endif
+        return 1;
+    }
+#endif
     if (!runtime.initialize(g.name, ramBackingBytes)) {
 
         fprintf(stderr, "[BOOT] Failed to initialize runtime\n");
@@ -1285,6 +1298,8 @@ int main(int argc, char* argv[]) {
                 backgroundMediaTest ? (captureBackgroundMediaTest ? 2 : 1) : 0);
     }
 #endif
+    if (!std::getenv("REO_HEADLESS") && !reo_gpu_present::requested())
+        reo::display_sync::configureOpenGl();
 
     // Configure I/O paths
 

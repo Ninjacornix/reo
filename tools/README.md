@@ -12,6 +12,7 @@ Keep build tools and regression checks in source control. Their output, captures
 | Graphics implementation | `parallel_gs_backend/`, `gpu_backend_bridge/`, `vu_whole_aot/` |
 | Internal resolution | `parallel_gs_backend/internal_resolution_check.cpp` (Native / 2× raw GPU scanout, startup display guard and distinct 3D subpixels; requires matching renderer headers/libraries) |
 | Performance counter | `parallel_gs_backend/performance_check.cpp` (measured present/update rates, frame intervals, duplicate actor callbacks, counter wrap/reset and stopped updates) |
+| Vertical sync | `display_sync_check/run.bat` (On/Off/Adaptive policy, NTSC cadence, refresh changes and Vulkan mode fallbacks; Vulkan headers only, no game data or GPU required) |
 | Read-only diagnostics | `ps2_debug/`, `ext_sampler/`, timing/audio analysis scripts |
 | Native co-op | `coop_playtest/`, `snap_iop_check/`, `netcnf_profile_check/`, `usb_keyboard_check/`, `ee_count_check/` |
 | Controller rumble | `input_rumble_check/` (native libpad2 packets), shared Windows service checks (`dotnet run --project launcher/cross-tests -c Release -- --windows-services-check`) (adapter, routing and HID reports) |

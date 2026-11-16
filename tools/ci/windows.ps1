@@ -70,6 +70,7 @@ try {
     Invoke-Recorded 'windows-services' { & dotnet run --project launcher/cross-tests -c Release -- --windows-services-check }
     Invoke-Recorded 'audio-bridge' { & (Join-Path $repo 'tools/audio_mixer_check/run-bridge.bat') }
     Invoke-Recorded 'native-cheats' { & (Join-Path $repo 'tools/cheat_check/run.bat') }
+    Invoke-Recorded 'display-sync' { & (Join-Path $repo 'tools/display_sync_check/run.bat') }
     Invoke-Recorded 'native-netcode' { & (Join-Path $repo 'tools/native_netcode_check/run.bat') }
     Invoke-Recorded 'snap-iop-network' { & (Join-Path $repo 'tools/snap_iop_check/run.bat') --local-only }
     Invoke-Recorded 'file2-unlocks' { & (Join-Path $repo 'tools/cheat_check/run-file2-unlocks.bat') }
@@ -98,7 +99,7 @@ try {
             Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $licenses ($framework.name + '-' + $_.Name))
         }
     }
-    @{ format=2; version='1.0.20'; releaseTag=('ci-' + $Commit.Substring(0,12)); platform='win-x64';
+    @{ format=2; version='1.0.21'; releaseTag=('ci-' + $Commit.Substring(0,12)); platform='win-x64';
        prerelease=$true; kind='launcher-preview'; revision=$Commit; containsGameBuildKits=$false } |
         ConvertTo-Json | Set-Content -LiteralPath (Join-Path $publish 'distribution.json') -Encoding UTF8
     & git archive HEAD --format=zip ('--output=' + (Join-Path $publish 'project-source.zip'))

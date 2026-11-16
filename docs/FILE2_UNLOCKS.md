@@ -2,6 +2,8 @@
 
 Select **File #2 → Cheats**, enable **Enable cheats** and **Unlock everything**, then launch **Play alone**, **Host a game** or **Join a game**. This option grants scenario, difficulty, costume, NPC, bonus-mode and collection availability through the running game's progression data. It does not grant points, add inventory items or play through scenarios. The game's normal save operation is needed to retain changes after disabling the option; the launcher does not replace or directly edit a memory card.
 
+In **Play alone**, **Unlock everything** also grants the 25 hidden **File #3** NPCs, including HUNK and HUNK:B. Select **Unlock File #3 characters** on its own to grant just those NPCs while earning the regular unlocks through gameplay. Co-op **Unlock everything** grants the original progression unlocks. Both solo selections require the updated File #2 build with the `[CHEATS-FILE3-NPCS-1] hidden characters` marker.
+
 File #2 uses the native marker `[CHEATS-UNLOCK-FILE2-1] progression`. The launcher rejects an older File #2 native build that has only the health/infection/ammunition hook or File #1's unlock marker. Rebuild or update the game when prompted. Both the master cheat switch and the File #2 unlock selection are required. File #1 and File #2 selections remain separate, and the built-in progression unlock is available in co-op. Deselect other cheats before hosting or joining; gameplay and imported data cheats still require Play alone. See [online unlocks](ONLINE_UNLOCKS.md).
 
 ## Original-code evidence
@@ -16,6 +18,7 @@ Original routine `0x13c190` and helper `0x13c110` establish the progression layo
 | --- | --- | --- |
 | Costumes | Eight bytes at `0x2feea8`; OR masks `03 03 03 03 03 0f 0f 0f` | Table `0x217878`; selection reader `0x59c680`, setter `0x597dd0` |
 | NPC characters | Four words at `0x2feeb0`; OR the corresponding masks from both original tables, preserving the zero-mask final word | Tables `0x217880` and `0x217890`; getter `0x59c550` |
+| Hidden NPC characters (solo) | OR `0x8430033d`, `0x00243007` and `0x00003f04` into the first three words at `0x2feeb0` | SLUS-20984 NPC name table `0x219690` names IDs 0–92. The 25 named IDs outside the original unlock masks match the roster in the [Japanese File #3 patch](https://obsrv.org/wiki/downloads/SLPM-65692_70C1FE97.pnach) by bit index. |
 | Difficulties | Byte `0x2feec5` OR `0x0f` | Getter `0x59bb00`, setter `0x597f20` |
 | Main and extra scenarios | Word `0x30022c` OR `0x0fff` | Unlock routine `0x13c190`; save initialization `0x13a610`; availability getter `0x59bab0` and scenario list `0x59bda0` |
 | Online scenario choices | Word `0x2ff8c8` OR `0x0ffe` | Full-unlock routine `0x13c190`; online room constructor `0x5ebe80` |

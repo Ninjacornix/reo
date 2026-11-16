@@ -15,6 +15,7 @@ internal sealed record GraphicsOptions(bool Fullscreen, OutputSize Output, bool 
             ["REO_DISPLAY_ASPECT"] = settings.ResolvedAspect,
             ["REO_WIDESCREEN"] = settings.ResolvedWidescreen ? "1" : "0",
             ["REO_DISPLAY_FIT"] = settings.ResolvedFit,
+            ["REO_VSYNC"] = settings.ResolvedVSync,
             ["REO_DISPLAY_FILTER"] = settings.LinearFilter ? "linear" : "nearest",
             ["REO_WINDOW_WIDTH"] = Number(size.Width),
             ["REO_WINDOW_HEIGHT"] = Number(size.Height),
@@ -25,7 +26,8 @@ internal sealed record GraphicsOptions(bool Fullscreen, OutputSize Output, bool 
             ["REO_TEXTURE_ANISOTROPY"] = Number(settings.ResolvedAnisotropy),
             ["REO_POST_AA"] = settings.ResolvedAntiAliasing,
             ["REO_BRIGHTNESS"] = Decimal(Math.Clamp(settings.Brightness, 50, 150) / 100.0),
-            ["REO_GAMMA"] = Decimal(double.IsFinite(settings.Gamma) ? Math.Clamp(settings.Gamma, 0.5, 2.0) : 1.0)
+            ["REO_GAMMA"] = Decimal(
+                double.IsFinite(settings.Gamma) ? Math.Clamp(settings.Gamma, 0.5, 2.0) : 1.0)
         };
         return new(settings.Fullscreen, size, settings.GpuMovies, settings.GpuMoviesChoice, environment);
     }

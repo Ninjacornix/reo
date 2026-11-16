@@ -49,10 +49,19 @@ internal static class HeadlessChecks {
         Control<Button>("ResetBindingsButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         window.ShowPage("Graphics");Dispatcher.UIThread.RunJobs();
         window.CheckMovieDecoderSettings(Check);
+        var sync = Control<ComboBox>("VSync");
+        Check(sync.SelectedIndex == 0, "Existing settings must default VSync to On.");
+        foreach (var (index, mode) in new[] { (1, "off"), (2, "adaptive"), (0, "on") }) {
+            sync.SelectedIndex = index;
+            Check(window.settings.ResolvedVSync == mode &&
+                      Settings.Load(window.root).ResolvedVSync == mode,
+                  "VSync selection did not persist: " + mode);
+        }
         var resolution=Control<ComboBox>("InternalResolution");resolution.IsDropDownOpen=true;Dispatcher.UIThread.RunJobs();
         Check(resolution.GetRealizedContainers().Any(),"Dropdown does not populate RC1 choices.");resolution.IsDropDownOpen=false;
         Control<ComboBox>("InternalResolution").SelectedIndex=2;
         Check(window.settings.InternalResolution==4,"Resolution selector does not reach shared settings.");
+        window.CheckMovieDecoderSettings(Check);
         window.ShowPage("Audio");Dispatcher.UIThread.RunJobs();
         var music=Control<Slider>("MusicVolume");
         var track=music.GetVisualDescendants().OfType<Track>().First();track.Value=37;
@@ -111,6 +120,7 @@ internal static class HeadlessChecks {
         }
         window.CheckGraphicsPreviewReentry(Check);
         window.CheckHostingSummary(Check);
+        window.CheckActivityOverlay(Check, output);
         bool mediaChecked=false;
         string? ffmpeg=null;try{ffmpeg=PlatformServices.Ffmpeg();}catch(IOException){}
         Check(!args.Contains("--require-media") || ffmpeg!=null,"This regression run requires a real FFmpeg decoder; video checks must not be skipped.");

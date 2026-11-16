@@ -581,10 +581,16 @@ class ParallelBackend final : public Backend, private SignalInterface {
         if (config_.residentPresentation) {
             // The DXGI bridge uses PRESENT_SRC_KHR for external image
             // ownership transitions, requiring the swapchain extension.
-            const char* instanceExtensions[] = {"VK_KHR_surface"};
+            // Also enable VK_KHR_win32_surface so drivers without D3D12-Vulkan
+            // external interop (e.g. Intel Iris Xe, #104) can present directly
+            // through a native Win32 Vulkan swapchain.
+            const char* instanceExtensions[] = {"VK_KHR_surface", "VK_KHR_win32_surface"};
             const char* deviceExtensions[] = {"VK_KHR_swapchain"};
-            initialized = context_->init_instance_and_device(instanceExtensions, 1,
+            initialized = context_->init_instance_and_device(instanceExtensions, 2,
                                                               deviceExtensions, 1, flags);
+            if (!initialized)
+                initialized = context_->init_instance_and_device(instanceExtensions, 1,
+                                                                  deviceExtensions, 1, flags);
         } else
 #endif
 #if defined(REO_MACOS_METAL_PRESENT)

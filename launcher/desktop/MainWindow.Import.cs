@@ -133,16 +133,19 @@ public partial class MainWindow {
         SetupStage.Text = "Preparing game";
         SetupCounts.Text = "";
         SetupDetail.Text = "Checking imported files";
+        ImportTiming.Text = "";
+        ImportState.IsVisible = false;
         DiscValidationStatus.Text = "";
         ImportActivity.Visibility = Visibility.Visible;
+        HideStatusToast();
         var elapsed = Stopwatch.StartNew();
         var stageClock = Stopwatch.StartNew();
         string stage = "";
         long total = -1;
         long stageStart = 0;
         static string Duration(TimeSpan time) =>
-            time.TotalHours >= 1 ? $"{(int)time.TotalHours}h {time.Minutes:00}m"
-                                 : $"{(int)time.TotalMinutes}m {time.Seconds:00}s";
+            time.TotalHours >= 1 ? $"{(int)time.TotalHours}:{time.Minutes:00}:{time.Seconds:00}"
+                                 : $"{(int)time.TotalMinutes}:{time.Seconds:00}";
         return new Progress<ImportProgress>(value => {
             if (importCancellation != source)
                 return;
@@ -157,29 +160,27 @@ public partial class MainWindow {
                 stageStart = value.Completed;
                 stageClock.Restart();
             }
-            string eta = "estimating...";
+            string eta = "—";
             if (value.Total > 0 && value.Completed >= value.Total)
                 eta = "done";
             else if (value.Completed > stageStart && value.Total > value.Completed &&
                      stageClock.Elapsed.TotalSeconds >= 3) {
                 double seconds = stageClock.Elapsed.TotalSeconds * (value.Total - value.Completed) /
                                  (value.Completed - stageStart);
-                eta = "about " + Duration(TimeSpan.FromSeconds(Math.Min(seconds, 7 * 86400)));
+                eta = "~" + Duration(TimeSpan.FromSeconds(Math.Min(seconds, 7 * 86400)));
             }
-            ImportTiming.Text = $"Elapsed {Duration(elapsed.Elapsed)} · Stage ETA {eta}";
-            ImportState.Text = value.Total > 0 ? $"{value.Stage} {value.Percent:0}% - {value.File}"
-                                               : $"{value.Stage} - {value.File}";
+            ImportTiming.Text = $"Elapsed {Duration(elapsed.Elapsed)} · ETA {eta}";
             if (value.Stage == "Checking ISO") {
                 DiscValidationStatus.Text = value.File;
                 DiscValidationStatus.Foreground = (IBrush)FindResource("Muted");
             }
-            Status.Text = $"{value.Stage} - {value.Percent:0}%";
         });
     }
     void EndDiscImport() {
         importCancellation?.Dispose();
         importCancellation = null;
         ImportActivity.Visibility = Visibility.Collapsed;
+        ImportState.IsVisible = true;
         DiscProgress.IsIndeterminate = false;
         RefreshImportUi();
         if (closeAfterImport && !game.Running)
