@@ -95,9 +95,12 @@ struct ThirdPerson {
     bool enabled{}, log{}, mouse{true}, first_person{};
     float mouse_sens{0.12f}, zoom_step{25.f};
     // First person: eye height above the actor's feet and how far ahead of the face.
-    float eye_height{160.f}, eye_ahead{18.f};
+    float eye_height{160.f}, eye_ahead{30.f};
     // Aim height from camera pitch: above +down degrees aims low, below -up aims high.
     float aim_up{-12.f}, aim_down{16.f};
+    // Moving while aiming (the original game stands still): units per second,
+    // body radius kept from walls; strafe=0 turns it off.
+    float strafe{1.f}, strafe_speed{75.f}, body_radius{28.f};
     float distance{300.f}, pivot{150.f}, pitch{10.f}, side{35.f};
     float yaw_speed{4.f}, pitch_speed{3.f}, invert_y{0.f}, turn_sign{1.f};
     float aim_distance{150.f}, aim_side{45.f}, aim_pivot{155.f};
@@ -116,7 +119,8 @@ struct ThirdPerson {
                 {"aim_pivot", &t.aim_pivot}, {"smoothing", &t.smoothing}, {"pitch_min", &t.pitch_min},
                 {"pitch_max", &t.pitch_max}, {"mouse_sens", &t.mouse_sens}, {"zoom_step", &t.zoom_step},
                 {"eye_height", &t.eye_height}, {"eye_ahead", &t.eye_ahead}, {"aim_up", &t.aim_up},
-                {"aim_down", &t.aim_down}};
+                {"aim_down", &t.aim_down}, {"strafe", &t.strafe}, {"strafe_speed", &t.strafe_speed},
+                {"body_radius", &t.body_radius}};
             const char* at = tune;
             while (*at) {
                 const char* end = std::strchr(at, ',');
@@ -139,7 +143,7 @@ struct ThirdPersonState {
     std::uint16_t previous_pressed{};
     float zoom{};  // added to the rig distance by the mouse wheel
     bool first_person{}, view_initialised{};
-    std::uint64_t view_switches{}, first_person_frames{};
+    std::uint64_t view_switches{}, first_person_frames{}, strafe_frames{}, strafe_blocked{};
     std::uint64_t frames{}, yielded{}, collisions{}, recentres{}, aim_frames{}, mouse_frames{};
 };
 constexpr float yaw_turn = 6.28318530718f / 65536.f;  // actor yaw units (measured)
@@ -536,6 +540,29 @@ public:
             const auto units = std::int16_t(std::lround(tps.yaw / yaw_turn));
             g.put<std::int16_t>(base + actor_yaw, units);
             ++tps.aim_frames;
+            // Move while aiming: the host left stick (not the aim override) moves
+            // the actor relative to the camera; a knee-height segment test keeps
+            // the body radius away from room walls. Height is unchanged.
+            const float sx = axis(pad.left_x), sy = -axis(pad.left_y);
+            if (tp.strafe != 0.f && (sx != 0.f || sy != 0.f)) {
+                const float step = tp.strafe_speed / 30.f;
+                const t::Vector flat{std::sin(tps.yaw), 0.f, std::cos(tps.yaw)};
+                const t::Vector side{std::cos(tps.yaw), 0.f, -std::sin(tps.yaw)};
+                t::Vector move{flat.x * sy + side.x * sx, 0.f, flat.z * sy + side.z * sx};
+                const float length = std::sqrt(move.x * move.x + move.z * move.z);
+                if (length > 1.f) { move.x /= length; move.z /= length; }
+                const t::Vector knee{position.x, position.y + 50.f, position.z};
+                const float reach = step + tp.body_radius;
+                const t::Vector probe{knee.x + move.x * reach, knee.y, knee.z + move.z * reach};
+                t::Vector wall{};
+                bool blocked = true;
+                try { blocked = segment(ctx, g, knee, probe, wall); } catch (...) {}
+                if (!blocked) {
+                    const t::Vector next{position.x + move.x * step, position.y, position.z + move.z * step};
+                    g.put(base + actor_position, next);
+                    ++tps.strafe_frames;
+                } else ++tps.strafe_blocked;
+            }
         }
         const float distance = std::max(60.f, (aiming ? tp.aim_distance : tp.distance) + (aiming ? 0.f : tps.zoom));
         const float side = aiming ? tp.aim_side : tp.side;
@@ -670,6 +697,8 @@ public:
                          (unsigned long long)tps.recentres, (unsigned long long)tps.aim_frames,
                          (unsigned long long)tps.mouse_frames, (unsigned long long)tps.first_person_frames,
                          (unsigned long long)tps.view_switches);
+            std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-STRAFE] frames=%llu blocked=%llu\n",
+                         (unsigned long long)tps.strafe_frames, (unsigned long long)tps.strafe_blocked);
         if (mode == Mode::shadow_writes)
             std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-WATCH] block=0x%06x checks=%llu changed_between_calls=%llu\n",
                          watch_at, (unsigned long long)watch_checks, (unsigned long long)watch_changed_between_calls);
