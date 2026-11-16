@@ -16,6 +16,8 @@
 #include <mutex>
 #include <stdexcept>
 #include <unordered_map>
+#include <iterator>
+#include <vector>
 
 #if !defined(REO_BUILD_NATIVE_GAMEPLAY_SAVE) || !REO_BUILD_NATIVE_GAMEPLAY_SAVE
 #error Native gameplay save/session requires explicit candidate compilation
@@ -58,6 +60,14 @@ struct Observations {
     struct Counts {std::atomic<std::uint64_t> accepted{},completed{},failed{},rejected{};};
     struct Row {std::uint64_t sequence{},operation{},ns{};Kind kind{};const char* event{};std::int32_t detail{};};
     std::array<Counts,9> counts{};std::array<Row,128> rows{};
+    // Shadow mode: original authoritative, native compared on scratch regions.
+    struct ShadowCounts {std::uint64_t compared{},mismatched{},native_failed{},passthrough{};};
+    struct Mismatch {Kind kind{};std::uint32_t at{};std::uint64_t native{},original{};};
+    std::array<ShadowCounts,9> shadow{};std::array<Mismatch,16> mismatches{};std::uint64_t mismatch_rows{};bool shadow_mode{};
+    void mismatch(Kind kind,std::uint32_t at,std::uint64_t native,std::uint64_t original) noexcept {
+        if(mismatch_rows<mismatches.size())mismatches[mismatch_rows]={kind,at,native,original};
+        ++mismatch_rows;
+    }
     std::uint64_t sequence{},operation{},restore_ok{},restore_error{};bool emitted{},installed{};
     inline static std::atomic<std::uint64_t> next_id{};
     const std::uint64_t id=next_id.fetch_add(1,std::memory_order_relaxed)+1;
@@ -79,6 +89,20 @@ struct Observations {
                 static_cast<unsigned long long>(id),entries[i].at,
                 static_cast<unsigned long long>(c.accepted.load()),static_cast<unsigned long long>(c.completed.load()),
                 static_cast<unsigned long long>(c.failed.load()),static_cast<unsigned long long>(c.rejected.load()));
+        }
+        if(shadow_mode){
+            for(unsigned i=0;i<shadow.size();++i){const auto& s=shadow[i];
+                std::fprintf(stderr,"[NATIVE-GAMEPLAY-SAVE-SHADOW] binding=%llu at=0x%x compared=%llu mismatched=%llu native_failed=%llu passthrough=%llu\n",
+                    static_cast<unsigned long long>(id),entries[i].at,static_cast<unsigned long long>(s.compared),
+                    static_cast<unsigned long long>(s.mismatched),static_cast<unsigned long long>(s.native_failed),
+                    static_cast<unsigned long long>(s.passthrough));
+            }
+            const auto shown=std::min<std::uint64_t>(mismatch_rows,mismatches.size());
+            for(std::uint64_t i=0;i<shown;++i){const auto& m=mismatches[i];
+                // at=0xffffffff is the v0 return value; otherwise the first differing guest byte.
+                std::fprintf(stderr,"[NATIVE-GAMEPLAY-SAVE-SHADOW-MISMATCH] entry=0x%x at=0x%x native=0x%llx original=0x%llx\n",
+                    entries[static_cast<unsigned>(m.kind)].at,m.at,static_cast<unsigned long long>(m.native),static_cast<unsigned long long>(m.original));
+            }
         }
         for(std::uint64_t seq=sequence-retained+1;seq<=sequence;++seq){const auto& r=rows[(seq-1)%rows.size()];
             std::fprintf(stderr,"[NATIVE-GAMEPLAY-SAVE-TRACE] binding=%llu seq=%llu operation=%llu ns=%llu at=0x%x event=%s detail=%d\n",
@@ -117,6 +141,8 @@ public:
     save::Container container{};save::LiveState state{};session::Random random;
     Observations observations;Kind current_kind{};
     R5900Context* context{};std::uint32_t container_at{},restore_depth{};bool failed{};
+    // Shadow scratch: same physical layout as guest RAM; only declared regions are valid.
+    std::vector<std::uint8_t> scratch;bool on_scratch{};
     Binding(PS2Runtime& r):runtime(&r),ram(r.memory().getRDRAM()){}
     void requestStop() noexcept override {stopped.store(true,std::memory_order_release);}
     bool join() noexcept override {
@@ -135,6 +161,10 @@ public:
     }
     void copy(std::uint32_t at,void* data,std::size_t bytes,bool write){
         check();const auto p=physical(at,bytes);
+        if(on_scratch){ // shadow run: never touches guest RAM or its instrumentation
+            if(write)std::memcpy(scratch.data()+p,data,bytes);else std::memcpy(data,scratch.data()+p,bytes);
+            return;
+        }
         if(write)reo_source_instrumentation::copyBytesForBank(ram,ram+p,data,bytes);
         else reo_source_instrumentation::copyBytesForBank(ram,data,ram+p,bytes);
     }
@@ -280,8 +310,63 @@ public:
     std::fputs("[NATIVE-GAMEPLAY-SAVE-ERROR] native save/session admission or provider failed\n",stderr);
     throw std::runtime_error("Native gameplay save/session stopped; no legacy fallback");
 }
+Function original_of(Kind kind) noexcept {
+    for(const auto& e:entries)if(e.kind==kind)return e.original;
+    return nullptr;
+}
+// Entries whose native body makes no guest provider call. Their whole guest
+// footprint is the declared regions below, so native can run on scratch.
+bool shadowable(Kind kind) noexcept {
+    return kind==Kind::random||kind==Kind::seed||kind==Kind::sanitize||kind==Kind::clear_second||kind==Kind::capture_options;
+}
+// Guest bytes these entries may read or write (native side): RNG state, seed
+// source, option bytes and the projected save regions.
+void shadow_regions(Kind kind,R5900Context ctx,std::vector<Region>& out){ // copy: GPR macros need a mutable context
+    out.assign(std::begin(projections),std::end(projections));
+    for(const auto at:option_at)out.push_back({at,1});
+    out.push_back({0x3244b0,2});out.push_back({0x3244b8,2});out.push_back({0x2b8de8,1});out.push_back({0x324199,1});
+    if(kind==Kind::clear_second)out.push_back({GPR_U32(&ctx,4)+0x20u,4});
+}
+// While an original runs under shadow, nested hooked entries run their original too.
+thread_local bool shadow_passthrough=false;
+struct PassthroughScope {PassthroughScope(){shadow_passthrough=true;}~PassthroughScope(){shadow_passthrough=false;}};
+void run_original(Kind kind,std::uint8_t* ram,R5900Context* ctx,PS2Runtime* rt){
+    const auto back=GPR_U32(ctx,31);
+    PassthroughScope scope;original_of(kind)(ram,ctx,rt);
+    if(ctx->pc!=back||ctx->in_delay_slot)throw std::runtime_error("Original save/session entry did not return synchronously");
+}
+void shadow(Binding& b,Kind kind,std::uint8_t* ram,R5900Context* ctx,PS2Runtime* rt,const R5900Context& saved){
+    auto& s=b.observations.shadow[static_cast<unsigned>(kind)];
+    if(!shadowable(kind)){run_original(kind,ram,ctx,rt);++s.passthrough;return;}
+    std::vector<Region> regions;shadow_regions(kind,saved,regions);
+    for(const auto& r:regions){const auto p=physical(r.at,r.bytes);
+        reo_source_instrumentation::copyBytesForBank(ram,b.scratch.data()+p,ram+p,r.bytes);}
+    // Native on scratch, with a private context copy.
+    R5900Context native_ctx=saved;bool has_result=false,native_ok=true;
+    b.context=&native_ctx;b.on_scratch=true;
+    try{has_result=b.run(kind);}catch(...){native_ok=false;}
+    b.on_scratch=false;b.failed=false;b.context=ctx;
+    // Original on guest RAM: the only result the game sees.
+    run_original(kind,ram,ctx,rt);
+    ++s.compared;
+    if(!native_ok){++s.native_failed;++s.mismatched;b.observations.mismatch(kind,0xfffffffeu,0,0);return;}
+    bool same=true;
+    if(has_result && GPR_U64(&native_ctx,2)!=GPR_U64(ctx,2)){
+        same=false;b.observations.mismatch(kind,0xffffffffu,GPR_U64(&native_ctx,2),GPR_U64(ctx,2));
+    }
+    std::vector<std::uint8_t> actual;
+    for(const auto& r:regions){const auto p=physical(r.at,r.bytes);actual.resize(r.bytes);
+        reo_source_instrumentation::copyBytesForBank(ram,actual.data(),ram+p,r.bytes);
+        if(std::memcmp(actual.data(),b.scratch.data()+p,r.bytes)){
+            std::size_t i=0;while(actual[i]==b.scratch[p+i])++i;
+            same=false;b.observations.mismatch(kind,r.at+std::uint32_t(i),b.scratch[p+i],actual[i]);
+        }
+    }
+    if(!same)++s.mismatched;
+}
 void invoke(Kind kind,std::uint8_t* ram,R5900Context* ctx,PS2Runtime* rt){
     [[maybe_unused]] auto* rdram=ram;
+    if(shadow_passthrough){run_original(kind,ram,ctx,rt);return;}
     std::shared_ptr<Binding> b;
     {std::lock_guard lock(registry_mutex);const auto it=registry.find(rt);if(it!=registry.end())b=it->second;}
     if(!b || !ctx || !b->active.load(std::memory_order_acquire)){
@@ -300,6 +385,11 @@ void invoke(Kind kind,std::uint8_t* ram,R5900Context* ctx,PS2Runtime* rt){
         for(const auto& e:entries)if(!rt->hasFunction(e.at)||rt->lookupFunction(e.at)!=e.replacement)throw std::runtime_error("Stale native gameplay registry");
         for(const auto& p:providers)if(!rt->hasFunction(p.at)||rt->lookupFunction(p.at)!=p.original)throw std::runtime_error("Stale native gameplay provider");
         ++counts.accepted;accepted=true;++b->observations.operation;b->observations.record(kind,"begin");
+        if(b->observations.shadow_mode){
+            // Original stays authoritative and leaves ctx at its return address.
+            shadow(*b,kind,ram,ctx,rt,saved);
+            ++counts.completed;b->context=nullptr;Binding::current_binding=nullptr;return;
+        }
         const bool has_result=b->run(kind);const auto result=GPR_U64(ctx,2);
         *ctx=saved;if(has_result)SET_GPR_U64(ctx,2,result);ctx->pc=GPR_U32(ctx,31);ctx->in_delay_slot=false;
         if(kind==Kind::restore){if(std::int32_t(result)==0)++b->observations.restore_ok;else ++b->observations.restore_error;}
@@ -311,14 +401,16 @@ void invoke(Kind kind,std::uint8_t* ram,R5900Context* ctx,PS2Runtime* rt){
     }
 }
 }
-InstallResult install_save_session_before_run(PS2Runtime& rt,bool selected) noexcept {
+InstallResult install_save_session_before_run(PS2Runtime& rt,bool selected,bool shadow_mode) noexcept {
     if(!selected)return{InstallStatus::disabled};
     auto lease=rt.acquirePreRunSetup();if(!lease)return{InstallStatus::phase_closed};
     try{
         if(!image(rt.memory().getRDRAM()))return{InstallStatus::unsupported_image};
         for(const auto& e:entries)if(!rt.hasFunction(e.at)||rt.lookupFunction(e.at)!=e.original)return{InstallStatus::registry_mismatch};
         for(const auto& p:providers)if(!rt.hasFunction(p.at)||rt.lookupFunction(p.at)!=p.original)return{InstallStatus::registry_mismatch};
-        auto b=std::make_shared<Binding>(rt);std::lock_guard lock(registry_mutex);
+        auto b=std::make_shared<Binding>(rt);
+        if(shadow_mode){b->scratch.assign(0x02000000u,0);b->observations.shadow_mode=true;}
+        std::lock_guard lock(registry_mutex);
         if(registry.contains(&rt))return{InstallStatus::publication_refused};
         registry.emplace(&rt,b);
         if(!rt.registerExternalWorker(b)){registry.erase(&rt);return{InstallStatus::publication_refused};}

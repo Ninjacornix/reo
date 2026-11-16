@@ -1575,12 +1575,17 @@ int main(int argc, char* argv[]) {
 #endif
 
 #if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_GAMEPLAY_SAVE) && REO_BUILD_NATIVE_GAMEPLAY_SAVE
-    if (const auto* requested = std::getenv("REO_NATIVE_GAMEPLAY_SAVE"); requested && !std::strcmp(requested, "1")) {
+    // REO_NATIVE_GAMEPLAY_SAVE=1 runs the native entries; =shadow keeps the originals
+    // authoritative and compares native results (see HYBRID_INTEGRATION_PLAN.md).
+    if (const auto* requested = std::getenv("REO_NATIVE_GAMEPLAY_SAVE");
+        requested && (!std::strcmp(requested, "1") || !std::strcmp(requested, "shadow"))) {
         using namespace reo::native::native_gameplay;
+        const bool shadow = !std::strcmp(requested, "shadow");
         if (std::strcmp(g.serial, "SLUS-20765") || g.entry_point != 0x00100008u ||
-            install_save_session_before_run(runtime, true).status != InstallStatus::installed)
+            install_save_session_before_run(runtime, true, shadow).status != InstallStatus::installed)
             throw std::runtime_error("Selected native gameplay save/session owner unavailable; inspect build identity");
-        std::fprintf(stdout, "[NATIVE-GAMEPLAY-SAVE] nine native save/session entries installed\n");
+        std::fprintf(stdout, shadow ? "[NATIVE-GAMEPLAY-SAVE] nine save/session entries installed in shadow mode\n"
+                                    : "[NATIVE-GAMEPLAY-SAVE] nine native save/session entries installed\n");
     }
 #endif
 

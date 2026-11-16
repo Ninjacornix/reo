@@ -20,6 +20,36 @@ Stage 4 work is not discarded: its components and comparison harnesses are the
 supply for swaps. New isolated components are written only when a chosen swap
 needs them.
 
+## End goal
+
+A native PC game with **no PS2 runtime**: no guest RAM, no R5900 context, no
+PS2Recomp runtime or recompiled code. Gameplay, rooms, actors, camera, input,
+saves, audio, movies and rendering are native code over native data structures.
+The purpose is modification: removing or adding content, and modes the PS2 game
+never had (third-person/modern camera, new movement and control schemes, other
+complex modes). The hybrid swaps are the migration path to that, not the
+destination.
+
+Swaps move through three ownership phases per subsystem:
+
+1. **Native logic, guest state.** The native function replaces the recompiled
+   one but reads and writes the original guest structures (this plan's rules
+   below). Safe because recompiled callers still see the same memory.
+2. **Native state, guest mirror.** Once a subsystem's main writers are native,
+   its state lives in native structures; a projection writes the fields that
+   remaining recompiled readers (and saves/co-op) still need back to guest RAM.
+   The Stage 4 owners (`World`, `Update`, `NativeSession`, …) are the intended
+   native state; their comparison harnesses stay useful here.
+3. **Native only.** When no recompiled reader remains, the mirror is deleted.
+   The runtime is removed when the last subsystem reaches this phase.
+
+Order of subsystems follows what modding needs first: camera → player
+control/movement → actors and rooms → content tables (items, enemies, scenario
+scripts) → rendering/presentation. A TPS camera needs native camera ownership
+plus native player control; adding/removing content needs native actor, room and
+script ownership. Saves, RNG and media are already partly native and finish
+along the way.
+
 ## The pattern already exists
 
 `recomp/overrides/native_gameplay/` swaps nine save/session entries for native
@@ -38,7 +68,8 @@ game has **not** been re-verified on this branch; doing so is step 0.
 
 ## Rules for every swap
 
-1. **Guest memory stays the source of truth.** The adapter reads the guest
+1. **In phase 1, guest memory stays the source of truth.** (Phases 2–3 move it
+   to native structures, subsystem by subsystem.) The adapter reads the guest
    structures the original function reads, calls the native component, and
    writes back exactly what the original writes. A native component must not
    keep state between calls unless every change is written through to guest
@@ -114,8 +145,26 @@ Entries exercised with the swap on: `1C55C0` restore ×2, `1AEC50` seed ×1,
 this route: `1C5410` capture, `1C5630` clear-second, `1AEDB0` capture-options,
 `1BADF0` restore-options (need a typewriter save and the options menu). Both runs
 end with the usual "PS2 Thread Exit" after the requested window close.
-Level C/D for the save swap remain open: shadow mode is not implemented, and no
-save → load playthrough has been done.
+Shadow run (`REO_NATIVE_GAMEPLAY_SAVE=shadow`, build `file1-ready-v2`, kit sha
+`aa4ce595…`, same route): arrived 55.3 s, exit 0, movement 164.8.
+
+| Entry | Compared | Mismatched | Pass-through (provider entry) |
+|---|---|---|---|
+| `1AEC80` random | 5,140 | 0 | — |
+| `1AEE40` sanitize | 2 | 0 | — |
+| `1AEC50` seed | 1 | 0 | — |
+| `1C55C0` restore | — | — | 2 |
+| `1AED60` defaults | — | — | 1 |
+| `1C5410`, `1C5630`, `1AEDB0`, `1BADF0` | 0 | 0 | 0 (not reached) |
+
+So random, seed and sanitize are at **level C** on this route. Clear-second and
+capture-options are shadow-capable but were not reached. The four provider
+entries (capture, restore, defaults, restore-options) call original guest code,
+which the runtime's source instrumentation ties to real guest RAM, so they cannot
+be shadowed on scratch; their evidence is Codex's fixture comparisons plus a
+level D save → quit → load playthrough, which is still open. The two
+"Thread does not exist in thread manager" errors appear in all three runs
+(off, on, shadow), so they predate this work.
 
 ### Shadow mode (level C harness)
 
