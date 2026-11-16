@@ -523,7 +523,8 @@
               <compat:Rc1TextBlock x:Name="ControllerDetail" FontSize="14" TextWrapping="Wrap" Margin="0,0,0,10" Classes="Hint" />
               <WrapPanel Margin="0,2,0,12">
                 <Button x:Name="BindingsTab" Click="ShowBindings" Content="Button map" Margin="0,0,8,0" />
-                <Button x:Name="LayoutTab" Click="ShowInputLayout" Content="Stick settings" />
+                <Button x:Name="LayoutTab" Click="ShowInputLayout" Content="Stick settings" Margin="0,0,8,0" />
+                <Button x:Name="ModernCameraTab" Click="ShowModernCamera" Content="Modern camera" />
               </WrapPanel>
               <Border Height="1" Background="{StaticResource Line}" Margin="0,0,0,12" />
               <StackPanel x:Name="InputBindingsPanel">
@@ -572,6 +573,37 @@
                     <local:StickPlot x:Name="RightPlot" Grid.Column="1" Height="140" />
                   </Grid>
                 </StackPanel>
+              </StackPanel>
+              <StackPanel x:Name="ModernCameraPanel" IsVisible="false">
+                <Grid Margin="0,0,0,10">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <compat:Rc1TextBlock x:Name="ModernCameraLabel" Text="Third-person camera (File #1)" FontSize="18" VerticalAlignment="Center" />
+                  <CheckBox x:Name="ModernCameraSwitch" IsCheckedChanged="ModernCameraChanged" Grid.Column="1" VerticalAlignment="Center" AutomationProperties.Name="Third-person camera" AutomationProperties.LabeledBy="{Binding ElementName=ModernCameraLabel}" Classes="ToggleSwitch" />
+                </Grid>
+                <compat:Rc1TextBlock x:Name="ModernCameraSupport" FontSize="14" TextWrapping="Wrap" Margin="0,0,0,10" Classes="Hint" />
+                <compat:Rc1TextBlock Text="Controller: right stick looks, left stick walks relative to the camera, R1 aims, R3 recentres. Keyboard and mouse: the mouse looks, movement keys walk relative to the camera, right button aims, left button is Cross, the wheel zooms and C frees the cursor. Door and event cameras still use the original angles." FontSize="14" TextWrapping="Wrap" Margin="0,0,0,14" Classes="Hint" />
+                <CheckBox x:Name="ModernCameraMouse" IsCheckedChanged="ModernCameraChanged" Content="Mouse look" Margin="0,0,0,6" />
+                <CheckBox x:Name="ModernCameraInvert" IsCheckedChanged="ModernCameraChanged" Content="Invert vertical look" Margin="0,0,0,12" />
+                <Grid Margin="0,5,0,12">
+                  <compat:Rc1TextBlock x:Name="ModernCameraMouseLabel" Text="Mouse sensitivity: 100%" VerticalAlignment="Center" />
+                  <Slider x:Name="ModernCameraMouseSensitivity" ValueChanged="ModernCameraSliderChanged" Minimum="10" Maximum="400" Value="100" Width="300" HorizontalAlignment="Right" AutomationProperties.Name="Mouse sensitivity" Classes="AudioSlider" />
+                </Grid>
+                <Grid Margin="0,5,0,12">
+                  <compat:Rc1TextBlock x:Name="ModernCameraStickLabel" Text="Stick look speed: 100%" VerticalAlignment="Center" />
+                  <Slider x:Name="ModernCameraStickSpeed" ValueChanged="ModernCameraSliderChanged" Minimum="10" Maximum="400" Value="100" Width="300" HorizontalAlignment="Right" AutomationProperties.Name="Stick look speed" Classes="AudioSlider" />
+                </Grid>
+                <Grid Margin="0,5,0,12">
+                  <compat:Rc1TextBlock x:Name="ModernCameraDistanceLabel" Text="Distance: 300" VerticalAlignment="Center" />
+                  <Slider x:Name="ModernCameraDistance" ValueChanged="ModernCameraSliderChanged" Minimum="120" Maximum="600" Value="300" Width="300" HorizontalAlignment="Right" AutomationProperties.Name="Camera distance" Classes="AudioSlider" />
+                </Grid>
+                <Grid Margin="0,5,0,12">
+                  <compat:Rc1TextBlock x:Name="ModernCameraShoulderLabel" Text="Shoulder offset: 35" VerticalAlignment="Center" />
+                  <Slider x:Name="ModernCameraShoulder" ValueChanged="ModernCameraSliderChanged" Minimum="-120" Maximum="120" Value="35" Width="300" HorizontalAlignment="Right" AutomationProperties.Name="Shoulder offset" Classes="AudioSlider" />
+                </Grid>
+                <Button x:Name="ModernCameraResetButton" Click="ResetModernCamera" Content="Reset camera settings" HorizontalAlignment="Left" Margin="0,6,0,0" />
               </StackPanel>
             </StackPanel>
             <StackPanel x:Name="PageSaves" MaxWidth="940" HorizontalAlignment="Stretch" IsVisible="false">

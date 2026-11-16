@@ -47,6 +47,7 @@
 #include "network/native/automatic_account.h"
 #include "network/native/game_addresses.h"
 #include "reo_trace_logger.h"
+#include "reo_pad_tap.h"
 #include "runtime/gs/gs_renderer.h"
 #include "runtime/vu/vu_interpreter.h"
 #include "runtime/input/input.h"
@@ -2416,6 +2417,12 @@ void pad2FeederLoop() {
                 else
                     pressed |= pad2TestWorldTarget(routeRam, now, hostPad);
             }
+            // Mouse look (native camera mod): right button aims (R1), left button is cross.
+            if (const auto mouseButtons = reo_pad_tap::mouse_buttons_source.load(std::memory_order_relaxed)) {
+                const unsigned held = mouseButtons();
+                if (held & 2u) pressed |= reo_pad_tap::R1;
+                if (held & 1u) pressed |= reo_pad_tap::CROSS;
+            }
             g_pad2.lastPressed = pressed;
             const uint16_t data = (uint16_t)~pressed; // active-low
             // Keep digital directions independent from the analog sticks. Both
@@ -2476,8 +2483,12 @@ void pad2FeederLoop() {
                 const uint8_t sb0 = (uint8_t)(data & 0xFF), sb1 = (uint8_t)(data >> 8);
                 reo_source_instrumentation::bankCell(rd, rec + 0x1C) = sb0;
                 reo_source_instrumentation::bankCell(rd, rec + 0x1D) = sb1;
-                reo_source_instrumentation::bankCell(rd, rec + 0x1E) = hostPad.right_x;
-                reo_source_instrumentation::bankCell(rd, rec + 0x1F) = hostPad.right_y;
+                // Native camera mods read the host sample; while one owns the right
+                // stick, the game sees it centred (see reo_pad_tap.h).
+                reo_pad_tap::publish(hostPad.right_x, hostPad.right_y, hostPad.left_x, hostPad.left_y, pressed);
+                const bool cameraOwnsRight = reo_pad_tap::consume_right_stick.load(std::memory_order_relaxed);
+                reo_source_instrumentation::bankCell(rd, rec + 0x1E) = cameraOwnsRight ? uint8_t(0x80) : hostPad.right_x;
+                reo_source_instrumentation::bankCell(rd, rec + 0x1F) = cameraOwnsRight ? uint8_t(0x80) : hostPad.right_y;
                 reo_source_instrumentation::bankCell(rd, rec + 0x20) = hostPad.left_x;
                 reo_source_instrumentation::bankCell(rd, rec + 0x21) = hostPad.left_y;
 #if defined(REO_GAME_FILE2)

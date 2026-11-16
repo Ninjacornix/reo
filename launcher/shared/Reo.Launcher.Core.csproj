@@ -40,6 +40,7 @@
     <Compile Include="../GameCatalog.cs" Link="Shared/GameCatalog.cs" />
     <Compile Include="../Pad.cs" Link="Shared/Pad.cs" />
     <Compile Include="../InputMapping.cs" Link="Shared/InputMapping.cs" />
+    <Compile Include="../ModernCamera.cs" Link="Shared/ModernCamera.cs" />
     <Compile Include="../HostNetworking.cs" Link="Shared/HostNetworking.cs" />
     <Compile Include="../BuildPathLinks.cs" Link="Shared/BuildPathLinks.cs" />
     <Compile Include="../LocalGameBuild.cs" Link="Shared/LocalGameBuild.cs" />

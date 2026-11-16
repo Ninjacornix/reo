@@ -86,6 +86,9 @@ public sealed partial class Settings {
     public PadProfile PlayStation { get; set; } = new();
     public PadProfile Xbox { get; set; } = new();
     public Dictionary<string, int> Keyboard { get; set; } = InputMapping.KeyboardDefaults();
+    ModernCameraOptions modernCamera = new();
+    // Third-person camera (File #1 native camera builds); see ModernCamera.cs.
+    public ModernCameraOptions ModernCamera { get => modernCamera; set => modernCamera = value ?? new(); }
     public static Settings Load(string root) {
         Settings settings;
         try {
@@ -111,6 +114,7 @@ public sealed partial class Settings {
         settings.Gamma =
             double.IsFinite(settings.Gamma) ? Math.Clamp(settings.Gamma, 0.5, 2.0) : 1.0;
         settings.DeadZone = Math.Clamp(settings.DeadZone, 0, 30);
+        settings.ModernCamera = settings.ModernCamera.Clamped();
         if (!settings.DualSense && settings.InputDeviceId.Length == 0)
             settings.InputDeviceId = "keyboard";
         settings.EnabledCheats ??= new();

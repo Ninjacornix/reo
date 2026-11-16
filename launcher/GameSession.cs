@@ -179,6 +179,12 @@ public sealed class GameSession {
         if (File.Exists(stringPlan)) Set("REO_EXECUTABLE_STRINGS", stringPlan);
         Set("REO_AUDIO_LEVELS", AudioLevels.From(settings).LaunchValue);
         Set("REO_SUBTITLES", settings.ShowSubtitles ? "1" : "0");
+        // Modern (third-person) camera: File #1 builds that contain the native camera only.
+        bool modernCamera = selectedGame.Id == "file1" && settings.ModernCamera.Enabled && ModernCamera.Supported(image);
+        if (modernCamera)
+            foreach (var (name, value) in ModernCamera.Environment(settings.ModernCamera))
+                Set(name, value);
+        controller.AnalogKeyboardMovement = modernCamera;
         if (SubtitleMapName != null) Set("REO_SUBTITLE_MAP", SubtitleMapName);
         if (!string.IsNullOrWhiteSpace(settings.AudioOutputId)) Set("REO_AUDIO_DEVICE", settings.AudioOutputId);
         if (AudioMapName != null) Set("REO_AUDIO_MAP", AudioMapName);
@@ -535,7 +541,7 @@ public sealed class GameSession {
     internal static bool SupportsEnemySpawnRandomizer(string image) =>
         HasMarker(image, "[MOD-ENEMY-SPAWN-1] installed seed=%u") &&
         HasMarker(image, RandomizerSession.Capability) && HasMarker(image, "[MOD-ENEMY-ASSETS-1]");
-    static bool HasMarker(string image, string value) {
+    internal static bool HasMarker(string image, string value) {
         byte[] marker = System.Text.Encoding.ASCII.GetBytes(value);
         byte[] buffer = new byte[1024 * 1024 + marker.Length];
         using var source = File.OpenRead(image);

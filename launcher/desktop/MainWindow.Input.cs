@@ -27,6 +27,7 @@ public partial class MainWindow {
         inputUiUpdating = true;
         RumbleSwitch.IsChecked = settings.RumbleEnabled;
         inputUiUpdating = false;
+        InitializeModernCamera();
         controller.Poll();
         UpdateInputUi();
         ShowBindings(this, new());
@@ -121,16 +122,20 @@ public partial class MainWindow {
         CancelCapture(sender, e);
         InputLayoutPanel.Visibility = Visibility.Visible;
         InputBindingsPanel.Visibility = Visibility.Collapsed;
+        ModernCameraPanel.Visibility = Visibility.Collapsed;
         LayoutTab.BorderBrush = VisualPalette.Brush(Palette.Accent);
         BindingsTab.BorderBrush = VisualPalette.Brush(Palette.Text, Palette.Divider);
+        ModernCameraTab.BorderBrush = VisualPalette.Brush(Palette.Text, Palette.Divider);
     }
     void ShowBindings(object? sender, RoutedEventArgs e) {
         InputLayoutPanel.Visibility = Visibility.Collapsed;
+        ModernCameraPanel.Visibility = Visibility.Collapsed;
         InputBindingsPanel.Visibility = Visibility.Visible;
         BuildBindingRows();
         RefreshControllerArtwork();
         BindingsTab.BorderBrush = VisualPalette.Brush(Palette.Accent);
         LayoutTab.BorderBrush = VisualPalette.Brush(Palette.Text, Palette.Divider);
+        ModernCameraTab.BorderBrush = VisualPalette.Brush(Palette.Text, Palette.Divider);
     }
     void BuildBindingRows() {
         BindingRows.Children.Clear();

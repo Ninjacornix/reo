@@ -10,6 +10,9 @@ public sealed partial class Controller {
     readonly Dictionary<uint, Pad> xbox = new();
     readonly Func<uint, Pad?> readXbox;
     Settings config = new();
+    // Set by GameSession while a game runs with the modern camera: keyboard
+    // movement keys drive the left stick (camera-relative) instead of the D-pad.
+    public bool AnalogKeyboardMovement { get; set; }
     long lastDiscovery = -1000;
     readonly FullscreenChord fullscreenChord = new();
     InputDevice lastSelected = new("keyboard", "Keyboard", "keyboard");
@@ -72,7 +75,8 @@ public sealed partial class Controller {
         }
         if (device.Kind == "keyboard") {
             if (!OperatingSystem.IsWindows()) {
-                RawState = State = InputMapping.Keyboard(config.Keyboard, NativeControllers.KeyDown);
+                RawState = State = InputMapping.Keyboard(config.Keyboard, NativeControllers.KeyDown,
+                                                         AnalogKeyboardMovement && SessionEnabled);
                 return;
             }
             GetWindowThreadProcessId(GetForegroundWindow(), out uint foreground);
@@ -83,7 +87,8 @@ public sealed partial class Controller {
             bool suppressEnter = fullscreenChord.SuppressEnter(enter, control);
             RawState = State = InputMapping.Keyboard(
                 config.Keyboard, key => focused && !(key == 13 && suppressEnter) &&
-                                        (GetAsyncKeyState(key) & 0x8000) != 0);
+                                        (GetAsyncKeyState(key) & 0x8000) != 0,
+                AnalogKeyboardMovement && SessionEnabled);
             return;
         }
         if (device.Kind == "xbox") {

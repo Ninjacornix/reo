@@ -20,6 +20,7 @@
 #include "ps2_runtime.h"
 #include "ps2_runtime_macros.h"
 #include "source_instruction_access.hpp"
+#include "../reo_pad_tap.h"
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -38,6 +39,11 @@
 void o2_005BE3E0_0x5be3e0(std::uint8_t*, R5900Context*, PS2Runtime*);
 void o2_005BED30_0x5bed30(std::uint8_t*, R5900Context*, PS2Runtime*);
 void sub_001AF780_0x1af780(std::uint8_t*, R5900Context*, PS2Runtime*);
+void o2_005795E0_0x5795e0(std::uint8_t*, R5900Context*, PS2Runtime*);
+// SDK patch 0132 (Win32ModalRender): mouse look capture on the game window.
+void ps2HostSetMouseLook(bool enabled);
+bool ps2HostTakeMouseDelta(int* dx, int* dy, int* wheel);
+unsigned ps2HostMouseButtons();
 
 namespace reo::native::room_camera_adapter {
 namespace {
@@ -64,25 +70,70 @@ constexpr std::uint32_t camera_entry = 0x5bed30, import_entry = 0x5be3e0, render
 constexpr unsigned op_viewport = 24, op_view = 22;
 constexpr std::uint32_t actor_yaw = 0x92;  // signed halfword (save_actor_position_and_yaw, o2 0x667370)
 
-// First mod on the native camera: a follow camera behind the primary actor.
-// REO_CAMERA_MOD=tps enables it (native mode only). REO_CAMERA_TPS tunes it as
-// "distance,height,aim_height,yaw_offset_degrees,yaw_sign". REO_CAMERA_TPS_LOG=1
-// logs actor/camera samples (also without the override) to derive conventions.
+// Third-person camera mod on the native room camera (native mode only).
+//
+// REO_CAMERA_MOD=tps enables it. The camera orbits a pivot above the primary
+// actor; the right stick turns it (the game then sees a centred right stick),
+// R3 recentres behind the actor, R1 (aim) switches to the aim rig and turns the
+// actor to the camera yaw. The game's own analog movement (6621F0) is relative
+// to the published camera eye/aim, so the left stick walks relative to this
+// camera. The view is pulled in front of room walls with the game's segment test
+// (o2 0x5795E0). Scripted camera selections (doors, events) are left to the game.
+//
+// Tuning: REO_CAMERA_TPS="key=value,..." with keys distance, pivot, pitch, side,
+// yaw_speed, pitch_speed, invert_y, turn_sign, aim_distance, aim_side, aim_pivot,
+// smoothing, pitch_min, pitch_max, mouse_sens (degrees per mouse count),
+// zoom_step. REO_CAMERA_MOUSE=0 disables mouse look (on by default with tps):
+// the cursor is hidden and kept in the window while the game has focus, C frees
+// it, a click captures it again; right button aims (R1), left button is cross,
+// the wheel zooms. REO_CAMERA_TPS_LOG=1 prints samples.
+//
+// Measured (2026-11-16): +Y is up; actor yaw (signed halfword +0x92) is 0x10000
+// per turn and forward = (sin, 0, cos) of it.
 struct ThirdPerson {
-    bool enabled{}, log{};
-    // Measured (2026-11-16, Outbreak opening): +Y is up (room eyes ~197 over a floor
-    // at 0), yaw is 0x10000 per turn and forward = (sin, 0, cos) of it.
-    float distance{320.f}, height{180.f}, aim_height{120.f}, yaw_offset{0.f}, yaw_sign{1.f};
+    bool enabled{}, log{}, mouse{true};
+    float mouse_sens{0.12f}, zoom_step{25.f};
+    float distance{300.f}, pivot{150.f}, pitch{10.f}, side{35.f};
+    float yaw_speed{4.f}, pitch_speed{3.f}, invert_y{0.f}, turn_sign{1.f};
+    float aim_distance{150.f}, aim_side{45.f}, aim_pivot{155.f};
+    float smoothing{0.45f}, pitch_min{-35.f}, pitch_max{55.f};
     static ThirdPerson from_environment() {
         ThirdPerson t;
         if (const char* mod = std::getenv("REO_CAMERA_MOD")) t.enabled = !std::strcmp(mod, "tps");
         if (const char* log = std::getenv("REO_CAMERA_TPS_LOG")) t.log = !std::strcmp(log, "1");
-        if (const char* tune = std::getenv("REO_CAMERA_TPS"))
-            std::sscanf(tune, "%f,%f,%f,%f,%f", &t.distance, &t.height, &t.aim_height, &t.yaw_offset, &t.yaw_sign);
+        if (const char* mouse = std::getenv("REO_CAMERA_MOUSE")) t.mouse = std::strcmp(mouse, "0") != 0;
+        if (const char* tune = std::getenv("REO_CAMERA_TPS")) {
+            const struct { const char* key; float* value; } keys[] = {
+                {"distance", &t.distance}, {"pivot", &t.pivot}, {"pitch", &t.pitch}, {"side", &t.side},
+                {"yaw_speed", &t.yaw_speed}, {"pitch_speed", &t.pitch_speed}, {"invert_y", &t.invert_y},
+                {"turn_sign", &t.turn_sign}, {"aim_distance", &t.aim_distance}, {"aim_side", &t.aim_side},
+                {"aim_pivot", &t.aim_pivot}, {"smoothing", &t.smoothing}, {"pitch_min", &t.pitch_min},
+                {"pitch_max", &t.pitch_max}, {"mouse_sens", &t.mouse_sens}, {"zoom_step", &t.zoom_step}};
+            const char* at = tune;
+            while (*at) {
+                const char* end = std::strchr(at, ',');
+                const std::size_t length = end ? std::size_t(end - at) : std::strlen(at);
+                for (const auto& k : keys) {
+                    const auto n = std::strlen(k.key);
+                    if (length > n && !std::strncmp(at, k.key, n) && at[n] == '=') *k.value = float(std::atof(at + n + 1));
+                }
+                at += length; if (*at == ',') ++at;
+            }
+        }
         return t;
     }
 };
-
+struct ThirdPersonState {
+    bool active{}, smoothed{};
+    float yaw{}, pitch{};  // radians
+    t::Vector eye{}, aim{};
+    std::uint64_t imports_seen{};
+    std::uint16_t previous_pressed{};
+    float zoom{};  // added to the rig distance by the mouse wheel
+    std::uint64_t frames{}, yielded{}, collisions{}, recentres{}, aim_frames{}, mouse_frames{};
+};
+constexpr float yaw_turn = 6.28318530718f / 65536.f;  // actor yaw units (measured)
+constexpr float degrees = 0.01745329252f;
 
 struct Event {
     unsigned op{};
@@ -184,6 +235,7 @@ public:
     s::SceneModels models{s::SceneModelState{}, s::RoomModelRemap{}};
     s::CameraProjectionContext projection{};
     ThirdPerson third_person = ThirdPerson::from_environment();
+    ThirdPersonState tps;
     std::uint64_t tps_samples{};
     std::int8_t display_mode{};
     std::size_t model_count{};
@@ -384,26 +436,126 @@ public:
         *ctx = saved;
     }
 
-    void third_person_override(const Guest& g) {
+    // Game segment test against room geometry (o2 0x5795E0): a0 start, a1 end,
+    // a2 out point, a3 out normal, t0/t1 filters, t2 out type; v0 = any hit.
+    // Filters -1/0 as the actor surface probe at o2 0x623884 passes them.
+    bool segment(R5900Context* ctx, const Guest& g, t::Vector start, t::Vector end, t::Vector& hit) {
+        [[maybe_unused]] auto* rdram = ram;  // SDK context-write bank macros
+        const auto saved = *ctx;
+        const auto sp = GPR_U32(ctx, 29);
+        if (sp < 0x400 || (sp & 15)) return false;
+        const std::uint32_t frame = (sp - 0x200) & ~15u;
+        const std::uint32_t a = frame + 0x40, b = frame + 0x50, out = frame + 0x60, normal = frame + 0x70, type = frame + 0x80;
+        g.put(a, start); g.put(b, end);
+        SET_GPR_U32(ctx, 29, frame); SET_GPR_U32(ctx, 31, camera_entry);
+        SET_GPR_U32(ctx, 4, a); SET_GPR_U32(ctx, 5, b); SET_GPR_U32(ctx, 6, out); SET_GPR_U32(ctx, 7, normal);
+        SET_GPR_U32(ctx, 8, 0xffffffffu); SET_GPR_U32(ctx, 9, 0); SET_GPR_U32(ctx, 10, type);
+        ctx->pc = 0x5795e0; ctx->in_delay_slot = false;
+        bool any = false;
+        try {
+            o2_005795E0_0x5795e0(ram, ctx, runtime);
+            if (ctx->pc != camera_entry || ctx->in_delay_slot) throw std::runtime_error("segment test did not return");
+            any = GPR_U32(ctx, 2) != 0;
+            if (any) hit = g.get<t::Vector>(out);
+        } catch (...) { *ctx = saved; throw; }
+        *ctx = saved;
+        return any;
+    }
+
+    void third_person_override(const Guest& g, R5900Context* ctx) {
         auto& tp = third_person;
         if (!tp.enabled && !tp.log) return;
-        const auto actor = sequences.snapshot().actor;
+        const auto& state = sequences.snapshot();
+        const auto actor = state.actor;
         if (actor >= primary_actors) return;
         const auto base = actors_at + actor_stride * actor;
         const auto position = g.get<t::Vector>(base + actor_position);
-        const auto yaw = g.get<std::int16_t>(base + actor_yaw);
+        const auto actor_angle = float(g.get<std::int16_t>(base + actor_yaw)) * yaw_turn;
         if (tp.log && (tps_samples++ % 15) == 0)
-            std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-TPS] actor=%u pos=%.1f,%.1f,%.1f yaw=%d eye=%.1f,%.1f,%.1f aim=%.1f,%.1f,%.1f lens=%.3f roll=%u\n",
-                         unsigned(actor), position.x, position.y, position.z, int(yaw), parameters.pose.eye.x,
-                         parameters.pose.eye.y, parameters.pose.eye.z, parameters.pose.aim.x, parameters.pose.aim.y,
-                         parameters.pose.aim.z, parameters.lens, parameters.pose.roll);
+            std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-TPS] actor=%u pos=%.1f,%.1f,%.1f actor_yaw=%.1f cam_yaw=%.1f cam_pitch=%.1f active=%d eye=%.1f,%.1f,%.1f aim=%.1f,%.1f,%.1f\n",
+                         unsigned(actor), position.x, position.y, position.z, actor_angle / degrees, tps.yaw / degrees,
+                         tps.pitch / degrees, int(tps.active), parameters.pose.eye.x, parameters.pose.eye.y,
+                         parameters.pose.eye.z, parameters.pose.aim.x, parameters.pose.aim.y, parameters.pose.aim.z);
         if (!tp.enabled) return;
-        constexpr float turn = 6.28318530718f / 65536.f;  // actor yaw: 0x10000 per turn (measured)
-        const float angle = tp.yaw_sign * float(yaw) * turn + tp.yaw_offset * 0.01745329252f;
-        const float fx = std::sin(angle), fz = std::cos(angle);
-        parameters.pose.eye = {position.x - fx * tp.distance, position.y + tp.height, position.z - fz * tp.distance};
-        parameters.pose.aim = {position.x + fx * 100.f, position.y + tp.aim_height, position.z + fz * 100.f};
+
+        int mouse_dx = 0, mouse_dy = 0, wheel = 0;
+        const bool mouse_captured = tp.mouse && ps2HostTakeMouseDelta(&mouse_dx, &mouse_dy, &wheel);
+        // Scripted selections (doors, events, notifications) keep the game's camera.
+        if (state.selection != 0) { tps.active = false; tps.smoothed = false; ++tps.yielded; return; }
+        const auto pad = reo_pad_tap::latest();
+        const auto pressed_now = std::uint16_t(pad.pressed & ~tps.previous_pressed);
+        tps.previous_pressed = pad.pressed;
+        if (!tps.active || tps.imports_seen != counts.imports) {
+            tps.active = true; tps.smoothed = false; tps.imports_seen = counts.imports;
+            tps.yaw = actor_angle; tps.pitch = tp.pitch * degrees;
+        }
+        if (pressed_now & reo_pad_tap::R3) { tps.yaw = actor_angle; tps.pitch = tp.pitch * degrees; ++tps.recentres; }
+        const auto axis = [](std::uint8_t v) {
+            const float x = (float(v) - 128.f) / 127.f;
+            const float dead = 0.18f;
+            if (std::fabs(x) < dead) return 0.f;
+            return std::copysign((std::fabs(x) - dead) / (1.f - dead), x);
+        };
+        tps.yaw += tp.turn_sign * axis(pad.right_x) * tp.yaw_speed * degrees;
+        tps.pitch += (tp.invert_y != 0.f ? -1.f : 1.f) * axis(pad.right_y) * tp.pitch_speed * degrees;
+        if (mouse_captured) {
+            tps.yaw += tp.turn_sign * float(mouse_dx) * tp.mouse_sens * degrees;
+            tps.pitch += (tp.invert_y != 0.f ? -1.f : 1.f) * float(mouse_dy) * tp.mouse_sens * degrees;
+            tps.zoom = std::clamp(tps.zoom - float(wheel) / 120.f * tp.zoom_step, -150.f, 250.f);
+            if (mouse_dx || mouse_dy) ++tps.mouse_frames;
+        }
+        tps.pitch = std::clamp(tps.pitch, tp.pitch_min * degrees, tp.pitch_max * degrees);
+        if (tps.yaw > 3.14159265f) tps.yaw -= 6.28318531f;
+        if (tps.yaw < -3.14159265f) tps.yaw += 6.28318531f;
+
+        const bool aiming = (pad.pressed & reo_pad_tap::R1) != 0;
+        if (aiming) {
+            // Modern aim: the actor faces where the camera looks.
+            const auto units = std::int16_t(std::lround(tps.yaw / yaw_turn));
+            g.put<std::int16_t>(base + actor_yaw, units);
+            ++tps.aim_frames;
+        }
+        const float distance = std::max(60.f, (aiming ? tp.aim_distance : tp.distance) + (aiming ? 0.f : tps.zoom));
+        const float side = aiming ? tp.aim_side : tp.side;
+        const float lift = aiming ? tp.aim_pivot : tp.pivot;
+        const float cp = std::cos(tps.pitch), sp = std::sin(tps.pitch);
+        const t::Vector forward{std::sin(tps.yaw) * cp, -sp, std::cos(tps.yaw) * cp};
+        const t::Vector right{std::cos(tps.yaw), 0.f, -std::sin(tps.yaw)};
+        const t::Vector pivot{position.x + right.x * side, position.y + lift, position.z + right.z * side};
+        t::Vector eye{pivot.x - forward.x * distance, pivot.y - forward.y * distance, pivot.z - forward.z * distance};
+        const t::Vector aim{pivot.x + forward.x * 400.f, pivot.y + forward.y * 400.f, pivot.z + forward.z * 400.f};
+        // Walls: test from the actor's head line to the eye; stop short of a hit.
+        const t::Vector head{position.x, position.y + lift, position.z};
+        bool pulled = false;
+        t::Vector hit{};
+        try {
+            if (segment(ctx, g, head, eye, hit)) {
+                const t::Vector back{head.x - hit.x, head.y - hit.y, head.z - hit.z};
+                const float length = std::sqrt(back.x * back.x + back.y * back.y + back.z * back.z);
+                const float pull = length > 1.f ? std::min(25.f, length * 0.5f) / length : 0.f;
+                eye = {hit.x + back.x * pull, hit.y + back.y * pull, hit.z + back.z * pull};
+                pulled = true; ++tps.collisions;
+            }
+        } catch (...) {}
+        if (!tps.smoothed) { tps.eye = eye; tps.aim = aim; tps.smoothed = true; }
+        else {
+            const float k = std::clamp(tp.smoothing, 0.f, 1.f);
+            const auto lerp = [k](t::Vector a, t::Vector b) {
+                return t::Vector{a.x + (b.x - a.x) * k, a.y + (b.y - a.y) * k, a.z + (b.z - a.z) * k};
+            };
+            const auto d2 = [&](t::Vector v) {
+                return (v.x - head.x) * (v.x - head.x) + (v.y - head.y) * (v.y - head.y) + (v.z - head.z) * (v.z - head.z);
+            };
+            // Never ease through a wall: when pulled in closer than the smoothed eye, snap.
+            tps.eye = pulled && d2(eye) < d2(tps.eye) ? eye : lerp(tps.eye, eye);
+            tps.aim = lerp(tps.aim, aim);
+        }
+        parameters.pose.eye = tps.eye;
+        parameters.pose.aim = tps.aim;
         parameters.pose.roll = 0;
+        ++tps.frames;
+        // Free camera: no zone hand-off latch for the analog direction (6621F0).
+        auto relatched = sequences.snapshot(); relatched.selection_changed = 0; sequences.restore(relatched);
         // Republish viewport/view from the overridden pose; replaces the native events.
         events.clear();
         s::publish_camera_display(parameters, display_mode, projection, display, sink);
@@ -476,6 +628,11 @@ public:
         std::fflush(stderr);
     }
     void dump_details() {
+        if (third_person.enabled)
+            std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-TPS-SUMMARY] frames=%llu yielded=%llu collisions=%llu recentres=%llu aim_frames=%llu mouse_frames=%llu\n",
+                         (unsigned long long)tps.frames, (unsigned long long)tps.yielded, (unsigned long long)tps.collisions,
+                         (unsigned long long)tps.recentres, (unsigned long long)tps.aim_frames,
+                         (unsigned long long)tps.mouse_frames);
         if (mode == Mode::shadow_writes)
             std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-WATCH] block=0x%06x checks=%llu changed_between_calls=%llu\n",
                          watch_at, (unsigned long long)watch_checks, (unsigned long long)watch_changed_between_calls);
@@ -582,7 +739,7 @@ void camera_hook(std::uint8_t* ram, R5900Context* ctx, PS2Runtime* rt) {
 
     if (b->mode == Mode::native) {
         if (!native_ok) { ++b->counts.refused; ++b->counts.fallback; run_original_camera(ram, ctx, rt); return; }
-        b->third_person_override(g);
+        b->third_person_override(g, ctx);
         b->replay(g, ctx);
         b->write_outputs(g, *fog);
         ++b->counts.native_completed;
@@ -623,6 +780,13 @@ bool install_before_run(PS2Runtime& rt, Mode mode) noexcept {
         rt.registerOverlayFunction(overlay_base, overlay_magic, overlay_id_offset, overlay_o2, import_entry, import_hook);
         rt.registerOverlayFunction(overlay_base, overlay_magic, overlay_id_offset, overlay_o2, camera_entry, camera_hook);
         if (mode != Mode::native) rt.registerFunction(renderer_command, renderer_recorder);
+        if (mode == Mode::native && owned->third_person.enabled) {
+            reo_pad_tap::consume_right_stick.store(true);
+            if (owned->third_person.mouse) {
+                ps2HostSetMouseLook(true);
+                reo_pad_tap::mouse_buttons_source.store(&ps2HostMouseButtons);
+            }
+        }
         return true;
     } catch (...) {
         binding = nullptr; owned.reset();

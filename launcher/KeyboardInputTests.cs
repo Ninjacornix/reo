@@ -39,5 +39,32 @@ internal static class KeyboardInputTests {
         }
         bool unknown=false;try{InputMapping.BindKeyboard(bindings,"not-an-action",65);}catch(ArgumentException){unknown=true;}
         check(unknown&&JsonSerializer.Serialize(bindings)==before,"unknown action cannot change saved bindings");
+        ModernCameraKeyboard(check);
+        ModernCameraEnvironment(check);
+    }
+
+    // Modern camera: movement keys drive the left stick (camera-relative) instead of the D-pad.
+    static void ModernCameraKeyboard(Action<bool,string> check) {
+        var bindings=InputMapping.KeyboardDefaults();
+        Pad Analog(params int[] keys)=>InputMapping.Keyboard(bindings,keys.Contains,analogMovement:true);
+        check(Analog('W')==new Pad(LY:32767)&&Analog('S')==new Pad(LY:-32768),"modern camera W/S drive the left stick, not the D-pad");
+        check(Analog('A')==new Pad(LX:-32768)&&Analog('D')==new Pad(LX:32767),"modern camera A/D drive the left stick, not the D-pad");
+        check(Analog('W','D')==new Pad(LX:32767,LY:32767),"modern camera diagonals combine both axes");
+        check(Analog('W','S')==new Pad()&&Analog('A','D')==new Pad(),"modern camera opposite keys cancel");
+        check(Analog('W',38)==new Pad(LY:32767,RY:32767),"modern camera keeps arrow keys on the right stick");
+        check(Analog(32,'2')==new Pad(0x1200),"modern camera leaves face and shoulder buttons unchanged");
+        check(InputMapping.Keyboard(bindings,key=>key=='W')==new Pad(1),"without the modern camera W stays digital D-pad");
+    }
+
+    static void ModernCameraEnvironment(Action<bool,string> check) {
+        check(ModernCamera.Environment(new ModernCameraOptions()).Count==0,"modern camera off sets no game environment");
+        var env=ModernCamera.Environment(new ModernCameraOptions{Enabled=true});
+        check(env["REO_NATIVE_ROOM_CAMERA"]=="1"&&env["REO_CAMERA_MOD"]=="tps"&&env["REO_CAMERA_MOUSE"]=="1","modern camera selects the native camera, TPS and mouse look");
+        check(env["REO_CAMERA_TPS"]=="distance=300,side=35,mouse_sens=0.12,yaw_speed=4,pitch_speed=3,invert_y=0","modern camera default tuning");
+        var tuned=ModernCamera.Environment(new ModernCameraOptions{Enabled=true,MouseLook=false,MouseSensitivity=200,StickSpeed=50,InvertY=true,Distance=9999,Shoulder=-40});
+        check(tuned["REO_CAMERA_MOUSE"]=="0"&&tuned["REO_CAMERA_TPS"]=="distance=600,side=-40,mouse_sens=0.24,yaw_speed=2,pitch_speed=1.5,invert_y=1","modern camera tuning is clamped and uses invariant decimals");
+        var saved=JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(new Settings{ModernCamera=new(){Enabled=true,Distance=420}}))!;
+        check(saved.ModernCamera.Enabled&&saved.ModernCamera.Distance==420,"modern camera settings round-trip through settings.json");
+        check(JsonSerializer.Deserialize<Settings>("{}")!.ModernCamera is {Enabled:false,MouseLook:true},"older settings default to the original camera with mouse look ready");
     }
 }

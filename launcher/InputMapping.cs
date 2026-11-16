@@ -134,7 +134,10 @@ public static partial class InputMapping {
             right.Y = (short)Math.Clamp(-(int)right.Y, -32768, 32767);
         return new(buttons, lt, rt, left.X, left.Y, right.X, right.Y);
     }
-    public static Pad Keyboard(Dictionary<string, int> bindings, Func<int, bool> down) {
+    // analogMovement (modern camera): the D-pad keys drive the left stick instead,
+    // so the game moves the character relative to the camera.
+    public static Pad Keyboard(Dictionary<string, int> bindings, Func<int, bool> down,
+                               bool analogMovement = false) {
         ushort buttons = 0;
         byte lt = 0, rt = 0;
         bool Held(string action) =>
@@ -142,6 +145,8 @@ public static partial class InputMapping {
             !(key == 13 && (down(17) || down(162) || down(163))) && down(key);
         foreach (var target in Actions) {
             if (!Held(target.Id))
+                continue;
+            if (analogMovement && target.Code is 1 or 2 or 4 or 8)
                 continue;
             if (target.Code == LeftTrigger)
                 lt = 255;
@@ -158,7 +163,9 @@ public static partial class InputMapping {
                                                                          : (short)-32768;
         // D-pad keys are digital PS2 input (tank controls). Mirroring them onto
         // the left stick makes the game select camera-relative analog movement.
-        return new(buttons, lt, rt, 0, 0,
+        short lx = analogMovement ? Axis(Held("Right"), Held("Left")) : (short)0;
+        short ly = analogMovement ? Axis(Held("Up"), Held("Down")) : (short)0;
+        return new(buttons, lt, rt, lx, ly,
                    Axis(Held("CameraRight"), Held("CameraLeft")),
                    Axis(Held("CameraUp"), Held("CameraDown")));
     }
