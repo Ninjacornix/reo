@@ -8,6 +8,7 @@ namespace reo::native::gameplay_world {
 class ResourceAuxiliaryLists final {
 public:
     explicit ResourceAuxiliaryLists(WorldInventory&);
+    bool append_ready(std::uint32_t actor,std::span<const std::uint8_t>,std::int32_t count)const noexcept;
     std::int8_t append(std::uint32_t actor,std::span<const std::uint8_t>,std::int32_t count); //5B5F10
     std::int8_t remove(std::uint32_t actor,std::uint32_t resource); //5B6180
     std::int8_t regroup(std::uint32_t actor); //5B6300

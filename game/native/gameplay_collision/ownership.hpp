@@ -9,11 +9,13 @@ using Handle=gameplay_scene::RecordId;
 struct Record {
     Proxy geometry;
     gameplay_actors::EntityId owner;
+    std::optional<std::uint8_t> last_query_class;
     Handle source;
     std::optional<Door> door;
     std::optional<std::uint8_t> owner_snapshot, extra;
 };
 struct Selected {Handle proxy;gameplay_actors::EntityId actor;std::uint8_t query_class{};};
+struct LazySelected {LazySelectionStatus status{LazySelectionStatus::completed};std::optional<Selected> selected;};
 // Simulation-owner only. Native handles reject stale reuse and foreign rooms.
 // List ordering is separate from reusable storage, preserving prepend/append.
 class Proxies final {
@@ -37,9 +39,14 @@ public:
     bool retire(const Handle&) noexcept;
     const Record* get(const Handle&)const noexcept;
     bool replace(const Handle&,Record) noexcept;
+    bool publish_owner(const Handle&,gameplay_actors::EntityId actor) noexcept;
+    bool publish_query(const Handle&,gameplay_actors::EntityId actor,
+                       std::uint8_t query_class) noexcept;
     std::vector<Handle> ordered()const;
     std::optional<Selected> select(const ActorQuery&,gameplay_actors::EntityId,
                                   std::span<const ProxyState>)const;
+    LazySelected select_lazy(ActorQuery&,gameplay_actors::EntityId,
+                             QueryStateProvider&)const;
     std::size_t size()const noexcept{return pool_->size();}
     void clear() noexcept;
 private:

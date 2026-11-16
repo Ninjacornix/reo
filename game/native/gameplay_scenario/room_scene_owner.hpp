@@ -41,6 +41,9 @@ public:
   // record. Retired/reused identities refuse even while this owner survives.
   const RoomProxyDefinition *
   definition(const gameplay_scene::RecordId &) const noexcept;
+  // The exact imported input and canonical record pool are a single room
+  // generation. A retired owner cannot authorize later room consumers.
+  bool bound_to(const RoomSceneInput &,const SceneControls &) const noexcept;
   void close() noexcept;
 
 private:

@@ -122,7 +122,7 @@ void construction_record(std::uint8_t* m,unsigned at,const g::Actor& actor){
     const auto& s=*actor.scripted;m[at+0xb38]=std::uint8_t(s.cue_phase);transform_write(m,at+0xb3c,s.request_flags);
     m[at+0xb40]=std::uint8_t(actor.model_correction_skip);m[at+0xb41]=std::uint8_t(s.scale_lock);m[at+0xb42]=s.request_phase;m[at+0xb43]=std::uint8_t(s.motion_selector);transform_write(m,at+0xb44,s.motion_blend_duration);
     transform_write(m,at+0xb48,s.relation_mode);transform_write(m,at+0xb4c,unsigned(bool(s.related_actor)));transform_write(m,at+0xb50,s.relation_options);transform_write(m,at+0xb54,s.relation_offset);transform_write(m,at+0xb60,s.relation_parameter);
-    transform_write(m,at+0xb64,s.command_angles);transform_write(m,at+0xb6c,s.movement_angles);transform_write(m,at+0xb70,s.forward_step);transform_write(m,at+0xb74,s.yaw_step);transform_write(m,at+0xb78,s.movement_remaining);transform_write(m,at+0xb7c,s.track_two_motion);m[at+0xb8b]=s.scale_profile;transform_write(m,at+0xc50,s.command_angle_copy);
+    transform_write(m,at+0xb64,s.command_angles);transform_write(m,at+0xb6c,s.movement_angles);transform_write(m,at+0xb70,s.forward_step);transform_write(m,at+0xb74,s.yaw_step);transform_write(m,at+0xb78,s.movement_remaining);transform_write(m,at+0xb7c,s.track_two_motion);m[at+0xb8b]=s.scale_profile;transform_write(m,at+0xc50,actor.model_offset_frame.value_or(0));
 }
 void compare_roster_world(const g::World& world,const reo::native::gameplay_scenario::CutsceneRosterState& before,const reo::native::gameplay_scenario::CutsceneRosterState& after,std::int32_t mode){
     static std::vector<std::uint8_t> roster_memory(0x2000000);auto* m=roster_memory.data();std::memset(m+0x38eca0,0,0x1800);std::memset(m+0x4a5c30,0,8*0x10e0);

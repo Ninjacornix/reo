@@ -16,7 +16,9 @@ void room_variant_vm_tests(){
         run({b},{0,end},1,selected%6,std::uint8_t(selected));++room_variant_dispatches;
     }
     check(vm::Interpreter::coverage()[0x5a].native_algorithm&&vm::Interpreter::coverage()[0x5a].world_required);
-    check(!vm::Interpreter::coverage(vm::DispatchProfile::offline_actor)[0x5a].native_algorithm);
+    // Offline701840 also refreshes the canonical navigation owner. Its cold,
+    // warm and missing-provider cases live in verify_offline_room_variants.py.
+    check(vm::Interpreter::coverage(vm::DispatchProfile::offline_actor)[0x5a].native_algorithm);
     for(unsigned room:{128u,256u,0xffffffffu}){check(!variants.store(room,99)&&!variants.get(room));++room_variant_refusals;}
     for(unsigned room:{128u,0xffffffffu}){
         std::vector<std::byte> b;emit(b,0x110,{0,77});emit(b,0x5a,{room,1});emit(b,0xa);vm::Interpreter interpreter;

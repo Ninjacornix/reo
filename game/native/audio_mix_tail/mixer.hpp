@@ -5,6 +5,8 @@
 #include <optional>
 
 namespace reo::native::adxt_output_session { struct State; class Session; }
+namespace reo::native::gameplay_audio { class Owner; }
+namespace reo::native::gameplay_application { class SessionAudio; }
 namespace reo::native::audio_mix_tail {
 namespace banks=audio_banks::v2;
 namespace packets=bank_packets::v3;
@@ -46,11 +48,14 @@ public:
 private:
     friend struct adxt_output_session::State;
     friend class adxt_output_session::Session;
+    friend class gameplay_application::SessionAudio;
     [[nodiscard]] bool bind() noexcept;
     [[nodiscard]] Status render(float*,std::uint32_t) noexcept;
     void request_stop() noexcept;
     [[nodiscard]] bool join() noexcept;
     std::shared_ptr<banks::Session> banks_;
+    // At most one gameplay control owner may manage the private bank ports.
+    std::weak_ptr<gameplay_audio::Owner> gameplay_owner_;
     std::unique_ptr<packets::PacketAdapter> packets_;
     std::shared_ptr<banks::GainProvider> bank_gains_;
     std::shared_ptr<MasterGain> master_;

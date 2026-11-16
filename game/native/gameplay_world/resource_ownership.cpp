@@ -86,7 +86,13 @@ bool ResourceOwnership::claimed_by_other(std::uint32_t resource,std::uint32_t ac
     const auto item=descriptor(std::uint8_t(resource));return item.active&&item.claim_tag&&unsigned(item.claim_tag)!=unsigned(std::uint8_t(actor))+1;
 }
 void ResourceOwnership::clear_claims(){
-    for(unsigned slot=0;slot<256;++slot){auto item=descriptor(std::uint8_t(slot));if(item.active){item.claim_tag=0;publish(std::uint8_t(slot),item);}}
+    if(world_.closed()||!clear_resource_claims(resources_))throw std::runtime_error("Native resource claim owner unavailable");
+}
+bool clear_resource_claims(gameplay_scenario::SceneResources& resources)noexcept{
+    for(unsigned slot=0;slot<256;++slot){const auto id=resources.slot(slot);const auto value=id?resources.get(*id):std::nullopt;
+        if(!value)return false;
+        if(value->active){auto changed=*value;changed.claim_tag=0;if(resources.replace(*id,changed)!=gameplay_scenario::SceneStatus::completed)return false;}}
+    return true;
 }
 void ResourceOwnership::clear_actor_claims(std::uint32_t actor){
     const unsigned tag=unsigned(std::uint8_t(actor))+1;

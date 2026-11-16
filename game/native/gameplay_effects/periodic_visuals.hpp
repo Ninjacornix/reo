@@ -76,6 +76,12 @@ public:
     PeriodicVisuals(const PeriodicVisuals&)=delete;
     PeriodicVisuals& operator=(const PeriodicVisuals&)=delete;
     bool admitted()const noexcept override;
+    bool busy()const noexcept{return busy_;}
+    // Source resource2000 publication changes future constructors. Existing
+    // native work keeps its immutable bank lease until its own retirement.
+    // A null publication explicitly withdraws constructor readiness.
+    bool replace_bank(std::shared_ptr<const EffectBank>)noexcept;
+    const std::shared_ptr<const EffectBank>& bank()const noexcept{return bank_;}
     bool bound_to(const gameplay_session::Random&)const noexcept override;
     bool bound_to(const gameplay_world::World&)const noexcept override;
     // Borrowed room/modulation owners outlive this visual owner and callbacks.

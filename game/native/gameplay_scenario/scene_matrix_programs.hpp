@@ -76,6 +76,9 @@ class SceneMatrixPrograms final
     bool bound_to(const SceneControls& controls,const SceneModels& models)const noexcept{return !closed_ && &controls_==&controls && &models_==&models;}
     bool bound_to_records(const gameplay_scene::Records& records,const FlagState& flags,const std::uint16_t& room)const noexcept{return !closed_&&controls_.records().get()==&records&&&flags_==&flags&&&room_==&room;}
     bool authored_absence_reset_ready()const noexcept;
+    bool bound_to(const SceneModels& models,const SceneModelBindings& bindings)const noexcept{return !closed_&&&models_==&models&&&bindings_==&bindings;}
+    //5D7D60 clears16 records in place; existing matrix leases retain identity.
+    SceneMatrixStatus reset()noexcept;
     void close() noexcept { closed_ = true; }
 
   private:

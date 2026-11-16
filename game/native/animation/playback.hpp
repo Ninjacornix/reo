@@ -73,6 +73,9 @@ class Playback final {
     void or_primary_flags82() noexcept;
     void or_packed_primary_flags(std::uint8_t) noexcept;
     void clear_primary(std::uint16_t track);
+    //66C040 after its caller's type1 floor gate. Uses canonical secondary
+    //channel364 and saved delta4FC, already owned by this Playback.
+    void advance_locomotion_blend(float rate,std::uint8_t clock_mode);
     // The real573430 behavior/event prelude must run before these operations;
     // the World adapter owns that required synchronous provider boundary.
     std::int8_t advance_channels_after_prelude(std::uint8_t count, float step,

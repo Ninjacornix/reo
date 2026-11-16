@@ -1,6 +1,15 @@
 #include "sequence_control.hpp"
+#include "room_camera_records.hpp"
 
 namespace reo::native::gameplay_scenario {
+void SequenceControl::install_camera_records(std::shared_ptr<const RoomCameraRecords> records,
+                                             std::uint8_t actor)noexcept{
+    if(!records)return;
+    records_=std::move(records);state_={};state_.initialized=1;state_.actor=actor;
+    state_.condition_id=255;state_.distance=80;state_.count=std::int8_t(records_->count());
+    state_.view_masks.first=state_.view_masks.second=0;
+    for(std::size_t i=0;i<state_.camera_anchors.size();++i)state_.camera_anchors[i]=records_->records()[i].anchor;
+}
 bool SequenceControl::active(std::uint32_t index,bool value)noexcept{
     if(index>=state_.active.size())return false;
     state_.active[index]=value?1:0;return true;

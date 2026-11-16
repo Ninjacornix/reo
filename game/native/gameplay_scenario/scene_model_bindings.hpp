@@ -39,6 +39,9 @@ public:
     std::array<std::uint32_t,4> mask()const noexcept;
     EntityId target(std::uint8_t)const noexcept;
     ModelBindingFailure failure()const noexcept{return failure_;}
+    bool bound_to(const SceneModels& models)const noexcept{return !closed_&&&models_==&models;}
+    //5D7D60 releases every binding/mask without closing this room's owner.
+    ModelBindingError reset()noexcept;
     ModelBindingError close()noexcept;
 private:
     struct Binding {EntityId id;std::shared_ptr<ObjectInstance> object;std::shared_ptr<ModelMatrix> matrix;};

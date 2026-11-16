@@ -129,7 +129,9 @@ ai::ObservationUpdated Owner::update_ai_observations(const world::actors::Entity
             return result;
         if (*own_distance < 1000.f && !state.reference_cooldown &&
             reference_state.reference_signal) {
-            const auto event = reference_state.reference_event;
+            if (!reference->speech.display_style)
+                return result;
+            const auto event = static_cast<std::uint8_t>(*reference->speech.display_style);
             if (event == 1) {
                 if (!(actor->status & 8))
                     result.scheduled_event = 10;
@@ -265,7 +267,7 @@ ai::ObservationUpdated Owner::update_ai_observations(const world::actors::Entity
                     .status != ai::Status::completed)
             return result;
         if (state.reaction_countdown && --state.reaction_countdown == 0) {
-            state.reaction = state.pending_reaction;
+            actor->speech.remote_request = state.pending_reaction;
             state.pending_reaction = 0;
         }
         if (state.reactive_hold)

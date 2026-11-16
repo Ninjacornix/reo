@@ -2,6 +2,8 @@
 #include "inventory.hpp"
 #include "resource_factory.hpp"
 namespace reo::native::gameplay_world {
+// Complete5B16D0 descriptor-only primitive, shared by actual resource owners.
+bool clear_resource_claims(gameplay_scenario::SceneResources&)noexcept;
 // Ownership and claims operate on the same descriptor/inventory/model owners.
 // These primitives do not insert inventory, journal actions or send messages.
 // Missing required actors/profiles throw after preserving the known prefix.

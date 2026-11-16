@@ -12,17 +12,17 @@ void primary_cutscene_timer_sweep(g::World& world,const g::actors::EntityId& id,
     for(unsigned style=0;style<2;++style)for(unsigned mode=0;mode<3;++mode)for(unsigned word=0;word<65536;++word){
         location="primary timer style="+std::to_string(style)+" mode="+std::to_string(mode)+" word="+std::to_string(word);
         value->motion_style=std::uint8_t(style);state.command_angles={};state.command_angles[mode]=std::bit_cast<std::int16_t>(std::uint16_t(word));
-        state.command_angle_copy=std::bit_cast<std::int16_t>(std::uint16_t(1+word%65535));
-        put(ram.data(),actor+0xb99,value->motion_style);put(ram.data(),actor+0xb64,state.command_angles);put(ram.data(),actor+0xc50,state.command_angle_copy);
+        value->model_offset_frame=std::bit_cast<std::int16_t>(std::uint16_t(1+word%65535));
+        put(ram.data(),actor+0xb99,value->motion_style);put(ram.data(),actor+0xb64,state.command_angles);put(ram.data(),actor+0xc50,value->model_offset_frame.value_or(0));
         consumer.tick(id);call(ram.data(),0x67be90,actor);
-        check(std::memcmp(state.command_angles.data(),ram.data()+actor+0xb64,6)==0&&state.command_angle_copy==get<std::int16_t>(ram.data(),actor+0xc50),"complete signed timer domain and unsigned total duration");
+        check(std::memcmp(state.command_angles.data(),ram.data()+actor+0xb64,6)==0&&value->model_offset_frame==get<std::int16_t>(ram.data(),actor+0xc50),"complete signed timer domain and unsigned total duration");
         for(unsigned node:{24u,26u})check(bits(value->model->local_translation(node).y)==get<std::uint32_t>(ram.data(),nodes+400*node+0x74),"actual paired local-node offsets with animation disabled");
         ++primary_action_timer_sweeps;
     }
-    state.command_angles={1,1,1};state.command_angle_copy=1;put(ram.data(),actor+0xb64,state.command_angles);put(ram.data(),actor+0xc50,state.command_angle_copy);
+    state.command_angles={1,1,1};value->model_offset_frame=1;put(ram.data(),actor+0xb64,state.command_angles);put(ram.data(),actor+0xc50,value->model_offset_frame.value_or(0));
     for(unsigned tick=0;tick<4;++tick){
         consumer.tick(id);call(ram.data(),0x67be90,actor);
-        check(std::memcmp(state.command_angles.data(),ram.data()+actor+0xb64,6)==0&&state.command_angle_copy==get<std::int16_t>(ram.data(),actor+0xc50),"sequential three-timer handoff without same-tick fallthrough");
+        check(std::memcmp(state.command_angles.data(),ram.data()+actor+0xb64,6)==0&&value->model_offset_frame==get<std::int16_t>(ram.data(),actor+0xc50),"sequential three-timer handoff without same-tick fallthrough");
         for(unsigned node:{24u,26u})check(bits(value->model->local_translation(node).y)==get<std::uint32_t>(ram.data(),nodes+400*node+0x74),"sequential paired-node timer result");
         ++primary_action_timer_sweeps;
     }
@@ -43,13 +43,13 @@ void primary_cutscene_action_composition(g::World& world,const g::actors::Entity
     state.movement_remaining=std::array{0u,1u,2u,0x80000000u,0xffffffffu}[variant%5];
     state.command_angles={};
     state.command_angles[variant%3]=std::array<std::int16_t,5>{1,2,3,-1,INT16_MIN}[variant%5];
-    state.command_angle_copy=std::bit_cast<std::int16_t>(std::array<std::uint16_t,4>{1,3,32768,65535}[variant%4]);
+    value->model_offset_frame=std::bit_cast<std::int16_t>(std::array<std::uint16_t,4>{1,3,32768,65535}[variant%4]);
     const auto write_state=[&]{
         put(ram.data(),0x4badf8,world.paused);put(ram.data(),actor+1,std::uint8_t(value->visible));
         put(ram.data(),actor+8,value->primary);put(ram.data(),actor+9,value->secondary);put(ram.data(),actor+10,value->phase);put(ram.data(),actor+11,value->subphase);
         put(ram.data(),actor+0x38,value->position);put(ram.data(),actor+0x90,value->orientation);put(ram.data(),actor+0x4e4,value->root_motion_delta);
         put(ram.data(),actor+0xb38,state.cue_phase);put(ram.data(),actor+0xb3c,state.request_flags);put(ram.data(),actor+0xb41,state.scale_lock);put(ram.data(),actor+0xb42,state.request_phase);
-        put(ram.data(),actor+0xb64,state.command_angles);put(ram.data(),actor+0xc50,state.command_angle_copy);
+        put(ram.data(),actor+0xb64,state.command_angles);put(ram.data(),actor+0xc50,value->model_offset_frame.value_or(0));
         put(ram.data(),actor+0xb6c,state.movement_angles);put(ram.data(),actor+0xb70,state.forward_step);put(ram.data(),actor+0xb74,state.yaw_step);put(ram.data(),actor+0xb78,state.movement_remaining);
         put(ram.data(),actor+0xba4,value->auxiliary_status);put(ram.data(),actor+0xb99,value->motion_style);
     };
@@ -61,7 +61,7 @@ void primary_cutscene_action_composition(g::World& world,const g::actors::Entity
         consumer.tick(id);call(ram.data(),0x67be90,actor);
         check(value->visible==bool(ram[actor+1])&&value->primary==ram[actor+8]&&value->secondary==ram[actor+9]&&value->phase==ram[actor+10]&&value->subphase==ram[actor+11],"actual primary action cue and action transitions");
         check(state.cue_phase==get<std::int8_t>(ram.data(),actor+0xb38)&&state.request_flags==get<std::uint32_t>(ram.data(),actor+0xb3c)&&state.request_phase==ram[actor+0xb42],"actual primary request consumption");
-        check(std::memcmp(state.command_angles.data(),ram.data()+actor+0xb64,6)==0&&state.command_angle_copy==get<std::int16_t>(ram.data(),actor+0xc50),"signed first-nonzero timer decrement and next-duration handoff");
+        check(std::memcmp(state.command_angles.data(),ram.data()+actor+0xb64,6)==0&&value->model_offset_frame==get<std::int16_t>(ram.data(),actor+0xc50),"signed first-nonzero timer decrement and next-duration handoff");
         check(std::memcmp(&value->position,ram.data()+actor+0x38,12)==0&&std::memcmp(value->orientation.data(),ram.data()+actor+0x90,8)==0,"primary counted movement before animation");
         check(std::memcmp(state.movement_angles.data(),ram.data()+actor+0xb6c,4)==0&&bits(state.forward_step)==get<std::uint32_t>(ram.data(),actor+0xb70)&&state.yaw_step==get<std::uint32_t>(ram.data(),actor+0xb74)&&state.movement_remaining==get<std::uint32_t>(ram.data(),actor+0xb78),"primary movement exact-zero cleanup");
         check(value->contact_flags==get<std::uint16_t>(ram.data(),actor+0x54a)&&value->auxiliary_status==get<std::uint32_t>(ram.data(),actor+0xba4),"primary final auxiliary bit-two propagation");
@@ -90,7 +90,7 @@ void primary_cutscene_action_gates(std::vector<std::uint8_t>& ram){
     g::ScriptedActorMotion motion(world,{});g::PrimaryCutsceneAction consumer(world,motion);bool refused{};
     try{consumer.tick(id);}catch(const std::runtime_error&){refused=true;}
     check(refused&&value->primary==6&&value->secondary==0&&value->phase==0&&value->subphase==0&&value->root_motion_delta.x==0,"missing owned primary channels refuses after initialization prefix");++primary_action_refusals;
-    value->scripted->cue_phase=2;value->scripted->request_flags=2;value->scripted->command_angles[0]=1;value->scripted->command_angle_copy=1;
+    value->scripted->cue_phase=2;value->scripted->request_flags=2;value->scripted->command_angles[0]=1;value->model_offset_frame=1;
     world.paused=1;refused=false;try{consumer.tick(id);}catch(const std::runtime_error&){refused=true;}
     check(refused&&value->secondary==0x23&&value->scripted->request_flags==0&&value->scripted->command_angles[0]==1,"missing paired-node model refuses after request prefix and before decrement");++primary_action_refusals;
     value->secondary=0;value->model_pose_class=1;consumer.tick(id);

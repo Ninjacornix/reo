@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(reo_native_gameplay_session LANGUAGES CXX)
-add_library(reo_native_gameplay_session STATIC session.cpp activity.cpp)
+add_library(reo_native_gameplay_session STATIC session.cpp activity.cpp room_membership.cpp)
 target_sources(reo_native_gameplay_session PRIVATE launch.cpp)
 target_include_directories(reo_native_gameplay_session PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_features(reo_native_gameplay_session PUBLIC cxx_std_20)

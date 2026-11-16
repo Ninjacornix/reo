@@ -5,6 +5,46 @@ ActorReception::ActorReception(gameplay_world::World& world,gameplay_collision::
     if(equipment_&&!equipment_->bound_to(world_))throw std::invalid_argument("Native actor reception equipment belongs to another or closed World");
     if(presence_&&!presence_->bound_to(world_))throw std::invalid_argument("Native actor reception inventory presence belongs to another or closed World");
 }
+bool ActorReception::bind_room_membership(gameplay_session::RoomMembership* membership)noexcept{
+    if(world_.closed()||world_.busy()||(membership_&&membership&&membership_!=membership))return false;
+    membership_=membership;return true;
+}
+bool ActorReception::room_membership_ready(MessageRoute route)const noexcept{
+    const auto mode=route==MessageRoute::mode_zero?0u:1u;
+    return !world_.closed()&&world_.mode==mode&&membership_&&membership_->ready(std::uint8_t(mode));
+}
+bool ActorReception::begin_room_membership_update()noexcept{
+    if(world_.mode>1||!room_membership_ready(world_.mode?MessageRoute::mode_one:MessageRoute::mode_zero))return false;
+    return membership_->begin_update();
+}
+gameplay_session::RoomMembershipChanges ActorReception::collect_room_membership()noexcept{
+    if(world_.mode>1||!room_membership_ready(world_.mode?MessageRoute::mode_one:MessageRoute::mode_zero))
+        return{gameplay_session::RoomMembershipStatus::unavailable,{}};
+    const auto& activity=world_.session().activity;
+    return membership_->collect(world_.mode?activity.online:activity.single,world_.selected_actor);
+}
+std::optional<std::uint32_t> ActorReception::room_owner(MessageRoute route,std::uint16_t room)const noexcept{
+    if(!room_membership_ready(route))return{};
+    const auto owner=membership_->owner(room);
+    return owner?std::optional<std::uint32_t>(std::uint32_t(*owner)):std::nullopt;
+}
+ReceptionResult ActorReception::receive(const RoomClaimBeginMessage& message,bool)noexcept{
+    if(!room_membership_ready(message.route))return{ReceptionStatus::unavailable,{}};
+    const auto& activity=world_.session().activity;
+    const auto result=membership_->claim(message.sender,message.room,world_.mode?activity.online:activity.single);
+    return{result==gameplay_session::RoomMembershipStatus::completed?ReceptionStatus::completed:ReceptionStatus::unavailable,{}};
+}
+ReceptionResult ActorReception::receive(const RoomClaimReleaseMessage& message,bool)noexcept{
+    if(!room_membership_ready(message.route))return{ReceptionStatus::unavailable,{}};
+    const auto& activity=world_.session().activity;
+    const auto result=membership_->release(message.sender,message.room,world_.mode?activity.online:activity.single);
+    return{result==gameplay_session::RoomMembershipStatus::completed?ReceptionStatus::completed:ReceptionStatus::unavailable,{}};
+}
+ReceptionResult ActorReception::receive(const RoomMembershipMessage& message,bool)noexcept{
+    if(!room_membership_ready(message.route)||message.update.count>message.update.rows.size())return{ReceptionStatus::unavailable,{}};
+    const auto result=membership_->receive(std::span(message.update.rows).first(message.update.count));
+    return{result==gameplay_session::RoomMembershipStatus::completed?ReceptionStatus::completed:ReceptionStatus::unavailable,{}};
+}
 const gameplay_collision::room_objects::Owner* ActorReception::room_objects()const noexcept{
     return world_.closed()||(objects_scenario_&&world_.scenario!=*objects_scenario_)?nullptr:objects_;
 }
@@ -12,6 +52,13 @@ bool ActorReception::bind_room_objects(std::uint16_t scenario,std::shared_ptr<ga
     if(world_.closed()||world_.busy()||world_.scenario!=scenario||!objects||!objects->initialized())return false;
     if(room_objects()&&room_objects()!=objects.get())return false;
     objects_=objects.get();objects_scenario_=scenario;retained_objects_=std::move(objects);return true;
+}
+bool ActorReception::roster_room_objects_ready(std::uint16_t scenario,const gameplay_collision::room_objects::Owner* expected)const noexcept{
+    return !world_.closed()&&world_.updating_&&world_.primary_object_startup_&&world_.scenario==scenario&&room_objects()==expected;
+}
+bool ActorReception::replace_roster_room_objects(std::uint16_t scenario,std::shared_ptr<gameplay_collision::room_objects::Owner> objects,const gameplay_collision::room_objects::Owner* expected)noexcept{
+    if(!roster_room_objects_ready(scenario,expected))return false;
+    objects_=objects.get();objects_scenario_=objects?std::optional<std::uint16_t>(scenario):std::nullopt;retained_objects_=std::move(objects);return true;
 }
 bool ActorReception::unbind_room_objects()noexcept{
     if(world_.closed()||world_.busy())return false;

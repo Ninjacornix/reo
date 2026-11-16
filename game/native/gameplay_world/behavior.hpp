@@ -46,6 +46,11 @@ public:
     virtual ~ZeroHealthApplication()=default;
     virtual bool apply_zero_health(World&,Actor&,actors::StatusServices&)=0;
 };
+class ControlPreparation {
+public:
+    virtual ~ControlPreparation()=default;
+    virtual bool prepare_control(World&,Actor&)noexcept=0;
+};
 // Operates directly on the canonical World actor/session. Timers, status and
 // pending hits use their qualified native cores; other providers remain explicit.
 // Throws leave a partial invocation, exactly as World service failures do.
@@ -53,7 +58,7 @@ void update_behavior(World&,Actor&,BehaviorServices&,std::span<const std::int16_
                      const gameplay_collision::response::Grid* native_floors=nullptr,
                      ActivityPublication* publication=nullptr,GaugeApplication* gauge=nullptr,
                      TerminalTiming* terminal=nullptr,ProgressionTiming* progression=nullptr,
-                     ZeroHealthApplication* zero_health=nullptr);
+                     ZeroHealthApplication* zero_health=nullptr,ControlPreparation* control=nullptr);
 // Actual primary-frame consumer of update_behavior. The remaining frame ports
 // and behavior effects are borrowed synchronous owners and must outlive this
 // adapter; a supplied native floor owner must also outlive it. Timer content is
@@ -80,6 +85,7 @@ public:
     bool find_grid(World&,Actor&,std::int8_t&)override;
     void switch_grid(World&,std::int32_t,std::int32_t)override;
     float grid_response(World&,std::uint8_t)override;
+    void bind_control_preparation(ControlPreparation& control)noexcept{control_=&control;}
 private:
     Services& frame_;
     BehaviorServices& behavior_;
@@ -90,5 +96,6 @@ private:
     TerminalTiming* terminal_{};
     ProgressionTiming* progression_{};
     ZeroHealthApplication* zero_health_{};
+    ControlPreparation* control_{};
 };
 } // namespace reo::native::gameplay_world

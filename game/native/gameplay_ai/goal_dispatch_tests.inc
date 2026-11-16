@@ -3,7 +3,7 @@ std::uint64_t goal_dispatch_cases{}, goal_dispatch_refusals{};
 std::optional<std::uint16_t> reference_dispatched_goal;
 #endif
 
-void compare_goal_dispatch(gw::Actor& actor, const gn::Bank& bank,
+void compare_goal_dispatch(gw::Actor& actor, gn::Bank& bank,
                            const gs::SceneResources& resources, std::uint16_t expected_goal,
                            std::uint16_t seed) {
     reo::native::gameplay_session::Random random({seed, 4321, 99});
@@ -91,6 +91,9 @@ void goal_dispatch_contracts() {
         actor.ai_execution = state(goal);
         actor.ai_execution->goal = std::uint16_t(goal);
         actor.ai_execution->goal_refresh = 0;
+        // Goal1 now has a real route consumer. Phase2 requires the canonical
+        // session-room/flags context, which this refusal fixture omits.
+        if(goal==1)actor.ai_execution->goal_phases[0]=2;
         const auto before = *actor.ai_execution;
         const auto random_before = random.state();
         const auto result = ai::dispatch_goal(actor, nullptr, nullptr, bank, resources, random);

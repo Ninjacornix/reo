@@ -23,6 +23,8 @@ private:
     std::shared_ptr<const animation::MotionBank> alternate_style_;
     std::array<std::shared_ptr<const animation::MotionBank>,8> characters_;
     std::shared_ptr<const animation::MotionBank> primary_;
+    // Separate4C3750 bank, loaded by1D1C50 and used by6834B0's51C/D04.
+    std::shared_ptr<const animation::MotionBank> scenario_auxiliary_;
     bool base_loaded_{};
     std::shared_ptr<const HumanoidMotionRevision> revision_,parent_;
 };
@@ -49,6 +51,15 @@ public:
     //1D1B10: common overlay mode1, followed by selected PLxx_PC_000 banks mode1.
     std::shared_ptr<const HumanoidMotionBanks> overlay(std::uint16_t common_index,
         std::span<const std::uint8_t> characters,const HumanoidMotionBanks& previous)const;
+    // Individual1D1B10 character publication, after its common bank load.
+    // The application uses this boundary to retain successful earlier loads
+    // when a later character resource is unavailable.
+    std::shared_ptr<const HumanoidMotionBanks> overlay_character(std::uint8_t character,
+        const HumanoidMotionBanks& previous)const;
+    //1D1C50 loads rn(low8 scenario)_tbl.bin into the separate auxiliary bank.
+    // Preserve its untouched rows/tokens on repeated sparse mode2 publication.
+    std::shared_ptr<const HumanoidMotionBanks> scenario_auxiliary(std::uint8_t scenario,
+        const HumanoidMotionBanks& previous)const;
     // Existing scene loader preserves each previous bank on missing/failed
     // input, including the shared general/head-motion destination.
     HumanoidSceneMotionLoad scene(std::uint16_t scenario,std::uint16_t clip,const HumanoidMotionBanks& previous)const;
@@ -58,6 +69,9 @@ public:
     // Complete1B1DF0: release family0 in common/alternate and all prepared
     // character banks, then invalidate the common-default-loaded gate.
     std::shared_ptr<const HumanoidMotionBanks> release_base(const HumanoidMotionBanks& previous)const;
+    //1B1E20: retire families1/2 in common, alternate and character stores.
+    //The default-loaded gate, headers, reserved slots and family0 survive.
+    std::shared_ptr<const HumanoidMotionBanks> release_overlay(const HumanoidMotionBanks& previous)const;
     //1B1E50: release all three families and zero range headers in prepared
     // general/alternate/character banks. Reserved tokens and kinds survive;
     // unknown character banks remain unavailable, not fabricated empty data.

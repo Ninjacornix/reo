@@ -10,7 +10,9 @@ void SessionResourceWorkers::verify(gameplay_update::Owner& owner)const{
 }
 void SessionResourceWorkers::run(gameplay_update::Worker worker,gameplay_update::Owner& owner){
     verify(owner);
-    if(worker==gameplay_update::Worker::resource_instances||worker==gameplay_update::Worker::scene_pose_tasks){
+    if(worker==gameplay_update::Worker::camera_modes&&owner.room_camera_modes()){
+        if(session_.run_room_camera()!=SessionStatus::completed)throw std::runtime_error("Native room camera worker unavailable");
+    }else if(worker==gameplay_update::Worker::resource_instances||worker==gameplay_update::Worker::scene_pose_tasks){
         if(resources_.run_worker(worker,owner)!=SessionResourceStatus::completed)throw std::runtime_error("Native session resource worker unavailable");
     }else remaining_.run(worker,owner);
 }

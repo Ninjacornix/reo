@@ -1,8 +1,30 @@
 #pragma once
 #include "flags.hpp"
 #include "../gameplay_world/world.hpp"
+#include <bit>
+#include <cmath>
 
 namespace reo::native::gameplay_scenario {
+// Complete702D70 predicate, excluding its actual interpreter scan. Room and
+// node operands compare at full width before817170's bounded graph read.
+inline std::optional<bool> offline_actor_reached_node(const gameplay_world::World& world,
+    std::uint32_t selector,std::uint32_t room,std::uint32_t node)noexcept{
+    if(world.closed()||selector>=gameplay_world::World::primary_capacity)return{};
+    const auto actor=world.primary(selector);
+    if(!actor||!actor->active||!actor->ai_control)return false;
+    if(actor->room!=room)return false;
+    if(!actor->navigation_route)return{};
+    const auto current=actor->navigation_route->current_node;
+    if(std::int32_t(current)!=std::bit_cast<std::int32_t>(node))return false;
+    const auto bank=world.navigation_if_created();if(!bank)return{};
+    const auto graph=bank->room(actor->room);
+    if(!graph||current<0||std::size_t(current)>=graph->nodes().size())return{};
+    const auto target=graph->nodes()[std::size_t(current)].position;
+    const float x=actor->position.x-target.x,y=actor->position.y-target.y,z=actor->position.z-target.z;
+    const float xx=x*x,yy=y*y,zz=z*z,sum=xx+yy,total=sum+zz;
+    if(!std::isfinite(total))return{};
+    return std::sqrt(total)<30.f; //817100/191D10 preserve FP32 operation order.
+}
 // Complete admitted693920 predicate. The count is the full unsigned authored
 // population; inactive actors still own slot/character/style/flag-tag fields.
 inline std::optional<bool> actor_condition_matches(const gameplay_world::World& world,

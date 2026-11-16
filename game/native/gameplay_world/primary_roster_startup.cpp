@@ -69,7 +69,7 @@ PrimaryStartupReport PrimaryActorModels::start_roster(const PrimaryStartupContex
         work(PrimaryStartupWork::resource_pump);
         const auto previous=motions_.snapshot();if(!previous)throw StartupFailure{PrimaryStartupStatus::unavailable};
         const auto defaults=context.motions.ensure_base(previous);
-        if(defaults!=previous){const auto published=motions_.publish_nested(defaults,true);if(published.status!=HumanoidPublicationStatus::completed)throw StartupFailure{published.status==HumanoidPublicationStatus::no_memory?PrimaryStartupStatus::no_memory:PrimaryStartupStatus::unavailable};}
+        if(defaults!=previous){const auto published=motions_.publish_nested(defaults,true);if(published.status!=HumanoidPublicationStatus::completed)throw StartupFailure{published.status==HumanoidPublicationStatus::no_memory?PrimaryStartupStatus::no_memory:PrimaryStartupStatus::unavailable};effects().motion_defaults_reloaded();}
         report.stage=PrimaryStartupStage::model_tail;
         work(PrimaryStartupWork::room_motion_table);work(PrimaryStartupWork::resource_pump);
         work(PrimaryStartupWork::scenario_render_models);work(PrimaryStartupWork::resource_pump);
@@ -82,14 +82,35 @@ PrimaryStartupReport PrimaryActorModels::start_roster(const PrimaryStartupContex
         report.stage=PrimaryStartupStage::controller_routes;work(PrimaryStartupWork::controller_routes);
         report.stage=PrimaryStartupStage::actor_gauges;
         for(std::size_t index=0;index<population();++index){const auto actor=actor_at(index);if(!actor->active)continue;actor->action_elapsed=actor->control_elapsed=std::numeric_limits<std::uint32_t>::max();const auto height=effects().reference_height(actor->character);if(!height||!std::isfinite(*height))throw StartupFailure{PrimaryStartupStatus::unavailable};actor->model_height_correction=*height;actor->gauge_value=0;actor->gauge_modifier_one=actor->gauge_modifier_two=0;if(world_.mode==0&&context.update.initialize_ai(report.failed).status!=gameplay_ai::Status::completed)throw StartupFailure{PrimaryStartupStatus::unavailable};++report.gauges_initialized;}
-        report.stage=PrimaryStartupStage::scene_resources;work(PrimaryStartupWork::scene_resources);
-        report.stage=PrimaryStartupStage::scenario_sound;work(PrimaryStartupWork::scenario_sound);
+        report.stage=PrimaryStartupStage::scene_resources;
+        {
+            // Keep World busy while admitting this exact original nested call.
+            world_.primary_resource_startup_=true;
+            struct Permit {bool& value;~Permit(){value=false;}} permit{world_.primary_resource_startup_};
+            work(PrimaryStartupWork::scene_resources);
+        }
+        report.stage=PrimaryStartupStage::scenario_sound;
+        {
+            world_.primary_object_startup_=true;
+            struct Permit {bool& value;~Permit(){value=false;}} permit{world_.primary_object_startup_};
+            work(PrimaryStartupWork::scenario_sound);
+        }
         report.stage=PrimaryStartupStage::npcs;
         if(!context.scenario_assets||!session.scenario)throw StartupFailure{PrimaryStartupStatus::unavailable};
         if(context.update.load_scenario_npcs(*context.scenario_assets,*session.scenario)!=gameplay_update::Status::completed)throw StartupFailure{PrimaryStartupStatus::unavailable};
         report.stage=PrimaryStartupStage::enemies;
         if(context.update.load_scenario_enemies(*context.scenario_assets)!=gameplay_update::Status::completed)throw StartupFailure{PrimaryStartupStatus::unavailable};
-        report.stage=PrimaryStartupStage::scripts;work(PrimaryStartupWork::scenario_scripts);work(PrimaryStartupWork::start_scenario_script);
+        report.stage=PrimaryStartupStage::scripts;
+        {
+            world_.primary_script_startup_=true;
+            struct Permit {bool& value;~Permit(){value=false;}} permit{world_.primary_script_startup_};
+            work(PrimaryStartupWork::scenario_scripts);
+        }
+        {
+            world_.primary_script_startup_=true;
+            struct Permit {bool& value;~Permit(){value=false;}} permit{world_.primary_script_startup_};
+            work(PrimaryStartupWork::start_scenario_script);
+        }
         report.stage=PrimaryStartupStage::navigation;if(world_.mode==0)work(PrimaryStartupWork::scenario_navigation);
         report.stage=PrimaryStartupStage::remaining_resources;
         for(const auto value:{PrimaryStartupWork::scenario_tables,PrimaryStartupWork::scenario_root_motion,

@@ -12,7 +12,7 @@ void construction_owned(const char* archive){
         const auto loaded=g::PrimaryActorModels::prepare(owner.capture(source_id).value(),assets,content);check(owner.apply(*loaded,state).status==g::PrimaryModelStatus::completed);
         original->current=std::int16_t(123+main);original->primary=1;original->secondary=2;original->phase=3;original->subphase=4;original->position={7,8,9};original->model_variant=37;original->appearance_variant=19;
         original->scripted.emplace();auto& script=*original->scripted;script.cue_phase=3;script.request_flags=0xffffffff;original->model_correction_skip=2;script.scale_lock=3;script.request_phase=4;script.motion_selector=5;script.motion_blend_duration=6;
-        script.relation_mode=7;script.related_actor=source_id;script.relation_options=8;script.relation_parameter=9;script.relation_offset={10,11,12};script.command_angles={13,14,15};script.command_angle_copy=77;script.movement_angles={16,17};script.forward_step=18;script.yaw_step=19;script.movement_remaining=20;script.track_two_motion=21;script.scale_profile=22;
+        script.relation_mode=7;script.related_actor=source_id;script.relation_options=8;script.relation_parameter=9;script.relation_offset={10,11,12};script.command_angles={13,14,15};original->model_offset_frame=77;script.movement_angles={16,17};script.forward_step=18;script.yaw_step=19;script.movement_remaining=20;script.track_two_motion=21;script.scale_profile=22;
         original->primary_state->initialization_marker=0x7654;
         const auto source_before=g::copy_actor_owned(*original);check(source_before.status==g::ActorCopyStatus::completed);
         auto& pool=world.scene_primary_actors();check(pool.initialize()==g::ScenePrimaryStatus::completed);
@@ -24,7 +24,7 @@ void construction_owned(const char* archive){
         const auto constructed=owner.construct_scene_primary(choice,roster,content);check(constructed.status==g::PrimaryModelStatus::completed&&constructed.id&&constructed.roster_slot==main&&constructed.release_on_exit==bool(model_class));
         const auto actor=world.resolve(constructed.id);check(actor&&pool.identity_at(temporary)==constructed.id&&!world.resolve(old_id)&&!old_actor->active&&world.identity(main)==source_id);
         check(actor->active&&!actor->visible&&actor->slot==temporary&&actor->primary==6&&actor->secondary==0&&actor->phase==0&&actor->subphase==0&&actor->model_variant==0&&actor->character==main&&actor->model_pose_class==model_class&&actor->room==world.room);
-        check(actor->current==original->current&&actor->position.y==8&&actor->appearance_variant==19&&actor->primary_state->initialization_marker==0x7654&&actor->scripted->command_angle_copy==77);
+        check(actor->current==original->current&&actor->position.y==8&&actor->appearance_variant==19&&actor->primary_state->initialization_marker==0x7654&&actor->model_offset_frame==77);
         check(actor->model&&actor->model!=source_before.actor->model&&actor->animation->model()==actor->model&&!owner.capture(constructed.id));
         check(constructed.retirement_completed==bool(model_class)&&constructed.main_model_retired==bool(model_class)&&bool(original->model)==!model_class&&roster.characters[main]==(model_class?255:main));
         compare_construction(*old_actor,*source_before.actor,*actor,before,roster,choice,world.room,constructed);++construction_cases;
@@ -35,9 +35,9 @@ void construction_owned(const char* archive){
     // invented cold actor. Model/cache admission is a later phase.
     for(unsigned character:{17u,255u}){
         g::World world(profile(),std::make_shared<g::Session>());world.room=87;g::HumanoidMotionOwner motions(world);g::PrimaryActorModels owner(world,motions);auto& pool=world.scene_primary_actors();check(pool.initialize()==g::ScenePrimaryStatus::completed);
-        const auto old_id=pool.identity_at(0);const auto old_actor=world.resolve(old_id);old_actor->current=456;old_actor->primary=22;old_actor->scripted.emplace();old_actor->scripted->command_angle_copy=123;
+        const auto old_id=pool.identity_at(0);const auto old_actor=world.resolve(old_id);old_actor->current=456;old_actor->primary=22;old_actor->scripted.emplace();old_actor->model_offset_frame=123;
         const auto old=g::copy_actor_owned(*old_actor);Roster roster;roster.characters=characters;roster.eligible_count=4;const auto before=roster;const Choice choice{0,0,std::uint8_t(character),0,{}};
-        const auto made=owner.construct_scene_primary(choice,roster,content);const auto actor=world.resolve(made.id);check(made.status==g::PrimaryModelStatus::completed&&made.release_on_exit&&!made.roster_slot&&!made.retirement_completed&&actor&&actor->current==456&&actor->scripted->command_angle_copy==123&&!actor->model);
+        const auto made=owner.construct_scene_primary(choice,roster,content);const auto actor=world.resolve(made.id);check(made.status==g::PrimaryModelStatus::completed&&made.release_on_exit&&!made.roster_slot&&!made.retirement_completed&&actor&&actor->current==456&&actor->model_offset_frame==123&&!actor->model);
         compare_construction(*old.actor,*old.actor,*actor,before,roster,choice,world.room,made);++construction_cases;
     }
     // One spare generation is required before publication. Refusal keeps the

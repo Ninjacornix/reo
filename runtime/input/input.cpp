@@ -34,11 +34,56 @@ bool Input::init() {
 #else
     printf("[INPUT] Initialized (XInput + keyboard)\n");
 #endif
+    m_initialized = true;
     return true;
 }
 
 void Input::shutdown() {
+    m_initialized = false;
     printf("[INPUT] Shutdown\n");
+}
+
+std::optional<NativeInputSnapshot> Input::poll_native(bool focused) {
+    if (!m_initialized)
+        return std::nullopt;
+#ifdef REO_PLATFORM_WINDOWS
+    // Poll both physical ports even after a disconnect so reconnection is a
+    // real new observation. Reset first to prevent stale buttons or pressure.
+    for (int i = 0; i < 2; ++i) {
+        m_pads[i].reset();
+        update_xinput(i);
+    }
+    if (focused)
+        update_keyboard();
+    else
+        for (auto& pad : m_pads)
+            pad.reset();
+    NativeInputSnapshot result;
+    result.focused = focused;
+    for (unsigned i = 0; i < result.ports.size(); ++i) {
+        result.ports[i].pad = m_pads[i];
+        result.ports[i].physical_connected = m_xinput_connected[i];
+    }
+    result.ports[0].keyboard_available = true;
+    return result;
+#else
+    (void)focused;
+    return std::nullopt;
+#endif
+}
+
+std::optional<NativeInputSnapshot> Input::poll_native_window(void* window) {
+#ifdef REO_PLATFORM_WINDOWS
+    const auto handle = static_cast<HWND>(window);
+    DWORD process = 0;
+    if (!handle || !IsWindow(handle) || !GetWindowThreadProcessId(handle, &process) ||
+        process != GetCurrentProcessId())
+        return std::nullopt;
+    return poll_native(GetForegroundWindow() == handle && !IsIconic(handle));
+#else
+    (void)window;
+    return std::nullopt;
+#endif
 }
 
 void Input::update() {
@@ -77,6 +122,8 @@ void Input::update_xinput(int port) {
         m_xinput_connected[port] = false;
         return;
     }
+
+    m_xinput_connected[port] = true;
 
     auto& pad = m_pads[port];
     uint16_t buttons = 0xFFFF; // All released

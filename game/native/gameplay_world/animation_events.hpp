@@ -12,7 +12,8 @@ enum class EventKind {
     position_audio,
     contact_action,
     model_action,
-    resource_program
+    resource_program,
+    character_callback
 };
 struct Event {
     EventKind kind;
@@ -93,9 +94,9 @@ enum class Family {
 // admitted explicitly; a selected family is not proof its consumers exist.
 Family family(std::uint8_t category, bool visible, std::uint8_t actor_type,
               std::uint8_t source_kind, std::uint8_t source_slot) noexcept;
-// Complete5965A0/59A820/59EBB0 schedules for the two normal player families.
+// Complete5965A0/59A820/59EBB0 and the eight character-bank schedules.
 // Reads the same canonical Playback selectors, including fresh upper/tail reads
-// after synchronous actions. Other real families explicitly refuse.
+// after synchronous actions. Other real actor families explicitly refuse.
 void run_player(Family, Actor&, const Metadata&, Consumer&, float step);
 class Prelude final : public MotionPrelude {
   public:

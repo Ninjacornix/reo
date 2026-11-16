@@ -2,6 +2,7 @@ add_library(reo_native_gameplay_update STATIC update.cpp material_animation.cpp 
 target_compile_features(reo_native_gameplay_update PUBLIC cxx_std_20)
 target_sources(reo_native_gameplay_update PRIVATE linked_model_workers.cpp)
 target_sources(reo_native_gameplay_update PRIVATE npc_actor_workers.cpp)
+target_sources(reo_native_gameplay_update PRIVATE ../gameplay_world/assistance.cpp)
 add_library(reo_native_actor_model_workers STATIC actor_model_workers.cpp)
 target_compile_features(reo_native_actor_model_workers PUBLIC cxx_std_20)
 target_link_libraries(reo_native_actor_model_workers PUBLIC reo_native_gameplay_update reo_native_actor_model_passes)

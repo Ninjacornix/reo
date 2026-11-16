@@ -334,4 +334,7 @@ Snapshot Session::snapshot() const noexcept {
         result.playing+=s.records[i].active && s.records[i].config.playing;}
     return result;
 }
+bool Session::bound_to(const audio_mix_tail::Mixer& mixer)const noexcept {
+    return state_->config.bank_mix.get()==&mixer && !state_->closing.load(std::memory_order_acquire);
+}
 } // namespace reo::native::adxt_output_session

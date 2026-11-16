@@ -1,4 +1,6 @@
 #include "update.hpp"
+#include "../gameplay_scenario/timed_scene_text.hpp"
+#include "../gameplay_scenario/room_camera_modes.hpp"
 #include <bit>
 #include <exception>
 #include <stdexcept>
@@ -20,14 +22,31 @@ bool script_ok(scenario::Status s){return s==scenario::Status::completed || s==s
 Owner::Owner(world::World& world,scenario::FlagNotifications& notifications,std::shared_ptr<const gameplay_events::RuleBook> rules,GameplayMessageSink* messages,const gameplay_collision::room_objects::Owner* objects):world_(world),materials_(world_,linked_),statistics_(std::move(rules)),notifications_(notifications),flags_(this),publication_(world_,flags_,messages,objects){
     if(world_.session().timing)throw std::invalid_argument("Native world already has a timing owner");
     scenario_events_.reset(new scenario::ScenarioEvents(world_,flags_,timers_,events_));
+    actor_script_terminal_.reset(new scenario::ActorScriptTerminal(world_,statistics_,publication_,state.pause_latched));
+    actor_offline_navigation_=std::make_unique<scenario::ActorOfflineNavigation>(*this);
     world_.session().timing=this;
 }
 Owner::~Owner(){if(running_)std::terminate();(void)close();}
+Status Owner::bind_message_sink(GameplayMessageSink* next,GameplayMessageSink* expected)noexcept{
+    if(!open())return Status::closed;
+    if(busy())return Status::busy;
+    if(publication_.messages_!=expected)return Status::actor_failure;
+    publication_.messages_=next;return Status::completed;
+}
 Status Owner::bind_room_objects(std::uint16_t scenario,std::shared_ptr<const gameplay_collision::room_objects::Owner> objects)noexcept{
     if(!open())return Status::closed;
     if(busy())return Status::busy;
     if(!objects||!objects->initialized()||world_.scenario!=scenario)return Status::actor_failure;
     if(publication_.room_objects()&&publication_.room_objects()!=objects.get())return Status::actor_failure;
+    publication_.bind_room_objects(scenario,std::move(objects));return Status::completed;
+}
+bool Owner::roster_room_objects_ready(std::uint16_t scenario,const gameplay_collision::room_objects::Owner* expected)const noexcept{
+    return open()&&world_.updating_&&world_.primary_object_startup_&&!running_&&events_.idle()&&linked_.idle()&&
+        !(actor_script_terminal_&&actor_script_terminal_->running_)&&
+        !(actor_offline_navigation_&&actor_offline_navigation_->busy())&&world_.scenario==scenario&&publication_.room_objects()==expected;
+}
+Status Owner::replace_roster_room_objects(std::uint16_t scenario,std::shared_ptr<const gameplay_collision::room_objects::Owner> objects,const gameplay_collision::room_objects::Owner* expected)noexcept{
+    if(!roster_room_objects_ready(scenario,expected))return Status::busy;
     publication_.bind_room_objects(scenario,std::move(objects));return Status::completed;
 }
 Status Owner::unbind_room_objects()noexcept{
@@ -36,8 +55,13 @@ Status Owner::unbind_room_objects()noexcept{
     publication_.bind_room_objects(0,{});return Status::completed;
 }
 Status Owner::close()noexcept{
-    if(running_ || world_.busy() || !events_.idle() || !linked_.idle())return Status::busy;
-    closed_=true;(void)scenario_events_->close();(void)events_.seal();(void)linked_.seal();
+    if(busy())return Status::busy;
+    if(room_camera_modes_){
+        if(room_camera_modes_->close()==scenario::CameraModeStatus::busy)return Status::busy;
+        room_camera_modes_=nullptr;
+    }
+    if(actor_offline_navigation_->close()!=scenario::OfflineNavigationStatus::completed)return Status::busy;
+    closed_=true;(void)actor_script_terminal_->close();(void)scenario_events_->close();(void)events_.seal();(void)linked_.seal();
     cooperative_.close();
     if(linked_actor_updates_)(void)linked_actor_updates_->close();
     if(cutscene_actor_tracks_)(void)cutscene_actor_tracks_->close();
@@ -46,6 +70,12 @@ Status Owner::close()noexcept{
     (void)events_.clear();(void)linked_.clear();
     if(world_.session().timing==this)world_.session().timing=nullptr;
     return Status::completed;
+}
+Status Owner::bind_room_camera_modes(scenario::RoomCameraModes* next,const scenario::RoomCameraModes* expected)noexcept{
+    if(next&&!open())return Status::closed;
+    if(busy())return Status::busy;
+    if(room_camera_modes_!=expected||(next&&!next->bound_to(world_)))return Status::actor_failure;
+    room_camera_modes_=next;return Status::completed;
 }
 Status Owner::bind_linked_actors(world::ScriptedMotionBanks banks,std::shared_ptr<const gameplay_collision::response::Grid> floors){
     if(!open())return Status::closed;
@@ -101,6 +131,10 @@ Status Owner::run_script(std::size_t channel,scenario::Providers providers,std::
     providers.messages=messages;
     if(providers.scenario_events&&providers.scenario_events!=scenario_events_.get())return Status::script_failure;
     providers.scenario_events=scenario_events_.get();
+    if(providers.actor_script_terminal&&providers.actor_script_terminal!=actor_script_terminal_.get())return Status::script_failure;
+    providers.actor_script_terminal=actor_script_terminal_.get();
+    if(providers.actor_offline_navigation&&providers.actor_offline_navigation!=actor_offline_navigation_.get())return Status::script_failure;
+    providers.actor_offline_navigation=actor_offline_navigation_.get();
     providers.flags=&flags_;providers.canonical_flags=&flags_;providers.timers=&timers_;
     if(providers.action_choices&&providers.action_choices!=&choices_)return Status::script_failure;
     providers.action_choices=&choices_;
@@ -128,6 +162,23 @@ Result Owner::step_script(std::size_t channel,scenario::Providers providers,std:
     providers.world=&world_;
     running_=true;struct Reset{bool& value;~Reset(){value=false;}}reset{running_};
     result.status=run_script(channel,providers,budget,result);return result;
+}
+Result Owner::start_roster_scenario_script(std::shared_ptr<const scenario::Program> program,
+                                                   scenario::Providers providers,std::size_t budget)noexcept{
+    Result result;
+    if(!open()){result.status=Status::closed;return result;}
+    if(running_||!events_.idle()||!linked_.idle()||(actor_script_terminal_&&actor_script_terminal_->running_)||
+       (actor_offline_navigation_&&actor_offline_navigation_->busy())){
+        result.status=Status::busy;return result;
+    }
+    if(!program||!program->record({1,0})||program->unsupported()||
+       (providers.world&&providers.world!=&world_)){result.status=Status::script_failure;return result;}
+    auto channel=scripts_.channels()[0];
+    if(!channel.program||channel.saved.block!=UINT32_MAX){result.status=Status::script_failure;return result;}
+    channel.program=std::move(program);channel.current={1,0};channel.block_index=1;
+    if(scripts_.restore_channel(0,channel)!=scenario::Status::completed){result.status=Status::script_failure;return result;}
+    providers.world=&world_;running_=true;struct Reset{bool& value;~Reset(){value=false;}}reset{running_};
+    result.status=run_script(0,providers,budget,result);return result;
 }
 Status Owner::script_service(Services& services,scenario::Providers providers,std::size_t budget,Result& result){
     if(std::bit_cast<std::int32_t>(clock_.update_counter())>=0x83d60 &&
@@ -183,6 +234,15 @@ Result Owner::workers(Services& services,world::Services& actors,scenario::Provi
     work(Worker::model_interactions);work(Worker::resource_instances);work(Worker::scene_pose_tasks);
     result.linked=linked_.run(tasks::Pass::update,task_budget);
     if(result.linked.status!=tasks::Status::completed){result.status=Status::task_failure;return result;}
+    if(room_camera_modes_&&room_camera_modes_->status()!=scenario::CameraModeStatus::completed){
+        result.status=Status::task_failure;return result;
+    }
+    // A callback's unavailable capability is a failed frame prefix. Stop
+    // before later UI/contact work or the enclosing clock commit observes it.
+    if(providers.timed_scene_text&&
+       providers.timed_scene_text->snapshot().callback_status!=scenario::TimedTextStatus::completed){
+        result.status=Status::task_failure;return result;
+    }
     for(const auto stage:{Worker::render_work_banks,Worker::large_callbacks,Worker::gameplay_ui,
                          Worker::room_sound_callbacks,Worker::sequences})work(stage);
     // 6B80A0 is the final child of the 6B7E40 sequence worker.

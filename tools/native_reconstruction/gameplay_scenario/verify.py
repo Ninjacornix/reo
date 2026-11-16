@@ -47,6 +47,7 @@ IDS += ['00691AE0']
 IDS += ['006DEC80','006925C0','005F4FD0','006E1430']
 IDS += ['0068F180']
 IDS += ['0068F140','00604300']
+IDS += ['00693430','006936B0']
 
 PINNED={};PIN_COMMITS={}
 def source_bytes(p):
@@ -266,6 +267,9 @@ def main(a):
     units += [('script_resource_parameters',ROOT/'game/native/gameplay_scenario/script_resource_parameters.cpp'),('script_resource_activation',ROOT/'game/native/gameplay_scenario/script_resource_activation.cpp')]
     units += [(name,ROOT/'game/native/gameplay_scenario'/(name+'.cpp'))for name in ['scenario_events','timer_hud']]
     units += [('inventory_ui',ROOT/'game/native/gameplay_world/inventory_ui.cpp')]
+    units += [(name,ROOT/'game/native/gameplay_scenario'/(name+'.cpp'))for name in ['timed_scene_text','scene_text_bank','text_cache','scenario_archive']]
+    units += [(name,ROOT/'game/native/gameplay_scenario'/(name+'.cpp'))for name in ['inventory_ui_resources','room_camera','room_camera_modes']]
+    units += [('weighted_destination',ROOT/'game/native/gameplay_navigation/weighted_destination.cpp'),('goal_route',ROOT/'game/native/gameplay_ai/goal_route.cpp')]
     units += [('resource_owner_'+name,ROOT/'game/native/gameplay_world'/(name+'.cpp')) for name in ['resource_frames','resource_factory','resource_static_assets','inventory']]
     units += [('ai_execution',ROOT/'game/native/gameplay_ai/execution.cpp')]
     units += [('audio_'+name,ROOT/'game/native/gameplay_audio'/(name+'.cpp')) for name in ('routing','import','spatial','owner','scenario_cues')]
@@ -327,6 +331,8 @@ def main(a):
     source_paths.append(HERE/'inventory_ui_vm_tests.inc')
     source_paths.append(HERE/'actor_model_classes_vm_tests.inc')
     source_paths.append(HERE/'inventory_request_gate_vm_tests.inc')
+    source_paths.append(HERE/'actor_population_vm_tests.inc')
+    shutil.copyfile(HERE/'actor_population_vm_tests.inc',out/'actor_population_vm_tests.inc')
     source_paths.append(ROOT/'tools/native_reconstruction/comparison_objects.py')
     source_paths += [HERE/'surface_vm_tests.inc',ROOT/'tools/native_reconstruction/effect_work_sources.py']
     source_paths += [ROOT/p for p in ['game/native/gameplay_world/world.hpp','game/native/gameplay_world/world.cpp','game/native/gameplay_actors/input.hpp','game/native/gameplay_actors/input.cpp','game/native/gameplay_actors/health.hpp','game/native/gameplay_actors/hit.hpp','game/native/gameplay_actors/status.hpp','game/native/gameplay_session/session.hpp','game/native/gameplay_session/session.cpp']]
@@ -341,6 +347,7 @@ def main(a):
     before={p.relative_to(ROOT).as_posix():sha(p) for p in source_paths}
     for p in source_paths:
         target=out/'source'/p.relative_to(ROOT);target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(source_bytes(p))
+    (out/'snapshot-complete.json').write_text(json.dumps(dict(source_sha256=before,native_library_sha256=library_hashes),indent=2)+'\n')
     corpus=ROOT/'build-native-sjuni/effect-geometry-owned-v1';corpus_receipt=json.loads((corpus/'receipt.json').read_bytes());assert len(corpus_receipt['assets'])==12 and sha(corpus/'owned_effect_geometry.bin')==corpus_receipt['package_sha256'];shutil.copyfile(corpus/'owned_effect_geometry.bin',out/'owned_effect_geometry.bin')
     index=ROOT/'build-native-sjuni/gameplay-script-content-llvm-v14'
     index_receipt=json.loads((index/'receipt.json').read_bytes())
@@ -376,7 +383,10 @@ def main(a):
     objects,production_objects=compile_objects(ROOT,out,cc,base[1:]+['-Wall','-Wextra','-Wpedantic','-Werror'],native_names,frozen,dict(os.environ))
     checks.append(invoke(base+['-Wall','-Wextra','-Wpedantic','-Werror','-c',str(out/'tests.cpp'),'-o',str(out/'tests.o')],out,'compile-tests'))
     checks.append(invoke([str(cc),str(out/'original.o'),*objects,str(out/'tests.o'),'-Wl,--start-group']+[str(out/'libraries'/name)for name in native_libraries]+['-Wl,--end-group','-lpthread','-o',str(out/'checks.exe')],out,'link'))
-    checks.append(invoke([str(out/'checks.exe'),str(out/'owned_effect_geometry.bin'),str(policy_path),str(stock_path),str(out/'owned_enemy_members.bin')],out,'test'));assert all(sha(ROOT/n)==digest for n,digest in before.items())
+    checks.append(invoke([str(out/'checks.exe'),str(out/'owned_effect_geometry.bin'),str(policy_path),str(stock_path),str(out/'owned_enemy_members.bin')],out,'test'))
+    assert all(hashlib.sha256((out/'source'/name).read_bytes()).hexdigest()==digest for name,digest in before.items())
+    source_drift={name:sha(ROOT/name)for name,digest in before.items()if sha(ROOT/name)!=digest}
+    if not a.allow_source_drift:assert not source_drift
     receipt=dict(status='passed',compiler=str(cc),compiler_sha256=sha(cc),source_sha256=before,original_sources_sha256=sources,checked_owned_instruction_comments=words,
         pinned_shared_sources={name:dict(commit=PIN_COMMITS[name],sha256=hashlib.sha256(data).hexdigest())for name,data in PINNED.items()},pinned_current_source_drift={name:hashlib.sha256((ROOT/name).read_bytes()).hexdigest()for name,data in PINNED.items()if (ROOT/name).read_bytes()!=data},oracle_profile=dict(reference_sha256=sha(reference),sdk131_sign_extended_word_setter=True,finite_simd=True,transitive_native_headers=True,compiled_private_source_snapshot=True,periodic_scheduler_allocation_declared_port=True,actual_native_periodic_visual_owner=True),periodic_effect_corpus=dict(receipt=str((corpus/'receipt.json').relative_to(ROOT)),sha256=sha(corpus/'receipt.json'),package_sha256=corpus_receipt['package_sha256']),executable_sha256=sha(out/'checks.exe'),generated_fixture_sha256=sha(out/'original_fixture.hpp'),generated_original_sha256=sha(out/'original.cpp'),original_main_elf_sha256=elf_sha,original_main_leaf=dict(address='1B3C30',bytes=8,sha256=hashlib.sha256(body).hexdigest(),instructions=['jr ra','nop'],context_cases=4096),
         original_table_sha256=hashlib.sha256(struct.pack('<432I',*table)).hexdigest(),npc_members=npc_members,
@@ -384,11 +394,14 @@ def main(a):
         enemy_members=enemy_members,enemy_fixture_sha256=sha(out/'owned_enemy_members.bin'),
         installed_in_game=False,game_launched=False,live_process_access=False,limitations=['Native opcode algorithm coverage is partial; entire programs with unsupported handlers are refused before native install.','Canonical flag storage and offline actor-delta merging are native; actual game caller/content import, notification delivery and message services remain external integration gates.','Actual original dispatcher and handler bodies are used only in the test oracle, with bounded memory/register scaffolding. No MIPS execution ships in native core.'])
     receipt['native_owner_libraries_sha256']=library_hashes
+    receipt['current_shared_source_drift']=source_drift
+    receipt['source_unchanged']=not source_drift
+    receipt['qualification_scope']='immutable_source_and_native_library_snapshot'if a.allow_source_drift else'current_source_and_native_library_snapshot'
     receipt['production_objects']=production_objects
     receipt['room_counter_policy']=dict(index_receipt_sha256=sha(index/'receipt.json'),owned_members={e['name']:e['sha256'] for e in evbs},package_sha256=sha(policy_path))
     receipt['stock_room']=dict(name=stock['name'],sha256=sha(stock_path),installed_in_game=False)
     receipt['cutscene_model_admission']=dict(path=str(admission_path),sha256=sha(admission_path))
     (out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps(dict(status='passed',checks=receipt['result']['checks'],original_invocations=receipt['result']['original_dispatch_invocations'],coverage={k:v['count'] for k,v in receipt['result']['coverage'].items()},instruction_comments=words,output=str(out))))
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('--compiler',required=True);p.add_argument('--output',required=True,type=Path);p.add_argument('--pin-domain-commit');p.add_argument('--pin-effects-commit');main(p.parse_args())
+    p=argparse.ArgumentParser();p.add_argument('--compiler',required=True);p.add_argument('--output',required=True,type=Path);p.add_argument('--pin-domain-commit');p.add_argument('--pin-effects-commit');p.add_argument('--allow-source-drift',action='store_true');main(p.parse_args())
 

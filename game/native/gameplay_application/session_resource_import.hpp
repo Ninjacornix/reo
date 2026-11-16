@@ -10,8 +10,8 @@ struct ResourceImportReport {
     bool selection_found{},item_found{};
     std::size_t selected{},placed{},starting{},tuning_records{};
 };
-// Actual ordinary591C50 startup over one canonical resource/inventory graph.
-// Offline4BAE96 adjustment and filesystem asset mode remain explicit profiles.
+// Actual591C50 archive startup over one canonical resource/inventory graph.
+// Filesystem asset mode remains an explicit unavailable profile.
 class ResourceBootstrap final {
 public:
     ResourceBootstrap(gameplay_world::World&,gameplay_scenario::SceneResources&,
@@ -23,8 +23,12 @@ private:
     gameplay_scenario::ResourceTemplates& templates_;gameplay_world::WorldInventory& inventory_;
     std::array<ResourceTuningRecord,129> tuning_{};
     bool running_{};
+    ResourceImportReport run_impl(const gameplay_scenario::content::ScenarioArchive&,bool nested)noexcept;
+    friend class SessionResources;
     void clear();
     void selection(std::span<const std::byte>,std::uint16_t,ResourceImportReport&);
+    void fixed_selection(std::span<const std::byte>,ResourceImportReport&);
+    void offline_adjustment();
     void item(std::span<const std::byte>,ResourceImportReport&);
     void starting(ResourceImportReport&);
 };

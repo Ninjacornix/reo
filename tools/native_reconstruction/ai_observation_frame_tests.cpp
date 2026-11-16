@@ -150,7 +150,7 @@ void project_actor(std::span<std::uint8_t> bytes, const g::Actor& actor) {
     put(bytes, 0x1054, actor.navigation_route->action);
     put(bytes, 0x1056, actor.navigation_route->previous_action);
     bytes[0x105a] = actor.navigation_route->completed;
-    bytes[0x105b] = actor.transient_marker;
+    bytes[0x105b] = actor.navigation_route->selection_mode;
     put(bytes, 0x105c, actor.navigation_route->travel_ticks);
     put(bytes, 0x1060, state.observation_timeout);
     bytes[0x106c] = state.threat_band;
@@ -159,7 +159,7 @@ void project_actor(std::span<std::uint8_t> bytes, const g::Actor& actor) {
     put(bytes, 0x1070, state.observation_cooldown);
     put(bytes, 0x1072, state.periodic_counter);
     bytes[0x1074] = state.goal_refresh;
-    bytes[0x1075] = state.reference_event;
+    bytes[0x1075] = static_cast<std::uint8_t>(actor.speech.display_style.value_or(0));
     bytes[0x1077] = state.weight_mode;
     put(bytes, 0x107c, state.room_memo);
     bytes[0x107e] = state.room_reaction_gate;
@@ -172,12 +172,13 @@ void project_actor(std::span<std::uint8_t> bytes, const g::Actor& actor) {
     put(bytes, 0x1086, state.reference_cooldown);
     put(bytes, 0x1088, state.companion_hold);
     put(bytes, 0x108a, state.owned_request);
-    bytes[0x1098] = state.reaction;
+    bytes[0x1098] = actor.speech.remote_request.value_or(0);
     bytes[0x1099] = state.pending_reaction;
     put(bytes, 0x109a, state.reaction_countdown);
     put(bytes, 0x109c, state.forced_priority);
     put(bytes, 0x10a0, state.forced_content);
     put(bytes, 0x10a4, state.forward_wall_ticks);
+    bytes[0x10a9] = actor.transient_marker;
     put(bytes, 0x10ac, state.weight_profile ? 0x828a60u + 56u * *state.weight_profile : 0u);
     put(bytes, 0x10b0, state.base_weights);
     put(bytes, 0x10b8, state.reactive_weights);
@@ -237,7 +238,7 @@ void compare(unsigned seed, const c::response::Grid& grid,
     reference->status = seed / 37 % 2 ? 8 : 0;
     reference->motion_class = seed / 17 % 2 ? 0x15 : 0;
     reference->phase = seed / 19 % 2 ? 10 : 0;
-    reference->ai_execution->reference_event = std::uint8_t(seed / 2 % 13);
+    reference->speech.display_style = std::int8_t(seed / 2 % 13);
     reference->ai_execution->reference_signal = seed / 101 % 5 ? 1 : 0;
     reference->ai_execution->weight_mode = std::uint8_t(seed / 41 % 2);
     peer->ai_execution->companion_hold = seed / 7 % 5 == 0 ? 2 : 0;
@@ -275,7 +276,8 @@ void compare(unsigned seed, const c::response::Grid& grid,
     const bool session_gate = (gate_bits & 1) != 0;
     if (full_ai_frame) {
         self->motion_class = seed % 4 == 0 ? 0x3b : 0;
-        self->transient_marker = seed == 1024 || seed % 7 == 0 ? 1 : 0;
+        self->navigation_route->selection_mode = seed == 1024 || seed % 7 == 0 ? 1 : 0;
+        self->transient_marker = self->navigation_route->selection_mode ? 0 : 1;
         self->status = gate_bits & 16 ? 0x20 : 0;
         self->response_lock = gate_bits & 4 ? 2 : 0;
         world.session().suppress_hits = (gate_bits & 8) != 0;
@@ -284,9 +286,9 @@ void compare(unsigned seed, const c::response::Grid& grid,
         state.steering_value = 0x1234;
         state.steering_button_10 = 3;
         state.steering_button_20 = 2;
-        state.reaction = 199;
+        self->speech.remote_request = 199;
         state.goal = std::array<std::uint16_t, 3>{0, 6, 14}[seed % 3];
-        const bool waypoint = seed == 1024 || (self->transient_marker && seed % 3 == 1);
+        const bool waypoint = seed == 1024 || (self->navigation_route->selection_mode && seed % 3 == 1);
         state.action = waypoint ? 2 : std::uint16_t(seed / 7 % 2);
         self->navigation_route->action = seed == 1024 ? 12 : 13;
         self->navigation_route->travel_ticks = seed == 1024 ? 0 : 57;
@@ -383,7 +385,7 @@ void compare(unsigned seed, const c::response::Grid& grid,
         ++ai_frames;
         if (gate_bits)
             ++gated_frames;
-        else if (self->transient_marker)
+        else if (self->navigation_route->selection_mode)
             ++off_room_frames;
         else if (active_waypoint) {
             ++active_waypoint_frames;
@@ -438,7 +440,7 @@ void compare(unsigned seed, const c::response::Grid& grid,
           transform_read<std::uint32_t>(memory.data(), 0x83e530));
     check(original_dispatched_goal == (full_ai_frame && !gate_bits));
     check(original_dispatched_action == (full_ai_frame && !gate_bits));
-    check(original_off_room_action == (full_ai_frame && !gate_bits && self->transient_marker));
+    check(original_off_room_action == (full_ai_frame && !gate_bits && self->navigation_route->selection_mode));
     check(original_active_waypoint == (active_waypoint && !gate_bits));
     check(world.session().random.state().primary ==
           transform_read<std::uint16_t>(memory.data(), 0x3244b0));

@@ -1,5 +1,6 @@
 #include "priority_goals.hpp"
 #include "reactions.hpp"
+#include "goal_route.hpp"
 #include "../gameplay_world/world.hpp"
 #include "../gameplay_scenario/scene_resources.hpp"
 #include "../gameplay_navigation/bank.hpp"
@@ -96,8 +97,9 @@ Status update_motion_goal(gameplay_world::Actor& actor, gameplay_session::Random
 }
 
 GoalDispatched dispatch_goal(gameplay_world::Actor& actor, const gameplay_world::Actor* reference,
-    const gameplay_world::Actor* companion, const gameplay_navigation::Bank& bank,
-    const gameplay_scenario::SceneResources& resources, gameplay_session::Random& random) noexcept {
+    const gameplay_world::Actor* companion, gameplay_navigation::Bank& bank,
+    const gameplay_scenario::SceneResources& resources, gameplay_session::Random& random,
+    const GoalRouteContext* context) noexcept {
     if (reevaluate_goal(actor, reference, companion, bank, resources).status != Status::completed)
         return {};
     auto& state = *actor.ai_execution;
@@ -105,6 +107,8 @@ GoalDispatched dispatch_goal(gameplay_world::Actor& actor, const gameplay_world:
     switch (selected) {
     case 0:
         return {Status::completed, selected};
+    case 1:
+        return {update_route_goal(actor,reference,bank,random,context),selected};
     case 6:
         finish_goal_six(state);
         return {Status::completed, selected};

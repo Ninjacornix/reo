@@ -41,17 +41,35 @@
 namespace reo::native::animation {class Instance;class Constraints;class Playback;class WeaponProgramBank;}
 namespace reo::native::gameplay_navigation {class Bank;}
 namespace reo::native::gameplay_scenario {class CutscenePlayback;class CutsceneActorTracks;class CutsceneObjectTracks;class CutsceneRosterPreparation;}
-namespace reo::native::gameplay_update {class LinkedModelWorkers;}
-namespace reo::native::gameplay_application {class ResourceBootstrap;class SessionResources;}
+namespace reo::native::gameplay_update {class LinkedModelWorkers;class Owner;class ActorReception;}
+namespace reo::native::gameplay_application {class ResourceBootstrap;class SessionResources;class SessionStartupEffects;class SessionRooms;class SessionRoomMotions;}
 namespace reo::native::gameplay_world {
 namespace actors=gameplay_actors;
 namespace input=gameplay_actors::input;
 struct Position {float x{},y{},z{};};
 struct AlignmentTarget {Position position;std::int16_t yaw{};};
+// Original actor bytes FAA/FA8/BCE, consumed and written by analog-control
+// preparation6621F0. BCE remains a persistent control target independent of
+// the optional alignment producer's C4C yaw.
+struct AnalogControlState {std::int8_t heading_active{};std::int16_t previous_input_heading{},control_target_heading{};};
+// Primary-family C0/C4/C8 and D10. These are independent of the D8/E4
+// motion impulses and of the other actor families' pose-work overlay.
+struct PrimaryLocomotionState {Position velocity;std::uint8_t marker{};float root_sample_z{};}; //CE4 is5D7BC0's retained node sample.
+//67FF80's registration word B34 and sequence bytes DA6/DA7.
+struct InteractionRegistrationState {std::uint32_t selection_word{};std::uint8_t sequence{},previous_sequence{};};
+//C74/C75/C76 are produced by5C5B50/5C5BD0 and consumed by64F2D0.
+//They are distinct from C78/C79's inventory interaction kind/mode.
+struct InteractionControlRequest {std::uint8_t pending{},variant{},parameter{};};
 struct PeerRequest {std::uint8_t state_high{};actors::ActorReference peer;std::array<std::int16_t,2> parameters{};};
 struct InteractionRequest {
     std::uint8_t kind{},parameter{};Position anchor;
     std::uint32_t orientation{};float travel_distance{};std::uint8_t endpoint{};
+};
+// Source publications at4BAE05/07 and3243E0/E2. The scenario component is
+// copied from canonical Session::scenario (3243DA); it is never mirrored.
+struct SceneTransitionPublication {
+    std::uint8_t kind{},variant{};
+    std::uint16_t scenario{},destination{};
 };
 struct ColorFade {std::uint32_t rgba{},step{},updates_left{};};
 struct CollisionShapeTarget {gameplay_collision::Vec3 center;float radius{};};
@@ -109,6 +127,21 @@ struct Actor : actors::Entity,actors::HitActor {
     std::optional<std::uint32_t> gauge_value; // original BAC; unknown until its actual owner/import supplies it
     std::uint16_t terminal_countdown{}; // original C62, distinct from status/hit recovery timers
     std::uint8_t appearance_variant{}; // original BBC; separate from character B98 and model_variant BB4
+    // BBD, incremented by5C5A30 and consumed/cleared by64F110/64B060.
+    // Adjacent appearance/variant fields do not establish this counter.
+    std::optional<std::uint8_t> interaction_request_count;
+    std::optional<std::uint8_t> collision_resource_selector; //C82;5AA160 clears,5AB280 selects one
+    std::optional<std::uint8_t> scene_contact_request; //C9C; route/query collision gate
+    // CB0, authored descriptor+44 byte copied by5C5A30 and published by64F110.
+    std::optional<std::uint8_t> interaction_control_selector;
+    std::optional<InteractionRegistrationState> interaction_registration;
+    std::optional<InteractionControlRequest> interaction_control_request;
+    std::optional<std::uint16_t> forward_contact_attempts; //CDE;64E960 held-contact interaction timer
+    //5D6A60/5D6ED0 paired-node animation. C50 is also the cinematic
+    // command's unsigned total-duration view; keep that source alias once.
+    std::optional<std::int16_t> model_offset_frame; //C50
+    std::optional<std::uint8_t> model_offset_phase; //C52
+    std::optional<std::uint16_t> model_offset_lock; //232
     std::uint8_t motion_subtype{},motion_style{},previous_motion_class{};
     std::uint8_t selected_resource{},secondary_resource{},model_pose_class{};
     std::uint8_t secondary_equipped_resource{}; // C7D; secondary_resource is a distinct audio/model selector
@@ -129,10 +162,19 @@ struct Actor : actors::Entity,actors::HitActor {
     // supplies it; these are separate from the selected/equipped item slots.
     std::optional<std::uint8_t> interaction_resource; // C80, descriptor item ID from5F2B70
     std::optional<std::int16_t> aim_pitch_adjustment,aim_target_pitch; // BC8/CD4
+    std::optional<std::int16_t> aim_target_yaw,aim_target_roll; // CD6/CD8
     std::optional<std::uint8_t> aim_target_index; // CDC, FF means no selected target
+    // Source pointers become canonical identities. A present null identity
+    // is a known absent target; a missing optional has no actual producer.
+    std::optional<actors::EntityId> weapon_target; // +24, distinct from contact.related +28
+    std::optional<actors::EntityId> ai_target; // +1068, selected by offline AI
     // Primary alignment contract C34/C38/C3C and C4C. Other source-state
     // overlays do not establish this target; actual producers/import must.
     std::optional<AlignmentTarget> alignment_target;
+    // Present only after a source-qualified full-record clear; generic Actor
+    // construction does not establish the original FAA/FA8/BCE bytes.
+    std::optional<AnalogControlState> analog_control;
+    std::optional<PrimaryLocomotionState> locomotion;
     // C65/C66/C68/C6A. C64's low byte is the inherited transient_contact,
     // including when pending-hit cleanup clears only that byte.
     std::optional<PeerRequest> peer_request;
@@ -140,6 +182,7 @@ struct Actor : actors::Entity,actors::HitActor {
     // AB9/ABA, ABC..AD0. AB8 remains inherited transient_action; ABB remains
     // scene_model. The three unused bytes after endpoint are not native state.
     std::optional<InteractionRequest> interaction_request;
+    std::optional<std::uint8_t> interaction_subselector; // AD1; actual full-record clear establishes zero
     std::optional<std::int8_t> related_target_state; // D32, shared phase-dependent cached target/state
     // Primary actor CE8/CEC/CF0 color fade. Other source actor families reuse
     // these offsets for unrelated roles; they do not grant this capability.
@@ -175,6 +218,7 @@ struct Actor : actors::Entity,actors::HitActor {
     Position surface_normal{0,1,0};
     ActorCollision collision;
     ProjectileContact projectile_contact;
+    std::optional<std::uint8_t> forward_contact_status; // +540;65F4A0 stores the low byte returned by5795E0
     gameplay_collision::delivery::Component contact;
     std::optional<MaterialUv> material_uv;
     std::shared_ptr<animation::Instance> model;
@@ -214,8 +258,10 @@ struct Session : actors::HitSession {
     std::uint8_t control_notice{};
     std::uint8_t exit_requested{}; //3243D8; shared actor hold producer and outer update consumer
     std::optional<std::uint16_t> scenario;
+    std::optional<SceneTransitionPublication> scene_transition_publication;
     std::optional<std::uint16_t> last_scenario_audio; // original316550, written even when a bank request is rejected
     std::uint8_t resource_hide_selected{},resource_hide_others{}; // original4B9D10/11
+    std::array<std::uint8_t,2> resource_hide_remaining{}; // original4B9D12/13
     std::uint8_t sound_loading_mode{}; // original324405; only mode2 rejects queued direct bank loads
     // Original3243D7 chooses resident-file versus archive-bundle resource work.
     // It is independent of pause4BADF8. The actual content owner must supply it.
@@ -298,6 +344,7 @@ public:
     ScenePrimaryActorPool& scene_primary_actors();
     CinematicObjectPool& cinematic_objects();
     gameplay_navigation::Bank& navigation();
+    const gameplay_navigation::Bank* navigation_if_created()const noexcept{return closed_?nullptr:navigation_.get();}
     TargetMetricCache& target_metrics();
     std::shared_ptr<Actor> primary(std::size_t)const noexcept;
     bool actor_roster_ready()const noexcept;
@@ -351,6 +398,16 @@ private:
     friend class gameplay_scenario::CutscenePlayback;
     friend class gameplay_application::ResourceBootstrap;
     friend class gameplay_application::SessionResources;
+    // Only 5EB520's synchronous 591C50 site authorizes nested bootstrap.
+    bool primary_resource_startup_{};
+    friend class gameplay_application::SessionStartupEffects;
+    friend class gameplay_application::SessionRoomMotions;
+    // Scoped to 5EB520's 1D3E90/68C890 synchronous script callers.
+    bool primary_script_startup_{};
+    bool primary_object_startup_{};
+    friend class gameplay_application::SessionRooms;
+    friend class gameplay_update::Owner;
+    friend class gameplay_update::ActorReception;
     gameplay_scenario::CutsceneActorTracks* cutscene_tracks_owner_{};
     friend class gameplay_scenario::CutsceneActorTracks;
     gameplay_scenario::CutsceneObjectTracks* cutscene_object_tracks_owner_{};

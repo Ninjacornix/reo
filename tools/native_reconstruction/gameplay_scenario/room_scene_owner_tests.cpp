@@ -159,6 +159,21 @@ void compare(World &world, const sc::RoomSceneInput &input,
           p.priority == ram[at + 0x32] && p.active == (ram[at + 0x3c] != 0));
     const auto canonical=world.controls.records()->acquire(id);
     check(canonical&&canonical->value.condition_ordinal==ram[at+0x3f]);
+    if(canonical->value.door_entry){const auto& entry=*canonical->value.door_entry;
+      check(entry.side==fixture_read<std::uint32_t>(ram.data(),at+0x50));
+      check(entry.yaw==fixture_read<std::uint32_t>(ram.data(),at+0x58));
+    }
+    if(canonical->value.object_entry){const auto& entry=*canonical->value.object_entry;
+      check(entry.anchor==fixture_read<std::array<float,3>>(ram.data(),at+0x4c));
+      check(entry.yaw==fixture_read<std::uint32_t>(ram.data(),at+0x58));
+      check(entry.travel==fixture_read<std::uint32_t>(ram.data(),at+0x70));
+      check(entry.endpoint==fixture_read<std::uint32_t>(ram.data(),at+0x78));
+      check(entry.scenario_flag==fixture_read<std::uint16_t>(ram.data(),at+0x86));
+    }
+    if(canonical->value.ladder_entry){const auto& entry=*canonical->value.ladder_entry;
+      check(entry.mode==fixture_read<std::uint32_t>(ram.data(),at+0x4c));
+      check(entry.model.encoded()==fixture_read<std::uint32_t>(ram.data(),at+0x60));
+    }
     if (p.kind < 14) {
       const auto record = world.controls.get(id);
       check(bool(record));
@@ -180,9 +195,13 @@ void compare(World &world, const sc::RoomSceneInput &input,
       if (const auto *zero = std::get_if<sc::ControlTypeZero>(&record->body))
         check(zero->matrix_program->resource_class ==
               fixture_read<std::uint32_t>(ram.data(), at + 0x60));
-      if (const auto *two = std::get_if<sc::ControlTypeTwo>(&record->body))
+      if (const auto *two = std::get_if<sc::ControlTypeTwo>(&record->body)) {
         check(*two->matrix_resource_class ==
               fixture_read<std::uint32_t>(ram.data(), at + 0x58));
+        check(two->camera_anchor && *two->camera_anchor ==
+              fixture_read<std::uint32_t>(ram.data(), at + 0x4c));
+        check(two->camera_offset && *two->camera_offset == ram[at + 0x54]);
+      }
     } else {
       check(bool(proxy->source));
       const auto parent = owner.definition(proxy->source);

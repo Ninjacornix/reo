@@ -11,6 +11,8 @@
 #include "actor_gauge.hpp"
 #include "material_animation.hpp"
 #include "../gameplay_scenario/scenario_events.hpp"
+#include "../gameplay_scenario/actor_script_terminal.hpp"
+#include "../gameplay_scenario/actor_offline_navigation.hpp"
 #include "../gameplay_world/behavior.hpp"
 #include "../gameplay_world/alignment.hpp"
 #include "../gameplay_world/interaction_transitions.hpp"
@@ -32,6 +34,7 @@
 #include "../gameplay_ai/observations.hpp"
 
 namespace reo::native::gameplay_scenario::content { class ScriptBank; class ScenarioArchive; struct RoomId; }
+namespace reo::native::gameplay_scenario {class RoomCameraModes;}
 
 namespace reo::native::gameplay_update {
 namespace tasks=gameplay_tasks;
@@ -72,6 +75,7 @@ struct State {
     bool scripts_enabled{true};
     std::int16_t session_work_gate{};
     std::uint8_t control_armed{},control_state{},short_exit_adjustment{};
+    // pause_latched is 4BADF9; World's selected_frame_marker is distinct 4BAE89.
     std::uint8_t notification_pending{},transition_gate{},pause_latched{};
     std::uint32_t request_flags{},control_flags{};
     // Supplied by the actual native audio/SDK tick owner. Simulation updates
@@ -116,7 +120,9 @@ public:
     // Application/bootstrap script stepping uses this same canonical caller,
     // without pretending the frame workers ran or committing simulation time.
     Result step_script(std::size_t channel,scenario::Providers={},std::size_t maximum_operations=4096)noexcept;
-    bool busy()const noexcept{return running_||world_.busy()||!events_.idle()||!linked_.idle();}
+    bool busy()const noexcept{return running_||world_.busy()||!events_.idle()||!linked_.idle()||
+        (actor_script_terminal_&&actor_script_terminal_->running_)||
+        (actor_offline_navigation_&&actor_offline_navigation_->busy());}
     Status close()noexcept;
     world::World& world()noexcept{return world_;}
     // Scenario resources become known after application/session construction.
@@ -124,7 +130,12 @@ public:
     Status bind_room_objects(std::uint16_t,std::shared_ptr<const gameplay_collision::room_objects::Owner>)noexcept;
     Status unbind_room_objects()noexcept;
     const gameplay_collision::room_objects::Owner* room_objects()const noexcept{return publication_.room_objects();}
+    GameplayMessageSink* message_sink()const noexcept{return publication_.message_sink();}
+    Status bind_message_sink(GameplayMessageSink*,GameplayMessageSink* expected_current=nullptr)noexcept;
     tasks::Scheduler& linked()noexcept{return linked_;}
+    // Borrowed room owner; its application unbinds it before room destruction.
+    Status bind_room_camera_modes(scenario::RoomCameraModes*,const scenario::RoomCameraModes* expected_current=nullptr)noexcept;
+    const scenario::RoomCameraModes* room_camera_modes()const noexcept{return room_camera_modes_;}
     MaterialAnimations& material_animations()noexcept{return materials_;}
     Status bind_linked_actors(world::ScriptedMotionBanks,std::shared_ptr<const gameplay_collision::response::Grid>);
     Status unbind_linked_actors()noexcept;
@@ -137,6 +148,8 @@ public:
     const scenario::CutsceneActorTracks* cutscene_actor_tracks()const noexcept{return cutscene_actor_tracks_.get();}
     tasks::EventTasks& events()noexcept{return events_;}
     scenario::ScenarioEvents& scenario_events()noexcept{return *scenario_events_;}
+    scenario::ActorScriptTerminal& actor_script_terminal()noexcept{return *actor_script_terminal_;}
+    scenario::ActorOfflineNavigation& actor_offline_navigation()noexcept{return *actor_offline_navigation_;}
     tasks::FlagTimers& timers()noexcept{return timers_;}
     tasks::SimulationClock& clock()noexcept{return clock_;}
     gameplay_events::Events& cooperative_events()noexcept{return cooperative_;}
@@ -164,6 +177,11 @@ public:
     PublicationStatus record_actor_message(const world::actors::EntityId& actor,ActorMessageSelector selector)noexcept{
         if(!open())return PublicationStatus::unavailable;
         return publication_.actor_message(actor,selector);
+    }
+    PublicationStatus record_interaction_registration(const world::actors::EntityId& actor,
+        const world::InteractionRegistrationMessage& message)noexcept {
+        if(!open())return PublicationStatus::unavailable;
+        return publication_.interaction_registration(actor,message);
     }
     PublicationStatus record_local_actor_message(const world::actors::EntityId& actor,ActorMessageSelector selector)noexcept {
         if(!open())return PublicationStatus::unavailable;
@@ -294,10 +312,13 @@ private:
     StatePublication publication_;
     std::unique_ptr<world::LinkedActorUpdates> linked_actor_updates_;
     std::unique_ptr<scenario::CutsceneActorTracks> cutscene_actor_tracks_;
+    scenario::RoomCameraModes* room_camera_modes_{};
     scenario::ActionChoices choices_;
     scenario::Interpreter scripts_;
     scenario::OfflineCoordinator offline_;
     std::unique_ptr<scenario::ScenarioEvents> scenario_events_;
+    std::unique_ptr<scenario::ActorScriptTerminal> actor_script_terminal_;
+    std::unique_ptr<scenario::ActorOfflineNavigation> actor_offline_navigation_;
     bool running_{},closed_{};
     bool changed(const scenario::ScenarioFlagChange& value)noexcept override{
         if(!open())return false;
@@ -305,6 +326,13 @@ private:
         return notifications_.changed(value);
     }
     bool changed(const scenario::StridedFlagChange& value)noexcept override{return notifications_.changed(value);}
+    // Only the 5EB520 script-site adapter can enter under its World guard.
+    friend class reo::native::gameplay_application::SessionStartupEffects;
+    friend class reo::native::gameplay_application::SessionRooms;
+    bool roster_room_objects_ready(std::uint16_t,const gameplay_collision::room_objects::Owner*)const noexcept;
+    Status replace_roster_room_objects(std::uint16_t,std::shared_ptr<const gameplay_collision::room_objects::Owner>,const gameplay_collision::room_objects::Owner*)noexcept;
+    Status bind_roster_scenario_scripts(const scenario::content::ScriptBank&,std::uint8_t);
+    Result start_roster_scenario_script(std::shared_ptr<const scenario::Program>,scenario::Providers,std::size_t)noexcept;
     Status run_script(std::size_t,scenario::Providers,std::size_t,Result&)noexcept;
     Status script_service(Services&,scenario::Providers,std::size_t,Result&);
     Result workers(Services&,world::Services&,scenario::Providers,std::size_t,std::size_t);

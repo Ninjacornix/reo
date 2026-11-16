@@ -1,8 +1,11 @@
 #include "native_session.hpp"
 #include "../gameplay_world/inventory_dialogue_presentation.hpp"
 #include "../gameplay_world/dialogue_pool.hpp"
+#include "../gameplay_world/dialogue_room_banks.hpp"
 #include "../gameplay_world/primary_actor_records.hpp"
 #include "../gameplay_update/dialogue_workers.hpp"
+#include "../gameplay_navigation/visibility.hpp"
+#include "../gameplay_scenario/scene_resources.hpp"
 #include "runtime/assets/virtual_afs.h"
 #include <cstring>
 #include <iostream>
@@ -56,7 +59,19 @@ int main(int argc,char** argv)try{
     check(!session.inventory_ui().request_blocked());world.paused=1;worker.run(u::Worker::sequences,session.update());check(worker.last_result()&&worker.last_result()->status==w::DialogueStatus::completed&&remaining.calls==1);
     world.paused=0;bool refused{};try{worker.run(u::Worker::sequences,session.update());}catch(const std::runtime_error&){refused=true;}check(refused&&worker.last_result()->status==w::DialogueStatus::unavailable&&worker.last_result()->stage==w::DialogueResponseStage::records);
     check(session.inventory_ui().configure_requests(1)==w::InventoryUiStatus::completed&&session.inventory_ui().request_blocked()==1);
+    // 812460 and 6B7E40 share actor+1098 across the AI and dialogue owners.
+    world.mode=0;
+    auto remote=world.primary(1);remote->ai_execution.emplace();remote->speech.remote_request=5;
+    reo::native::gameplay_collision::response::Grid grid;
+    const reo::native::gameplay_navigation::VisibilityRoom visibility{grid,{},{}};
+    reo::native::gameplay_scene::Records records;s::SceneResources descriptors;
+    const auto ai_frame=session.update().run_ai_frame(world.identity(1),true,visibility,records,descriptors,{});
+    check(ai_frame.status==u::AiFrameStatus::gated&&remote->speech.remote_request==0);
+
     worker.run(u::Worker::sequences,session.update());check(worker.last_result()->status==w::DialogueStatus::completed&&worker.last_result()->actors==2);
+    check(remote->speech.remote_request==0);remote->speech.remote_request=5;
+    worker.run(u::Worker::sequences,session.update());check(worker.last_result()->status==w::DialogueStatus::completed&&remote->speech.remote_request==0&&remote->speech.request==0&&remote->speech.variant==0);
+    world.mode=1;
     check(session.inventory_ui().initialize()==w::InventoryUiStatus::completed&&session.inventory_ui().request_blocked()==1&&display.suppressed()==false);
     check(session.inventory_ui().configure_requests(0)==w::InventoryUiStatus::unavailable_request_reset&&session.inventory_ui().request_blocked()==1);
     check(shared.set_timer(91,true)&&pool.flag(91)==true&&pool.flag_duration(91)==0);
@@ -66,6 +81,27 @@ int main(int argc,char** argv)try{
     check(session.update().scripts().install(0,program)==s::Status::completed&&session.update().scripts().install(1,program)==s::Status::completed);
     InactiveActors actors;check(session.update().run_workers(worker,actors).status==u::Status::completed);check(shared.timer(91)==1&&pool.flag_duration(91)==1&&remaining.at_occupancy==1);
     world.paused=1;check(session.update().run_workers(worker,actors).status==u::Status::completed&&shared.timer(91)==1);world.paused=0;
+    auto absent_bytes=std::make_shared<const std::vector<std::byte>>(128);s::content::ScriptBank absent(absent_bytes,s::content::BankFormat::scenario_evb);
+    auto actor=world.primary(0);actor->speech.selection=w::SpeechSelection{44,1,-1,2,-1};actor->speech.gauge_notice=5;actor->speech.dialogue_delay=30;actor->speech.response_delay=7;actor->speech.repeat_delay=4;actor->speech.target_lock=1;actor->speech.request=-3;actor->speech.variant=-128;actor->speech.notice=9;actor->speech.timing_active=11;actor->speech.previous_elapsed=12;actor->speech.elapsed=13;actor->speech.remote_request=14;
+    const auto ticks=shared.timer(91);const auto removed=pool.refresh_room_banks(session.archive(),absent);
+    check(removed.status==w::DialogueStatus::completed&&removed.section==-1&&removed.reset&&!removed.cache_hit&&removed.actors_reset==2&&removed.requested==0&&shared.loaded_index()==255);
+    check(actor->speech.selection->sequence==0&&actor->speech.selection->target_identifier==0&&actor->speech.selection->target_context==0&&actor->speech.selection->pending==0&&actor->speech.selection->response_state==0&&actor->speech.gauge_notice==0&&actor->speech.dialogue_delay==0&&actor->speech.response_delay==0&&actor->speech.repeat_delay==0&&actor->speech.target_lock==0);
+    check(actor->speech.request==-3&&actor->speech.variant==-128&&actor->speech.notice==9&&actor->speech.timing_active==11&&actor->speech.previous_elapsed==12&&actor->speech.elapsed==13&&actor->speech.remote_request==14&&shared.timer(91)==ticks&&pool.flag(91)==true);
+    actor->speech.selection->sequence=99;check(pool.refresh_room_banks(session.archive(),absent).reset&&actor->speech.selection->sequence==0);
+    const auto section_bank=[](std::uint8_t section){auto bytes=std::make_shared<std::vector<std::byte>>(140);const auto word=[&](unsigned at,std::uint32_t value){std::memcpy(bytes->data()+at,&value,4);};word(24*4,132);word(132,128);word(136,0xffffffffu);std::fill_n(bytes->begin()+128,4,std::byte(section));return s::content::ScriptBank(bytes,s::content::BankFormat::scenario_evb);};
+    shared.select(0);shared.publish_loaded_index(9);world.session().room_variant=0;world.session().scenario.reset();world.session().asset_loading_mode.reset();actor->speech.selection->sequence=99;
+    const auto cached=pool.refresh_room_banks(session.archive(),section_bank(9));check(cached.status==w::DialogueStatus::completed&&cached.cache_hit&&!cached.reset&&cached.requested==0&&actor->speech.selection->sequence==99);
+    shared.select(1);const auto invalid_row=pool.refresh_room_banks(session.archive(),section_bank(9));check(invalid_row.status==w::DialogueStatus::unsupported_profile&&invalid_row.stage==w::DialogueBankLoadStage::section&&!invalid_row.reset&&actor->speech.selection->sequence==99);
+    shared.select(2);world.room=65535;world.session().room_variant.reset();const auto past_rows=pool.refresh_room_banks(session.archive(),section_bank(9));check(past_rows.status==w::DialogueStatus::completed&&past_rows.section==-1&&past_rows.reset&&past_rows.requested==0);
+    if(argc==2){
+        shared.select(0x100);world.room=0;world.session().room_variant.reset();world.session().scenario=1;world.session().asset_loading_mode=1;world.primary(0)->character=0;world.primary(1)->character=1;
+        const auto loaded=pool.refresh_room_banks(session.archive(),section_bank(0));check(loaded.status==w::DialogueStatus::completed&&loaded.requested==6&&loaded.loaded==6&&loaded.missing==0&&loaded.cache_published&&shared.loaded_index()==0);
+        const auto retained_banks=pool.bank_snapshot();check(retained_banks&&(*retained_banks)[0].cues&&(*retained_banks)[1].texts&&(*retained_banks)[8].cues);
+        shared.select(0x100);world.session().asset_loading_mode=0;world.primary(1)->character=0;
+        check(pool.refresh_room_banks(session.archive(),section_bank(0)).loaded==6);const auto duplicated=pool.bank_snapshot();check(duplicated&&(*duplicated)[0].cues==(*duplicated)[1].cues&&(*duplicated)[0].texts==(*duplicated)[1].texts&&(*duplicated)[0].cues!=(*retained_banks)[0].cues&&(*retained_banks)[0].texts->size()>0);
+        shared.select(0x100);const auto missing=pool.refresh_room_banks(session.archive(),section_bank(254));check(missing.status==w::DialogueStatus::completed&&missing.requested==6&&missing.loaded==0&&missing.missing==6&&missing.cache_published&&shared.loaded_index()==254&&pool.bank_snapshot()==duplicated);
+        check(pool.refresh_room_banks(session.archive(),section_bank(254)).cache_hit);
+    }
     const auto forwarded=remaining.calls;
     foreign=false;try{worker.run(u::Worker::sequences,other.update());}catch(const std::invalid_argument&){foreign=true;}check(foreign&&remaining.calls==forwarded);
     check(worker.close()==u::Status::completed);refused=false;try{worker.run(u::Worker::sequences,session.update());}catch(const std::invalid_argument&){refused=true;}check(refused);

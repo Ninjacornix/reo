@@ -81,7 +81,8 @@ void resource_index_fixtures(){
     };
     table(0,{"r001.afs","r002.afs","r028.afs","r035.afs","r041.afs","r001_h.bin","r002_h.bin","r028_h.bin","r035_h.bin","r041_h.bin"});
     for(unsigned i=0;i<5;++i){
-        const auto base=16384*(i+1);table(base,{"display0","display1","display2","display3"});
+        // Unsorted names and an unnamed live member must not change ordinals.
+        const auto base=16384*(i+1);table(base,{"display3","display1","","display0"});
         for(unsigned n=0;n<4;++n)bytes[base+2048+2048*n]=std::uint8_t(11+n);
         auto* header=bytes.data()+base+12288;reo::assets::put32(header,1);reo::assets::put32(header+4,3);
         std::memcpy(header+8,"OBJ00_00_A_00_NB",16);std::memcpy(header+24,"OBJ00_00_A_00_NB",16);std::memcpy(header+40,"FILE_TXT",8);
@@ -99,7 +100,10 @@ void resource_index_fixtures(){
         check(!archive.read_resource(std::uint16_t(id),"obj00_00_a_00.nbd"));
         check(!archive.read_resource(std::uint16_t(id),"display1"));
         check(archive.read_member(std::uint16_t(id),"display1")->at(0)==std::byte{12});
+        for(unsigned ordinal=0;ordinal<4;++ordinal){const auto actual=archive.read_member_ordinal(std::uint16_t(id),ordinal);check(actual&&actual->size()==128&&actual->at(0)==std::byte(11+ordinal));}
+        check(!archive.read_member_ordinal(std::uint16_t(id),4));
     }
+    check(!archive.read_member_ordinal(19,0));
     check(!archive.read_resource(19,"FILE_TXT")&&!archive.read_resource(1,"")&&!archive.read_resource(1,"folder/")&&!archive.read_resource(1,std::string(256,'a'))&&!archive.read_resource(1,std::string("file\0txt",8)));
     const auto malformed=[&]{bool refused{};try{content::ScenarioArchive candidate(source());}catch(const std::invalid_argument&){refused=true;}check(refused);};
     reo::assets::put32(bytes.data()+16384+12288,4);malformed(); // index starts past the available suffix

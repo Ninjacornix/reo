@@ -18,6 +18,9 @@ class WorldAnimation final {
         : world_(world), resources_(resources), profiles_(profiles), prelude_(prelude) {}
     bool bound_to(const World& world)const noexcept{return &world==&world_&&!world_.closed();}
     void select(const actors::EntityId&, std::uint32_t encoded, float initial, float blend);
+    float first_frame(const actors::EntityId&,std::uint32_t encoded,std::uint16_t track); //5D4A10
+    float last_frame(const actors::EntityId&,std::uint32_t encoded,std::uint16_t track); //5D4930
+    float matched_frame(const actors::EntityId&,std::uint32_t encoded,std::uint16_t track); //5D4B10
     void select_blended(const actors::EntityId&, std::uint32_t primary, std::uint32_t secondary,
                         float weight);
     void apply_named(const actors::EntityId&, const animation::PackedMotion&, float initial,
@@ -29,6 +32,7 @@ class WorldAnimation final {
     std::int8_t tick_blended(const actors::EntityId&, float step, float weight);
 
   private:
+    std::shared_ptr<const animation::MotionBlock> frame_block(const actors::EntityId&,std::uint32_t,std::uint16_t);
     bool override_motion(const actors::EntityId&, std::uint32_t, float initial, float blend);
     World& world_;
     WorldMotionResources& resources_;

@@ -29,7 +29,7 @@ DialogueStatus DialoguePool::initialize_owned_state()noexcept{
     if(running_||world_.busy())return DialogueStatus::busy;
     if(!responses_){try{responses_.reset(new DialogueResponsesState(*this));}catch(const std::bad_alloc&){return DialogueStatus::no_memory;}}
     responses_->clear_owned();
-    initialized_=false;banks_.reset();world_.session().auxiliary_scene.clear_timers();previous_secondary_actor_.reset();primary_actor_.reset();selected_sequences_={};clear_records_unchecked();
+    initialized_=false;banks_.reset();physical_banks_.emplace();world_.session().auxiliary_scene.clear_timers();previous_secondary_actor_.reset();primary_actor_.reset();selected_sequences_={};clear_records_unchecked();
     const auto population=world_.session().primary_population;if(!population||*population>World::primary_capacity)return DialogueStatus::unavailable;
     for(std::size_t i=0;i<*population;++i){const auto actor=world_.primary(i);if(!actor)return DialogueStatus::unavailable;actor->speech.selection=SpeechSelection{0,0,0,0,0};actor->speech.gauge_notice=0;actor->speech.dialogue_delay=0;actor->speech.repeat_delay=0;actor->speech.response_delay=0;actor->speech.target_lock=0;}
     initialized_=true;return DialogueStatus::completed;
@@ -47,7 +47,7 @@ DialogueStatus DialoguePool::banks(std::shared_ptr<const DialogueBanks> value)no
     try{if(!responses_)responses_.reset(new DialogueResponsesState(*this));responses_->bind(*value);}
     catch(const std::bad_alloc&){return DialogueStatus::no_memory;}
     catch(const std::invalid_argument&){return DialogueStatus::unsupported_profile;}
-    banks_=std::move(value);return DialogueStatus::completed;
+    banks_=std::move(value);physical_banks_.reset();return DialogueStatus::completed;
 }
 std::optional<DialogueRecord> DialoguePool::record(std::size_t index)const{return initialized_&&index<records_.size()?std::optional(records_[index]):std::nullopt;}
 std::optional<bool> DialoguePool::flag(std::uint16_t value)const noexcept{if(!initialized_)return{};return world_.session().auxiliary_scene.timer_active(value);}

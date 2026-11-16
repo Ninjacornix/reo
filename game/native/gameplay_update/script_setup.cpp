@@ -57,6 +57,24 @@ Status Owner::bind_scenario_scripts(const scenario::content::ScriptBank& bank,st
     return Status::completed;
 }
 
+Status Owner::bind_roster_scenario_scripts(const scenario::content::ScriptBank& bank,std::uint8_t policy_row){
+    if(!open())return Status::closed;
+    if(running_||!events_.idle()||!linked_.idle()||(actor_script_terminal_&&actor_script_terminal_->running_))return Status::busy;
+    // 68C260 does not clear the saved continuation array. A warm pointer
+    // cannot be mapped to the newly loaded owned EVB without provenance.
+    const auto before=scripts_.channels();
+    for(const auto channel:{0u,4u})if(before[channel].saved.block!=UINT32_MAX)return Status::script_failure;
+    if(!bank.object(0))return Status::script_failure;
+    const auto status=bind_scenario_scripts(bank,policy_row);if(status!=Status::completed)return status;
+    for(const auto channel:{0u,4u}){
+        auto current=scripts_.channels()[channel];current.condition=before[channel].condition;
+        // 68C260 writes index 4 even when EVB entry 4 is null.
+        if(!current.program)current.block_index=channel;
+        if(scripts_.restore_channel(channel,current)!=scenario::Status::completed)return Status::script_failure;
+    }
+    state.scripts_enabled=true;return Status::completed;
+}
+
 Status Owner::bind_room_scripts(const scenario::content::ScriptBank& bank,std::size_t room_channel) {
     if (!open()) return Status::closed;
     if (running_) return Status::busy;

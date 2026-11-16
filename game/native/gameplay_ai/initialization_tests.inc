@@ -23,33 +23,34 @@ void initialization_contracts(){
         if(profile==1){(void)controls.register_control(0,slot);controls.registration(0)->phase=7;controls.registration(0)->payload={1,2,3,4};}
         else if(profile==2)for(unsigned i=0;i<64;++i)(void)controls.register_control(1,i);
         else if(profile==3){(void)controls.register_control(0,slot);for(unsigned i=0;i<64;++i)(void)ai::publish_actor_control(controls,std::uint8_t(slot),i);}
-        auto execution=state(slot+profile*256);nav::ActorRouteState route;
+        auto execution=state(slot+profile*256);nav::ActorRouteState route;std::optional<std::uint8_t> remote_request=std::uint8_t(slot+17);
         route.current_node=-3;route.destination_node=4;route.last_current_node=7;route.final_position={1,2,3};route.output.route={5,6,{4,5,6},{7,8,9}};route.output.link=314;
         route.previous_action=0x1234;route.action=0x2345;route.destination_room=99;route.completed=7;route.selection_mode=3;route.refresh=8;
 #ifdef REO_AI_ORIGINAL
         constexpr unsigned a=0x10000,base=0x7449b0,table_bytes=328+64*28;
-        project(memory,execution);project_initial_route(memory,route);project_controls(memory,base,controls);
+        project(memory,execution);memory[a+0x1098]=*remote_request;project_initial_route(memory,route);project_controls(memory,base,controls);
         memory[a+3]=std::uint8_t(slot);memory[a+0xff0]=enabled;memory[0x843780]=bank.header_byte();
         auto expected=std::vector<std::uint8_t>(memory.begin(),memory.begin()+0x11100);
         auto table=std::vector<std::uint8_t>(memory.begin()+base,memory.begin()+base+table_bytes);
 #endif
-        const auto result=ai::initialize(bank,controls,enabled,std::uint8_t(slot),&execution,&route);
+        const auto result=ai::initialize(bank,controls,enabled,std::uint8_t(slot),&execution,&route,&remote_request);
         check(result.status==ai::Status::completed&&result.enabled==(enabled!=0)&&bank.header_byte()==0);
-        if(!enabled){++initialization_disabled;check(!result.registration&&!result.publication);}
-        else{check(result.registration.has_value()&&result.publication.has_value());if(result.publication->status!=ai::RequestStatus::queued)++initialization_limited;}
+        if(!enabled){++initialization_disabled;check(!result.registration&&!result.publication&&remote_request==std::uint8_t(slot+17));}
+        else{check(remote_request==0&&result.registration.has_value()&&result.publication.has_value());if(result.publication->status!=ai::RequestStatus::queued)++initialization_limited;}
 #ifdef REO_AI_ORIGINAL
-        project(expected,execution);project_initial_route(expected,route);project_controls(table,0,controls);
+        project(expected,execution);expected[a+0x1098]=*remote_request;project_initial_route(expected,route);project_controls(table,0,controls);
         R5900Context context;PS2Runtime runtime;context.pc=0x8120c0;SET_GPR_U32(&context,4,a);SET_GPR_U32(&context,29,0x1f00000);SET_GPR_U32(&context,31,0x100);original_transform_port(memory.data(),&context,&runtime);
         check(context.pc==0x100&&GPR_U32(&context,29)==0x1f00000&&memory[0x843780]==bank.header_byte());
         check(std::memcmp(expected.data()+a,memory.data()+a,0x1100)==0&&std::memcmp(table.data(),memory.data()+base,table_bytes)==0);
 #endif
         ++initialization_cases;
     }
-    nav::Bank bank(variants);check(bank.bind(asset));ai::ControlRequests controls;auto execution=state(17);const auto before=execution;nav::ActorRouteState route;
-    check(ai::initialize(bank,controls,1,0,&execution,nullptr).status==ai::Status::unavailable&&execution==before&&controls.pending().empty()&&bank.header_byte()==0);++initialization_refusals;
+    nav::Bank bank(variants);check(bank.bind(asset));ai::ControlRequests controls;auto execution=state(17);const auto before=execution;nav::ActorRouteState route;std::optional<std::uint8_t> remote_request=77;
+    check(ai::initialize(bank,controls,1,0,&execution,nullptr,&remote_request).status==ai::Status::unavailable&&execution==before&&controls.pending().empty()&&bank.header_byte()==0);++initialization_refusals;
     check(bank.bind(asset)&&bank.header_byte()==0); // rebinding is not reloading
-    check(ai::initialize(bank,controls,1,0,nullptr,&route).status==ai::Status::unavailable&&controls.pending().empty());++initialization_refusals;
+    check(ai::initialize(bank,controls,1,0,nullptr,&route,&remote_request).status==ai::Status::unavailable&&controls.pending().empty());++initialization_refusals;
+    check(ai::initialize(bank,controls,1,0,&execution,&route,nullptr).status==ai::Status::unavailable&&execution==before&&controls.pending().empty());++initialization_refusals;
     check(bank.bind(initialization_asset())&&bank.header_byte()==0x24);
-    check(ai::initialize(bank,controls,0,255,nullptr,nullptr).status==ai::Status::completed&&bank.header_byte()==0&&controls.pending().empty());
-    bank.close();check(ai::initialize(bank,controls,0,0,nullptr,nullptr).status==ai::Status::unavailable);++initialization_refusals;
+    check(ai::initialize(bank,controls,0,255,nullptr,nullptr,nullptr).status==ai::Status::completed&&bank.header_byte()==0&&controls.pending().empty());
+    bank.close();check(ai::initialize(bank,controls,0,0,nullptr,nullptr,nullptr).status==ai::Status::unavailable);++initialization_refusals;
 }

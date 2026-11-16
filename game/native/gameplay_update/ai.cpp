@@ -1,6 +1,7 @@
 #include "update.hpp"
 #include "../gameplay_ai/off_room_actions.hpp"
 #include "../gameplay_ai/steering.hpp"
+#include "../gameplay_ai/goal_route.hpp"
 namespace reo::native::gameplay_update {
 gameplay_ai::ObservationAdmitted Owner::admit_ai_reference_reaction(const world::actors::EntityId& id,std::uint32_t mode){
     if(!open())return {};
@@ -28,8 +29,12 @@ gameplay_ai::GoalDispatched Owner::dispatch_ai_goal(const world::actors::EntityI
         return {};
     const auto reference = world_.primary(0);
     const auto companion = world_.primary(actor->slot == 1 ? 2 : 1);
+    gameplay_navigation::RoomFlags flags;
+    for (std::uint32_t room = 0; room < flags.size(); ++room)
+        flags[room] = flags_.strided_half(room, 0);
+    const gameplay_ai::GoalRouteContext context{world_.room, flags};
     return gameplay_ai::dispatch_goal(*actor, reference.get(), companion.get(), world_.navigation(),
-                                     resources, world_.session().random);
+                                     resources, world_.session().random, &context);
 }
 gameplay_ai::Status Owner::dispatch_active_ai_action(
     const world::actors::EntityId& id, bool updates_blocked,
@@ -64,7 +69,7 @@ AiFrameResult Owner::run_ai_frame(const world::actors::EntityId& id, bool update
     input.analog.fill(0);
     state.steering_button_10 = 1;
     state.steering_button_20 = 0;
-    state.reaction = 0;
+    actor->speech.remote_request = 0;
     if (updates_blocked || state.inhibited || actor->response_lock ||
         world_.session().suppress_hits || (actor->status & 0x20u)) {
         result.status = AiFrameStatus::gated;
@@ -81,8 +86,12 @@ AiFrameResult Owner::run_ai_frame(const world::actors::EntityId& id, bool update
         result.status = AiFrameStatus::goal_unavailable;
         return result;
     }
+    if (!actor->navigation_route) {
+        result.status = AiFrameStatus::action_unavailable;
+        return result;
+    }
     const auto action_status =
-        actor->transient_marker
+        actor->navigation_route->selection_mode
             ? gameplay_ai::dispatch_off_room_action(*actor, world_.navigation(),
                                                     world_.session().clock_mode)
             : dispatch_active_ai_action(id, false, &room, camera_heading);
@@ -97,7 +106,7 @@ gameplay_ai::InitializationResult Owner::initialize_ai(const world::actors::Enti
     if(!open())return {};
     const auto actor=world_.resolve(id);if(!actor)return {};
     return gameplay_ai::initialize(world_.navigation(),world_.session().ai_control_requests,actor->ai_control,actor->slot,
-        actor->ai_execution?&*actor->ai_execution:nullptr,actor->navigation_route?&*actor->navigation_route:nullptr);
+        actor->ai_execution?&*actor->ai_execution:nullptr,actor->navigation_route?&*actor->navigation_route:nullptr,&actor->speech.remote_request);
 }
 std::optional<std::int32_t> Owner::ai_activity_mode()const noexcept{
     if(!open())return {};

@@ -3,6 +3,16 @@
 #include <cmath>
 #include <stdexcept>
 namespace reo::native::gameplay_collision::ground {
+std::int8_t ProbeRef::read() const noexcept {
+    return byte_ ? *byte_ : std::bit_cast<std::int8_t>(
+        std::uint8_t(std::bit_cast<std::uint32_t>(*word_) >> 8));
+}
+void ProbeRef::write(std::int8_t value) const noexcept {
+    if (byte_) { *byte_ = value; return; }
+    auto bits = std::bit_cast<std::uint32_t>(*word_);
+    bits = (bits & ~0xff00u) | (std::uint32_t(std::bit_cast<std::uint8_t>(value)) << 8);
+    *word_ = std::bit_cast<float>(bits);
+}
 transform_math::Angles RotationRef::angles() const noexcept {
     return {std::uint16_t(x), std::uint16_t(y), std::uint16_t(z)};
 }
@@ -67,7 +77,7 @@ Report update(std::span<Entry> ordered, const response::Grid& floors, Walls& wal
             ++report.wall_queries;
             walls.correct(entry.id, entry.view);
         }
-        std::int8_t* state{};
+        ProbeRef* state{};
         if (entry.subtype == 1)
             state = &entry.states.kind_one;
         else if (entry.subtype == 0x29)
@@ -76,10 +86,16 @@ Report update(std::span<Entry> ordered, const response::Grid& floors, Walls& wal
             state = &entry.states.kind_twenty_d;
         if (!state)
             refresh(entry.view, floors);
-        else if (probe(entry.view, *state, floors) == ProbeStatus::completed)
-            ++report.classified;
-        else
-            ++report.unknown_probes;
+        else {
+            if (!state->available())
+                throw std::runtime_error("Secondary ground probe source unavailable");
+            auto value = state->read();
+            if (probe(entry.view, value, floors) == ProbeStatus::completed) {
+                state->write(value);
+                ++report.classified;
+            } else
+                ++report.unknown_probes;
+        }
     }
     return report;
 }

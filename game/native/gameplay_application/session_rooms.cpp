@@ -30,6 +30,7 @@ bool clear_collision_disabled(gameplay_world::Session& session,std::uint32_t sel
 }
 struct SessionRoomObjects {
     std::map<std::uint16_t,std::shared_ptr<collision::room_objects::Owner>> scenarios;
+    std::optional<std::uint16_t> startup_bytes_scenario;
 };
 struct SessionRoomGeometry {
     collision::response::Grid walls,floors;
@@ -81,11 +82,17 @@ std::string key(char prefix,gameplay_scenario::content::RoomId room){
 }
 SessionRooms::SessionRooms(std::shared_ptr<NativeSession> session):session_(std::move(session)){}
 std::shared_ptr<const collision::response::Grid> SessionRooms::retain_floor(std::uint16_t number){
-    const auto invocation=retain(number);if(!invocation||!invocation->current(invocation->identity()))return{};
     const auto host=session_.lock();const auto lease=host?host->retain_room(host):nullptr;
     if(!lease||!lease->current()||lease->room().room!=number)return{};
-    const auto data=lease->geometry_cache();if(!data||!data->ready)return{};
-    return {data,&data->floors};
+    const auto id=lease->room();const auto identity=std::tuple{id.scenario,id.room,id.variant};
+    if(const auto found=floors_.find(identity);found!=floors_.end())
+        if(auto retained=found->second.lock())return retained;
+    try{
+        const auto bytes=host->archive().read_resource(id.scenario,key('g',id));
+        if(!bytes)return{};
+        auto result=std::make_shared<const collision::response::Grid>(collision::response::Grid::import(*bytes));
+        floors_[identity]=result;return result;
+    }catch(const std::invalid_argument&){return{};}
 }
 std::shared_ptr<gameplay_world::World> SessionRooms::world()const noexcept{
     const auto host=session_.lock();return host?std::shared_ptr<gameplay_world::World>(host,&host->world()):nullptr;
@@ -94,6 +101,60 @@ std::shared_ptr<collision::room_objects::Owner> SessionRooms::objects()const noe
     const auto host=session_.lock();if(!host||!host->open()||!host->room()||!host->room_objects_)return {};
     const auto found=host->room_objects_->scenarios.find(host->room()->scenario);
     return found==host->room_objects_->scenarios.end()?nullptr:found->second;
+}
+std::optional<RoomObjectStartupBytes> SessionRooms::object_startup_bytes()const noexcept{
+    const auto host=session_.lock();const auto owner=objects();
+    if(!host||!host->room_objects_||!host->room()||!owner||
+       host->room_objects_->startup_bytes_scenario!=host->room()->scenario)return{};
+    const auto* row=owner->type(31);if(!row)return{};
+    return RoomObjectStartupBytes{std::uint8_t(row->request_threshold),std::uint8_t(row->capacity),row->parameter4};
+}
+gameplay_scenario::RoomObjectCommands* SessionRooms::script_commands()const noexcept{
+    const auto host=session_.lock();const auto owner=objects();
+    if(!host||!host->open()||!commands_||!owner||owner.get()!=command_owner_)return nullptr;
+    const auto room=host->retain_room(host);if(!room||room->identity()!=command_room_)return nullptr;
+    if(command_scene_&&(host->object_instances()!=command_scene_||!command_scene_->open()))return nullptr;
+    return commands_.get();
+}
+bool SessionRooms::initialize_roster_objects()noexcept{
+    const auto host=session_.lock();if(!host||!host->open())return false;
+    auto& world=host->world();
+    if(!world.updating_||!world.primary_object_startup_||!world.scenario||!world.session().asset_loading_mode||
+       !*world.session().asset_loading_mode||!host->room()||host->room()->scenario!=*world.scenario)return false;
+    auto lease=host->retain_room(host);if(!lease||!lease->current())return false;
+    try{
+        if(!host->room_objects_)host->room_objects_=std::make_shared<SessionRoomObjects>();
+        auto& state=*host->room_objects_;const auto scenario=*world.scenario;
+        const auto found=state.scenarios.find(scenario);
+        auto previous=found==state.scenarios.end()?std::shared_ptr<collision::room_objects::Owner>{}:found->second;
+        const auto* expected=previous.get();
+        if(!host->update().roster_room_objects_ready(scenario,expected)||
+           !host->reception().roster_room_objects_ready(scenario,expected))return false;
+        // Retire the native scene before the source's raw record reset; old
+        // invocation leases keep its closed scene and geometry alive.
+        commands_.reset();command_owner_=nullptr;command_scene_=nullptr;command_room_={};
+        if(!lease->retire_objects())return false;
+        if(host->update().replace_roster_room_objects(scenario,{},expected)!=gameplay_update::Status::completed||
+           !host->reception().replace_roster_room_objects(scenario,{},expected))return false;
+        if(found!=state.scenarios.end())state.scenarios.erase(found);
+        auto imported=std::make_shared<collision::room_objects::Owner>();
+        state.scenarios.emplace(scenario,imported);
+        state.startup_bytes_scenario=scenario; // 6ACF80 cleared the physical type row.
+        if(host->update().replace_roster_room_objects(scenario,imported,nullptr)!=gameplay_update::Status::completed||
+           !host->reception().replace_roster_room_objects(scenario,imported,nullptr))return false;
+        char types[17],placements[17];
+        std::snprintf(types,sizeof(types),"obj%03u.dat",unsigned(scenario));
+        std::snprintf(placements,sizeof(placements),"r%03u.sto",unsigned(scenario));
+        const auto type_bytes=host->archive().read_resource(scenario,types); // 6AD720
+        if(type_bytes)*imported=collision::room_objects::Owner::import_types(*type_bytes);
+        imported->apply_source_startup_bytes();
+        const auto placement_bytes=host->archive().read_resource(scenario,placements); // 6AD610
+        if(placement_bytes)imported->import_placements(*placement_bytes);
+        else imported->finish_without_placements();
+        commands_=std::make_unique<gameplay_scenario::RoomObjectCommands>(*imported);
+        command_owner_=imported.get();command_room_=lease->identity();
+        return true;
+    }catch(...){return false;}
 }
 std::shared_ptr<gameplay_contact_world::RoomInvocation> SessionRooms::retain(std::uint16_t room){
     status_=RoomResourcesStatus::unavailable_session;
@@ -110,6 +171,12 @@ std::shared_ptr<gameplay_contact_world::RoomInvocation> SessionRooms::retain(std
     try{
         auto& cached=lease->geometry_cache();
         if(!cached){
+            // Once a resource graph exists, 6AD5C0 is the only producer of
+            // scenario objects. A room read cannot silently run it early.
+            if(host->resources()){
+                const auto owner=objects();
+                if(!owner||!owner->initialized()){status_=RoomResourcesStatus::unavailable_object_instances;return {};}
+            }
             if(host->update().busy()||host->world().busy()){status_=RoomResourcesStatus::object_binding_refused;return {};}
             status_=RoomResourcesStatus::unavailable_geometry;
             const auto id=lease->room();
@@ -162,6 +229,10 @@ std::shared_ptr<gameplay_contact_world::RoomInvocation> SessionRooms::retain(std
         if(!scene||!scene->open()){status_=RoomResourcesStatus::unavailable_object_instances;return {};}
         if(!host->world().session().collision_disabled_mask){status_=RoomResourcesStatus::unavailable_geometry;return {};}
         if(!bind_objects(cached->objects))return {};
+        if(command_owner_!=cached->objects.get()||command_scene_!=scene.get()||command_room_!=lease->identity()){
+            commands_=std::make_unique<gameplay_scenario::RoomObjectCommands>(*cached->objects,scene->lifetime());
+            command_owner_=cached->objects.get();command_scene_=scene.get();command_room_=lease->identity();
+        }
         auto result=std::make_shared<Invocation>(std::move(lease),cached);
         status_=RoomResourcesStatus::completed;return result;
     }catch(const std::invalid_argument&){status_=RoomResourcesStatus::unavailable_geometry;return {};}

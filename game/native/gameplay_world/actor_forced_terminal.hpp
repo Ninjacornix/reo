@@ -8,6 +8,11 @@ namespace reo::native::gameplay_world {
 class ActorForcedTerminal final:public gameplay_scenario::ForcedActorTerminal {
 public:
     ActorForcedTerminal(gameplay_update::Owner&,ActorResourceOperations&,RecoveryUi&);
+    bool bound_to(const World&)const noexcept;
+    // Checks the selected actor and actual inventory graph without mutation.
+    // The UI phase is checked at the source's close call, after its prefix.
+    bool ready()const noexcept;
+    bool busy()const noexcept{return running_;}
     bool apply(World&,std::uint32_t mode) noexcept override;
     void force(std::uint32_t mode);
 
@@ -16,5 +21,6 @@ private:
     ActorResourceOperations& operations_;
     RecoveryUi& ui_;
     World& world_;
+    bool running_{};
 };
 }

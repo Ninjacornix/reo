@@ -38,7 +38,7 @@ ai::ExecutionState state(unsigned seed){
     for(unsigned i=0;i<4;++i){result.goal_phases[i]=std::uint8_t(seed+i);result.action_phases[i]=std::uint8_t(seed*3+i);result.goal_parameters[i]=std::uint16_t(seed*7+i);}
     if(seed&1)result.weight_profile=std::uint8_t(seed%20);
     for(unsigned i=0;i<8;++i){result.base_weights[i]=std::uint8_t(seed+i);result.reactive_weights[i]=std::uint8_t(seed*3+i);result.status_weights[i]=std::uint8_t(seed*7+i);result.combined_weights[i]=std::uint8_t(seed*11+i);}
-    result.inhibited=std::uint8_t(seed+13);result.reaction=std::uint8_t(seed+17);result.pending_reaction=std::uint8_t(seed+19);result.observation_flags=std::uint8_t(seed+23);
+    result.inhibited=std::uint8_t(seed+13);result.pending_reaction=std::uint8_t(seed+19);result.observation_flags=std::uint8_t(seed+23);
     result.periodic_counter=std::uint16_t(seed*17);result.room_memo=std::uint16_t(seed*19);result.reaction_countdown=std::uint16_t(seed*23);result.action_counter=seed*67u;result.forced_priority=std::bit_cast<std::int32_t>(seed*97u);
     result.peer_priority=std::uint8_t(seed+29);result.reference_request=std::uint8_t(seed+31);result.owned_request=std::uint16_t(seed*29);result.goal_resource=0xdead0000u+seed;
     result.weight_mode=std::uint8_t(seed+37);result.room_reaction_gate=std::uint8_t(seed+41);
@@ -53,7 +53,7 @@ void project(std::vector<std::uint8_t>& target,const ai::ExecutionState& s,unsig
     target[a+0x1074]=s.goal_refresh;target[a+0x103a]=s.action_marker;
     target[a+0x1067]=s.weight_profile.value_or(255);put(target,a+0x10ac,s.weight_profile?0x828a60u+56u*(*s.weight_profile):0u);
     for(unsigned i=0;i<8;++i){target[a+0x10b0+i]=s.base_weights[i];target[a+0x10b8+i]=s.reactive_weights[i];target[a+0x10c0+i]=s.status_weights[i];target[a+0x10c8+i]=s.combined_weights[i];}
-    target[a+0xff1]=s.inhibited;target[a+0x1098]=s.reaction;target[a+0x1099]=s.pending_reaction;target[a+0x1083]=s.observation_flags;
+    target[a+0xff1]=s.inhibited;target[a+0x1099]=s.pending_reaction;target[a+0x1083]=s.observation_flags;
     put(target,a+0x1072,s.periodic_counter);put(target,a+0x107c,s.room_memo);put(target,a+0x109a,s.reaction_countdown);put(target,a+0x1034,s.action_counter);put(target,a+0x109c,s.forced_priority);
     target[a+0x1080]=s.reference_request;target[a+0x1081]=s.peer_priority;put(target,a+0x108a,s.owned_request);put(target,a+0x1090,s.goal_resource);
     target[a+0x1077]=s.weight_mode;target[a+0x107e]=s.room_reaction_gate;

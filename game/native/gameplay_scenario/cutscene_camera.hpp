@@ -23,11 +23,11 @@ std::shared_ptr<const PreparedCameraTracks> prepare_camera_tracks(const Cutscene
 enum class CutsceneCameraStatus {completed,unavailable,no_memory};
 struct CameraKeyLocation {std::size_t group{},stream{},record{};friend bool operator==(const CameraKeyLocation&,const CameraKeyLocation&)=default;};
 // The sole controller state is borrowed, including its simulation frame and
-// selection/end bytes. Only authored stream cursors and camera parameters live
-// here. Fog selection reaches the existing canonical Fog owner.
+// selection/end bytes. Authored stream cursors live here; camera parameters
+// are borrowed from the same owner as ordinary gameplay camera evaluation.
 class CutsceneCamera final {
 public:
-    CutsceneCamera(CutscenePlaybackState&,Fog&,CameraParameters initial) noexcept;
+    CutsceneCamera(CutscenePlaybackState&,Fog&,CameraParameters&) noexcept;
     CutsceneCamera(const CutsceneCamera&)=delete;
     CutsceneCamera& operator=(const CutsceneCamera&)=delete;
     CutsceneCameraStatus install(std::shared_ptr<const PreparedCameraTracks>) noexcept;
@@ -41,7 +41,7 @@ public:
     std::optional<std::size_t> cursor(std::size_t group,std::size_t stream)const noexcept;
     const auto& bindings()const noexcept{return bindings_;}
 private:
-    CutscenePlaybackState& state_;Fog& fog_;CameraParameters parameters_;
+    CutscenePlaybackState& state_;Fog& fog_;CameraParameters& parameters_;
     std::shared_ptr<const PreparedCameraTracks> tracks_;
     std::optional<std::size_t> selection_;
     std::vector<std::array<std::optional<std::size_t>,2>> positions_;

@@ -25,12 +25,20 @@ public:
     bool send(const ActorRoomObjectMessage&)noexcept override;
     bool send(const ActorPeerMessage&)noexcept override;
     bool send(const ActorSpeechMessage&)noexcept override;
+    bool begin_room_claim(const RoomClaimBeginMessage&)noexcept override;
+    bool send(const RoomClaimReleaseMessage&)noexcept override;
+    bool send(const RoomMembershipMessage&)noexcept override;
+    std::optional<std::uint32_t> room_owner(MessageRoute,std::uint16_t)noexcept override;
+    // Separate source scheduler stages: restore workspace, drain requests,
+    // then publish changes. Publication does not immediately receive its data.
+    bool begin_room_update()noexcept;
+    ActorQueueStatus publish_room_membership(MessageRoute)noexcept;
     ActorQueueDrain drain(std::size_t budget,bool local_echo=false)noexcept;
     ActorQueueStatus close()noexcept;
     std::size_t pending()const noexcept{return count_;}
     std::size_t capacity()const noexcept{return slots_.size();}
 private:
-    using Message=std::variant<ActorStatusMessage,ActorAlignmentMessage,ActorInteractionMessage,ActorInventoryMessage,ActorResourcePairMessage,ActorRoomObjectMessage,ActorPeerMessage,ActorSpeechMessage,ActorInteractionRequestMessage,SceneRecordParameterMessage>;
+    using Message=std::variant<ActorStatusMessage,ActorAlignmentMessage,ActorInteractionMessage,ActorInventoryMessage,ActorResourcePairMessage,ActorRoomObjectMessage,ActorPeerMessage,ActorSpeechMessage,ActorInteractionRequestMessage,SceneRecordParameterMessage,RoomClaimBeginMessage,RoomClaimReleaseMessage,RoomMembershipMessage>;
     ActorReception& receiver_;
     std::vector<std::optional<Message>> slots_;
     std::size_t head_{},count_{};

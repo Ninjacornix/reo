@@ -50,11 +50,28 @@ struct ProxyState {
     bool slot_idle{true}, grid_span_admitted{true};
 };
 struct Selection { ProxyId id; std::uint32_t actor_id{}; std::uint8_t query_class{}; };
+enum class LazySelectionStatus { completed, unavailable };
+struct LazySelection {LazySelectionStatus status{LazySelectionStatus::completed};std::optional<Selection> selection;};
+class QueryStateProvider {
+public:
+    virtual ~QueryStateProvider()=default;
+    // Called only after the original active/busy gates, and only for authored
+    // class-2/6 query records which read this actor-specific content value.
+    // A value means the actor-specific source value was available. A value
+    // that fails query_class_admits is an ordinary non-match; nullopt means
+    // the required producer/state is unavailable.
+    virtual std::optional<std::uint16_t> selected_content(const ActorQuery&,const Proxy&)=0;
+    // Called only after the original query-class gate for the corresponding
+    // type-2 or type-81 shape.
+    virtual std::optional<bool> slot_idle(const Proxy&)=0;
+    virtual std::optional<bool> grid_span_admitted(const Proxy&,const ActorQuery&)=0;
+};
 class World {
 public:
     // Preserve creation order; original query walks newest to oldest.
     World(std::uint64_t room_generation, std::vector<Proxy>);
     std::optional<Selection> select(const ActorQuery&, std::span<const ProxyState>) const noexcept;
+    LazySelection select_lazy(ActorQuery&,QueryStateProvider&)const;
     const Proxy* get(ProxyId) const noexcept;
     std::size_t size() const noexcept { return proxies_.size(); }
 private:

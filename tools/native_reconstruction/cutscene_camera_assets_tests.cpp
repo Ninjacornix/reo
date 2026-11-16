@@ -32,7 +32,7 @@ int main(int argc,char** argv)try{
         const auto duration=descriptor->duration();check(duration<65535);descriptor.reset();bytes.clear();bytes.shrink_to_fit();++retained;
         for(std::uint8_t clock:{0,1}){
             s::CutscenePlaybackState state;s::Fog fog({});std::array<std::byte,4> ignored{};check(fog.import_fog(ignored)==s::FogStatus::unsupported_version);
-            const s::CameraParameters initial{{{0,0,500},{0,0,0},{0,1,0},0},50000,1,27};s::CutsceneCamera camera(state,fog,initial);check(camera.install(prepared)==s::CutsceneCameraStatus::completed);
+            const s::CameraParameters initial{{{0,0,500},{0,0,0},{0,1,0},0},50000,1,27};auto parameters=initial;s::CutsceneCamera camera(state,fog,parameters);check(&camera.parameters()==&parameters&&camera.install(prepared)==s::CutsceneCameraStatus::completed);
             for(;state.frame<duration;state.frame+=clock?2u:1u){
                 check(camera.select(clock)==s::CutsceneCameraStatus::completed);++ticks;
                 if(camera.sample()){

@@ -16,6 +16,10 @@ ResourceFactory::ResourceFactory(ResourceModels& models,ResourceFrames& frames,
     if(!assets_||!frames_.open()||!frames_.bound_to(models_)||!frames_.templates_bound_to(templates_))throw std::invalid_argument("Native resource factory owners unavailable or foreign");
 }
 ResourceFactory::~ResourceFactory(){token_->owner=nullptr;}
+bool ResourceFactory::replace_static_assets(std::shared_ptr<const ResourceStaticAssets> assets)noexcept{
+    if(!frames_.open()||models_.busy())return false;
+    assets_=std::move(assets);return true;
+}
 DelayedResourceWork::DelayedResourceWork(ResourceFactory& factory):owner_(factory.token_){}
 void DelayedResourceWork::update(ResourceModels& models,const ResourceModelId& id,ResourceModel& model){
     const auto token=owner_.lock();if(!token||!token->owner)throw std::runtime_error("Native delayed resource factory retired");
@@ -27,6 +31,7 @@ bool ResourceFactory::bind_companions(gameplay_effects::PeriodicVisuals& owner)n
 }
 ResourceModelCreated ResourceFactory::create(std::uint16_t content,std::int8_t companion_argument){
     if(!frames_.open())return{ResourceModelStatus::closed,{},{}};
+    if(!assets_)return{ResourceModelStatus::unavailable,{},{}};
     auto created=models_.create(ResourceModelPlacement::front);
     if(created.status!=ResourceModelStatus::completed)return created;
     try{
@@ -63,6 +68,7 @@ ResourceModelCreated ResourceFactory::create(std::uint16_t content,std::int8_t c
 }
 ResourceModelCreated ResourceFactory::create_delayed(std::uint16_t content,std::int16_t ticks){
     if(!frames_.open())return{ResourceModelStatus::closed,{},{}};
+    if(!assets_)return{ResourceModelStatus::unavailable,{},{}};
     auto result=models_.create(ResourceModelPlacement::front);if(result.status!=ResourceModelStatus::completed)return result;
     try{
         auto& model=*result.model;model.active=true;model.category=8;model.content_id=content;model.draw_tag=255;model.asset_index=assets_->find(std::bit_cast<std::int16_t>(content));
@@ -81,6 +87,7 @@ void ResourceFactory::rebind(const ResourceModelId& id,std::uint16_t content){
     if(callback_class==1)model.work=std::make_shared<WeaponModelWork>(frames_);
     else if(callback_class==2)model.work=std::make_shared<DelayedResourceWork>(*this);
     else model.work=std::make_shared<CommonModelWork>(frames_);
+    if(!assets_)throw std::runtime_error("Native static resource asset publication unavailable");
     model.asset_index=assets_->find(std::bit_cast<std::int16_t>(content));
     if(model.asset_index<0){model.visible=false;model.base_parts.reset();return;}
     model.visible=true;model.base_parts=assets_->parts(model.asset_index);

@@ -54,6 +54,15 @@ public:
     Owner(Owner&&)=default;
     Owner& operator=(Owner&&)=default;
     static Owner import(std::span<const std::byte> types,std::span<const std::byte> placements);
+    // 6AD720 publishes the type tables before 6AD610 visits placements. A
+    // type-only owner remains uninitialized for ordinary gameplay admission.
+    static Owner import_types(std::span<const std::byte> types);
+    // 6AD5C0 writes these bytes in physical type row31 after 6AD720.
+    void apply_source_startup_bytes()noexcept;
+    void import_placements(std::span<const std::byte> placements);
+    // 6AD610 leaves the reset/loaded type rows intact when no placement file
+    // exists. Its original caller still completes the object startup.
+    void finish_without_placements();
     const Object* get(const ObjectId&)const noexcept;
     std::vector<ObjectId> objects()const;
     const Type* type(std::uint16_t)const noexcept;

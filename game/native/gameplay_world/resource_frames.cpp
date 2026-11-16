@@ -11,6 +11,21 @@ gameplay_scenario::SceneDescriptor ResourceFrames::descriptor(std::uint8_t slot)
     if(!value)throw std::runtime_error("Native resource frame descriptor unavailable");
     return *value;
 }
+bool ResourceFrames::release_ready(std::uint8_t slot)const noexcept{
+    if(world_.closed())return false;
+    const auto id=resources_.slot(slot);const auto current=id?resources_.get(*id):std::nullopt;
+    if(!current)return false;
+    if(!current->active)return true;
+    if(current->secondary){
+        const auto secondary=std::dynamic_pointer_cast<gameplay_scenario::SceneRecordAttachment>(current->secondary);
+        if(!secondary||!scene_records_||!secondary->bound_to(*scene_records_)||!secondary->current())return false;
+    }
+    if(current->primary){
+        const auto model=std::dynamic_pointer_cast<ResourceModel>(current->primary);
+        if(!model||!models_.identity_of(*model))return false;
+    }
+    return true;
+}
 void ResourceFrames::release(std::uint8_t slot,bool clear_owner_flag){
     if(world_.closed())throw std::runtime_error("Native resource release world closed");
     const auto id=resources_.slot(slot);auto current=id?resources_.get(*id):std::nullopt;

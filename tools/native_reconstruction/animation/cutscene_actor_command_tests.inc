@@ -61,7 +61,7 @@ void cutscene_command_tests(std::vector<std::uint8_t>& ram){
         put(ram.data(),actor+0xb40,value->model_correction_skip);put(ram.data(),actor+0xb41,s.scale_lock);put(ram.data(),actor+0xb42,s.request_phase);put(ram.data(),actor+0xb43,s.motion_selector);put(ram.data(),actor+0xb44,s.motion_blend_duration);
         put(ram.data(),actor+0xb8b,s.scale_profile);put(ram.data(),actor+0xb48,s.relation_mode);put(ram.data(),actor+0xb4c,0u);
         put(ram.data(),actor+0xb50,s.relation_options);put(ram.data(),actor+0xb54,s.relation_offset);put(ram.data(),actor+0xb60,s.relation_parameter);
-        put(ram.data(),actor+0xb64,s.command_angles);put(ram.data(),actor+0xc50,s.command_angle_copy);
+        put(ram.data(),actor+0xb64,s.command_angles);put(ram.data(),actor+0xc50,value->model_offset_frame.value_or(0));
         put(ram.data(),actor+0xb6c,s.movement_angles);put(ram.data(),actor+0xb70,s.forward_step);put(ram.data(),actor+0xb74,s.yaw_step);put(ram.data(),actor+0xb78,s.movement_remaining);
         put(ram.data(),0x4badf8,world.paused);put(ram.data(),0x3243da,*world.scenario);put(ram.data(),0x38ecd0,std::uint8_t(219));
         put(ram.data(),0x38eddc,0xa00000u);put(ram.data(),0x38eddc+0x8c,0u);put(ram.data(),0x38eddc+2*0x8c,actor);
@@ -76,7 +76,7 @@ void cutscene_command_tests(std::vector<std::uint8_t>& ram){
         check(s.relation_mode==get<std::int32_t>(ram.data(),actor+0xb48)&&s.relation_options==get<std::uint32_t>(ram.data(),actor+0xb50)&&std::memcmp(s.relation_offset.data(),ram.data()+actor+0xb54,12)==0&&s.relation_parameter==get<std::uint32_t>(ram.data(),actor+0xb60),"relationship native state");
         const auto expected=s.related_actor==target?0xa00000u:s.related_actor==id?actor:0u;
         check(expected==get<std::uint32_t>(ram.data(),actor+0xb4c),"relationship carries canonical identities, including known null");
-        check(value->movement_enabled==ram[actor+0x553]&&std::memcmp(s.command_angles.data(),ram.data()+actor+0xb64,6)==0&&s.command_angle_copy==get<std::int16_t>(ram.data(),actor+0xc50),"command angles and movement control");
+        check(value->movement_enabled==ram[actor+0x553]&&std::memcmp(s.command_angles.data(),ram.data()+actor+0xb64,6)==0&&value->model_offset_frame.value_or(0)==get<std::int16_t>(ram.data(),actor+0xc50),"command angles and movement control");
         check(std::memcmp(s.movement_angles.data(),ram.data()+actor+0xb6c,4)==0&&bits(s.forward_step)==get<std::uint32_t>(ram.data(),actor+0xb70)&&s.yaw_step==get<std::uint32_t>(ram.data(),actor+0xb74)&&s.movement_remaining==get<std::uint32_t>(ram.data(),actor+0xb78),"actual counted movement producer");
     };
     const auto run=[&](unsigned kind,unsigned seed){

@@ -12,6 +12,30 @@ bool ActorMessageQueue::send(const ActorResourcePairMessage& value)noexcept{retu
 bool ActorMessageQueue::send(const ActorRoomObjectMessage& value)noexcept{return enqueue(value);}
 bool ActorMessageQueue::send(const ActorPeerMessage& value)noexcept{return enqueue(value);}
 bool ActorMessageQueue::send(const ActorSpeechMessage& value)noexcept{return enqueue(value);}
+bool ActorMessageQueue::begin_room_claim(const RoomClaimBeginMessage& value)noexcept{
+    return receiver_.room_membership_ready(value.route)&&enqueue(value);
+}
+bool ActorMessageQueue::send(const RoomClaimReleaseMessage& value)noexcept{
+    return receiver_.room_membership_ready(value.route)&&enqueue(value);
+}
+bool ActorMessageQueue::send(const RoomMembershipMessage& value)noexcept{
+    return receiver_.room_membership_ready(value.route)&&value.update.count<=value.update.rows.size()&&enqueue(value);
+}
+std::optional<std::uint32_t> ActorMessageQueue::room_owner(MessageRoute route,std::uint16_t room)noexcept{
+    return closed_?std::nullopt:receiver_.room_owner(route,room);
+}
+bool ActorMessageQueue::begin_room_update()noexcept{
+    return !closed_&&!draining_&&receiver_.begin_room_membership_update();
+}
+ActorQueueStatus ActorMessageQueue::publish_room_membership(MessageRoute route)noexcept{
+    if(closed_)return ActorQueueStatus::closed;
+    if(draining_)return ActorQueueStatus::busy;
+    if(!receiver_.room_membership_ready(route))return ActorQueueStatus::unavailable;
+    const auto changes=receiver_.collect_room_membership();
+    if(changes.status!=gameplay_session::RoomMembershipStatus::completed)return ActorQueueStatus::unavailable;
+    if(changes.update&&!send(RoomMembershipMessage{route,*changes.update}))return ActorQueueStatus::unavailable;
+    return ActorQueueStatus::completed;
+}
 ActorQueueStatus ActorMessageQueue::close()noexcept{
     if(draining_)return ActorQueueStatus::busy;
     closed_=true;for(auto& slot:slots_)slot.reset();head_=count_=0;return ActorQueueStatus::completed;

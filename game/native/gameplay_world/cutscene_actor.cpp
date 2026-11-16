@@ -30,9 +30,9 @@ void movement(Actor& actor,ScriptedActorState& state){
         if(!state.movement_remaining){state.yaw_step=0;state.movement_angles={};state.forward_step=0;}
     }
 }
-void node_offset(World& world,Actor& actor,ScriptedActorState& state,std::int16_t remaining,unsigned mode){
+void node_offset(World& world,Actor& actor,std::int16_t remaining,unsigned mode){
     if(actor.model_pose_class!=0||world.paused==0)return;
-    if(!actor.model||actor.model->nodes().size()<=26)
+    if(!actor.model_offset_frame||!actor.model||actor.model->nodes().size()<=26)
         throw std::runtime_error("Native scripted paired-node offset model unavailable");
     // Owned70B010/70B040: only the two consumed endpoints are retained.
     const float first=actor.motion_style?std::bit_cast<float>(0x40d33333u):7.f;
@@ -40,7 +40,7 @@ void node_offset(World& world,Actor& actor,ScriptedActorState& state,std::int16_
     float value=last;
     if(mode!=1){
         const float start=mode==0?first:last,end=mode==0?last:first;
-        const float total=float(std::bit_cast<std::uint16_t>(state.command_angle_copy));
+        const float total=float(std::bit_cast<std::uint16_t>(actor.model_offset_frame.value()));
         const float increment=finite((end-start)/total);
         value=finite(start+finite(increment*(total-float(remaining))));
     }
@@ -70,9 +70,9 @@ void PrimaryCutsceneAction::tick(const actors::EntityId& id){
         request(*actor,state);
         for(unsigned mode=0;mode<state.command_angles.size();++mode){
             auto& timer=state.command_angles[mode];if(timer==0)continue;
-            node_offset(world_,*actor,state,timer,mode);
+            node_offset(world_,*actor,timer,mode);
             timer=std::bit_cast<std::int16_t>(std::uint16_t(std::uint16_t(timer)-1));
-            if(timer==0)state.command_angle_copy=mode<2?state.command_angles[mode+1]:0;
+            if(timer==0)actor->model_offset_frame=mode<2?state.command_angles[mode+1]:0;
             break;
         }
         movement(*actor,state);

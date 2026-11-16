@@ -29,6 +29,9 @@ public:
     virtual PrimaryStartupStatus background(std::uint8_t selector)=0; //1AF6A0, not a file wait
     virtual PrimaryStartupStatus initialize_stream_stage()=0; //1B0510
     virtual PrimaryStartupStatus run(PrimaryStartupWork)=0;
+    // Observes a completed default-bank publication and its1B2CE0 selector
+    // reset. This is a state notification, not an optional resource consumer.
+    virtual void motion_defaults_reloaded()noexcept{}
     virtual PrimaryStartupStatus actor_resources(PrimaryStartupWork,const actors::EntityId&)=0;
     //4BADF0[signed4BADF7] and runtime747400[character], supplied by their
     // actual configuration/render producers; unknown inputs stay unknown.

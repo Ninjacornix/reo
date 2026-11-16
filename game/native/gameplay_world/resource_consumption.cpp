@@ -60,6 +60,28 @@ std::uint8_t ResourceConsumption::transform(const actors::EntityId& id,std::uint
 void ResourceConsumption::notify(std::uint8_t resource,std::uint8_t actor,std::uint8_t operation){
     if(update_.record_resource_operation(resource,actor,operation)!=gameplay_update::PublicationStatus::completed)throw std::runtime_error("Native item operation message consumer unavailable");
 }
+bool ResourceConsumption::age_carried_expirations(const actors::EntityId& id){
+    last_record_.reset();const auto selected=actor(id);if(!selected)return false;
+    const auto scenario=update_.world().scenario;
+    if(!scenario)throw std::runtime_error("Native resource expiration scenario unavailable");
+    if(*scenario!=41)return false;
+    bool changed{};
+    const auto age=[&](std::uint8_t resource){
+        if(!resource)return;
+        auto& pairs=lifecycle_.pairs_;const auto item=pairs.descriptor(resource);
+        if(item.attachment_id!=0x3717)return;
+        // Zero becomes minus one. Negative quantities remain untouched; only
+        // a positive countdown reaching zero invokes the original transform.
+        if(item.parameter>=0)pairs.quantity(resource,std::int32_t(item.parameter)-1);
+        if(pairs.descriptor(resource).parameter!=0)return;
+        if(!transform(id,resource))return;
+        notify(resource,selected->slot,5);changed=true;
+    };
+    for(unsigned i=0;i<selected->inventory.carried.size();++i)age(selected->inventory.carried[i]);
+    if(selected->character==6)
+        for(unsigned i=0;i<selected->inventory.storage.size();++i)age(selected->inventory.storage[i]);
+    return changed;
+}
 void ResourceConsumption::use_carried_content(const actors::EntityId& id,std::uint32_t full_content){
     last_record_.reset();const auto selected=actor(id);if(!selected)return;auto& pairs=lifecycle_.pairs_;
     for(unsigned i=0;i<selected->inventory.carried.size();++i){

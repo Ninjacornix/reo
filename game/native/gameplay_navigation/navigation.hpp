@@ -40,11 +40,17 @@ public:
     // Bounded by the next greater authored entry or resource end. This is a
     // safe encoding view, not a claim that the encoded entry uses every byte.
     std::span<const std::uint8_t> condition_directory_entry(std::size_t)const noexcept;
+    //8163B0/700330 expose this actual embedded16-entry room-section table.
+    // Its relative offsets stay immutable; native ScriptBank owns relocation.
+    std::span<const std::uint8_t> script_encoding()const noexcept{return std::span(encoding_).subspan(directory_base_);}
 private:
     friend class Asset;
+    friend class Bank;
     std::uint32_t source_offset_{};
     std::vector<Node> nodes_;
     std::vector<Condition> conditions_;
+    std::size_t condition_base_{};
+    std::size_t directory_base_{};
     std::vector<RouteCandidates> routes_;
     std::array<std::size_t,16> directory_entries_{};
     std::array<std::uint8_t,4> initial_edge_flags_{};

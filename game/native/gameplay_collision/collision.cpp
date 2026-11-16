@@ -125,6 +125,36 @@ std::optional<Selection> World::select(const ActorQuery& q,std::span<const Proxy
     }
     return best;
 }
+LazySelection World::select_lazy(ActorQuery& q,QueryStateProvider& provider)const{
+    const auto point=integer_xz(q.point),actor=integer_xz(q.position);
+    if(!point||!actor)return{LazySelectionStatus::unavailable,{}};
+    std::optional<Selection> best;unsigned priority=256;
+    for(std::size_t remaining=proxies_.size();remaining;--remaining){
+        const auto i=remaining-1;const auto& p=proxies_[i];
+        if(!p.active||p.busy)continue;
+        if(p.query_class==2||p.query_class==6){
+            const auto content=provider.selected_content(q,p);
+            if(!content)return{LazySelectionStatus::unavailable,{}};
+            q.selected_content=*content;
+        }
+        if(!query_class_admits(p,q))continue;
+        if(p.kind==1&&!object_admits(p,q))continue;
+        if(p.kind==2&&!p.bypass_slot_guard){
+            const auto idle=provider.slot_idle(p);
+            if(!idle)return{LazySelectionStatus::unavailable,{}};
+            if(!*idle)continue;
+        }
+        if(p.kind==0x81){
+            const auto admitted=provider.grid_span_admitted(p,q);
+            if(!admitted)return{LazySelectionStatus::unavailable,{}};
+            if(!*admitted)continue;
+        }
+        const bool geometry=p.kind==0x80||p.kind==0x81?overlaps(p.bounds,*point,q.radius):contains(p.bounds,p.kind==0x85?*actor:*point);
+        if(!geometry||!admits_height(p.lower,p.upper,q.point.y))continue;
+        if(p.priority<priority){priority=p.priority;best=Selection{{generation_,static_cast<std::uint32_t>(i)},q.actor_id,q.query_class};}
+    }
+    return{LazySelectionStatus::completed,std::move(best)};
+}
 std::vector<ImportedProxy> import_proxy_section(std::span<const std::byte> bytes,ImportContext context){
     const auto count=word(bytes,4);
     if(count>128||bytes.size()<8+std::size_t(count)*4)throw std::invalid_argument("Invalid room proxy count");

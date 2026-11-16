@@ -5,6 +5,7 @@ namespace reo::native::gameplay_scenario {class SceneResources;}
 namespace reo::native::gameplay_navigation {class Bank;}
 namespace reo::native::gameplay_session {class Random;}
 namespace reo::native::gameplay_ai {
+struct GoalRouteContext;
 struct GoalResourceSelection {Status status{Status::unavailable};std::optional<std::uint8_t> selected;};
 // Complete825CC0: character7 selects a descriptor ID from exact canonical
 // inventory positions. This is a read-only selection, not transfer/consumption.
@@ -21,9 +22,10 @@ struct GoalDispatched {
     Status status{Status::unavailable};
     std::optional<std::uint16_t> selected;
 };
-// 813330 for the admitted direct goals 0, 6 and 14. These handlers return zero
+// 813330 for the admitted direct goals 0,1,6 and14. These handlers return zero
 // to the outer dispatcher. Other goal families still require native handlers.
 GoalDispatched dispatch_goal(gameplay_world::Actor&, const gameplay_world::Actor* reference,
-    const gameplay_world::Actor* companion, const gameplay_navigation::Bank&,
-    const gameplay_scenario::SceneResources&, gameplay_session::Random&) noexcept;
+    const gameplay_world::Actor* companion, gameplay_navigation::Bank&,
+    const gameplay_scenario::SceneResources&, gameplay_session::Random&,
+    const GoalRouteContext* =nullptr) noexcept;
 }

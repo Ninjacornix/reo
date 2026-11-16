@@ -3,6 +3,11 @@
 #include <cmath>
 #include <limits>
 namespace reo::native::gameplay_scenario {
+SceneMatrixStatus SceneMatrixPrograms::reset()noexcept{
+    if(closed_)return SceneMatrixStatus::closed;
+    for(auto& channel:channels_)*channel=SceneMatrixChannel{};
+    return SceneMatrixStatus::completed;
+}
 SceneMatrixStatus SceneMatrixPrograms::interaction(std::size_t index,std::uint8_t value)noexcept{
     if(closed_)return SceneMatrixStatus::closed;
     if(index>=channels_.size()||!channels_[index])return SceneMatrixStatus::invalid_channel;

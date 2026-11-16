@@ -142,11 +142,11 @@ int main(int argc,char** argv)try{
 
  {
   s::Fog fog({});std::array<std::byte,4> ignored{};check(fog.import_fog(ignored)==s::FogStatus::unsupported_version);
-  s::CutscenePlaybackState foreign;auto foreign_camera=std::make_unique<s::CutsceneCamera>(foreign,fog,s::CameraParameters{});
+  s::CameraParameters shared_parameters;s::CutscenePlaybackState foreign;auto foreign_camera=std::make_unique<s::CutsceneCamera>(foreign,fog,shared_parameters);
   check(playback.bind_camera(foreign_camera)==s::CutscenePlaybackStatus::unavailable&&foreign_camera);
-  auto native_camera=std::make_unique<s::CutsceneCamera>(playback.state(),fog,s::CameraParameters{});
+  auto native_camera=std::make_unique<s::CutsceneCamera>(playback.state(),fog,shared_parameters);
   auto* borrowed=native_camera.get();check(playback.bind_camera(native_camera)==s::CutscenePlaybackStatus::completed&&!native_camera&&playback.camera()==borrowed);
-  auto duplicate_camera=std::make_unique<s::CutsceneCamera>(playback.state(),fog,s::CameraParameters{});
+  auto duplicate_camera=std::make_unique<s::CutsceneCamera>(playback.state(),fog,shared_parameters);
   check(playback.bind_camera(duplicate_camera)==s::CutscenePlaybackStatus::unavailable&&duplicate_camera);
   services.camera_attempt=std::move(duplicate_camera);services.playback=&playback;
   std::array<std::byte,32> selections{};std::array<std::array<std::byte,112>,2> curves{};

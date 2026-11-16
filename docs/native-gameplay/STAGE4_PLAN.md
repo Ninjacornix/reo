@@ -1,5 +1,11 @@
 # Stage 4: native gameplay and scheduling
 
+Planning update, 2026-11-13: the [Stage 4 completion plan](STAGE4_COMPLETION_PLAN.md)
+now governs implementation order, the shipping-LLVM-only required test policy,
+and final integrated acceptance. Stage 4 remains incomplete. The checkpoints
+below retain their historical evidence and component-specific limits; their
+paired-compiler results do not impose a new GCC gate on subsequent work.
+
 Status, 2026-11-12. **Stage 4 is incomplete**. Continue through end-to-end
 verification with multiple agents. The user is awake and has revoked the prior
 sleep request: finish Stage4 and do not put the PC to sleep afterward.

@@ -21,6 +21,48 @@ std::shared_ptr<Actor> retain(World& world, const actors::EntityId& id) {
     return actor;
 }
 } // namespace
+std::shared_ptr<const animation::MotionBlock> WorldAnimation::frame_block(const actors::EntityId& id,std::uint32_t encoded,std::uint16_t track){
+    const auto actor=retain(world_,id);
+    const auto decoded=descriptors_.unpack(identity(*actor),descriptors_.resolve(identity(*actor),encoded));
+    if(track>1)throw std::out_of_range("Native initial motion frame track unavailable");
+    const auto bank=resources_.resolve(id,decoded.family);
+    if(!bank)return {};
+    const auto key=track?decoded.channel_one:decoded.channel_zero;
+    if((key&0x7fffu)>=bank->rows().size())throw std::out_of_range("Native initial motion frame row unavailable");
+    //5D4A10 indexes the retained row table even for a strided bank; do not
+    // substitute MotionBank::find's kind-dependent indexing here.
+    const auto slot=std::size_t(bank->rows()[key&0x7fffu])+track;
+    if(slot>=bank->slots().size())throw std::out_of_range("Native initial motion frame slot unavailable");
+    const auto& block=bank->slots()[slot];
+    if(!block)throw std::runtime_error("Native motion frame header unavailable: motion="+std::to_string(encoded)+
+        " family="+std::to_string(decoded.family)+" key="+std::to_string(key)+" track="+std::to_string(track)+
+        " slot="+std::to_string(slot)+" character="+std::to_string(actor->character));
+    return block;
+}
+float WorldAnimation::first_frame(const actors::EntityId& id,std::uint32_t encoded,std::uint16_t track){
+    const auto block=frame_block(id,encoded,track);if(!block)return 0;
+    const auto clip=block->clip();
+    //192DA0 reads the packed loop flag and restart value, not the earliest
+    //key time. Non-looping clips publish zero even when their first key is later.
+    const auto frame=clip->looping()?clip->loop_start():0.f;
+    return frame<0?0:frame;
+}
+float WorldAnimation::last_frame(const actors::EntityId& id,std::uint32_t encoded,std::uint16_t track){
+    const auto block=frame_block(id,encoded,track);return block?block->clip()->last_frame():0.f;
+}
+float WorldAnimation::matched_frame(const actors::EntityId& id,std::uint32_t encoded,std::uint16_t track){
+    const auto actor=retain(world_,id);
+    const auto before=actor->animation->channel(animation::ModelBank::primary,track).timing;
+    const float elapsed=before.frame<before.restart?0.f:before.frame-before.restart;
+    const auto first=first_frame(id,encoded,track);
+    const auto last=last_frame(id,encoded,track);
+    const float duration=before.end-before.restart;
+    if(duration<=0)return 0;
+    const float distance=last-first;
+    const float scaled=elapsed*distance;
+    const float fraction=scaled/duration;
+    return first+fraction;
+}
 bool WorldAnimation::override_motion(const actors::EntityId& id, std::uint32_t requested,
                                      float initial, float blend) {
     const auto actor = retain(world_, id);

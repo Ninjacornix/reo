@@ -1,6 +1,7 @@
 #include "destination.hpp"
 #include "../transform_math/heading.hpp"
 #include <cmath>
+#include <bit>
 #include <exception>
 namespace reo::native::gameplay_navigation {
 namespace {
@@ -72,6 +73,38 @@ CrossRoomResult begin_actor_route(Bank& bank,const RouteActorFacts& actor,std::u
     if(actor.room==state.destination_room&&state.destination_node==state.output.route.first){
         auto& route=state.output.route;route.first_position=route.second_position=state.final_position;
         route.first=route.second=state.destination_node;
+    }
+    return result;
+}
+CrossRoomResult continue_actor_route(Bank& bank,const RouteActorFacts& actor,std::uint16_t session_room,
+    const RoomFlags& flags,ActorRouteState& state,CrossRoomProfile profile)noexcept{
+    if(state.completed)return{QueryStatus::completed,std::bit_cast<std::int8_t>(state.completed),CrossRoomFailure::none};
+    if(state.refresh){state.refresh=0;return update_actor_route_action(bank,actor.identity,actor.status,actor.room,flags,state,profile);}
+    const auto admitted=admit_edge(bank,actor.room,state.last_current_node,state.output.route.first,
+        actor.identity,actor.status,actor.room<flags.size()?flags[actor.room]:std::nullopt);
+    if(admitted.status!=QueryStatus::completed)return{};
+    if(!admitted.allowed)return{QueryStatus::completed,-1,CrossRoomFailure::none};
+    if(actor.room==session_room&&actor.transient_marker)return{QueryStatus::completed,-1,CrossRoomFailure::none};
+    auto result=CrossRoomResult{QueryStatus::completed,0,CrossRoomFailure::none};
+    const auto update=[&]{return update_actor_route_action(bank,actor.identity,actor.status,actor.room,flags,state,profile);};
+    const auto nearby=[&](Position target)->std::optional<bool>{
+        auto position=actor.position;
+        if(actor.motion_class>=0x21&&actor.motion_class<=0x24){position.y=0;target.y=0;}
+        const auto length=distance(position,target);if(!length)return{};
+        const auto radius=actor.motion_class==0x1a||(actor.auxiliary_status&0x10000u)?100.f:50.f;
+        return *length<radius;
+    };
+    if(actor.room!=state.destination_room){
+        if(state.output.route.first!=state.output.route.second&&state.current_node==state.output.route.first)result=update();
+    }else if(state.destination_node!=state.output.route.first){
+        if(state.current_node==state.output.route.first){const auto near=nearby(state.output.route.first_position);if(!near)return{};if(*near)result=update();}
+    }else if(state.current_node==state.destination_node){
+        const auto near=nearby(state.final_position);if(!near)return{};if(*near)result.selected=1;
+    }
+    if(result.status!=QueryStatus::completed)return result;
+    if(actor.room==state.destination_room&&state.destination_node==state.output.route.first){
+        state.output.route.first_position=state.output.route.second_position=state.final_position;
+        state.output.route.first=state.output.route.second=state.destination_node;
     }
     return result;
 }

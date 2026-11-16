@@ -11,9 +11,14 @@ recreate internal media machinery are superseded when its consumers move to a
 complete native replacement. Stage 3 is complete for its selected stock File #1 US
 profile; see [final validation](native-media/STAGE3_FINAL_VALIDATION.md).
 [Stage 4](native-gameplay/STAGE4_PLAN.md) is in progress and incomplete. Stages 4-6
-are required before PS2 runtime removal can be claimed. The current user instruction
-is to fully finish and verify Stage 4 with multiple agents and leave the PC awake
-afterward (updated2026-11-12; this revokes the earlier sleep request).
+are required before PS2 runtime removal can be claimed. The
+[completion plan](native-gameplay/STAGE4_COMPLETION_PLAN.md), prepared 2026-11-13,
+defines the complete implementation sequence, required testing with the launcher's
+pinned LLVM compiler, and final gameplay/save/co-op acceptance. The
+[completion ledger](native-gameplay/STAGE4_COMPLETION_LEDGER.md) distinguishes
+prepared changes, application integration and final verification. A plan or a
+passing component suite does not close Stage 4. The prior instruction to keep the
+PC awake remains in effect.
 
 ## Historical checkpoints
 

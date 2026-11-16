@@ -6,6 +6,9 @@
 namespace reo::native::gameplay_world {
 struct LinkedActorFrameState {
     std::uint8_t center_cache_state{},transient_marker{}; // C8B/C98
+    // Secondary ground states D45 and D39, established by the linked-pool
+    // full-record clear. D25 is the second byte of MaterialUv::u instead.
+    std::int8_t ground_kind_one{},ground_kind_twenty_nine{};
 };
 struct LinkedUpdateState {
     std::uint8_t previous_seconds{}; // source3B5040

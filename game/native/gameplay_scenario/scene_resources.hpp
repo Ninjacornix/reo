@@ -1,5 +1,5 @@
 #pragma once
-#include "game/native/gameplay_actors/entity.hpp"
+#include "../gameplay_actors/entity.hpp"
 #include <array>
 #include <cstdint>
 #include <memory>

@@ -52,4 +52,15 @@ void publish_camera_display(CameraParameters& parameters,std::int8_t mode,
     sink.viewport(state.viewport,state.projection);
     state.view=camera_view(parameters.pose);sink.view(state.view);
 }
+void initialize_camera_display(CameraParameters& parameters,std::int8_t mode,
+                               const CameraProjectionContext& context,CameraDisplayState& state,CameraDisplaySink& sink){
+    parameters={};parameters.pose.eye={0,0,500};parameters.pose.up={0,1,0};
+    parameters.secondary_up={0,1,0};parameters.distance=500;
+    parameters.far_plane=50000;parameters.near_plane=1;parameters.lens=27;
+    state.viewport={0,0,mode?512:640,448,0,1};
+    state.projection=camera_projection(context,parameters.far_plane,parameters.near_plane,
+        std::bit_cast<float>(0x3c8efa35u)*parameters.lens,std::bit_cast<float>(0x3faaaaabu));
+    sink.viewport(state.viewport,state.projection);
+    publish_camera_display(parameters,mode,context,state,sink);
+}
 } // namespace reo::native::gameplay_scenario

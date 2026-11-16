@@ -35,13 +35,14 @@ gameplay_scene::Record canonical_record(Record value){
     result.collision=gameplay_scene::CollisionShape{p.bounds,p.lower,p.upper,p.query_class,p.busy,p.object};
     if(!std::holds_alternative<ControlTypeZero>(result.body))result.other_content=p.content_id;
     result.other_resource_class=value.door?std::uint32_t(value.door->heading):(p.bypass_slot_guard?2u:0u);
-    result.owner=std::move(value.owner);result.source=std::move(value.source);
+    result.owner=std::move(value.owner);result.last_query_class=value.last_query_class;result.source=std::move(value.source);
     result.owner_snapshot=value.owner_snapshot;result.extra=value.extra;
     return result;
 }
 Record projected_record(const gameplay_scene::Record& source){
     Record result;result.geometry=gameplay_scene::collision_view(source);
     result.owner=source.owner;result.source=source.source;
+    result.last_query_class=source.last_query_class;
     result.owner_snapshot=source.owner_snapshot;result.extra=source.extra;
     if(source.door){
         const auto* zero=std::get_if<gameplay_scenario::ControlTypeZero>(&source.body);
@@ -95,6 +96,17 @@ bool Proxies::replace(const Handle& id,Record value)noexcept{
     record.owner=std::move(value.owner);record.source=std::move(value.source);record.owner_snapshot=value.owner_snapshot;record.extra=value.extra;
     return true;
 }
+bool Proxies::publish_owner(const Handle& id,gameplay_actors::EntityId actor)noexcept{
+    const auto node=pool_->acquire(id);if(!node||!actor)return false;
+    pool_->touch();node->value.owner=std::move(actor);
+    return true;
+}
+bool Proxies::publish_query(const Handle& id,gameplay_actors::EntityId actor,
+                            std::uint8_t query_class)noexcept{
+    const auto node=pool_->acquire(id);if(!node||!actor)return false;
+    pool_->touch();node->value.owner=std::move(actor);node->value.last_query_class=query_class;
+    return true;
+}
 std::vector<Handle> Proxies::ordered()const{return pool_->ordered();}
 std::optional<Selected> Proxies::select(const ActorQuery& query,gameplay_actors::EntityId actor,std::span<const ProxyState> states)const{
     if(!actor||states.size()!=pool_->size())return{};
@@ -106,6 +118,24 @@ std::optional<Selected> Proxies::select(const ActorQuery& query,gameplay_actors:
     }
     const auto selected=snapshot_->select(query,states);if(!selected)return{};
     return Selected{order[selected->id.index],std::move(actor),selected->query_class};
+}
+LazySelected Proxies::select_lazy(ActorQuery& query,gameplay_actors::EntityId actor,
+                                  QueryStateProvider& provider)const{
+    if(!actor)return{LazySelectionStatus::unavailable,{}};
+    const auto order=pool_->ordered();
+    if(!snapshot_||snapshot_revision_!=pool_->revision()){
+        std::vector<Proxy> proxies;proxies.reserve(order.size());
+        for(const auto& id:order){const auto node=pool_->acquire(id);if(!node)return{LazySelectionStatus::unavailable,{}};
+            proxies.push_back(gameplay_scene::collision_view(node->value));}
+        try{snapshot_.emplace(1,std::move(proxies));}catch(...){return{LazySelectionStatus::unavailable,{}};}
+        snapshot_revision_=pool_->revision();
+    }
+    const auto result=snapshot_->select_lazy(query,provider);
+    if(result.status!=LazySelectionStatus::completed)return{result.status,{}};
+    if(!result.selection)return{LazySelectionStatus::completed,{}};
+    if(result.selection->id.index>=order.size())return{LazySelectionStatus::unavailable,{}};
+    return{LazySelectionStatus::completed,
+        Selected{order[result.selection->id.index],std::move(actor),result.selection->query_class}};
 }
 void Proxies::clear()noexcept{pool_->clear();}
 std::optional<Proxy> depth_extension(const Proxy& source,const actors::Basis& basis)noexcept{

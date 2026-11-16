@@ -54,6 +54,37 @@ void ResourceBootstrap::selection(std::span<const std::byte> bytes,std::uint16_t
         }
     }
 }
+void ResourceBootstrap::fixed_selection(std::span<const std::byte> bytes,ResourceImportReport& report){
+    const auto version=read<std::uint32_t>(bytes,0);const auto count=read<std::int32_t>(bytes,4);
+    if(version!=4||count<=0)return;
+    if(count>4096||std::size_t(count)>(bytes.size()-8)/4)throw std::invalid_argument("Fixed resource selection rows unavailable");
+    for(std::int32_t i=0;i<count;++i){
+        const auto at=8+4*std::size_t(i);const auto content=read<std::uint16_t>(bytes,at);
+        if(content==65535)continue;
+        const auto made=resources_.allocate(0,std::uint16_t(i+1),0,templates_);
+        if(made.status==gameplay_scenario::SceneStatus::full)break;
+        if(!made.id)throw std::runtime_error("Fixed resource selection allocation unavailable");
+        auto value=*resources_.get(*made.id);value.attachment_id=content;
+        value.parameter=read<std::int8_t>(bytes,at+2);value.flags=0x800;
+        if(content==0x3717)value.parameter=world_.session().clock_mode?600:1200;
+        if(resources_.replace(*made.id,value)!=gameplay_scenario::SceneStatus::completed)
+            throw std::runtime_error("Fixed resource selection identity unavailable");
+        ++report.selected;
+    }
+}
+void ResourceBootstrap::offline_adjustment(){
+    if(!(world_.session().gameplay_flags&1u))return;
+    for(unsigned slot=0;slot<gameplay_scenario::SceneResources::capacity;++slot){
+        const auto id=*resources_.slot(slot);auto value=*resources_.get(id);
+        if(!value.active||value.attachment_id==0x20||value.template_index==255)continue;
+        const auto flags=templates_.flags(value.template_index);
+        if((flags&1u)&&(flags&0x6000u)&&value.parameter<=0){
+            value.parameter=1;
+            if(resources_.replace(id,value)!=gameplay_scenario::SceneStatus::completed)
+                throw std::runtime_error("Offline resource adjustment identity unavailable");
+        }
+    }
+}
 void ResourceBootstrap::item(std::span<const std::byte> bytes,ResourceImportReport& report){
     if(const auto data=part(bytes,0);!data.empty())(void)templates_.load(data);
     if(const auto data=part(bytes,1);!data.empty()){
@@ -103,26 +134,32 @@ void ResourceBootstrap::starting(ResourceImportReport& report){
     }
 }
 ResourceImportReport ResourceBootstrap::run(const gameplay_scenario::content::ScenarioArchive& archive)noexcept{
+    return run_impl(archive,false);
+}
+ResourceImportReport ResourceBootstrap::run_impl(const gameplay_scenario::content::ScenarioArchive& archive,bool nested)noexcept{
     ResourceImportReport report;
     if(world_.closed()){report.status=ResourceImportStatus::closed;return report;}
-    if(running_||world_.busy()){report.status=ResourceImportStatus::busy;return report;}
-    const auto& session=world_.session();
-    if(!world_.mode||!world_.scenario||!session.difficulty||!session.asset_loading_mode||!*session.asset_loading_mode||!session.primary_population)return report;
+    if(running_||(!nested&&world_.busy())||
+       (nested&&(!world_.updating_||!world_.primary_resource_startup_))){report.status=ResourceImportStatus::busy;return report;}
+    auto& session=world_.session();
+    if(!world_.scenario||!session.difficulty||!session.asset_loading_mode||!*session.asset_loading_mode||!session.primary_population)return report;
     const auto count=std::bit_cast<std::int32_t>(*session.primary_population);
     if(count>std::int32_t(gameplay_world::World::primary_capacity))return report;
     for(std::int32_t i=0;i<count;++i)if(!world_.primary(std::uint32_t(i))){report.status=ResourceImportStatus::unavailable_actor;return report;}
-    running_=world_.updating_=true;
-    struct Guard{bool& local;bool& world;~Guard(){local=false;world=false;}}guard{running_,world_.updating_};
+    running_=true;if(!nested)world_.updating_=true;
+    struct Guard{bool& local;bool& world;bool owns_world;~Guard(){local=false;if(owns_world)world=false;}}guard{running_,world_.updating_,!nested};
     try{
-        clear();const auto variant=unsigned(*session.difficulty)*4+(world_.session().random.request(2)&3u);
-        const auto random=std::uint16_t(world_.session().random.request(0)%100);char name[40];
+        clear();const bool offline=world_.mode==0;
+        const auto variant=offline?unsigned(*session.difficulty)+16u:unsigned(*session.difficulty)*4+(session.random.request(2)&3u);
+        const auto random=offline?std::uint16_t{}:std::uint16_t(session.random.request(0)%100);char name[40];
         const int length=std::snprintf(name,sizeof name,"item%03u%02u.tbl",unsigned(*world_.scenario),variant);
         if(length<0||std::size_t(length)>=sizeof name)throw std::invalid_argument("Resource selection key unavailable");
         report.selection_key=name;
-        if(const auto bytes=archive.read_resource(*world_.scenario,name)){report.selection_found=true;selection(*bytes,random,report);}
+        if(const auto bytes=archive.read_resource(*world_.scenario,name)){report.selection_found=true;if(offline)fixed_selection(*bytes,report);else selection(*bytes,random,report);}
         const int item_length=std::snprintf(name,sizeof name,"item%03u.dat",unsigned(*world_.scenario));
         if(item_length<0||std::size_t(item_length)>=sizeof name)throw std::invalid_argument("Resource item key unavailable");
         if(const auto bytes=archive.read_resource(*world_.scenario,name)){report.item_found=true;item(*bytes,report);}
+        if(!world_.mode)offline_adjustment();
         starting(report);report.status=ResourceImportStatus::completed;
     }catch(const std::exception&){report.status=ResourceImportStatus::invalid_asset;}
     return report;

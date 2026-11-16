@@ -22,3 +22,11 @@ Owned tables:
 - 70A6C0/16bytes SHA-256 **9df8933f0b2b8672f67c0804ac922160060fb84290c1e736160436ae155bff81**, rows `00 05 03 06 / 01 06 00 07 / 03 06 00 05 / 00 07 01 06`.
 
 10 bodies / 1388 original instruction words. Plane primitivesretainseparateexisting[exact-bodyevidence](SYMBOLS_SHARED_BODIES.md);[o0vectorsubtractionandlineprojection](SYMBOLS_OVERLAY_MATH.md)establishthegeometrycontract. Staticvolumeadmissionisnotvisibility,cullingcostorproofofwhichcameraranintheplaytest.
+
+## Native room-record integration (2026-11-13)
+
+`game/native/gameplay_scenario/room_camera_records.{hpp,cpp}` implements the complete record loader, its planar preparation, bounded link traversal and `5C07C0`/`5C0800` ratio calculation. NativeSession imports actual RDT section 0 and installs it into the existing script-visible SequenceControl owner on committed room installation. The original main-ELF callback table row at `0x236820` is `[5BE3E0,0,0,0]`; `1D3830` invokes it at `1D39EC` with the section pointer and size, after section 2/3 processing and before section B lighting. The pinned row and complete dispatcher instruction words are included in the comparison evidence; the dispatcher itself is not executed by that fixture.
+
+The [current original comparison](../build-native-sjuni/room-camera-records-llvm-v1/receipt.json) passes 1,048,895 checks and 40,946 original entry calls against the current shared LLVM archives. It covers all 166 room sections (1,001 authored records, all nine active types), 64 synthetic cases, every represented field in the 32-slot pool, exact finite FP32 geometry results, 12,822 ratio samples, 27,894 link traversals and six refusal boundaries. The native profile bounds count/table/record extents and reached links to the actual 32-slot allocation; source type-zero/out-of-range skipped slots remain zero. Sequence time is each child's own duration byte converted to float, not an accumulated time. Existing script active bits remain in SequenceControl, with no second record copy.
+
+Ordinary camera selection, pose evaluation, mode tasks and actual display consumption remain open. Selected actor arithmetic uses stride `0x10E0`; `0x1E0` was a discarded research error. This data-import evidence does not establish a playable native camera or complete Stage 4.

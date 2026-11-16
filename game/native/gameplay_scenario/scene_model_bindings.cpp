@@ -125,6 +125,14 @@ std::array<std::uint32_t,4> SceneModelBindings::mask()const noexcept{
     std::array<std::uint32_t,4> result{};for(unsigned i=0;i<128;++i)if(bindings_[i].object||bindings_[i].matrix)result[i/32]|=std::uint32_t(1)<<(i%32);return result;
 }
 SceneModelBindings::EntityId SceneModelBindings::target(std::uint8_t slot)const noexcept{return slot<128?bindings_[slot].id:EntityId{};}
+ModelBindingError SceneModelBindings::reset()noexcept{
+    if(closed_)return ModelBindingError::closed;
+    if(busy_)return ModelBindingError::busy;
+    busy_=true;const Exit exit{busy_};
+    // Keep the owner guarded while releasing the previous native leases.
+    auto previous=std::move(bindings_);bindings_={};failure_={};previous={};
+    return ModelBindingError::none;
+}
 ModelBindingError SceneModelBindings::close()noexcept{
     if(closed_)return failure_.code;
     if(busy_){fail(ModelBindingError::busy,0);return failure_.code;}

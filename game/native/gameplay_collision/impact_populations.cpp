@@ -57,6 +57,11 @@ ContactVisuals::ContactVisuals(effects::WorkBackend& works, gameplay_session::Ra
 }
 Status ContactVisuals::oriented(const transform_math::Matrix& basis, Vec3& point,
                                 std::uint8_t key) {
+    return oriented_contact_impact(works_,random_,basis,point,key);
+}
+Status oriented_contact_impact(effects::WorkBackend& works_,gameplay_session::Random& random_,
+                               const transform_math::Matrix& basis,Vec3& point,std::uint8_t key) {
+    if(!works_.bound_to(random_))return Status::unadmitted_content;
     if (key >= oriented_styles.size() || oriented_styles[key] == -1)
         return Status::completed;
     if (!works_.admitted())

@@ -22,7 +22,7 @@ int main(){
     for(unsigned serial=0;serial<2048;++serial){
         current_case=serial;current_tick=0;s::CutscenePlaybackState state;state.camera_selection=std::uint8_t(serial%4);state.camera_ended=std::uint8_t(serial%5==0?3:serial%7==0?255:0);
         s::Fog fog({});std::array<std::byte,4> invalid_version{};check(fog.import_fog(invalid_version)==s::FogStatus::unsupported_version);
-        s::CutsceneCamera camera(state,fog,{});check(camera.bound_to(state));s::CutscenePlaybackState foreign;check(!camera.bound_to(foreign));
+        s::CameraParameters parameters;s::CutsceneCamera camera(state,fog,parameters);check(&camera.parameters()==&parameters&&camera.bound_to(state));s::CutscenePlaybackState foreign;check(!camera.bound_to(foreign));
         std::vector<std::byte> selection(5*16);std::array<std::array<std::vector<std::byte>,2>,4> records;
         std::array<std::array<std::span<const std::byte>,2>,4> spans;
         for(unsigned index=0;index<5;++index){
@@ -62,7 +62,7 @@ int main(){
         check(camera.install(nullptr)==s::CutsceneCameraStatus::completed);check(camera.select(mode)==s::CutsceneCameraStatus::unavailable);check(!camera.sample());
     }
     {
-        s::CutscenePlaybackState state;s::Fog fog({});s::CutsceneCamera camera(state,fog,{});
+        s::CutscenePlaybackState state;s::Fog fog({});s::CameraParameters parameters;s::CutsceneCamera camera(state,fog,parameters);
         check(camera.install(s::PreparedCameraTracks::import({},{}))==s::CutsceneCameraStatus::completed);
         std::fill_n(memory.data()+0x3900a0,32*8,0);transform_write(memory.data(),0x3901a8,0u);
         for(unsigned selected:{0u,1u,31u}){

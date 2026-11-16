@@ -131,11 +131,15 @@ RoomSceneOwner::definition(const gameplay_scene::RecordId &id) const noexcept {
       return &input_->records()[index];
   return nullptr;
 }
+bool RoomSceneOwner::bound_to(const RoomSceneInput& input,const SceneControls& controls)const noexcept {
+  return input_.get()==&input&&records_==controls.records();
+}
 void RoomSceneOwner::close() noexcept {
   for (auto it = ids_.rbegin(); it != ids_.rend(); ++it)
     (void)records_->retire(*it);
   ids_.clear();
   definitions_.clear();
   absent_lease_.reset();
+  input_.reset();
 }
 } // namespace reo::native::gameplay_scenario

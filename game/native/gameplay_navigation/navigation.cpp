@@ -65,6 +65,7 @@ std::optional<Asset> Asset::read(std::span<const std::uint8_t> bytes,ImportFailu
             if(tail!=12+64*nodes+4*nodes*nodes)throw Invalid{ImportError::layout,start};
             room.check(12,64*nodes+4*nodes*nodes);room.check(tail,8);
             const auto conditions=std::size_t(room.u32(tail+4));room.budget(conditions,4096,start+tail+4);
+            graph.condition_base_=tail+8;
             if(directory!=tail+8+16*conditions)throw Invalid{ImportError::layout,start+4};
             room.check(tail+8,16*conditions+64);
             for(std::size_t n=0;n<nodes;++n){
@@ -79,6 +80,7 @@ std::optional<Asset> Asset::read(std::span<const std::uint8_t> bytes,ImportFailu
             for(std::size_t i=0;i<nodes*nodes;++i){RouteCandidates candidates;std::copy_n(room.data.begin()+12+64*nodes+4*i,4,candidates.begin());graph.routes_.push_back(candidates);}
             for(std::size_t i=0;i<conditions;++i){Condition condition;std::copy_n(room.data.begin()+tail+8+16*i,16,condition.begin());graph.conditions_.push_back(condition);}
             std::copy_n(room.data.begin()+tail,4,graph.initial_edge_flags_.begin());
+            graph.directory_base_=directory;
             for(std::size_t i=0;i<16;++i){
                 const auto relative=std::size_t(room.u32(directory+4*i));
                 if(relative){if(relative<64)throw Invalid{ImportError::layout,start+directory+4*i};room.check(directory,relative);room.check(directory+relative,1);graph.directory_entries_[i]=directory+relative;}

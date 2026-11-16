@@ -2,16 +2,21 @@
 #include "../gameplay_world/resource_factory.hpp"
 #include "../gameplay_world/inventory.hpp"
 #include "../gameplay_world/resource_pose_updates.hpp"
+#include "../gameplay_world/actor_resource_operations.hpp"
+#include "../gameplay_world/resource_consumption.hpp"
 #include "../gameplay_scenario/script_resource_parameters.hpp"
 #include "../gameplay_scenario/script_resource_activation.hpp"
 #include "../gameplay_effects/periodic_visuals.hpp"
 #include "../gameplay_scenario/scenario_archive.hpp"
 #include "session_resource_import.hpp"
+#include "../gameplay_world/idle_action.hpp"
 namespace reo::native::gameplay_update {enum class Worker;class Owner;}
 namespace reo::native::gameplay_application {
 class NativeSession;
 class SessionRooms;
 class SessionResourceWorkers;
+class SessionStartup;
+class SessionStartupEffects;
 // Immutable capabilities supplied by their real asset importers. These are
 // asset inputs, never mutable runtime descriptor/model/actor substitutes.
 struct SessionResourceAssets {
@@ -41,25 +46,38 @@ public:
     SessionResources(const SessionResources&)=delete;
     SessionResources& operator=(const SessionResources&)=delete;
     bool bound_to(const NativeSession&)const noexcept;
+    // Non-mutating shutdown preflight, including independently callable owners.
+    bool busy()const noexcept;
     SessionResourceStatus close()noexcept;
     gameplay_scenario::SceneResources& descriptors()noexcept;
     const gameplay_scenario::ResourceTemplates& templates()const noexcept;
     gameplay_world::ResourceModels& models()noexcept;
+    std::shared_ptr<const gameplay_world::ResourceStaticAssets> static_models()const noexcept;
     gameplay_world::ResourceFactory& factory()noexcept;
     gameplay_world::WorldInventory& inventory()noexcept;
+    gameplay_world::ActorResourceOperations& actor_operations()noexcept;
+    gameplay_world::ResourceConsumption& consumption()noexcept;
     gameplay_world::WorldResourceAttachments& attachments()noexcept;
     gameplay_world::PoseWorkPool& pose_pool()noexcept;
     gameplay_world::ResourcePoseWork& pose_factory()noexcept;
     gameplay_collision::delivery::Packets& contact_packets()noexcept;
     gameplay_effects::PeriodicVisuals& visuals()noexcept;
+    gameplay_world::WorldAnimation& animation()noexcept;
+    gameplay_world::NativeActionAnimation& action_animation()noexcept;
+    void locomotion_action(gameplay_world::Actor&);
     bool initialized()const noexcept;
 private:
     SessionResources(NativeSession&,std::shared_ptr<const SessionResourceAssets>,std::shared_ptr<SessionRooms>);
     std::unique_ptr<Impl> impl_;
     void provide(gameplay_scenario::Providers&)noexcept;
     ResourceImportReport initialize()noexcept;
+    ResourceImportReport initialize_roster()noexcept;
+    bool initialize_roster_room_objects()noexcept;
+    ResourceImportReport initialize_impl(bool nested)noexcept;
     SessionResourceStatus run_worker(gameplay_update::Worker,gameplay_update::Owner&);
     friend class NativeSession;
     friend class SessionResourceWorkers;
+    friend class SessionStartup;
+    friend class SessionStartupEffects;
 };
 }

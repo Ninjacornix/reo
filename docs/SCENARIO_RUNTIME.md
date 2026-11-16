@@ -675,6 +675,55 @@ normally. This verifies the additional compiled path and local compatibility;
 the reporter's exact RTX 3060 configuration remains unverified, and the
 previously documented GPU-pressure case is not declared resolved.
 
+## Outbreak live-recording follow-up (2026-11-03)
+
+A local File #1 session on the RX 570, QHD output, 4x internal resolution, SMAA
+and 16x anisotropy produced eight completed incident bundles without dropped
+telemetry. Seven triggers were missing actor observations, which do not establish
+seven hangs. The other trigger was in scenario 1, room 21: the actor-sampled
+original clock advanced 0.800 game seconds across a 2.000-second host window.
+Presentation continued near 60 observations/s. The responsible worker/function
+is not established by those records.
+
+Reanalysis using sensitive thresholds identifies an individual 1232.7 ms
+original-clock update interval, another 83.7 ms interval, and a 40.9 ms frame
+capture scope. These intervals explain why a displayed FPS average can hide
+brief problems. They do not establish that the clock interruption and all
+reported in-engine cutscene lag share one cause. In particular, missing hooks
+and original game state transitions remain relevant limitations.
+
+The executed source-build executable registered zero whole-program VU defaults.
+Its selected local factory predates the approved-default-table interface; the
+current File #1 metadata marks seven exact programs for normal use. The candidate
+reconstructs the current twelve-image catalogue from the verified owned ELF and
+selects only those seven approved programs. No unmarked image/entry is admitted,
+and unknown code retains the interpreter. Rendering quality, original game-clock
+rules and experimental rendering/VU environment switches are unchanged.
+
+Edition-specific `REO_VU_WHOLE_FILE1_SOURCE` / `REO_VU_WHOLE_FILE2_SOURCE` CMake
+inputs prevent correcting one edition's factory from changing the other. CMake
+warns when a supplied legacy factory cannot provide approved defaults. The build
+guide documents reconstruction without an experimental enable switch. The new
+native `--check-vu-defaults` entry point verifies registration before constructing
+any runtime, window, audio device, guest state or input path; the rebuilt File #1
+candidate reports seven default programs.
+
+The current production-interpreter replay passes 1598 saved launches across four
+of the approved images and all their admitted entry points. It compares all 632
+VU state bytes, 16 KiB of data, and 2154 ordered graphics packets (2637600 bytes).
+Five replay rounds have median times of 88.1475 ms interpreted and 18.6705 ms
+compiled, about 4.72x faster for that captured VU workload. The other three
+approved images retain their previously documented admission; this local replay
+is not claimed to cover them. No new experimental program is promoted.
+
+This is a candidate correction to missing approved optimization in the local
+build, not a confirmed fix of the original room-21 incident. The automated
+gameplay route was not completed, so there is no new affected-scene baseline /
+candidate timing comparison. A user retest of the later Outbreak rooms and
+in-engine cutscenes is still required. Sensitive detection and a bounded
+continuous session trace are available for that retest; see
+[live slowdown recording](LIVE_SLOWDOWN_CHECKER.md).
+
 ## CRI disc-read freezes (2026-11-03)
 
 Two File #1 sessions on the RX 570 host showed isolated 157/227 ms and 187/502 ms

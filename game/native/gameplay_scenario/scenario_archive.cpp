@@ -36,7 +36,9 @@ ScenarioArchive::ScenarioArchive(std::shared_ptr<const reo::assets::Source> arch
         const auto contents = reo::assets::table(*archive_,source->offset,source->size);
         auto& members = members_[index];
         members.reserve(contents.entries.size());
+        auto& ordinals=ordinal_members_[index];ordinals.reserve(contents.entries.size());
         for (const auto& entry : contents.entries) {
+            ordinals.push_back({lower_name(entry.name),std::uint64_t(source->offset)+entry.offset,entry.size,sector_extent(entry.offset,entry.size,source->size)});
             if (!entry.name.empty())
                 members.push_back({lower_name(entry.name),std::uint64_t(source->offset)+entry.offset,entry.size,sector_extent(entry.offset,entry.size,source->size)});
         }
@@ -59,6 +61,13 @@ ScenarioArchive::ScenarioArchive(std::shared_ptr<const reo::assets::Source> arch
         }
         std::stable_sort(resources.begin(),resources.end(),[](const Member& a,const Member& b){return a.name<b.name;});
     }
+}
+
+Bytes ScenarioArchive::read_member_ordinal(std::uint16_t scenario,std::uint32_t ordinal)const{
+    const auto id=std::find(scenario_ids.begin(),scenario_ids.end(),scenario);
+    if(id==scenario_ids.end())return{};
+    const auto& members=ordinal_members_[std::size_t(id-scenario_ids.begin())];
+    return ordinal<members.size()?read(members[ordinal]):Bytes{};
 }
 
 Bytes ScenarioArchive::read_member(std::uint16_t scenario,std::string_view name) const {

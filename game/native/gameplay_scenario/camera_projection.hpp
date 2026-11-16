@@ -33,4 +33,18 @@ struct CameraDisplayState {
 // Stage5 consumer, never a successful default renderer implementation.
 void publish_camera_display(CameraParameters&,std::int8_t display_mode,
                             const CameraProjectionContext&,CameraDisplayState&,CameraDisplaySink&);
+//375650 publishes a projection/viewport before375920's viewport/view pair.
+void initialize_camera_display(CameraParameters&,std::int8_t display_mode,
+                               const CameraProjectionContext&,CameraDisplayState&,CameraDisplaySink&);
+class CameraDisplayBinding final {
+public:
+    CameraDisplayBinding(const std::int8_t& mode,const CameraProjectionContext& context,
+                         CameraDisplayState& state,CameraDisplaySink& sink)noexcept:
+        mode_(mode),context_(context),state_(state),sink_(sink){}
+    void initialize(CameraParameters& parameters){initialize_camera_display(parameters,mode_,context_,state_,sink_);}
+    void publish(CameraParameters& parameters){publish_camera_display(parameters,mode_,context_,state_,sink_);}
+private:
+    const std::int8_t& mode_;const CameraProjectionContext& context_;
+    CameraDisplayState& state_;CameraDisplaySink& sink_;
+};
 } // namespace reo::native::gameplay_scenario

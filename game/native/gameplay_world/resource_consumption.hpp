@@ -15,6 +15,10 @@ public:
     void use_carried_content(const actors::EntityId&,std::uint32_t content); //5B4460
     void consume_carried_content(const actors::EntityId&,std::uint32_t content); //5B45E0
     void destroy_content(const actors::EntityId&,std::uint32_t content); //5B47F0
+    //5B6450: scenario41 ages content3717 in all four carried slots and,
+    // for character6, all32 storage slots. Successful expiry transforms
+    // publish operation5 through the same canonical gameplay message owner.
+    bool age_carried_expirations(const actors::EntityId&);
     const std::optional<gameplay_events::Recorded>& last_record()const noexcept{return last_record_;}
 private:
     ResourceRecipes& lifecycle_;gameplay_update::Owner& update_;ResourceUse use_;

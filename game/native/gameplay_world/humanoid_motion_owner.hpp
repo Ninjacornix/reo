@@ -18,6 +18,7 @@ public:
     HumanoidPublicationStatus close()noexcept;
 private:
     friend class PrimaryActorModels;
+    friend class gameplay_application::SessionRoomMotions;
     HumanoidPublished publish_nested(std::shared_ptr<const HumanoidMotionBanks>,bool nested)noexcept;
     World& world_;std::shared_ptr<const HumanoidMotionBanks> current_;
     bool closed_{},running_{};

@@ -1,9 +1,13 @@
 #include "actor_resource_operations.hpp"
 #include "resource_auxiliary_lists.hpp"
+#include "resource_ownership.hpp"
 #include <stdexcept>
 namespace reo::native::gameplay_world {
 ActorResourceOperations::ActorResourceOperations(ResourceRecipes& resources):resources_(resources),world_(resources.pairs_.world_){
     if(world_.closed())throw std::invalid_argument("Native actor resource world closed");
+}
+bool ActorResourceOperations::clear_claims()noexcept{
+    return !world_.closed()&&clear_resource_claims(resources_.pairs_.resources_);
 }
 std::shared_ptr<Actor> ActorResourceOperations::actor(const actors::EntityId& id)const{
     const auto value=world_.closed()?nullptr:world_.resolve(id);
@@ -36,6 +40,19 @@ std::int8_t ActorResourceOperations::remap_content(const actors::EntityId& id,st
     const auto result=resources_.contents_.remap(resource);
     if(result&&value->selected_resource==std::uint8_t(resource)){resources_.pairs_.frames_.release(std::uint8_t(resource),true);value->selected_resource=0;value->resource_action=0;}
     if(mode!=1){notice(*value,0x8000,std::uint8_t(resource));}return std::int8_t(result);
+}
+bool ActorResourceOperations::transfer_inventory_ready(const actors::EntityId& id,std::uint32_t full_mode)const noexcept{
+    const auto value=world_.closed()?nullptr:world_.resolve(id);if(!value)return false;
+    const auto mode=std::uint8_t(full_mode);
+    if(value->category!=0||(mode==0&&value->slot!=world_.selected_actor)||(mode==1&&value->slot==world_.selected_actor))return true;
+    if(value->selected_resource&&!resources_.pairs_.frames_.release_ready(value->selected_resource))return false;
+    if(value->auxiliary_status&0x02000000u)return true;
+    if(!value->inventory.carried[0]&&!value->inventory.storage[0])return true;
+    try{
+        ResourceAuxiliaryLists lists(resources_.inventory_);
+        if(!lists.append_ready(value->slot,value->inventory.carried,4))return false;
+        return value->character!=6||lists.append_ready(value->slot,value->inventory.storage,32);
+    }catch(...){return false;}
 }
 std::int8_t ActorResourceOperations::transfer_inventory(const actors::EntityId& id,std::uint32_t full_mode){
     const auto value=actor(id);const auto mode=std::uint8_t(full_mode);

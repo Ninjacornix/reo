@@ -339,6 +339,20 @@ void Playback::blend_banks(std::uint16_t track, float p, float s) {
     if (secondary_)
         PoseBlend::blend(*primary_, *secondary_, track, p, s);
 }
+void Playback::advance_locomotion_blend(float rate,std::uint8_t mode){
+    auto& previous=channels_[1][0].timing;
+    const auto& current=channels_[0][0].timing;
+    if(previous.end==0||!(current.flags&8))return;
+    const float factor=clock_factor(mode);
+    const float ratio=finite(previous.end/current.end);
+    (void)advance(previous,times(factor,times(rate,ratio)));
+    if(!secondary_)return;
+    secondary_->sample(0,previous.frame);
+    // Source recomputes the second step with a different multiplication order.
+    const float before=minus(previous.frame,times(rate,times(factor,ratio)));
+    saved_delta_=secondary_->translation_difference(1,before,previous.frame);
+    secondary_->local_translation(1,{});
+}
 void Playback::activate(std::uint8_t count) {
     if (count > 5)
         throw std::out_of_range("Native active motion channel count unavailable");

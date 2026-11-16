@@ -4,6 +4,7 @@
 #include "../gameplay_world/world.hpp"
 #include "../gameplay_world/actor_state.hpp"
 #include "../gameplay_world/interaction_transitions.hpp"
+#include "../gameplay_world/interaction_registration.hpp"
 #include "../gameplay_scenario/flags.hpp"
 #include "../gameplay_collision/room_objects.hpp"
 #include <bit>
@@ -75,6 +76,12 @@ struct ActorInteractionRequestMessage {
     gameplay_world::InteractionRequest request;
     static constexpr unsigned type=3,length=32,options=0,dispatch_mode=4;
 };
+//67FF80 selector3/1AFDD0 short form. Its two source padding bytes are not
+//owned fields; only this initialized payload is carried into native transport.
+struct ActorRegistrationMessage {
+    MessageRoute route{};std::uint32_t channel{};std::uint8_t selector{3},control_selector{},room{},sequence{},yaw_high{};
+    static constexpr unsigned type=3,length=8,options=0,dispatch_mode=4;
+};
 struct ActorAlignmentMessage {
     MessageRoute route{};std::uint32_t channel{};gameplay_world::AlignmentTarget target;
     static constexpr unsigned type=6,length=20,options=0,dispatch_mode=4;
@@ -131,6 +138,7 @@ public:
     virtual bool send(const ActorActionMessage&)noexcept{return false;}
     virtual bool send(const ActorInteractionMessage&)noexcept{return false;}
     virtual bool send(const ActorInteractionRequestMessage&)noexcept{return false;}
+    virtual bool send(const ActorRegistrationMessage&)noexcept{return false;}
     virtual bool send(const ActorResourcePairMessage&)noexcept{return false;}
     virtual bool send(const ActorInventoryMessage&)noexcept{return false;}
     virtual bool send(const ActorStateMessage&)noexcept{return false;}
@@ -141,6 +149,7 @@ public:
     virtual bool send(const ActorPeerMessage&)noexcept{return false;}
     virtual bool send(const ActorSpeechMessage&)noexcept{return false;}
     bool send(const RoomClaimReleaseMessage&)noexcept override{return false;}
+    virtual bool send(const RoomMembershipMessage&)noexcept{return false;}
     virtual std::optional<std::uint32_t> room_owner(MessageRoute,std::uint16_t)noexcept{return{};}
 };
 // Complete admitted67DBD0 control/ownership path. Borrow canonical state once;
@@ -300,6 +309,16 @@ public:
         }
         default:return PublicationStatus::unavailable;
         }
+    }
+    PublicationStatus interaction_registration(const gameplay_world::actors::EntityId& id,
+        const gameplay_world::InteractionRegistrationMessage& registration)noexcept {
+        if(world_.closed())return PublicationStatus::unavailable;
+        const auto actor=world_.resolve(id);if(!actor)return PublicationStatus::unavailable;
+        if(world_.mode!=0&&world_.mode!=1)return PublicationStatus::completed;
+        ActorRegistrationMessage message;message.selector=registration.selector;
+        message.control_selector=registration.control_selector;message.room=registration.room;
+        message.sequence=registration.sequence;message.yaw_high=registration.yaw_high;
+        return dispatch_actor(*actor,message);
     }
     PublicationStatus resource_operation(std::uint32_t resource,std::uint32_t actor,std::uint32_t operation)noexcept{
         if(world_.closed())return PublicationStatus::unavailable;

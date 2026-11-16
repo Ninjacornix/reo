@@ -20,8 +20,9 @@ void initialization_owner(){
     check(owner.initialize_ai(id).status==ai::Status::completed&&!actor->ai_execution&&!actor->navigation_route&&world.navigation().header_byte()==0);
     actor->ai_control=1;check(owner.initialize_ai(id).status==ai::Status::unavailable&&world.session().ai_control_requests.pending().empty());
     actor->slot=3;actor->ai_execution.emplace();actor->navigation_route.emplace();auto& state=*actor->ai_execution;auto& route=*actor->navigation_route;
-    state.goal=42;state.action=9;state.combined_weights.fill(77);route.selection_mode=2;route.refresh=7;route.current_node=-3;
+    state.goal=42;state.action=9;state.combined_weights.fill(77);route.selection_mode=2;route.refresh=7;route.current_node=-3;actor->speech.remote_request=77;
     const auto first=owner.initialize_ai(id);check(first.status==ai::Status::completed&&first.registration==ai::RegistrationStatus::created&&first.publication->status==ai::RequestStatus::queued);
+    check(actor->speech.remote_request==0);
     check(state.goal==0&&state.previous_goal==42&&state.action==0&&state.previous_action==9&&state.weight_profile==0&&state.base_weights==ai::weight_profile(0)->base);
     check(state.combined_weights[0]==77&&state.room_memo==65535&&state.periodic_counter==60&&state.forced_priority==-1&&route.selection_mode==255&&route.refresh==0&&route.current_node==-3);
     auto& controls=world.session().ai_control_requests;
@@ -112,8 +113,8 @@ void reaction_owner(){
     const auto id=world.spawn_primary(0,std::make_unique<u::world::Actor>()).id;auto actor=world.resolve(id);check(bool(actor));
     auto& random=world.session().random;random.restore({0,54321,99});
     check(owner.schedule_ai_reaction(id,12).status==ai::Status::unavailable&&random.state().primary==0);
-    actor->ai_execution.emplace();auto& state=*actor->ai_execution;state.reaction=77;state.pending_reaction=55;state.reaction_countdown=100;
-    auto result=owner.schedule_ai_reaction(id,12);check(result.status==ai::Status::completed&&result.written&&result.random_draws==0&&state.pending_reaction==11&&state.reaction_countdown==5&&state.reaction==77&&random.state().primary==0);
+    actor->ai_execution.emplace();auto& state=*actor->ai_execution;actor->speech.remote_request=77;state.pending_reaction=55;state.reaction_countdown=100;
+    auto result=owner.schedule_ai_reaction(id,12);check(result.status==ai::Status::completed&&result.written&&result.random_draws==0&&state.pending_reaction==11&&state.reaction_countdown==5&&actor->speech.remote_request==77&&random.state().primary==0);
     result=owner.schedule_ai_reaction(id,0);check(result.status==ai::Status::completed&&!result.written&&result.random_draws==1&&state.pending_reaction==11&&state.reaction_countdown==5&&random.state().primary==176);
     random.restore({2,54321,99});result=owner.schedule_ai_reaction(id,0);check(result.written&&result.random_draws==2&&state.pending_reaction==1&&state.reaction_countdown==10&&random.state().primary==61952);
     random.restore({4,54321,99});result=owner.schedule_ai_reaction(id,0);check(result.written&&result.random_draws==2&&state.pending_reaction==11&&random.state().primary==58541&&random.state().secondary==54321&&random.state().observed==99);

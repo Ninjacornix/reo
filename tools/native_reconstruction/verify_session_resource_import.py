@@ -1,4 +1,4 @@
-"""Complete ordinary591C50 resource bootstrap and actual owned item assets."""
+"""Complete archive-mode591C50 resource bootstrap and actual owned item assets."""
 import argparse,hashlib,json,os,re,subprocess
 from pathlib import Path
 from audit_retail_effect_descriptors import compare_source,elf_reader
@@ -7,7 +7,7 @@ from verify_native_session import dependency_sources
 ROOT=Path(__file__).resolve().parents[2]
 def sha(path):return hashlib.sha256(path.read_bytes()).hexdigest()
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--compiler',choices=COMPILERS,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--compiler',choices=COMPILERS,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--offline-only',action='store_true');a=p.parse_args()
     out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni');out.mkdir()
     build=ROOT/'build-native-sjuni'/f'gameplay-native-{a.compiler}-v1';paths,libraries=dependency_sources(build)
     overlay=ROOT/'build-function-index/owned-overlays/o2.bin';assert sha(overlay)=='45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226';raw=overlay.read_bytes()
@@ -45,10 +45,10 @@ def main():
     (out/'owned_constants.hpp').write_text('inline void owned_resource_constants(std::uint8_t* memory){const std::uint8_t data[]={'+','.join(map(str,table))+'};std::memcpy(memory+0x723810,data,sizeof data); }\n')
     inventory=json.loads((ROOT/'build-native-sjuni/gameplay-script-content-llvm-v21/inventory.json').read_bytes());archive=Path(inventory[0]['archive']);compiler=COMPILERS[a.compiler];exe=out/'checks.exe'
     command=[str(compiler),'-std=c++20','-O2','-msse4.1','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-label','-Wno-unused-parameter','-fno-fast-math','-ffp-contract=off','-I'+str(out),'-I'+str(out/'source'),*[str(out/'source'/x.relative_to(ROOT))for x in [native,fixture]],'-Wl,--start-group',*[str(out/'libraries'/name)for name in libraries],'-Wl,--end-group','-lpthread','-o',str(exe)]
-    receipt=dict(schema='reo.native.session_resource_import.v1',status='failed',source_sha256=before,native_library_sha256=lib_hash,compiler_sha256=sha(compiler),original_word_audits=audits,metadata_sha256=hashlib.sha256(table).hexdigest(),boundaries=['Complete ordinary591C50 and its clear/selection/item/placement/tuning/starting-inventory bodies execute, with complete originalRNG and mode queries.','The declared asset-read port resolves actual owned ScenarioArchive files; clear/copy and exact filename formatting are observed IO operations. No successful gameplay service is substituted.','All256 sixty-byte descriptors,129 tuning rows,template metadata/eight whole actor projections/canonicalRNG/auxiliary-resource lists compare. Offline mode and filesystem profile remain unowned.'],game_launched=False)
+    receipt=dict(schema='reo.native.session_resource_import.v1',status='failed',source_sha256=before,native_library_sha256=lib_hash,compiler_sha256=sha(compiler),original_word_audits=audits,metadata_sha256=hashlib.sha256(table).hexdigest(),offline_only=a.offline_only,boundaries=['Complete archive-mode591C50 and both fixed/weighted selection bodies execute with clear/item/placement/tuning/starting inventory and original RNG/mode queries.','The declared asset-read port resolves actual owned ScenarioArchive files; clear/copy and exact filename formatting are observed IO operations. No successful gameplay service is substituted.','All256 sixty-byte descriptors,129 tuning rows,template metadata/eight whole actor projections/canonicalRNG/auxiliary-resource lists compare. Filesystem asset mode remains unowned.'],game_launched=False)
     env=dict(os.environ,PATH=str(compiler.parent)+os.pathsep+os.environ.get('PATH',''))
     try:
-        for label,cmd in [('compile',command),('run',[str(exe),str(archive)])]:
+        for label,cmd in [('compile',command),('run',[str(exe),str(archive)]+(['--offline-only'] if a.offline_only else []))]:
             result=subprocess.run(cmd,capture_output=True,text=True,env=env,timeout=600);(out/(label+'.txt')).write_text(result.stdout+result.stderr);assert result.returncode==0,label+': '+(result.stdout+result.stderr)[-4000:]
             if label=='run':receipt['observed']=json.loads(result.stdout)
         receipt['source_drift']={name:sha(ROOT/name)for name,digest in before.items()if sha(ROOT/name)!=digest};assert not receipt['source_drift'];receipt['source_unchanged']=True;receipt['status']='passed'

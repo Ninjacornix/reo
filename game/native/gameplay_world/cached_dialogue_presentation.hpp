@@ -1,14 +1,10 @@
 #pragma once
 #include "dialogue_records.hpp"
+#include "inventory_visibility.hpp"
 #include "../gameplay_scenario/text_cache.hpp"
 namespace reo::native::gameplay_world {
 // Borrowed inputs of actual6DEE20. The timed-message owner must supply these;
 // a generic presentation binding does not fabricate its initialization.
-struct DialogueVisibilityInputs {
-    std::optional<std::uint8_t> enabled; //4BAE33
-    std::optional<std::uint8_t> mode;    //755EC4
-};
-std::optional<bool> dialogue_suppressed(const DialogueVisibilityInputs&,std::uint8_t inventory_owner)noexcept;
 // The application supplies its one shared native cache for all text frontends.
 // Queue insertion/erase are the real source operations; later font/glyph
 // rendering consumes cache snapshots through its distinct source owner.

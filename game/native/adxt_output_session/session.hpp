@@ -109,6 +109,8 @@ public:
     void request_stop() noexcept;
     [[nodiscard]] Status join() noexcept;
     [[nodiscard]] Snapshot snapshot() const noexcept;
+    // Identity only; does not expose the mixer's private bank session.
+    [[nodiscard]] bool bound_to(const audio_mix_tail::Mixer&)const noexcept;
     [[nodiscard]] std::shared_ptr<Submix> submix()const noexcept{return submix_;}
 private:
     std::shared_ptr<State> state_;std::shared_ptr<audio_output::Owner> owner_;

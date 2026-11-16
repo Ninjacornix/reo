@@ -6,6 +6,7 @@
 #include "functions.h"
 #include <iostream>
 #include <source_location>
+#include <string_view>
 #include <vector>
 namespace a=reo::native::gameplay_application;namespace g=reo::native::gameplay_world;namespace s=reo::native::gameplay_scenario;
 std::uint64_t checks{},cases{},calls{},reads{},selected{},placed{},starting{};
@@ -52,7 +53,7 @@ struct Notices final:s::FlagNotifications {
     bool changed(const s::StridedFlagChange&)noexcept override{return true;}
 };
 int main(int argc,char** argv)try{
-    check(argc==2);auto source=std::make_shared<const reo::assets::Source>(std::filesystem::path(argv[1]));s::content::ScenarioArchive owned(source);archive=&owned;
+    check(argc==2||argc==3);const bool offline_only=argc==3&&std::string_view(argv[2])=="--offline-only";check(argc==2||offline_only);auto source=std::make_shared<const reo::assets::Source>(std::filesystem::path(argv[1]));s::content::ScenarioArchive owned(source);archive=&owned;
     g::Profile profile;profile.layouts.push_back({});profile.entities.capacity=64;auto session=std::make_shared<g::Session>();g::World world(profile,session);world.mode=1;session->asset_loading_mode=1;
     s::SceneResources resources;s::ResourceTemplates templates;g::ResourceModels models;g::ResourceFrames frames(world,resources,models,nullptr,{},&templates);g::WorldInventory inventory(world,resources,templates,frames);a::ResourceBootstrap bootstrap(world,resources,templates,inventory);
     for(unsigned slot=0;slot<8;++slot){auto actor=std::make_unique<g::Actor>();actor->slot=std::uint8_t(slot);check(bool(world.spawn_primary(slot,std::move(actor)).id));}
@@ -64,8 +65,8 @@ int main(int argc,char** argv)try{
         check(reached&&mode_prefix_ports-before==4&&memory[0x3243d7]==*host.world().session().asset_loading_mode);++mode_prefixes;
     }
     check(host.close()==a::SessionStatus::completed);
-    const auto run=[&](unsigned difficulty,unsigned observed,unsigned roll,unsigned variant,bool all_variants){
-        world.scenario=scenario;world.room=memory[0x3243dc]=73;world.mode=memory[0x3243f2]=1;session->asset_loading_mode=memory[0x3243d7]=1;session->difficulty=memory[0x4bae8a]=std::uint8_t(difficulty);
+    const auto run=[&](unsigned difficulty,unsigned observed,unsigned roll,unsigned variant,bool all_variants,unsigned mode=1,unsigned flags=0){
+        world.scenario=scenario;world.room=memory[0x3243dc]=73;world.mode=memory[0x3243f2]=std::uint8_t(mode);session->gameplay_flags=memory[0x4bae96]=std::uint8_t(flags);session->asset_loading_mode=memory[0x3243d7]=1;session->difficulty=memory[0x4bae8a]=std::uint8_t(difficulty);
         session->clock_mode=memory[0x3243cc]=std::uint8_t(roll%2);const auto population=all_variants?1u:roll%9;session->primary_population=population;
         transform_write(memory.data(),0x3243da,scenario);transform_write(memory.data(),0x4baea0,population);transform_write(memory.data(),0x32440c,0x1000000u);transform_write(memory.data(),0x324420,0x1000000u);
         session->random.restore({std::uint16_t(roll*3),std::uint16_t(roll),std::uint8_t(observed)});transform_write(memory.data(),0x3244b0,std::uint16_t(roll*3));transform_write(memory.data(),0x3244b8,std::uint16_t(roll));memory[0x2b8de8]=std::uint8_t(observed);
@@ -87,11 +88,16 @@ int main(int argc,char** argv)try{
         const auto random=session->random.state();check(random.primary==transform_read<std::uint16_t>(memory.data(),0x3244b0)&&random.secondary==transform_read<std::uint16_t>(memory.data(),0x3244b8)&&random.observed==memory[0x2b8de8]);
         selected+=result.selected;placed+=result.placed;starting+=result.starting;++cases;
     };
-    for(auto value:{1u,2u,28u,35u,41u}){scenario=std::uint16_t(value);for(unsigned difficulty=0;difficulty<4;++difficulty)for(unsigned observed=0;observed<4;++observed)for(unsigned roll=0;roll<100;++roll)run(difficulty,observed,roll,0,false);
-        for(unsigned variant=0;variant<=152;++variant)run(0,0,37,variant,true);
+    for(auto value:{1u,2u,28u,35u,41u}){scenario=std::uint16_t(value);
+        if(!offline_only){for(unsigned difficulty=0;difficulty<4;++difficulty)for(unsigned observed=0;observed<4;++observed)for(unsigned roll=0;roll<100;++roll)run(difficulty,observed,roll,0,false);
+            for(unsigned variant=0;variant<=152;++variant)run(0,0,37,variant,true);}
+        // Actual mode-zero fixed rows, both 4BAE96 branches, and all clock/
+        // roster populations. Original RNG state must remain identical.
+        for(unsigned difficulty=0;difficulty<4;++difficulty)for(unsigned flags=0;flags<2;++flags)
+            for(unsigned roll=0;roll<9;++roll)run(difficulty,roll%4,roll,0,false,0,flags);
     }
     const auto previous=resources.active_count();const auto unchanged=[&]{check(resources.active_count()==previous);++refusals;};
-    world.mode=0;check(bootstrap.run(owned).status==a::ResourceImportStatus::unavailable_profile);unchanged();world.mode=1;
+    world.mode=0;session->difficulty.reset();check(bootstrap.run(owned).status==a::ResourceImportStatus::unavailable_profile);unchanged();world.mode=1;session->difficulty=0;
     session->difficulty.reset();check(bootstrap.run(owned).status==a::ResourceImportStatus::unavailable_profile);unchanged();session->difficulty=0;
     session->asset_loading_mode=0;check(bootstrap.run(owned).status==a::ResourceImportStatus::unavailable_profile);unchanged();session->asset_loading_mode=1;
     session->primary_population=9;check(bootstrap.run(owned).status==a::ResourceImportStatus::unavailable_profile);unchanged();

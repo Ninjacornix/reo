@@ -1,8 +1,10 @@
 #pragma once
 #include "record_pool.hpp"
+#include "entry_details.hpp"
 #include "../gameplay_scenario/scene_control_types.hpp"
 #include "../gameplay_collision/collision.hpp"
 #include "../gameplay_actors/entity.hpp"
+#include <array>
 
 namespace reo::native::gameplay_scene {
 // Collision-only state. Kind, priority, activity, identity and type-dependent
@@ -15,11 +17,38 @@ struct CollisionShape {
     gameplay_collision::ObjectAdmission object;
 };
 struct DoorDetails { std::optional<std::uint32_t> selector_without_matrix; };
+// Exact type-3 policy fields consumed by5C3FE0. Raw RDT offsets are projected
+// at RoomSceneInput; these are source parameters, not guest memory aliases.
+struct FlagPolicyCallback {std::uint32_t gate{},expected{},inequality{};std::uint16_t event{0xffff};};
+// Exact5C4230 inventory/flag callback inputs. `event_word` remains full-width
+// because the source tests signed(P+68)!=-1 before narrowing the low half.
+struct InventoryPolicyCallback {
+    std::uint32_t gate{},expected{},inequality{},operation{},flag_bank{};
+    std::uint32_t second_content{},event_word{0xffffffffu};
+};
+//5C4600's source fields are distinct from ControlTypeFive's periodic-effect
+//state. Raw room data is projected without assigning guessed meanings to
+//the task-condition and category-selected event values.
+struct ConditionalEventCallback {
+    std::uint16_t base_event{},condition{},alternate_event{},task_parameter{};
+    std::uint8_t callback_parameter{},category_mask{};
+    std::array<std::uint16_t,8> category_events{};
+    std::int16_t counter_limit{},counter{};
+    std::uint8_t deactivate{};
+    std::uint32_t flag_id{},flag_mode{};
+};
 struct Record : gameplay_scenario::SceneControl {
     std::optional<CollisionShape> collision;
     gameplay_actors::EntityId owner;
+    // Original proxy+3E: last query-class byte written by 5DC570/5DCA90.
+    // It is independent of CollisionShape::query_class, which is authored
+    // admission data used to decide whether the record matches a query.
+    std::optional<std::uint8_t> last_query_class;
     RecordId source;
     std::optional<DoorDetails> door;
+    std::optional<DoorEntryDetails> door_entry;
+    std::optional<ObjectEntryDetails> object_entry;
+    std::optional<LadderEntryDetails> ladder_entry;
     std::optional<std::uint8_t> owner_snapshot,extra; // original44/45; distinct from3F
     // Original3F: allocator zeroes it; room initialization writes ordinal+1.
     // Condition lookup reads this byte SIGNED, including the default zero.
@@ -27,6 +56,9 @@ struct Record : gameplay_scenario::SceneControl {
     // Used only for tags whose +48 has no existing semantic typed projection.
     // Type0 destination and type2 descriptor always use their body field.
     std::optional<std::uint32_t> other_content;
+    std::optional<FlagPolicyCallback> flag_policy;
+    std::optional<InventoryPolicyCallback> inventory_policy;
+    std::optional<ConditionalEventCallback> conditional_event;
     // Full-word native admission field. The matrix selector consumes a byte;
     // collision consumes equality with the complete word. A missing value is
     // distinct from an authored zero.

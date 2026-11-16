@@ -44,17 +44,31 @@ bool Owner::apply_source_coordinates(std::uint8_t ordinal,std::array<std::int8_t
     if(!initialized_||ordinal>=objects_.size())return false;
     auto& object=objects_[ordinal];object.x=value[0];object.z=value[1];return true;
 }
-Owner Owner::import(std::span<const std::byte> types,std::span<const std::byte> placements){
+Owner Owner::import_types(std::span<const std::byte> types){
     Owner result;const auto count=word(types,4),type_offset=word(types,8),model_offset=word(types,12);if(count>32)throw std::invalid_argument("Room-object type count exceeds physical capacity");result.type_count_=count;
     if(type_offset){if(type_offset>types.size()||std::size_t(count)*8>types.size()-type_offset)throw std::invalid_argument("Room-object type table outside owned blob");for(unsigned i=0;i<count;++i){const auto at=type_offset+8*i;auto& t=result.types_[i];t.profile=signed_byte(types,at);t.capacity=signed_byte(types,at+1);t.request_threshold=signed_byte(types,at+2);t.callback=std::to_integer<std::uint8_t>(types[at+3]);t.parameter4=std::to_integer<std::uint8_t>(types[at+4]);t.parameter5=std::to_integer<std::uint8_t>(types[at+5]);t.flags=std::uint16_t(word(types,at+4)>>16);if(t.profile<0||std::size_t(t.profile)>=profiles.size()||t.callback>=4)throw std::invalid_argument("Unsupported room-object profile/callback");}}
     if(model_offset){if(model_offset>types.size()||std::size_t(count)*2>types.size()-model_offset)throw std::invalid_argument("Room-object models outside owned blob");for(unsigned i=0;i<count;++i){const auto at=model_offset+2*i;result.types_[i].model_slot=std::uint16_t(std::to_integer<std::uint8_t>(types[at])|(std::uint16_t(std::to_integer<std::uint8_t>(types[at+1]))<<8));}}
-    if(word(placements,0)!=2)throw std::invalid_argument("Unsupported room-object placement schema");
+    return result;
+}
+void Owner::apply_source_startup_bytes()noexcept{
+    types_[31].request_threshold=0;types_[31].capacity=4;types_[31].parameter4=0;
+}
+void Owner::import_placements(std::span<const std::byte> placements){
+    if(initialized_||count_)throw std::invalid_argument("Room-object placement owner already populated");
+    if(word(placements,0)!=2){finish_without_placements();return;}
     const auto records=std::bit_cast<std::int32_t>(word(placements,4));if(records>0&&(std::size_t(records)>((placements.size()-8)/16)))throw std::invalid_argument("Room-object placements outside owned blob");
-    for(std::int32_t i=0;i<records&&result.count_<31;++i){const auto b=placements.subspan(8+std::size_t(i)*16,16);auto& object=result.objects_[++result.count_];object.active=true;object.room=std::to_integer<std::uint8_t>(b[0]);object.external_id=std::to_integer<std::uint8_t>(b[1]);object.control_flags=word(b,12)|1;object.type=object.control_flags&4?31:std::uint16_t(std::int16_t(signed_byte(b,2)));if(object.type>=32||(!(object.control_flags&4)&&object.type>=count))throw std::invalid_argument("Placement type outside imported native table");const auto& t=result.types_[object.type];object.initial_x=object.x=signed_byte(b,3);object.initial_z=object.z=signed_byte(b,4);object.rotation=std::to_integer<std::uint8_t>(b[5])&3;object.allowed_directions=std::to_integer<std::uint8_t>(b[6])&15;
+    for(std::int32_t i=0;i<records&&count_<31;++i){const auto b=placements.subspan(8+std::size_t(i)*16,16);auto& object=objects_[++count_];object.active=true;object.room=std::to_integer<std::uint8_t>(b[0]);object.external_id=std::to_integer<std::uint8_t>(b[1]);object.control_flags=word(b,12)|1;object.type=object.control_flags&4?31:std::uint16_t(std::int16_t(signed_byte(b,2)));if(object.type>=32)throw std::invalid_argument("Placement type outside physical native table");const auto& t=types_[object.type];object.initial_x=object.x=signed_byte(b,3);object.initial_z=object.z=signed_byte(b,4);object.rotation=std::to_integer<std::uint8_t>(b[5])&3;object.allowed_directions=std::to_integer<std::uint8_t>(b[6])&15;
         if(object.control_flags&4){object.width=signed_byte(b,7);object.height=signed_byte(b,8);object.depth=signed_byte(b,9);}else{const auto& p=profiles[std::size_t(t.profile)];object.width=p[16];object.height=p[17];object.depth=p[18];}
         if(t.capacity==0)object.height=7;
         object.control_flags|=t.flags;object.parameter=t.parameter4;
-    }result.initialized_=true;return result;
+    }initialized_=true;
+}
+void Owner::finish_without_placements(){
+    if(initialized_||count_)throw std::invalid_argument("Room-object placement owner already populated");
+    initialized_=true;
+}
+Owner Owner::import(std::span<const std::byte> types,std::span<const std::byte> placements){
+    auto result=import_types(types);result.import_placements(placements);return result;
 }
 ObjectId Owner::id(std::uint32_t slot)const noexcept{ObjectId result;result.domain_=domain_;result.slot_=slot;return result;}
 const Object* Owner::get(const ObjectId& handle)const noexcept{return handle&&handle.domain_==domain_&&handle.slot_<32&&objects_[handle.slot_].active?&objects_[handle.slot_]:nullptr;}

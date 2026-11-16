@@ -252,6 +252,7 @@ PS2Runtime::Function PS2Runtime::lookupFunction(std::uint32_t at)const{
 #include "inventory_ui_vm_tests.inc"
 #include "actor_model_classes_vm_tests.inc"
 #include "inventory_request_gate_vm_tests.inc"
+#include "actor_population_vm_tests.inc"
 int main(int argc,char** argv)try{
     check(argc==5);
     scene_record_eligibility_tests();
@@ -267,6 +268,7 @@ int main(int argc,char** argv)try{
     inventory_ui_vm_tests();
     actor_model_classes_vm_tests();
     inventory_request_gate_vm_tests();
+    actor_population_vm_tests();
     no_model_vm_tests();
     surface_vm_tests(argv[1]);
     room_counter_vm_tests(argv[2]);
@@ -473,5 +475,6 @@ int main(int argc,char** argv)try{
              <<",\"inventory_ui_dispatches\":"<<inventory_ui_dispatches<<",\"inventory_ui_refusals\":"<<inventory_ui_refusals
              <<",\"actor_model_class_dispatches\":"<<actor_model_class_dispatches<<",\"actor_model_class_refusals\":"<<actor_model_class_refusals
              <<",\"inventory_request_dispatches\":"<<inventory_request_dispatches<<",\"inventory_request_refusals\":"<<inventory_request_refusals<<",\"inventory_request_initializers\":"<<inventory_request_initializers
+             <<",\"actor_population_dispatches\":"<<actor_population_dispatches<<",\"actor_population_refusals\":"<<actor_population_refusals
              <<",\"original_numeric_handler_invocations\":65536,\"game_launched\":false}\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

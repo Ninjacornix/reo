@@ -2,6 +2,10 @@
 #include "impact_policy.hpp"
 #include "../gameplay_effects/work.hpp"
 namespace reo::native::gameplay_collision::delivery {
+// Shared complete5DD6F0 policy. This lane needs no feedback/sound parameter
+// provider; its immutable selectors consume the actual work owner and RNG.
+Status oriented_contact_impact(gameplay_effects::WorkBackend&,gameplay_session::Random&,
+                               const transform_math::Matrix&,Vec3&,std::uint8_t key);
 class ImpactParameters {
   public:
     virtual ~ImpactParameters() = default;

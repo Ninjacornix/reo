@@ -256,7 +256,11 @@ void PeriodicVisuals::publish(std::shared_ptr<const EffectFrame> frame)noexcept{
     // Destruction of an old frame/resource lease occurs after unlocking.
     {std::lock_guard lock(publication_);published_.swap(frame);}
 }
-bool PeriodicVisuals::admitted()const noexcept{return !closed_&&failure_==VisualStatus::completed;}
+bool PeriodicVisuals::admitted()const noexcept{return !closed_&&bank_&&failure_==VisualStatus::completed;}
+bool PeriodicVisuals::replace_bank(std::shared_ptr<const EffectBank> bank)noexcept{
+    if(closed_||busy_)return false;
+    bank_=std::move(bank);return true;
+}
 bool PeriodicVisuals::bound_to(const gameplay_session::Random& random)const noexcept{return admitted()&&random_==&random;}
 bool PeriodicVisuals::bound_to(const gameplay_world::World& world)const noexcept{
     if(!admitted()||world.closed()||!surfaces_||surfaces_->world.get()!=&world||!bound_to(world.session().random))return false;

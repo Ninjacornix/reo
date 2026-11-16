@@ -16,6 +16,7 @@ std::uint64_t checks{}, cases{}, mutation_cases{}, family_cases{};
 std::vector<e::Event> original_events;
 std::vector<std::uint32_t> original_steps;
 bool family_only{}, mutate{};
+bool character_mode{};
 std::uint32_t selected_target{};
 void check(bool yes, const char* why) {
     ++checks;
@@ -36,6 +37,8 @@ e::EventKind kind(std::uint32_t address) {
             return e::EventKind::resource_audio;
         case 0x595e30:
             return e::EventKind::resource_callback;
+        case 0x595eb0:
+            return e::EventKind::character_callback;
         case 0x595fa0:
             return e::EventKind::node_audio;
         case 0x596000:
@@ -89,6 +92,14 @@ void original_transform_port(std::uint8_t* ram, R5900Context* ctx, PS2Runtime* r
         case 0x59ebb0:
             o2_0059EBB0_0x59ebb0(ram, ctx, runtime);
             return;
+        case 0x5ec3e0:o2_005EC3E0_0x5ec3e0(ram,ctx,runtime);return;
+        case 0x5baff0:o2_005BAFF0_0x5baff0(ram,ctx,runtime);return;
+        case 0x5bb480:o2_005BB480_0x5bb480(ram,ctx,runtime);return;
+        case 0x5bb780:o2_005BB780_0x5bb780(ram,ctx,runtime);return;
+        case 0x5bbad0:o2_005BBAD0_0x5bbad0(ram,ctx,runtime);return;
+        case 0x5ec7a0:o2_005EC7A0_0x5ec7a0(ram,ctx,runtime);return;
+        case 0x5bbfa0:o2_005BBFA0_0x5bbfa0(ram,ctx,runtime);return;
+        case 0x5bc380:o2_005BC380_0x5bc380(ram,ctx,runtime);return;
         default:
             break;
     }
@@ -111,6 +122,7 @@ void original_transform_port(std::uint8_t* ram, R5900Context* ctx, PS2Runtime* r
             event.auxiliary = GPR_U32(ctx, 7);
             break;
         case e::EventKind::resource_callback:
+        case e::EventKind::character_callback:
             break;
         case e::EventKind::model_action:
             event.argument = GPR_U32(ctx, 6);
@@ -125,6 +137,7 @@ void original_transform_port(std::uint8_t* ram, R5900Context* ctx, PS2Runtime* r
         ram[actor_at + 0x54f] = 0x39;
         transform_write(ram, actor_at + 0x212, std::uint16_t(0xf2));
         transform_write(ram, actor_at + 0xca8, std::uint16_t(4));
+        if(character_mode){ram[actor_at+9]=15;transform_write(ram,actor_at+0x1f2,std::uint16_t(378));}
     }
     ctx->pc = GPR_U32(ctx, 31);
 }
@@ -140,6 +153,7 @@ struct Consumer final : e::Consumer {
             actor.motion_class = 0x39;
             actor.animation->channel(a::ModelBank::primary, 1).selector = 0xf2;
             actor.resource_action = 4;
+            if(character_mode){actor.secondary=15;actor.animation->channel(a::ModelBank::primary,0).selector=378;}
         }
         if (replace)
             actor.animation.reset();
@@ -349,6 +363,26 @@ int main(int argc, char** argv) try {
                   "fresh selectors and late canonical fields after mutable consumer");
             ++mutation_cases;
         }
+    character_mode=true;
+    for(unsigned family=0;family<8;++family){
+        const auto selected=static_cast<e::Family>(unsigned(e::Family::civilian_two)+family);
+        for(unsigned selector=0;selector<65536;++selector)for(unsigned variant=0;variant<4;++variant){
+            actor.secondary=(variant&1)?15:0;
+            const auto lower=std::uint16_t(selector*73u+variant*17u);
+            actor.animation->channel(a::ModelBank::primary,0).selector=lower;
+            actor.animation->channel(a::ModelBank::primary,1).selector=std::uint16_t(selector);
+            ram[actor_at+9]=actor.secondary;transform_write(ram.data(),actor_at+0x1f2,lower);
+            transform_write(ram.data(),actor_at+0x212,std::uint16_t(selector));
+            consumer.events.clear();consumer.steps.clear();original_events.clear();original_steps.clear();
+            mutate=consumer.mutation=(variant&2)!=0;
+            const auto step=variant&1?.125f:-.5f;
+            call(ram,address(selected),step);e::run_player(selected,actor,metadata,consumer,step);
+            check(consumer.events==original_events&&consumer.steps==original_steps,
+                  "complete character schedule, fresh lower selector and secondary state");
+            ++cases;if(mutate)++mutation_cases;
+        }
+    }
+    character_mode=false;
     family_only = true;
     mutate = false;
     for (unsigned category : {0u, 1u})

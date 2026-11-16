@@ -117,6 +117,8 @@ void owned(const std::filesystem::path& path){
         check(!resources.retain(72));
         auto room=resources.retain(73);check(bool(room));
         check(resources.status()==a::RoomResourcesStatus::completed);
+        check(resources.script_commands()&&resources.script_commands()->ready(false)&&
+              !resources.script_commands()->ready(true)&&!resources.script_commands()->ready(false,true));
         auto id=room->identity();check(bool(id)&&room->current(id));
         check(room->room_number()==73&&room->programs().get()==&host->scene_matrices());
         auto lease=host->retain_room(host);check(lease&&lease->world().get()==&host->world());
@@ -198,8 +200,11 @@ void owned(const std::filesystem::path& path){
         check(*host->scene_models().pose(100)==*bound_pose&&host->room_models().saved()[100]==saved_pose);
         check(!room->current(id)&&!lease->current());
         check(!object_scene->open());
+        check(!resources.script_commands());
         check(room->geometry().walls.triangles().size()==wall_count);
         auto replacement=resources.retain(73);check(replacement&&replacement->identity()!=id);
+        check(resources.script_commands()&&resources.script_commands()->ready(false)&&
+              !resources.script_commands()->ready(true)&&!resources.script_commands()->ready(false,true));
         auto replacement_lease=host->retain_room(host);check(replacement_lease&&replacement_lease->object_context().entities.size()==0);
         auto replacement_scene=replacement_lease->object_scene();check(replacement_scene&&replacement_scene->open());
         check(&replacement->geometry().objects==objects&&host->world().session().collision_disabled_mask==0);

@@ -34,6 +34,8 @@ class Statistics final {
 public:
     explicit Statistics(std::shared_ptr<const RuleBook> = RuleBook::file1());
     const CompletionState& state()const noexcept{return state_;}
+    void mark_scripted_terminal()noexcept{state_.actors.scripted_terminal=1;}
+    bool record_assistance()noexcept{if(!state_.initialized)return false;++state_.actors.assistance_requests;return true;}
     bool actor_frame(float distance,std::int16_t current,std::int16_t maximum,std::uint32_t status)noexcept{return state_.initialized&&record_actor_counters(state_.actors,distance,current,maximum,status);}
     bool resource_use(std::uint32_t action_flags)noexcept{if(!state_.initialized)return false;state_.actors.used_resource=1;if(action_flags&0x10u)++state_.actors.resource_uses;return true;}
     void restore(CompletionState state)noexcept{state_=state;}

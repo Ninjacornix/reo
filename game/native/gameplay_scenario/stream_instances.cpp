@@ -1,5 +1,6 @@
 #include "stream_instances.hpp"
 #include "actor_voice_archive_assets.hpp"
+#include "actor_voice_selections.hpp"
 #include <bit>
 #include <atomic>
 #include <stdexcept>
@@ -66,16 +67,19 @@ StreamAsset StreamAssetCatalog::resolve(StreamRequest request)const noexcept{
     }catch(...){return{StreamStatus::unsupported_profile,{}};}
 }
 StreamInstances::StreamInstances(std::shared_ptr<adxt_control_owner::Owner> owner,std::array<StreamInstanceConfig,3> config,
-    std::shared_ptr<const StreamAssetCatalog> catalog,std::shared_ptr<audio_clip_loader::Loader> voice_loader):owner_(std::move(owner)),config_(std::move(config)),catalog_(std::move(catalog)),voice_loader_(std::move(voice_loader)){}
+    std::shared_ptr<const StreamAssetCatalog> catalog,std::shared_ptr<audio_clip_loader::Loader> voice_loader,std::shared_ptr<ActorVoiceSelections> selections):owner_(std::move(owner)),config_(std::move(config)),catalog_(std::move(catalog)),voice_loader_(std::move(voice_loader)),actor_archives_(std::move(selections)){}
 StreamInstancesOpen StreamInstances::create(std::shared_ptr<adxt_control_owner::Owner> owner,std::array<StreamInstanceConfig,3> config,
-    std::shared_ptr<const StreamAssetCatalog> catalog,std::array<std::uint8_t,3> order,std::shared_ptr<audio_clip_loader::Loader> voice_loader)noexcept{
+    std::shared_ptr<const StreamAssetCatalog> catalog,std::array<std::uint8_t,3> order,std::shared_ptr<audio_clip_loader::Loader> voice_loader,std::shared_ptr<ActorVoiceSelections> selections)noexcept{
     if(!owner||!catalog||!catalog->sealed())return{StreamStatus::unsupported_profile,{}};
+    if(selections&&!selections->bound_to(*catalog))return{StreamStatus::unsupported_profile,{}};
+    if(selections){const auto status=selections->status();if(status!=StreamStatus::completed)return{status,{}};}
     std::array<bool,3> seen{};for(const auto index:order){if(index>=3||seen[index])return{StreamStatus::unsupported_profile,{}};seen[index]=true;}
     for(const auto& c:config)if(!c.construction.attenuation_table||c.construction.channels<1||c.construction.channels>2||
         c.player.sequence||c.player.lsc_input||c.player.initial_attenuation||
         (c.player.attenuation_table&&c.player.attenuation_table!=c.construction.attenuation_table))return{StreamStatus::unsupported_profile,{}};
     try{
-        auto value=std::unique_ptr<StreamInstances>(new StreamInstances(std::move(owner),std::move(config),std::move(catalog),std::move(voice_loader)));
+        if(!selections)selections=std::make_shared<ActorVoiceSelections>(catalog);
+        auto value=std::unique_ptr<StreamInstances>(new StreamInstances(std::move(owner),std::move(config),std::move(catalog),std::move(voice_loader),std::move(selections)));
         auto result=StreamStatus::fault;Operation setup([&](auto& players){
             if(players.snapshot().instances){result=StreamStatus::unsupported_profile;return;}
             result=mapped(players.start_output());if(result!=StreamStatus::completed)return;
@@ -89,33 +93,26 @@ StreamInstancesOpen StreamInstances::create(std::shared_ptr<adxt_control_owner::
 }
 StreamInstances::~StreamInstances(){(void)close();}
 StreamStatus StreamInstances::activate_actor_archive(std::uint8_t slot,std::uint8_t character)noexcept{
-    if(slot>=actor_archives_.size())return StreamStatus::completed; // Actual1BA440 no-op.
+    if(slot>=5)return StreamStatus::completed; // Actual1BA440 no-op.
     if(closed_)return StreamStatus::closed;
-    std::shared_ptr<const afs_source_range::Archive> archive;
-    if(character<ActorVoiceArchiveAssets::characters){archive=catalog_->actor_voice_archive(character);if(!archive)return StreamStatus::unbound;}
-    // All other byte-valued characters have no matching name in the owned
-    //422-entry table. Missing native archive capability above is not this case.
-    Operation operation([&](auto&){actor_archives_[slot]=ActorArchive{archive?std::uint8_t(character+1):std::uint8_t(0),archive};});
-    return admitted(owner_->run(operation),StreamStatus::completed);
+    if(character<ActorVoiceArchiveAssets::characters&&!catalog_->actor_voice_archive(character))return StreamStatus::unbound;
+    auto result=StreamStatus::fault;Operation operation([&](auto&){result=actor_archives_->activate(slot,character);});
+    const auto admission=owner_->run(operation);return admitted(admission,result);
 }
 StreamStatus StreamInstances::clear_actor_archives()noexcept{
     if(closed_)return StreamStatus::closed;
-    Operation operation([&](auto&){for(auto& archive:actor_archives_)archive=ActorArchive{};});
-    return admitted(owner_->run(operation),StreamStatus::completed);
+    auto result=StreamStatus::fault;Operation operation([&](auto&){result=actor_archives_->clear();});
+    const auto admission=owner_->run(operation);return admitted(admission,result);
 }
 StreamValue StreamInstances::actor_archive_marker(std::uint8_t slot)noexcept{
-    if(slot>=actor_archives_.size())return{StreamStatus::unsupported_profile,0};
+    if(slot>=5)return{StreamStatus::unsupported_profile,0};
     if(closed_)return{StreamStatus::closed,0};
-    return actor_archives_[slot]?StreamValue{StreamStatus::completed,actor_archives_[slot]->marker}:StreamValue{StreamStatus::unbound,0};
+    return actor_archives_->marker(slot);
 }
 StreamSourceResult StreamInstances::actor_voice_source(std::uint8_t slot,std::int32_t member)noexcept{
-    if(slot>=actor_archives_.size())return{StreamStatus::unsupported_profile,{}};
+    if(slot>=5)return{StreamStatus::unsupported_profile,{}};
     if(closed_)return{StreamStatus::closed,{}};
-    const auto& selected=actor_archives_[slot];if(!selected)return{};
-    if(!selected->marker||!selected->archive||member<0)return{StreamStatus::missing_asset,{}};
-    const auto entry=selected->archive->entry(std::uint32_t(member));
-    if(!entry||!entry->logical_bytes)return{StreamStatus::missing_asset,{}};
-    return{StreamStatus::completed,{ActorVoiceArchiveAssets::catalog_id(std::uint8_t(selected->marker-1)),member}};
+    return actor_archives_->source(slot,member);
 }
 adxt_instances::Observation StreamInstances::inspect(std::uint8_t index)noexcept{
     adxt_instances::Observation observed;if(closed_||index>=3||!constructed_[index])return observed;

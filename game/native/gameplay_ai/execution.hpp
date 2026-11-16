@@ -13,7 +13,7 @@ struct ExecutionState {
     std::uint8_t goal_refresh{},action_marker{};
     std::optional<std::uint8_t> weight_profile;
     std::array<std::uint8_t,8> base_weights{},reactive_weights{},status_weights{},combined_weights{};
-    std::uint8_t inhibited{},reaction{},pending_reaction{},observation_flags{};
+    std::uint8_t inhibited{},pending_reaction{},observation_flags{};
     std::uint16_t steering_value{};
     std::uint8_t steering_button_10{}, steering_button_20{};
     std::uint16_t periodic_counter{},room_memo{},reaction_countdown{};
@@ -22,13 +22,20 @@ struct ExecutionState {
     std::uint8_t peer_priority{},reference_request{};
     std::uint16_t owned_request{};
     std::uint8_t weight_mode{},room_reaction_gate{}; //1077/107E; shared observation inputs
-    std::uint8_t previous_room_reaction_gate{},reference_event{},reference_signal{};
+    // 8122B0 snapshots physical primary records, including inactive ones.
+    // 1075 itself is the canonical SpeechState::display_style, not a copy.
+    std::uint8_t previous_motion_class_106f{},previous_display_style_1076{};
+    std::uint8_t health_band_1078{},previous_health_band_1079{};
+    std::uint8_t gauge_band_107a{},previous_gauge_band_107b{};
+    std::uint8_t previous_room_reaction_gate{},reference_signal{};
     std::uint8_t threat_band{},previous_threat_band{},threat_slot{}; //106C..106E
     std::uint16_t reactive_hold{},reference_cooldown{},companion_hold{},observation_cooldown{},forced_content{};
     std::uint32_t forward_wall_ticks{},observation_timeout{};
     //1090 is a full word;825CC0 replaces only its low byte while goal B writes
     // a zero-extended equipment-slot byte. Do not split these mutable aliases.
     std::uint32_t goal_resource{};
+    //10A8;702C50 selects the signed damage scaling policy consumed by81C500.
+    std::uint8_t action_damage_policy{};
     friend bool operator==(const ExecutionState&,const ExecutionState&)=default;
 };
 struct WeightProfile {

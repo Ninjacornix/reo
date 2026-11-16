@@ -23,7 +23,15 @@ struct State {
     Position saved;
     std::uint32_t table_index{}, condition{};
     auto key() const noexcept {
-        return std::tie(pc.block, pc.offset, saved.block, saved.offset, table_index, condition);
+        // Only scanner-relative depth affects control flow. Both original
+        // scanners (68C9E0/68CBE0) save the current ordinal, add/subtract the
+        // same uint32_t increments, and compare equality with that saved value.
+        // Translating both ordinals by any constant preserves every branch,
+        // including wraparound. Other flow operations only increment or reset
+        // the ordinal; no handler branches on its absolute value. Keep one
+        // concrete representative for scan(), but quotient the ordinal out of
+        // the proof key. The Interpreter still preserves its observable value.
+        return std::tie(pc.block, pc.offset, saved.block, saved.offset, table_index);
     }
     bool operator<(const State& other) const noexcept { return key() < other.key(); }
 };
@@ -185,12 +193,21 @@ private:
 };
 }
 
-ScriptProgram admit_script_program(const ScriptBank& bank, DispatchProfile profile) {
+ScriptProgram admit_script_program(const ScriptBank& bank, DispatchProfile profile, ScriptRoots roots) {
     ScriptProgram result;
-    const std::uint32_t root = bank.format() == BankFormat::scenario_evb ? 0 : 8;
-    for (std::size_t i = 0; i < result.entries.size(); ++i) {
-        const auto block = root + std::uint32_t(i) * 4;
-        if (bank.object(block)) result.entries[i] = Position{block, 0};
+    if (roots == ScriptRoots::scenario_startup) {
+        if (bank.format() != BankFormat::scenario_evb || !bank.object(1)) {
+            result.status = ScriptAdmission::unbound_block;
+            result.failure = {1, 0};
+            return result;
+        }
+        result.entries[0] = Position{1, 0};
+    } else {
+        const std::uint32_t root = bank.format() == BankFormat::scenario_evb ? 0 : 8;
+        for (std::size_t i = 0; i < result.entries.size(); ++i) {
+            const auto block = root + std::uint32_t(i) * 4;
+            if (bank.object(block)) result.entries[i] = Position{block, 0};
+        }
     }
     if (!result.entries[0] && !result.entries[1]) return result;
     try {

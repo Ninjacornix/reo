@@ -16,6 +16,10 @@ struct CameraSegment {CameraKey current,next;};
 struct CameraParameters {
     CameraPose pose;
     float far_plane{},near_plane{},lens{};
+    // Remaining semantic375650 state, shared by ordinary and cinematic views.
+    transform_math::Vector offset{},secondary_up{};
+    float distance{};
+    std::uint32_t pitch{},yaw{};
 };
 // Complete5C09A0 parameter evaluation. Both bound curves are required. The
 // caller publishes the result through the real projection/display owner;

@@ -35,6 +35,7 @@ public:
     ResourceModelId identity_of(const ResourceModel&)const noexcept;
     std::size_t available()const noexcept{return free_count_;}
     bool open()const noexcept{return !closed_;}
+    bool busy()const noexcept{return running_;}
     ResourceModelId head()const noexcept;
     ResourceModelId tail()const noexcept;
     ResourceModelId previous(const ResourceModelId&)const noexcept;

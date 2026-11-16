@@ -12,7 +12,10 @@ template<class T>T read(std::span<const std::byte> bytes,std::size_t at){
 std::shared_ptr<const ResourceStaticAssets> ResourceStaticAssets::import_nbd(std::span<const std::byte> bytes){
     const auto offset=read<std::uint32_t>(bytes,0x24),length=read<std::uint32_t>(bytes,0x28);
     if(!offset||!length||offset>bytes.size()||length>bytes.size()-offset)throw std::invalid_argument("Native resource NBD forest extent unavailable");
-    return import_forest(bytes.subspan(offset,length));
+    const auto forest=import_forest(bytes.subspan(offset,length));
+    auto result=std::make_shared<ResourceStaticAssets>(*forest);
+    result->nbd_=std::make_shared<const std::vector<std::byte>>(bytes.begin(),bytes.end());
+    return result;
 }
 std::shared_ptr<const ResourceStaticAssets> ResourceStaticAssets::import_forest(std::span<const std::byte> bytes){
     const auto count=read<std::uint32_t>(bytes,4),length=read<std::uint32_t>(bytes,8);

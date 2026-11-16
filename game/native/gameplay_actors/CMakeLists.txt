@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
 project(reo_native_gameplay_actors LANGUAGES CXX)
 add_library(reo_native_gameplay_actors STATIC frame.cpp health.cpp health_class.cpp status.cpp hit.cpp entity.cpp input.cpp)
+target_sources(reo_native_gameplay_actors PRIVATE host_input.cpp)
+target_link_libraries(reo_native_gameplay_actors PUBLIC reo_native_transform_math)
 target_link_libraries(reo_native_gameplay_actors PUBLIC reo_native_gameplay_session)
 target_include_directories(reo_native_gameplay_actors PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_features(reo_native_gameplay_actors PUBLIC cxx_std_20)

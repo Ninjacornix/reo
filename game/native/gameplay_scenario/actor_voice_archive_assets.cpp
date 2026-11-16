@@ -16,10 +16,14 @@ ActorVoiceArchiveAssets::ActorVoiceArchiveAssets(std::shared_ptr<reo::assets::So
     if(audio==root.entries.end()||std::find_if(audio+1,root.entries.end(),match)!=root.entries.end())
         throw std::invalid_argument("Native actor voice audio archive missing or ambiguous");
     const auto entries=reo::assets::table(*source,audio->offset,audio->size);
-    if(entries.entries.size()<=408)throw std::invalid_argument("Native actor voice archive index profile unavailable");
+    if(entries.entries.size()!=422)throw std::invalid_argument("Native actor voice archive index profile unavailable");
     reo::assets::VirtualFile file;file.size=source->size;file.segments.push_back({0,source->size,0,std::move(source),{}});
     const auto retained=resources::VirtualFileView::create(file);
     if(retained.status!=resources::Status::ok||!retained.view)throw std::invalid_argument("Native actor voice source view unavailable");
+    const auto sound=afs_source_range::Archive::open(retained.view,audio->offset,audio->size,422);
+    if(sound.status!=afs_source_range::Status::completed||!sound.archive||sound.archive->count()!=422)
+        throw std::invalid_argument("Native named sound archive profile unavailable");
+    sound_archive_=sound.archive;
     for(unsigned character=0;character<characters;++character){
         std::array<char,32> filename{};std::snprintf(filename.data(),filename.size(),"vo001%02u.afs",character);
         const auto& entry=entries.entries[catalog_id(std::uint8_t(character))];

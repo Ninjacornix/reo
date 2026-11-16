@@ -57,6 +57,28 @@ std::vector<std::uint8_t> synthetic(){
     return b;
 }
 n::Asset imported(const std::vector<std::uint8_t>& bytes){n::ImportFailure why;auto asset=n::Asset::read(bytes,why);check(bool(asset)&&why.reason==n::ImportError::none);return std::move(*asset);}
+void mutable_condition_contracts(){
+    auto bytes=synthetic();bytes[synthetic_tail+8]=1;bytes[synthetic_tail+9]=1;bytes[synthetic_tail+10]=7;
+    bytes[synthetic_tail+24]=1;bytes[synthetic_tail+25]=1;
+    // Two room keys alias one source graph. Separate Banks still have their
+    // own mutable graph session, just as distinct simulations have their own SGL.
+    bytes.insert(bytes.begin()+synthetic_room,12,0);put(bytes,16,2u);put(bytes,24,44u);
+    put(bytes,32,std::uint16_t(8));put(bytes,34,std::uint16_t(0));put(bytes,36,44u);
+    const auto asset=std::make_shared<const n::Asset>(imported(bytes));
+    reo::native::gameplay_session::RoomVariants variants;variants.restore({});n::Bank first(variants),second(variants),unknown(variants);
+    check(!unknown.condition_count(7));unknown.clear_rooms();check(unknown.condition_count(7)==0);
+    check(first.bind(asset)&&second.bind(asset));check(first.condition_count(7)==2&&first.room(7)==first.room(8));
+    check(first.condition_active(7,0,0));check(first.room(8)->conditions()[0][0]==0);
+    check(asset->find_room(7,0)->conditions()[0][0]==1&&second.room(7)->conditions()[0][0]==1);
+    check(!n::admit_condition(*first.room(7),0,{},{}).allowed&&n::admit_condition(*second.room(7),0,{},{}).allowed);
+    check(first.room(7)->encoding()[synthetic_tail+8-synthetic_room]==0);
+    check(first.bind(asset)&&first.room(7)->conditions()[0][0]==0);
+    check(first.refresh_rooms_mode_two()&&first.room(7)->conditions()[0][0]==0);
+    first.clear_rooms();check(first.condition_count(7)==0&&!first.condition_active(7,0,1));
+    check(first.refresh_rooms_mode_two()&&first.room(7)->conditions()[0][0]==0);
+    check(first.bind(std::make_shared<const n::Asset>(*asset))&&first.room(7)->conditions()[0][0]==1);
+    check(!first.condition_count(128)&&!first.condition_active(7,2,1));first.close();check(!first.condition_count(7));
+}
 #ifdef REO_NAVIGATION_ORIGINAL
 std::uint32_t reference_cost_address{};bool reference_cost_written{};
 struct OriginalCostLimit {bool global{};};
@@ -327,7 +349,9 @@ void owned(const char* path){
         for(unsigned room=0;room<128;++room){
             const auto graph=asset.find_room(std::int32_t(room),std::int32_t(variant));const auto entry=0x83e550+164*room;
             check(word(memory,entry)==unsigned(bool(graph)));
-            check(bank.room(room)==shared->find_room(std::int32_t(room),std::int32_t(variant)));
+            const auto runtime=bank.room(room);check(bool(runtime)==bool(graph));
+            if(runtime){check(runtime->source_offset()==graph->source_offset());
+                check(std::equal(runtime->encoding().begin(),runtime->encoding().end(),graph->encoding().begin(),graph->encoding().end()));}
             if(graph)check(word(memory,entry+8)==graph->nodes().size()&&word(memory,entry+12)==input+graph->source_offset()+12&&word(memory,entry+0x98)==graph->conditions().size());
             check(std::all_of(memory.begin()+entry+0x14,memory.begin()+entry+0x94,[](auto value){return value==0;}));++bindings;
         }
@@ -504,7 +528,7 @@ int main(int argc,char** argv){
 #ifdef REO_NAVIGATION_ORIGINAL
         check(argc==8);const auto constants=read(argv[2]);for(std::size_t at=0;at<constants.size();){const auto address=word(constants,at),count=word(constants,at+4);at+=8;check(at+count<=constants.size()&&address<=memory.size()&&count<=memory.size()-address);std::copy_n(constants.begin()+at,count,memory.begin()+address);at+=count;}const auto overlay=read(argv[1]);check(overlay.size()==113152);std::copy(overlay.begin(),overlay.end(),memory.begin()+0x810000);
 #endif
-        contracts();bank_contracts();condition_contracts();link_contracts();edge_contracts();ranked_contracts();cost_contracts();graph_cost_contracts();local_contracts();collection_contracts();cross_room_contracts();actor_route_contracts();destination_contracts();visibility_contracts();scene_candidate_contracts();scene_lookup_contracts();
+        contracts();bank_contracts();mutable_condition_contracts();condition_contracts();link_contracts();edge_contracts();ranked_contracts();cost_contracts();graph_cost_contracts();local_contracts();collection_contracts();cross_room_contracts();actor_route_contracts();destination_contracts();visibility_contracts();scene_candidate_contracts();scene_lookup_contracts();
 #ifdef REO_NAVIGATION_ORIGINAL
         for(int i=3;i<argc;++i)owned(argv[i]);
         check(asset_rooms==166&&asset_nodes==3334&&asset_conditions==2167&&asset_links==432);

@@ -89,7 +89,7 @@ CutsceneCommandStatus apply_cutscene_actor_command(gameplay_world::World& world,
     case 4:actor->movement_enabled=std::uint8_t(read<std::uint32_t>(event,20));break;
     case 5:
         for(unsigned i=0;i<3;++i)state.command_angles[i]=read<std::int16_t>(event,4+2*i);
-        state.command_angle_copy=state.command_angles[0];break;
+        actor->model_offset_frame=state.command_angles[0];break;
     case 6:
         state.forward_step=finite(read<float>(event,4));
         state.movement_angles[0]=integer_half(read<float>(event,12));state.movement_angles[1]=integer_half(read<float>(event,8));

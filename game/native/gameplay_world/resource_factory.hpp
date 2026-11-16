@@ -4,6 +4,7 @@
 #include "../gameplay_scenario/resource_collisions.hpp"
 #include "../gameplay_collision/response.hpp"
 namespace reo::native::gameplay_effects {class PeriodicVisuals;}
+namespace reo::native::gameplay_application {class SessionStartup;}
 namespace reo::native::gameplay_world {
 class ResourceFactory;
 struct ResourceFactoryToken final {ResourceFactory* owner;};
@@ -30,6 +31,7 @@ public:
     // trailing part masks/poses. Rebinding does not construct companions.
     void rebind(const ResourceModelId&,std::uint16_t content);
     bool bind_companions(gameplay_effects::PeriodicVisuals&)noexcept;
+    const std::shared_ptr<const ResourceStaticAssets>& static_assets()const noexcept{return assets_;}
     bool bound_to(const World& world,const ResourceModels& models)const noexcept{return frames_.open()&&&frames_.world_==&world&&&models_==&models;}
     bool bound_to(const World& world,const gameplay_scenario::SceneResources& resources,
                   const gameplay_scenario::ResourceTemplates& templates,const ResourceModels& models)const noexcept{
@@ -44,6 +46,10 @@ public:
     gameplay_scenario::SceneStatus apply(gameplay_scenario::SceneResources&,
         const gameplay_scenario::SceneResourceId&,gameplay_scenario::SceneEffect,std::uint8_t)noexcept override;
 private:
+    friend class gameplay_application::SessionStartup;
+    //1D0B70's nested startup release/publication. Null withdraws constructor
+    // admission; already created models retain immutable part-pose leases.
+    bool replace_static_assets(std::shared_ptr<const ResourceStaticAssets>)noexcept;
     friend class DelayedResourceWork;
     friend class gameplay_weapon_resources::Equipment;
     friend class ResourceContents;

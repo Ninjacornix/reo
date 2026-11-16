@@ -23,6 +23,7 @@ public:
     PoseWorkPool(const PoseWorkPool&)=delete;
     PoseWorkPool& operator=(const PoseWorkPool&)=delete;
     bool bound_to(const World&)const noexcept;
+    bool busy()const noexcept{return busy_||resetting_;}
     PoseWorkCreated allocate(bool prepend=true)noexcept;
     PoseWorkStatus retire(const actors::EntityId&,bool clear_visible=false)noexcept;
     PoseWorkStatus reset()noexcept;

@@ -25,6 +25,7 @@ struct Context {
     }
 };
 #include "player_event_schedule.inc"
+#include "character_event_schedule.inc"
 } // namespace
 std::uint32_t File1Metadata::action_flags(std::uint16_t i) const {
     return action(i).flags;
@@ -129,12 +130,26 @@ Family family(std::uint8_t category, bool visible, std::uint8_t type, std::uint8
 }
 void run_player(Family selected, Actor& actor, const Metadata& metadata, Consumer& consumer,
                 float step) {
-    if (selected != Family::player_zero && selected != Family::player_one)
+    const bool character=selected>=Family::civilian_two&&selected<=Family::civilian_nine;
+    if (selected != Family::player_zero && selected != Family::player_one&&!character)
         throw std::domain_error("Native animation event family consumer not implemented");
     const auto owner = actor.animation;
     if (!owner || owner->model() != actor.model)
         throw std::runtime_error("Native canonical animation/model unavailable or stale");
     Context ctx{actor, *owner, metadata, consumer, step};
+    if(character){
+        using Schedule=void(*)(Context&,std::uint16_t);
+        constexpr std::array<Schedule,8> upper{character_0_upper,character_1_upper,character_2_upper,character_3_upper,
+            character_4_upper,character_5_upper,character_6_upper,character_7_upper};
+        constexpr std::array<Schedule,8> lower{character_0_lower,character_1_lower,character_2_lower,character_3_lower,
+            character_4_lower,character_5_lower,character_6_lower,character_7_lower};
+        const auto index=unsigned(selected)-unsigned(Family::civilian_two);
+        upper[index](ctx,owner->channel(animation::ModelBank::primary,1).selector);
+        // Original character routines read the lower selector only after all
+        // upper events; synchronous consumers may have changed that selector.
+        lower[index](ctx,owner->channel(animation::ModelBank::primary,0).selector);
+        return;
+    }
     const auto first = owner->channel(animation::ModelBank::primary, 0).selector;
     if (selected == Family::player_zero)
         lower_zero(ctx, first);

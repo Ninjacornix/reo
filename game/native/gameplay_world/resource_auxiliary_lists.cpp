@@ -28,6 +28,21 @@ unsigned ResourceAuxiliaryLists::emit(std::array<std::uint8_t,8>& target,const G
     for(unsigned reverse=0;reverse<4;++reverse){const auto group=3-reverse;for(unsigned i=0;i<used[group]&&count<target.size();++i)target[count++]=groups[group][i];}
     return count;
 }
+bool ResourceAuxiliaryLists::append_ready(std::uint32_t actor,std::span<const std::uint8_t> input,std::int32_t count)const noexcept{
+    try{
+        const auto& target=list(actor);
+        for(const auto resource:target){if(!resource)continue;const auto item=descriptor(resource);if(item.active)(void)group(item);}
+        const auto owner=unsigned(std::bit_cast<std::int8_t>(std::uint8_t(actor)))+1u;
+        for(std::int32_t i=0;i<count;++i){
+            if(std::size_t(i)>=input.size())return false;
+            const auto resource=input[std::size_t(i)];if(!resource)continue;
+            const auto item=descriptor(resource);if(!item.active)continue;
+            if((templates_.flags(item.template_index)&0x40u)||item.ownership_tag!=owner)continue;
+            (void)group(item);
+        }
+        return true;
+    }catch(...){return false;}
+}
 std::int8_t ResourceAuxiliaryLists::append(std::uint32_t actor,std::span<const std::uint8_t> input,std::int32_t count){
     auto& target=list(actor);Groups groups{};std::array<unsigned,4> used{};
     for(const auto resource:target){if(!resource)continue;const auto item=descriptor(resource);if(!item.active)continue;const auto kind=group(item);groups[kind][used[kind]++]=resource;}

@@ -13,7 +13,12 @@ struct ControlModelReference {ModelReference model{};std::uint32_t descriptor{};
 struct ControlMatrixProgramResource {ModelReference model_slot{};std::uint32_t descriptor{};std::uint32_t resource_class{};};
 struct ControlTypeZero {std::uint32_t parameter{};std::uint16_t half_parameter{};std::uint8_t byte_parameter{},refresh_parameter{};std::optional<ControlRouteDestination> destination{};std::optional<ControlMatrixProgramResource> matrix_program{};};
 struct ControlTypeOne {std::uint16_t parameter{};};
-struct ControlTypeTwo {std::uint32_t selector{},parameter{};std::uint16_t half_parameter{};std::uint8_t byte_parameter{},refresh_parameter{};std::optional<ControlModelReference> model_reference{};std::optional<std::uint32_t> matrix_resource_class{};};
+struct ControlTypeTwo {std::uint32_t selector{},parameter{};std::uint16_t half_parameter{};std::uint8_t byte_parameter{},refresh_parameter{};std::optional<ControlModelReference> model_reference{};std::optional<std::uint32_t> matrix_resource_class{};
+    // 5D9790's AD1=FF path also reads type2 proxy +4C/+54. They are
+    // independent of the type2 +44/+48 model and descriptor fields.
+    std::optional<std::uint32_t> camera_anchor;
+    std::optional<std::uint8_t> camera_offset;
+};
 struct ControlTypeThree {std::uint32_t mode{};std::uint16_t parameter{};};
 struct ControlTypeFour {std::uint32_t mode{},selector{};};
 struct ControlTypeFive {std::uint16_t selector{},duration{},countdown{},secondary_parameter{};std::uint32_t completion{};std::uint8_t byte_parameter{};
@@ -23,7 +28,11 @@ struct ControlTypeFive {std::uint16_t selector{},duration{},countdown{},secondar
     std::array<float,3> position{};
     std::uint16_t effect_parameter{};};
 struct ControlTypeNine {std::uint32_t parameter{};};
-struct ControlTypeSix {std::uint32_t selector{};};
+struct ControlTypeSix {
+    std::uint32_t selector{}; // proxy P+54
+    std::uint32_t scene_mode_value{}; // proxy P+5C; room input+4C
+    std::uint32_t scene_matrix_index{}; // proxy P+60; room input+50
+};
 struct ControlTypeSeven {std::uint32_t selector{};};
 struct ControlTypeEleven {};
 struct ControlTypeThirteen {std::uint32_t selector{};std::uint16_t parameter{};};

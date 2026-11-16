@@ -1,8 +1,13 @@
 #include "session_startup.hpp"
+#include "session_audio.hpp"
+#include "../adxt_output_session/session.hpp"
+#include "../audio_mix_tail/mixer.hpp"
+#include "../audio_output/audio_output_owner.h"
 #include "../gameplay_world/actor_voice_startup.hpp"
 #include "../gameplay_world/actor_voice_requests.hpp"
 #include "../gameplay_world/launch_roster.hpp"
 #include "../gameplay_scenario/actor_voice_archive_assets.hpp"
+#include "../gameplay_scenario/actor_voice_selections.hpp"
 #include "../gameplay_scenario/stream_instances.hpp"
 #include "runtime/assets/virtual_afs.h"
 #include <bit>
@@ -18,7 +23,7 @@ std::uint64_t checks{},caller_cases{},original_cases{},source_calls{},startup_br
 void check(bool value,std::source_location at=std::source_location::current()){++checks;if(!value)throw std::runtime_error("Actor voice caller "+std::string(at.file_name())+":"+std::to_string(at.line()));}
 struct Notifications final:s::FlagNotifications {bool changed(const s::ScenarioFlagChange&)noexcept override{return true;}bool changed(const s::StridedFlagChange&)noexcept override{return true;}};
 w::Profile profile(){w::Profile value;value.layouts.push_back({});return value;}
-struct Event {unsigned kind{},channel{};std::int32_t first{},second{};std::uint32_t tick{};std::int32_t requested{};std::int8_t paused{};std::int32_t current{};std::uint32_t step{};friend bool operator==(const Event&,const Event&)=default;};
+struct Event {unsigned kind{},channel{};std::int32_t first{},second{};std::uint32_t tick{};std::int32_t requested{};std::int8_t paused{};std::int32_t current{};std::uint32_t step{};[[maybe_unused]] friend bool operator==(const Event&,const Event&)=default;};
 struct Output final:s::StreamBackend {
     s::StreamInstances& actual;s::StreamChannels& channels;std::vector<Event> events;int phase_value{};unsigned slot{};std::uint32_t tick=1234;
     Output(s::StreamInstances& backend,s::StreamChannels& state):actual(backend),channels(state){events.reserve(32);}
@@ -45,6 +50,51 @@ struct Remaining final:w::PrimaryStartupEffects {
     std::optional<float> reference_height(std::uint8_t)const noexcept override{return 0.f;}
 };
 template<class F>struct Operation final:n::adxt_control_owner::Operation {F callback;explicit Operation(F f):callback(std::move(f)){}void run(n::adxt_instances::Instances& players)noexcept override{callback(players);}};
+struct BankGains final:n::audio_banks::v2::GainProvider {float gain(unsigned,unsigned,std::uint64_t)noexcept override{return 1.f;}};
+struct MasterGain final:n::audio_mix_tail::MasterGain {float gain()noexcept override{return 1.f;}};
+// Controlled output boundary: the real mixer and bank engine remain active.
+struct FixtureProvider final:reo::audio_output::Provider {
+    reo::audio_output::CallbackSlot* slot{};
+    std::string_view source_sha256()const noexcept override{return reo::audio_output::provider_source_sha256;}
+    bool attach(reo::audio_output::CallbackSlot& value)noexcept override{slot=&value;return true;}
+    bool detach()noexcept override{slot=nullptr;return true;}
+    bool stop()noexcept override{return true;}
+    bool unload()noexcept override{return true;}
+};
+struct SoundReadFault final:reo::assets::PositionedSource {
+    std::shared_ptr<reo::assets::Source> source;std::uint64_t offset{},bytes{};mutable std::atomic<unsigned> reads{};std::atomic<bool> fail{};
+    std::uint64_t size()const noexcept override{return source->size;}
+    std::size_t read(std::uint64_t at,std::size_t count,void* destination)const override{
+        if(at==offset&&count==bytes){++reads;if(fail.load())throw std::runtime_error("controlled common bank read failure");}
+        source->read(at,count,destination);return count;
+    }
+};
+void sound_graph(w::World& world,const std::shared_ptr<reo::assets::Source>& source){
+    const auto root=reo::assets::table(*source,0,source->size);
+    const auto parent=std::find_if(root.entries.begin(),root.entries.end(),[](const auto& entry){return entry.name=="adxsnd.afs";});check(parent!=root.entries.end());
+    const auto members=reo::assets::table(*source,parent->offset,parent->size);check(members.entries.size()==422&&members.entries[297].name=="common.snd");
+    auto fault=std::make_shared<SoundReadFault>();fault->source=source;fault->offset=std::uint64_t(parent->offset)+members.entries[297].offset;fault->bytes=members.entries[297].size;
+    auto controlled=std::make_shared<reo::assets::Source>("controlled common-bank read failure",fault);
+    const s::ActorVoiceArchiveAssets assets(controlled);
+    auto mixer=std::make_shared<n::audio_mix_tail::Mixer>(n::audio_banks::v2::Config{},std::make_shared<BankGains>(),std::make_shared<MasterGain>());
+    auto slot=std::make_shared<reo::audio_output::CallbackSlot>();auto provider=std::make_shared<FixtureProvider>();
+    n::adxt_output_session::Config config;config.bank_mix=mixer;
+    auto output=std::make_shared<n::adxt_output_session::Session>(config,slot,provider);
+    check(output->start()==n::adxt_output_session::Status::completed);
+    a::SessionAudio sound(world,mixer,output,assets.sound_archive());check(sound.bound_to(world)&&sound.owner());
+    bool rejected{};try{a::SessionAudio duplicate(world,mixer,output,assets.sound_archive());}catch(const std::invalid_argument&){rejected=true;}check(rejected);
+    auto foreign=std::make_shared<n::audio_mix_tail::Mixer>(n::audio_banks::v2::Config{},std::make_shared<BankGains>(),std::make_shared<MasterGain>());
+    rejected=false;try{a::SessionAudio mismatch(world,foreign,output,assets.sound_archive());}catch(const std::invalid_argument&){rejected=true;}check(rejected&&!foreign->snapshot().banks.ports[0].loaded);
+    const auto loaded=sound.load_common();check(loaded.status==a::SessionAudioLoadStatus::completed&&loaded.member==297);
+    check(mixer->snapshot().banks.ports[0].loaded&&sound.owner()->state(0)==n::gameplay_audio::Status::completed);
+    const auto fingerprint=mixer->snapshot().banks.ports[0].fingerprint;fault->fail=true;
+    check(sound.load_common().status==a::SessionAudioLoadStatus::source_failure&&mixer->snapshot().banks.ports[0].fingerprint==fingerprint);
+    fault->fail=false;check(sound.load_common().status==a::SessionAudioLoadStatus::completed&&fault->reads==3);
+    check(sound.owner()->request({0,0}).commands>0);
+    std::array<float,256> samples{};check(slot->dispatch(samples.data(),128));check(mixer->snapshot().render_calls>0);
+    check(sound.close()&&!sound.bound_to(world)&&sound.owner()==nullptr&&sound.load_common().status==a::SessionAudioLoadStatus::closed);
+    check(output->join()==n::adxt_output_session::Status::completed);
+}
 }
 #ifdef REO_ACTOR_VOICE_CALLER_ORIGINAL
 #include "actor_voice_caller_reference.inc"
@@ -57,10 +107,18 @@ int main(int argc,char** argv)try{
     a::NativeSession session(models,profile(),notifications);a::SessionStartup startup(session,models,w::HumanoidMotionAssets::initial_banks(false));check(startup.initialize_records().status==w::PrimaryRecordsStatus::completed);
     n::gameplay_session::LaunchRoster roster;roster.scenario=1;roster.count=5;for(unsigned i=0;i<5;++i)roster.actors[i].character=std::uint8_t(i);
     check(w::apply_launch_roster(session.world(),session.update().action_choices(),roster));session.world().session().asset_loading_mode=1;session.world().session().scene_stream_stage=0;
-    s::ActorVoiceArchiveAssets assets(audio);auto catalog=std::make_shared<s::StreamAssetCatalog>();check(catalog->add_actor_voice_archives(assets));catalog->seal();
+    s::ActorVoiceArchiveAssets assets(audio);sound_graph(session.world(),audio);auto catalog=std::make_shared<s::StreamAssetCatalog>();check(catalog->add_actor_voice_archives(assets));catalog->seal();
     std::array<std::uint32_t,1000> words{};words.front()=256;const auto table=n::adxt_attenuation::Table::from_words(words);check(table.status==n::adxt_attenuation::Status::completed);
     std::array<s::StreamInstanceConfig,3> config;for(unsigned i=0;i<3;++i){config[i].construction={i==2?1u:2u,{i,i,i,i},table.table};config[i].player.decoder.channels=config[i].construction.channels;}
-    auto owner=std::make_shared<n::adxt_control_owner::Owner>(n::adxt_instances::control::Config{{3},{}});auto opened=s::StreamInstances::create(owner,config,catalog,{0,1,2});check(opened.status==s::StreamStatus::completed&&opened.value);auto backend=std::move(opened.value);
+    auto selections=std::make_shared<s::ActorVoiceSelections>(catalog);
+    check(selections->marker(0).status==s::StreamStatus::unbound);
+    check(selections->activate(0,3)==s::StreamStatus::completed&&selections->marker(0).value==4);
+    auto owner=std::make_shared<n::adxt_control_owner::Owner>(n::adxt_instances::control::Config{{3},{}});
+    auto foreign=std::make_shared<s::StreamAssetCatalog>();foreign->seal();
+    check(s::StreamInstances::create(owner,config,foreign,{0,1,2},{},selections).status==s::StreamStatus::unsupported_profile);
+    auto opened=s::StreamInstances::create(owner,config,catalog,{0,1,2},{},selections);check(opened.status==s::StreamStatus::completed&&opened.value);auto backend=std::move(opened.value);
+    check(backend->actor_archive_marker(0).value==4);
+    check(backend->activate_actor_archive(0,0)==s::StreamStatus::completed&&selections->marker(0).value==1);
     Remaining remaining(session.world());w::ActorVoiceStartupEffects effects(session.world(),*backend,remaining);w::PrimaryStartupReport busy;
     Operation nested([&](auto&){busy=startup.start(&effects);});check(owner->run(nested)==n::adxt_control_owner::Admission::accepted&&busy.status==w::PrimaryStartupStatus::busy&&busy.stage==w::PrimaryStartupStage::voice_archives&&busy.voice_requests==0);++prefixes;
     const auto prefix=startup.start(&effects);check(prefix.status==w::PrimaryStartupStatus::unavailable&&prefix.stage==w::PrimaryStartupStage::background&&prefix.voice_requests==5&&prefix.slots_assigned==0&&remaining.forbidden_voice==0);++prefixes;
@@ -98,5 +156,7 @@ int main(int argc,char** argv)try{
     check(backend->actor_archive_marker(0).value==1&&channels.snapshot().requested_ids[2]==7&&channels.snapshot().channels[2].paused==0);
     check(s::stream_accepted(backend->stop(2)));
     check(startup.close()==w::PrimaryStartupStatus::completed&&session.close()==a::SessionStatus::completed&&backend->close()==s::StreamStatus::completed);check(requests.request({},-1).status==s::StreamStatus::closed);
+    check(selections->marker(0).value==1&&selections->close()==s::StreamStatus::completed&&selections->marker(0).status==s::StreamStatus::closed);
+    check(s::StreamInstances::create(owner,config,catalog,{0,1,2},{},selections).status==s::StreamStatus::closed);
     std::cout<<"{\"checks\":"<<checks<<",\"complete_native_caller_cases\":"<<caller_cases<<",\"complete_original_caller_cases\":"<<original_cases<<",\"source_calls\":"<<source_calls<<",\"canonical_startup_bridges\":"<<startup_bridges<<",\"refusal_prefixes\":"<<prefixes<<",\"decoder_sources_started\":"<<actual_sources<<",\"actual_copied_samples\":"<<actual_samples<<",\"audio_device_opened\":false,\"game_run\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

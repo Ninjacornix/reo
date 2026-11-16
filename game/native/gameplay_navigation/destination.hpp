@@ -12,4 +12,8 @@ struct RouteActorFacts {
 CrossRoomResult begin_actor_route(Bank&,const RouteActorFacts&,std::uint16_t session_room,
     const RoomFlags&,ActorRouteState&,Position destination,std::uint16_t destination_room,
     CrossRoomProfile={})noexcept;
+// Complete bounded816C10. Returns the signed completion code without writing
+//105A itself; the actual goal/action caller owns that publication.
+CrossRoomResult continue_actor_route(Bank&,const RouteActorFacts&,std::uint16_t session_room,
+    const RoomFlags&,ActorRouteState&,CrossRoomProfile={})noexcept;
 }

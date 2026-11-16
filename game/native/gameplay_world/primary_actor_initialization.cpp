@@ -63,7 +63,7 @@ PrimaryInitializationStatus PrimaryActorInitialization::defaults(World& world,ac
             }
             const std::array<float,2> thresholds{50,25};
             if(actors::derive_health_class(*actor,thresholds)==actors::ClassResult::invalid_maximum)return PrimaryInitializationStatus::unavailable;
-            actor->previous_motion_class=actor->class_marker;actor->primary_state->model_adjustment={};
+            actor->previous_motion_class=actor->class_marker;actor->candidate_direction={};
             actor->animation->resources=std::move(resources);actor->motion_bank_aliases={aliases[0],aliases[1],aliases[2]};actor->animation->resources_known=true;actor->animation->channel_count=5;
             actor->local_impulse=actor->world_impulse={};actor->motion_multiplier=1;
             actor->collision.body_definition=body;actor->collision.local_center=actor->collision.previous_local_center=shape.center;actor->collision.radius=actor->collision.previous_radius=shape.radius;actor->collision.interpolation_target=shape;

@@ -27,7 +27,6 @@ struct ScriptedActorState {
     std::uint32_t relation_options{},relation_parameter{}; // B50/B60
     std::array<float,3> relation_offset{}; // B54/B58/B5C
     std::array<std::int16_t,3> command_angles{}; // B64/B66/B68
-    std::int16_t command_angle_copy{}; // C50
     std::array<std::int16_t,2> movement_angles{}; // B6C/B6E
     float forward_step{}; // B70
     std::uint32_t yaw_step{},movement_remaining{}; // B74/B78

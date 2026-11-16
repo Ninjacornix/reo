@@ -42,3 +42,38 @@ UPDATE_UNITS += ['game/native/gameplay_audio/'+name+'.cpp' for name in
                  ['routing','import','spatial','owner','scenario_cues']]
 UPDATE_UNITS += ['game/native/audio_banks/v2/'+name+'.cpp' for name in
                  ['algorithms','session']]
+
+#132's actual owner borrows the shared queue, bank delivery and inventory UI.
+# Keep these linked in historical source-object update comparisons as well as
+# the current shared CMake archives; no test-local text implementation exists.
+UPDATE_UNITS += ['game/native/gameplay_scenario/'+name+'.cpp' for name in
+                 ['timed_scene_text','scene_text_bank','text_cache']]
+UPDATE_UNITS += ['game/native/gameplay_scenario/'+name+'.cpp' for name in
+                 ['inventory_ui_resources','room_camera','room_camera_modes']]
+UPDATE_UNITS += ['game/native/gameplay_navigation/weighted_destination.cpp',
+                 'game/native/gameplay_ai/goal_route.cpp']
+
+# Existing direct Update/VM owners also require these concrete units. Their
+# source-object closure was checked against shipping-LLVM archive symbols;
+# source comparison suites must not substitute their old test-local ports.
+UPDATE_UNITS += ['game/native/'+group+'/'+name+'.cpp' for group,names in [
+    ('animation',['weapon_program']),
+    ('gameplay_collision',['impact_populations']),
+    ('gameplay_effects',['actor_contact_channels','projectile_trail','resource_flight',
+                         'resource_flight_queries','surface_follower_visual']),
+    ('gameplay_scenario',['actor_script_terminal','resource_collisions']),
+    ('gameplay_world',['actor_resource_operations','humanoid_motion_bindings','inventory',
+                       'resource_auxiliary_lists','resource_contents','resource_factory',
+                       'resource_frames','resource_pairs','resource_static_assets','resource_use']),
+] for name in names]
+
+# 1A2 uses the same retained scene-entry, resource and recovery consumers.
+UPDATE_UNITS += ['game/native/gameplay_scenario/'+name+'.cpp' for name in
+                 ['actor_offline_navigation','scene_entry_requests']]
+UPDATE_UNITS += ['game/native/gameplay_world/'+name+'.cpp' for name in
+                 ['resource_ownership','actor_recovery','actor_forced_terminal']]
+
+UPDATE_UNITS += ['game/native/gameplay_world/actor_resource_acquisition.cpp']
+
+#66B500 real paired-node animation and terminal visibility suffix.
+UPDATE_UNITS += ['game/native/gameplay_world/behavior_attachments.cpp']

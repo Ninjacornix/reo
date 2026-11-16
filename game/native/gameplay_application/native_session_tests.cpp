@@ -1,4 +1,7 @@
 #include "native_session.hpp"
+#include "session_rooms.hpp"
+#include "../gameplay_scenario/scene_resources.hpp"
+#include "../gameplay_scenario/room_camera_records.hpp"
 #include "runtime/assets/virtual_afs.h"
 #include <cstring>
 #include <iostream>
@@ -88,6 +91,43 @@ void canonical_step(){
     check(!stepped.clock_committed&&owner.clock().update_counter()==0&&!owner.busy());
     check(owner.step_script(99).status==update::Status::script_failure);
 }
+void timed_text_failure_boundary(){
+    // Controlled empty-actor frame: only the actual timed callback and its
+    // ordering are under test. These recording services are not game owners.
+    struct Phases final:update::PhaseServices {
+        std::vector<update::Worker> calls;unsigned effects{};
+        void run(update::Worker worker,update::Owner&)override{calls.push_back(worker);}
+        bool button(update::Button,update::Owner&)override{return false;}
+        bool transition_request(update::Owner&)override{return false;}
+        void effect(update::PhaseEffect,update::Owner&,std::uint32_t)override{++effects;}
+    } phases;
+    struct EmptyActors final:world::Services {
+        void begin_offline_frame(world::World&)override{std::terminate();}
+        void run(world::Stage,world::World&,world::Actor&)override{std::terminate();}
+        bool remote_motion(world::World&,world::Actor&)override{std::terminate();}
+        bool find_grid(world::World&,world::Actor&,std::int8_t&)override{std::terminate();}
+        void switch_grid(world::World&,std::int32_t,std::int32_t)override{std::terminate();}
+        float grid_response(world::World&,std::uint8_t)override{std::terminate();}
+    } actors;
+    Notifications notices;application::NativeSession session(fixture_archive(),profile(),notices,1);
+    auto& owner=session.update();owner.state.scripts_enabled=false;owner.state.session_work_gate=1;
+    const auto disabled_program=std::make_shared<const scenario::Program>(std::vector<std::vector<std::byte>>{
+        {std::byte{1},std::byte{},std::byte{},std::byte{},std::byte{0xa},std::byte{},std::byte{},std::byte{}}});
+    for(unsigned channel=0;channel<2;++channel)
+        check(owner.scripts().install(channel,disabled_program)==scenario::Status::completed);
+    check(owner.clock().restore({},123)==update::tasks::Status::completed);
+    session.text_cache().reset();session.scene_text_bank().priority().reset_active();
+    check(session.application_lifecycle().begin_preparation());
+    check(session.timed_scene_text().request(181)==scenario::TimedTextStatus::completed);
+    scenario::Providers providers;providers.world=&session.world();providers.timed_scene_text=&session.timed_scene_text();
+    const auto result=owner.advance(phases,actors,providers);
+    check(result.status==update::Status::task_failure&&!result.clock_committed&&!result.completion_checked);
+    check(result.linked.called==1&&owner.clock().update_counter()==123&&phases.effects==0);
+    check(!phases.calls.empty()&&phases.calls.back()==update::Worker::scene_pose_tasks);
+    check(session.timed_scene_text().snapshot().callback_status==scenario::TimedTextStatus::unavailable);
+    check(session.close()==application::SessionStatus::frame_failure);
+    check(session.close()==application::SessionStatus::completed);
+}
 void cold_inventory_ui(){
     Notifications notices;application::NativeSession session(fixture_archive(),profile(),notices);
     auto& ui=session.inventory_ui();auto& world=session.world();
@@ -107,12 +147,64 @@ void cold_inventory_ui(){
     check(session.close()==application::SessionStatus::completed&&!ui.close_ready()&&!recovery.close());
     check(!ui.request_mode_ready(1)&&ui.configure_requests(1)==world::InventoryUiStatus::closed&&ui.request_blocked()==1);
 }
+struct CameraSink final:scenario::CameraDisplaySink {
+    application::NativeSession& session;std::vector<unsigned> calls;
+    explicit CameraSink(application::NativeSession& value):session(value){}
+    void viewport(const scenario::CameraViewport& viewport,const scenario::CameraProjectionMatrices&)override{
+        check(session.close()==application::SessionStatus::busy);check(viewport.width==640&&viewport.height==448);calls.push_back(24);
+    }
+    void view(const reo::native::transform_math::Matrix&)override{
+        check(session.close()==application::SessionStatus::busy);calls.push_back(22);
+    }
+};
+void owned_camera(std::shared_ptr<const reo::assets::Source> source,Notifications& notices){
+    auto host=std::make_shared<application::NativeSession>(std::move(source),profile(),notices);
+    auto& session=*host;application::SessionRooms rooms(host);
+    check(session.install_room({41,73,0})==application::SessionStatus::completed&&session.fog().ready());
+    auto actor=std::make_unique<world::Actor>();actor->active=true;
+    check(bool(session.world().spawn_primary(0,std::move(actor)).id));
+    auto& sequences=session.sequences();check(sequences.select(0,123));
+    const auto& record=sequences.camera_records()->records()[0];
+    scenario::CameraProjectionContext projection{320,224,640,448,reo::native::transform_math::identity(),reo::native::transform_math::identity()};
+    scenario::CameraDisplayState display;const std::int8_t mode=0;CameraSink sink(session);
+    scenario::CameraDisplayBinding binding(mode,projection,display,sink);
+    check(session.step_room_camera(binding)==application::SessionStatus::completed);
+    check(sink.calls==std::vector<unsigned>{24,24,22,24,22});
+    check(sequences.snapshot().selection_changed==0&&sequences.snapshot().condition_id==0&&sequences.snapshot().previous_camera==0);
+    const auto& parameters=session.camera_parameters();
+    check(parameters.pose.eye.x==float(record.endpoints[1][0][0])&&parameters.pose.aim.z==float(record.endpoints[2][0][2]));
+    check(parameters.pitch==record.parameters[0]&&parameters.yaw==record.parameters[1]&&parameters.pose.roll==record.parameters[2]);
+    check(parameters.lens==record.lens&&parameters.distance==500&&parameters.far_plane==50000&&parameters.near_plane==1);
+    for(unsigned i=0;i<session.room_models().asset()->parts();++i)
+        check((session.scene_models().state().visibility[i]&1u)==((std::to_integer<unsigned>(record.view_controls[i/8])>>(i%8))&1u));
+    const auto selected_fog=session.fog().state().selected;
+    check(session.install_room({41,127,0})==application::SessionStatus::missing_room&&session.fog().state().selected==selected_fog);
+    sink.calls.clear();check(session.step_room_camera(binding)==application::SessionStatus::completed);
+    check(sequences.snapshot().selection_changed==0&&sequences.snapshot().progress==1&&sink.calls.size()==5);
+    check(session.bind_room_camera(rooms,binding)==application::SessionStatus::completed&&session.update().room_camera_modes());
+    check(session.update().bind_room_camera_modes(nullptr)==update::Status::actor_failure&&session.update().room_camera_modes());
+    check(session.install_room({41,73,0})==application::SessionStatus::completed&&!session.update().room_camera_modes());
+    check(session.bind_room_camera(rooms,binding)==application::SessionStatus::completed);
+    check(session.unbind_room_camera()==application::SessionStatus::completed&&!session.update().room_camera_modes());
+    check(session.bind_room_camera(rooms,binding)==application::SessionStatus::completed);
+    check(session.close()==application::SessionStatus::completed&&session.step_room_camera(binding)==application::SessionStatus::closed);
+    check(!session.update().room_camera_modes());
+}
 void owned(const std::filesystem::path& path){
     auto source=std::make_shared<const reo::assets::Source>(path);Notifications notices;
+    owned_camera(source,notices);
     for(const auto mode:{std::uint8_t(1),std::uint8_t(0)})for(bool terminal:{false,true}){
         application::NativeSession session(source,profile(),notices,mode);
         check(session.install_room({41,73,0})==application::SessionStatus::completed);++owned_rooms;
         check(session.room()&&session.world().scenario==41&&session.world().room==73);
+        const auto camera=session.sequences().camera_records();
+        check(camera&&camera->count()==16&&camera->records()[0].type==1);
+        check(session.sequences().snapshot().count==16&&session.sequences().snapshot().initialized==1);
+        check(session.sequences().snapshot().actor==session.world().selected_actor&&session.sequences().snapshot().distance==80);
+        check(session.sequences().select(0,123));
+        check(session.install_room({41,127,0})==application::SessionStatus::missing_room);
+        check(session.sequences().camera_records()==camera&&session.sequences().snapshot().selection==123);
+        session.sequences().reset_camera_override();
         const auto asset=session.room_models().asset();
         check(asset&&asset->name()=="r0417300.nbd"&&asset->parts()==69&&asset->nodes()==71&&asset->poses().size()==69);
         for(unsigned i=0;i<128;++i){
@@ -164,9 +256,74 @@ void owned(const std::filesystem::path& path){
         check(session.close()==application::SessionStatus::completed&&session.scene_controls().size()==0);
     }
 }
+// Controlled script roots avoid unrelated unimplemented r028 audio/effect
+// providers. All scene, camera, lighting and model assets remain owned bytes.
+struct RoomScriptOverlay final:reo::assets::PositionedSource {
+    std::shared_ptr<const reo::assets::Source> source;
+    std::array<std::uint64_t,2> offsets{};
+    std::uint64_t size()const noexcept override{return source->size;}
+    std::size_t read(std::uint64_t at,std::size_t length,void* destination)const override{
+        source->read(at,length,destination);
+        constexpr std::array<std::uint8_t,8> replacement{1,0,0,0,10,0,0,0};
+        for(auto offset:offsets)if(offset){const auto first=std::max(at,offset),last=std::min(at+length,offset+replacement.size());
+            if(first<last)std::memcpy(static_cast<std::uint8_t*>(destination)+(first-at),replacement.data()+(first-offset),std::size_t(last-first));}
+        return length;
+    }
+};
+std::shared_ptr<const reo::assets::Source> controlled_room_28(const std::filesystem::path& path){
+    auto source=std::make_shared<const reo::assets::Source>(path);
+    const auto lower=[](std::string value){for(auto& c:value)if(c>='A'&&c<='Z')c+=('a'-'A');return value;};
+    const auto outer=reo::assets::table(*source,0,source->size);
+    const auto parent=std::find_if(outer.entries.begin(),outer.entries.end(),[&](const auto& e){return lower(e.name)=="r028.afs";});
+    check(parent!=outer.entries.end());const auto inner=reo::assets::table(*source,parent->offset,parent->size);
+    const auto member=std::find_if(inner.entries.begin(),inner.entries.end(),[&](const auto& e){return lower(e.name)=="r0280300.rdt";});
+    check(member!=inner.entries.end());const auto base=std::uint64_t(parent->offset)+member->offset;
+    std::array<std::uint32_t,2> section{};source->read(base+8,sizeof(section),section.data());
+    check(section[1]>=64&&section[0]<=member->size&&section[1]<=member->size-section[0]);
+    std::array<std::uint32_t,16> table{};source->read(base+section[0],sizeof(table),table.data());
+    auto overlay=std::make_shared<RoomScriptOverlay>();overlay->source=source;
+    for(unsigned i=0;i<2;++i){const auto root=table[8+4*i];if(root){check(root>=64&&root+8<=section[1]);overlay->offsets[i]=base+section[0]+root;}}
+    check(overlay->offsets[0]!=0);
+    return std::make_shared<const reo::assets::Source>("controlled-r028-room-script",overlay);
+}
+// 169 dispatches through the real application VM and descriptor owners. The
+// controlled descriptor bytes and the room-script overlay are test fixtures.
+void enemy_relocation(const std::filesystem::path& path){
+    auto source=controlled_room_28(path);Notifications notices;
+    application::NativeSession session(source,profile(),notices,1);auto& world=session.world();
+    auto& state=world.session();world.scenario=28;state.primary_population=3;
+    for(unsigned i=0;i<3;++i){auto actor=std::make_unique<world::Actor>();actor->active=i<2;actor->slot=std::uint8_t(i);
+        check(bool(world.spawn_primary(i,std::move(actor)).id));}
+    world.selected_actor=0;world.primary(0)->room=7;world.primary(0)->status=0;
+    world.primary(1)->status=0x20;world.primary(1)->character=0;
+    auto& routes=state.enemy_routes;routes.classes={27,27};routes.room_banks[0][7]=1;
+    std::vector<std::byte> data(295);reo::assets::put32(reinterpret_cast<std::uint8_t*>(data.data()),4);
+    auto prediction=state.random;(void)prediction.request(0);const auto group=std::uint8_t(prediction.request(2)&3u);
+    for(unsigned i=0;i<3;++i){const auto at=4+96*i;data[at+2]=std::byte{27};data[at+0x1c]=std::byte(i==0?2:i==1?7:3);
+        data[at+0x1e]=std::byte(group);data[at+0x20]=std::byte{9};data[at+0x22]=std::byte(i==1?17:16);
+        data[at+0x33]=std::byte{255};data[at+0x49]=std::byte{1};}
+    data[4+288+2]=std::byte{255};
+    check(state.enemy_descriptors.import(data,state,false,0).count==3);
+    check(session.update().flags().write(scenario::FlagBank::scene_record_eligibility,17,true));
+    check(session.install_room({28,3,0})==application::SessionStatus::completed);
+    std::vector<std::byte> script(16);const std::array<std::uint32_t,4> words{1,0x01000169,16,0xa};
+    std::memcpy(script.data(),words.data(),script.size());
+    auto program=std::make_shared<const scenario::Program>(std::vector<std::vector<std::byte>>{script});
+    check(!program->unsupported()&&session.update().scripts().install(1,program)==scenario::Status::completed);
+    const auto result=session.step_room_script();auto* first=state.enemy_descriptors.record(0);
+    check(result.status==application::SessionStatus::completed&&first&&first->room==7&&first->parameter20==5&&world.primary(1)->status==0x1020);
+    routes.room_banks[0][7]=0;routes.room_banks[1][7]=1;first->room=2;first->parameter20=9;world.primary(1)->status=0x20;
+    check(session.update().scripts().install(1,program)==scenario::Status::completed);
+    check(session.step_room_script().status==application::SessionStatus::completed&&first->room==2&&
+          first->parameter20==9&&world.primary(1)->status==0x20);
+    check(session.close()==application::SessionStatus::completed);
+}
+#include "destination_policy_tests.inc"
+#include "offline_actor_controls_tests.inc"
+#include "offline_scene_entry_tests.inc"
 }
 int main(int argc,char** argv)try{
-    fixtures();canonical_step();cold_inventory_ui();check(argc==1||argc==2);
-    if(argc==2){const std::string_view value(argv[1]);owned(std::filesystem::path(std::u8string(value.begin(),value.end())));}
+    fixtures();canonical_step();timed_text_failure_boundary();cold_inventory_ui();check(argc==1||argc==2);
+    if(argc==2){const std::string_view value(argv[1]);const auto path=std::filesystem::path(std::u8string(value.begin(),value.end()));owned(path);enemy_relocation(path);destination_policy_application(path);offline_navigation_controls_application(path);offline_actor_controls_application(path);offline_scene_entry_application(path);}
     std::cout<<"{\"status\":\"passed\",\"checks\":"<<checks<<",\"owned_rooms\":"<<owned_rooms<<",\"script_steps\":"<<script_steps<<",\"frame_refusals\":"<<frame_refusals<<",\"game_launched\":false}\n";
 }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}

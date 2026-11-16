@@ -58,6 +58,8 @@ void NativeConsumer::apply(Actor& actor, const Event& event, float step) {
     const auto lease = world_.resolve(id);
     if (!lease || lease.get() != &actor)
         unavailable("Native animation event actor retired or foreign");
+    //595EB0 checks the character before looking at playback/crossing state.
+    if(event.kind==EventKind::character_callback&&actor.character!=2)return;
     // The real model action fetches model34->node820 before the crossing gate.
     if (event.kind == EventKind::model_action && !actor.model)
         unavailable("Native animation model action requires the actual model before gate");
@@ -103,6 +105,8 @@ void NativeConsumer::apply(Actor& actor, const Event& event, float step) {
             if (!actor.selected_resource)
                 return;
             unavailable("Native animation resource-follow callback task owner not implemented");
+        case EventKind::character_callback:
+            unavailable("Native character animation callback task5D8E60 unavailable");
         case EventKind::contact_action:
             switch (kind) {
                 case 0:

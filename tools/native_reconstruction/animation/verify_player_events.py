@@ -6,7 +6,7 @@ from audit_retail_effect_descriptors import compare_source
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
  p=argparse.ArgumentParser();p.add_argument('--compiler',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--corpus',type=Path,required=True);a=p.parse_args();out=a.output.resolve();assert not out.exists()and out.is_relative_to(ROOT/'build-native-sjuni');out.mkdir();image=ROOT/'build-function-index/owned-overlays/o2.bin';assert sha(image)=='45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226';raw=image.read_bytes();originals=[];proof=[]
- for at in [0x573430,0x5958b0,0x5959d0,0x5a8fd0,0x5965a0,0x59a820,0x59ebb0,0x59fca0,0x5a04e0]:
+ for at in [0x573430,0x5958b0,0x5959d0,0x5a8fd0,0x5965a0,0x59a820,0x59ebb0,0x59fca0,0x5a04e0,0x5ec3e0,0x5baff0,0x5bb480,0x5bb780,0x5bbad0,0x5ec7a0,0x5bbfa0,0x5bc380]:
   src=next((ROOT/'recomp/config/output_ovl/o2').glob(f'o2_{at:08X}_*'));begin,end=[int(x,16)for x in re.search(r'// Address: (0x[0-9a-f]+) - (0x[0-9a-f]+)',src.read_text()).groups()];proof.append(compare_source('complete animation family/player schedule',src.relative_to(ROOT).as_posix(),begin,end,lambda at,n:raw[at-0x570000:at-0x570000+n]));originals.append(src.relative_to(ROOT).as_posix())
  cpp=['game/native/'+n for n in ['gameplay_world/animation_events.cpp','animation/playback.cpp','animation/model_blend.cpp','animation/model.cpp','animation/model_math.cpp','animation/curves.cpp','animation/motion_bank.cpp','animation/constraints.cpp','animation/constraint_math.cpp','transform_math/transform_math.cpp']];native=set(cpp);pending=cpp.copy()
  while pending:

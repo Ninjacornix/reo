@@ -16,6 +16,7 @@ public:
     void common(const ResourceModelId&,ResourceModel&);
     void weapon(const ResourceModelId&,ResourceModel&);
     //5B1850 or5B1A90; the descriptor identity survives instance retirement.
+    bool release_ready(std::uint8_t)const noexcept;
     void release(std::uint8_t,bool clear_owner_flag=false);
 private:
     friend class ResourceFactory;

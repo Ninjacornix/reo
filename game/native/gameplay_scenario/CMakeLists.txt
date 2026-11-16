@@ -1,4 +1,7 @@
 add_library(reo_native_gameplay_scenario STATIC interpreter.cpp flags.cpp offline.cpp scene_resources.cpp scene_controls.cpp content.cpp sequence_control.cpp lighting.cpp stream_channels.cpp stream_instances.cpp scene_models.cpp scene_model_bindings.cpp periodic_effects.cpp room_rules.cpp room_object_commands.cpp actor_requests.cpp scene_control_routes.cpp scene_matrix_programs.cpp scene_matrix_tables.cpp scene_matrix_playback.cpp)
+target_sources(reo_native_gameplay_scenario PRIVATE scene_entry_requests.cpp)
+target_sources(reo_native_gameplay_scenario PRIVATE actor_offline_navigation.cpp)
+target_link_libraries(reo_native_gameplay_scenario PUBLIC reo_native_owned_resource_recipes)
 
 # Scene actor lifecycle composes the existing model/constructor owners above
 # the core Scenario layer; it does not introduce a reverse actor dependency.
@@ -17,6 +20,9 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_compile_options(cutscene_scene_actors_tests PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)
 endif()
 target_sources(reo_native_gameplay_scenario PRIVATE script_audio.cpp)
+target_sources(reo_native_gameplay_scenario PRIVATE room_camera_records.cpp room_camera.cpp room_camera_modes.cpp)
+target_sources(reo_native_gameplay_scenario PRIVATE scene_text_bank.cpp timed_scene_text.cpp)
+target_sources(reo_native_gameplay_scenario PRIVATE inventory_ui_resources.cpp)
 target_link_libraries(reo_native_gameplay_scenario PUBLIC reo_native_gameplay_audio reo_native_model_attachments)
 
 add_executable(scene_record_parameter_tests scene_record_parameter_tests.cpp)
@@ -86,7 +92,7 @@ target_sources(reo_native_gameplay_scenario PRIVATE resource_templates.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE script_program.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE actor_inventory_commands.cpp auxiliary_room_rows.cpp cutscene_requests.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE script_resource_parameters.cpp script_resource_activation.cpp)
-target_sources(reo_native_gameplay_scenario PRIVATE scenario_events.cpp timer_hud.cpp)
+target_sources(reo_native_gameplay_scenario PRIVATE scenario_events.cpp timer_hud.cpp actor_script_terminal.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE scenario_archive.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE npc_descriptors.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE enemy_descriptors.cpp enemy_routes.cpp)
@@ -95,6 +101,7 @@ target_link_libraries(reo_native_gameplay_scenario PUBLIC reo_native_gameplay_ai
 target_sources(reo_native_gameplay_scenario PRIVATE cutscene_cues.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE resource_collisions.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE room_scene_input.cpp room_scene_owner.cpp)
+target_sources(reo_native_gameplay_scenario PRIVATE room_return_points.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE fog.cpp)
 target_include_directories(reo_native_gameplay_scenario PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 target_link_libraries(reo_native_gameplay_scenario PUBLIC reo_native_gameplay_tasks reo_native_adxt_control_owner reo_native_afs_source_range reo_native_gameplay_world reo_native_transform_math)
@@ -124,7 +131,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
 endif()
 
 target_sources(reo_native_gameplay_scenario PRIVATE scene_voice_assets.cpp stream_voice_queue.cpp scene_voice_preparation.cpp)
-target_sources(reo_native_gameplay_scenario PRIVATE actor_voice_archive_assets.cpp)
+target_sources(reo_native_gameplay_scenario PRIVATE actor_voice_archive_assets.cpp actor_voice_selections.cpp)
 target_sources(reo_native_gameplay_scenario PRIVATE dialogue_assets.cpp text_cache.cpp dialogue_response_program.cpp)
 target_link_libraries(reo_native_gameplay_scenario PUBLIC reo_native_audio_cue_queue)
 

@@ -17,6 +17,14 @@ public:
     bool bind_room_objects(std::uint16_t,std::shared_ptr<gameplay_collision::room_objects::Owner>)noexcept;
     bool unbind_room_objects()noexcept;
     const gameplay_collision::room_objects::Owner* room_objects()const noexcept;
+    bool bind_room_membership(gameplay_session::RoomMembership*)noexcept;
+    bool room_membership_ready(MessageRoute)const noexcept;
+    bool begin_room_membership_update()noexcept;
+    gameplay_session::RoomMembershipChanges collect_room_membership()noexcept;
+    std::optional<std::uint32_t> room_owner(MessageRoute,std::uint16_t)const noexcept;
+    ReceptionResult receive(const RoomClaimBeginMessage&,bool local_echo=false)noexcept;
+    ReceptionResult receive(const RoomClaimReleaseMessage&,bool local_echo=false)noexcept;
+    ReceptionResult receive(const RoomMembershipMessage&,bool local_echo=false)noexcept;
     ReceptionResult receive(const ActorStatusMessage&,bool local_echo=false)noexcept;
     ReceptionResult receive(const SceneRecordParameterMessage&,bool local_echo=false)noexcept;
     ReceptionResult receive(const ActorAlignmentMessage&,bool local_echo=false)noexcept;
@@ -28,8 +36,12 @@ public:
     ReceptionResult receive(const ActorPeerMessage&,bool local_echo=false)noexcept;
     ReceptionResult receive(const ActorSpeechMessage&,bool local_echo=false)noexcept;
 private:
+    friend class reo::native::gameplay_application::SessionRooms;
+    bool roster_room_objects_ready(std::uint16_t,const gameplay_collision::room_objects::Owner*)const noexcept;
+    bool replace_roster_room_objects(std::uint16_t,std::shared_ptr<gameplay_collision::room_objects::Owner>,const gameplay_collision::room_objects::Owner*)noexcept;
     struct Admission {ReceptionStatus status{ReceptionStatus::completed};std::shared_ptr<gameplay_world::Actor> actor;};
     gameplay_world::World& world_;
+    gameplay_session::RoomMembership* membership_{};
     gameplay_collision::room_objects::Owner* objects_;
     std::shared_ptr<gameplay_collision::room_objects::Owner> retained_objects_;
     std::optional<std::uint16_t> objects_scenario_;

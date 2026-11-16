@@ -23,7 +23,7 @@ BehaviorFrameServices::BehaviorFrameServices(Services& frame,BehaviorServices& b
     BehaviorFrameServices(frame,behavior,amounts,publication,gauge,terminal,progression,zero_health){floors_=&floors;}
 void BehaviorFrameServices::begin_offline_frame(World& w){frame_.begin_offline_frame(w);}
 void BehaviorFrameServices::run(Stage stage,World& w,Actor& a){
-    if(stage==Stage::update_behavior)update_behavior(w,a,behavior_,hit_timer_amounts_,floors_,publication_,gauge_,terminal_,progression_,zero_health_);
+    if(stage==Stage::update_behavior)update_behavior(w,a,behavior_,hit_timer_amounts_,floors_,publication_,gauge_,terminal_,progression_,zero_health_,control_);
     else frame_.run(stage,w,a);
 }
 bool BehaviorFrameServices::remote_motion(World& w,Actor& a){return frame_.remote_motion(w,a);}
@@ -32,7 +32,7 @@ void BehaviorFrameServices::switch_grid(World& w,std::int32_t next,std::int32_t 
 float BehaviorFrameServices::grid_response(World& w,std::uint8_t grid){return frame_.grid_response(w,grid);}
 void update_behavior(World& w,Actor& a,BehaviorServices& services,
                      std::span<const std::int16_t> hit_timer_amounts,
-                     const gameplay_collision::response::Grid* floors,ActivityPublication* publication,GaugeApplication* gauge,TerminalTiming* terminal,ProgressionTiming* progression,ZeroHealthApplication* zero_health){
+                     const gameplay_collision::response::Grid* floors,ActivityPublication* publication,GaugeApplication* gauge,TerminalTiming* terminal,ProgressionTiming* progression,ZeroHealthApplication* zero_health,ControlPreparation* control){
     auto& s=w.session();
     if(floors){sample_surface(a,*floors);resolve_surface(a,*floors);}
     else{
@@ -56,7 +56,8 @@ void update_behavior(World& w,Actor& a,BehaviorServices& services,
         if(terminal){if(!terminal->apply_terminal_timer(w,a))throw std::runtime_error("Native actor terminal timing unavailable");}
         else services.run(BehaviorStage::terminal_timer,w,a);
         if(a.category==0){
-            services.run(BehaviorStage::prepare_control,w,a);
+            if(control){if(!control->prepare_control(w,a))throw std::runtime_error("Native actor control preparation unavailable");}
+            else services.run(BehaviorStage::prepare_control,w,a);
             services.run(BehaviorStage::analog_control,w,a);
             services.run(BehaviorStage::cooperation,w,a);
             if(services.locally_controlled(a,s) && s.inventory_owner)

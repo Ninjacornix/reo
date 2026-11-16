@@ -45,7 +45,7 @@ std::shared_ptr<const PreparedCameraTracks> PreparedCameraTracks::import(std::sp
     }
     return result;
 }
-CutsceneCamera::CutsceneCamera(CutscenePlaybackState& state,Fog& fog,CameraParameters initial) noexcept:
+CutsceneCamera::CutsceneCamera(CutscenePlaybackState& state,Fog& fog,CameraParameters& initial) noexcept:
     state_(state),fog_(fog),parameters_(initial){}
 CutsceneCameraStatus CutsceneCamera::install(std::shared_ptr<const PreparedCameraTracks> prepared) noexcept{
     try{

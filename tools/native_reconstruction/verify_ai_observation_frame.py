@@ -141,8 +141,42 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--compiler", choices=COMPILERS, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--native-build", type=Path)
+    parser.add_argument("--build-receipt", type=Path)
     args = parser.parse_args()
     out = args.output.resolve()
+    if bool(args.native_build) != bool(args.build_receipt):
+        raise ValueError("Use --native-build and --build-receipt together")
+    libraries = []
+    native_source_hashes = {}
+    archive_hashes = {}
+    if args.native_build:
+        if args.compiler != "llvm":
+            raise ValueError("Archive-backed comparison requires shipping LLVM")
+        build = args.native_build.resolve()
+        cohort = json.loads(args.build_receipt.read_text())
+        compiler_hash = digest(COMPILERS[args.compiler].read_bytes())
+        if cohort.get("status") != "passed" or cohort.get("compiler_sha256") != compiler_hash:
+            raise ValueError("Build receipt or shipping compiler identity mismatch")
+        native_source_hashes = {p.relative_to(ROOT).as_posix(): digest(p.read_bytes())
+            for p in sorted((ROOT / "game/native").rglob("*")) if p.is_file() and
+            (p.suffix in (".cpp", ".hpp", ".h", ".inc") or p.name == "CMakeLists.txt")}
+        if native_source_hashes != cohort["sources_sha256"]:
+            raise ValueError("Native source/header identity differs from build receipt")
+        ninja = (build / "build.ninja").read_text().splitlines()
+        at = next(i for i, line in enumerate(ninja)
+                  if line.startswith("build gameplay_application/session_resources_tests.exe:"))
+        words = next(line.split("=", 1)[1].split() for line in ninja[at+1:at+8]
+                     if line.lstrip().startswith("LINK_LIBRARIES ="))
+        for word in words:
+            if word.endswith(".a"):
+                path = build / word
+                archive_hashes[word] = digest(path.read_bytes())
+                if cohort["archives_sha256"].get(word) != archive_hashes[word]:
+                    raise ValueError("Native archive identity differs from build receipt: " + word)
+                libraries.append(str(path))
+            else:
+                libraries.append(word)
     assert not out.exists() and out.is_relative_to(ROOT / "build-native-sjuni")
     assert (ROOT / "game/native/gameplay_update/ai_observation_frame_policy.inc").read_text() == generated()
     entries, audits, images = original_bodies()
@@ -171,6 +205,9 @@ def main():
         schema=1, status="failed", game_launched=False, installed_in_game=False, stage4_complete=False,
         compiler_sha256=digest(compiler.read_bytes()), owned_image_sha256={n: digest(b) for n, b in images.items()},
         source_sha256={n: digest(b) for n, b in frozen.items()}, original_word_audits=audits, commands=[],
+        native_build=str(args.native_build.resolve()) if args.native_build else None,
+        build_receipt_sha256=digest(args.build_receipt.read_bytes()) if args.build_receipt else None,
+        native_source_sha256=native_source_hashes, archives_sha256=archive_hashes,
         declared_ports=[
             "815BC0 current-node selection in the admitted single-node graph",
             "819BC0 scene scan with an empty scene-record owner",
@@ -197,13 +234,19 @@ def main():
         ]
         for label, command in commands:
             run(out, label, command, env, receipt)
-        objects, _ = compile_objects(ROOT, out, compiler, flags, UPDATE_UNITS, frozen, env)
+        objects = [] if args.native_build else compile_objects(ROOT, out, compiler, flags, UPDATE_UNITS, frozen, env)[0]
         run(out, "link", [
-            str(compiler), str(out / "fixture.o"), str(original), *objects, "-o", str(executable),
+            str(compiler), str(out / "fixture.o"), str(original), *objects, *libraries, "-o", str(executable),
         ], env, receipt)
         receipt["observed"] = json.loads(run(out, "test", [str(executable), str(image)], env, receipt))
         receipt["source_unchanged"] = all((ROOT / name).read_bytes() == data for name, data in frozen.items())
         assert receipt["source_unchanged"]
+        if args.native_build:
+            receipt["native_sources_unchanged"] = all(digest((ROOT / n).read_bytes()) == h
+                                                       for n, h in native_source_hashes.items())
+            receipt["archives_unchanged"] = all(digest((build / n).read_bytes()) == h
+                                                 for n, h in archive_hashes.items())
+            assert receipt["native_sources_unchanged"] and receipt["archives_unchanged"]
         receipt["status"] = "passed"
     finally:
         receipt["output_sha256"] = {p.name: digest(p.read_bytes()) for p in out.iterdir() if p.is_file()}

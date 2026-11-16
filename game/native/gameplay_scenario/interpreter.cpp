@@ -22,12 +22,22 @@
 #include "script_resource_parameters.hpp"
 #include "script_resource_activation.hpp"
 #include "scenario_events.hpp"
+#include "actor_script_terminal.hpp"
+#include "actor_offline_navigation.hpp"
+#include "../gameplay_world/actor_resource_operations.hpp"
+#include "actor_interaction_commands.hpp"
+#include "room_variant_commands.hpp"
+#include "scenario_enemy_relocation.hpp"
+#include "timed_scene_text.hpp"
 #include "difficulty_predicate.hpp"
 #include "actor_model_classes.hpp"
 #include "../gameplay_world/inventory_ui.hpp"
 #include "scene_record_parameters.hpp"
 #include "actor_script_commands.hpp"
+#include "actor_room_population.hpp"
 #include "actor_script_predicates.hpp"
+#include "actor_ai_policy.hpp"
+#include "offline_navigation_controls.hpp"
 #include "scene_record_commands.hpp"
 #include "../gameplay_world/world.hpp"
 #include <algorithm>
@@ -44,12 +54,20 @@ std::uint32_t word(const std::byte* p)noexcept{
 }
 std::size_t payload_minimum(std::uint32_t op)noexcept{
     switch(op) {
-    case 0x80:case 0x81:case 0x164:case 0x165:case 0x1a5:return 4;
+    case 0x80:case 0x81:case 0x164:case 0x165:case 0x1a5:case 0x1a7:case 0x1a8:case 0x1a9:return 4;
     case 0x166:return 9;
-    case 0x150:case 0x1a1:return 12;
+    case 0x150:case 0x153:case 0x1a0:case 0x1a1:case 0x1a2:case 0x1a6:case 0x1aa:case 0x1ac:return 12;
+    case 0x151:return 8;
+    case 0x175:return 16;
+    case 0x1a4:return 8;
+    case 0x172:return 8;
+    case 0x169:return 1;
+    case 0x132:return 2;
+    case 0x6c:return 13;
+    case 0x106:return 18;
     case 0x156:return 20;
     case 0x170:case 0x174:return 6;
-    case 0xd1:return 28;
+    case 0xd0:case 0xd1:return 28;
     case 0x73:return 8;
     case 0x88:return 16;
     case 0x89:return 22;
@@ -105,9 +123,9 @@ detail::ScriptFlowBinding detail::script_flow_binding(std::uint32_t opcode,Dispa
     case 4:binding.flow=ScriptFlow::delay;break;
     case 8:case 0x14:case 0x17:case 0x34:case 0x47:case 0x48:case 0x49:case 0x4d:
     case 0xb7:case 0xb8:case 0xc2:case 0xc3:case 0xe3:case 0xe6:case 0xe9:case 0xea:
-    case 0xec:case 0xed:case 0xee:case 0xef:case 0x113:case 0x155:case 0x180:
+    case 0xec:case 0xed:case 0xee:case 0xef:case 0x113:case 0x150:case 0x151:case 0x153:case 0x155:case 0x156:case 0x180:case 0x1ac:
         binding.flow=ScriptFlow::if_test;break;
-    case 0x36:binding.flow=ScriptFlow::if_test_without_open;break;
+    case 0x36:case 0x1aa:binding.flow=ScriptFlow::if_test_without_open;break;
     case 0xe4:binding.flow=ScriptFlow::else_scan;break;
     case 0xe5:binding.flow=ScriptFlow::end_if;break;
     default:break;
@@ -156,6 +174,8 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
                 if(!mode&&selector>=gameplay_world::World::primary_capacity)throw std::invalid_argument("Native actor AI profile selector");
                 actor_profile_requests_.push_back({mode,selector,std::bit_cast<std::int32_t>(word(b.data()+at+12))});
             }
+            actor_population_rooms_|=!noop&&op==0x151;
+            if(!noop&&op==0x153)actor_room_population_queries_.push_back(word(b.data()+at+4));
             if(!noop&&op==0x156){
                 const auto mode=word(b.data()+at+4),selector=word(b.data()+at+8),query=word(b.data()+at+12),parameter=word(b.data()+at+16);
                 if(!mode&&selector>=gameplay_world::World::primary_capacity)throw std::invalid_argument("Native actor condition selector");
@@ -166,12 +186,53 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
                 actor_condition_requests_.push_back({mode,selector,query,parameter});
             }
             actor_ai_counter_|=!noop&&op==0x1a5;
+            actor_script_terminal_|=!noop&&op==0x60;
+            if(!noop&&op==0x132)timed_text_requests_.push_back(std::uint16_t(word(b.data()+at+4)));
+            if(!noop&&op==0x169)enemy_relocation_requests_.push_back(std::to_integer<std::uint8_t>(b[at+4]));
+            if(!noop&&op==0x5a&&profile==DispatchProfile::offline_actor){
+                if(word(b.data()+at+4)>=gameplay_session::RoomVariants::capacity)throw std::invalid_argument("Native offline room variant profile");
+                offline_room_variants_=true;
+            }
+            if(!noop&&op==0x172){
+                if(word(b.data()+at+8)>=512)throw std::invalid_argument("Native inventory flag extent");
+                inventory_flags_=true;
+            }
+            if(!noop&&op==0x106){
+                const auto selector=word(b.data()+at+4);
+                if(selector>=gameplay_world::World::primary_capacity)throw std::invalid_argument("Native actor anchor selector");
+                script_anchor_selectors_.push_back(selector);
+            }
+            actor_ai_damage_policy_|=!noop&&op==0x1a8;
+            if(!noop&&(op==0x1a6||op==0x1a7||op==0x1a9||op==0x1aa)){
+                const auto selector=word(b.data()+at+4);
+                if(selector>=gameplay_world::World::primary_capacity)throw std::invalid_argument("Native offline actor physical selector");
+                if(op==0x1a9)actor_retire_selectors_.push_back(selector);
+                else if(op!=0x1aa)actor_forced_policy_selectors_.push_back(selector);
+            }
+            if(!noop&&op==0x1ac&&word(b.data()+at+4)<3){
+                if(word(b.data()+at+8)>=512)throw std::invalid_argument("Native offline actor flag extent");
+                flags_=canonical_flags_=true;
+            }
+            if(!noop&&op==0x175)offline_inventory_requests_.push_back({std::bit_cast<std::int16_t>(std::uint16_t(word(b.data()+at+4))),std::bit_cast<std::int16_t>(std::uint16_t(word(b.data()+at+8)))});
+            if(!noop&&op==0x1a2)offline_navigation_requests_.push_back({word(b.data()+at+4),word(b.data()+at+8),word(b.data()+at+12)});
+            if(!noop&&op==0x1a0)destination_policy_requests_.push_back({word(b.data()+at+4),word(b.data()+at+8),word(b.data()+at+12)});
+            if(!noop&&op==0x1a4){
+                const auto selector=word(b.data()+at+4);
+                if(selector>=gameplay_world::World::primary_capacity)throw std::invalid_argument("Native actor AI inhibition selector");
+                actor_inhibition_requests_.push_back({selector,word(b.data()+at+8)});
+            }
             if(!noop&&op==0x170)resource_parameter_requests_.push_back({std::uint16_t(word(b.data()+at+4)),std::bit_cast<std::int16_t>(std::uint16_t(word(b.data()+at+8)))});
             if(!noop&&op==0x174&&std::bit_cast<std::int16_t>(std::uint16_t(word(b.data()+at+4)))>0){resource_activation_=true;world_=true;}
             if(!noop&&op==0xd1){
                 std::array<std::uint32_t,5> args;for(unsigned i=0;i<args.size();++i)args[i]=word(b.data()+at+12+4*i);
                 if(!ScenarioEvents::admits(word(b.data()+at+4),word(b.data()+at+8),args))throw std::invalid_argument("Native scenario event callback/payload profile");
                 scenario_events_=true;world_=true;
+            }
+            if(!noop&&op==0xd0){
+                std::array<std::uint32_t,5> args;for(unsigned i=0;i<args.size();++i)args[i]=word(b.data()+at+12+4*i);
+                const auto kind=word(b.data()+at+4),slot=word(b.data()+at+8);
+                if(!ScenarioEvents::admits_scenario(kind,slot,args))throw std::invalid_argument("Native scenario-specific event callback/payload profile");
+                scenario_event_requests_.push_back({kind,slot,args});scenario_events_=true;world_=true;
             }
             if(!noop&&op==0xee&&std::to_integer<std::uint8_t>(b[at+8])<6){difficulty_=true;world_=true;}
             inventory_ui_|=!noop&&op==0x108;
@@ -207,7 +268,7 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
             if(!noop&&(op==0x10||op==0x11)&&word(b.data()+at+4)>=32)throw std::invalid_argument("Native sequence index profile");
             if(!noop&&(op==0x13||op==0x15)&&std::to_integer<unsigned>(b[at+4])>=32)throw std::invalid_argument("Native sequence selector profile");
             if(!noop&&(op==0x23||op==0x24)&&std::to_integer<unsigned>(b[at+4])>=32)throw std::invalid_argument("Native lighting entry profile");
-            if(!noop&&op==0x69){
+            if(!noop&&(op==0x69||op==0x6c)){
                 using gameplay_world::ActorPlacements;
                 const auto actor=std::to_integer<unsigned>(b[at+4]);
                 const auto command=std::to_integer<unsigned>(b[at+8]);
@@ -216,6 +277,7 @@ Program::Program(std::vector<std::vector<std::byte>> blocks,DispatchProfile prof
                     (!immediate&&actor!=4&&actor>=ActorPlacements::request_count)||
                     (command==0xf0&&std::to_integer<unsigned>(b[at+12])>=ActorPlacements::position_capacity))
                     throw std::invalid_argument("Native actor placement profile");
+                if(op==0x6c)control_placement_requests_.push_back({std::uint8_t(actor),std::uint8_t(command),std::to_integer<std::uint8_t>(b[at+12])});
             }
             if(!noop&&op==0x70&&std::bit_cast<std::int32_t>(word(b.data()+at+4))<0)throw std::invalid_argument("Native stream member profile");
             if(!noop&&op==0xb4){if(word(b.data()+at+8)>=8)throw std::invalid_argument("Native model transform preset profile");adjusted_models_.push_back(std::to_integer<std::uint8_t>(b[at+4]));}
@@ -244,18 +306,52 @@ bool Program::admits_script_audio(const ScriptAudio* audio,const gameplay_world:
     for(const auto& request:audio_requests_)if(!audio->ready(request.event,request.mode,request.actor))return false;
     return true;
 }
+bool Program::admits_actor_interaction_commands(const gameplay_world::World* world,const SceneResources* resources)const noexcept{
+    if(control_placement_requests_.empty()&&script_anchor_selectors_.empty()&&!inventory_flags_)return true;
+    if(!world)return false;
+    for(const auto& request:control_placement_requests_)
+        if(!script_anchor_actor(*world,request.selector))return false;
+    for(const auto selector:script_anchor_selectors_)if(!script_anchor_actor(*world,selector))return false;
+    return !inventory_flags_||inventory_flag_ready(*world,resources);
+}
+bool Program::admits_offline_room_variants(const gameplay_world::World* world)const noexcept{
+    return !offline_room_variants_||(world&&offline_room_variant_ready(*world));
+}
+bool Program::admits_scenario_enemy_relocation(const gameplay_world::World* world,const FlagState* flags)const noexcept{
+    if(enemy_relocation_requests_.empty())return true;
+    if(!world)return false;
+    for(const auto condition:enemy_relocation_requests_)if(!scenario_enemy_relocation_plan(*world,flags,condition).ready)return false;
+    return true;
+}
+bool Program::admits_timed_scene_text(const TimedSceneText* text,const gameplay_world::World* world)const noexcept{
+    if(timed_text_requests_.empty())return true;
+    if(!text||!world||!text->bound_to(*world))return false;
+    for(const auto id:timed_text_requests_)if(!text->ready(id))return false;
+    return true;
+}
 bool Program::admits_scene_record_parameters(const gameplay_world::World* world,const gameplay_update::GameplayMessageSink* messages)const noexcept{
     return !scene_record_parameters_||(world&&scene_record_parameters_ready(*world,messages));
 }
 bool Program::admits_actor_script_commands(const gameplay_world::World* world,const FlagState* flags)const noexcept{
-    if(room_actor_selectors_.empty()&&actor_profile_requests_.empty()&&actor_condition_requests_.empty()&&!actor_ai_counter_)return true;
-    if(!world)return false;
+    if(room_actor_selectors_.empty()&&actor_profile_requests_.empty()&&actor_condition_requests_.empty()&&!actor_ai_counter_&&!actor_ai_damage_policy_&&actor_inhibition_requests_.empty()&&actor_forced_policy_selectors_.empty()&&destination_policy_requests_.empty()&&!actor_population_rooms_&&actor_room_population_queries_.empty())return true;
+    if(!world||world->closed())return false;
     for(const auto selector:room_actor_selectors_)if(!actor_room_query_ready(*world,selector))return false;
+    if(actor_population_rooms_&&!actor_population_rooms_ready(*world))return false;
+    for(const auto room:actor_room_population_queries_)if(!actor_room_population_ready(*world,room))return false;
     for(const auto& request:actor_profile_requests_)
         if(!actor_weight_profile_ready(*world,request.mode,request.selector,request.profile))return false;
     for(const auto& request:actor_condition_requests_)
         if(!actor_condition_matches(*world,flags,request.mode,request.selector,request.query,request.parameter,0))return false;
     if(actor_ai_counter_&&!actor_ai_counter_ready(*world))return false;
+    if(actor_ai_damage_policy_&&!actor_ai_damage_policy_ready(*world))return false;
+    for(const auto& request:actor_inhibition_requests_)
+        if(!actor_ai_inhibition_ready(*world,request.selector,request.value))return false;
+    for(const auto selector:actor_forced_policy_selectors_)
+        if(!actor_forced_policy_ready(*world,selector))return false;
+    //1D3F60 publishes SGL only after68C890 has run EVB entry1. The complete
+    // static closure also includes later blocks, so their1A0 descriptors cannot
+    // be required before that producer. The reached1A0 handler retains the
+    // exact signed gate and descriptor/AI readiness before its first mutation.
     return true;
 }
 bool Program::admits_resource_parameter_commands(const gameplay_world::World* world,const ScriptResourceParameters* parameters,
@@ -273,7 +369,33 @@ bool Program::admits_resource_activation(const ScriptResourceActivation* activat
     return !resource_activation_||(activation&&world&&activation->bound_to(*world,resources,templates));
 }
 bool Program::admits_scenario_events(const ScenarioEvents* events,const gameplay_world::World* world)const noexcept{
-    return !scenario_events_||(events&&world&&events->bound_to(*world)&&events->ready());
+    if(!scenario_events_)return true;
+    if(!events||!world||!events->bound_to(*world)||!events->ready())return false;
+    for(const auto& request:scenario_event_requests_)
+        if(!events->scenario_ready(request.kind,request.slot,request.arguments))return false;
+    return true;
+}
+bool Program::admits_actor_script_terminal(const ActorScriptTerminal* terminal,const gameplay_world::World* world)const noexcept{
+    if(!actor_script_terminal_&&actor_retire_selectors_.empty())return true;
+    if(!terminal||!world||!terminal->bound_to(*world))return false;
+    if(actor_script_terminal_&&!terminal->command_ready())return false;
+    for(const auto selector:actor_retire_selectors_)if(!terminal->retire_offline_actor_ready(selector))return false;
+    return true;
+}
+bool Program::admits_offline_actor_inventory(const gameplay_world::ActorResourceOperations* operations,const gameplay_world::World* world,const SceneResources* resources,const ResourceTemplates* templates)const noexcept{
+    for(const auto& request:offline_inventory_requests_){
+        if(!world)return false;
+        const auto required=gameplay_world::offline_actor_resource_required(*world,request[0],request[1]);if(!required)return false;
+        if(*required&&(!operations||!resources||!templates||!operations->bound_to(*world,*resources,*templates)))return false;
+    }
+    return true;
+}
+bool Program::admits_actor_offline_navigation(const ActorOfflineNavigation* owner,const gameplay_world::World* world,const Interpreter* scripts)const noexcept{
+    if(offline_navigation_requests_.empty())return true;
+    // Keep the concrete owner identity required for the complete closure.
+    // Graph/node readiness belongs to the reached1A2 command, after the actual
+    // SGL producer; checking future blocks here would prevent entry1 itself.
+    return owner&&world&&!world->closed()&&scripts&&owner->bound_to(*world,*scripts);
 }
 bool Program::admits_difficulty(const gameplay_world::World* world)const noexcept{
     return !difficulty_||(world&&!world->closed()&&world->session().difficulty.has_value());
@@ -345,7 +467,7 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     for(std::size_t i=0;i<out.size();++i)if(control_command(std::uint32_t(i)))out[i]={true,false,false,false,false,false,false,false,false,true};
     for(const auto i:{0x70,0x71})out[i]={true,false,false,false,false,false,false,false,false,false,true};
     for(const auto i:{0x104,0x105})out[i]={true,false,false,false,false,false,false,false,false,true};
-    for(const auto i:{0x5a,0x61,0x62,0x65,0x68,0x69,0x6a,0x85,0x86,0x87,0xea,0xf2,0x120,0x121,0x122,0x135,0x150,0x155,0x156,0x170,0x180}){out[i].native_algorithm=true;out[i].world_required=true;}
+    for(const auto i:{0x5a,0x61,0x62,0x65,0x68,0x69,0x6a,0x85,0x86,0x87,0xea,0xf2,0x120,0x121,0x122,0x135,0x150,0x151,0x153,0x155,0x156,0x170,0x180}){out[i].native_algorithm=true;out[i].world_required=true;}
     out[0x62].selected_actor_required=true;
     out[0x135].scene_controls_required=true;out[0x135].action_choices_required=true;
     out[0x135].selected_actor_required=true;out[0x155].selected_actor_required=true;
@@ -357,6 +479,12 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
     out[0xa8].native_algorithm=true;out[0xa8].world_required=true;out[0xa8].surface_effects_required=true;
     out[0x191].native_algorithm=true;out[0x191].world_required=true;out[0x191].scenario_required=true;out[0x191].canonical_flags_required=true;out[0x191].scene_controls_required=true;
     out[0xd1].native_algorithm=true;out[0xd1].world_required=true;
+    out[0xd0].native_algorithm=true;out[0xd0].world_required=true;out[0xd0].scenario_required=true;
+    out[0x60].native_algorithm=true;out[0x60].world_required=true;
+    for(const auto i:{0x6c,0x106,0x172}){out[i].native_algorithm=true;out[i].world_required=true;}
+    out[0x172].canonical_flags_required=true;
+    out[0x169].native_algorithm=true;out[0x169].world_required=true;
+    out[0x132].native_algorithm=true;out[0x132].world_required=true;
     out[0xee].native_algorithm=true; // Valid comparisons require canonical difficulty, selected per Program.
     out[0x108].native_algorithm=true;out[0x108].world_required=true;
     out[0x64].native_algorithm=true;out[0x64].world_required=true;
@@ -366,7 +494,11 @@ std::array<OpcodeCoverage,432> Interpreter::coverage(DispatchProfile profile)noe
         else if(!offline_bindings[i].same_handler&&i!=0xb&&i!=0xc&&i!=0xe3&&i!=0xed&&i!=0xef&&i!=0x104&&i!=0x105)out[i]={};
         if(i==0x104||i==0x105)out[i].saved_controls_required=true;
     }
-    if(profile==DispatchProfile::offline_actor)for(const auto i:{0x1a1,0x1a5}){out[i].native_algorithm=true;out[i].world_required=true;}
+    if(profile==DispatchProfile::offline_actor)for(const auto i:{0x5a,0x1a0,0x1a1,0x1a2,0x1a4,0x1a5,0x1a6,0x1a7,0x1a8,0x1a9,0x1aa}){out[i].native_algorithm=true;out[i].world_required=true;}
+    if(profile==DispatchProfile::offline_actor){out[0x1ac].native_algorithm=true;out[0x175].native_algorithm=true;out[0x175].world_required=true;}
+    //7012C0/701550 dependencies are reached-path capabilities: category>=2
+    // dispatch skips; the canonical disabled pool exits before SGL reads.
+    if(profile==DispatchProfile::offline_actor)for(const auto i:{0x53,0x58}){out[i]={};out[i].native_algorithm=true;}
     return out;
 }
 Status Interpreter::install(std::size_t id,std::shared_ptr<const Program> p,Position entry)noexcept{
@@ -393,9 +525,14 @@ Status Interpreter::replace_channels(std::span<const ChannelReplacement> replace
 Status Interpreter::restore_channel(std::size_t id,const Channel& value)noexcept{
     if(running_)return Status::busy;
     if(id>=channel_count)return Status::invalid_channel;
-    if(!value.program||!value.program->record(value.current)||value.block_index>=value.program->blocks())return Status::invalid_program;
-    if(value.saved.block!=UINT32_MAX&&!value.program->record(value.saved))return Status::invalid_program;
-    if(value.program->unsupported())return Status::unsupported_opcode;
+    const auto current=value.cursor_program?value.cursor_program:value.program;
+    const auto saved=value.saved_program?value.saved_program:value.program;
+    if((current&&current->unsupported())||(saved&&saved->unsupported())||(value.program&&value.program->unsupported()))return Status::unsupported_opcode;
+    if(current){if(!current->record(value.current))return Status::invalid_program;}
+    else if(value.current!=Position{}||value.countdown)return Status::invalid_program;
+    if(value.program&&value.block_index>=value.program->blocks())return Status::invalid_program;
+    if(value.saved!=Position{}&&(!saved||!saved->record(value.saved)))return Status::invalid_program;
+    if(value.program&&((current&&current->profile()!=value.program->profile())||(saved&&saved->profile()!=value.program->profile())))return Status::invalid_program;
     channels_[id]=value;return Status::completed;
 }
 Status Interpreter::restore_counters(const std::array<std::uint32_t,4>& values)noexcept{
@@ -412,48 +549,62 @@ TickResult Interpreter::tick_offline_channel(std::size_t id,const TickContext& c
 TickResult Interpreter::execute(std::size_t id,const TickContext& context,Providers providers,std::size_t budget,const OfflineDispatch* offline)noexcept{
     if(running_)return{Status::busy,0,{},0};
     if(id>=channel_count)return{Status::invalid_channel,0,{},0};
-    auto& c=channels_[id];if(!c.program)return{Status::invalid_program,0,{},0};
-    if(c.program->profile()!=(offline?DispatchProfile::offline_actor:DispatchProfile::ordinary))return{Status::invalid_program,0,{},0};
-    if(offline&&offline->actor_category>4)return{Status::invalid_program,0,{},0};
-    if(offline&&(!providers.canonical_flags||providers.flags!=providers.canonical_flags))return{Status::provider_unavailable,0,{},0};
-    if(c.program->needs_actor_events()&&context.selected_actor>=4)return{Status::invalid_program,0,{},0};
-    if((c.program->needs_flags()&&!providers.flags)||(c.program->needs_timers()&&!providers.timers))return{Status::provider_unavailable,0,{},0};
-    if(c.program->needs_signals()&&!providers.signals)return{Status::provider_unavailable,0,{},0};
-    if(c.program->needs_forced_terminal()&&!providers.forced_terminal)return{Status::provider_unavailable,0,{},0};
-    if(c.program->needs_scene_resources()&&!providers.scene_resources)return{Status::provider_unavailable,0,{},0};
-    if(c.program->needs_session_counters()&&!providers.session_counters)return{Status::provider_unavailable,0,{},0};
-    if(offline&&c.program->needs_session_counters()&&context.selected_actor>=3)return{Status::invalid_program,0,{},0};
-    if(c.program->needs_sequences()&&!providers.sequences)return{Status::provider_unavailable,0,{},0};
-    if(c.program->needs_lighting()&&!providers.lighting)return{Status::provider_unavailable,0,{},0};
-    if(c.program->needs_scene_channels()&&!providers.scene_channels)return{Status::provider_unavailable,0,{},0};
-    if(c.program->needs_scene_controls()&&!providers.scene_controls)return{Status::provider_unavailable,0,{},0};
-    if(c.program->needs_streams()&&(!providers.streams||!providers.stream_backend||!context.stream_tick))return{Status::provider_unavailable,0,{},0};
-    if(c.program->needs_saved_controls()&&(!providers.saved_controls||context.selected_actor>=SavedControlRecords::owner_count))return{Status::provider_unavailable,0,{},0};
-    if(c.program->needs_world()&&(!providers.world||providers.world->closed()||providers.world->selected_actor!=context.selected_actor))return{Status::provider_unavailable,0,{},0};
-    if(!c.program->admits_room_counters(providers.world))return{Status::provider_unavailable,0,{},0};
-    if(!c.program->admits_inventory_grants(providers.world,providers.scene_resources,providers.resource_templates))return{Status::provider_unavailable,0,{},0};
-    if(!c.program->admits_actor_roster(providers.world))return{Status::provider_unavailable,0,{},0};
-    if(!c.program->admits_character_remap(providers.world))return{Status::provider_unavailable,0,{},0};
-    if(!c.program->admits_script_audio(providers.script_audio,providers.world))return{Status::provider_unavailable,0,{},0};
-    if(!c.program->admits_scene_record_parameters(providers.world,providers.messages))return{Status::provider_unavailable,0,{},0};
-    if(!c.program->admits_actor_script_commands(providers.world,providers.canonical_flags))return{Status::provider_unavailable,0,{},0};
-    if(!c.program->admits_resource_parameter_commands(providers.world,providers.resource_parameters,providers.scene_resources,providers.resource_templates))return{Status::provider_unavailable,0,{},0};
-    if(!c.program->admits_resource_activation(providers.resource_activation,providers.world,providers.scene_resources,providers.resource_templates))return{Status::provider_unavailable,0,{},0};
-    if(!c.program->admits_scenario_events(providers.scenario_events,providers.world))return{Status::provider_unavailable,0,{},0};
-    if(!c.program->admits_difficulty(providers.world))return{Status::provider_unavailable,0,{},0};
-    if(!c.program->admits_inventory_ui(providers.inventory_ui,providers.world))return{Status::provider_unavailable,0,{},0};
-    if(!c.program->admits_actor_model_classes(providers.world))return{Status::provider_unavailable,0,{},0};
-    if(c.program->needs_selected_actor()&&!providers.world->primary(context.selected_actor))return{Status::provider_unavailable,0,{},0};
-    if(c.program->needs_action_choices()&&!providers.action_choices)return{Status::provider_unavailable,0,{},0};
-    if(c.program->needs_scenario()&&!providers.world->scenario)return{Status::provider_unavailable,0,{},0};
-    if(c.program->needs_canonical_flags()&&(!providers.canonical_flags||providers.flags!=providers.canonical_flags))return{Status::provider_unavailable,0,{},0};
-    if(c.program->needs_periodic_effects()&&(!providers.periodic_effects||!providers.periodic_effects->admitted()||
-        !providers.periodic_effects->bound_to(*providers.scene_controls,*providers.canonical_flags,providers.world->session().random)))return{Status::provider_unavailable,0,{},0};
-    if(c.program->needs_surface_effects()&&(!providers.surface_effects||!providers.surface_effects->bound_to(*providers.world)))return{Status::provider_unavailable,0,{},0};
-    if(c.program->needs_room_objects()&&(!providers.room_objects||!providers.room_objects->ready(c.program->needs_room_object_lifetime(),c.program->needs_room_object_queries())))return{Status::provider_unavailable,0,{},0};
-    if(c.program->needs_models()&&!providers.models)return{Status::provider_unavailable,0,{},0};
-    for(const auto authored:c.program->adjusted_models())if(!providers.models->admits_adjustment(authored))return{Status::provider_unavailable,0,{},0};
-    for(const auto authored:c.program->visibility_models())if(!providers.models->admits_visibility(authored))return{Status::provider_unavailable,0,{},0};
+    auto& c=channels_[id];
+    const auto initial_program=c.cursor_program?c.cursor_program:c.program;
+    if(!initial_program)return{Status::invalid_program,0,{},0};
+    const auto provider_status=[&](const Program& program)->Status{
+    if(program.profile()!=(offline?DispatchProfile::offline_actor:DispatchProfile::ordinary))return Status::invalid_program;
+    if(offline&&offline->actor_category>4)return Status::invalid_program;
+    if(offline&&(!providers.canonical_flags||providers.flags!=providers.canonical_flags))return Status::provider_unavailable;
+    if(program.needs_actor_events()&&context.selected_actor>=4)return Status::invalid_program;
+    if((program.needs_flags()&&!providers.flags)||(program.needs_timers()&&!providers.timers))return Status::provider_unavailable;
+    if(program.needs_signals()&&!providers.signals)return Status::provider_unavailable;
+    if(program.needs_forced_terminal()&&!providers.forced_terminal)return Status::provider_unavailable;
+    if(program.needs_scene_resources()&&!providers.scene_resources)return Status::provider_unavailable;
+    if(program.needs_session_counters()&&!providers.session_counters)return Status::provider_unavailable;
+    if(offline&&program.needs_session_counters()&&context.selected_actor>=3)return Status::invalid_program;
+    if(program.needs_sequences()&&!providers.sequences)return Status::provider_unavailable;
+    if(program.needs_lighting()&&!providers.lighting)return Status::provider_unavailable;
+    if(program.needs_scene_channels()&&!providers.scene_channels)return Status::provider_unavailable;
+    if(program.needs_scene_controls()&&!providers.scene_controls)return Status::provider_unavailable;
+    if(program.needs_streams()&&(!providers.streams||!providers.stream_backend||!context.stream_tick))return Status::provider_unavailable;
+    if(program.needs_saved_controls()&&(!providers.saved_controls||context.selected_actor>=SavedControlRecords::owner_count))return Status::provider_unavailable;
+    if(program.needs_world()&&(!providers.world||providers.world->closed()||providers.world->selected_actor!=context.selected_actor))return Status::provider_unavailable;
+    if(!program.admits_room_counters(providers.world))return Status::provider_unavailable;
+    if(!program.admits_inventory_grants(providers.world,providers.scene_resources,providers.resource_templates))return Status::provider_unavailable;
+    if(!program.admits_actor_roster(providers.world))return Status::provider_unavailable;
+    if(!program.admits_character_remap(providers.world))return Status::provider_unavailable;
+    if(!program.admits_script_audio(providers.script_audio,providers.world))return Status::provider_unavailable;
+    if(!program.admits_scene_record_parameters(providers.world,providers.messages))return Status::provider_unavailable;
+    if(!program.admits_actor_script_commands(providers.world,providers.canonical_flags))return Status::provider_unavailable;
+    if(!program.admits_resource_parameter_commands(providers.world,providers.resource_parameters,providers.scene_resources,providers.resource_templates))return Status::provider_unavailable;
+    if(!program.admits_resource_activation(providers.resource_activation,providers.world,providers.scene_resources,providers.resource_templates))return Status::provider_unavailable;
+    if(!program.admits_scenario_events(providers.scenario_events,providers.world))return Status::provider_unavailable;
+    if(!program.admits_actor_script_terminal(providers.actor_script_terminal,providers.world))return Status::provider_unavailable;
+    if(!program.admits_actor_interaction_commands(providers.world,providers.scene_resources))return Status::provider_unavailable;
+    if(!program.admits_offline_room_variants(providers.world))return Status::provider_unavailable;
+    if(!program.admits_scenario_enemy_relocation(providers.world,providers.flags==providers.canonical_flags?providers.canonical_flags:nullptr))return Status::provider_unavailable;
+    if(!program.admits_timed_scene_text(providers.timed_scene_text,providers.world))return Status::provider_unavailable;
+    if(!program.admits_difficulty(providers.world))return Status::provider_unavailable;
+    if(!program.admits_inventory_ui(providers.inventory_ui,providers.world))return Status::provider_unavailable;
+    if(!program.admits_actor_model_classes(providers.world))return Status::provider_unavailable;
+    if(program.needs_selected_actor()&&!providers.world->primary(context.selected_actor))return Status::provider_unavailable;
+    if(program.needs_action_choices()&&!providers.action_choices)return Status::provider_unavailable;
+    if(program.needs_scenario()&&!providers.world->scenario)return Status::provider_unavailable;
+    if(program.needs_canonical_flags()&&(!providers.canonical_flags||providers.flags!=providers.canonical_flags))return Status::provider_unavailable;
+    if(program.needs_periodic_effects()&&(!providers.periodic_effects||!providers.periodic_effects->admitted()||
+        !providers.periodic_effects->bound_to(*providers.scene_controls,*providers.canonical_flags,providers.world->session().random)))return Status::provider_unavailable;
+    if(program.needs_surface_effects()&&(!providers.surface_effects||!providers.surface_effects->bound_to(*providers.world)))return Status::provider_unavailable;
+    if(program.needs_room_objects()&&(!providers.room_objects||!providers.room_objects->ready(program.needs_room_object_lifetime(),program.needs_room_object_queries())))return Status::provider_unavailable;
+    if(program.needs_models()&&!providers.models)return Status::provider_unavailable;
+    for(const auto authored:program.adjusted_models())if(!providers.models->admits_adjustment(authored))return Status::provider_unavailable;
+    for(const auto authored:program.visibility_models())if(!providers.models->admits_visibility(authored))return Status::provider_unavailable;
+    if(!program.admits_offline_actor_inventory(providers.actor_resource_operations,providers.world,providers.scene_resources,providers.resource_templates))return Status::provider_unavailable;
+    if(!program.admits_actor_offline_navigation(providers.actor_offline_navigation,providers.world,this))return Status::provider_unavailable;
+    return Status::completed;
+    };
+    if(const auto status=provider_status(*initial_program);status!=Status::completed)return{status,0,{},0};
+    auto validated_program=initial_program;
     running_=true;struct Reset{bool& flag;~Reset(){flag=false;}} reset{running_};
     selected_=static_cast<std::uint8_t>(id);std::size_t operations=0;std::uint32_t opcode=0;
     auto result=[&](Status s){return TickResult{s,operations,c.current,opcode};};
@@ -464,8 +615,10 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
         const auto saved=c.condition;
         for(;;){
             if(operations>=budget)return Status::budget_exhausted;
-            const auto current=c.program->record(c.current);if(!current)return Status::invalid_record;
-            advance(*current);const auto record=c.program->record(c.current);if(!record)return Status::invalid_record;
+            const auto scan_program=c.cursor_program?c.cursor_program:c.program;
+            if(!scan_program)return Status::invalid_program;
+            const auto current=scan_program->record(c.current);if(!current)return Status::invalid_record;
+            advance(*current);const auto record=scan_program->record(c.current);if(!record)return Status::invalid_record;
             ++operations;const auto op=record->opcode;c.condition+=opener(op)?1u:0u;
             if(failed&&op==0xe4&&c.condition==saved){advance(*record);return Status::completed;}
             if(op==0xe5){if(c.condition==saved){--c.condition;advance(*record);return Status::completed;}--c.condition;}
@@ -473,7 +626,16 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
         }
     };
     for(;;){
-        const auto record=c.program->record(c.current);if(!record)return result(Status::invalid_record);
+        const auto cursor_program=c.cursor_program?c.cursor_program:c.program;
+        if(!cursor_program)return result(Status::invalid_program);
+        if(cursor_program!=validated_program){
+            if(const auto status=provider_status(*cursor_program);status!=Status::completed)return result(status);
+            validated_program=cursor_program;
+        }
+        //700330 can replace this channel during the handler. Keep its record
+        //alive; 68C660 advances the replacement cursor by the old record size.
+        const auto executing_program=cursor_program;
+        const auto record=executing_program->record(c.current);if(!record)return result(Status::invalid_record);
         if(c.countdown){--c.countdown;return result(Status::yielded);}
         if(operations>=budget)return result(Status::budget_exhausted);
         ++operations;opcode=record->opcode;const auto payload=record->payload;
@@ -489,11 +651,11 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
         if(skipped){if(opener(opcode)){++c.condition;const auto status=scan(true);if(status!=Status::completed)return result(status);flow=2;}}
         else if(offline?offline_bindings[opcode].noop:original_noops[opcode]){}
         else switch(opcode){
-        case 1:c.saved=c.current;c.saved.offset+=record->bytes;break;
-        case 2:case 0xa:c.current=c.saved;flow=1;break;
+        case 1:c.saved=c.current;c.saved.offset+=record->bytes;c.saved_program=executing_program;break;
+        case 2:case 0xa:c.current=c.saved;c.cursor_program=c.saved_program?c.saved_program:c.program;flow=1;break;
         case 3:{const auto count=value(0);for(std::uint32_t i=0;i<count;++i){
             if(operations>=budget)return result(Status::budget_exhausted);
-            const auto r=c.program->record(c.current);if(!r)return result(Status::invalid_record);advance(*r);++operations;
+            const auto r=executing_program->record(c.current);if(!r)return result(Status::invalid_record);advance(*r);++operations;
         }flow=1;break;}
         case 4:c.countdown=value(0);break;
         case 5:case 6:{
@@ -502,8 +664,8 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
             if(opcode==6)event.active=0;
             else if(!event.active){event.active=1;event.kind=std::to_integer<std::uint8_t>(payload[8]);event.value=std::uint16_t(value(4));}
             break;}
-        case 7:case 0xd:++c.block_index;if(c.block_index>=c.program->blocks())return result(Status::invalid_record);
-            c.current={c.block_index,0};flow=1;break;
+        case 7:case 0xd:++c.block_index;if(!c.program||c.block_index>=c.program->blocks())return result(Status::invalid_record);
+            c.cursor_program.reset();c.current={c.block_index,0};flow=1;break;
         case 8:{++c.condition;const auto flag=providers.flags->get(FlagBank::scenario,value(0));
             if(!flag)return result(Status::provider_unavailable);
             const bool wanted=payload[4]!=std::byte{};if(*flag!=wanted){const auto status=scan(true);if(status!=Status::completed)return result(status);flow=2;}break;}
@@ -556,6 +718,16 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
                 std::to_integer<std::uint8_t>(payload[4]),std::to_integer<std::uint8_t>(payload[8])))
                 return result(Status::provider_unavailable);
             break;
+        case 0x6c:
+            if(!script_control_placement(*providers.world,std::to_integer<std::uint8_t>(payload[0]),
+                std::to_integer<std::uint8_t>(payload[4]),std::to_integer<std::uint8_t>(payload[8]),std::to_integer<std::uint8_t>(payload[12])))return result(Status::provider_unavailable);
+            break;
+        case 0x106:
+            if(!set_script_anchor(*providers.world,value(0),value(4),value(8),value(12),std::bit_cast<std::int16_t>(std::uint16_t(value(16)))))return result(Status::provider_unavailable);
+            break;
+        case 0x172:
+            if(!update_inventory_flag(*providers.world,providers.scene_resources,*providers.canonical_flags,std::uint16_t(value(0)),value(4)))return result(Status::provider_unavailable);
+            break;
         case 0x6a:providers.world->session().actor_placements.clear_requests();break;
         case 0x70:{const auto audio=providers.streams->request(0,std::bit_cast<std::int32_t>(value(0)),0,*context.stream_tick,*providers.stream_backend);
             if(!stream_accepted(audio.status))return result(Status::provider_unavailable);
@@ -584,6 +756,12 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
             if(!matches){const auto status=scan(true);if(status!=Status::completed)return result(status);flow=2;}break;}
         case 0x50:case 0x51:case 0x52:case 0x53:case 0x54:case 0x55:case 0x56:case 0x57:
         case 0x58:case 0x59:case 0x5b:case 0x5c:case 0x5d:case 0x5e:case 0x5f:case 0x72:case 0xb5:case 0xf6:{
+            if(offline&&(opcode==0x53||opcode==0x58)){
+                if(!apply_offline_navigation_control(providers.world,providers.scene_controls,offline->actor_room,
+                    offline->room_relation,opcode==0x58,value(0),opcode==0x58?std::uint16_t(value(4)):0))
+                    return result(Status::provider_unavailable);
+                break;
+            }
             const auto bytes=payload_minimum(opcode);ControlArguments arguments;arguments.authored_id=value(0);
             if(bytes>=8)arguments.parameter=value(4);
             if(bytes>=12)arguments.selector=value(8);
@@ -749,10 +927,21 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
             if(!providers.world->session().room_actor_assets.remove(std::uint16_t(signed_half(4)),value(0)))
                 return result(Status::provider_unavailable);
             break;
-        case 0x5a:if(providers.world->closed()||!providers.world->session().room_variants.store(value(0),value(4)))return result(Status::provider_unavailable);break;
+        case 0x5a:
+            if(offline){if(!set_offline_room_variant(*providers.world,value(0),value(4)))return result(Status::provider_unavailable);}
+            else if(providers.world->closed()||!providers.world->session().room_variants.store(value(0),value(4)))return result(Status::provider_unavailable);
+            break;
         case 0x44:if(value(0)<128&&!providers.flags->write(FlagBank::bounded_byte,value(0),true))return result(Status::provider_unavailable);break;
         case 0x164:if(!providers.flags->write(FlagBank::scene_record_eligibility,value(0),true))return result(Status::provider_unavailable);break;
         case 0x165:if(!clear_scene_record_eligibility(*providers.canonical_flags,*providers.world,value(0)))return result(Status::provider_unavailable);break;
+        case 0x132:{
+            const auto status=providers.timed_scene_text->request(std::uint16_t(value(0)));
+            if(status!=TimedTextStatus::completed)return result(Status::provider_unavailable);
+            break;
+        }
+        case 0x169:
+            if(!relocate_scenario_enemy(*providers.world,providers.flags==providers.canonical_flags?providers.canonical_flags:nullptr,std::to_integer<std::uint8_t>(payload[0])))return result(Status::provider_unavailable);
+            break;
         case 0x166:if(update_scene_record_parameter(*providers.world,std::to_integer<std::uint8_t>(payload[0]),std::to_integer<std::uint8_t>(payload[4]),std::to_integer<std::uint8_t>(payload[8]),providers.messages).status!=SceneRecordParameterStatus::completed)return result(Status::provider_unavailable);break;
         case 0x150:{++c.condition;
             const auto matches=actor_room_matches(*providers.world,value(0),std::uint16_t(value(4)),value(8)!=0);
@@ -760,12 +949,49 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
             if(!*matches){const auto status=scan(true);if(status!=Status::completed)return result(status);flow=2;}
             break;}
         case 0x1a1:if(!set_actor_weight_profile(*providers.world,value(0),value(4),std::bit_cast<std::int32_t>(value(8))))return result(Status::provider_unavailable);break;
+        case 0x151:{++c.condition;
+            const auto matches=actor_population_rooms_match(*providers.world,std::uint16_t(value(0)),value(4));
+            if(!matches)return result(Status::provider_unavailable);
+            if(!*matches){const auto status=scan(true);if(status!=Status::completed)return result(status);flow=2;}
+            break;}
+        case 0x153:{++c.condition;
+            const auto matches=actor_room_population_matches(*providers.world,value(0),value(4),value(8));
+            if(!matches)return result(Status::provider_unavailable);
+            if(!*matches){const auto status=scan(true);if(status!=Status::completed)return result(status);flow=2;}
+            break;}
         case 0x156:{++c.condition;
             const auto matches=actor_condition_matches(*providers.world,providers.canonical_flags,value(0),value(4),value(8),value(12),value(16));
             if(!matches)return result(Status::provider_unavailable);
             if(!*matches){const auto status=scan(true);if(status!=Status::completed)return result(status);flow=2;}
             break;}
         case 0x1a5:if(!set_actor_ai_counter(*providers.world,value(0)))return result(Status::provider_unavailable);break;
+        case 0x1a8:if(!set_actor_ai_damage_policy(*providers.world,value(0)))return result(Status::provider_unavailable);break;
+        case 0x1a4:if(!set_actor_ai_inhibition(*providers.world,value(0),value(4)))return result(Status::provider_unavailable);break;
+        case 0x1a6:case 0x1a7:
+            if(!set_actor_forced_policy(*providers.world,value(0),opcode==0x1a7?0:value(4),opcode==0x1a7?0:value(8),opcode==0x1a7))return result(Status::provider_unavailable);
+            break;
+        case 0x1a9:
+            if(providers.actor_script_terminal->retire_offline_actor(value(0))!=ActorScriptTerminalStatus::completed)return result(Status::provider_unavailable);
+            break;
+        case 0x1aa:{ //702D70 omits the ordinal increment despite scanner opener membership.
+            const auto matches=offline_actor_reached_node(*providers.world,value(0),value(4),value(8));
+            if(!matches)return result(Status::provider_unavailable);
+            if(!*matches){const auto status=scan(true);if(status!=Status::completed)return result(status);flow=2;}
+            break;}
+        case 0x1ac:{const auto bank=value(0);if(bank>=3)break;++c.condition;
+            const auto flag=providers.canonical_flags->actor_flag(ActorFlagFamily::primary,std::uint8_t(bank+1),value(4));
+            if(!flag)return result(Status::provider_unavailable);
+            if(*flag!=(value(8)!=0)){const auto status=scan(true);if(status!=Status::completed)return result(status);flow=2;}
+            break;}
+        case 0x175:{
+            const auto required=gameplay_world::offline_actor_resource_required(*providers.world,signed_half(0),signed_half(4));
+            if(!required)return result(Status::provider_unavailable);
+            if(*required&&(!providers.actor_resource_operations||!providers.actor_resource_operations->grant_offline_resource(signed_half(0),signed_half(4),signed_half(8),signed_half(12))))return result(Status::provider_unavailable);
+            break;}
+        case 0x1a2:
+            if(!providers.actor_offline_navigation||providers.actor_offline_navigation->command(value(0),value(4),value(8))!=OfflineNavigationStatus::completed)return result(Status::provider_unavailable);
+            break;
+        case 0x1a0:if(!set_actor_destination_policy(*providers.world,value(0),value(4),value(8)))return result(Status::provider_unavailable);break;
         case 0x170:
             if(!script_resource_parameter_noop(*providers.world,std::uint16_t(value(0)))&&
                providers.resource_parameters->command(std::uint16_t(value(0)),signed_half(4))!=SceneStatus::completed)return result(Status::provider_unavailable);
@@ -773,11 +999,15 @@ TickResult Interpreter::execute(std::size_t id,const TickContext& context,Provid
         case 0x174:
             if(signed_half(0)>0&&providers.resource_activation->command(signed_half(0),signed_half(4))!=SceneStatus::completed)return result(Status::provider_unavailable);
             break;
-        case 0xd1:{
+        case 0xd0:case 0xd1:{
             std::array<std::uint32_t,5> args;for(unsigned i=0;i<args.size();++i)args[i]=value(8+4*i);
-            if(providers.scenario_events->command(value(0),value(4),args)!=ScenarioEventStatus::completed)return result(Status::provider_unavailable);
+            const auto status=opcode==0xd0?providers.scenario_events->scenario_command(value(0),value(4),args):providers.scenario_events->command(value(0),value(4),args);
+            if(status!=ScenarioEventStatus::completed)return result(Status::provider_unavailable);
             break;
         }
+        case 0x60:
+            if(providers.actor_script_terminal->command()!=ActorScriptTerminalStatus::completed)return result(Status::provider_unavailable);
+            break;
         case 0x108:
             if(providers.inventory_ui->force_close()!=gameplay_world::InventoryUiStatus::completed)return result(Status::provider_unavailable);
             break;

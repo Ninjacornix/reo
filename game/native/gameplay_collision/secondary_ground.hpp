@@ -25,13 +25,34 @@ ProbeStatus probe(View, std::int8_t& state, const response::Grid&);
 struct ProbeStates {
     std::int8_t kind_one{}, kind_twenty_nine{}, kind_twenty_d{};
 };
+// D25 is also byte 1 of the linked actor's D24 material-U float. Access it
+// through the actual float bits so both consumers retain one source value.
+class ProbeRef {
+public:
+    ProbeRef(std::int8_t& value) noexcept : byte_(&value) {}
+    explicit ProbeRef(float* value) noexcept : word_(value) {}
+    bool available() const noexcept { return byte_ || word_; }
+    std::int8_t read() const noexcept;
+    void write(std::int8_t) const noexcept;
+private:
+    std::int8_t* byte_{};
+    float* word_{};
+};
+struct ProbeRefs {
+    ProbeRef kind_one, kind_twenty_nine, kind_twenty_d;
+    ProbeRefs(ProbeStates& states) noexcept
+        : kind_one(states.kind_one), kind_twenty_nine(states.kind_twenty_nine),
+          kind_twenty_d(states.kind_twenty_d) {}
+    ProbeRefs(std::int8_t& one, std::int8_t& twenty_nine, float* material_u) noexcept
+        : kind_one(one), kind_twenty_nine(twenty_nine), kind_twenty_d(material_u) {}
+};
 struct Entry {
     actors::EntityId id;
     View view;
     postmove::VectorRef displacement;
     const std::uint16_t& controls;
     const std::uint8_t& subtype;
-    ProbeStates& states;
+    ProbeRefs states;
 };
 class Walls {
   public:

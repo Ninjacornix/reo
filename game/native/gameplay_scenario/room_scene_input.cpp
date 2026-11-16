@@ -96,6 +96,7 @@ RoomSceneInput::RoomSceneInput(std::span<const std::byte> input,
       record.body = body;
       record.enabled = 1;
       record.door = gameplay_scene::DoorDetails{};
+      record.door_entry=gameplay_scene::DoorEntryDetails{word(source,0x40),word(source,0x48)};
       record.other_content.reset();
       d.model = RoomProxyModelSetup{model, byte(source, 0x4c),
                                     RoomProxyHelper::depth_extension};
@@ -107,6 +108,9 @@ RoomSceneInput::RoomSceneInput(std::span<const std::byte> input,
       shape.object.mode = std::bit_cast<std::int32_t>(word(source, 0x5c));
       shape.object.policy = byte(source, 0x6c);
       shape.object.selected_id = word(source, 0x70);
+      record.object_entry=gameplay_scene::ObjectEntryDetails{
+          {std::bit_cast<float>(word(source,0x3c)),std::bit_cast<float>(word(source,0x40)),std::bit_cast<float>(word(source,0x44))},
+          word(source,0x48),word(source,0x60),word(source,0x68),65535}; //5C14F8 overwrites source76.
       d.type_one_initial_angle =
           (shape.object.mode == 0 || shape.object.mode == 7 ||
            shape.object.mode == 8)
@@ -124,6 +128,8 @@ RoomSceneInput::RoomSceneInput(std::span<const std::byte> input,
       body.refresh_parameter = byte(source, 0x61);
       body.model_reference = ControlModelReference{model, word(source, 0x38)};
       body.matrix_resource_class = word(source, 0x48);
+      body.camera_anchor = word(source, 0x3c);
+      body.camera_offset = byte(source, 0x44);
       record.body = body;
       record.enabled = (context.scenario == 1 && context.room == 1) ? 0 : 1;
       record.other_content.reset();
@@ -136,9 +142,18 @@ RoomSceneInput::RoomSceneInput(std::span<const std::byte> input,
     }
     case 3:
       record.body = ControlTypeThree{word(source, 0x34), UINT16_MAX};
+      //5C3FE0 reads proxy+4C/+50/+54/+58. The room proxy header maps these
+      //to authored source offsets+3C/+40/+44/+48, respectively.
+      record.flag_policy=gameplay_scene::FlagPolicyCallback{
+          word(source,0x3c),word(source,0x40),word(source,0x44),half(source,0x48)};
       break;
     case 4:
       record.body = ControlTypeFour{word(source, 0x54), word(source, 0x34)};
+      //5C4230 reads proxy+58/+5C/+60 gates, +4C operation, +64 flag bank,
+      //+48/+54 inventory IDs and signed +68 optional event.
+      record.inventory_policy=gameplay_scene::InventoryPolicyCallback{
+          word(source,0x48),word(source,0x4c),word(source,0x50),
+          word(source,0x3c),word(source,0x54),word(source,0x44),word(source,0x58)};
       break;
     case 5: {
       ControlTypeFive body;
@@ -150,11 +165,27 @@ RoomSceneInput::RoomSceneInput(std::span<const std::byte> input,
                        std::bit_cast<float>(word(source, 0x3c))};
       body.effect_parameter = half(source, 0x44);
       record.body = body;
+      gameplay_scene::ConditionalEventCallback callback;
+      callback.base_event=half(source,0x48); //5C4600 P+50
+      callback.condition=half(source,0x4a); //P+52
+      callback.alternate_event=half(source,0x4c); //P+54
+      callback.task_parameter=half(source,0x4e); //P+56
+      callback.callback_parameter=byte(source,0x50); //P+58
+      callback.category_mask=byte(source,0x51); //P+59
+      for(unsigned index=0;index<callback.category_events.size();++index)
+        callback.category_events[index]=half(source,0x52+2*index); //P+5A..P+68
+      callback.counter_limit=std::bit_cast<std::int16_t>(half(source,0x62)); //P+6A
+      callback.counter=std::bit_cast<std::int16_t>(half(source,0x64)); //P+6C
+      callback.deactivate=byte(source,0x66); //P+6E
+      callback.flag_id=word(source,0x68); //P+70
+      callback.flag_mode=word(source,0x6c); //P+74
+      record.conditional_event=callback;
       break;
     }
     case 6:
-      record.body = ControlTypeSix{word(source, 0x44)};
+      record.body = ControlTypeSix{word(source, 0x44),word(source,0x4c),word(source,0x50)};
       record.enabled = 1;
+      record.ladder_entry=gameplay_scene::LadderEntryDetails{word(source,0x3c),resolve(1)};
       d.model = RoomProxyModelSetup{
           resolve(1), {}, RoomProxyHelper::reproject_middle};
       break;
