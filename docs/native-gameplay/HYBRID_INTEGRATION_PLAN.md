@@ -217,9 +217,42 @@ archives as `authored-runtime` independent inputs.
   another (concurrent) writer and is not a camera output.
 - Movement totals differ run to run (164.8 / 806.6 / 758.7) because the driver
   times input by wall clock; per-step movement is identical across runs.
-- Coverage is one room. Level C for the camera needs shadow runs across room
-  transitions, cinematic hand-offs and the other camera record types (the
-  fixture test covers all 166 rooms, the game run does not yet).
+- Coverage, multi-room (`tools/hybrid/room_driver.py --explore`, 150 s per
+  scenario opening, opening cutscenes skipped):
+
+  | Scenario | Mode | Room loads | Calls | Result |
+  |---|---|---|---|---|
+  | 0 Outbreak | shadow | 2 | 4,344 | 4,337 compared, 0 mismatched |
+  | 1 Below Freezing Point | shadow | 5 | 4,241 | 4,236 compared, 0 mismatched |
+  | 2 The Hive | shadow | 3 | 4,000+ | 3,992 compared, 0 mismatched |
+  | 3 Hellfire | shadow | 2 | 4,504 | 4,503 compared, 0 mismatched |
+  | 4 Decisions, Decisions | shadow | 2 | 4,501 | 4,492 compared, 0 mismatched |
+  | 0 Outbreak | native | 2 | 4,106 | 4,101 native, 5 fallback |
+  | 1 Below Freezing Point | native | 4 | 4,000+ | 3,994 native, 5 fallback |
+
+  Shadow total: 21,560 comparisons, 0 mismatches, 14 room loads, all five
+  scenarios. Every refusal is `unavailable` (no camera chosen yet). Runs marked
+  `+` ended with exit `0xC000013A` (console close by the driver at the end) and
+  were read from the periodic counters. Camera level C holds for the scenario
+  openings explored; full scenarios and cinematic hand-offs are still untested.
+
+### Step 1b — first camera mod: third-person follow camera (prototype)
+
+`REO_CAMERA_MOD=tps` (native camera mode only) replaces eye/aim after the native
+camera runs: eye `distance` behind and `height` above the primary actor, aim
+`aim_height` above it, then republishes viewport/view. Tune with
+`REO_CAMERA_TPS=distance,height,aim_height,yaw_offset_deg,yaw_sign`
+(defaults 320,180,120,0,1). `REO_CAMERA_TPS_LOG=1` samples actor/camera state.
+
+Measured conventions: +Y up (room eyes ~197 above a floor at 0); actor yaw is the
+signed halfword at actor `+0x92`, 0x10000 per turn; forward = (sin, 0, cos).
+Outbreak opening run: 1,184 native frames, 3 fallbacks; screenshots show the
+over-the-shoulder view (`build-ninja/hybrid/tps-s0/`).
+
+Known prototype limits: no camera collision (clips into walls and NPCs), no
+smoothing, tank controls unchanged (control needs step 3), and room visibility
+masks still come from the original camera record, so geometry culled for that
+angle can be missing from the TPS view.
 
 ### Step 2 — frame cadence investigation (60 fps / interpolation, #11, #41)
 

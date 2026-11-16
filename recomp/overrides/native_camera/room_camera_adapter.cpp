@@ -70,7 +70,9 @@ constexpr std::uint32_t actor_yaw = 0x92;  // signed halfword (save_actor_positi
 // logs actor/camera samples (also without the override) to derive conventions.
 struct ThirdPerson {
     bool enabled{}, log{};
-    float distance{350.f}, height{-220.f}, aim_height{-150.f}, yaw_offset{0.f}, yaw_sign{1.f};
+    // Measured (2026-11-16, Outbreak opening): +Y is up (room eyes ~197 over a floor
+    // at 0), yaw is 0x10000 per turn and forward = (sin, 0, cos) of it.
+    float distance{320.f}, height{180.f}, aim_height{120.f}, yaw_offset{0.f}, yaw_sign{1.f};
     static ThirdPerson from_environment() {
         ThirdPerson t;
         if (const char* mod = std::getenv("REO_CAMERA_MOD")) t.enabled = !std::strcmp(mod, "tps");
@@ -396,7 +398,7 @@ public:
                          parameters.pose.eye.y, parameters.pose.eye.z, parameters.pose.aim.x, parameters.pose.aim.y,
                          parameters.pose.aim.z, parameters.lens, parameters.pose.roll);
         if (!tp.enabled) return;
-        constexpr float turn = 6.28318530718f / 4096.f;  // PS2 0x1000-per-turn angle units (to be confirmed)
+        constexpr float turn = 6.28318530718f / 65536.f;  // actor yaw: 0x10000 per turn (measured)
         const float angle = tp.yaw_sign * float(yaw) * turn + tp.yaw_offset * 0.01745329252f;
         const float fx = std::sin(angle), fz = std::cos(angle);
         parameters.pose.eye = {position.x - fx * tp.distance, position.y + tp.height, position.z - fz * tp.distance};
