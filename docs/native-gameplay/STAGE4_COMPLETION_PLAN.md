@@ -1,5 +1,11 @@
 # Stage 4 completion plan
 
+> **Paused 2026-11-16.** Native work now follows the
+> [hybrid integration plan](HYBRID_INTEGRATION_PLAN.md): native components replace
+> recompiled functions one at a time inside the shipping game. This document and the
+> [completion ledger](STAGE4_COMPLETION_LEDGER.md) are kept as the record of component
+> qualification.
+
 Planning baseline: 2026-11-13, commit `54a6b497` plus the existing uncommitted gameplay work. Stage 4 is incomplete. This plan defines implementation and final acceptance; updating the plan does not qualify the current game. The historical baseline below is preserved separately from the current execution priorities and completion ledger.
 
 Finish the stock File #1 US gameplay migration using the launcher's pinned LLVM/MinGW compiler. Integrate complete gameplay paths into one native application, reuse existing implementations, and test changes in proportion to their impact. Stage 4 closes only after all required gameplay is implemented, selected by the launcher candidate, and checked together on the final build.
