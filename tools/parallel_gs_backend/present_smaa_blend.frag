@@ -23,4 +23,5 @@ void main() {
         hostColor = displayColor(SMAANeighborhoodBlendingPS(uv, offset, colorTexture, weightTexture).rgb, extent.flags);
     }
     hostColor = performanceOverlay(hostColor, extent.destination, extent.fps, extent.frameMs, extent.ups);
+    hostColor = crosshairOverlay(hostColor, extent.destination, extent.fps);
 }

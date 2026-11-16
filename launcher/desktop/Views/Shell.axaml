@@ -584,7 +584,14 @@
                   <CheckBox x:Name="ModernCameraSwitch" IsCheckedChanged="ModernCameraChanged" Grid.Column="1" VerticalAlignment="Center" AutomationProperties.Name="Third-person camera" AutomationProperties.LabeledBy="{Binding ElementName=ModernCameraLabel}" Classes="ToggleSwitch" />
                 </Grid>
                 <compat:Rc1TextBlock x:Name="ModernCameraSupport" FontSize="14" TextWrapping="Wrap" Margin="0,0,0,10" Classes="Hint" />
-                <compat:Rc1TextBlock Text="Controller: right stick looks, left stick walks relative to the camera, R1 aims, R3 recentres. Keyboard and mouse: the mouse looks, movement keys walk relative to the camera, right button aims, left button is Cross, the wheel zooms and C frees the cursor. Door and event cameras still use the original angles." FontSize="14" TextWrapping="Wrap" Margin="0,0,0,14" Classes="Hint" />
+                <compat:Rc1TextBlock Text="Controller: right stick looks, left stick walks relative to the camera, R1 aims, R3 recentres, L3 switches first/third person. Keyboard and mouse: the mouse looks, movement keys walk relative to the camera, right button aims, left button is Cross, the wheel zooms, Z switches view and C frees the cursor. Aiming shows a crosshair and aims high, middle or low with the camera. Door and event cameras still use the original angles." FontSize="14" TextWrapping="Wrap" Margin="0,0,0,14" Classes="Hint" />
+                <Grid Margin="0,0,0,10">
+                  <compat:Rc1TextBlock x:Name="ModernCameraViewLabel" Text="Starting view" VerticalAlignment="Center" />
+                  <ComboBox x:Name="ModernCameraView" SelectionChanged="ModernCameraViewChanged" Width="300" HorizontalAlignment="Right" AutomationProperties.Name="Starting camera view" AutomationProperties.LabeledBy="{Binding ElementName=ModernCameraViewLabel}">
+                    <ComboBoxItem Content="Third person" />
+                    <ComboBoxItem Content="First person" />
+                  </ComboBox>
+                </Grid>
                 <CheckBox x:Name="ModernCameraMouse" IsCheckedChanged="ModernCameraChanged" Content="Mouse look" Margin="0,0,0,6" />
                 <CheckBox x:Name="ModernCameraInvert" IsCheckedChanged="ModernCameraChanged" Content="Invert vertical look" Margin="0,0,0,12" />
                 <Grid Margin="0,5,0,12">

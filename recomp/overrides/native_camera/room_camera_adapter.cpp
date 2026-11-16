@@ -21,6 +21,7 @@
 #include "ps2_runtime_macros.h"
 #include "source_instruction_access.hpp"
 #include "../reo_pad_tap.h"
+#include "runtime/gs/performance.h"
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -91,8 +92,12 @@ constexpr std::uint32_t actor_yaw = 0x92;  // signed halfword (save_actor_positi
 // Measured (2026-11-16): +Y is up; actor yaw (signed halfword +0x92) is 0x10000
 // per turn and forward = (sin, 0, cos) of it.
 struct ThirdPerson {
-    bool enabled{}, log{}, mouse{true};
+    bool enabled{}, log{}, mouse{true}, first_person{};
     float mouse_sens{0.12f}, zoom_step{25.f};
+    // First person: eye height above the actor's feet and how far ahead of the face.
+    float eye_height{160.f}, eye_ahead{18.f};
+    // Aim height from camera pitch: above +down degrees aims low, below -up aims high.
+    float aim_up{-12.f}, aim_down{16.f};
     float distance{300.f}, pivot{150.f}, pitch{10.f}, side{35.f};
     float yaw_speed{4.f}, pitch_speed{3.f}, invert_y{0.f}, turn_sign{1.f};
     float aim_distance{150.f}, aim_side{45.f}, aim_pivot{155.f};
@@ -102,13 +107,16 @@ struct ThirdPerson {
         if (const char* mod = std::getenv("REO_CAMERA_MOD")) t.enabled = !std::strcmp(mod, "tps");
         if (const char* log = std::getenv("REO_CAMERA_TPS_LOG")) t.log = !std::strcmp(log, "1");
         if (const char* mouse = std::getenv("REO_CAMERA_MOUSE")) t.mouse = std::strcmp(mouse, "0") != 0;
+        if (const char* view = std::getenv("REO_CAMERA_VIEW")) t.first_person = !std::strcmp(view, "first");
         if (const char* tune = std::getenv("REO_CAMERA_TPS")) {
             const struct { const char* key; float* value; } keys[] = {
                 {"distance", &t.distance}, {"pivot", &t.pivot}, {"pitch", &t.pitch}, {"side", &t.side},
                 {"yaw_speed", &t.yaw_speed}, {"pitch_speed", &t.pitch_speed}, {"invert_y", &t.invert_y},
                 {"turn_sign", &t.turn_sign}, {"aim_distance", &t.aim_distance}, {"aim_side", &t.aim_side},
                 {"aim_pivot", &t.aim_pivot}, {"smoothing", &t.smoothing}, {"pitch_min", &t.pitch_min},
-                {"pitch_max", &t.pitch_max}, {"mouse_sens", &t.mouse_sens}, {"zoom_step", &t.zoom_step}};
+                {"pitch_max", &t.pitch_max}, {"mouse_sens", &t.mouse_sens}, {"zoom_step", &t.zoom_step},
+                {"eye_height", &t.eye_height}, {"eye_ahead", &t.eye_ahead}, {"aim_up", &t.aim_up},
+                {"aim_down", &t.aim_down}};
             const char* at = tune;
             while (*at) {
                 const char* end = std::strchr(at, ',');
@@ -130,6 +138,8 @@ struct ThirdPersonState {
     std::uint64_t imports_seen{};
     std::uint16_t previous_pressed{};
     float zoom{};  // added to the rig distance by the mouse wheel
+    bool first_person{}, view_initialised{};
+    std::uint64_t view_switches{}, first_person_frames{};
     std::uint64_t frames{}, yielded{}, collisions{}, recentres{}, aim_frames{}, mouse_frames{};
 };
 constexpr float yaw_turn = 6.28318530718f / 65536.f;  // actor yaw units (measured)
@@ -481,7 +491,12 @@ public:
         int mouse_dx = 0, mouse_dy = 0, wheel = 0;
         const bool mouse_captured = tp.mouse && ps2HostTakeMouseDelta(&mouse_dx, &mouse_dy, &wheel);
         // Scripted selections (doors, events, notifications) keep the game's camera.
-        if (state.selection != 0) { tps.active = false; tps.smoothed = false; ++tps.yielded; return; }
+        if (state.selection != 0) {
+            tps.active = false; tps.smoothed = false; ++tps.yielded;
+            reo::performance::request_crosshair(false); reo_pad_tap::set_aim_left(-1);
+            return;
+        }
+        if (!tps.view_initialised) { tps.first_person = tp.first_person; tps.view_initialised = true; }
         const auto pad = reo_pad_tap::latest();
         const auto pressed_now = std::uint16_t(pad.pressed & ~tps.previous_pressed);
         tps.previous_pressed = pad.pressed;
@@ -490,6 +505,8 @@ public:
             tps.yaw = actor_angle; tps.pitch = tp.pitch * degrees;
         }
         if (pressed_now & reo_pad_tap::R3) { tps.yaw = actor_angle; tps.pitch = tp.pitch * degrees; ++tps.recentres; }
+        // L3 switches between third and first person.
+        if (pressed_now & reo_pad_tap::L3) { tps.first_person = !tps.first_person; tps.smoothed = false; ++tps.view_switches; }
         const auto axis = [](std::uint8_t v) {
             const float x = (float(v) - 128.f) / 127.f;
             const float dead = 0.18f;
@@ -509,6 +526,11 @@ public:
         if (tps.yaw < -3.14159265f) tps.yaw += 6.28318531f;
 
         const bool aiming = (pad.pressed & reo_pad_tap::R1) != 0;
+        reo::performance::request_crosshair(aiming || tps.first_person);
+        if (aiming) {
+            const float pitch_degrees = tps.pitch / degrees;
+            reo_pad_tap::set_aim_left(pitch_degrees < tp.aim_up ? 0x00 : pitch_degrees > tp.aim_down ? 0xff : 0x80);
+        } else reo_pad_tap::set_aim_left(-1);
         if (aiming) {
             // Modern aim: the actor faces where the camera looks.
             const auto units = std::int16_t(std::lround(tps.yaw / yaw_turn));
@@ -520,6 +542,20 @@ public:
         const float lift = aiming ? tp.aim_pivot : tp.pivot;
         const float cp = std::cos(tps.pitch), sp = std::sin(tps.pitch);
         const t::Vector forward{std::sin(tps.yaw) * cp, -sp, std::cos(tps.yaw) * cp};
+        if (tps.first_person) {
+            const t::Vector flat{std::sin(tps.yaw), 0.f, std::cos(tps.yaw)};
+            const t::Vector eye{position.x + flat.x * tp.eye_ahead, position.y + tp.eye_height,
+                                position.z + flat.z * tp.eye_ahead};
+            parameters.pose.eye = eye;
+            parameters.pose.aim = {eye.x + forward.x * 400.f, eye.y + forward.y * 400.f, eye.z + forward.z * 400.f};
+            parameters.pose.roll = 0;
+            tps.eye = parameters.pose.eye; tps.aim = parameters.pose.aim; tps.smoothed = true;
+            ++tps.frames; ++tps.first_person_frames;
+            auto relatched = sequences.snapshot(); relatched.selection_changed = 0; sequences.restore(relatched);
+            events.clear();
+            s::publish_camera_display(parameters, display_mode, projection, display, sink);
+            return;
+        }
         const t::Vector right{std::cos(tps.yaw), 0.f, -std::sin(tps.yaw)};
         const t::Vector pivot{position.x + right.x * side, position.y + lift, position.z + right.z * side};
         t::Vector eye{pivot.x - forward.x * distance, pivot.y - forward.y * distance, pivot.z - forward.z * distance};
@@ -629,10 +665,11 @@ public:
     }
     void dump_details() {
         if (third_person.enabled)
-            std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-TPS-SUMMARY] frames=%llu yielded=%llu collisions=%llu recentres=%llu aim_frames=%llu mouse_frames=%llu\n",
+            std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-TPS-SUMMARY] frames=%llu yielded=%llu collisions=%llu recentres=%llu aim_frames=%llu mouse_frames=%llu first_person_frames=%llu view_switches=%llu\n",
                          (unsigned long long)tps.frames, (unsigned long long)tps.yielded, (unsigned long long)tps.collisions,
                          (unsigned long long)tps.recentres, (unsigned long long)tps.aim_frames,
-                         (unsigned long long)tps.mouse_frames);
+                         (unsigned long long)tps.mouse_frames, (unsigned long long)tps.first_person_frames,
+                         (unsigned long long)tps.view_switches);
         if (mode == Mode::shadow_writes)
             std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-WATCH] block=0x%06x checks=%llu changed_between_calls=%llu\n",
                          watch_at, (unsigned long long)watch_checks, (unsigned long long)watch_changed_between_calls);

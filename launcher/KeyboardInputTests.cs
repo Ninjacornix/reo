@@ -59,7 +59,8 @@ internal static class KeyboardInputTests {
     static void ModernCameraEnvironment(Action<bool,string> check) {
         check(ModernCamera.Environment(new ModernCameraOptions()).Count==0,"modern camera off sets no game environment");
         var env=ModernCamera.Environment(new ModernCameraOptions{Enabled=true});
-        check(env["REO_NATIVE_ROOM_CAMERA"]=="1"&&env["REO_CAMERA_MOD"]=="tps"&&env["REO_CAMERA_MOUSE"]=="1","modern camera selects the native camera, TPS and mouse look");
+        check(env["REO_NATIVE_ROOM_CAMERA"]=="1"&&env["REO_CAMERA_MOD"]=="tps"&&env["REO_CAMERA_MOUSE"]=="1"&&env["REO_CAMERA_VIEW"]=="third","modern camera selects the native camera, TPS, third person and mouse look");
+        check(ModernCamera.Environment(new ModernCameraOptions{Enabled=true,View="first"})["REO_CAMERA_VIEW"]=="first"&&ModernCamera.Environment(new ModernCameraOptions{Enabled=true,View="sideways"})["REO_CAMERA_VIEW"]=="third","modern camera view is first or third person only");
         check(env["REO_CAMERA_TPS"]=="distance=300,side=35,mouse_sens=0.12,yaw_speed=4,pitch_speed=3,invert_y=0","modern camera default tuning");
         var tuned=ModernCamera.Environment(new ModernCameraOptions{Enabled=true,MouseLook=false,MouseSensitivity=200,StickSpeed=50,InvertY=true,Distance=9999,Shoulder=-40});
         check(tuned["REO_CAMERA_MOUSE"]=="0"&&tuned["REO_CAMERA_TPS"]=="distance=600,side=-40,mouse_sens=0.24,yaw_speed=2,pitch_speed=1.5,invert_y=1","modern camera tuning is clamped and uses invariant decimals");

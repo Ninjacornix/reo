@@ -7,10 +7,14 @@ namespace Outbreak.Launcher;
 // (docs/native-gameplay/HYBRID_INTEGRATION_PLAN.md). Works with a controller
 // (right stick looks, left stick walks relative to the camera) and with keyboard
 // and mouse (mouse looks, WASD walks relative to the camera, right button aims,
-// left button is cross, wheel zooms, C frees the cursor).
+// left button is cross, wheel zooms, C frees the cursor). L3 (Z) switches
+// between third and first person; aiming shows a crosshair and picks the game's
+// aim height from where the camera looks.
 public sealed class ModernCameraOptions {
     public bool Enabled { get; set; }
     public bool MouseLook { get; set; } = true;
+    // "third" or "first"; L3 (Z on keyboard) switches during play.
+    public string View { get; set; } = "third";
     // Percent of the default sensitivities (mouse 0.12 degrees per count, stick 4/3 degrees per frame).
     public int MouseSensitivity { get; set; } = 100;
     public int StickSpeed { get; set; } = 100;
@@ -21,6 +25,7 @@ public sealed class ModernCameraOptions {
     public ModernCameraOptions Clamped() => new() {
         Enabled = Enabled,
         MouseLook = MouseLook,
+        View = View == "first" ? "first" : "third",
         MouseSensitivity = Math.Clamp(MouseSensitivity, 10, 400),
         StickSpeed = Math.Clamp(StickSpeed, 10, 400),
         InvertY = InvertY,
@@ -43,6 +48,7 @@ public static class ModernCamera {
             ["REO_NATIVE_ROOM_CAMERA"] = "1",
             ["REO_CAMERA_MOD"] = "tps",
             ["REO_CAMERA_MOUSE"] = o.MouseLook ? "1" : "0",
+            ["REO_CAMERA_VIEW"] = o.View,
             ["REO_CAMERA_TPS"] = $"distance={o.Distance},side={o.Shoulder},mouse_sens={F(mouse)}," +
                                  $"yaw_speed={F(4 * stick)},pitch_speed={F(3 * stick)},invert_y={(o.InvertY ? 1 : 0)}"
         };

@@ -39,9 +39,28 @@ vec4 performanceOverlay(vec4 color, uvec2 destination, uint fps, uint frameMs, u
     if (any(lessThan(p, ivec2(0))) || p.x >= 96 || p.y >= 27) return background;
     int row = p.y / 9;
     if (p.y % 9 >= 7 || p.x % 6 >= 5) return background;
-    uint value = row == 0 ? fps & 0x7fffffffu : row == 1 ? frameMs : ups;
+    uint value = row == 0 ? fps & 0x3fffffffu : row == 1 ? frameMs : ups;
     uint glyph = performanceCharacter(row, p.x / 6, value);
     uint bits = performanceFont[glyph * 7u + uint(p.y % 9)];
     bool ink = ((bits >> uint(4 - p.x % 6)) & 1u) != 0u;
     return ink ? vec4(0.83, 1.0, 0.87, 1) : background;
+}
+
+// Modern camera crosshair (bit 30 of the fps word): a centre dot and four arms
+// with a dark outline, scaled with the output height, at the window centre
+// where the picture is centred.
+bool crosshairShape(ivec2 p, int thickness, int gap, int arm) {
+    bool horizontal = abs(p.y) <= thickness && abs(p.x) >= gap && abs(p.x) <= gap + arm;
+    bool vertical = abs(p.x) <= thickness && abs(p.y) >= gap && abs(p.y) <= gap + arm;
+    bool centre = abs(p.x) <= thickness && abs(p.y) <= thickness;
+    return horizontal || vertical || centre;
+}
+vec4 crosshairOverlay(vec4 color, uvec2 destination, uint flags) {
+    if ((flags & 0x40000000u) == 0u) return color;
+    int scale = clamp(int(destination.y) / 480, 1, 4);
+    ivec2 p = ivec2(gl_FragCoord.xy) - ivec2(destination) / 2;
+    int thickness = scale / 2, gap = 4 * scale, arm = 6 * scale;
+    if (crosshairShape(p, thickness, gap, arm)) return vec4(0.93, 0.96, 0.93, 1);
+    if (crosshairShape(p, thickness + 1, gap - 1, arm + 2)) return vec4(color.rgb * 0.25, 1);
+    return color;
 }

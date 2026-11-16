@@ -46,4 +46,5 @@ void main() {
         hostColor = displayColor(texelFetch(mergedScanout, ivec2(texel), 0).rgb, extent.linear);
     }
     hostColor = performanceOverlay(hostColor, extent.destination, extent.fps, extent.frameMs, extent.ups);
+    hostColor = crosshairOverlay(hostColor, extent.destination, extent.fps);
 }

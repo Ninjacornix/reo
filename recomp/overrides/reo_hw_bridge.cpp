@@ -2489,8 +2489,9 @@ void pad2FeederLoop() {
                 const bool cameraOwnsRight = reo_pad_tap::consume_right_stick.load(std::memory_order_relaxed);
                 reo_source_instrumentation::bankCell(rd, rec + 0x1E) = cameraOwnsRight ? uint8_t(0x80) : hostPad.right_x;
                 reo_source_instrumentation::bankCell(rd, rec + 0x1F) = cameraOwnsRight ? uint8_t(0x80) : hostPad.right_y;
-                reo_source_instrumentation::bankCell(rd, rec + 0x20) = hostPad.left_x;
-                reo_source_instrumentation::bankCell(rd, rec + 0x21) = hostPad.left_y;
+                const int aimLeftY = reo_pad_tap::active_aim_left();
+                reo_source_instrumentation::bankCell(rd, rec + 0x20) = aimLeftY >= 0 ? uint8_t(0x80) : hostPad.left_x;
+                reo_source_instrumentation::bankCell(rd, rec + 0x21) = aimLeftY >= 0 ? uint8_t(aimLeftY) : hostPad.left_y;
 #if defined(REO_GAME_FILE2)
                 static constexpr const char* pressureOrder[12] = {
                     "RIGHT", "LEFT", "UP", "DOWN", "TRIANGLE", "CIRCLE",

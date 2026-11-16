@@ -1,5 +1,6 @@
 #pragma once
 #include <atomic>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
@@ -14,6 +15,19 @@ inline bool enabled() {
     return value;
 }
 inline std::atomic<uint64_t> updates{0};
+// Modern camera crosshair, drawn by the present shader (bit 30 of the fps push word).
+// Steady-clock milliseconds of the last camera frame that wanted it; the presenter
+// draws it only while that is recent, so menus and cutscenes never keep it.
+inline std::atomic<int64_t> crosshair_ms{0};
+inline int64_t steady_ms() {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now().time_since_epoch()).count();
+}
+inline void request_crosshair(bool wanted) { crosshair_ms.store(wanted ? steady_ms() : 0); }
+inline bool crosshair_visible() {
+    const auto at = crosshair_ms.load(std::memory_order_relaxed);
+    return at != 0 && steady_ms() - at < 100;
+}
 
 // Actor callbacks run more than once per game frame. Count the original room
 // frame once, including wrap/reset, rather than counting every player and AI.

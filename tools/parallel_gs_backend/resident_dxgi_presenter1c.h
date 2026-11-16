@@ -550,6 +550,8 @@ class ResidentDxgiPresenter {
                 std::fprintf(stderr, "[PERFORMANCE-OVERLAY] fps=%.1f frame_ms=%.1f ups=%.1f\n",
                     reading.fps / 10.0, reading.frameMs / 10.0, reading.ups / 10.0);
         }
+        if (reo::performance::crosshair_visible())
+            parameters.fps |= 0x40000000u;
         cmd.push_constants(&parameters, 0, sizeof(parameters));
         cmd.draw(3);
         cmd.end_render_pass();

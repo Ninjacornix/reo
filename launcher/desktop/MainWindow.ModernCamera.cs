@@ -9,6 +9,7 @@ public partial class MainWindow {
         var o = settings.ModernCamera.Clamped();
         ModernCameraSwitch.IsChecked = o.Enabled;
         ModernCameraMouse.IsChecked = o.MouseLook;
+        ModernCameraView.SelectedIndex = o.View == "first" ? 1 : 0;
         ModernCameraInvert.IsChecked = o.InvertY;
         ModernCameraMouseSensitivity.Value = o.MouseSensitivity;
         ModernCameraStickSpeed.Value = o.StickSpeed;
@@ -25,11 +26,13 @@ public partial class MainWindow {
         ModernCameraShoulderLabel.Text = $"Shoulder offset: {(int)ModernCameraShoulder.Value}";
         bool enabled = ModernCameraSwitch.IsChecked == true;
         foreach (var control in new Avalonia.Controls.Control[] {
-                     ModernCameraMouse, ModernCameraInvert, ModernCameraMouseSensitivity,
+                     ModernCameraView, ModernCameraMouse, ModernCameraInvert, ModernCameraMouseSensitivity,
                      ModernCameraStickSpeed, ModernCameraDistance, ModernCameraShoulder })
             control.IsEnabled = enabled;
         ModernCameraMouseSensitivity.IsEnabled = enabled && ModernCameraMouse.IsChecked == true;
-        string exe = settings.Exe;
+        // Packaged launchers run the game from the local build cache; source layouts use Exe.
+        string built = LocalGameBuild.TargetPath(root, "file1");
+        string exe = System.IO.File.Exists(built) ? built : settings.Exe;
         ModernCameraSupport.Text = ModernCamera.Supported(exe)
             ? "The installed File #1 build supports the modern camera."
             : "The installed File #1 build does not include the native camera yet; the original camera is used until the game is rebuilt with it.";
@@ -39,6 +42,7 @@ public partial class MainWindow {
         settings.ModernCamera = new ModernCameraOptions {
             Enabled = ModernCameraSwitch.IsChecked == true,
             MouseLook = ModernCameraMouse.IsChecked == true,
+            View = ModernCameraView.SelectedIndex == 1 ? "first" : "third",
             InvertY = ModernCameraInvert.IsChecked == true,
             MouseSensitivity = (int)Math.Round(ModernCameraMouseSensitivity.Value),
             StickSpeed = (int)Math.Round(ModernCameraStickSpeed.Value),
@@ -55,6 +59,12 @@ public partial class MainWindow {
     }
 
     void ModernCameraSliderChanged(object? sender, Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e) {
+        if (!initialized || modernCameraUpdating) return;
+        UpdateModernCameraLabels();
+        SaveModernCamera();
+    }
+
+    void ModernCameraViewChanged(object? sender, SelectionChangedEventArgs e) {
         if (!initialized || modernCameraUpdating) return;
         UpdateModernCameraLabels();
         SaveModernCamera();
