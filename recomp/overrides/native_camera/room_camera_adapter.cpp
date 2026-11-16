@@ -24,6 +24,8 @@
 #include <array>
 #include <atomic>
 #include <bit>
+#include <cmath>
+#include <cstdlib>
 #include <cstdio>
 #include <cstring>
 #include <memory>
@@ -60,6 +62,25 @@ constexpr std::uint32_t actors_at = 0x4a5c30, actor_stride = 0x10e0, actor_posit
 constexpr std::uint32_t overlay_base = 0x570000, overlay_magic = 0x336F574D, overlay_id_offset = 4, overlay_o2 = 3;
 constexpr std::uint32_t camera_entry = 0x5bed30, import_entry = 0x5be3e0, renderer_command = 0x1af780;
 constexpr unsigned op_viewport = 24, op_view = 22;
+constexpr std::uint32_t actor_yaw = 0x92;  // signed halfword (save_actor_position_and_yaw, o2 0x667370)
+
+// First mod on the native camera: a follow camera behind the primary actor.
+// REO_CAMERA_MOD=tps enables it (native mode only). REO_CAMERA_TPS tunes it as
+// "distance,height,aim_height,yaw_offset_degrees,yaw_sign". REO_CAMERA_TPS_LOG=1
+// logs actor/camera samples (also without the override) to derive conventions.
+struct ThirdPerson {
+    bool enabled{}, log{};
+    float distance{350.f}, height{-220.f}, aim_height{-150.f}, yaw_offset{0.f}, yaw_sign{1.f};
+    static ThirdPerson from_environment() {
+        ThirdPerson t;
+        if (const char* mod = std::getenv("REO_CAMERA_MOD")) t.enabled = !std::strcmp(mod, "tps");
+        if (const char* log = std::getenv("REO_CAMERA_TPS_LOG")) t.log = !std::strcmp(log, "1");
+        if (const char* tune = std::getenv("REO_CAMERA_TPS"))
+            std::sscanf(tune, "%f,%f,%f,%f,%f", &t.distance, &t.height, &t.aim_height, &t.yaw_offset, &t.yaw_sign);
+        return t;
+    }
+};
+
 
 struct Event {
     unsigned op{};
@@ -160,6 +181,8 @@ public:
     s::CameraDisplayState display;
     s::SceneModels models{s::SceneModelState{}, s::RoomModelRemap{}};
     s::CameraProjectionContext projection{};
+    ThirdPerson third_person = ThirdPerson::from_environment();
+    std::uint64_t tps_samples{};
     std::int8_t display_mode{};
     std::size_t model_count{};
     std::vector<Event> events;
@@ -359,6 +382,31 @@ public:
         *ctx = saved;
     }
 
+    void third_person_override(const Guest& g) {
+        auto& tp = third_person;
+        if (!tp.enabled && !tp.log) return;
+        const auto actor = sequences.snapshot().actor;
+        if (actor >= primary_actors) return;
+        const auto base = actors_at + actor_stride * actor;
+        const auto position = g.get<t::Vector>(base + actor_position);
+        const auto yaw = g.get<std::int16_t>(base + actor_yaw);
+        if (tp.log && (tps_samples++ % 15) == 0)
+            std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-TPS] actor=%u pos=%.1f,%.1f,%.1f yaw=%d eye=%.1f,%.1f,%.1f aim=%.1f,%.1f,%.1f lens=%.3f roll=%u\n",
+                         unsigned(actor), position.x, position.y, position.z, int(yaw), parameters.pose.eye.x,
+                         parameters.pose.eye.y, parameters.pose.eye.z, parameters.pose.aim.x, parameters.pose.aim.y,
+                         parameters.pose.aim.z, parameters.lens, parameters.pose.roll);
+        if (!tp.enabled) return;
+        constexpr float turn = 6.28318530718f / 4096.f;  // PS2 0x1000-per-turn angle units (to be confirmed)
+        const float angle = tp.yaw_sign * float(yaw) * turn + tp.yaw_offset * 0.01745329252f;
+        const float fx = std::sin(angle), fz = std::cos(angle);
+        parameters.pose.eye = {position.x - fx * tp.distance, position.y + tp.height, position.z - fz * tp.distance};
+        parameters.pose.aim = {position.x + fx * 100.f, position.y + tp.aim_height, position.z + fz * 100.f};
+        parameters.pose.roll = 0;
+        // Republish viewport/view from the overridden pose; replaces the native events.
+        events.clear();
+        s::publish_camera_display(parameters, display_mode, projection, display, sink);
+    }
+
     void replay(const Guest& g, R5900Context* ctx) {
         for (const auto& e : events) {
             write_parameters(g, e.parameters);
@@ -408,6 +456,10 @@ public:
     }
 
     void dump() {
+        counters();
+        dump_details();
+    }
+    void counters() {
         std::fprintf(stderr,
             "[NATIVE-ROOM-CAMERA] mode=%s calls=%llu compared=%llu mismatched=%llu refused=%llu native_completed=%llu "
             "fallback=%llu imports=%llu import_refused=%llu no_records=%llu unexpected_write_calls=%llu "
@@ -419,6 +471,9 @@ public:
             (unsigned long long)counts.import_refused, (unsigned long long)counts.no_records,
             (unsigned long long)counts.unexpected_write_calls, (unsigned long long)counts.refused_projection,
             (unsigned long long)counts.refused_unavailable, (unsigned long long)counts.refused_numeric);
+        std::fflush(stderr);
+    }
+    void dump_details() {
         if (mode == Mode::shadow_writes)
             std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-WATCH] block=0x%06x checks=%llu changed_between_calls=%llu\n",
                          watch_at, (unsigned long long)watch_checks, (unsigned long long)watch_changed_between_calls);
@@ -490,6 +545,7 @@ void camera_hook(std::uint8_t* ram, R5900Context* ctx, PS2Runtime* rt) {
     if (!b) { run_original_camera(ram, ctx, rt); return; }
     std::unique_lock<std::recursive_mutex> lock(b->operation);
     ++b->counts.calls;
+    if (b->counts.calls % 1000 == 0) b->counters();  // survives a killed process
     if (!b->records) { ++b->counts.no_records; lock.unlock(); run_original_camera(ram, ctx, rt); return; }
     const auto saved = *ctx;
     const auto entry_sp = GPR_U32(ctx, 29);
@@ -524,6 +580,7 @@ void camera_hook(std::uint8_t* ram, R5900Context* ctx, PS2Runtime* rt) {
 
     if (b->mode == Mode::native) {
         if (!native_ok) { ++b->counts.refused; ++b->counts.fallback; run_original_camera(ram, ctx, rt); return; }
+        b->third_person_override(g);
         b->replay(g, ctx);
         b->write_outputs(g, *fog);
         ++b->counts.native_completed;
