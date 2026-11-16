@@ -249,10 +249,21 @@ signed halfword at actor `+0x92`, 0x10000 per turn; forward = (sin, 0, cos).
 Outbreak opening run: 1,184 native frames, 3 fallbacks; screenshots show the
 over-the-shoulder view (`build-ninja/hybrid/tps-s0/`).
 
-Known prototype limits: no camera collision (clips into walls and NPCs), no
-smoothing, tank controls unchanged (control needs step 3), and room visibility
-masks still come from the original camera record, so geometry culled for that
-angle can be missing from the TPS view.
+Completed (2026-11-16, user guide [docs/MODERN_CAMERA.md](../MODERN_CAMERA.md)):
+right-stick and mouse look (SDK patch `0132`), camera-relative walking through
+the game's own analog path (no new movement code: `6621F0` uses the published
+eye/aim), wall collision via o2 `0x5795E0`, smoothing, R1/right-button aim that
+turns the actor to the camera yaw, R3 recentre, wheel zoom, yield to scripted
+cameras, launcher Controls > Modern camera tab (settings, build detection,
+keyboard movement as left stick).
+
+| Run (build v10, kit v5) | Rooms | Result |
+|---|---|---|
+| Outbreak, analog explore | 1 | 1,799 TPS frames; walking follows camera yaw (94.4°→93.4°, 169.7°→168.8°); 208 wall pulls; 1,267 units walked |
+| Below Freezing Point, analog explore + R1 script | 4 loads | 4,290 TPS frames, 301 aim frames, 2,146 wall pulls, exit 0 |
+
+Not covered by automated runs: mouse look (needs the real cursor and focus;
+manual check), crosshair (not implemented), co-op.
 
 ### Step 2 — frame cadence investigation (60 fps / interpolation, #11, #41)
 
