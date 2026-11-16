@@ -47,6 +47,35 @@ internal static class HeadlessChecks {
         Check(InputMapping.Keyboard(window.settings.Keyboard,k=>k==38)==new Pad(1),
               "Keyboard movement must send only the digital D-pad after remapping.");
         Control<Button>("ResetBindingsButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        // Controls > Modern camera: tab, switch, sliders reach settings and the game environment.
+        Control<Button>("ModernCameraTab").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+        Check(Control<StackPanel>("ModernCameraPanel").IsVisible && !Control<StackPanel>("InputBindingsPanel").IsVisible,
+              "Modern camera tab does not show its panel.");
+        Check(!window.settings.ModernCamera.Enabled && !Control<Slider>("ModernCameraDistance").IsEnabled,
+              "Modern camera must start off with its options disabled.");
+        Control<CheckBox>("ModernCameraSwitch").IsChecked=true;
+        Dispatcher.UIThread.RunJobs();
+        Control<Slider>("ModernCameraDistance").Value=420;
+        Control<Slider>("ModernCameraShoulder").Value=-50;
+        Control<CheckBox>("ModernCameraInvert").IsChecked=true;
+        Dispatcher.UIThread.RunJobs();
+        var camera=window.settings.ModernCamera;
+        Check(camera.Enabled && camera.Distance==420 && camera.Shoulder==-50 && camera.InvertY &&
+              Control<Slider>("ModernCameraDistance").IsEnabled,
+              "Modern camera controls do not reach saved settings.");
+        Check(ModernCamera.Environment(camera)["REO_CAMERA_TPS"].StartsWith("distance=420,side=-50,") &&
+              Control<TextBlock>("ModernCameraDistanceLabel").Text=="Distance: 420",
+              "Modern camera settings do not reach the game environment or labels.");
+        Control<Button>("ModernCameraResetButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+        Check(window.settings.ModernCamera is {Enabled:true,Distance:300,Shoulder:35,InvertY:false},
+              "Resetting camera settings must keep the switch and restore defaults.");
+        Control<CheckBox>("ModernCameraSwitch").IsChecked=false;
+        Control<Button>("BindingsTab").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+        Check(!Control<StackPanel>("ModernCameraPanel").IsVisible && Control<StackPanel>("InputBindingsPanel").IsVisible,
+              "Returning to Button map must hide the modern camera panel.");
         window.ShowPage("Graphics");Dispatcher.UIThread.RunJobs();
         window.CheckMovieDecoderSettings(Check);
         var sync = Control<ComboBox>("VSync");
