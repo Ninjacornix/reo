@@ -28,6 +28,7 @@ ap.add_argument('--data', type=Path)
 ap.add_argument('--env', action='append', default=[], help='Extra KEY=VALUE for the game process')
 ap.add_argument('--explore', action='store_true', help='Walk/turn/press cross in cycles instead of the fixed movement check')
 ap.add_argument('--analog', action='store_true', help='With --explore: walk with the left stick and turn with the right stick (modern camera)')
+ap.add_argument('--aim-probe', action='store_true', help='Hold R1 with the left stick up/centre/down/up and dump the player actor record after each')
 args = ap.parse_args()
 args.exe = args.exe.resolve(); args.iso = args.iso.resolve(); args.out = args.out.resolve()
 for name in ("XINPUT1_4.dll", "XINPUT1_3.dll"):
@@ -113,7 +114,7 @@ try:
         process = subprocess.Popen([str(args.exe),'--game','file1','--elf',str(elf),'--data',str(disc)],cwd=args.out,env=env,stdout=stdout,stderr=stderr,creationflags=subprocess.CREATE_NO_WINDOW)
         identity = harness.process_identity(process.pid); (args.out/'identity.json').write_text(json.dumps(identity,indent=2))
         print('START '+json.dumps(identity),flush=True)
-        began=time.monotonic(); next_sample=0; next_pad=0; held_until=0; held=[]; held_axes={}
+        began=time.monotonic(); next_sample=0; next_pad=0; held_until=0; held=[]; held_axes={}; dumped=set()
         initial_shot=False; final_shot=False; scenario_shot=False; next_cancel=0
         while process.poll() is None and time.monotonic()-began < max(240, args.seconds+120):
             elapsed=time.monotonic()-began
@@ -164,7 +165,17 @@ try:
                         elif row['selected']<4:
                             axes=None
                             motion=room_elapsed-args.move_at
-                            if args.explore and args.analog and motion>=0:
+                            if args.aim_probe and motion>=0:
+                                # 4 s per hold: R1 + stick, dump at 3 s. Order up, mid, down, up.
+                                probe=[('up',32767),('mid',0),('down',-32767),('up2',32767)]
+                                k=int(motion//4);ph=motion-4*k
+                                if k<len(probe) and ph<3.6:
+                                    name,ly=probe[k];button='analog';axes={'ly':ly}
+                                    if ph>=3.0 and name not in dumped:
+                                        dumped.add(name)
+                                        (args.out/('actor-'+name+'.bin')).write_bytes(ram.read(0x4a5c30,0x10e0))
+                                        print('DUMP '+name,flush=True)
+                            elif args.explore and args.analog and motion>=0:
                                 k=int(motion//6);ph=motion-6*k
                                 if ph<2.4 or 3.0<=ph<5.4:axes={'ly':32767}
                                 elif ph<3.0:axes={'rx':32767 if k%3!=2 else -32767,'ly':32767}
@@ -182,12 +193,12 @@ try:
                             elif 4.5<=motion<6.5:button='up'
                             elif 6.5<=motion<7.8:button='down'
                             elif args.scenario==1 and 18<=room_elapsed<23:button='up'
-                            if button:why='explore' if args.explore else 'movement-check'
+                            if button:why='explore' if (args.explore or args.aim_probe) else 'movement-check'
                     if room_elapsed>=22 and not final_shot:
                         final_shot=True;capture('after-movement')
                     if room_elapsed>=args.seconds:break
                 if button:
-                    held=[] if button=='analog' else [button];held_axes=axes if button=='analog' else {}
+                    held=(['r1'] if args.aim_probe and why=='explore' else []) if button=='analog' else [button];held_axes=axes if button=='analog' else {}
                     held_until=time.monotonic()-began+.12;next_pad=elapsed+1.2
                     if why in ('movement-check','explore'):held_until=time.monotonic()-began+.23
                     record_input(held,why,elapsed)

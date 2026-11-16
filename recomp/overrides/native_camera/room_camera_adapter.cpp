@@ -41,6 +41,7 @@ void o2_005BE3E0_0x5be3e0(std::uint8_t*, R5900Context*, PS2Runtime*);
 void o2_005BED30_0x5bed30(std::uint8_t*, R5900Context*, PS2Runtime*);
 void sub_001AF780_0x1af780(std::uint8_t*, R5900Context*, PS2Runtime*);
 void o2_005795E0_0x5795e0(std::uint8_t*, R5900Context*, PS2Runtime*);
+void o2_00586AA0_0x586aa0(std::uint8_t*, R5900Context*, PS2Runtime*);
 // SDK patch 0132 (Win32ModalRender): mouse look capture on the game window.
 void ps2HostSetMouseLook(bool enabled);
 bool ps2HostTakeMouseDelta(int* dx, int* dy, int* wheel);
@@ -70,6 +71,14 @@ constexpr std::uint32_t overlay_base = 0x570000, overlay_magic = 0x336F574D, ove
 constexpr std::uint32_t camera_entry = 0x5bed30, import_entry = 0x5be3e0, renderer_command = 0x1af780;
 constexpr unsigned op_viewport = 24, op_view = 22;
 constexpr std::uint32_t actor_yaw = 0x92;  // signed halfword (save_actor_position_and_yaw, o2 0x667370)
+// Aim elevation, signed halfword in yaw units (+0x2000 = 45 degrees up). o2 0x586AA0
+// sets it each frame from the aim level (+0xF80 & 3) or the auto-aim target and
+// clamps it to +/-0x2000; the weapon code (o2 0x5F5D20, 0x5F62D0, ...) reads it.
+constexpr std::uint32_t actor_aim_elevation = 0xbc8, aim_update_entry = 0x586aa0;
+// Free aim request from the camera: elevation units and the steady-clock ms it was set.
+std::atomic<int> free_aim_units{0};
+std::atomic<std::int64_t> free_aim_ms{0};
+std::atomic<std::uint32_t> free_aim_actor{0};
 
 // Third-person camera mod on the native room camera (native mode only).
 //
@@ -144,6 +153,7 @@ struct ThirdPersonState {
     float zoom{};  // added to the rig distance by the mouse wheel
     bool first_person{}, view_initialised{};
     std::uint64_t view_switches{}, first_person_frames{}, strafe_frames{}, strafe_blocked{};
+    std::uint64_t free_aim_frames{};
     std::uint64_t frames{}, yielded{}, collisions{}, recentres{}, aim_frames{}, mouse_frames{};
 };
 constexpr float yaw_turn = 6.28318530718f / 65536.f;  // actor yaw units (measured)
@@ -534,7 +544,11 @@ public:
         if (aiming) {
             const float pitch_degrees = tps.pitch / degrees;
             reo_pad_tap::set_aim_left(pitch_degrees < tp.aim_up ? 0x00 : pitch_degrees > tp.aim_down ? 0xff : 0x80);
-        } else reo_pad_tap::set_aim_left(-1);
+            // Exact elevation for the shot: camera pitch (down positive) to aim units (up positive).
+            const int units = std::clamp(int(std::lround(-tps.pitch / yaw_turn)), -0x2000, 0x2000);
+            free_aim_units.store(units); free_aim_actor.store(base);
+            free_aim_ms.store(reo_pad_tap::steady_ms());
+        } else { reo_pad_tap::set_aim_left(-1); free_aim_ms.store(0); }
         if (aiming) {
             // Modern aim: the actor faces where the camera looks.
             const auto units = std::int16_t(std::lround(tps.yaw / yaw_turn));
@@ -699,6 +713,7 @@ public:
                          (unsigned long long)tps.view_switches);
             std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-STRAFE] frames=%llu blocked=%llu\n",
                          (unsigned long long)tps.strafe_frames, (unsigned long long)tps.strafe_blocked);
+            std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-FREE-AIM] frames=%llu\n", (unsigned long long)tps.free_aim_frames);
         if (mode == Mode::shadow_writes)
             std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-WATCH] block=0x%06x checks=%llu changed_between_calls=%llu\n",
                          watch_at, (unsigned long long)watch_checks, (unsigned long long)watch_changed_between_calls);
@@ -742,6 +757,23 @@ void run_original_camera(std::uint8_t* ram, R5900Context* ctx, PS2Runtime* rt) {
     const auto back = GPR_U32(ctx, 31);
     o2_005BED30_0x5bed30(ram, ctx, rt);
     if (ctx->pc != back || ctx->in_delay_slot) throw std::runtime_error("Room camera adapter: original did not return");
+}
+
+// Free aim: after the original aim update, the player's elevation follows the
+// camera while it aims (only for the actor the camera aims with, only while the
+// request is fresh, so menus/cutscenes/other actors keep the original value).
+void aim_update_hook(std::uint8_t* ram, R5900Context* ctx, PS2Runtime* rt) {
+    const auto actor = GPR_U32(ctx, 4);
+    const auto back = GPR_U32(ctx, 31);
+    o2_00586AA0_0x586aa0(ram, ctx, rt);
+    if (ctx->pc != back) return;  // non-synchronous return: leave it to the dispatcher
+    const auto at = free_aim_ms.load();
+    if (!at || reo_pad_tap::steady_ms() - at > 100 || actor != free_aim_actor.load()) return;
+    try {
+        reo_source_instrumentation::EntryScope scope(rt, ctx);
+        Guest(ram).put<std::int16_t>(actor + actor_aim_elevation, std::int16_t(free_aim_units.load()));
+        if (binding) ++binding->tps.free_aim_frames;
+    } catch (...) {}
 }
 
 void import_hook(std::uint8_t* ram, R5900Context* ctx, PS2Runtime* rt) {
@@ -848,6 +880,8 @@ bool install_before_run(PS2Runtime& rt, Mode mode) noexcept {
         if (mode != Mode::native) rt.registerFunction(renderer_command, renderer_recorder);
         if (mode == Mode::native && owned->third_person.enabled) {
             reo_pad_tap::consume_right_stick.store(true);
+            rt.registerOverlayFunction(overlay_base, overlay_magic, overlay_id_offset, overlay_o2, aim_update_entry,
+                                       aim_update_hook);
             if (owned->third_person.mouse) {
                 ps2HostSetMouseLook(true);
                 reo_pad_tap::mouse_buttons_source.store(&ps2HostMouseButtons);
