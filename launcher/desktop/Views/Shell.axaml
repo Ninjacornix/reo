@@ -368,7 +368,7 @@
                       <StackPanel>
                         <CheckBox x:Name="PerformanceOverlay" IsCheckedChanged="SaveSettings" Content="FPS counter" FontSize="14" ToolTip.Tip="Shows the in-game FPS counter. Applies on the next launch." />
                         <CheckBox x:Name="AsyncVif" IsCheckedChanged="SaveSettings" Content="Parallel geometry worker" FontSize="14" />
-                        <CheckBox x:Name="GpuMovies" IsCheckedChanged="SaveSettings" Content="Decode movies on the graphics card" FontSize="14" IsEnabled="False" />
+                        <CheckBox x:Name="GpuMovies" IsCheckedChanged="SaveSettings" Content="Decode movies on the graphics card" FontSize="14" />
                       </StackPanel>
                     </Expander>
                   </StackPanel>
@@ -908,6 +908,28 @@
             <StackPanel x:Name="PageDeveloper" MaxWidth="940" HorizontalAlignment="Stretch" IsVisible="false">
               <compat:Rc1TextBlock Text="Developer" FontSize="24" Margin="0,3,0,28" />
               <compat:Rc1TextBlock x:Name="DeveloperSessionNote" Text="Changes apply to your next session." FontSize="14" Margin="0,0,0,18" Classes="Hint" IsVisible="false" />
+              <Grid Margin="0,0,0,14">
+                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <StackPanel Margin="0,0,12,0">
+                  <compat:Rc1TextBlock x:Name="DevSlowdownsLabel" Text="Record slowdowns" FontSize="18" />
+                  <compat:Rc1TextBlock Text="Records performance evidence when the game slows down. Reports stay on this computer." TextWrapping="Wrap" Classes="Hint" Margin="0,5,0,0" />
+                </StackPanel>
+                <CheckBox x:Name="DevSlowdowns" Grid.Column="1" IsCheckedChanged="DeveloperSettingChanged" Classes="ToggleSwitch" AutomationProperties.Name="Record slowdowns" AutomationProperties.LabeledBy="{Binding ElementName=DevSlowdownsLabel}" AutomationProperties.HelpText="Applies to the next game launch. Windows live recorder; File #2 has limited clock coverage." />
+              </Grid>
+              <Grid Margin="0,0,0,14">
+                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <StackPanel Margin="0,0,12,0">
+                  <compat:Rc1TextBlock x:Name="DevStrictSlowdownsLabel" Text="Sensitive detection" FontSize="18" />
+                  <compat:Rc1TextBlock Text="Captures shorter hitches, smaller speed drops and continuous timing evidence. Applies to your next launch." TextWrapping="Wrap" Classes="Hint" Margin="0,5,0,0" />
+                </StackPanel>
+                <CheckBox x:Name="DevStrictSlowdowns" Grid.Column="1" IsCheckedChanged="DeveloperSettingChanged" Classes="ToggleSwitch" AutomationProperties.Name="Sensitive slowdown detection" AutomationProperties.LabeledBy="{Binding ElementName=DevStrictSlowdownsLabel}" />
+              </Grid>
+              <compat:Rc1TextBlock x:Name="PerformanceRecordingStatus" TextWrapping="Wrap" Classes="Hint" Margin="0,0,0,12" />
+              <WrapPanel Margin="0,0,0,22">
+                <Button x:Name="MarkPerformanceProblem" Content="Mark problem" Click="MarkProblem" IsEnabled="false" Margin="0,0,8,8" />
+                <Button Content="Open performance reports" Click="OpenPerformanceReports" Margin="0,0,8,8" />
+                <Button Content="Export report" Click="ExportPerformanceReport" Margin="0,0,0,8" />
+              </WrapPanel>
               <Grid>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition />

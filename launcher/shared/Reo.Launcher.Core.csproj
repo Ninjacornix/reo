@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><DefineConstants>$(DefineConstants);REO_CROSS_PLATFORM</DefineConstants></PropertyGroup>
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><AllowUnsafeBlocks>true</AllowUnsafeBlocks><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><DefineConstants>$(DefineConstants);REO_CROSS_PLATFORM</DefineConstants></PropertyGroup>
   <ItemGroup>
+    <Compile Include="../SlowdownTransport.cs" Link="Shared/SlowdownTransport.cs" />
+    <Compile Include="../SlowdownMonitor.cs" Link="Shared/SlowdownMonitor.cs" />
+    <Compile Include="../SlowdownAnalysis.cs" Link="Shared/SlowdownAnalysis.cs" />
+    <Compile Include="../SlowdownTrace.cs" Link="Shared/SlowdownTrace.cs" />
     <Compile Include="../GraphicsOptions.cs" Link="Shared/GraphicsOptions.cs" />
     <Compile Include="../Cheats.cs" Link="Shared/Cheats.cs" />
     <Compile Include="../GameScenePreviewRenderer.cs" Link="Shared/GameScenePreviewRenderer.cs" />

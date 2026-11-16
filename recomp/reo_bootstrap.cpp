@@ -970,6 +970,7 @@ static void reoWriteBmp(const char* path, const std::vector<uint8_t>& rgba, uint
 }
 
 int main(int argc, char* argv[]) {
+    reo::slowdown::configure("reo-slowdown-v1 " __DATE__ " " __TIME__);
 
 #ifdef _WIN32
 
@@ -1018,6 +1019,10 @@ int main(int argc, char* argv[]) {
 
             game_data = argv[++i];
 
+        } else if (strcmp(argv[i], "--check-vu-defaults") == 0) {
+            // Registration checks only: no PS2Runtime, window, audio device,
+            // guest execution, or input. Safe for unattended build verification.
+            return reoRegisterVuSpecializedPrograms() ? 0 : 1;
         } else if (strcmp(argv[i], "--help") == 0) {
 
             printf("Usage: reo_recomp [--game file1|file2] [--elf <path>] [--data <path>]\n");
@@ -1027,6 +1032,7 @@ int main(int argc, char* argv[]) {
             printf("  --elf    Path to game ELF (default: auto from game selection)\n");
 
             printf("  --data   Path to extracted game data (default: auto from game selection)\n");
+            printf("  --check-vu-defaults   Check compiled VU registration without starting the game\n");
 
             return 0;
         }

@@ -6,6 +6,16 @@ namespace Outbreak.Launcher.Desktop;
 internal static class Program {
     [STAThread]
     public static int Main(string[] args) {
+        if (args.Length == 2 && args[0] == "--slowdown-monitor")
+            return SlowdownMonitor.Run(args[1]).GetAwaiter().GetResult();
+        if (args.Length == 2 && args[0] == "--analyze-slowdown") {
+            try { SlowdownAnalyzer.Write(args[1]); return 0; }
+            catch (Exception error) { Console.Error.WriteLine(error.Message); return 1; }
+        }
+        if (args.Length == 2 && args[0] == "--analyze-slowdown-trace") {
+            try { SlowdownTrace.Analyze(args[1]); return 0; }
+            catch (Exception error) { Console.Error.WriteLine(error.Message); return 1; }
+        }
         int update = Array.IndexOf(args, "--apply-update");
         if (update >= 0) {
             if (!OperatingSystem.IsWindows()) {

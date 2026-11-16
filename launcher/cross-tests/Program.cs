@@ -1,5 +1,13 @@
 using Outbreak.Launcher;
 using System.Text.Json;
+if (args.Length==2 && args[0]=="--slowdown-monitor") return await SlowdownMonitor.Run(args[1]);
+if (args.Contains("--slowdown-check")) {
+    int count=0;var errors=new List<string>();
+    try { await SlowdownTests.Run((ok,why)=>{if(ok)count++;else errors.Add(why);}); }
+    catch(Exception e) { errors.Add(e.ToString()); }
+    Console.WriteLine(JsonSerializer.Serialize(new{passed=count,failures=errors},new JsonSerializerOptions{WriteIndented=true}));
+    return errors.Count==0?0:1;
+}
 // A UI-free restart/parent fixture for the real Windows updater process check.
 if (args.Length == 2 && args[0] == "--update-parent-check") {
     using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(90));

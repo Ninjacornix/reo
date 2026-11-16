@@ -10,10 +10,12 @@ public sealed class DeveloperOptions {
     public bool SnapTrace { get; set; }
     public bool FrameTiming { get; set; }
     public bool GameClock { get; set; }
+    public bool RecordSlowdowns { get; set; }
+    public bool StrictSlowdowns { get; set; }
     public bool CriServerTiming { get; set; }
 
     [System.Text.Json.Serialization.JsonIgnore]
-    public bool Any => NetworkTrace || TransportLog || SnapTrace || FrameTiming || GameClock || CriServerTiming;
+    public bool Any => NetworkTrace || TransportLog || SnapTrace || FrameTiming || GameClock || RecordSlowdowns || CriServerTiming;
 
     // Network recordings apply only to online launches; the game clock observer is File #1 only.
     internal Dictionary<string, string> Environment(string logs, bool online, string game) {

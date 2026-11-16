@@ -47,6 +47,11 @@ The Windows launcher build is self-contained and needs no separately installed
 shaders and license notices. ISO mounting is not needed. Launcher and game-window
 icons are original project artwork.
 
+The opt-in Developer **Record slowdowns** feature also needs a native game rebuilt
+with the live recorder hooks. Older game builds provide process-health evidence
+only. See [live slowdown recording](LIVE_SLOWDOWN_CHECKER.md) for controls, evidence
+limits, standalone analysis and synthetic checks.
+
 ## Native game
 
 Requirements: Visual Studio 2022 C++ tools, CMake, Ninja, Python 3, the pinned PS2Recomp submodule, and your own NTSC-U game data. GPU builds additionally need Vulkan tooling and matching paraLLEl-GS libraries.
@@ -60,6 +65,35 @@ cmake --build build-ninja --target reo_recomp --parallel 6
 ```
 
 The setup script fetches pinned dependencies and applies the local runtime patch series. Inspect it before running in an existing modified dependency checkout. Recompilation configurations, function maps, and overlay-generation tools are under `recomp/config/` and `tools/`. Additional overlay generation may be needed for the selected build; generated outputs are intentionally excluded from Git.
+
+### Approved VU programs in source builds
+
+An old locally generated VU factory may contain only an experimental table. In
+that case normal play reports `[VU-WHOLE] mode=default programs=0`, even though
+the current metadata admits optimized programs. Regenerate from the verified
+owned ELF and current metadata rather than enabling the experimental table:
+
+```powershell
+python tools/local_build/reconstruct_vu.py --elf game_data/SLUS_207.65 --plan recomp/config/local_vu_images.json --output build-local-vu/file1
+python tools/vu_whole_aot/generate.py --collection build-local-vu/file1 --out build-local-vu/file1/whole
+$vuFactory = (Resolve-Path build-local-vu/file1/whole/reo_vu_whole_registered_generated.cpp).Path
+cmake -S . -B build-ninja "-DREO_VU_WHOLE_FILE1_SOURCE=$vuFactory"
+cmake --build build-ninja --target reo_recomp --parallel 6
+```
+
+Use a fresh output directory. Generated microcode and translated bodies remain
+local. The File #1 factory uses only images and entries marked `enabledByDefault`
+in that edition's metadata; unknown images retain the interpreter. File #2 has a
+separate `REO_VU_WHOLE_FILE2_SOURCE` option and requires its own verified ELF and
+`recomp/config/file2/local_vu_images.json`. These options override the legacy
+shared `REO_VU_WHOLE_SOURCE` for one edition only. CMake warns when a supplied
+legacy factory cannot provide approved defaults. The local-build kit already
+performs this reconstruction as part of its VU generation stage.
+
+This restores existing approved CPU paths without changing the game clock,
+rendering quality, or experimental rendering/VU settings. Verify the default
+registration line, interpreter replay and the affected gameplay route after
+changing a factory; a successful build alone is not a performance retest.
 
 The ordinary target is `reo_recomp`; `reo` is the older scaffold. Experimental GPU builds depend on additional local source/library paths declared in `recomp/CMakeLists.txt`. They are not a turnkey clean-clone release pipeline. Do not reuse a private link script or mix objects compiled against different runtime interfaces.
 

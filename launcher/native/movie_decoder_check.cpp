@@ -1,17 +1,20 @@
-// Decides whether this PC can use the GPU movie decoder. Prints one JSON line:
-//   {"gpu":"<name>","gpuMovies":true|false,"reason":"<text>"}
-// The launcher sets REO_GPU_MOVIE from it. The GPU route needs D3D11 MPEG-2 VLD on the
+// Recommends whether this PC should default to the GPU movie decoder. Prints one JSON line:
+//   {"gpu":"<name>","gpuMovies":true|false,"reason":"<text>","hardwareMpeg2":true|false|null}
+// hardwareMpeg2 is independent of REO interop policy; null means no adapter could be checked.
+// The launcher uses gpuMovies only for the default; an explicit user choice wins.
+// The GPU route needs D3D11 MPEG-2 VLD on the
 // adapter the renderer uses (AMD RDNA 4 parts, for example, have none); without it the
 // original CPU decoder plays the movies.
 // Sharing decoded frames with Vulkan has only been verified on AMD. NVIDIA drivers lose the
 // device at the first scenario movie (GTX 1070 Ti, driver 582.31, issue #4) and Intel is
-// untested, so both use the CPU decoder. REO_GPU_MOVIES_ANY_VENDOR=1 skips this rule.
+// untested, so both default to CPU. REO_GPU_MOVIES_ANY_VENDOR=1 skips this recommendation.
 // Built by launcher/build.ps1 (MSVC, Vulkan SDK headers); the launcher ships it as
 // reo-movie-check.exe beside Outbreak.Launcher.exe.
 #include <initguid.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <optional>
 #include <string>
 #include <vector>
 #include <d3d11.h>
@@ -19,11 +22,9 @@
 #include <windows.h>
 #define VK_NO_PROTOTYPES
 #include <vulkan/vulkan.h>
+#include "../../runtime/media/movie_decoder_support.h"
 
 namespace {
-// DXVA_NoEncrypt; Mpeg2VldCore accepts it or GUID_NULL for every encryption field.
-const GUID kNoEncrypt = {0x1b81bed0, 0xa0c7, 0x11d3, {0xb9, 0x84, 0x00, 0xc0, 0x4f, 0x2e, 0x73, 0xc5}};
-
 std::string escape(const std::string& text) {
     std::string out;
     for (char c : text) {
@@ -35,9 +36,11 @@ std::string escape(const std::string& text) {
     return out;
 }
 
-int report(const std::string& gpu, bool gpuMovies, const std::string& reason) {
-    std::printf("{\"gpu\":\"%s\",\"gpuMovies\":%s,\"reason\":\"%s\"}\n", escape(gpu).c_str(),
-                gpuMovies ? "true" : "false", escape(reason).c_str());
+int report(const std::string& gpu, bool gpuMovies, const std::string& reason,
+           std::optional<bool> hardwareMpeg2 = std::nullopt) {
+    std::printf("{\"gpu\":\"%s\",\"gpuMovies\":%s,\"reason\":\"%s\",\"hardwareMpeg2\":%s}\n",
+                escape(gpu).c_str(), gpuMovies ? "true" : "false", escape(reason).c_str(),
+                hardwareMpeg2.has_value() ? (*hardwareMpeg2 ? "true" : "false") : "null");
     return 0;
 }
 
@@ -89,7 +92,8 @@ bool selectRendererGpu(Selected& selected, std::string& error) {
         gpus.resize(count);
         if (enumerate(instance, &count, gpus.data()) != VK_SUCCESS)
             gpus.clear();
-        gpus.resize(count);
+        else
+            gpus.resize(count);
     }
     VkPhysicalDevice chosen = VK_NULL_HANDLE;
     if (const char* index = std::getenv("GRANITE_VULKAN_DEVICE_INDEX")) {
@@ -141,27 +145,12 @@ bool selectRendererGpu(Selected& selected, std::string& error) {
     return ok;
 }
 
-bool verifiedVendor(uint32_t vendor, std::string& reason) {
-    if (vendor == 0x1002)
-        return true;
-    if (const char* any = std::getenv("REO_GPU_MOVIES_ANY_VENDOR"); any && std::strcmp(any, "1") == 0)
-        return true;
-    reason = vendor == 0x10de ? "Movie decoding on NVIDIA graphics cards can crash the game"
-             : vendor == 0x8086 ? "Movie decoding on Intel graphics is untested"
-                                : "Movie decoding on this graphics card is untested";
-    return false;
-}
-
-bool plain(const GUID& g) {
-    return IsEqualGUID(g, kNoEncrypt) || IsEqualGUID(g, GUID{});
-}
-
 // The acceptance rule of Mpeg2VldCore::initialize, on the device setup MovieOwnerService uses.
-bool hardwareMpeg2(const LUID& luid, std::string& reason) {
+std::optional<bool> hardwareMpeg2(const LUID& luid, std::string& reason) {
     IDXGIFactory1* factory = nullptr;
     if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory1), reinterpret_cast<void**>(&factory)))) {
         reason = "DXGI unavailable";
-        return false;
+        return std::nullopt;
     }
     IDXGIAdapter1* adapter = nullptr;
     for (UINT i = 0; factory->EnumAdapters1(i, &adapter) != DXGI_ERROR_NOT_FOUND; ++i) {
@@ -176,7 +165,7 @@ bool hardwareMpeg2(const LUID& luid, std::string& reason) {
     factory->Release();
     if (!adapter) {
         reason = "Renderer GPU not found in DXGI";
-        return false;
+        return std::nullopt;
     }
     ID3D11Device* device = nullptr;
     HRESULT hr = D3D11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr,
@@ -185,14 +174,14 @@ bool hardwareMpeg2(const LUID& luid, std::string& reason) {
     adapter->Release();
     if (FAILED(hr)) {
         reason = "No D3D11 video device";
-        return false;
+        return std::nullopt;
     }
     ID3D11VideoDevice* video = nullptr;
     hr = device->QueryInterface(__uuidof(ID3D11VideoDevice), reinterpret_cast<void**>(&video));
     if (FAILED(hr)) {
         device->Release();
         reason = "No D3D11 video device";
-        return false;
+        return std::nullopt;
     }
     const GUID profiles[] = {D3D11_DECODER_PROFILE_MPEG2_VLD, D3D11_DECODER_PROFILE_MPEG2and1_VLD};
     bool found = false;
@@ -206,10 +195,8 @@ bool hardwareMpeg2(const LUID& luid, std::string& reason) {
             continue;
         for (UINT i = 0; i < configs && !found; ++i) {
             D3D11_VIDEO_DECODER_CONFIG config{};
-            if (FAILED(video->GetVideoDecoderConfig(&desc, i, &config)) || config.ConfigBitstreamRaw != 1 ||
-                !plain(config.guidConfigBitstreamEncryption) ||
-                !plain(config.guidConfigMBcontrolEncryption) ||
-                !plain(config.guidConfigResidDiffEncryption) || config.ConfigMinRenderTargetBuffCount > 8)
+            if (FAILED(video->GetVideoDecoderConfig(&desc, i, &config)) ||
+                !reo_movie_probe::usableMpeg2Config(config))
                 continue;
             ID3D11VideoDecoder* decoder = nullptr;
             if (SUCCEEDED(video->CreateVideoDecoder(&desc, &config, &decoder))) {
@@ -222,7 +209,8 @@ bool hardwareMpeg2(const LUID& luid, std::string& reason) {
     }
     video->Release();
     device->Release();
-    reason = found ? "Hardware MPEG-2 decoder available" : "This GPU has no hardware MPEG-2 decoder";
+    reason = found ? "Hardware MPEG-2 decoder available"
+                   : "No compatible D3D11 MPEG-2 VLD decoder on this GPU/driver";
     return found;
 }
 } // namespace
@@ -233,6 +221,13 @@ int main() {
     if (!selectRendererGpu(gpu, error) || !gpu.luidValid)
         return report(gpu.name, false, error);
     std::string reason;
-    const bool gpuMovies = verifiedVendor(gpu.vendor, reason) && hardwareMpeg2(gpu.luid, reason);
-    return report(gpu.name, gpuMovies, reason);
+    // Always query the actual GPU/driver first, including NVIDIA and Intel.
+    // A model list cannot account for driver omissions or cut-down media engines.
+    const auto hardware = hardwareMpeg2(gpu.luid, reason);
+    if (!hardware.value_or(false))
+        return report(gpu.name, false, reason, hardware);
+    const char* any = std::getenv("REO_GPU_MOVIES_ANY_VENDOR");
+    const char* blocked = reo_movie_probe::interopBlockReason(
+        gpu.vendor, any && std::strcmp(any, "1") == 0);
+    return report(gpu.name, !blocked, blocked ? blocked : reason, hardware);
 }

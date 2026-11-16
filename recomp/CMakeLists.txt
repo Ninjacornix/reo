@@ -89,6 +89,8 @@ macro(reo_require_vulkan_shader_tools)
 endmacro()
 
 set(REO_VU_WHOLE_SOURCE "" CACHE FILEPATH "Optional locally generated whole-program VU AOT (tools/vu_whole_aot); game bytes stay in ignored output")
+set(REO_VU_WHOLE_FILE1_SOURCE "" CACHE FILEPATH "File #1 whole-program VU factory; overrides the legacy shared factory")
+set(REO_VU_WHOLE_FILE2_SOURCE "" CACHE FILEPATH "File #2 whole-program VU factory; overrides the legacy shared factory")
 
 set(REO_VU_NATIVE_GEOMETRY_SOURCE "" CACHE FILEPATH "Optional File #1 native geometry factory; requires exact generated VU identities")
 
@@ -439,6 +441,27 @@ set(REO_RUNTIME_SOURCES
 # Helper function to set up a recomp target
 
 function(add_recomp_target TARGET_NAME OUTPUT_DIR GAME_DEFINE)
+    # Edition-specific factories carry the verified ELF/profile admission policy.
+    # Do not make selecting File #1's approved defaults change File #2's build.
+    if(GAME_DEFINE STREQUAL "REO_GAME_FILE1" AND REO_VU_WHOLE_FILE1_SOURCE)
+        set(REO_VU_WHOLE_SOURCE "${REO_VU_WHOLE_FILE1_SOURCE}")
+    elseif(GAME_DEFINE STREQUAL "REO_GAME_FILE2" AND REO_VU_WHOLE_FILE2_SOURCE)
+        set(REO_VU_WHOLE_SOURCE "${REO_VU_WHOLE_FILE2_SOURCE}")
+    endif()
+    if(REO_VU_WHOLE_SOURCE)
+        get_filename_component(_reo_vu_policy_dir "${REO_VU_WHOLE_SOURCE}" DIRECTORY)
+        set(_reo_vu_policy_header "${_reo_vu_policy_dir}/reo_vu_whole_registered_generated.h")
+        if(EXISTS "${_reo_vu_policy_header}")
+            file(STRINGS "${_reo_vu_policy_header}" _reo_vu_default_policy
+                REGEX "^#define REO_VU_HAS_DEFAULT_PROGRAM_TABLE 1$")
+            if(NOT _reo_vu_default_policy)
+                message(WARNING "${TARGET_NAME}: the supplied VU factory predates approved default tables; "
+                    "normal play will register zero whole-program optimizations. Regenerate from the "
+                    "verified ELF and current local_vu_images.json; see docs/BUILDING.md. "
+                    "The experimental catalogue is not enabled automatically.")
+            endif()
+        endif()
+    endif()
 
     file(GLOB RECOMP_SOURCES CONFIGURE_DEPENDS "${REO_RECOMP_CONFIG_ROOT}/${OUTPUT_DIR}/*.cpp")
 

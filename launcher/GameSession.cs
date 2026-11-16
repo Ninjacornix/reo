@@ -16,6 +16,9 @@ public sealed class GameSession {
     TaskCompletionSource graphicsReady = new(TaskCreationOptions.RunContinuationsAsynchronously);
     internal Task WaitForGraphicsReadyAsync(TimeSpan timeout) => graphicsReady.Task.WaitAsync(timeout);
     public string? MovieStatus { get; private set; }
+    public SlowdownSession? Performance { get; private set; }
+    SlowdownStatus? performanceError;
+    public SlowdownStatus? PerformanceStatus => Performance?.Status ?? performanceError;
     internal string? AudioMapName { get; set; }
     internal string? SubtitleMapName { get; set; }
     public string? RandomizerSeedSummary { get; private set; }
@@ -43,6 +46,8 @@ public sealed class GameSession {
             throw new InvalidOperationException("The launcher already has a game session running.");
         var graphics = GraphicsOptions.From(settings);
         OriginalAssets = null;
+        Performance = null;
+        performanceError = null;
         var selectedAssetPaks = AssetPaks.Selected(settings);
         var onlineEnvironment = OnlineOptions.LaunchEnvironment(settings);
         if (diagnosticColdCache && diagnosticRoute == null)
@@ -299,10 +304,9 @@ public sealed class GameSession {
             Set("REO_TEST_ENEMY_PROBE", "1");
         }
         if (diagnosticRoute == "gameplay-enemy-combat") Set("REO_TEST_WORLD_TARGET", "8180,13340,30");
-        // GPU movies when the rendering GPU has a hardware MPEG-2 decoder and the player left them
-        // on in Graphics; otherwise the original CPU decoder.
+        // Keep the existing CPU/GPU default unless the player explicitly chooses otherwise.
         MovieDecoderChoice movies = await MovieDecoder.Choose(cancel);
-        bool gpuMovies = movies.Gpu && graphics.GpuMovies;
+        bool gpuMovies = movies.UseGpu(graphics.GpuMovies, graphics.GpuMoviesChoice);
         MovieStatus = gpuMovies   ? "Movies: graphics card"
                       : movies.Gpu ? "Movies: processor (chosen in Graphics)"
                                    : "Movies: processor (" + movies.Reason + ")";
@@ -331,6 +335,11 @@ public sealed class GameSession {
         var stdout = new StreamWriter(Path.Combine(Logs, "stdout.log")) { AutoFlush = true };
         var stderr = new StreamWriter(Path.Combine(Logs, "stderr.log")) { AutoFlush = true };
         AutomaticAccount? account = null;
+        SlowdownSession? recording = null;
+        if (settings.Developer.RecordSlowdowns) {
+            try { Performance = recording = new SlowdownSession(Logs, start, settings.Developer.StrictSlowdowns); }
+            catch (Exception error) { performanceError = new("unavailable", "Performance diagnostics error: " + error.Message); }
+        }
         Process = new Process { StartInfo = start };
         if (settings.ResolvedCoopMode == "host") HostRandomizerConfiguration = randomizerConfiguration;
         try {
@@ -348,6 +357,7 @@ public sealed class GameSession {
             if (!Process.Start())
                 throw new IOException("Windows could not start the game.");
         } catch {
+            recording?.Dispose();
             account?.Dispose();
             cardLease.Dispose();
             stdout.Dispose();
@@ -360,7 +370,7 @@ public sealed class GameSession {
                                              text => NetworkStatus = text);
             _ = automation.Run();
         }
-        _ = RecordExit(Process, Logs, cardLease, account, automation);
+        _ = RecordExit(Process, Logs, cardLease, account, automation, recording);
         if (randomizerConfiguration != null && settings.ResolvedCoopMode == "join")
             _ = WatchRandomizerSession(Process,Logs,settings.CoopHost,randomizerConfiguration);
         controller.GameProcessId = Process.Id;
@@ -377,6 +387,13 @@ public sealed class GameSession {
             ObserveGraphicsLine(line);
             account?.Observe(line);
         });
+        if (recording != null) {
+            var recordedProcess = Process;
+            _ = Task.Run(() => {
+                try { recording.Start(recordedProcess, image, hash, selectedGame.Id); }
+                catch (Exception error) { recording.Failed(error); }
+            });
+        }
         await File.WriteAllTextAsync(
             Path.Combine(Logs, "launch.json"),
             JsonSerializer.Serialize(
@@ -419,6 +436,7 @@ public sealed class GameSession {
                       movieDecoder = gpuMovies ? "gpu" : "cpu",
                       gpuMoviesAvailable = movies.Gpu,
                       gpuMoviesSetting = graphics.GpuMovies,
+                      gpuMoviesUserChoice = graphics.GpuMoviesChoice,
                       movieDecoderGpu = movies.GpuName,
                       movieDecoderReason = movies.Reason },
                 new JsonSerializerOptions { WriteIndented = true }));
@@ -446,7 +464,7 @@ public sealed class GameSession {
         }
     }
     async Task RecordExit(Process process, string logs, FileStream cardLease,
-                          AutomaticAccount? account, LobbyAutomation? automation) {
+                          AutomaticAccount? account, LobbyAutomation? automation, SlowdownSession? recording = null) {
         try {
             await process.WaitForExitAsync();
         } finally {
@@ -456,6 +474,7 @@ public sealed class GameSession {
             graphicsStatus = null;
             graphicsReady.TrySetCanceled();
             cardLease.Dispose();
+            recording?.Dispose();
         }
         await Task.Run(() => NetworkTrace.Finish(logs));
         await File.WriteAllTextAsync(Path.Combine(logs, "exit.json"), JsonSerializer.Serialize(new {
