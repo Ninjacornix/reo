@@ -30,6 +30,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -37,11 +38,31 @@
 #include <type_traits>
 #include <vector>
 
+// Original entries per edition (addresses: tools/hybrid/diff_function_layout.py,
+// docs/native-gameplay/HYBRID_INTEGRATION_PLAN.md "File #2 camera layout").
+#if defined(REO_GAME_FILE2)
+void o2_005DEE30_0x5dee30(std::uint8_t*, R5900Context*, PS2Runtime*);
+void o2_005DF720_0x5df720(std::uint8_t*, R5900Context*, PS2Runtime*);
+void sub_0013ADD0_0x13add0(std::uint8_t*, R5900Context*, PS2Runtime*);
+void o2_00593780_0x593780(std::uint8_t*, R5900Context*, PS2Runtime*);
+void o2_005A2020_0x5a2020(std::uint8_t*, R5900Context*, PS2Runtime*);
+#define original_import o2_005DEE30_0x5dee30
+#define original_camera o2_005DF720_0x5df720
+#define original_renderer sub_0013ADD0_0x13add0
+#define original_segment o2_00593780_0x593780
+#define original_aim_update o2_005A2020_0x5a2020
+#else
 void o2_005BE3E0_0x5be3e0(std::uint8_t*, R5900Context*, PS2Runtime*);
 void o2_005BED30_0x5bed30(std::uint8_t*, R5900Context*, PS2Runtime*);
 void sub_001AF780_0x1af780(std::uint8_t*, R5900Context*, PS2Runtime*);
 void o2_005795E0_0x5795e0(std::uint8_t*, R5900Context*, PS2Runtime*);
 void o2_00586AA0_0x586aa0(std::uint8_t*, R5900Context*, PS2Runtime*);
+#define original_import o2_005BE3E0_0x5be3e0
+#define original_camera o2_005BED30_0x5bed30
+#define original_renderer sub_001AF780_0x1af780
+#define original_segment o2_005795E0_0x5795e0
+#define original_aim_update o2_00586AA0_0x586aa0
+#endif
 // SDK patch 0132 (Win32ModalRender): mouse look capture on the game window.
 void ps2HostSetMouseLook(bool enabled);
 bool ps2HostTakeMouseDelta(int* dx, int* dy, int* wheel);
@@ -53,9 +74,26 @@ namespace s = reo::native::gameplay_scenario;
 namespace w = reo::native::gameplay_world;
 namespace t = reo::native::transform_math;
 
+#if defined(REO_GAME_FILE2)
+// File #2 (SLUS-20984): same fields, header 4 bytes shorter, globals relocated,
+// actor stride 0x1100. The camera also publishes the high half of each record's
+// +0x194 word to header +0x2C every evaluated frame (o2 0x5DFA34..0x5DFA44).
+constexpr std::uint32_t header_at = 0x3fd2b0, header_fixed = 0x30;
+constexpr std::uint32_t viewport_at = 0x3006a0, params_at = 0x3006b8, params_end = 0x300710, view_at = 0x300660;
+constexpr std::uint32_t perspective_at = 0x70003f00, scaled_at = 0x34dc50, first_composite_at = 0x34dc90,
+                        second_composite_at = 0x34dcd0;
+constexpr std::uint32_t horizontal_at = 0x34d100, vertical_at = 0x34d108, width_at = 0x34d120, height_at = 0x34d128,
+                        first_transform_at = 0x70003f80, second_transform_at = 0x34dd10;
+constexpr std::uint32_t mode_at = 0x30094f, visibility_at = 0x4be8c0 + 0x8a0, model_count_at = 0x4be8c0 + 0x872,
+                        hide_at = 0x4d9f60 + 0x290, fog_selected_at = 0x30063d;
+constexpr std::uint32_t actors_at = 0x4c5e10, actor_stride = 0x1100, actor_position = 0x38, primary_actors = 8;
+constexpr std::uint32_t overlay_base = 0x58d000, overlay_magic = 0x336F574D, overlay_id_offset = 4, overlay_o2 = 3;
+constexpr std::uint32_t camera_entry = 0x5df720, import_entry = 0x5dee30, renderer_command = 0x13add0;
+constexpr std::uint32_t segment_entry = 0x593780, aim_update_entry = 0x5a2020, actor_aim_elevation = 0xbe0;
+constexpr bool selection_word = true;  // header +0x2C <- record +0x194 >> 16
+#else
 // Room camera header (5BE3E0 clears 0x34 bytes + 32 records of 0x198).
-constexpr std::uint32_t header_at = 0x3dddb0, records_at = header_at + 0x34, stride = 0x198, record_count = 32;
-constexpr std::uint32_t header_bytes = 0x34 + record_count * stride;
+constexpr std::uint32_t header_at = 0x3dddb0, header_fixed = 0x34;
 // Camera parameters / display state.
 constexpr std::uint32_t viewport_at = 0x324120, params_at = 0x324138, params_end = 0x324190, view_at = 0x3240e0;
 constexpr std::uint32_t perspective_at = 0x70003f00, scaled_at = 0x294d00, first_composite_at = 0x294d40,
@@ -69,12 +107,16 @@ constexpr std::uint32_t actors_at = 0x4a5c30, actor_stride = 0x10e0, actor_posit
 // o2 overlay slot (see recomp/config/output_ovl/o2/register_o2.cpp).
 constexpr std::uint32_t overlay_base = 0x570000, overlay_magic = 0x336F574D, overlay_id_offset = 4, overlay_o2 = 3;
 constexpr std::uint32_t camera_entry = 0x5bed30, import_entry = 0x5be3e0, renderer_command = 0x1af780;
-constexpr unsigned op_viewport = 24, op_view = 22;
-constexpr std::uint32_t actor_yaw = 0x92;  // signed halfword (save_actor_position_and_yaw, o2 0x667370)
 // Aim elevation, signed halfword in yaw units (+0x2000 = 45 degrees up). o2 0x586AA0
 // sets it each frame from the aim level (+0xF80 & 3) or the auto-aim target and
 // clamps it to +/-0x2000; the weapon code (o2 0x5F5D20, 0x5F62D0, ...) reads it.
-constexpr std::uint32_t actor_aim_elevation = 0xbc8, aim_update_entry = 0x586aa0;
+constexpr std::uint32_t segment_entry = 0x5795e0, aim_update_entry = 0x586aa0, actor_aim_elevation = 0xbc8;
+constexpr bool selection_word = false;
+#endif
+constexpr std::uint32_t stride = 0x198, record_count = 32;
+constexpr std::uint32_t records_at = header_at + header_fixed, header_bytes = header_fixed + record_count * stride;
+constexpr unsigned op_viewport = 24, op_view = 22;
+constexpr std::uint32_t actor_yaw = 0x92;  // signed halfword (save_actor_position_and_yaw, o2 0x667370 / F2 0x68C770)
 // Free aim request from the camera: elevation units and the steady-clock ms it was set.
 std::atomic<int> free_aim_units{0};
 std::atomic<std::int64_t> free_aim_ms{0};
@@ -210,7 +252,7 @@ class Binding;
 Binding* binding = nullptr;           // one runtime per process
 thread_local std::vector<Event>* recording = nullptr;  // original 0x1AF780 observations (shadow)
 
-class Binding final : public PS2Runtime::ExternalWorker {
+class Binding final {
 public:
     class Sink final : public s::CameraDisplaySink {
     public:
@@ -242,8 +284,8 @@ public:
     std::uint8_t* ram;
     std::recursive_mutex operation;
     std::atomic<bool> stopped{};bool emitted{};
-    void requestStop() noexcept override { stopped.store(true); }
-    bool join() noexcept override { requestStop(); std::lock_guard lock(operation); if (!emitted) { emitted = true; dump(); } return true; }
+    void request_stop() noexcept { stopped.store(true); }
+    void join_dump() noexcept { request_stop(); std::lock_guard lock(operation); if (!emitted) { emitted = true; dump(); } }
     Counts counts;
     std::array<Mismatch, 24> mismatches{};
     std::uint64_t mismatch_rows{};
@@ -371,7 +413,15 @@ public:
         g.put<std::uint8_t>(hide_at + 2, session.resource_hide_remaining[0]);
         g.put<std::uint8_t>(hide_at + 3, session.resource_hide_remaining[1]);
         g.put<std::int8_t>(fog_selected_at, fog.state().selected);
+        if (const auto word = selection_word_value(g)) g.put<std::uint16_t>(header_at + 0x2c, *word);
         write_parameters(g, parameters);
+    }
+    // File #2 only: high half of the chosen record's +0x194 word (header +0x2C).
+    std::optional<std::uint16_t> selection_word_value(const Guest& g) const {
+        if constexpr (!selection_word) return std::nullopt;
+        const auto chosen = sequences.snapshot().condition_id;
+        if (chosen >= record_count) return std::nullopt;
+        return std::uint16_t(g.get<std::uint32_t>(records_at + stride * chosen + 0x194) >> 16);
     }
     static void write_parameters(const Guest& g, const s::CameraParameters& p) {
         g.put(params_at, p.pose.eye); g.put(params_at + 0x0c, p.pose.aim); g.put(params_at + 0x18, p.offset);
@@ -415,6 +465,8 @@ public:
         same("hide_remaining", 0, session.resource_hide_remaining[0], g.get<std::uint8_t>(hide_at + 2), ok);
         same("hide_remaining", 1, session.resource_hide_remaining[1], g.get<std::uint8_t>(hide_at + 3), ok);
         same("fog_selected", 0, fog.state().selected, g.get<std::int8_t>(fog_selected_at), ok);
+        if (const auto word = selection_word_value(g))
+            same("selection_word", 0, *word, g.get<std::uint16_t>(header_at + 0x2c), ok);
         same("eye", 0, parameters.pose.eye, g.get<t::Vector>(params_at), ok);
         same("aim", 0, parameters.pose.aim, g.get<t::Vector>(params_at + 0x0c), ok);
         same("offset", 0, parameters.offset, g.get<t::Vector>(params_at + 0x18), ok);
@@ -457,7 +509,7 @@ public:
         SET_GPR_U32(ctx, 29, sp - 0x40); SET_GPR_U32(ctx, 31, camera_entry);
         SET_GPR_U32(ctx, 4, op); ctx->pc = renderer_command; ctx->in_delay_slot = false;
         try {
-            sub_001AF780_0x1af780(ram, ctx, runtime);
+            original_renderer(ram, ctx, runtime);
             if (ctx->pc != camera_entry || ctx->in_delay_slot)
                 throw std::runtime_error("Room camera adapter: renderer command did not return");
         } catch (...) { *ctx = saved; throw; }
@@ -478,10 +530,10 @@ public:
         SET_GPR_U32(ctx, 29, frame); SET_GPR_U32(ctx, 31, camera_entry);
         SET_GPR_U32(ctx, 4, a); SET_GPR_U32(ctx, 5, b); SET_GPR_U32(ctx, 6, out); SET_GPR_U32(ctx, 7, normal);
         SET_GPR_U32(ctx, 8, 0xffffffffu); SET_GPR_U32(ctx, 9, 0); SET_GPR_U32(ctx, 10, type);
-        ctx->pc = 0x5795e0; ctx->in_delay_slot = false;
+        ctx->pc = segment_entry; ctx->in_delay_slot = false;
         bool any = false;
         try {
-            o2_005795E0_0x5795e0(ram, ctx, runtime);
+            original_segment(ram, ctx, runtime);
             if (ctx->pc != camera_entry || ctx->in_delay_slot) throw std::runtime_error("segment test did not return");
             any = GPR_U32(ctx, 2) != 0;
             if (any) hit = g.get<t::Vector>(out);
@@ -746,17 +798,17 @@ void renderer_recorder(std::uint8_t* ram, R5900Context* ctx, PS2Runtime* rt) {
         recording->push_back(e);
         if (binding && binding->mode == Mode::shadow_writes) {
             binding->renderer_snapshot();
-            sub_001AF780_0x1af780(ram, ctx, rt);
+            original_renderer(ram, ctx, rt);
             binding->renderer_attribute();
             return;
         }
     }
-    sub_001AF780_0x1af780(ram, ctx, rt);
+    original_renderer(ram, ctx, rt);
 }
 
 void run_original_camera(std::uint8_t* ram, R5900Context* ctx, PS2Runtime* rt) {
     const auto back = GPR_U32(ctx, 31);
-    o2_005BED30_0x5bed30(ram, ctx, rt);
+    original_camera(ram, ctx, rt);
     if (ctx->pc != back || ctx->in_delay_slot) throw std::runtime_error("Room camera adapter: original did not return");
 }
 
@@ -766,7 +818,7 @@ void run_original_camera(std::uint8_t* ram, R5900Context* ctx, PS2Runtime* rt) {
 void aim_update_hook(std::uint8_t* ram, R5900Context* ctx, PS2Runtime* rt) {
     const auto actor = GPR_U32(ctx, 4);
     const auto back = GPR_U32(ctx, 31);
-    o2_00586AA0_0x586aa0(ram, ctx, rt);
+    original_aim_update(ram, ctx, rt);
     if (ctx->pc != back) return;  // non-synchronous return: leave it to the dispatcher
     const auto at = free_aim_ms.load();
     if (!at || reo_pad_tap::steady_ms() - at > 100 || actor != free_aim_actor.load()) return;
@@ -790,7 +842,7 @@ void import_hook(std::uint8_t* ram, R5900Context* ctx, PS2Runtime* rt) {
         } catch (...) { raw.clear(); }
     }
     const auto back = GPR_U32(ctx, 31);
-    o2_005BE3E0_0x5be3e0(ram, ctx, rt);
+    original_import(ram, ctx, rt);
     if (ctx->pc != back) throw std::runtime_error("Room camera adapter: record import did not return");
     if (!b) return;
     std::lock_guard<std::recursive_mutex> lock(b->operation);
@@ -869,14 +921,39 @@ void camera_hook(std::uint8_t* ram, R5900Context* ctx, PS2Runtime* rt) {
 
 }  // namespace
 
+// SDKs with the native runtime patches report shutdown to external workers and
+// guard pre-run setup; older SDKs (e.g. File #2 release kits) have neither. Use
+// them when present; counters are also printed every 1,000 calls regardless.
+template <class R, class = void> struct HasWorkers : std::false_type {};
+template <class R> struct HasWorkers<R, std::void_t<typename R::ExternalWorker>> : std::true_type {};
+template <class R, bool = HasWorkers<R>::value> struct ExitReport {
+    static bool attach(R&, const std::shared_ptr<Binding>&) { return true; }
+};
+template <class R> struct ExitReport<R, true> {
+    struct Worker final : R::ExternalWorker {
+        std::shared_ptr<Binding> binding;
+        void requestStop() noexcept override { binding->request_stop(); }
+        bool join() noexcept override { binding->join_dump(); return true; }
+    };
+    static bool attach(R& rt, const std::shared_ptr<Binding>& b) {
+        auto worker = std::make_shared<Worker>(); worker->binding = b;
+        return rt.registerExternalWorker(worker);
+    }
+};
+template <class R, class = void> struct HasLease : std::false_type {};
+template <class R> struct HasLease<R, std::void_t<decltype(std::declval<R&>().acquirePreRunSetup())>> : std::true_type {};
+template <class R> bool with_pre_run(R& rt, const std::function<bool()>& work) {
+    if constexpr (HasLease<R>::value) { auto lease = rt.acquirePreRunSetup(); if (!lease) return false; return work(); }
+    else return work();
+}
+
 bool install_before_run(PS2Runtime& rt, Mode mode) noexcept {
     try {
-        auto lease = rt.acquirePreRunSetup();
-        if (!lease) return false;
+      return with_pre_run(rt, [&]() -> bool {
         std::lock_guard lock(registry_mutex);
         if (owned) return false;
         owned = std::make_shared<Binding>(rt, mode);
-        if (!rt.registerExternalWorker(owned)) { owned.reset(); return false; }
+        if (!ExitReport<PS2Runtime>::attach(rt, owned)) { owned.reset(); return false; }
         binding = owned.get();
         rt.registerOverlayFunction(overlay_base, overlay_magic, overlay_id_offset, overlay_o2, import_entry, import_hook);
         rt.registerOverlayFunction(overlay_base, overlay_magic, overlay_id_offset, overlay_o2, camera_entry, camera_hook);
@@ -891,6 +968,7 @@ bool install_before_run(PS2Runtime& rt, Mode mode) noexcept {
             }
         }
         return true;
+      });
     } catch (...) {
         binding = nullptr; owned.reset();
         return false;
