@@ -46,7 +46,6 @@ public sealed partial class Settings {
     public string AccountUsername { get; set; } = "";
     // "offline", "host" or "join"; null in settings saved by older launchers.
     public string? CoopMode { get; set; }
-    public bool AutoLobby { get; set; } = true;
     DeveloperOptions developer = new();
     public DeveloperOptions Developer { get => developer; set => developer = value ?? new(); }
     public string JoinHostName { get; set; } = "";
@@ -120,10 +119,6 @@ public sealed partial class Settings {
         settings.EnabledAssetPaks ??= new();
         settings.CoopHost ??= "";
         settings.AccountUsername ??= "";
-        settings.RoomName ??= "";
-        settings.JoinRoomName ??= "";
-        settings.RoomMaxPlayers = Math.Clamp(settings.RoomMaxPlayers, 2, 4);
-        if (!new[] { 3, 5, 10, 15, 30 }.Contains(settings.RoomWaitMinutes)) settings.RoomWaitMinutes = 5;
         settings.JoinHostName ??= "";
         if (HostNetworking.PortError(settings.SignupPort, settings.GamePort) != null) {
             settings.SignupPort = HostNetworking.SignupPort;

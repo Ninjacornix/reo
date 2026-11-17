@@ -277,7 +277,7 @@
                         <ColumnDefinition Width="Auto" />
                       </Grid.ColumnDefinitions>
                       <compat:Rc1TextBlock Text="Start at the main menu" FontSize="14" VerticalAlignment="Center" />
-                      <CheckBox x:Name="SkipIntro" IsCheckedChanged="SaveSettings" Grid.Column="1" AutomationProperties.Name="Start at the main menu" Classes="ToggleSwitch" ToolTip.Tip="Skips the startup logos and the title screen." />
+                      <CheckBox x:Name="SkipIntro" IsCheckedChanged="SaveSettings" Grid.Column="1" AutomationProperties.Name="Start at the main menu" Classes="ToggleSwitch" ToolTip.Tip="Skips the startup logos and the title screen. Network Game goes straight to the server list." />
                     </Grid>
                     <DockPanel MinHeight="48">
                       <ComboBox x:Name="WindowSize" SelectionChanged="SettingChanged" DockPanel.Dock="Right" AutomationProperties.Name="Window resolution" Classes="GraphicsChoice" ToolTip.Tip="Windowed output size. Borderless fullscreen uses the desktop resolution.">
@@ -733,30 +733,6 @@
                     <TextBox x:Name="AccountUsername" TextChanged="OnlineSettingChanged" Margin="0,12,0,8" AutomationProperties.Name="Player name" AutomationProperties.HelpText="Four to ten letters, numbers or underscores. Underscores cannot start, end or repeat." Classes="CoopTextInput" />
                     <compat:Rc1TextBlock Text="4 to 10 letters, numbers or underscores." FontSize="14" Classes="Hint" />
                     <compat:Rc1TextBlock x:Name="AccountStatus" FontSize="14" Margin="0,12,0,0" AutomationProperties.LiveSetting="Polite" Classes="CoopStatus Hint" />
-                    <compat:Rc1TextBlock Text="WAITING ROOM" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,32,0,14" />
-                    <Grid>
-                      <Grid.ColumnDefinitions>
-                        <ColumnDefinition />
-                        <ColumnDefinition Width="Auto" />
-                      </Grid.ColumnDefinitions>
-                      <compat:Rc1TextBlock x:Name="AutoLobbyLabel" Text="Enter automatically" FontSize="17" VerticalAlignment="Center" Margin="0,0,12,0" />
-                      <CheckBox x:Name="AutoLobby" IsCheckedChanged="OnlineSettingChanged" Grid.Column="1" AutomationProperties.Name="Enter the waiting room automatically" AutomationProperties.LabeledBy="{Binding ElementName=AutoLobbyLabel}" AutomationProperties.HelpText="After launch, sign in and open or join the host's room. Press any button to take over." Classes="ToggleSwitch" />
-                    </Grid>
-                    <StackPanel x:Name="RoomSettings" Margin="0,18,0,0" IsVisible="false">
-                      <Label Content="Room name" Target="{Binding ElementName=RoomName}" Padding="0" Foreground="{StaticResource Ink}" FontSize="14" />
-                      <Grid Margin="0,8,0,14">
-                        <TextBox x:Name="RoomName" TextChanged="RoomSettingChanged" MaxLength="15" AutomationProperties.Name="Waiting room name" AutomationProperties.HelpText="Up to 15 letters, numbers or underscores. Leave blank to use your player name." Classes="CoopTextInput" />
-                        <compat:Rc1TextBlock Text="Use player name" Foreground="{StaticResource Muted}" FontSize="14" Margin="11,8" IsHitTestVisible="False" IsVisible="{Binding #RoomName.Text, Converter={x:Static StringConverters.IsNullOrEmpty}}" />
-                      </Grid>
-                      <DockPanel MinHeight="48">
-                        <ComboBox x:Name="RoomPlayers" SelectionChanged="RoomSettingChanged" DockPanel.Dock="Right" Width="150" MinWidth="120" Margin="12,0,0,0" AutomationProperties.Name="Maximum players" DisplayMemberBinding="{Binding Label}" SelectedValueBinding="{Binding Value}" />
-                        <compat:Rc1TextBlock Text="Maximum players" FontSize="14" VerticalAlignment="Center" />
-                      </DockPanel>
-                      <DockPanel MinHeight="48" Margin="0,8,0,0">
-                        <ComboBox x:Name="RoomWait" SelectionChanged="RoomSettingChanged" DockPanel.Dock="Right" Width="150" MinWidth="120" Margin="12,0,0,0" AutomationProperties.Name="Room waiting time" DisplayMemberBinding="{Binding Label}" SelectedValueBinding="{Binding Value}" />
-                        <compat:Rc1TextBlock Text="Waiting time" FontSize="14" VerticalAlignment="Center" />
-                      </DockPanel>
-                    </StackPanel>
                     <compat:Rc1TextBlock x:Name="CoopValidation" Foreground="{StaticResource Danger}" FontSize="14" Margin="0,22,0,0" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" IsVisible="false" />
                   </StackPanel>
                   <StackPanel Grid.Column="2">

@@ -7,7 +7,6 @@
     <Compile Include="../GlobalItemCatalogue.cs" Link="Shared/GlobalItemCatalogue.cs" />
     <Compile Include="../DeveloperOptions.cs" Link="Shared/DeveloperOptions.cs" />
     <Compile Include="../LogTail.cs" Link="Shared/LogTail.cs" />
-    <Compile Include="../LobbySettings.cs" Link="Shared/LobbySettings.cs" />
     <Compile Include="../GameRemoval.cs" Link="Shared/GameRemoval.cs" />
     <Compile Include="../AssetExports.cs" Link="Shared/AssetExports.cs" />
     <Compile Include="../RandomizerSeeds.cs" Link="Shared/RandomizerSeeds.cs" />
@@ -80,7 +79,7 @@
     <Compile Include="../GameSession.cs" Link="Shared/GameSession.cs" />
     <Compile Include="../GameImageCache.cs" Link="Shared/GameImageCache.cs" />
     <Compile Include="../GameWindowIcon.cs" Link="Shared/GameWindowIcon.cs" />
-    <Compile Include="../LobbyAutomation.cs" Link="Shared/LobbyAutomation.cs" />
+    <Compile Include="../GuestMemory.cs" Link="Shared/GuestMemory.cs" />
     <Compile Include="../GameArtwork.Download.cs" Link="Shared/GameArtwork.Download.cs" />
     <Compile Include="../GameArtwork.cs" Link="Shared/GameArtwork.cs" />
   </ItemGroup>

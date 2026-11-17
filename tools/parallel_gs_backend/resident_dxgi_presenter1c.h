@@ -552,6 +552,8 @@ class ResidentDxgiPresenter {
         }
         if (reo::performance::intro_hidden())
             parameters.fps |= 0x20000000u;  // black while the intro is skipped
+        if (reo::performance::network_veil.load(std::memory_order_relaxed))  // black + spinner (bits 16..23: phase)
+            parameters.fps = (parameters.fps & 0xff00ffffu) | 0x30000000u | ((uint32_t(submitted_ / 4u) & 0xffu) << 16);
         cmd.push_constants(&parameters, 0, sizeof(parameters));
         cmd.draw(3);
         cmd.end_render_pass();

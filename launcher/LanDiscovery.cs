@@ -33,6 +33,10 @@ public static class LanDiscovery {
         return (game.GameId == "file2" ? File2ReplyPrefix : ReplyPrefix).Concat(body).ToArray();
     }
 
+    // Older launchers advertise an original room title (up to 15 letters, digits, underscores).
+    static bool ValidTitle(string title) => title.Length is > 0 and <= 15 &&
+        title == title.Trim() && title.All(c => char.IsAsciiLetterOrDigit(c) || c == '_');
+
     // Untrusted network input: bounded size, exact prefix, validated fields.
     internal static Game? Decode(ReadOnlySpan<byte> packet) {
         bool second = packet.StartsWith(File2ReplyPrefix);
@@ -48,7 +52,7 @@ public static class LanDiscovery {
             string version = root.GetProperty("version").GetString() ?? "";
             int signup = root.GetProperty("signup").GetInt32();
             string title = root.TryGetProperty("title", out var roomTitle) ? roomTitle.GetString() ?? "" : "";
-            if (title.Length > 0 && !LobbySettings.ValidTitle(title)) return null;
+            if (title.Length > 0 && !ValidTitle(title)) return null;
             if (!OnlineOptions.TryHost(root.GetProperty("address").GetString(), out string address) ||
                 !OnlineOptions.ValidUsername(name) || version.Length > 20 ||
                 version.Any(c => c is < ' ' or > '~') || signup is < 1024 or > 65535)

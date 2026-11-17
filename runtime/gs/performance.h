@@ -34,6 +34,12 @@ inline bool intro_hidden() {
     if (clock::now() - started > std::chrono::seconds(30)) { intro_finished.store(true); return false; }
     return true;
 }
+// Network Game straight to SERVER SELECT: from choosing Network in the main menu until the
+// original server list appears, the connection prompts and sign-in run automatically
+// (automatic account provider) behind a black screen with a "connecting" spinner, audio
+// muted. Set by reo_hw_bridge.cpp (pad2NetworkVeil), which also applies a time limit.
+inline std::atomic<bool> network_veil{false};
+inline bool screen_hidden() { return intro_hidden() || network_veil.load(std::memory_order_relaxed); }
 
 // Actor callbacks run more than once per game frame. Count the original room
 // frame once, including wrap/reset, rather than counting every player and AI.

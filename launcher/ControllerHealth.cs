@@ -18,14 +18,14 @@ internal static class ControllerHealth {
 
     // Bounded reads on a background worker at 4 Hz. No guest writes or game-thread hooks.
     internal static async Task Run(Process process, string elf, Controller controller, string logs) {
-        LobbyAutomation.GuestMemory? memory = null;
+        GuestMemory? memory = null;
         Sample? previous = null;
         try {
             using var trace = new StreamWriter(Path.Combine(logs, "controller-health.jsonl")) { AutoFlush = true };
             while (!process.HasExited) {
                 Sample? sample = null;
                 try {
-                    memory ??= LobbyAutomation.GuestMemory.Open(process, elf);
+                    memory ??= GuestMemory.Open(process, elf);
                     sample = memory.ReadHealth();
                 } catch (IOException) {
                     memory?.Dispose(); memory = null;
