@@ -69,7 +69,7 @@ internal static class HeadlessChecks {
               "Modern camera settings do not reach the game environment or labels.");
         Control<Button>("ModernCameraResetButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
-        Check(window.settings.ModernCamera is {Enabled:true,Distance:300,Shoulder:35,InvertY:false},
+        Check(window.settings.ModernCamera is {Enabled:true,Distance:170,Shoulder:45,InvertY:false},
               "Resetting camera settings must keep the switch and restore defaults.");
         Control<CheckBox>("ModernCameraSwitch").IsChecked=false;
         Control<Button>("BindingsTab").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

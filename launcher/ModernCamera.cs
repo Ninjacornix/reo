@@ -15,12 +15,13 @@ public sealed class ModernCameraOptions {
     public bool MouseLook { get; set; } = true;
     // "third" or "first"; L3 (Z on keyboard) switches during play.
     public string View { get; set; } = "third";
-    // Percent of the default sensitivities (mouse 0.12 degrees per count, stick 4/3 degrees per frame).
+    // Percent of the default sensitivities (mouse 0.06 degrees per count, stick 4/3 degrees per frame).
     public int MouseSensitivity { get; set; } = 100;
     public int StickSpeed { get; set; } = 100;
     public bool InvertY { get; set; }
-    public int Distance { get; set; } = 300;
-    public int Shoulder { get; set; } = 35;
+    // Over-the-shoulder framing: distance behind the shoulder and sideways offset.
+    public int Distance { get; set; } = 170;
+    public int Shoulder { get; set; } = 45;
 
     public ModernCameraOptions Clamped() => new() {
         Enabled = Enabled,
@@ -29,7 +30,7 @@ public sealed class ModernCameraOptions {
         MouseSensitivity = Math.Clamp(MouseSensitivity, 10, 400),
         StickSpeed = Math.Clamp(StickSpeed, 10, 400),
         InvertY = InvertY,
-        Distance = Math.Clamp(Distance, 120, 600),
+        Distance = Math.Clamp(Distance, 60, 600),
         Shoulder = Math.Clamp(Shoulder, -120, 120)
     };
 }
@@ -43,7 +44,7 @@ public static class ModernCamera {
         var o = options.Clamped();
         if (!o.Enabled) return new Dictionary<string, string>();
         string F(double value) => value.ToString("0.###", CultureInfo.InvariantCulture);
-        double mouse = 0.12 * o.MouseSensitivity / 100.0, stick = o.StickSpeed / 100.0;
+        double mouse = 0.06 * o.MouseSensitivity / 100.0, stick = o.StickSpeed / 100.0;
         return new Dictionary<string, string> {
             ["REO_NATIVE_ROOM_CAMERA"] = "1",
             ["REO_CAMERA_MOD"] = "tps",

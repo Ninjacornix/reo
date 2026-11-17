@@ -33,9 +33,10 @@ public partial class MainWindow {
         // Packaged launchers run the game from the local build cache; source layouts use Exe.
         string built = LocalGameBuild.TargetPath(root, "file1");
         string exe = System.IO.File.Exists(built) ? built : settings.Exe;
-        ModernCameraSupport.Text = ModernCamera.Supported(exe)
-            ? "The installed File #1 build supports the modern camera."
-            : "The installed File #1 build does not include the native camera yet; the original camera is used until the game is rebuilt with it.";
+        bool supported = ModernCamera.Supported(exe);
+        ModernCameraSupport.Text = supported ? ""
+            : "The installed File #1 build does not include the modern camera yet; the original camera is used.";
+        ModernCameraSupport.IsVisible = !supported;
     }
 
     void SaveModernCamera() {

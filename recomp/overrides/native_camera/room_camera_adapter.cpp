@@ -79,6 +79,7 @@ constexpr std::uint32_t actor_aim_elevation = 0xbc8, aim_update_entry = 0x586aa0
 std::atomic<int> free_aim_units{0};
 std::atomic<std::int64_t> free_aim_ms{0};
 std::atomic<std::uint32_t> free_aim_actor{0};
+std::atomic<int> free_aim_yaw{0};  // actor yaw units toward the crosshair point
 
 // Third-person camera mod on the native room camera (native mode only).
 //
@@ -102,18 +103,20 @@ std::atomic<std::uint32_t> free_aim_actor{0};
 // per turn and forward = (sin, 0, cos) of it.
 struct ThirdPerson {
     bool enabled{}, log{}, mouse{true}, first_person{};
-    float mouse_sens{0.12f}, zoom_step{25.f};
+    float mouse_sens{0.06f}, zoom_step{20.f};
     // First person: eye height above the actor's feet and how far ahead of the face.
-    float eye_height{160.f}, eye_ahead{30.f};
+    float eye_height{162.f}, eye_ahead{10.f};
     // Aim height from camera pitch: above +down degrees aims low, below -up aims high.
     float aim_up{-12.f}, aim_down{16.f};
     // Moving while aiming (the original game stands still): units per second,
     // body radius kept from walls; strafe=0 turns it off.
     float strafe{1.f}, strafe_speed{75.f}, body_radius{28.f};
-    float distance{300.f}, pivot{150.f}, pitch{10.f}, side{35.f};
+    float distance{170.f}, pivot{155.f}, pitch{5.f}, side{45.f};
     float yaw_speed{4.f}, pitch_speed{3.f}, invert_y{0.f}, turn_sign{1.f};
-    float aim_distance{150.f}, aim_side{45.f}, aim_pivot{155.f};
-    float smoothing{0.45f}, pitch_min{-35.f}, pitch_max{55.f};
+    float aim_distance{90.f}, aim_side{50.f}, aim_pivot{160.f};
+    // Height of the gun above the actor's feet, for aiming at the crosshair point.
+    float gun_height{140.f};
+    float smoothing{0.5f}, pitch_min{-50.f}, pitch_max{60.f};
     static ThirdPerson from_environment() {
         ThirdPerson t;
         if (const char* mod = std::getenv("REO_CAMERA_MOD")) t.enabled = !std::strcmp(mod, "tps");
@@ -129,6 +132,7 @@ struct ThirdPerson {
                 {"pitch_max", &t.pitch_max}, {"mouse_sens", &t.mouse_sens}, {"zoom_step", &t.zoom_step},
                 {"eye_height", &t.eye_height}, {"eye_ahead", &t.eye_ahead}, {"aim_up", &t.aim_up},
                 {"aim_down", &t.aim_down}, {"strafe", &t.strafe}, {"strafe_speed", &t.strafe_speed},
+                {"gun_height", &t.gun_height},
                 {"body_radius", &t.body_radius}};
             const char* at = tune;
             while (*at) {
@@ -147,7 +151,7 @@ struct ThirdPerson {
 struct ThirdPersonState {
     bool active{}, smoothed{};
     float yaw{}, pitch{};  // radians
-    t::Vector eye{}, aim{};
+    t::Vector eye{}, aim{}, pivot{};  // pivot: smoothed follow position (translation only)
     std::uint64_t imports_seen{};
     std::uint16_t previous_pressed{};
     float zoom{};  // added to the rig distance by the mouse wheel
@@ -541,95 +545,92 @@ public:
 
         const bool aiming = (pad.pressed & reo_pad_tap::R1) != 0;
         reo::performance::request_crosshair(aiming || tps.first_person);
+        const float cp = std::cos(tps.pitch), sp = std::sin(tps.pitch);
+        const t::Vector forward{std::sin(tps.yaw) * cp, -sp, std::cos(tps.yaw) * cp};
+        const t::Vector flat{std::sin(tps.yaw), 0.f, std::cos(tps.yaw)};
+        const t::Vector right{std::cos(tps.yaw), 0.f, -std::sin(tps.yaw)};
+        const auto add = [](t::Vector a, t::Vector b, float k) { return t::Vector{a.x + b.x * k, a.y + b.y * k, a.z + b.z * k}; };
+
+        // Rig. Only the follow position is smoothed; yaw/pitch apply immediately,
+        // so looking has no lag. The eye is pulled in front of room walls.
+        t::Vector eye{};
+        if (tps.first_person) {
+            eye = {position.x + flat.x * tp.eye_ahead, position.y + tp.eye_height, position.z + flat.z * tp.eye_ahead};
+            tps.smoothed = false;
+            ++tps.first_person_frames;
+        } else {
+            const float distance = std::max(60.f, (aiming ? tp.aim_distance : tp.distance) + (aiming ? 0.f : tps.zoom));
+            const float side = aiming ? tp.aim_side : tp.side;
+            const float lift = aiming ? tp.aim_pivot : tp.pivot;
+            const t::Vector target{position.x, position.y + lift, position.z};
+            if (!tps.smoothed) { tps.pivot = target; tps.smoothed = true; }
+            else {
+                const float k = std::clamp(tp.smoothing, 0.f, 1.f);
+                tps.pivot = {tps.pivot.x + (target.x - tps.pivot.x) * k, tps.pivot.y + (target.y - tps.pivot.y) * k,
+                             tps.pivot.z + (target.z - tps.pivot.z) * k};
+            }
+            const t::Vector shoulder = add(tps.pivot, right, side);
+            eye = add(shoulder, forward, -distance);
+            t::Vector hit{};
+            try {
+                if (segment(ctx, g, tps.pivot, eye, hit)) {
+                    const t::Vector back{tps.pivot.x - hit.x, tps.pivot.y - hit.y, tps.pivot.z - hit.z};
+                    const float length = std::sqrt(back.x * back.x + back.y * back.y + back.z * back.z);
+                    const float pull = length > 1.f ? std::min(20.f, length * 0.5f) / length : 0.f;
+                    eye = add(hit, back, pull);
+                    ++tps.collisions;
+                }
+            } catch (...) {}
+        }
+
+        // Crosshair point: the screen-centre ray into the room (walls), or far ahead.
+        t::Vector point = add(eye, forward, 3000.f);
+        try {
+            t::Vector hit{};
+            if (segment(ctx, g, eye, point, hit)) point = hit;
+        } catch (...) {}
+
         if (aiming) {
-            const float pitch_degrees = tps.pitch / degrees;
-            reo_pad_tap::set_aim_left(pitch_degrees < tp.aim_up ? 0x00 : pitch_degrees > tp.aim_down ? 0xff : 0x80);
-            // Exact elevation for the shot: camera pitch (down positive) to aim units (up positive).
-            const int units = std::clamp(int(std::lround(-tps.pitch / yaw_turn)), -0x2000, 0x2000);
-            free_aim_units.store(units); free_aim_actor.store(base);
+            // The actor and the gun turn to the crosshair point, measured from the gun,
+            // so shots land where the crosshair is despite the shoulder offset.
+            const t::Vector gun{position.x, position.y + tp.gun_height, position.z};
+            const float dx = point.x - gun.x, dy = point.y - gun.y, dz = point.z - gun.z;
+            const float horizontal = std::sqrt(dx * dx + dz * dz);
+            const float face = horizontal > 1.f ? std::atan2(dx, dz) : tps.yaw;
+            const float elevation = std::atan2(dy, std::max(horizontal, 1.f));
+            const auto face_units = std::int16_t(std::lround(face / yaw_turn));
+            const int elevation_units = std::clamp(int(std::lround(elevation / yaw_turn)), -0x2000, 0x2000);
+            g.put<std::int16_t>(base + actor_yaw, face_units);
+            free_aim_units.store(elevation_units); free_aim_yaw.store(face_units); free_aim_actor.store(base);
             free_aim_ms.store(reo_pad_tap::steady_ms());
-        } else { reo_pad_tap::set_aim_left(-1); free_aim_ms.store(0); }
-        if (aiming) {
-            // Modern aim: the actor faces where the camera looks.
-            const auto units = std::int16_t(std::lround(tps.yaw / yaw_turn));
-            g.put<std::int16_t>(base + actor_yaw, units);
+            // Nearest of the game's three aim poses (the shot itself uses the exact elevation).
+            const float elevation_degrees = elevation / degrees;
+            reo_pad_tap::set_aim_left(elevation_degrees > -tp.aim_up ? 0x00 : elevation_degrees < -tp.aim_down ? 0xff : 0x80);
             ++tps.aim_frames;
-            // Move while aiming: the host left stick (not the aim override) moves
-            // the actor relative to the camera; a knee-height segment test keeps
-            // the body radius away from room walls. Height is unchanged.
+            // Move while aiming: the host left stick moves the actor relative to the
+            // camera; a knee-height segment test keeps the body radius from walls.
             const float sx = axis(pad.left_x), sy = -axis(pad.left_y);
             if (tp.strafe != 0.f && (sx != 0.f || sy != 0.f)) {
                 const float step = tp.strafe_speed / 30.f;
-                const t::Vector flat{std::sin(tps.yaw), 0.f, std::cos(tps.yaw)};
-                const t::Vector side{std::cos(tps.yaw), 0.f, -std::sin(tps.yaw)};
-                t::Vector move{flat.x * sy + side.x * sx, 0.f, flat.z * sy + side.z * sx};
+                t::Vector move{flat.x * sy + right.x * sx, 0.f, flat.z * sy + right.z * sx};
                 const float length = std::sqrt(move.x * move.x + move.z * move.z);
                 if (length > 1.f) { move.x /= length; move.z /= length; }
                 const t::Vector knee{position.x, position.y + 50.f, position.z};
-                const float reach = step + tp.body_radius;
-                const t::Vector probe{knee.x + move.x * reach, knee.y, knee.z + move.z * reach};
+                const t::Vector probe = add(knee, move, step + tp.body_radius);
                 t::Vector wall{};
                 bool blocked = true;
                 try { blocked = segment(ctx, g, knee, probe, wall); } catch (...) {}
                 if (!blocked) {
-                    const t::Vector next{position.x + move.x * step, position.y, position.z + move.z * step};
-                    g.put(base + actor_position, next);
+                    g.put(base + actor_position, add(position, move, step));
                     ++tps.strafe_frames;
                 } else ++tps.strafe_blocked;
             }
-        }
-        const float distance = std::max(60.f, (aiming ? tp.aim_distance : tp.distance) + (aiming ? 0.f : tps.zoom));
-        const float side = aiming ? tp.aim_side : tp.side;
-        const float lift = aiming ? tp.aim_pivot : tp.pivot;
-        const float cp = std::cos(tps.pitch), sp = std::sin(tps.pitch);
-        const t::Vector forward{std::sin(tps.yaw) * cp, -sp, std::cos(tps.yaw) * cp};
-        if (tps.first_person) {
-            const t::Vector flat{std::sin(tps.yaw), 0.f, std::cos(tps.yaw)};
-            const t::Vector eye{position.x + flat.x * tp.eye_ahead, position.y + tp.eye_height,
-                                position.z + flat.z * tp.eye_ahead};
-            parameters.pose.eye = eye;
-            parameters.pose.aim = {eye.x + forward.x * 400.f, eye.y + forward.y * 400.f, eye.z + forward.z * 400.f};
-            parameters.pose.roll = 0;
-            tps.eye = parameters.pose.eye; tps.aim = parameters.pose.aim; tps.smoothed = true;
-            ++tps.frames; ++tps.first_person_frames;
-            auto relatched = sequences.snapshot(); relatched.selection_changed = 0; sequences.restore(relatched);
-            events.clear();
-            s::publish_camera_display(parameters, display_mode, projection, display, sink);
-            return;
-        }
-        const t::Vector right{std::cos(tps.yaw), 0.f, -std::sin(tps.yaw)};
-        const t::Vector pivot{position.x + right.x * side, position.y + lift, position.z + right.z * side};
-        t::Vector eye{pivot.x - forward.x * distance, pivot.y - forward.y * distance, pivot.z - forward.z * distance};
-        const t::Vector aim{pivot.x + forward.x * 400.f, pivot.y + forward.y * 400.f, pivot.z + forward.z * 400.f};
-        // Walls: test from the actor's head line to the eye; stop short of a hit.
-        const t::Vector head{position.x, position.y + lift, position.z};
-        bool pulled = false;
-        t::Vector hit{};
-        try {
-            if (segment(ctx, g, head, eye, hit)) {
-                const t::Vector back{head.x - hit.x, head.y - hit.y, head.z - hit.z};
-                const float length = std::sqrt(back.x * back.x + back.y * back.y + back.z * back.z);
-                const float pull = length > 1.f ? std::min(25.f, length * 0.5f) / length : 0.f;
-                eye = {hit.x + back.x * pull, hit.y + back.y * pull, hit.z + back.z * pull};
-                pulled = true; ++tps.collisions;
-            }
-        } catch (...) {}
-        if (!tps.smoothed) { tps.eye = eye; tps.aim = aim; tps.smoothed = true; }
-        else {
-            const float k = std::clamp(tp.smoothing, 0.f, 1.f);
-            const auto lerp = [k](t::Vector a, t::Vector b) {
-                return t::Vector{a.x + (b.x - a.x) * k, a.y + (b.y - a.y) * k, a.z + (b.z - a.z) * k};
-            };
-            const auto d2 = [&](t::Vector v) {
-                return (v.x - head.x) * (v.x - head.x) + (v.y - head.y) * (v.y - head.y) + (v.z - head.z) * (v.z - head.z);
-            };
-            // Never ease through a wall: when pulled in closer than the smoothed eye, snap.
-            tps.eye = pulled && d2(eye) < d2(tps.eye) ? eye : lerp(tps.eye, eye);
-            tps.aim = lerp(tps.aim, aim);
-        }
-        parameters.pose.eye = tps.eye;
-        parameters.pose.aim = tps.aim;
+        } else { reo_pad_tap::set_aim_left(-1); free_aim_ms.store(0); }
+
+        parameters.pose.eye = eye;
+        parameters.pose.aim = add(eye, forward, 400.f);
         parameters.pose.roll = 0;
+        tps.eye = parameters.pose.eye; tps.aim = parameters.pose.aim;
         ++tps.frames;
         // Free camera: no zone hand-off latch for the analog direction (6621F0).
         auto relatched = sequences.snapshot(); relatched.selection_changed = 0; sequences.restore(relatched);
@@ -771,7 +772,9 @@ void aim_update_hook(std::uint8_t* ram, R5900Context* ctx, PS2Runtime* rt) {
     if (!at || reo_pad_tap::steady_ms() - at > 100 || actor != free_aim_actor.load()) return;
     try {
         reo_source_instrumentation::EntryScope scope(rt, ctx);
-        Guest(ram).put<std::int16_t>(actor + actor_aim_elevation, std::int16_t(free_aim_units.load()));
+        Guest guest(ram);
+        guest.put<std::int16_t>(actor + actor_aim_elevation, std::int16_t(free_aim_units.load()));
+        guest.put<std::int16_t>(actor + actor_yaw, std::int16_t(free_aim_yaw.load()));
         if (binding) ++binding->tps.free_aim_frames;
     } catch (...) {}
 }

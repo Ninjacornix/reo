@@ -61,9 +61,9 @@ internal static class KeyboardInputTests {
         var env=ModernCamera.Environment(new ModernCameraOptions{Enabled=true});
         check(env["REO_NATIVE_ROOM_CAMERA"]=="1"&&env["REO_CAMERA_MOD"]=="tps"&&env["REO_CAMERA_MOUSE"]=="1"&&env["REO_CAMERA_VIEW"]=="third","modern camera selects the native camera, TPS, third person and mouse look");
         check(ModernCamera.Environment(new ModernCameraOptions{Enabled=true,View="first"})["REO_CAMERA_VIEW"]=="first"&&ModernCamera.Environment(new ModernCameraOptions{Enabled=true,View="sideways"})["REO_CAMERA_VIEW"]=="third","modern camera view is first or third person only");
-        check(env["REO_CAMERA_TPS"]=="distance=300,side=35,mouse_sens=0.12,yaw_speed=4,pitch_speed=3,invert_y=0","modern camera default tuning");
+        check(env["REO_CAMERA_TPS"]=="distance=170,side=45,mouse_sens=0.06,yaw_speed=4,pitch_speed=3,invert_y=0","modern camera default over-the-shoulder tuning");
         var tuned=ModernCamera.Environment(new ModernCameraOptions{Enabled=true,MouseLook=false,MouseSensitivity=200,StickSpeed=50,InvertY=true,Distance=9999,Shoulder=-40});
-        check(tuned["REO_CAMERA_MOUSE"]=="0"&&tuned["REO_CAMERA_TPS"]=="distance=600,side=-40,mouse_sens=0.24,yaw_speed=2,pitch_speed=1.5,invert_y=1","modern camera tuning is clamped and uses invariant decimals");
+        check(tuned["REO_CAMERA_MOUSE"]=="0"&&tuned["REO_CAMERA_TPS"]=="distance=600,side=-40,mouse_sens=0.12,yaw_speed=2,pitch_speed=1.5,invert_y=1","modern camera tuning is clamped and uses invariant decimals");
         var saved=JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(new Settings{ModernCamera=new(){Enabled=true,Distance=420}}))!;
         check(saved.ModernCamera.Enabled&&saved.ModernCamera.Distance==420,"modern camera settings round-trip through settings.json");
         check(JsonSerializer.Deserialize<Settings>("{}")!.ModernCamera is {Enabled:false,MouseLook:true},"older settings default to the original camera with mouse look ready");
