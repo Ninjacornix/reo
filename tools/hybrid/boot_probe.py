@@ -26,7 +26,7 @@ args.out.mkdir(parents=True, exist_ok=False)
 for name in ('XINPUT1_4.dll', 'XINPUT1_3.dll'):
     shutil.copyfile(SOURCE / 'launcher/artifacts/native/XINPUT1_4.dll', args.exe.parent / name)
 elf = args.data / ('SLUS_207.65' if args.game == 'file1' else 'SLUS_209.84')
-front_at = 0x5d4898 if args.game == 'file1' else None
+front_at = 0x5d4898 if args.game == 'file1' else 0x5b7d00
 shutil.copytree(SOURCE / 'build-ninja/play/saves', args.out / 'saves')
 env = {k: v for k, v in os.environ.items() if not k.upper().startswith('REO_')}
 # Same base environment as tools/hybrid/room_driver.py, without its test route or turbo.

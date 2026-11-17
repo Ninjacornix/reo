@@ -80,12 +80,17 @@ inline bool all_views() {
     static const bool value = [] { const char* v = option(); return v && std::strcmp(v, "all") == 0; }();
     return value;
 }
-// Z = a + b / d (d = distance along the view direction), REO_CAMERA_WARP_DEPTH=a,b.
+// Z = a + b / d (d = distance along the view direction). Measured for Outbreak (both
+// editions use the same VU1 projection): Z = 2^24 / d (tools/hybrid/depth_calibrate.py).
+// REO_CAMERA_WARP_DEPTH=a,b overrides it; =off uses rotation-only warps.
 struct DepthMapping { bool on{}; float a{}, b{}; };
 inline DepthMapping depth_mapping() {
     static const DepthMapping value = [] {
-        DepthMapping m;
-        if (const char* v = std::getenv("REO_CAMERA_WARP_DEPTH"); v && *v) {
+        DepthMapping m{true, 0.f, 16777216.f};
+        const char* v = std::getenv("REO_CAMERA_WARP_DEPTH");
+        if (v && !std::strcmp(v, "off")) return DepthMapping{};
+        if (v && *v) {
+            m = DepthMapping{};
             m.a = float(std::atof(v));
             if (const char* c = std::strchr(v, ',')) { m.b = float(std::atof(c + 1)); m.on = m.b != 0.f; }
         }
@@ -93,11 +98,12 @@ inline DepthMapping depth_mapping() {
     }();
     return value;
 }
-// Game updates between the camera evaluation and the frame it is shown in.
+// Game updates between the camera evaluation and the frame it is shown in. Measured: 2
+// (view switches reach the scanout two camera updates later; REO_CAMERA_WARP_PROBE).
 inline unsigned lag() {
     static const unsigned value = [] {
         const char* v = std::getenv("REO_CAMERA_WARP_LAG");
-        return v ? unsigned(std::atoi(v)) : 0u;
+        return v ? unsigned(std::atoi(v)) : 2u;
     }();
     return value;
 }

@@ -5,7 +5,7 @@ per second for what the player sees. It should act like a modern game: frames ar
 presented as fast as the display allows, motion and camera are smooth at that rate,
 and game logic keeps its own correct speed.
 
-Status: **step 0 implemented (presentation warp, first person); steps 1–4 are design.**
+Status: **step 0 implemented (presentation warp, first and third person); steps 1–4 are design.**
 Plan step 2 in [HYBRID_INTEGRATION_PLAN.md](HYBRID_INTEGRATION_PLAN.md).
 
 ## What modern games do
@@ -64,17 +64,33 @@ lens (fit 1.00), 4:3 picture, screen x = −(up × forward), screen y = +up.
 
 Scope and limits:
 
-- **First person only by default.** The third-person camera orbits the player: the
-  background should pan while the player stays put. Without depth a rotation moves
-  both, so the player would wobble (~20 px at full stick speed). `REO_CAMERA_WARP=all`
-  enables it anyway for experiments; `REO_CAMERA_WARP=0` disables the warp.
-  Third person needs depth-aware reprojection (GS Z buffer → presenter), which is
-  a renderer feature of its own.
+- Rotation mode alone is exact only for first person; third person uses the depth
+  warp (step 0b). `REO_CAMERA_WARP=0` disables the warp.
 - Actors and camera translation still move at 30 Hz (steps 1–2).
 - HUD text drawn into the game frame rotates with the repeated frame for one
   scanout during turns (the crosshair and overlays are drawn after the warp).
 - Diagnostics: `REO_CAMERA_WARP_LOG=1` (applied warps), `=2` (every present);
   `REO_CAMERA_WARP_TEST=<yaw>,<pitch>` applies a fixed warp to every present.
+
+
+### Step 0b — depth warp for the orbiting third-person camera (2026-11-17)
+
+At each flip the GS Z buffer of the shown frame is de-swizzled into a linear buffer
+(`camera_depth.comp`, context-1 `ZBUF`, here PSMZ32 512x448). On the repeated scanout
+`present_warp.glsl` reprojects every pixel with its depth into the in-between
+camera (rotation and translation, four fixed-point iterations of a backward warp).
+
+| Measurement | Result | Tool |
+|---|---|---|
+| Depth mapping | Z = 2^24 / forward distance (ten floor fits: a ~ 0, b 16.67–16.76 M) | `tools/hybrid/depth_calibrate.py`, dumps via `REO_CAMERA_DEPTH_DUMP` |
+| Pose lag | 2 camera updates (view switches at serial 121/211/302 reached the scanout at flip 123/213/304) | `REO_CAMERA_WARP_PROBE=1` |
+| In-between frames while turning (16 repeats) | background shift median 0.50 of the real frame-to-frame shift; player region stays halfway (still when the player is still) | `REO_CAMERA_WARP_SHOT`, `tools/hybrid/warp_shots.py` |
+
+With lag 2 the next camera pose is already known when the repeat is shown, so the
+in-between frame is an exact interpolation, not an extrapolation. Defaults: depth
+mapping on, lag 2 (`REO_CAMERA_WARP_DEPTH=off` returns to rotation-only for first
+person). Disocclusions (background revealed behind the player during a turn) reuse
+the nearest rendered pixel. Actors still move at 30 Hz (step 2).
 
 
 ## Plan, in order

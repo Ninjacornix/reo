@@ -43,12 +43,11 @@ game does not see the right stick, so right-stick ad-libs are off.
 
 ## Smooth camera motion (60 fps)
 
-The game updates 30 times per second. In first person the camera turn is also
-shown on the in-between display frame: the repeated frame is rotated by half of the
-turn (presentation warp, [native-gameplay/FRAME_DECOUPLING.md](native-gameplay/FRAME_DECOUPLING.md)).
-Characters and camera position still move at 30 Hz. Third person is not warped,
-because its camera orbits the character and that needs depth information the
-presenter does not have yet. `REO_CAMERA_WARP=0` turns the warp off.
+The game updates 30 times per second. Camera motion is also shown on the in-between
+display frame: the repeated frame is reprojected with the frame's depth buffer into
+the camera halfway to the next update, in first and third person
+([native-gameplay/FRAME_DECOUPLING.md](native-gameplay/FRAME_DECOUPLING.md)).
+Characters still move at 30 Hz. `REO_CAMERA_WARP=0` turns it off.
 
 ## How it works
 

@@ -29,6 +29,7 @@ ap.add_argument('--env', action='append', default=[], help='Extra KEY=VALUE for 
 ap.add_argument('--explore', action='store_true', help='Walk/turn/press cross in cycles instead of the fixed movement check')
 ap.add_argument('--analog', action='store_true', help='With --explore: walk with the left stick and turn with the right stick (modern camera)')
 ap.add_argument('--press', action='append', default=[], help='SECONDS:BUTTON[+BUTTON|+AXIS=VALUE]:HOLD after room arrival (e.g. 10:r3:0.2, 5:rx=20000:30)')
+ap.add_argument('--burst', help='AT:SECONDS after room arrival: capture frames as fast as possible (burst-NNN.png, burst.json)')
 ap.add_argument('--capture-at', action='append', type=float, default=[], help='Extra capture SECONDS after room arrival')
 ap.add_argument('--reverse-walk', action='store_true', help='With --explore --analog: alternate forward/backward stick walks (sharp reversals)')
 ap.add_argument('--warp-probe', action='store_true', help='Idle captures before/after short right-stick turns (presentation warp validation)')
@@ -163,6 +164,17 @@ try:
                         if at<=room_elapsed<at+hold:
                             parts=names.split('+');held=[x for x in parts if '=' not in x]
                             held_axes={k:int(v) for k,v in (x.split('=') for x in parts if '=' in x)};held_until=time.monotonic()-began+0.25
+                    if args.burst and 'burst' not in dumped:
+                        at,length=map(float,args.burst.split(':'))
+                        if room_elapsed>=at:
+                            dumped.add('burst');times=[]
+                            publisher.publish(dict({'buttons':held},**held_axes))
+                            end=time.monotonic()+length;k=0
+                            while time.monotonic()<end:
+                                if k%4==0: publisher.publish(dict({'buttons':held},**held_axes))
+                                try: capture_owned(identity,args.out/('burst-%03d.png'%k));times.append(time.monotonic()-began);k+=1
+                                except Exception as problem: print('BURST '+str(problem),flush=True);break
+                            (args.out/'burst.json').write_text(json.dumps(times));print('BURST frames=%d'%k,flush=True)
                     for at in args.capture_at:
                         if room_elapsed>=at and ('cap',at) not in dumped:
                             dumped.add(('cap',at));capture('at-%g'%at)

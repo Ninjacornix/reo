@@ -337,6 +337,61 @@ class ResidentDxgiPresenter {
         device_.unmap_host_buffer(*probeHost_, Vulkan::MEMORY_ACCESS_READ_BIT);
         ++probeLogged_;
     }
+    // REO_CAMERA_WARP_SHOT=<folder>: every 2 s, six consecutive presents are re-rendered
+    // offscreen exactly as presented and saved (shot-NNN.rgba + shot-NNN.json) to check the
+    // warped repeats against the real frames around them.
+    Vulkan::ImageHandle shotImage_;
+    uint64_t shotPresents_ = 0, shotSaved_ = 0;
+    static const char* shotFolder() {
+        static const char* folder = std::getenv("REO_CAMERA_WARP_SHOT");
+        return folder && *folder ? folder : nullptr;
+    }
+    void shotMaybe(const Vulkan::ImageHandle& merged, bool linear) {
+        const char* folder = shotFolder();
+        // Only while the modern camera publishes views (gameplay), so boot frames are skipped.
+        if (!folder || shotSaved_ >= 60 || !width_ || !height_ || !warpFlipSerial_) return;
+        if ((shotPresents_++ % 120) >= 6) return;
+        if (!shotImage_ || shotImage_->get_width() != width_ || shotImage_->get_height() != height_) {
+            auto info = Vulkan::ImageCreateInfo::render_target(width_, height_, VK_FORMAT_R8G8B8A8_UNORM);
+            info.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+            info.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+            shotImage_ = device_.create_image(info);
+            if (!shotImage_) return;
+        }
+        Vulkan::BufferCreateInfo bufferInfo{};
+        bufferInfo.domain = Vulkan::BufferDomain::CachedHost;
+        bufferInfo.size = VkDeviceSize(width_) * height_ * 4u;
+        bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+        auto host = device_.create_buffer(bufferInfo);
+        if (!host) return;
+        auto cmd = device_.request_command_buffer();
+        recordPresentPass(*cmd, merged, *shotImage_, shotImage_->get_view(), false, linear);
+        cmd->image_barrier(*shotImage_, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                           VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT, 0, VK_PIPELINE_STAGE_2_COPY_BIT,
+                           VK_ACCESS_2_TRANSFER_READ_BIT);
+        VkBufferImageCopy copy{};
+        copy.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+        copy.imageExtent = {width_, height_, 1};
+        cmd->copy_image_to_buffer(*host, *shotImage_, 1, &copy);
+        cmd->buffer_barrier(*host, VK_PIPELINE_STAGE_2_COPY_BIT, VK_ACCESS_2_TRANSFER_WRITE_BIT,
+                            VK_PIPELINE_STAGE_2_HOST_BIT, VK_ACCESS_2_HOST_READ_BIT);
+        Vulkan::Fence fence;
+        device_.submit(cmd, &fence);
+        if (!fence) return;
+        fence->wait();
+        const auto* data = static_cast<const char*>(device_.map_host_buffer(*host, Vulkan::MEMORY_ACCESS_READ_BIT));
+        if (!data) return;
+        const auto index = shotSaved_++;
+        char name[32]; std::snprintf(name, sizeof name, "shot-%03llu", (unsigned long long)index);
+        const auto base = std::filesystem::path(folder) / name;
+        { std::ofstream out(base.string() + ".rgba", std::ios::binary); out.write(data, std::streamsize(bufferInfo.size)); }
+        device_.unmap_host_buffer(*host, Vulkan::MEMORY_ACCESS_READ_BIT);
+        std::ofstream meta(base.string() + ".json");
+        meta << "{\"width\":" << width_ << ",\"height\":" << height_ << ",\"present\":" << submitted_
+             << ",\"repeat\":" << (warpRepeat_ ? 1 : 0) << ",\"applied\":" << (warpApplied_ ? 1 : 0)
+             << ",\"mode\":" << warpResult_.mode << ",\"flipSerial\":" << warpFlipSerial_
+             << ",\"yaw\":" << warpResult_.yaw_degrees << ",\"move\":" << warpResult_.move << "}\n";
+    }
     void probeCopy() {
         if (!probeEnabled() || !depthWidth_ || probeLogged_ > 4000) return;
         if (!probeHost_) {
@@ -821,6 +876,7 @@ private:
         else
             requireVk(result, "Win32 Vulkan queue presentation");
         heldSource_ = merged;
+        shotMaybe(merged, linear);
         ++submitted_;
         return drawComplete;
     }
@@ -852,6 +908,7 @@ private:
         if (!release || !swapchain_->present(std::move(release), displayVsync || displaySync()))
             throw std::runtime_error("DXGI GPU present failed");
         heldSource_ = merged;
+        shotMaybe(merged, linear);
         ++submitted_;
         return drawComplete;
     }
