@@ -737,8 +737,9 @@
       "Picture configuration",
       "DISPLAY",
       "Borderless fullscreen",
+      "Start at the main menu",
       "{Binding Width}",
-      " \u00d7 ",
+      " × ",
       "{Binding Height}",
       "Window resolution",
       "Aspect ratio",
@@ -757,7 +758,7 @@
       "1.00",
       "PREVIEW",
       "Live preview",
-      "Loading Kevin\u2026",
+      "Loading Kevin…",
       "Drag to rotate. Scroll to zoom."
     ],
     "PageAudio": [
