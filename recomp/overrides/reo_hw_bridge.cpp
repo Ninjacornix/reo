@@ -47,6 +47,7 @@
 #include "network/native/automatic_account.h"
 #include "network/native/game_addresses.h"
 #include "reo_trace_logger.h"
+#include "runtime/gs/performance.h"
 #include "runtime/gs/gs_renderer.h"
 #include "runtime/vu/vu_interpreter.h"
 #include "runtime/input/input.h"
@@ -988,6 +989,43 @@ uint16_t pad2AutomaticAccount(uint8_t* rd, double now) {
         case account::Button::Down: return pad2ButtonBit("DOWN");
         default: return 0;
     }
+}
+
+// Start at the main menu (REO_SKIP_INTRO=1, runtime/gs/performance.h): presses Start at
+// the original title prompt (and File #2's opening movie) until the main menu is shown.
+// Only ordinary pad input is produced; the boot logos are shortened by REO_TURBO.
+uint16_t pad2SkipIntro(uint8_t* rd, double now) {
+    if (!reo::performance::skip_intro() || reo::performance::intro_finished.load() || !rd)
+        return 0;
+    static double nextPress = 0;
+    auto finish = [&](const char* why) {
+        std::fprintf(stderr, "[SKIP-INTRO] %s t=%.3f\n", why, now);
+        reo::performance::intro_finished.store(true);
+        return uint16_t(0);
+    };
+    if (!reo::performance::intro_hidden())
+        return finish("time limit; showing the game");
+    auto word = [rd](uint32_t a) {
+        uint32_t value = 0;
+        reo_source_instrumentation::copyBytesForBank(rd, &value, rd + a, sizeof(value));
+        return value;
+    };
+    const uint32_t front = word(reo_network::game::frontMenu);
+    if (front < 0x100000u || front >= ps2RamBackingBytes - 0x74u)
+        return 0;
+    const uint32_t state = word(front) & 0x00FFFFFFu;
+    if ((state & 0xFFFFu) == 0x0501u)
+        return finish("main menu reached");
+#if defined(REO_GAME_FILE2)
+    const bool prompt = state == 0x030100u || state == 0x020000u;
+#else
+    const bool prompt = state == 0x030200u;
+#endif
+    // Short Start pulses: pressed 0.1 s, then released 0.3 s.
+    if (!prompt) return 0;
+    if (now < nextPress) return now > nextPress - 0.3 ? 0 : pad2ButtonBit("START");
+    nextPress = now + 0.4;
+    return pad2ButtonBit("START");
 }
 
 // Test-only route through original guest handlers. These reads observe menu state;
@@ -2321,6 +2359,7 @@ void pad2FeederLoop() {
                 routeRam = g_pad2.rdram;
             }
             pressed |= pad2TestRoute(routeRam, now);
+            pressed |= pad2SkipIntro(routeRam, now);
             pressed |= pad2AutomaticAccount(routeRam, now);
             // Live input (runtime/input: keyboard and XInput, same bit order), only while this
             // process owns the foreground window so typing elsewhere does not press buttons.

@@ -31,6 +31,7 @@
     <Compile Include="../FontContours.cs" Link="Shared/FontContours.cs" />
     <Compile Include="../CoopSmokeOptions.cs" Link="Shared/CoopSmokeOptions.cs" />
     <Compile Include="../Settings.cs" Link="Shared/Settings.cs" />
+    <Compile Include="../IntroSkip.cs" Link="Shared/IntroSkip.cs" />
     <Compile Include="../AppLayout.cs" Link="Shared/AppLayout.cs" />
     <Compile Include="../Storage.cs" Link="Shared/Storage.cs" />
     <Compile Include="../GameCatalog.cs" Link="Shared/GameCatalog.cs" />

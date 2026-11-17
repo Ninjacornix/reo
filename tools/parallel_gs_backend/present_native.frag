@@ -31,6 +31,7 @@ vec3 antialias(vec2 uv, vec2 stepSize) {
     return wideLuma < lowest || wideLuma > highest ? narrow : wide;
 }
 void main() {
+    if ((extent.fps & 0x20000000u) != 0u) { hostColor = vec4(0,0,0,1); return; }  // intro skip
     vec2 drawn = pictureSize(extent.source, extent.destination, extent.linear);
     vec2 origin = (vec2(extent.destination) - drawn) * 0.5;
     vec2 texel = (gl_FragCoord.xy - origin) * vec2(extent.source) / drawn;

@@ -1,5 +1,6 @@
 #pragma once
 #include <atomic>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
@@ -14,6 +15,25 @@ inline bool enabled() {
     return value;
 }
 inline std::atomic<uint64_t> updates{0};
+// Start at the main menu (REO_SKIP_INTRO=1). The boot logos run fast (REO_TURBO until
+// the front menu exists) and the title is confirmed automatically (reo_hw_bridge.cpp);
+// meanwhile the screen stays black and audio is muted. A 30 s limit shows the game
+// normally if the boot waits for input (e.g. a memory card prompt).
+inline bool skip_intro() {
+    static const bool value = [] {
+        const char* v = std::getenv("REO_SKIP_INTRO");
+        return v && std::strcmp(v, "1") == 0;
+    }();
+    return value;
+}
+inline std::atomic<bool> intro_finished{false};
+inline bool intro_hidden() {
+    if (!skip_intro() || intro_finished.load(std::memory_order_relaxed)) return false;
+    using clock = std::chrono::steady_clock;
+    static const clock::time_point started = clock::now();
+    if (clock::now() - started > std::chrono::seconds(30)) { intro_finished.store(true); return false; }
+    return true;
+}
 
 // Actor callbacks run more than once per game frame. Count the original room
 // frame once, including wrap/reset, rather than counting every player and AI.

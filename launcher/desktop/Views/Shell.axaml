@@ -271,6 +271,14 @@
                       <compat:Rc1TextBlock Text="Borderless fullscreen" FontSize="14" VerticalAlignment="Center" />
                       <CheckBox x:Name="Fullscreen" IsCheckedChanged="SaveSettings" Grid.Column="1" AutomationProperties.Name="Borderless fullscreen" Classes="ToggleSwitch" ToolTip.Tip="Ctrl+Enter toggles fullscreen in game." />
                     </Grid>
+                    <Grid MinHeight="42" Margin="0,0,0,6">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <compat:Rc1TextBlock Text="Start at the main menu" FontSize="14" VerticalAlignment="Center" />
+                      <CheckBox x:Name="SkipIntro" IsCheckedChanged="SaveSettings" Grid.Column="1" AutomationProperties.Name="Start at the main menu" Classes="ToggleSwitch" ToolTip.Tip="Skips the startup logos and the title screen." />
+                    </Grid>
                     <DockPanel MinHeight="48">
                       <ComboBox x:Name="WindowSize" SelectionChanged="SettingChanged" DockPanel.Dock="Right" AutomationProperties.Name="Window resolution" Classes="GraphicsChoice" ToolTip.Tip="Windowed output size. Borderless fullscreen uses the desktop resolution.">
                         <ComboBox.ItemTemplate>

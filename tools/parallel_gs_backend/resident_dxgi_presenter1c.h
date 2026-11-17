@@ -550,6 +550,8 @@ class ResidentDxgiPresenter {
                 std::fprintf(stderr, "[PERFORMANCE-OVERLAY] fps=%.1f frame_ms=%.1f ups=%.1f\n",
                     reading.fps / 10.0, reading.frameMs / 10.0, reading.ups / 10.0);
         }
+        if (reo::performance::intro_hidden())
+            parameters.fps |= 0x20000000u;  // black while the intro is skipped
         cmd.push_constants(&parameters, 0, sizeof(parameters));
         cmd.draw(3);
         cmd.end_render_pass();

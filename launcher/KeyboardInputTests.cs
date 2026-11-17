@@ -4,6 +4,9 @@ namespace Outbreak.Launcher;
 
 internal static class KeyboardInputTests {
     internal static void Run(Action<bool,string> check) {
+        var skip=IntroSkip.Environment("file1",true);
+        check(skip["REO_SKIP_INTRO"]=="1"&&skip["REO_TURBO"]=="16"&&skip["REO_TURBO_UNTIL"]=="0x5D4898"&&IntroSkip.Environment("file2",true)["REO_TURBO_UNTIL"]=="0x5B7D00","start at the main menu fast-forwards the boot to each edition's front menu");
+        check(IntroSkip.Environment("file1",false).Count==0&&System.Text.Json.JsonSerializer.Deserialize<Settings>("{}")!.SkipIntro,"skipping the intro is on by default and off sets nothing");
         var bindings=InputMapping.KeyboardDefaults();
         Pad Keys(params int[] keys)=>InputMapping.Keyboard(bindings,keys.Contains);
         foreach (var (key,button) in new (int,ushort)[]{('W',1),('S',2),('A',4),('D',8)}) {

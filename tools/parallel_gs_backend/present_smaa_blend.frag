@@ -12,6 +12,7 @@ layout(set=0,binding=0) uniform sampler2D colorTexture;
 layout(set=0,binding=1) uniform sampler2D weightTexture;
 layout(location=0) out vec4 hostColor;
 void main() {
+    if ((extent.fps & 0x20000000u) != 0u) { hostColor = vec4(0,0,0,1); return; }  // intro skip
     vec2 outputSize = vec2(extent.destination);
     vec2 picture = pictureSize(extent.source, extent.destination, extent.flags);
     vec2 origin = (outputSize - picture) * 0.5;

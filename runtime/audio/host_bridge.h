@@ -1,5 +1,6 @@
 #pragma once
 #include "mixer.h"
+#include "runtime/gs/performance.h"
 #include <charconv>
 #include <cstdlib>
 #include <cstdio>
@@ -74,7 +75,8 @@ inline void initialize() {
 
 // Host mixer ABI, defined once by the game's bootstrap translation unit.
 // These controls do not change guest volumes, resources or playback cursors.
-float reoAudioMasterGain() { return reo::audio::gain(reo::audio::Master); }
+// Muted while the intro is skipped (REO_SKIP_INTRO, runtime/gs/performance.h).
+float reoAudioMasterGain() { return reo::performance::intro_hidden() ? 0.f : reo::audio::gain(reo::audio::Master); }
 float reoAudioStreamGain(uint32_t handle) { return reo::audio::streamGain(handle); }
 void reoAudioResetStreams() {
     for(auto& entry:reo::audio::streamRoutes) entry.store(0,std::memory_order_relaxed);
