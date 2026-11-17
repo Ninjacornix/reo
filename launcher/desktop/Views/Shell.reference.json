@@ -737,8 +737,9 @@
       "Picture configuration",
       "DISPLAY",
       "Borderless fullscreen",
+      "Start at the main menu",
       "{Binding Width}",
-      " \u00d7 ",
+      " × ",
       "{Binding Height}",
       "Window resolution",
       "Aspect ratio",
@@ -757,7 +758,7 @@
       "1.00",
       "PREVIEW",
       "Live preview",
-      "Loading Kevin\u2026",
+      "Loading Kevin…",
       "Drag to rotate. Scroll to zoom."
     ],
     "PageAudio": [
@@ -784,7 +785,13 @@
       "RIGHT STICK / VOICE COMMANDS",
       "D-pad keys use tank controls. Assigning a key clears its previous keyboard binding.",
       "PS2 button mapping",
-      "Dead zone: 12%"
+      "Dead zone: 12%",
+      "Modern camera",
+      "Starting view",
+      "Mouse sensitivity: 100%",
+      "Stick look speed: 100%",
+      "Distance: 170",
+      "Shoulder offset: 45"
     ],
     "PageSaves": [
       "Memory cards",
@@ -847,6 +854,10 @@
     "PageDeveloper": [
       "Developer",
       "Changes apply to your next session.",
+      "Record slowdowns",
+      "Records performance evidence when the game slows down. Reports stay on this computer.",
+      "Sensitive detection",
+      "Captures shorter hitches, smaller speed drops and continuous timing evidence. Applies to your next launch.",
       "NETWORK",
       "Co-op only",
       "Packet timing",

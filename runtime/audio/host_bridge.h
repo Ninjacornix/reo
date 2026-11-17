@@ -1,6 +1,6 @@
 #pragma once
 #include "mixer.h"
-#include "runtime/gs/performance.h"
+#include "../gs/performance.h"  // relative: also built without the repo root on the include path
 #include <charconv>
 #include <cstdlib>
 #include <cstdio>
