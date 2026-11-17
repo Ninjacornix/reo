@@ -29,7 +29,7 @@ tab says so and the original camera is used). Settings apply on the next launch.
 | Action | Controller | Keyboard and mouse |
 |---|---|---|
 | Look | Right stick | Mouse |
-| Walk (relative to the camera) | Left stick | Movement keys (WASD by default) |
+| Walk forward / sideways / back (the character always faces where the camera points) | Left stick | Movement keys (WASD by default) |
 | Aim: the camera moves closer, a crosshair appears, the character and gun turn to it | Hold R1 | Hold right mouse button (or the R1 key) |
 | Move while aiming (no walk animation) | Left stick | Movement keys |
 | Fire / action | Cross | Left mouse button (or the Cross key) |
@@ -48,6 +48,19 @@ display frame: the repeated frame is reprojected with the frame's depth buffer i
 the camera halfway to the next update, in first and third person
 ([native-gameplay/FRAME_DECOUPLING.md](native-gameplay/FRAME_DECOUPLING.md)).
 Characters still move at 30 Hz. `REO_CAMERA_WARP=0` turns it off.
+
+## Modern TPS facing
+
+The character turns toward the crosshair point every frame (rate-limited, `turn_rate`
+degrees per frame), not only while aiming. Forward input walks or runs with the game's own
+animation straight ahead; sideways and backward input moves the character relative to the
+camera (wall-checked) while it keeps facing the camera, so it slides without a walk cycle.
+`face=0` restores the original behaviour (the character turns toward its walking direction).
+
+A frame the native camera refuses no longer shows the room's fixed angle: the original
+camera still evaluates it, then the modern view is published again. Scripted camera
+selections (doors, events) hand the camera back to the game only after they last
+`yield_delay` frames (default 20).
 
 ## How it works
 
@@ -76,7 +89,8 @@ Game switches (set by the launcher): `REO_NATIVE_ROOM_CAMERA=1`,
 `REO_CAMERA_TPS=distance=…,side=…,mouse_sens=…,yaw_speed=…,pitch_speed=…,invert_y=…`
 (also `crosshair`, `r3`, `pivot`, `pitch`, `aim_distance`, `aim_side`, `aim_pivot`, `gun_height`,
 `smoothing`, `pitch_min`, `pitch_max`, `zoom_step`, `turn_sign`, `eye_height`,
-`eye_ahead`, `aim_up`, `aim_down`, `strafe`, `strafe_speed`, `body_radius`).
+`eye_ahead`, `aim_up`, `aim_down`, `strafe`, `strafe_speed`, `body_radius`, `face`, `turn_rate`,
+`yield_delay`).
 
 ## Limits
 

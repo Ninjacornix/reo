@@ -160,6 +160,9 @@ struct ThirdPerson {
     float gun_height{140.f};
     float crosshair{1.f};  // 0 hides the crosshair
     float r3{1.f};         // R3: 1 switches shoulder, 0 recentres behind the character
+    float face{1.f};       // 1: the character always faces the crosshair (modern TPS); 0: only while aiming
+    float turn_rate{25.f}; // degrees per frame the character turns toward the crosshair
+    float yield_delay{20.f}; // frames a scripted camera selection must last before the game's camera shows
     float smoothing{0.5f}, pitch_min{-50.f}, pitch_max{60.f};
     static ThirdPerson from_environment() {
         ThirdPerson t;
@@ -176,7 +179,7 @@ struct ThirdPerson {
                 {"pitch_max", &t.pitch_max}, {"mouse_sens", &t.mouse_sens}, {"zoom_step", &t.zoom_step},
                 {"eye_height", &t.eye_height}, {"eye_ahead", &t.eye_ahead}, {"aim_up", &t.aim_up},
                 {"aim_down", &t.aim_down}, {"strafe", &t.strafe}, {"strafe_speed", &t.strafe_speed},
-                {"gun_height", &t.gun_height}, {"crosshair", &t.crosshair}, {"r3", &t.r3},
+                {"gun_height", &t.gun_height}, {"crosshair", &t.crosshair}, {"r3", &t.r3}, {"face", &t.face}, {"turn_rate", &t.turn_rate}, {"yield_delay", &t.yield_delay},
                 {"body_radius", &t.body_radius}};
             const char* at = tune;
             while (*at) {
@@ -200,7 +203,8 @@ struct ThirdPersonState {
     std::uint16_t previous_pressed{};
     float zoom{};  // added to the rig distance by the mouse wheel
     float shoulder{1.f}, shoulder_blend{1.f};  // target side (+1/-1) and its smoothed value
-    std::uint64_t shoulder_switches{};
+    std::uint64_t shoulder_switches{}, face_frames{}, forward_frames{}, held_frames{}, brief_selections{};
+    std::uint32_t selection_frames{};
     bool first_person{}, view_initialised{};
     std::uint64_t view_switches{}, first_person_frames{}, strafe_frames{}, strafe_blocked{};
     std::uint64_t free_aim_frames{};
@@ -590,8 +594,15 @@ public:
 
         int mouse_dx = 0, mouse_dy = 0, wheel = 0;
         const bool mouse_captured = tp.mouse && ps2HostTakeMouseDelta(&mouse_dx, &mouse_dy, &wheel);
-        // Scripted selections (doors, events, notifications) keep the game's camera.
-        if (state.selection != 0) {
+        // Scripted selections (doors, events, notifications) keep the game's camera, but
+        // only once they last: a selection flag held for a few frames while walking past
+        // a trigger zone would otherwise flash the room's fixed angle (flicker).
+        if (state.selection != 0) ++tps.selection_frames;
+        else {
+            if (tps.selection_frames > 0 && float(tps.selection_frames) < tp.yield_delay) ++tps.brief_selections;
+            tps.selection_frames = 0;
+        }
+        if (state.selection != 0 && float(tps.selection_frames) >= tp.yield_delay) {
             tps.active = false; tps.smoothed = false; ++tps.yielded;
             reo::performance::request_crosshair(false); reo_pad_tap::set_aim_left(-1);
             reo::performance::warp::clear();
@@ -679,14 +690,33 @@ public:
             if (segment(ctx, g, eye, point, hit)) point = hit;
         } catch (...) {}
 
+        // Facing: the crosshair point measured from the gun, so shots land where the
+        // crosshair is despite the shoulder offset.
+        const t::Vector gun{position.x, position.y + tp.gun_height, position.z};
+        const float aim_dx = point.x - gun.x, aim_dy = point.y - gun.y, aim_dz = point.z - gun.z;
+        const float horizontal = std::sqrt(aim_dx * aim_dx + aim_dz * aim_dz);
+        const float face = horizontal > 1.f ? std::atan2(aim_dx, aim_dz) : tps.yaw;
+        const float sx = axis(pad.left_x), sy = -axis(pad.left_y);  // sy > 0: forward
+        // Move relative to the camera with a knee-height wall test (body radius).
+        const auto camera_move = [&](float side, float ahead) {
+            if (tp.strafe == 0.f || (side == 0.f && ahead == 0.f)) return;
+            const float step = tp.strafe_speed / 30.f;
+            t::Vector move{flat.x * ahead + right.x * side, 0.f, flat.z * ahead + right.z * side};
+            const float length = std::sqrt(move.x * move.x + move.z * move.z);
+            if (length > 1.f) { move.x /= length; move.z /= length; }
+            const t::Vector knee{position.x, position.y + 50.f, position.z};
+            const t::Vector probe = add(knee, move, step + tp.body_radius);
+            t::Vector wall{};
+            bool blocked = true;
+            try { blocked = segment(ctx, g, knee, probe, wall); } catch (...) {}
+            if (!blocked) {
+                g.put(base + actor_position, add(position, move, step));
+                ++tps.strafe_frames;
+            } else ++tps.strafe_blocked;
+        };
         if (aiming) {
-            // The actor and the gun turn to the crosshair point, measured from the gun,
-            // so shots land where the crosshair is despite the shoulder offset.
-            const t::Vector gun{position.x, position.y + tp.gun_height, position.z};
-            const float dx = point.x - gun.x, dy = point.y - gun.y, dz = point.z - gun.z;
-            const float horizontal = std::sqrt(dx * dx + dz * dz);
-            const float face = horizontal > 1.f ? std::atan2(dx, dz) : tps.yaw;
-            const float elevation = std::atan2(dy, std::max(horizontal, 1.f));
+            // The actor and the gun turn to the crosshair point.
+            const float elevation = std::atan2(aim_dy, std::max(horizontal, 1.f));
             const auto face_units = std::int16_t(std::lround(face / yaw_turn));
             const int elevation_units = std::clamp(int(std::lround(elevation / yaw_turn)), -0x2000, 0x2000);
             g.put<std::int16_t>(base + actor_yaw, face_units);
@@ -696,24 +726,30 @@ public:
             const float elevation_degrees = elevation / degrees;
             reo_pad_tap::set_aim_left(elevation_degrees > -tp.aim_up ? 0x00 : elevation_degrees < -tp.aim_down ? 0xff : 0x80);
             ++tps.aim_frames;
-            // Move while aiming: the host left stick moves the actor relative to the
-            // camera; a knee-height segment test keeps the body radius from walls.
-            const float sx = axis(pad.left_x), sy = -axis(pad.left_y);
-            if (tp.strafe != 0.f && (sx != 0.f || sy != 0.f)) {
-                const float step = tp.strafe_speed / 30.f;
-                t::Vector move{flat.x * sy + right.x * sx, 0.f, flat.z * sy + right.z * sx};
-                const float length = std::sqrt(move.x * move.x + move.z * move.z);
-                if (length > 1.f) { move.x /= length; move.z /= length; }
-                const t::Vector knee{position.x, position.y + 50.f, position.z};
-                const t::Vector probe = add(knee, move, step + tp.body_radius);
-                t::Vector wall{};
-                bool blocked = true;
-                try { blocked = segment(ctx, g, knee, probe, wall); } catch (...) {}
-                if (!blocked) {
-                    g.put(base + actor_position, add(position, move, step));
-                    ++tps.strafe_frames;
-                } else ++tps.strafe_blocked;
+            camera_move(sx, sy);
+        } else if (tp.face != 0.f) {
+            // Modern TPS: the character turns toward where the camera points (rate
+            // limited). Forward input walks/runs with the game's own animation straight
+            // ahead (the game's analog control steers toward the camera heading);
+            // sideways/backward input moves relative to the camera while still facing it.
+            free_aim_ms.store(0);
+            float turn = face - actor_angle;
+            while (turn > 3.14159265f) turn -= 6.28318531f;
+            while (turn < -3.14159265f) turn += 6.28318531f;
+            const float limit = std::max(1.f, tp.turn_rate) * degrees;
+            const float facing = actor_angle + std::clamp(turn, -limit, limit);
+            g.put<std::int16_t>(base + actor_yaw, std::int16_t(std::lround(facing / yaw_turn)));
+            const float magnitude = std::min(1.f, std::sqrt(sx * sx + sy * sy));
+            if (sy > 0.f && std::fabs(sx) <= sy * 0.6f) {
+                reo_pad_tap::set_aim_left(std::uint8_t(std::lround(128.f - 127.f * magnitude)));
+                ++tps.forward_frames;
+            } else if (magnitude > 0.f) {
+                reo_pad_tap::set_aim_left(0x80);
+                camera_move(sx, sy);
+            } else {
+                reo_pad_tap::set_aim_left(-1);
             }
+            ++tps.face_frames;
         } else { reo_pad_tap::set_aim_left(-1); free_aim_ms.store(0); }
 
         parameters.pose.eye = eye;
@@ -805,11 +841,13 @@ public:
     }
     void dump_details() {
         if (third_person.enabled)
-            std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-TPS-SUMMARY] frames=%llu yielded=%llu collisions=%llu recentres=%llu aim_frames=%llu mouse_frames=%llu first_person_frames=%llu view_switches=%llu shoulder_switches=%llu\n",
+            std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-TPS-SUMMARY] frames=%llu yielded=%llu collisions=%llu recentres=%llu aim_frames=%llu mouse_frames=%llu first_person_frames=%llu view_switches=%llu shoulder_switches=%llu face_frames=%llu forward_frames=%llu held_frames=%llu brief_selections=%llu\n",
                          (unsigned long long)tps.frames, (unsigned long long)tps.yielded, (unsigned long long)tps.collisions,
                          (unsigned long long)tps.recentres, (unsigned long long)tps.aim_frames,
                          (unsigned long long)tps.mouse_frames, (unsigned long long)tps.first_person_frames,
-                         (unsigned long long)tps.view_switches, (unsigned long long)tps.shoulder_switches);
+                         (unsigned long long)tps.view_switches, (unsigned long long)tps.shoulder_switches,
+                         (unsigned long long)tps.face_frames, (unsigned long long)tps.forward_frames,
+                         (unsigned long long)tps.held_frames, (unsigned long long)tps.brief_selections);
             std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-STRAFE] frames=%llu blocked=%llu\n",
                          (unsigned long long)tps.strafe_frames, (unsigned long long)tps.strafe_blocked);
             std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-FREE-AIM] frames=%llu\n", (unsigned long long)tps.free_aim_frames);
@@ -940,7 +978,23 @@ void camera_hook(std::uint8_t* ram, R5900Context* ctx, PS2Runtime* rt) {
     }
 
     if (b->mode == Mode::native) {
-        if (!native_ok) { ++b->counts.refused; ++b->counts.fallback; run_original_camera(ram, ctx, rt); return; }
+        if (!native_ok) {
+            ++b->counts.refused; ++b->counts.fallback;
+            run_original_camera(ram, ctx, rt);
+            // The modern camera keeps the picture: after the original evaluated this
+            // frame (its state stays consistent), the third-person view is published
+            // again, so a refused frame never shows the room's fixed angle (flicker).
+            if (b->third_person.enabled && b->tps.active) {
+                const auto after = *ctx;
+                try {
+                    b->events.clear();
+                    b->third_person_override(g, ctx);
+                    if (!b->events.empty()) { b->replay(g, ctx); ++b->tps.held_frames; }
+                } catch (...) {}
+                *ctx = after;
+            }
+            return;
+        }
         b->third_person_override(g, ctx);
         b->replay(g, ctx);
         b->write_outputs(g, *fog);
