@@ -28,6 +28,7 @@ ap.add_argument('--data', type=Path)
 ap.add_argument('--env', action='append', default=[], help='Extra KEY=VALUE for the game process')
 ap.add_argument('--explore', action='store_true', help='Walk/turn/press cross in cycles instead of the fixed movement check')
 ap.add_argument('--analog', action='store_true', help='With --explore: walk with the left stick and turn with the right stick (modern camera)')
+ap.add_argument('--reverse-walk', action='store_true', help='With --explore --analog: alternate forward/backward stick walks (sharp reversals)')
 ap.add_argument('--warp-probe', action='store_true', help='Idle captures before/after short right-stick turns (presentation warp validation)')
 ap.add_argument('--aim-probe', action='store_true', help='Hold R1 with the left stick up/centre/down/up and dump the player actor record after each')
 args = ap.parse_args()
@@ -190,8 +191,9 @@ try:
                                         print('DUMP '+name,flush=True)
                             elif args.explore and args.analog and motion>=0:
                                 k=int(motion//6);ph=motion-6*k
-                                if ph<2.4 or 3.0<=ph<5.4:axes={'ly':32767}
-                                elif ph<3.0:axes={'rx':32767 if k%3!=2 else -32767,'ly':32767}
+                                walk=-32767 if args.reverse_walk and k%2 else 32767
+                                if ph<2.4 or 3.0<=ph<5.4:axes={'ly':walk}
+                                elif ph<3.0:axes={'rx':32767 if k%3!=2 else -32767,'ly':walk}
                                 else:button='cross'
                                 if axes:button='analog'
                             elif args.explore and motion>=0:

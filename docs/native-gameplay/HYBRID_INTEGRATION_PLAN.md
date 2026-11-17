@@ -354,12 +354,37 @@ Design written: [FRAME_DECOUPLING.md](FRAME_DECOUPLING.md).
   guest snapshots without changing game timing, and what it needs natively.
   No implementation until that is answered.
 
-### Step 3 — host analog input (`6621F0`)
+### Step 3 — player analog control (`6621F0`) (2026-11-17)
 
-- Unlocks remapping, mouse camera control and modern movement on top of step 1.
-- Blocked at level A: the ledger reports a selector/input-mask mismatch and an
-  unqualified head-target helper, and contradicts itself about whether analog is
-  already wired. Fix and re-qualify first.
+Swap: `recomp/overrides/native_gameplay/analog_control_adapter.cpp` replaces File #1
+o2 `0x6621F0` with the Stage 4 native `gameplay_world::update_analog_control`
+(phase 1: native logic on guest state). `REO_NATIVE_ANALOG=shadow|1`.
+
+- Projection (File #1): actor category `+2`, slot `+3`, yaw `+0x92`, motion class
+  `+0x54F`, character `+0xB98`, status `+0xBA0`, heading target `+0xBCE`, response
+  lock `+0xBD0`, input frame `+0xF78` (48 bytes), previous heading `+0xFA8`, heading
+  active `+0xFAA`, AI control `+0xFF0`; globals request `0x4BAE8D`, mode `0x3243F2`,
+  selected actor `0x4BADED`, inventory owner `0x4BADEE`, camera eye/aim
+  `0x324138/0x324144`, camera one-shot latch `0x3DDDB4`.
+- The original's two calls are pure reads and are native: `1B0340` (local player:
+  category 0 and slot = mode 0 ? 0 : selected, i.e. `World::locally_controlled`;
+  `1B02D0`/`1B0300` read mode `0x3243F2`) and `6DEE20` (dialogue bytes).
+- The head-target branch (`65F0C0`, a sharp reversal at walking speed) needs world
+  target metrics the hybrid does not publish; native reports unavailable and the
+  original runs there.
+- Shadow compares the input frame, status, heading state and latch, and counts any
+  other byte the original changes in the actor record.
+
+| Run (File #1, v19, left-stick walking/turning) | Compared | Mismatched | Other actor writes |
+|---|---|---|---|
+| shadow, Outbreak / Below Freezing Point / Hellfire | 6,000 each | 0 | 0 |
+| shadow + modern camera (latch and eye/aim from the camera) | 4,000 | 0 | 0 |
+| shadow, alternating forward/backward walks | 6,000 | 0 | 0 |
+| native, Below Freezing Point | 6,000 native, 0 fallback | — | — (walked 919 units, exit 0) |
+| native, alternating walks | 6,000 native, 0 fallback | — | — (exit 0) |
+
+The ledger's "selector mismatch" did not appear in about 28,000 live comparisons.
+File #2's `6875F0` is 164 bytes longer than File #1's body and is not mapped.
 
 ### After step 3
 
