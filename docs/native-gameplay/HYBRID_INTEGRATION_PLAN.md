@@ -317,6 +317,31 @@ Phase 3 (delete the mirror) needs every remaining guest reader of these fields
 to be native: the higher camera modes (`5BE9A0`), the script opcodes that read
 the current camera (`68D550`), the analog control latch (`6621F0`) and saves.
 
+### Step 1e — co-op with the modern camera (2026-11-17)
+
+Two native File #2 clients (`file2-ready-v1`) on a private loopback openSNAP server,
+camera mod on player 1 only (`REO_NATIVE_ROOM_CAMERA=1 REO_CAMERA_MOD=tps
+REO_CAMERA_MOUSE=0`). Automatic accounts, shared waiting room, Wild Things start
+and gameplay on both in about 20 s (`tools/hybrid/coop_camera_run.sh`; server
+`tools/hybrid/coop_server.py`, account broker `tools/hybrid/coop_account_broker.py`
+mirrors `launcher/AutomaticAccount.cs`).
+
+Player 1's actor read from both processes (`tools/hybrid/coop_actor_probe.py`,
+position `+0x38`, yaw `+0x92`, aim elevation `+0xBE0`):
+
+| Step (player 1 input) | While held | After settling |
+|---|---|---|
+| aim + camera turn right / left | peer lags (network) | yaw equal |
+| aim + strafe left | peer lags | position within 2 units, then equal |
+| aim + stick up (free elevation) | peer lags | elevation 8192 on both |
+| idle 4–8 s | — | position, yaw, elevation **identical** |
+| player 2 walks (original camera) | — | identical on both |
+
+Captures: player 1 over-the-shoulder, player 2 the original fixed camera, same
+room and positions. The camera's direct yaw/elevation writes reach the peer
+through the game's own actor sync. Not covered: combat hits against enemies in
+co-op, File #1 co-op, more than two players.
+
 ### Step 2 — frame cadence investigation (60 fps / interpolation, #11, #41)
 
 Design written: [FRAME_DECOUPLING.md](FRAME_DECOUPLING.md).
