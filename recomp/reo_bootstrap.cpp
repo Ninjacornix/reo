@@ -46,7 +46,7 @@
 #if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_GAMEPLAY_SAVE) && REO_BUILD_NATIVE_GAMEPLAY_SAVE
 #include "overrides/native_gameplay/save_session.hpp"
 #endif
-#if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_ROOM_CAMERA) && REO_BUILD_NATIVE_ROOM_CAMERA
+#if defined(REO_BUILD_NATIVE_ROOM_CAMERA) && REO_BUILD_NATIVE_ROOM_CAMERA
 #include "overrides/native_camera/room_camera_adapter.hpp"
 #endif
 #if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_HOST_MOVIE) && REO_BUILD_NATIVE_HOST_MOVIE
@@ -1591,15 +1591,21 @@ int main(int argc, char* argv[]) {
                                     : "[NATIVE-GAMEPLAY-SAVE] nine native save/session entries installed\n");
     }
 #endif
-#if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_ROOM_CAMERA) && REO_BUILD_NATIVE_ROOM_CAMERA
-    // REO_NATIVE_ROOM_CAMERA=1 | shadow | shadow-writes (see HYBRID_INTEGRATION_PLAN.md, step 1).
+#if defined(REO_BUILD_NATIVE_ROOM_CAMERA) && REO_BUILD_NATIVE_ROOM_CAMERA
+    // REO_NATIVE_ROOM_CAMERA=1 | shadow | shadow-writes (docs/MODERN_CAMERA.md,
+    // docs/native-gameplay/HYBRID_INTEGRATION_PLAN.md). Both File #1 and File #2.
     if (const auto* requested = std::getenv("REO_NATIVE_ROOM_CAMERA"); requested && *requested) {
         using reo::native::room_camera_adapter::Mode;
         const Mode mode = !std::strcmp(requested, "1") ? Mode::native
                         : !std::strcmp(requested, "shadow") ? Mode::shadow
                         : !std::strcmp(requested, "shadow-writes") ? Mode::shadow_writes
                         : throw std::runtime_error("REO_NATIVE_ROOM_CAMERA must be 1, shadow or shadow-writes");
-        if (std::strcmp(g.serial, "SLUS-20765") || g.entry_point != 0x00100008u ||
+#if defined(REO_GAME_FILE2)
+        const char* cameraSerial = "SLUS-20984";
+#else
+        const char* cameraSerial = "SLUS-20765";
+#endif
+        if (std::strcmp(g.serial, cameraSerial) ||
             !reo::native::room_camera_adapter::install_before_run(runtime, mode))
             throw std::runtime_error("Selected native room camera unavailable; inspect build identity");
         std::fprintf(stdout, "[NATIVE-ROOM-CAMERA] installed mode=%s\n", requested);

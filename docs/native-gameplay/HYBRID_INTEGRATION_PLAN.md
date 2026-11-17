@@ -265,7 +265,38 @@ keyboard movement as left stick).
 Not covered by automated runs: mouse look (needs the real cursor and focus;
 manual check), crosshair (not implemented), co-op.
 
+### Step 1c — modern camera on File #2 (2026-11-17)
+
+Same adapter, File #2 layout behind `REO_GAME_FILE2` (found with
+`tools/hybrid/diff_function_layout.py`, File #1 vs File #2 generated bodies):
+
+| Item | File #1 | File #2 |
+|---|---|---|
+| Camera entry / import / renderer | o2 `5BED30` / `5BE3E0` / `1AF780` | o2 `5DF720` / `5DEE30` / `13ADD0` |
+| Segment test / aim update | `5795E0` / `586AA0` | `593780` / `5A2020` |
+| Camera header (fixed bytes) | `3DDDB0` (0x34) | `3FD2B0` (0x30) |
+| Viewport / params / view | `324120` / `324138` / `3240E0` | `3006A0` / `3006B8` / `300660` |
+| Projection context | `2941A8..` / `294D00..294DC0` | `34D100..` / `34DC50..34DD10` |
+| Mode / visibility / model count / hide / fog | `3243CF` / `49F790` / `49F762` / `4B9D10` / `3240BD` | `30094F` / `4BF160` / `4BF132` / `4DA1F0` / `30063D` |
+| Actors (stride) / aim elevation | `4A5C30` (0x10E0) / `+0xBC8` | `4C5E10` (0x1100) / `+0xBE0` |
+| Overlay slot | `0x570000` id 3 | `0x58D000` id 3 |
+
+File #2 also writes `header+0x2C = record+0x194 >> 16` every evaluated frame;
+the adapter writes and compares it. Build: `tools/hybrid/kit_apply_camera.py`
+applies the hooks to a develop-based kit (here the v1.0.21-rc0 File #2 kit,
+resealed because its presenter files were already newer than its seal).
+
+| Run (File #2 opening) | Result |
+|---|---|
+| shadow | ~3,000 compared, **0 mismatched** (incl. selection word), exit 0 |
+| native + TPS | ~2,000 native frames, over-the-shoulder view verified by capture, exit 0 |
+
+Driver: `tools/hybrid/file2_room_driver.py --explore`. Coverage: File #2 opening
+area only.
+
 ### Step 2 — frame cadence investigation (60 fps / interpolation, #11, #41)
+
+Design written: [FRAME_DECOUPLING.md](FRAME_DECOUPLING.md).
 
 - Not a swap. Identify where the 30 Hz game update and the presentation are
   separated today (`recomp/overrides/reo_game_clock_observer.h`,
