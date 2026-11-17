@@ -580,7 +580,7 @@
                     <ColumnDefinition />
                     <ColumnDefinition Width="Auto" />
                   </Grid.ColumnDefinitions>
-                  <compat:Rc1TextBlock x:Name="ModernCameraLabel" Text="Third-person camera (File #1)" FontSize="18" VerticalAlignment="Center" />
+                  <compat:Rc1TextBlock x:Name="ModernCameraLabel" Text="Modern camera" FontSize="18" VerticalAlignment="Center" />
                   <CheckBox x:Name="ModernCameraSwitch" IsCheckedChanged="ModernCameraChanged" Grid.Column="1" VerticalAlignment="Center" AutomationProperties.Name="Third-person camera" AutomationProperties.LabeledBy="{Binding ElementName=ModernCameraLabel}" Classes="ToggleSwitch" />
                 </Grid>
                 <compat:Rc1TextBlock x:Name="ModernCameraSupport" FontSize="14" TextWrapping="Wrap" Margin="0,0,0,10" Classes="Hint" />

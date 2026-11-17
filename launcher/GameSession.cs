@@ -179,8 +179,8 @@ public sealed class GameSession {
         if (File.Exists(stringPlan)) Set("REO_EXECUTABLE_STRINGS", stringPlan);
         Set("REO_AUDIO_LEVELS", AudioLevels.From(settings).LaunchValue);
         Set("REO_SUBTITLES", settings.ShowSubtitles ? "1" : "0");
-        // Modern (third-person) camera: File #1 builds that contain the native camera only.
-        bool modernCamera = selectedGame.Id == "file1" && settings.ModernCamera.Enabled && ModernCamera.Supported(image);
+        // Modern camera: File #1 and File #2 builds that contain the native camera.
+        bool modernCamera = selectedGame.Id is "file1" or "file2" && settings.ModernCamera.Enabled && ModernCamera.Supported(image);
         if (modernCamera)
             foreach (var (name, value) in ModernCamera.Environment(settings.ModernCamera))
                 Set(name, value);

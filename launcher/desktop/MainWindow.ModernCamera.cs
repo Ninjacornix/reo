@@ -31,11 +31,12 @@ public partial class MainWindow {
             control.IsEnabled = enabled;
         ModernCameraMouseSensitivity.IsEnabled = enabled && ModernCameraMouse.IsChecked == true;
         // Packaged launchers run the game from the local build cache; source layouts use Exe.
-        string built = LocalGameBuild.TargetPath(root, "file1");
-        string exe = System.IO.File.Exists(built) ? built : settings.Exe;
+        string game = settings.Game.Id is "file2" ? "file2" : "file1";
+        string built = LocalGameBuild.TargetPath(root, game);
+        string exe = System.IO.File.Exists(built) ? built : game == "file2" ? settings.SecondExe : settings.Exe;
         bool supported = ModernCamera.Supported(exe);
         ModernCameraSupport.Text = supported ? ""
-            : "The installed File #1 build does not include the modern camera yet; the original camera is used.";
+            : $"The installed {(game == "file2" ? "File #2" : "File #1")} build does not include the modern camera yet; the original camera is used.";
         ModernCameraSupport.IsVisible = !supported;
     }
 

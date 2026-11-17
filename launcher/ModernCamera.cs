@@ -3,7 +3,7 @@ using System.IO;
 
 namespace Outbreak.Launcher;
 
-// Third-person "modern camera" for File #1, built on the native room camera swap
+// Third-person "modern camera" for File #1 and File #2, built on the native room camera swap
 // (docs/native-gameplay/HYBRID_INTEGRATION_PLAN.md). Works with a controller
 // (right stick looks, left stick walks relative to the camera) and with keyboard
 // and mouse (mouse looks, WASD walks relative to the camera, right button aims,
