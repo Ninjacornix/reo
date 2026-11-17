@@ -294,6 +294,29 @@ resealed because its presenter files were already newer than its seal).
 Driver: `tools/hybrid/file2_room_driver.py --explore`. Coverage: File #2 opening
 area only.
 
+### Step 1d — camera phase 2: native-owned camera state (2026-11-17)
+
+`REO_NATIVE_ROOM_CAMERA_STATE=native` keeps the camera's own header state in the
+native `SequenceControl` between calls instead of re-reading it from guest memory:
+current camera (`+3`), change latch (`+4`), progress/target (`+8..+0x14`),
+previous record (`+0x18`), progress counter (`+0x26`) and the 32 record anchors.
+Fields other recompiled code writes (initialized, count, selected id/selection,
+actor, phase, active bytes, view masks) and the shared camera parameters are still
+read each call. A room import or a native refusal drops the native state, which
+is then rebuilt from guest memory once. Guest memory is a mirror of the
+native-owned fields (written in native mode, compared in shadow mode).
+
+| Run (File #1, v16) | Room loads | Compared | Mismatched | Calls on native state |
+|---|---|---|---|---|
+| shadow, Outbreak | 2 | 3,447 | 0 | 3,445 |
+| shadow, Below Freezing Point | 4 | 3,393 | 0 | 3,389 |
+| shadow, Hellfire | 3 | 3,544 | 0 | 3,542 |
+| native + TPS, Below Freezing Point | 2 | — | — | 2,599 of 2,604 (3 fallbacks), exit 0 |
+
+Phase 3 (delete the mirror) needs every remaining guest reader of these fields
+to be native: the higher camera modes (`5BE9A0`), the script opcodes that read
+the current camera (`68D550`), the analog control latch (`6621F0`) and saves.
+
 ### Step 2 — frame cadence investigation (60 fps / interpolation, #11, #41)
 
 Design written: [FRAME_DECOUPLING.md](FRAME_DECOUPLING.md).

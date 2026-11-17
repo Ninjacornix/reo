@@ -320,7 +320,9 @@ public:
     // Guest -> native. False when the guest state is outside what native owns.
     bool project(const Guest& g) {
         if (!records) return false;
-        if (!records_installed) { sequences.install_camera_records(records, 0); records_installed = true; }
+        if (!records_installed) {
+            sequences.install_camera_records(records, 0); records_installed = true; have_native_state = false;
+        }
         std::array<std::uint8_t, 0x34> h{};
         g.read(header_at, h.data(), h.size());
         auto state = sequences.snapshot();
@@ -343,6 +345,19 @@ public:
         for (unsigned i = 0; i < record_count; ++i) {
             state.active[i] = g.get<std::uint8_t>(records_at + stride * i);
             state.camera_anchors[i] = g.get<t::Vector>(records_at + stride * i + 0x1c);
+        }
+        if (persistent_state && have_native_state) {
+            // Native-owned: written only by the room camera itself (5BED30 and its
+            // helpers 5BF1F0/5BF300/5BF7B0); keep the native values.
+            const auto& owned_state = sequences.snapshot();
+            state.condition_id = owned_state.condition_id;
+            state.selection_changed = owned_state.selection_changed;
+            state.camera_progress = owned_state.camera_progress;
+            state.camera_target = owned_state.camera_target;
+            state.previous_camera = owned_state.previous_camera;
+            state.progress = owned_state.progress;
+            state.camera_anchors = owned_state.camera_anchors;
+            ++persistent_calls;
         }
         if (!sequences.restore(state)) return false;
 
@@ -384,6 +399,17 @@ public:
         session.resource_hide_remaining = {g.get<std::uint8_t>(hide_at + 2), g.get<std::uint8_t>(hide_at + 3)};
         return true;
     }
+
+    // Phase 2 (REO_NATIVE_ROOM_CAMERA_STATE=native): the camera's own header state
+    // persists natively between calls; only fields other recompiled code writes
+    // are read back from guest memory. Guest memory is then a mirror of the
+    // native-owned fields (written by write_outputs, compared in shadow mode).
+    bool persistent_state = [] {
+        const char* v = std::getenv("REO_NATIVE_ROOM_CAMERA_STATE");
+        return v && !std::strcmp(v, "native");
+    }();
+    bool have_native_state{};
+    std::uint64_t persistent_calls{};
 
     s::RoomCameraStatus run_native(std::int8_t fog_selected, s::Fog& fog) {
         (void)fog_selected;
@@ -747,14 +773,15 @@ public:
         std::fprintf(stderr,
             "[NATIVE-ROOM-CAMERA] mode=%s calls=%llu compared=%llu mismatched=%llu refused=%llu native_completed=%llu "
             "fallback=%llu imports=%llu import_refused=%llu no_records=%llu unexpected_write_calls=%llu "
-            "refused_projection=%llu refused_unavailable=%llu refused_numeric=%llu\n",
+            "refused_projection=%llu refused_unavailable=%llu refused_numeric=%llu persistent=%llu\n",
             mode == Mode::native ? "native" : mode == Mode::shadow ? "shadow" : "shadow-writes",
             (unsigned long long)counts.calls, (unsigned long long)counts.compared, (unsigned long long)counts.mismatched,
             (unsigned long long)counts.refused, (unsigned long long)counts.native_completed,
             (unsigned long long)counts.fallback, (unsigned long long)counts.imports,
             (unsigned long long)counts.import_refused, (unsigned long long)counts.no_records,
             (unsigned long long)counts.unexpected_write_calls, (unsigned long long)counts.refused_projection,
-            (unsigned long long)counts.refused_unavailable, (unsigned long long)counts.refused_numeric);
+            (unsigned long long)counts.refused_unavailable, (unsigned long long)counts.refused_numeric,
+            (unsigned long long)persistent_calls);
         std::fflush(stderr);
     }
     void dump_details() {
@@ -875,6 +902,9 @@ void camera_hook(std::uint8_t* ram, R5900Context* ctx, PS2Runtime* rt) {
         }
     } catch (...) { projected = false; }
     const bool native_ok = projected && status == s::RoomCameraStatus::completed;
+    // Persistent state is valid only after a completed native evaluation; a refusal
+    // (original runs instead) re-reads everything from guest memory next time.
+    b->have_native_state = native_ok;
     if (!native_ok) {
         if (!projected) ++b->counts.refused_projection;
         else if (status == s::RoomCameraStatus::unavailable) ++b->counts.refused_unavailable;
