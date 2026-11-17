@@ -32,7 +32,16 @@ while time.monotonic() - began < seconds:
         name = 'w%03d.png' % int(t)
         try: capture(identity, out / name)
         except Exception as problem: name = 'capture failed: %s' % problem
-        log.append({'t': round(t, 1), 'state': state, 'shot': name})
+        probe = None
+        try:
+            if ram is not None:
+                second = record.get('game') == 'file2'
+                addrs = ([0x58D000, 0x6E32EA, 0x6A9848, 0x6A9849, 0x6E37D0, 0x6E37D1] if second else
+                         [0x570000, 0x6DF150, 0x6DF151, 0x6D91CA, 0x6995A0, 0x6D9688, 0x6D9689])
+                probe = [struct.unpack('<I', ram.read(addrs[0], 4))[0]] + [ram.read(a, 1)[0] for a in addrs[1:]]
+        except Exception:
+            probe = None
+        log.append({'t': round(t, 1), 'state': state, 'shot': name, 'serverProbe': probe})
     time.sleep(every)
 (out / 'flow.json').write_text(json.dumps(log, indent=1))
 print('captures', len(log))

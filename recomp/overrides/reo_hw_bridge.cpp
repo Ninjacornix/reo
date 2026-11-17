@@ -1061,7 +1061,8 @@ uint16_t pad2SkipIntro(uint8_t* rd, double now) {
 // Network Game straight to SERVER SELECT (runtime/gs/performance.h, network_veil). Once
 // the automatic account provider is armed (the original network module runs after
 // Network is chosen in the main menu), the screen stays black until the original server
-// list is shown; the provider answers the prompts and signs in meanwhile. Observation
+// list (File #2 with one server: its area list) is shown; the provider answers the prompts
+// and signs in meanwhile. Observation
 // only: no input is produced here. Server list: lobby overlay active, main mode 7,
 // server controller 3, server widget 2/0 (tools/coop_playtest/lobby_driver.py).
 uint16_t pad2NetworkVeil(uint8_t* rd, double now) {
@@ -1098,14 +1099,16 @@ uint16_t pad2NetworkVeil(uint8_t* rd, double now) {
     }
 #if defined(REO_GAME_FILE2)
     const bool overlay = word(0x58D000) == 0x336F574Du && word(0x58D004) == 4u;
-    const bool servers = overlay && byte(0x6E32EA) == 7 && byte(0x6A9848) == 3 && byte(0x6A9849) == 0 &&
-                         byte(0x6E37D0) == 2 && byte(0x6E37D1) == 0;
+    // With one server File #2 skips SERVER SELECT and opens AREA SELECT (lobby main mode 1).
+    const bool servers = overlay && (byte(0x6E32EA) == 1 ||
+                                     (byte(0x6E32EA) == 7 && byte(0x6A9848) == 3 && byte(0x6A9849) == 0 &&
+                                      byte(0x6E37D0) == 2 && byte(0x6E37D1) == 0));
 #else
     const bool overlay = word(0x570000) == 0x336F574Du && word(0x570004) == 4u;
     const bool servers = overlay && byte(0x6DF150) == 37 && byte(0x6DF151) == 7 && byte(0x6D91CA) == 7 &&
                          byte(0x6995A0) == 3 && byte(0x6D9688) == 2 && byte(0x6D9689) == 0;
 #endif
-    if (servers) return finish("server select reached");
+    if (servers) return finish("server or area select reached");
     if (now - started > 90.0) return finish("time limit; showing the game");
     return 0;
 }
