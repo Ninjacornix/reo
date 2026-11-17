@@ -1,6 +1,6 @@
 #version 450
 #extension GL_GOOGLE_include_directive : require
-layout(push_constant) uniform PresentSize { uvec2 source; uvec2 destination; uint flags; uint fps; uint frameMs; uint ups; } extent;
+layout(push_constant) uniform PresentSize { uvec2 source; uvec2 destination; uint flags; uint fps; uint frameMs; uint ups; vec4 warp0; vec4 warp1; vec4 warp2; } extent;
 #define SMAA_GLSL_4
 #define SMAA_PRESET_HIGH
 #define SMAA_RT_METRICS vec4(1.0 / vec2(extent.destination), vec2(extent.destination))
@@ -19,6 +19,8 @@ void main() {
         hostColor = vec4(0,0,0,1);
     } else {
         vec2 uv = gl_FragCoord.xy / outputSize;
+        if (extent.warp0.w != 0.0)
+            uv = (origin + warpPicture((gl_FragCoord.xy - origin) / picture, extent.warp0, extent.warp1, extent.warp2) * picture) / outputSize;
         vec4 offset; SMAANeighborhoodBlendingVS(uv, offset);
         hostColor = displayColor(SMAANeighborhoodBlendingPS(uv, offset, colorTexture, weightTexture).rgb, extent.flags);
     }

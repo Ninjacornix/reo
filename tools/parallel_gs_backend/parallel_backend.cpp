@@ -7,6 +7,7 @@
 #endif
 #include "runtime/gs/internal_resolution.h"
 #include "runtime/gs/frame_pacing.h"
+#include "runtime/gs/performance.h"
 #include "shader_location.hpp"
 #include "parent_first_entry.h"
 #include "parent_natural_runtime.h"
@@ -1088,6 +1089,13 @@ class ParallelBackend final : public Backend, private SignalInterface {
 #endif
                 if (!config_.presentationEpochCurrent(capture.epoch))
                     return {};
+                {
+                    // Display buffer of this scanout: the presenter tells a new game
+                    // frame from a repeated one (presentation warp).
+                    const size_t circuit = (capture.registers[0] & 1u) ? 7 : 9;
+                    reo::performance::warp::scanout_fbp.store(
+                        uint32_t(capture.registers[circuit] & 0x1FF), std::memory_order_relaxed);
+                }
                 complete = presenter_->present(scanout.image, false, target.linear);
                 timing.presented();
             } else {

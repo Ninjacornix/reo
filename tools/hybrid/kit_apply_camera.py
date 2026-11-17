@@ -5,7 +5,7 @@ usage: kit_apply_camera.py KIT SPV_DIR
            native headers as added sources); edited in place, reseal afterwards
            with kit_add_native_archives.py
   SPV_DIR  folder with present_native.frag.spv and present_smaa_blend.frag.spv
-           compiled from tools/parallel_gs_backend (crosshair)
+           compiled from tools/parallel_gs_backend (crosshair, presentation warp)
 
 Edits are anchored on text that exists in both develop and native/hybrid; each
 anchor must occur exactly once, so a changed source fails loudly instead of
@@ -87,6 +87,41 @@ edit('tools/parallel_gs_backend/resident_dxgi_presenter1c.h', [
      '        if (reo::performance::crosshair_visible())\n'
      '            parameters.fps |= 0x40000000u;\n'
      '        cmd.push_constants(&parameters, 0, sizeof(parameters));'),
+])
+# Presentation warp (docs/native-gameplay/FRAME_DECOUPLING.md, step 0): the blocks are
+# taken from this checkout's sources so the kit gets exactly the validated code.
+perf = (root / 'runtime/gs/performance.h').read_text(encoding='utf-8').replace('\r\n', '\n')
+warp_block = perf[perf.index('// Presentation warp'):perf.index('}  // namespace warp\n') + len('}  // namespace warp\n')]
+crosshair_end = ('inline bool crosshair_visible() {\n'
+                 '    const auto at = crosshair_ms.load(std::memory_order_relaxed);\n'
+                 '    return at != 0 && steady_ms() - at < 100;\n'
+                 '}\n')
+edit('runtime/gs/performance.h', [(crosshair_end, crosshair_end + '\n' + warp_block)])
+presenter = (root / 'tools/parallel_gs_backend/resident_dxgi_presenter1c.h').read_text(encoding='utf-8').replace('\r\n', '\n')
+present_block = presenter[presenter.index('        {\n            // A scanout of the same display buffer'):
+                          presenter.index('        cmd.push_constants(&parameters, 0, sizeof(parameters));')]
+edit('tools/parallel_gs_backend/resident_dxgi_presenter1c.h', [
+    ('        uint32_t fps = 0, frameMs = 0, ups = 0;\n    };',
+     '        uint32_t fps = 0, frameMs = 0, ups = 0;\n'
+     '        float warp[12] = {};  // presentation warp rows (r0.w = enabled), see performance.h\n'
+     '    };\n'
+     '    uint32_t warpLastFbp_ = 0xffffffffu;\n'
+     '    uint64_t warpLogged_ = 0;'),
+    ('            parameters.fps |= 0x40000000u;\n        cmd.push_constants(&parameters, 0, sizeof(parameters));',
+     '            parameters.fps |= 0x40000000u;\n' + present_block +
+     '        cmd.push_constants(&parameters, 0, sizeof(parameters));'),
+])
+edit('tools/parallel_gs_backend/parallel_backend.cpp', [
+    ('#include "runtime/gs/frame_pacing.h"\n', '#include "runtime/gs/frame_pacing.h"\n#include "runtime/gs/performance.h"\n'),
+    ('                complete = presenter_->present(scanout.image, false, target.linear);',
+     '                {\n'
+     '                    // Display buffer of this scanout: the presenter tells a new game\n'
+     '                    // frame from a repeated one (presentation warp).\n'
+     '                    const size_t circuit = (capture.registers[0] & 1u) ? 7 : 9;\n'
+     '                    reo::performance::warp::scanout_fbp.store(\n'
+     '                        uint32_t(capture.registers[circuit] & 0x1FF), std::memory_order_relaxed);\n'
+     '                }\n'
+     '                complete = presenter_->present(scanout.image, false, target.linear);'),
 ])
 for name in ('present_native.frag.spv', 'present_smaa_blend.frag.spv'):
     shutil.copyfile(spv / name, kit / 'shaders' / name)

@@ -5,8 +5,8 @@ per second for what the player sees. It should act like a modern game: frames ar
 presented as fast as the display allows, motion and camera are smooth at that rate,
 and game logic keeps its own correct speed.
 
-Status: **design; not implemented.** This records the facts established so far and
-the order of work. Plan step 2 in [HYBRID_INTEGRATION_PLAN.md](HYBRID_INTEGRATION_PLAN.md).
+Status: **step 0 implemented (presentation warp, first person); steps 1–4 are design.**
+Plan step 2 in [HYBRID_INTEGRATION_PLAN.md](HYBRID_INTEGRATION_PLAN.md).
 
 ## What modern games do
 
@@ -31,6 +31,51 @@ applied at render rate. Nothing about game speed depends on the display rate.
   eye/aim and the view matrix each update, and the modern camera computes them
   from input directly - the camera is the first piece that can be evaluated at
   render rate.
+
+## Step 0 — presentation warp (implemented 2026-11-17)
+
+The presenter already shows every 30 Hz game frame on two 60 Hz scanouts. The
+repeated scanout is now drawn rotated by half of the camera's latest per-update
+rotation, so camera turning advances on every display frame. This is rotational
+reprojection (as in VR time-warp): a pure rotation needs no depth and is exact up to
+a sliver of clamped edge pixels.
+
+- Camera: `room_camera_adapter.cpp` publishes its view direction and lens once per
+  update (`reo::performance::warp::publish`) and clears it when the game takes the
+  camera back (doors, events) or the view is third person.
+- Backend: `parallel_backend.cpp` records the scanout's display buffer
+  (`DISPFB.FBP`); the presenter treats a present of the same buffer as a repeat.
+- Presenter: `resident_dxgi_presenter1c.h` builds the 3x3 warp
+  (`warp::compute`/`warp::build` in `runtime/gs/performance.h`) and pushes it to
+  `present_native.frag` / `present_smaa_blend.frag` (`warpPicture` in
+  `present_layout.glsl`). Cuts (more than 20° per update), stale views (>100 ms),
+  menus and new frames get no warp.
+
+Conventions measured on real frames (`tools/hybrid/room_driver.py --warp-probe`,
+first person, eye fixed, `tools/hybrid/warp_validate.py`): vertical FOV = camera
+lens (fit 1.00), 4:3 picture, screen x = −(up × forward), screen y = +up.
+
+| Check | Error (mean abs, 0–255) |
+|---|---|
+| Real 8° turn: unwarped vs after-turn frame | 11.30 |
+| Real 8° turn: frame warped by measured rotation vs after-turn frame | **1.55** |
+| GPU fixed 8° yaw warp vs the same warp in Python (two views) | **0.33 / 0.37** (unwarped 8.7 / 11.0) |
+| GPU fixed 6° pitch warp vs Python | **2.1** (opposite sign 14.1; unwarped 10.3) |
+
+Scope and limits:
+
+- **First person only by default.** The third-person camera orbits the player: the
+  background should pan while the player stays put. Without depth a rotation moves
+  both, so the player would wobble (~20 px at full stick speed). `REO_CAMERA_WARP=all`
+  enables it anyway for experiments; `REO_CAMERA_WARP=0` disables the warp.
+  Third person needs depth-aware reprojection (GS Z buffer → presenter), which is
+  a renderer feature of its own.
+- Actors and camera translation still move at 30 Hz (steps 1–2).
+- HUD text drawn into the game frame rotates with the repeated frame for one
+  scanout during turns (the crosshair and overlays are drawn after the warp).
+- Diagnostics: `REO_CAMERA_WARP_LOG=1` (applied warps), `=2` (every present);
+  `REO_CAMERA_WARP_TEST=<yaw>,<pitch>` applies a fixed warp to every present.
+
 
 ## Plan, in order
 

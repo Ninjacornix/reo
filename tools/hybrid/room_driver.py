@@ -28,6 +28,7 @@ ap.add_argument('--data', type=Path)
 ap.add_argument('--env', action='append', default=[], help='Extra KEY=VALUE for the game process')
 ap.add_argument('--explore', action='store_true', help='Walk/turn/press cross in cycles instead of the fixed movement check')
 ap.add_argument('--analog', action='store_true', help='With --explore: walk with the left stick and turn with the right stick (modern camera)')
+ap.add_argument('--warp-probe', action='store_true', help='Idle captures before/after short right-stick turns (presentation warp validation)')
 ap.add_argument('--aim-probe', action='store_true', help='Hold R1 with the left stick up/centre/down/up and dump the player actor record after each')
 args = ap.parse_args()
 args.exe = args.exe.resolve(); args.iso = args.iso.resolve(); args.out = args.out.resolve()
@@ -165,7 +166,19 @@ try:
                         elif row['selected']<4:
                             axes=None
                             motion=room_elapsed-args.move_at
-                            if args.aim_probe and motion>=0:
+                            if args.warp_probe and motion>=0:
+                                # Pairs: idle capture, short yaw turn (~8 deg), idle capture; long turns between pairs; one pitch pair.
+                                plan=[('w0',1.0),('w1',3.5),('w2',8.0),('w3',10.5),('w4',15.0),('w5',17.5),('w6',20.0)]
+                                for name,at in plan:
+                                    if motion>=at and name not in dumped:
+                                        pose=lambda:struct.unpack('<7f',ram.read(0x324138,0x18)+ram.read(0x324138+0x48,4))
+                                        before=pose();dumped.add(name);capture('warp-'+name);after=pose()
+                                        print('WARP-CAPTURE '+name+' t=%.3f'%elapsed+' pose='+json.dumps(before)+' stable='+str(before==after),flush=True)
+                                turns=[(2.0,2.3,'rx',32767),(4.5,7.0,'rx',32767),(9.0,9.3,'rx',32767),(11.5,14.0,'rx',-32767),
+                                       (16.0,16.3,'rx',-32767),(18.5,18.7,'ry',32767)]
+                                for lo,hi,ax,v in turns:
+                                    if lo<=motion<hi:button='analog';axes={ax:v}
+                            elif args.aim_probe and motion>=0:
                                 # 4 s per hold: R1 + stick, dump at 3 s. Order up, mid, down, up.
                                 probe=[('up',32767),('mid',0),('down',-32767),('up2',32767)]
                                 k=int(motion//4);ph=motion-4*k
@@ -201,6 +214,7 @@ try:
                     held=(['r1'] if args.aim_probe and why=='explore' else []) if button=='analog' else [button];held_axes=axes if button=='analog' else {}
                     held_until=time.monotonic()-began+.12;next_pad=elapsed+1.2
                     if why in ('movement-check','explore'):held_until=time.monotonic()-began+.23
+                    if args.warp_probe and button=='analog':held_until=time.monotonic()-began+.05;next_pad=elapsed
                     record_input(held,why,elapsed)
             time.sleep(.015)
         close_owned()

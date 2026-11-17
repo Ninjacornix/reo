@@ -291,7 +291,10 @@ class ResidentDxgiPresenter {
     struct Parameters {
         uint32_t sourceWidth, sourceHeight, destinationWidth, destinationHeight, linear;
         uint32_t fps = 0, frameMs = 0, ups = 0;
+        float warp[12] = {};  // presentation warp rows (r0.w = enabled), see performance.h
     };
+    uint32_t warpLastFbp_ = 0xffffffffu;
+    uint64_t warpLogged_ = 0;
     static uint32_t layoutFlags() {
         const char* aspect = std::getenv("REO_DISPLAY_ASPECT");
         const char* fit = std::getenv("REO_DISPLAY_FIT");
@@ -552,6 +555,28 @@ class ResidentDxgiPresenter {
         }
         if (reo::performance::crosshair_visible())
             parameters.fps |= 0x40000000u;
+        {
+            // A scanout of the same display buffer as the previous present repeats the
+            // game frame; it is shown rotated by the camera motion in between.
+            const uint32_t fbp = reo::performance::warp::scanout_fbp.load(std::memory_order_relaxed);
+            const bool repeat = fbp == warpLastFbp_;
+            warpLastFbp_ = fbp;
+            reo::performance::warp::Result warp;
+            const bool applied = reo::performance::warp::test(warp) ||
+                                 reo::performance::warp::compute(repeat, warp);
+            if (applied) std::memcpy(parameters.warp, warp.rows, sizeof(parameters.warp));
+            // REO_CAMERA_WARP_LOG=1: applied warps (plus every 30th present); =2: every present.
+            static const int log = [] {
+                const char* value = std::getenv("REO_CAMERA_WARP_LOG");
+                return value ? std::atoi(value) : 0;
+            }();
+            if (log && warpLogged_ < 4000 && (applied || log == 2 || (warpLogged_ % 30) == 0)) {
+                ++warpLogged_;
+                std::fprintf(stderr, "[CAMERA-WARP] present=%llu fbp=%u repeat=%d applied=%d yaw=%.3f pitch=%.3f ms=%lld\n",
+                             (unsigned long long)submitted_, fbp, int(repeat), int(applied),
+                             warp.yaw_degrees, warp.pitch_degrees, (long long)reo::performance::steady_ms());
+            } else if (log) ++warpLogged_;
+        }
         cmd.push_constants(&parameters, 0, sizeof(parameters));
         cmd.draw(3);
         cmd.end_render_pass();

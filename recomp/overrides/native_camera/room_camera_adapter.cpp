@@ -590,6 +590,7 @@ public:
         if (state.selection != 0) {
             tps.active = false; tps.smoothed = false; ++tps.yielded;
             reo::performance::request_crosshair(false); reo_pad_tap::set_aim_left(-1);
+            reo::performance::warp::clear();
             return;
         }
         if (!tps.view_initialised) { tps.first_person = tp.first_person; tps.view_initialised = true; }
@@ -709,6 +710,16 @@ public:
         parameters.pose.aim = add(eye, forward, 400.f);
         parameters.pose.roll = 0;
         tps.eye = parameters.pose.eye; tps.aim = parameters.pose.aim;
+        // Presentation warp (performance.h): exact for a camera rotating in place
+        // (first person). The third-person camera orbits the player, which a
+        // depth-free rotation cannot reproduce (the player would wobble), so it is
+        // only warped on request (REO_CAMERA_WARP=all).
+        if (tps.first_person || reo::performance::warp::all_views()) {
+            const float view[3] = {forward.x, forward.y, forward.z};
+            reo::performance::warp::publish(view, parameters.lens);
+        } else {
+            reo::performance::warp::clear();
+        }
         ++tps.frames;
         // Free camera: no zone hand-off latch for the analog direction (6621F0).
         auto relatched = sequences.snapshot(); relatched.selection_changed = 0; sequences.restore(relatched);
