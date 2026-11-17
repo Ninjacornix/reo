@@ -40,7 +40,6 @@ public sealed class GameSession {
                              string? diagnosticRoute = null,
                              IProgress<ImportProgress>? importProgress = null,
                              CancellationToken cancel = default,
-                             LobbyAutomation.Options? lobby = null,
                              uint? diagnosticSeed = null, bool diagnosticColdCache = false,
                              string? accountHome = null, string? workingDirectory = null) {
         if (Running)
@@ -198,6 +197,10 @@ public sealed class GameSession {
         }
         foreach (var pair in onlineEnvironment)
             Set(pair.Key, pair.Value);
+        // Network Game goes straight to the server list: the automatic sign-in runs behind
+        // a black "connecting" screen (REO_COOP_FAST_NETWORK, reo_hw_bridge.cpp).
+        if (settings.SkipIntro && onlineEnvironment.ContainsKey("REO_COOP_AUTO_ACCOUNT"))
+            Set("REO_COOP_FAST_NETWORK", "1");
         if (onlineEnvironment.Count > 0)
             Set("REO_NETCODE_METRICS_FILE", Path.Combine(Logs!, "network-metrics.jsonl"));
         // Developer recordings come first so diagnostic routes below keep their own settings.
@@ -205,16 +208,6 @@ public sealed class GameSession {
             Set(pair.Key, pair.Value);
         if (start.Environment.ContainsKey("REO_COOP_TRACE_FILE"))
             NetworkTrace.Start(Logs!);
-        string? keyboardQueue = null;
-        if (lobby != null && automaticAccount && diagnosticRoute == null) {
-            // Title -> Network -> automatic sign-in uses the native route; the launcher then steers
-            // the lobby. Pad input from the launcher map also applies while the game is unfocused.
-            Set("REO_TEST_ROUTE", "network-auto");
-            Set("REO_COOP_TEST_INPUT", "1");
-            keyboardQueue = Path.Combine(Logs, "keyboard.bin");
-            LobbyAutomation.CreateKeyboardQueue(keyboardQueue);
-            Set("REO_COOP_KEYBOARD_FILE", keyboardQueue);
-        }
         string cheatFile = Cheats.Export(settings, Logs, selectedMods);
         Mods.SaveSession(selectedMods, Logs);
         var weaponShuffle = selectedMods.SingleOrDefault(m => m.WeaponShuffle != null)?.WeaponShuffle;
@@ -374,13 +367,7 @@ public sealed class GameSession {
             stderr.Dispose();
             throw;
         }
-        LobbyAutomation? automation = null;
-        if (keyboardQueue != null) {
-            automation = new LobbyAutomation(Process, discElf, controller, keyboardQueue, lobby!,
-                                             text => NetworkStatus = text);
-            _ = automation.Run();
-        }
-        _ = RecordExit(Process, Logs, cardLease, account, automation, recording);
+        _ = RecordExit(Process, Logs, cardLease, account, recording);
         if (randomizerConfiguration != null && settings.ResolvedCoopMode == "join")
             _ = WatchRandomizerSession(Process,Logs,settings.CoopHost,randomizerConfiguration);
         controller.GameProcessId = Process.Id;
@@ -418,7 +405,7 @@ public sealed class GameSession {
                       server = onlineEnvironment.GetValueOrDefault("REO_COOP_HOST"),
                       accountUsername = onlineEnvironment.GetValueOrDefault("REO_COOP_USERNAME"),
                       networkProfileMarker,
-                      automaticLobby = keyboardQueue != null,
+                      fastNetwork = start.Environment.ContainsKey("REO_COOP_FAST_NETWORK"),
                       inputDevice = controller.SelectedDevice.Name,
                       fullscreen = graphics.Fullscreen,
                       graphicsEnvironment = graphics.Environment,
@@ -471,11 +458,10 @@ public sealed class GameSession {
         }
     }
     async Task RecordExit(Process process, string logs, FileStream cardLease,
-                          AutomaticAccount? account, LobbyAutomation? automation, SlowdownSession? recording = null) {
+                          AutomaticAccount? account, SlowdownSession? recording = null) {
         try {
             await process.WaitForExitAsync();
         } finally {
-            automation?.Dispose();
             account?.Dispose();
             NetworkStatus = randomizerStopReason;
             graphicsStatus = null;

@@ -18,7 +18,6 @@ internal static class WindowsServiceChecks {
         CoopSmokeOptionsTests.Run(check);
         await ExistingGameBuildTests.Run(check);
         await File2LauncherTests.Run(check);
-        File2LobbyTests.Run(check);
         GameImageCacheTests.Run(check);
         LocalBuildPayloadTests.Run(check);
         await LocalGameBuildTests.Run(check);

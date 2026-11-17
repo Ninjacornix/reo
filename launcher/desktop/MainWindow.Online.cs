@@ -2,14 +2,13 @@ using Avalonia.Input.Platform;
 
 namespace Outbreak.Launcher.Desktop;
 
-// Ports of RC1 MainWindow.Online.cs, MainWindow.InviteAddresses.cs and MainWindow.LobbySettings.cs.
+// Ports of RC1 MainWindow.Online.cs and MainWindow.InviteAddresses.cs.
 public partial class MainWindow {
     readonly HostedServer hostedServer = new();
     bool serverStarting;
     CancellationTokenSource? accountPreparation;
     string? preparedAccount;
     LanDiscovery.Responder? lanResponder;
-    volatile bool hostRoomReady;
     CancellationTokenSource? gameSearch;
     readonly HashSet<string> searchedGameEditions = new(StringComparer.Ordinal);
     Func<CancellationToken, string, Task<List<LanDiscovery.Game>>>? gameSearchLookup;
@@ -123,11 +122,9 @@ public partial class MainWindow {
         CoopHost.Text = mode == "join" ? settings.CoopHost : "";
         AccountUsername.Text = settings.AccountUsername;
         AccountUsername.MaxLength = OnlineOptions.MaxUsernameLength;
-        AutoLobby.IsChecked = settings.AutoLobby;
         AutoForward.IsChecked = settings.AutoForward;
         // RC1 requests forwarding through Windows' UPnP client (HNetCfg); other desktops forward manually.
         if (!OperatingSystem.IsWindows()) AutoForward.IsEnabled = false;
-        InitializeLobbySettings();
         ShowPorts();
         RefreshHostAddresses();
         _ = RefreshFirewallStatus();
@@ -157,7 +154,6 @@ public partial class MainWindow {
         preparedAccount = null;
         AccountStatus.Text = "";
         settings.AccountUsername = (AccountUsername.Text ?? "").Trim();
-        settings.AutoLobby = AutoLobby.IsChecked == true;
         bool forwardChanged = settings.AutoForward != (AutoForward.IsChecked == true);
         settings.AutoForward = AutoForward.IsChecked == true;
         if (settings.ResolvedCoopMode == "join" && sender == CoopHost) {
@@ -165,7 +161,6 @@ public partial class MainWindow {
             var picked = foundGames.FirstOrDefault(g => g.Address == settings.CoopHost);
             settings.JoinHostName = picked?.Name ?? "";
             settings.JoinSignupPort = picked?.Signup ?? 0;
-            settings.JoinRoomName = picked?.RoomTitle ?? "";
             ShowFoundGames();
         }
         SaveOnlineSettings();
@@ -271,9 +266,8 @@ public partial class MainWindow {
 
     LanDiscovery.Game DescribeHostedGame() =>
         new(OnlineOptions.ValidUsername(settings.AccountUsername) ? settings.AccountUsername : "Host",
-            hostedServer.Address, Updates.DefaultVersion, hostRoomReady && game.Running,
-            settings.SignupPort, hostedServer.GameId,
-            settings.AutoLobby && LobbySettings.ValidTitle(settings.ResolvedRoomName) ? settings.ResolvedRoomName : "");
+            hostedServer.Address, Updates.DefaultVersion, game.Running,
+            settings.SignupPort, hostedServer.GameId);
 
     async Task StopHosting() {
         lanResponder?.Dispose();
@@ -324,10 +318,9 @@ public partial class MainWindow {
                                     : "";
             var chosen = foundGames.FirstOrDefault(g => g.Address == settings.CoopHost);
             if (chosen != null && (chosen.Name != settings.JoinHostName ||
-                                   chosen.Signup != settings.JoinSignupPort || chosen.RoomTitle != settings.JoinRoomName)) {
+                                   chosen.Signup != settings.JoinSignupPort)) {
                 settings.JoinHostName = chosen.Name;
                 settings.JoinSignupPort = chosen.Signup;
-                settings.JoinRoomName = chosen.RoomTitle;
                 SaveOnlineSettings();
             }
         } catch (Exception error) when (error is OperationCanceledException or
@@ -431,18 +424,6 @@ public partial class MainWindow {
                 "Your router accepted the request. Internet access is not confirmed.";
     }
 
-    // Lobby steering for the next launch, when the player asked for it.
-    LobbyAutomation.Options? LobbyOptions() {
-        if (!settings.AutoLobby || !OnlineOptions.Configured(settings))
-            return null;
-        if (settings.ResolvedCoopMode == "host")
-            return new(true, settings.ResolvedRoomName, hostedServer.Address,
-                       ready => hostRoomReady = ready, settings.Game.Id,
-                       settings.ResolvedRoomMaxPlayers, settings.ResolvedRoomWaitMinutes);
-        return new(false, settings.JoinRoomName.Length > 0 ? settings.JoinRoomName : settings.JoinHostName,
-                   settings.CoopHost, Game: settings.Game.Id);
-    }
-
     // A host typed by address may still answer discovery directly: learn its name and sign-up port.
     async Task RefreshJoinHost() {
         if (settings.ResolvedCoopMode != "join")
@@ -453,10 +434,9 @@ public partial class MainWindow {
                                               CancellationToken.None, edition);
             if (settings.Game.Id != edition) return;
             if (host != null && (host.Name != settings.JoinHostName ||
-                                 host.Signup != settings.JoinSignupPort || host.RoomTitle != settings.JoinRoomName)) {
+                                 host.Signup != settings.JoinSignupPort)) {
                 settings.JoinHostName = host.Name;
                 settings.JoinSignupPort = host.Signup;
-                settings.JoinRoomName = host.RoomTitle;
                 preparedAccount = null;
                 SaveOnlineSettings();
             }
@@ -473,7 +453,6 @@ public partial class MainWindow {
                 SearchStatus.Text = searchedGameEditions.Contains(settings.Game.Id) ? "Press Search again to look for games." : "";
                 settings.JoinHostName = "";
                 settings.JoinSignupPort = 0;
-                settings.JoinRoomName = "";
                 preparedAccount = null;
                 AccountStatus.Text = "";
             }
@@ -489,7 +468,6 @@ public partial class MainWindow {
         OfflinePanel.Visibility = mode == "offline" ? Visibility.Visible : Visibility.Collapsed;
         HostOptions.Visibility = mode == "host" ? Visibility.Visible : Visibility.Collapsed;
         JoinOptions.Visibility = mode == "join" ? Visibility.Visible : Visibility.Collapsed;
-        RefreshLobbySettings();
         if (mode == "host" && PageCoop.IsVisible && !internetLookupAttempted &&
             (!CoopUiDiagnostics || publicAddressLookup != null)) _ = LookupPublicAddress();
         if (mode == "host" && CopyServerButton.IsEnabled && !hostedServer.Running) {
@@ -575,37 +553,3 @@ public partial class MainWindow {
     }
 }
 
-// ---- RC1 MainWindow.LobbySettings.cs ----
-public partial class MainWindow {
-    sealed record RoomChoice(int Value, string Label) {
-        public override string ToString() => Label;
-    }
-    bool refreshingLobbySettings;
-    string lobbyChoicesEdition = "";
-    void InitializeLobbySettings() {
-        RoomName.Text = settings.RoomName;
-        RoomPlayers.ItemsSource = new[] { new RoomChoice(2, "2 players"), new RoomChoice(3, "3 players"), new RoomChoice(4, "4 players") };
-        RefreshLobbySettings();
-    }
-    void RefreshLobbySettings() {
-        refreshingLobbySettings = true;
-        try {
-            if (lobbyChoicesEdition != settings.Game.Id) {
-                RoomWait.ItemsSource = LobbySettings.WaitTimes(settings.Game.Id).Select(n => new RoomChoice(n, n + " minutes")).ToArray();
-                lobbyChoicesEdition = settings.Game.Id;
-            }
-            RoomPlayers.SelectedValue = settings.ResolvedRoomMaxPlayers;
-            RoomWait.SelectedValue = settings.ResolvedRoomWaitMinutes;
-            RoomSettings.Visibility = settings.ResolvedCoopMode == "host" ? Visibility.Visible : Visibility.Collapsed;
-            RoomSettings.IsEnabled = settings.AutoLobby;
-        } finally { refreshingLobbySettings = false; }
-    }
-    void RoomSettingChanged(object? sender, RoutedEventArgs e) {
-        if (!initialized || refreshingLobbySettings) return;
-        settings.RoomName = (RoomName.Text ?? "").Trim();
-        if (RoomPlayers.SelectedValue is int players) settings.RoomMaxPlayers = players;
-        if (RoomWait.SelectedValue is int minutes) settings.RoomWaitMinutes = minutes;
-        SaveOnlineSettings();
-        RefreshOnlineUi();
-    }
-}
