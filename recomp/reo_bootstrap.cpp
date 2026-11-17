@@ -1625,6 +1625,25 @@ int main(int argc, char* argv[]) {
             throw std::runtime_error("Selected native analog control unavailable; inspect build identity");
     }
 #endif
+    // No PS2 hard drive on PC, so no HDD INSTALL in the main menu: the original HDD
+    // initialisation (File #1 1BCF60, File #2 148B50) loads the DEV9/ATAD/HDD/PFS drivers and
+    // stores the drive status (devctl hdd0: 0x4807). Its "not connected" outcome is kept:
+    // status 3 at File #1 0x235008 / File #2 0x2185E8 and the flag at 0x3244E0 / 0x300A70
+    // cleared, exactly what the original writes before probing; no drivers are loaded.
+    {
+        static constexpr bool file2 =
+#if defined(REO_GAME_FILE2)
+            true;
+#else
+            false;
+#endif
+        runtime.registerFunction(file2 ? 0x148B50u : 0x1BCF60u, [](uint8_t* ram, R5900Context* ctx, PS2Runtime*) {
+            const uint32_t none = 3, zero = 0;
+            std::memcpy(ram + (file2 ? 0x300A70u : 0x3244E0u), &zero, 4);
+            std::memcpy(ram + (file2 ? 0x2185E8u : 0x235008u), &none, 4);
+            ctx->pc = static_cast<uint32_t>(ctx->r[31][0]);
+        });
+    }
 
     // Begin execution
 

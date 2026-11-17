@@ -128,11 +128,24 @@ edit('tools/parallel_gs_backend/parallel_backend.cpp', [
 ])
 bridge = (root / 'recomp/overrides/reo_hw_bridge.cpp').read_text(encoding='utf-8').replace('\r\n', '\n')
 skip_function = bridge[bridge.index('// Start at the main menu (REO_SKIP_INTRO=1'):bridge.index('// Test-only route through original guest handlers.')]
+# A kit patched by an earlier version: replace its menu-skip functions and calls with the
+# current ones (start at the main menu, Network Game straight to the server list).
+_bridge_path = src / 'recomp/overrides/reo_hw_bridge.cpp'
+_bt = _bridge_path.read_text(encoding='utf-8')
+if 'uint16_t pad2SkipIntro' in _bt and skip_function not in _bt:
+    _a = _bt.index('// Start at the main menu (REO_SKIP_INTRO=1')
+    _b = _bt.index('// Test-only route through original guest handlers.')
+    _bt = _bt[:_a] + skip_function + _bt[_b:]
+    _bt = _bt.replace('            pressed |= pad2NetworkVeil(routeRam, now);\n', '')
+    _bt = _bt.replace('            pressed |= pad2SkipIntro(routeRam, now);\n',
+                      '            pressed |= pad2SkipIntro(routeRam, now);\n            pressed |= pad2NetworkVeil(routeRam, now);\n')
+    _bridge_path.write_text(_bt, encoding='utf-8', newline='')
 edit('recomp/overrides/reo_hw_bridge.cpp', [
     ('#include "reo_pad_tap.h"\n', '#include "reo_pad_tap.h"\n#include "runtime/gs/performance.h"\n'),
     ('// Test-only route through original guest handlers.', skip_function + '// Test-only route through original guest handlers.'),
     ('            pressed |= pad2TestRoute(routeRam, now);\n',
-     '            pressed |= pad2TestRoute(routeRam, now);\n            pressed |= pad2SkipIntro(routeRam, now);\n'),
+     '            pressed |= pad2TestRoute(routeRam, now);\n            pressed |= pad2SkipIntro(routeRam, now);\n'
+     '            pressed |= pad2NetworkVeil(routeRam, now);\n'),
 ])
 for name in ('present_native.frag.spv', 'present_smaa_blend.frag.spv', 'camera_depth.spv'):
     shutil.copyfile(spv / name, kit / 'shaders' / name)

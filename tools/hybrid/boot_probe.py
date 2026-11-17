@@ -5,6 +5,9 @@ usage: boot_probe.py --exe EXE --data DISC_DATA --out FOLDER [--seconds 90] [--e
 """
 from pathlib import Path
 import argparse, json, os, shutil, struct, subprocess, sys, time
+import ctypes
+try: ctypes.windll.shcore.SetProcessDpiAwareness(2)  # full-size window captures
+except Exception: pass
 
 SOURCE = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(SOURCE / 'tools/coop_playtest'))
