@@ -8,7 +8,7 @@ namespace Outbreak.Launcher;
 // (right stick looks, left stick walks relative to the camera) and with keyboard
 // and mouse (mouse looks, WASD walks relative to the camera, right button aims,
 // left button is cross, wheel zooms, C frees the cursor). L3 (Z) switches
-// between third and first person; aiming shows a crosshair and picks the game's
+// between third and first person; R3 (X) switches shoulder (or recentres); aiming shows a crosshair and picks the game's
 // aim height from where the camera looks.
 public sealed class ModernCameraOptions {
     public bool Enabled { get; set; }
@@ -22,6 +22,10 @@ public sealed class ModernCameraOptions {
     // Over-the-shoulder framing: distance behind the shoulder and sideways offset.
     public int Distance { get; set; } = 170;
     public int Shoulder { get; set; } = 45;
+    // Crosshair while aiming and in first person.
+    public bool Crosshair { get; set; } = true;
+    // R3 (the R3 key on keyboard) switches shoulder; off: R3 recentres the camera.
+    public bool ShoulderSwitch { get; set; } = true;
 
     public ModernCameraOptions Clamped() => new() {
         Enabled = Enabled,
@@ -31,7 +35,9 @@ public sealed class ModernCameraOptions {
         StickSpeed = Math.Clamp(StickSpeed, 10, 400),
         InvertY = InvertY,
         Distance = Math.Clamp(Distance, 60, 600),
-        Shoulder = Math.Clamp(Shoulder, -120, 120)
+        Shoulder = Math.Clamp(Shoulder, -120, 120),
+        Crosshair = Crosshair,
+        ShoulderSwitch = ShoulderSwitch
     };
 }
 
@@ -51,7 +57,8 @@ public static class ModernCamera {
             ["REO_CAMERA_MOUSE"] = o.MouseLook ? "1" : "0",
             ["REO_CAMERA_VIEW"] = o.View,
             ["REO_CAMERA_TPS"] = $"distance={o.Distance},side={o.Shoulder},mouse_sens={F(mouse)}," +
-                                 $"yaw_speed={F(4 * stick)},pitch_speed={F(3 * stick)},invert_y={(o.InvertY ? 1 : 0)}"
+                                 $"yaw_speed={F(4 * stick)},pitch_speed={F(3 * stick)},invert_y={(o.InvertY ? 1 : 0)}," +
+                                 $"crosshair={(o.Crosshair ? 1 : 0)},r3={(o.ShoulderSwitch ? 1 : 0)}"
         };
     }
 

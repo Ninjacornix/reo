@@ -11,6 +11,8 @@ public partial class MainWindow {
         ModernCameraMouse.IsChecked = o.MouseLook;
         ModernCameraView.SelectedIndex = o.View == "first" ? 1 : 0;
         ModernCameraInvert.IsChecked = o.InvertY;
+        ModernCameraCrosshair.IsChecked = o.Crosshair;
+        ModernCameraShoulderSwitch.IsChecked = o.ShoulderSwitch;
         ModernCameraMouseSensitivity.Value = o.MouseSensitivity;
         ModernCameraStickSpeed.Value = o.StickSpeed;
         ModernCameraDistance.Value = o.Distance;
@@ -26,7 +28,7 @@ public partial class MainWindow {
         ModernCameraShoulderLabel.Text = $"Shoulder offset: {(int)ModernCameraShoulder.Value}";
         bool enabled = ModernCameraSwitch.IsChecked == true;
         foreach (var control in new Avalonia.Controls.Control[] {
-                     ModernCameraView, ModernCameraMouse, ModernCameraInvert, ModernCameraMouseSensitivity,
+                     ModernCameraView, ModernCameraMouse, ModernCameraInvert, ModernCameraCrosshair, ModernCameraShoulderSwitch, ModernCameraMouseSensitivity,
                      ModernCameraStickSpeed, ModernCameraDistance, ModernCameraShoulder })
             control.IsEnabled = enabled;
         ModernCameraMouseSensitivity.IsEnabled = enabled && ModernCameraMouse.IsChecked == true;
@@ -46,6 +48,8 @@ public partial class MainWindow {
             MouseLook = ModernCameraMouse.IsChecked == true,
             View = ModernCameraView.SelectedIndex == 1 ? "first" : "third",
             InvertY = ModernCameraInvert.IsChecked == true,
+            Crosshair = ModernCameraCrosshair.IsChecked == true,
+            ShoulderSwitch = ModernCameraShoulderSwitch.IsChecked == true,
             MouseSensitivity = (int)Math.Round(ModernCameraMouseSensitivity.Value),
             StickSpeed = (int)Math.Round(ModernCameraStickSpeed.Value),
             Distance = (int)Math.Round(ModernCameraDistance.Value),

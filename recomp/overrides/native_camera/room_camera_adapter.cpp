@@ -158,6 +158,8 @@ struct ThirdPerson {
     float aim_distance{90.f}, aim_side{50.f}, aim_pivot{160.f};
     // Height of the gun above the actor's feet, for aiming at the crosshair point.
     float gun_height{140.f};
+    float crosshair{1.f};  // 0 hides the crosshair
+    float r3{1.f};         // R3: 1 switches shoulder, 0 recentres behind the character
     float smoothing{0.5f}, pitch_min{-50.f}, pitch_max{60.f};
     static ThirdPerson from_environment() {
         ThirdPerson t;
@@ -174,7 +176,7 @@ struct ThirdPerson {
                 {"pitch_max", &t.pitch_max}, {"mouse_sens", &t.mouse_sens}, {"zoom_step", &t.zoom_step},
                 {"eye_height", &t.eye_height}, {"eye_ahead", &t.eye_ahead}, {"aim_up", &t.aim_up},
                 {"aim_down", &t.aim_down}, {"strafe", &t.strafe}, {"strafe_speed", &t.strafe_speed},
-                {"gun_height", &t.gun_height},
+                {"gun_height", &t.gun_height}, {"crosshair", &t.crosshair}, {"r3", &t.r3},
                 {"body_radius", &t.body_radius}};
             const char* at = tune;
             while (*at) {
@@ -197,6 +199,8 @@ struct ThirdPersonState {
     std::uint64_t imports_seen{};
     std::uint16_t previous_pressed{};
     float zoom{};  // added to the rig distance by the mouse wheel
+    float shoulder{1.f}, shoulder_blend{1.f};  // target side (+1/-1) and its smoothed value
+    std::uint64_t shoulder_switches{};
     bool first_person{}, view_initialised{};
     std::uint64_t view_switches{}, first_person_frames{}, strafe_frames{}, strafe_blocked{};
     std::uint64_t free_aim_frames{};
@@ -601,7 +605,13 @@ public:
             tps.active = true; tps.smoothed = false; tps.imports_seen = counts.imports;
             tps.yaw = actor_angle; tps.pitch = tp.pitch * degrees;
         }
-        if (pressed_now & reo_pad_tap::R3) { tps.yaw = actor_angle; tps.pitch = tp.pitch * degrees; ++tps.recentres; }
+        if (pressed_now & reo_pad_tap::R3) {
+            if (tp.r3 != 0.f) { tps.shoulder = -tps.shoulder; ++tps.shoulder_switches; }
+            else { tps.yaw = actor_angle; tps.pitch = tp.pitch * degrees; ++tps.recentres; }
+        }
+        // The camera glides to the other shoulder over a few frames.
+        tps.shoulder_blend += (tps.shoulder - tps.shoulder_blend) * 0.35f;
+        if (std::fabs(tps.shoulder - tps.shoulder_blend) < 0.01f) tps.shoulder_blend = tps.shoulder;
         // L3 switches between third and first person.
         if (pressed_now & reo_pad_tap::L3) { tps.first_person = !tps.first_person; tps.smoothed = false; ++tps.view_switches; }
         const auto axis = [](std::uint8_t v) {
@@ -623,7 +633,7 @@ public:
         if (tps.yaw < -3.14159265f) tps.yaw += 6.28318531f;
 
         const bool aiming = (pad.pressed & reo_pad_tap::R1) != 0;
-        reo::performance::request_crosshair(aiming || tps.first_person);
+        reo::performance::request_crosshair(tp.crosshair != 0.f && (aiming || tps.first_person));
         const float cp = std::cos(tps.pitch), sp = std::sin(tps.pitch);
         const t::Vector forward{std::sin(tps.yaw) * cp, -sp, std::cos(tps.yaw) * cp};
         const t::Vector flat{std::sin(tps.yaw), 0.f, std::cos(tps.yaw)};
@@ -639,7 +649,7 @@ public:
             ++tps.first_person_frames;
         } else {
             const float distance = std::max(60.f, (aiming ? tp.aim_distance : tp.distance) + (aiming ? 0.f : tps.zoom));
-            const float side = aiming ? tp.aim_side : tp.side;
+            const float side = (aiming ? tp.aim_side : tp.side) * tps.shoulder_blend;
             const float lift = aiming ? tp.aim_pivot : tp.pivot;
             const t::Vector target{position.x, position.y + lift, position.z};
             if (!tps.smoothed) { tps.pivot = target; tps.smoothed = true; }
@@ -797,11 +807,11 @@ public:
     }
     void dump_details() {
         if (third_person.enabled)
-            std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-TPS-SUMMARY] frames=%llu yielded=%llu collisions=%llu recentres=%llu aim_frames=%llu mouse_frames=%llu first_person_frames=%llu view_switches=%llu\n",
+            std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-TPS-SUMMARY] frames=%llu yielded=%llu collisions=%llu recentres=%llu aim_frames=%llu mouse_frames=%llu first_person_frames=%llu view_switches=%llu shoulder_switches=%llu\n",
                          (unsigned long long)tps.frames, (unsigned long long)tps.yielded, (unsigned long long)tps.collisions,
                          (unsigned long long)tps.recentres, (unsigned long long)tps.aim_frames,
                          (unsigned long long)tps.mouse_frames, (unsigned long long)tps.first_person_frames,
-                         (unsigned long long)tps.view_switches);
+                         (unsigned long long)tps.view_switches, (unsigned long long)tps.shoulder_switches);
             std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-STRAFE] frames=%llu blocked=%llu\n",
                          (unsigned long long)tps.strafe_frames, (unsigned long long)tps.strafe_blocked);
             std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-FREE-AIM] frames=%llu\n", (unsigned long long)tps.free_aim_frames);

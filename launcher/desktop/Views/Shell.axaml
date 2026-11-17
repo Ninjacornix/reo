@@ -592,7 +592,9 @@
                   </ComboBox>
                 </Grid>
                 <CheckBox x:Name="ModernCameraMouse" IsCheckedChanged="ModernCameraChanged" Content="Mouse look" Margin="0,0,0,6" />
-                <CheckBox x:Name="ModernCameraInvert" IsCheckedChanged="ModernCameraChanged" Content="Invert vertical look" Margin="0,0,0,12" />
+                <CheckBox x:Name="ModernCameraInvert" IsCheckedChanged="ModernCameraChanged" Content="Invert vertical look" Margin="0,0,0,6" />
+                <CheckBox x:Name="ModernCameraCrosshair" IsCheckedChanged="ModernCameraChanged" Content="Show crosshair" Margin="0,0,0,6" />
+                <CheckBox x:Name="ModernCameraShoulderSwitch" IsCheckedChanged="ModernCameraChanged" Content="R3 switches shoulder (off: R3 recentres the camera)" Margin="0,0,0,12" />
                 <Grid Margin="0,5,0,12">
                   <compat:Rc1TextBlock x:Name="ModernCameraMouseLabel" Text="Mouse sensitivity: 100%" VerticalAlignment="Center" />
                   <Slider x:Name="ModernCameraMouseSensitivity" ValueChanged="ModernCameraSliderChanged" Minimum="10" Maximum="400" Value="100" Width="300" HorizontalAlignment="Right" AutomationProperties.Name="Mouse sensitivity" Classes="AudioSlider" />

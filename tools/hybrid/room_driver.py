@@ -28,6 +28,8 @@ ap.add_argument('--data', type=Path)
 ap.add_argument('--env', action='append', default=[], help='Extra KEY=VALUE for the game process')
 ap.add_argument('--explore', action='store_true', help='Walk/turn/press cross in cycles instead of the fixed movement check')
 ap.add_argument('--analog', action='store_true', help='With --explore: walk with the left stick and turn with the right stick (modern camera)')
+ap.add_argument('--press', action='append', default=[], help='SECONDS:BUTTON[+BUTTON]:HOLD after room arrival (e.g. 10:r3:0.2)')
+ap.add_argument('--capture-at', action='append', type=float, default=[], help='Extra capture SECONDS after room arrival')
 ap.add_argument('--reverse-walk', action='store_true', help='With --explore --analog: alternate forward/backward stick walks (sharp reversals)')
 ap.add_argument('--warp-probe', action='store_true', help='Idle captures before/after short right-stick turns (presentation warp validation)')
 ap.add_argument('--aim-probe', action='store_true', help='Hold R1 with the left stick up/centre/down/up and dump the player actor record after each')
@@ -156,6 +158,13 @@ try:
                         elif row['phase'] in (0xe,1,4):button='start';why='skip-opening-cutscene'
                 else:
                     room_elapsed=elapsed-arrived
+                    for spec in args.press:
+                        at,names,hold=spec.split(':');at=float(at);hold=float(hold)
+                        if at<=room_elapsed<at+hold:
+                            held=names.split('+');held_axes={};held_until=time.monotonic()-began+0.25
+                    for at in args.capture_at:
+                        if room_elapsed>=at and ('cap',at) not in dumped:
+                            dumped.add(('cap',at));capture('at-%g'%at)
                     if room_elapsed>=4 and not initial_shot:
                         initial_shot=True;capture('opening')
                     if room_elapsed>=args.move_at:

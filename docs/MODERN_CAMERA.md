@@ -20,7 +20,9 @@ tab says so and the original camera is used). Settings apply on the next launch.
 | Mouse sensitivity | 10–400 % of 0.06° per mouse count |
 | Stick look speed | 10–400 % of 4°/3° per frame (horizontal/vertical) at full tilt |
 | Distance | Camera distance behind the character (60–600, default 170) |
-| Shoulder offset | Sideways offset (default 45); negative values switch shoulders |
+| Shoulder offset | Starting sideways offset (default 45); negative values start on the other shoulder |
+| Show crosshair | Crosshair while aiming and in first person (default on) |
+| R3 switches shoulder | R3 moves the camera to the other shoulder; off: R3 recentres the camera behind the character |
 
 ## Controls
 
@@ -32,7 +34,7 @@ tab says so and the original camera is used). Settings apply on the next launch.
 | Move while aiming (no walk animation) | Left stick | Movement keys |
 | Fire / action | Cross | Left mouse button (or the Cross key) |
 | Switch third / first person | L3 | L3 key (Z by default) |
-| Recentre behind the character | R3 | R3 key (X by default) |
+| Switch shoulder (or recentre, see settings) | R3 | R3 key (X by default) |
 | Zoom | — | Mouse wheel |
 | Free / capture the cursor | — | C / click in the window |
 
@@ -73,7 +75,7 @@ presenter does not have yet. `REO_CAMERA_WARP=0` turns the warp off.
 Game switches (set by the launcher): `REO_NATIVE_ROOM_CAMERA=1`,
 `REO_CAMERA_MOD=tps`, `REO_CAMERA_MOUSE=0|1`, `REO_CAMERA_VIEW=third|first`,
 `REO_CAMERA_TPS=distance=…,side=…,mouse_sens=…,yaw_speed=…,pitch_speed=…,invert_y=…`
-(also `pivot`, `pitch`, `aim_distance`, `aim_side`, `aim_pivot`, `gun_height`,
+(also `crosshair`, `r3`, `pivot`, `pitch`, `aim_distance`, `aim_side`, `aim_pivot`, `gun_height`,
 `smoothing`, `pitch_min`, `pitch_max`, `zoom_step`, `turn_sign`, `eye_height`,
 `eye_ahead`, `aim_up`, `aim_down`, `strafe`, `strafe_speed`, `body_radius`).
 
