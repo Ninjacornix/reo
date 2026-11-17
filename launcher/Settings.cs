@@ -21,6 +21,8 @@ public sealed partial class Settings {
     [System.Text.Json.Serialization.JsonIgnore]
     public string ResolvedVSync => VSync is "off" or "adaptive" ? VSync : "on";
     public bool PerformanceOverlay { get; set; }
+    // Start at the main menu: skip the boot logos and title prompt (IntroSkip.cs).
+    public bool SkipIntro { get; set; } = true;
     public string AspectRatio { get; set; } = "4:3";
     // Widen the game camera to the selected ratio instead of stretching the 4:3 view.
     public bool WidescreenCamera { get; set; }

@@ -39,7 +39,7 @@ vec4 performanceOverlay(vec4 color, uvec2 destination, uint fps, uint frameMs, u
     if (any(lessThan(p, ivec2(0))) || p.x >= 96 || p.y >= 27) return background;
     int row = p.y / 9;
     if (p.y % 9 >= 7 || p.x % 6 >= 5) return background;
-    uint value = row == 0 ? fps & 0x3fffffffu : row == 1 ? frameMs : ups;
+    uint value = row == 0 ? fps & 0x1fffffffu : row == 1 ? frameMs : ups;
     uint glyph = performanceCharacter(row, p.x / 6, value);
     uint bits = performanceFont[glyph * 7u + uint(p.y % 9)];
     bool ink = ((bits >> uint(4 - p.x % 6)) & 1u) != 0u;

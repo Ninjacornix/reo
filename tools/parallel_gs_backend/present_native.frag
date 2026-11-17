@@ -6,7 +6,9 @@
 layout(set=0,binding=0) uniform sampler2D mergedScanout;
 layout(location=0) out vec4 hostColor;
 // Bits 0/1: scaling/FXAA; bytes 1/2: brightness/gamma percent (zero = neutral).
-layout(push_constant) uniform PresentSize { uvec2 source; uvec2 destination; uint linear; uint fps; uint frameMs; uint ups; vec4 warp0; vec4 warp1; vec4 warp2; } extent;
+layout(push_constant) uniform PresentSize { uvec2 source; uvec2 destination; uint linear; uint fps; uint frameMs; uint ups; vec4 warp0; vec4 warp1; vec4 warp2; vec4 warpParams; uvec4 warpInfo; } extent;
+layout(set=0,binding=1,std430) readonly buffer DepthValues { uint values[]; } depthValues;
+#include "present_warp.glsl"
 
 float luminance(vec3 color) { return dot(color, vec3(0.299, 0.587, 0.114)); }
 vec3 readColor(vec2 uv) { return textureLod(mergedScanout, uv, 0).rgb; }
@@ -31,6 +33,7 @@ vec3 antialias(vec2 uv, vec2 stepSize) {
     return wideLuma < lowest || wideLuma > highest ? narrow : wide;
 }
 void main() {
+    if ((extent.fps & 0x20000000u) != 0u) { hostColor = vec4(0,0,0,1); return; }  // intro skip
     vec2 drawn = pictureSize(extent.source, extent.destination, extent.linear);
     vec2 origin = (vec2(extent.destination) - drawn) * 0.5;
     vec2 texel = (gl_FragCoord.xy - origin) * vec2(extent.source) / drawn;
@@ -40,9 +43,9 @@ void main() {
         hostColor = crosshairOverlay(hostColor, extent.destination, extent.fps);
         return;
     }
-    if (extent.warp0.w != 0.0) {
+    if (extent.warpInfo.x != 0u) {
         vec2 source = vec2(extent.source);
-        texel = min(warpPicture(texel / source, extent.warp0, extent.warp1, extent.warp2) * source, source - 0.5);
+        texel = min(warpPicture(texel / source, extent.warp0, extent.warp1, extent.warp2, extent.warpParams, extent.warpInfo) * source, source - 0.5);
     }
     if (false) {
     } else if ((extent.linear & 2u) != 0u) {

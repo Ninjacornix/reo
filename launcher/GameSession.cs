@@ -276,6 +276,9 @@ public sealed class GameSession {
         Set("REO_VIF1_GPU_RESIDENT", "0");
         foreach (var pair in graphics.Environment)
             Set(pair.Key, pair.Value);
+        // Diagnostic routes drive the original menus themselves.
+        foreach (var pair in IntroSkip.Environment(selectedGame.Id, settings.SkipIntro && diagnosticRoute == null))
+            Set(pair.Key, pair.Value);
         if (diagnosticRoute != null) {
             Set("REO_FRAME_PACING_FILE", Path.Combine(Logs, "frames.csv"));
             Set("REO_VIF_KICK_TIMING_AT", "0");

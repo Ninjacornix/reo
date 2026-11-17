@@ -720,15 +720,13 @@ public:
         parameters.pose.aim = add(eye, forward, 400.f);
         parameters.pose.roll = 0;
         tps.eye = parameters.pose.eye; tps.aim = parameters.pose.aim;
-        // Presentation warp (performance.h): exact for a camera rotating in place
-        // (first person). The third-person camera orbits the player, which a
-        // depth-free rotation cannot reproduce (the player would wobble), so it is
-        // only warped on request (REO_CAMERA_WARP=all).
-        if (tps.first_person || reo::performance::warp::all_views()) {
+        // Presentation warp (performance.h): every update publishes the camera; the
+        // presenter reprojects the repeated scanout (depth mode for any view, rotation
+        // mode only for first person, which turns in place).
+        {
             const float view[3] = {forward.x, forward.y, forward.z};
-            reo::performance::warp::publish(view, parameters.lens);
-        } else {
-            reo::performance::warp::clear();
+            const float at[3] = {eye.x, eye.y, eye.z};
+            reo::performance::warp::publish(at, view, parameters.lens, tps.first_person);
         }
         ++tps.frames;
         // Free camera: no zone hand-off latch for the analog direction (6621F0).

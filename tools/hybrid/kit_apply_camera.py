@@ -4,7 +4,7 @@ usage: kit_apply_camera.py KIT SPV_DIR
   KIT      refreshed kit directory (already containing the adapter, pad tap and
            native headers as added sources); edited in place, reseal afterwards
            with kit_add_native_archives.py
-  SPV_DIR  folder with present_native.frag.spv and present_smaa_blend.frag.spv
+  SPV_DIR  folder with present_native.frag.spv, present_smaa_blend.frag.spv and camera_depth.spv
            compiled from tools/parallel_gs_backend (crosshair, presentation warp)
 
 Edits are anchored on text that exists in both develop and native/hybrid; each
@@ -88,41 +88,38 @@ edit('tools/parallel_gs_backend/resident_dxgi_presenter1c.h', [
      '            parameters.fps |= 0x40000000u;\n'
      '        cmd.push_constants(&parameters, 0, sizeof(parameters));'),
 ])
-# Presentation warp (docs/native-gameplay/FRAME_DECOUPLING.md, step 0): the blocks are
-# taken from this checkout's sources so the kit gets exactly the validated code.
-perf = (root / 'runtime/gs/performance.h').read_text(encoding='utf-8').replace('\r\n', '\n')
-warp_block = perf[perf.index('// Presentation warp'):perf.index('}  // namespace warp\n') + len('}  // namespace warp\n')]
-crosshair_end = ('inline bool crosshair_visible() {\n'
-                 '    const auto at = crosshair_ms.load(std::memory_order_relaxed);\n'
-                 '    return at != 0 && steady_ms() - at < 100;\n'
-                 '}\n')
-edit('runtime/gs/performance.h', [(crosshair_end, crosshair_end + '\n' + warp_block)])
-presenter = (root / 'tools/parallel_gs_backend/resident_dxgi_presenter1c.h').read_text(encoding='utf-8').replace('\r\n', '\n')
-present_block = presenter[presenter.index('        {\n            // A scanout of the same display buffer'):
-                          presenter.index('        cmd.push_constants(&parameters, 0, sizeof(parameters));')]
-edit('tools/parallel_gs_backend/resident_dxgi_presenter1c.h', [
-    ('        uint32_t fps = 0, frameMs = 0, ups = 0;\n    };',
-     '        uint32_t fps = 0, frameMs = 0, ups = 0;\n'
-     '        float warp[12] = {};  // presentation warp rows (r0.w = enabled), see performance.h\n'
-     '    };\n'
-     '    uint32_t warpLastFbp_ = 0xffffffffu;\n'
-     '    uint64_t warpLogged_ = 0;'),
-    ('            parameters.fps |= 0x40000000u;\n        cmd.push_constants(&parameters, 0, sizeof(parameters));',
-     '            parameters.fps |= 0x40000000u;\n' + present_block +
-     '        cmd.push_constants(&parameters, 0, sizeof(parameters));'),
-])
+# Presentation warp, depth snapshot and start-at-main-menu (FRAME_DECOUPLING.md,
+# MODERN_CAMERA.md). These files are identical between develop and native/hybrid apart
+# from the camera work (checked when this was written), so the validated versions are
+# copied whole; files that differ get anchored edits taken from this checkout.
+for rel in ('runtime/gs/performance.h', 'runtime/audio/host_bridge.h',
+            'tools/parallel_gs_backend/resident_dxgi_presenter1c.h',
+            'tools/parallel_gs_backend/smaa/resident_smaa.hpp',
+            'tools/parallel_gs_backend/resident_gs/gs_renderer.hpp',
+            'tools/parallel_gs_backend/resident_gs/gs_interface.hpp'):
+    shutil.copyfile(root / rel, src / rel)
+backend = (root / 'tools/parallel_gs_backend/parallel_backend.cpp').read_text(encoding='utf-8').replace('\r\n', '\n')
+fbp_store = ('                    reo::performance::warp::scanout_fbp.store(\n'
+             '                        uint32_t(capture.registers[circuit] & 0x1FF), std::memory_order_relaxed);\n')
+depth_block = backend[backend.index(fbp_store) + len(fbp_store):backend.index('#endif\n', backend.index(fbp_store)) + len('#endif\n')]
 edit('tools/parallel_gs_backend/parallel_backend.cpp', [
     ('#include "runtime/gs/frame_pacing.h"\n', '#include "runtime/gs/frame_pacing.h"\n#include "runtime/gs/performance.h"\n'),
     ('                complete = presenter_->present(scanout.image, false, target.linear);',
      '                {\n'
      '                    // Display buffer of this scanout: the presenter tells a new game\n'
      '                    // frame from a repeated one (presentation warp).\n'
-     '                    const size_t circuit = (capture.registers[0] & 1u) ? 7 : 9;\n'
-     '                    reo::performance::warp::scanout_fbp.store(\n'
-     '                        uint32_t(capture.registers[circuit] & 0x1FF), std::memory_order_relaxed);\n'
+     '                    const size_t circuit = (capture.registers[0] & 1u) ? 7 : 9;\n' + fbp_store + depth_block +
      '                }\n'
      '                complete = presenter_->present(scanout.image, false, target.linear);'),
 ])
-for name in ('present_native.frag.spv', 'present_smaa_blend.frag.spv'):
+bridge = (root / 'recomp/overrides/reo_hw_bridge.cpp').read_text(encoding='utf-8').replace('\r\n', '\n')
+skip_function = bridge[bridge.index('// Start at the main menu (REO_SKIP_INTRO=1'):bridge.index('// Test-only route through original guest handlers.')]
+edit('recomp/overrides/reo_hw_bridge.cpp', [
+    ('#include "reo_pad_tap.h"\n', '#include "reo_pad_tap.h"\n#include "runtime/gs/performance.h"\n'),
+    ('// Test-only route through original guest handlers.', skip_function + '// Test-only route through original guest handlers.'),
+    ('            pressed |= pad2TestRoute(routeRam, now);\n',
+     '            pressed |= pad2TestRoute(routeRam, now);\n            pressed |= pad2SkipIntro(routeRam, now);\n'),
+])
+for name in ('present_native.frag.spv', 'present_smaa_blend.frag.spv', 'camera_depth.spv'):
     shutil.copyfile(spv / name, kit / 'shaders' / name)
 print('camera hooks applied to', kit)

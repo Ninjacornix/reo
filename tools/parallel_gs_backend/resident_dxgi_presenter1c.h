@@ -12,6 +12,9 @@
 #include "smaa/resident_smaa.hpp"
 #include "movie_frame_signal.h"
 #include "runtime/gs/performance.h"
+#include "shader_location.hpp"
+#include <filesystem>
+#include <fstream>
 #include "runtime/gs/display_sync.h"
 #include "presentation_mode.h"
 #include <algorithm>
@@ -291,10 +294,199 @@ class ResidentDxgiPresenter {
     struct Parameters {
         uint32_t sourceWidth, sourceHeight, destinationWidth, destinationHeight, linear;
         uint32_t fps = 0, frameMs = 0, ups = 0;
-        float warp[12] = {};  // presentation warp rows (r0.w = enabled), see performance.h
+        float warp[12] = {};       // presentation warp rows, see performance.h (namespace warp)
+        float warpParams[4] = {};  // tan x, tan y, depth mapping a, b
+        uint32_t warpInfo[4] = {}; // mode (0 none, 1 rotation, 2 depth), depth width, height
     };
+    static_assert(sizeof(Parameters) == 112, "present push constants");
+    // Presentation warp state (docs/native-gameplay/FRAME_DECOUPLING.md).
     uint32_t warpLastFbp_ = 0xffffffffu;
-    uint64_t warpLogged_ = 0;
+    uint64_t warpLogged_ = 0, warpFlipSerial_ = 0, warpNewFrames_ = 0, warpDumps_ = 0, warpDumpCandidates_ = 0;
+    reo::performance::warp::Result warpResult_{};
+    bool warpApplied_ = false, warpRepeat_ = false;
+    const Vulkan::Buffer* depthVram_ = nullptr;
+    uint32_t depthBase_ = 0, depthStride_ = 0, depthPsm_ = 0, depthSourceWidth_ = 0, depthSourceHeight_ = 0;
+    uint32_t depthWidth_ = 0, depthHeight_ = 0;  // dimensions of the current snapshot (0: none)
+    Vulkan::BufferHandle depthBuffer_;
+    Vulkan::Program* depthProgram_ = nullptr;
+    static constexpr uint32_t depthCapacity = 1024u * 1024u;  // pixels
+    // REO_CAMERA_WARP_PROBE=1: an 8x8 grid of each snapshot's depth is copied to the host
+    // and logged at the next flip with the views around it (measures the pose lag).
+    Vulkan::BufferHandle probeHost_;
+    bool probePending_ = false;
+    uint64_t probeFlipSerial_ = 0, probeLogged_ = 0;
+    static bool probeEnabled() {
+        static const bool value = [] { const char* v = std::getenv("REO_CAMERA_WARP_PROBE"); return v && *v == '1'; }();
+        return value;
+    }
+    void probeLog() {
+        if (!probePending_ || !probeHost_) return;
+        probePending_ = false;
+        const auto* z = static_cast<const uint32_t*>(device_.map_host_buffer(*probeHost_, Vulkan::MEMORY_ACCESS_READ_BIT));
+        if (!z) return;
+        double sum = 0; for (unsigned i = 0; i < 64; ++i) sum += z[i];
+        reo::performance::warp::View views[reo::performance::warp::ring_size]; uint64_t serial = 0;
+        reo::performance::warp::read(views, serial);
+        std::fprintf(stderr, "[CAMERA-WARP-PROBE] flip=%llu latest=%llu meanZ=%.0f views=", (unsigned long long)probeFlipSerial_,
+                     (unsigned long long)serial, sum / 64.0);
+        for (uint64_t s = probeFlipSerial_ > 3 ? probeFlipSerial_ - 3 : 1; s <= serial && s <= probeFlipSerial_ + 3; ++s) {
+            const auto& v = views[s % reo::performance::warp::ring_size];
+            if (v.valid && v.serial == s) std::fprintf(stderr, "%llu:%c ", (unsigned long long)s, v.rotation_only ? 'F' : 'T');
+        }
+        std::fprintf(stderr, "\n");
+        device_.unmap_host_buffer(*probeHost_, Vulkan::MEMORY_ACCESS_READ_BIT);
+        ++probeLogged_;
+    }
+    void probeCopy() {
+        if (!probeEnabled() || !depthWidth_ || probeLogged_ > 4000) return;
+        if (!probeHost_) {
+            Vulkan::BufferCreateInfo info{};
+            info.domain = Vulkan::BufferDomain::CachedHost; info.size = 256; info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+            probeHost_ = device_.create_buffer(info);
+            if (!probeHost_) return;
+        }
+        VkBufferCopy copies[64];
+        for (unsigned i = 0; i < 64; ++i) {
+            const uint32_t x = (depthWidth_ * (2 * (i % 8) + 1)) / 16, y = (depthHeight_ * (2 * (i / 8) + 1)) / 16;
+            copies[i] = {VkDeviceSize(y * depthWidth_ + x) * 4u, VkDeviceSize(i) * 4u, 4};
+        }
+        auto cmd = device_.request_command_buffer();
+        cmd->copy_buffer(*probeHost_, *depthBuffer_, copies, 64);
+        cmd->buffer_barrier(*probeHost_, VK_PIPELINE_STAGE_2_COPY_BIT, VK_ACCESS_2_TRANSFER_WRITE_BIT,
+                            VK_PIPELINE_STAGE_2_HOST_BIT, VK_ACCESS_2_HOST_READ_BIT);
+        device_.submit(cmd);
+        probePending_ = true; probeFlipSerial_ = warpFlipSerial_;
+    }
+public:
+    // GS Z buffer of the frame being scanned out (backend, before present()).
+    void setDepthSource(const Vulkan::Buffer* vram, uint32_t base, uint32_t stride, uint32_t psm,
+                        uint32_t width, uint32_t height) {
+        depthVram_ = vram; depthBase_ = base; depthStride_ = stride; depthPsm_ = psm;
+        depthSourceWidth_ = width; depthSourceHeight_ = height;
+    }
+private:
+    void initDepth() {
+        Vulkan::BufferCreateInfo info{};
+        info.domain = Vulkan::BufferDomain::Device;
+        info.size = VkDeviceSize(depthCapacity) * 4u;
+        info.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+        depthBuffer_ = device_.create_buffer(info);
+        if (!depthBuffer_) throw std::runtime_error("Presentation warp depth buffer unavailable");
+        try {
+            const auto path = reo_shader_location::find(std::filesystem::path(__FILE__).parent_path(), "camera_depth.spv");
+            std::ifstream file(path, std::ios::binary | std::ios::ate);
+            const auto size = file ? std::streamoff(file.tellg()) : std::streamoff(0);
+            if (size < 20 || size > 1 << 20 || size % 4) throw std::runtime_error("camera_depth.spv missing or invalid");
+            std::vector<uint32_t> code(size_t(size) / 4u);
+            file.seekg(0); file.read(reinterpret_cast<char*>(code.data()), size);
+            if (!file || code[0] != 0x07230203) throw std::runtime_error("camera_depth.spv unreadable");
+            Vulkan::ResourceLayout layout{};
+            layout.sets[0].storage_buffer_mask = 3u;
+            layout.sets[0].meta[0].array_size = 1; layout.sets[0].meta[1].array_size = 1;
+            layout.push_constant_size = 20;
+            depthProgram_ = device_.request_program(code.data(), code.size() * 4u, &layout);
+        } catch (const std::exception& e) {
+            depthProgram_ = nullptr;
+            std::fprintf(stderr, "[CAMERA-WARP] depth snapshot unavailable: %s\n", e.what());
+        }
+    }
+    static const char* depthDumpFolder() {
+        static const char* folder = std::getenv("REO_CAMERA_DEPTH_DUMP");
+        return folder && *folder ? folder : nullptr;
+    }
+    // At a flip: copy the shown frame's Z buffer before the next frame overwrites it.
+    bool snapshotDepth() {
+        depthWidth_ = depthHeight_ = 0;
+        const bool wanted = reo::performance::warp::depth_mapping().on || depthDumpFolder() || probeEnabled();
+        if (!wanted || !depthProgram_ || !depthVram_ || !depthSourceWidth_ || !depthSourceHeight_ ||
+            depthSourceWidth_ > 2048 || depthSourceHeight_ > 2048 ||
+            uint64_t(depthSourceWidth_) * depthSourceHeight_ > depthCapacity)
+            return false;
+        const uint32_t controls[5] = {depthBase_, depthStride_, depthPsm_, depthSourceWidth_, depthSourceHeight_};
+        auto cmd = device_.request_command_buffer();
+        cmd->buffer_barrier(*depthVram_, VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT, VK_ACCESS_2_MEMORY_WRITE_BIT,
+                            VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_READ_BIT);
+        cmd->set_program(depthProgram_);
+        cmd->set_storage_buffer(0, 0, *depthVram_);
+        cmd->set_storage_buffer(0, 1, *depthBuffer_);
+        cmd->push_constants(controls, 0, sizeof(controls));
+        cmd->dispatch((depthSourceWidth_ + 7u) / 8u, (depthSourceHeight_ + 7u) / 8u, 1);
+        cmd->buffer_barrier(*depthBuffer_, VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT,
+                            VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_2_COPY_BIT,
+                            VK_ACCESS_2_SHADER_STORAGE_READ_BIT | VK_ACCESS_2_TRANSFER_READ_BIT);
+        device_.submit(cmd);
+        depthWidth_ = depthSourceWidth_; depthHeight_ = depthSourceHeight_;
+        return true;
+    }
+    // REO_CAMERA_DEPTH_DUMP=<folder>: every 90th new frame (12 at most) writes the Z
+    // snapshot and the camera views for calibrating the depth mapping.
+    void dumpDepth() {
+        const char* folder = depthDumpFolder();
+        // Only frames with camera views (gameplay with the modern camera) are dumped.
+        if (!folder || !depthWidth_ || !warpFlipSerial_ || warpDumps_ >= 12 || ++warpDumpCandidates_ % 45) return;
+        const auto bytes = VkDeviceSize(depthWidth_) * depthHeight_ * 4u;
+        Vulkan::BufferCreateInfo info{};
+        info.domain = Vulkan::BufferDomain::CachedHost; info.size = bytes; info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+        auto host = device_.create_buffer(info);
+        if (!host) return;
+        auto cmd = device_.request_command_buffer();
+        cmd->copy_buffer(*host, 0, *depthBuffer_, 0, bytes);
+        cmd->buffer_barrier(*host, VK_PIPELINE_STAGE_2_COPY_BIT, VK_ACCESS_2_TRANSFER_WRITE_BIT,
+                            VK_PIPELINE_STAGE_2_HOST_BIT, VK_ACCESS_2_HOST_READ_BIT);
+        Vulkan::Fence fence;
+        device_.submit(cmd, &fence);
+        if (!fence) return;
+        fence->wait();
+        const auto* data = static_cast<const char*>(device_.map_host_buffer(*host, Vulkan::MEMORY_ACCESS_READ_BIT));
+        if (!data) return;
+        const auto index = warpDumps_++;
+        const auto base = std::filesystem::path(folder) / ("depth-" + std::to_string(index));
+        { std::ofstream out(base.string() + ".bin", std::ios::binary); out.write(data, std::streamsize(bytes)); }
+        device_.unmap_host_buffer(*host, Vulkan::MEMORY_ACCESS_READ_BIT);
+        reo::performance::warp::View views[reo::performance::warp::ring_size];
+        uint64_t serial = 0;
+        reo::performance::warp::read(views, serial);
+        std::ofstream meta(base.string() + ".json");
+        meta << "{\"width\":" << depthWidth_ << ",\"height\":" << depthHeight_ << ",\"psm\":" << depthPsm_
+             << ",\"base\":" << depthBase_ << ",\"stride\":" << depthStride_ << ",\"flipSerial\":" << warpFlipSerial_
+             << ",\"latestSerial\":" << serial << ",\"present\":" << submitted_ << ",\"ms\":"
+             << reo::performance::steady_ms() << ",\"views\":[";
+        bool first = true;
+        for (const auto& v : views) {
+            if (!v.valid) continue;
+            meta << (first ? "" : ",") << "{\"serial\":" << v.serial << ",\"ms\":" << v.ms << ",\"lens\":" << v.lens
+                 << ",\"first\":" << (v.rotation_only ? 1 : 0) << ",\"eye\":[" << v.eye[0] << "," << v.eye[1] << ","
+                 << v.eye[2] << "],\"forward\":[" << v.forward[0] << "," << v.forward[1] << "," << v.forward[2] << "]}";
+            first = false;
+        }
+        meta << "]}\n";
+    }
+    // Once per present, before recording: new frame or repeat, depth snapshot, warp.
+    void prepareWarp() {
+        const uint32_t fbp = reo::performance::warp::scanout_fbp.load(std::memory_order_relaxed);
+        warpRepeat_ = fbp == warpLastFbp_;
+        warpLastFbp_ = fbp;
+        if (!warpRepeat_) {
+            ++warpNewFrames_;
+            probeLog();  // previous frame's probe (its copy has completed by now)
+            warpFlipSerial_ = reo::performance::warp::current_serial();
+            if (snapshotDepth()) { dumpDepth(); probeCopy(); }
+        }
+        warpApplied_ = reo::performance::warp::test(warpResult_) ||
+                       reo::performance::warp::compute(warpRepeat_, warpFlipSerial_, depthWidth_ != 0, warpResult_);
+        // REO_CAMERA_WARP_LOG=1: applied warps (plus every 30th present); =2: every present.
+        static const int log = [] {
+            const char* value = std::getenv("REO_CAMERA_WARP_LOG");
+            return value ? std::atoi(value) : 0;
+        }();
+        if (log && warpLogged_ < 4000 && (warpApplied_ || log == 2 || (warpLogged_ % 30) == 0)) {
+            std::fprintf(stderr, "[CAMERA-WARP] present=%llu fbp=%u repeat=%d applied=%d mode=%u yaw=%.3f pitch=%.3f move=%.2f depth=%ux%u ms=%lld\n",
+                         (unsigned long long)submitted_, fbp, int(warpRepeat_), int(warpApplied_), warpResult_.mode,
+                         warpResult_.yaw_degrees, warpResult_.pitch_degrees, warpResult_.move, depthWidth_, depthHeight_,
+                         (long long)reo::performance::steady_ms());
+        }
+        if (log) ++warpLogged_;
+    }
     static uint32_t layoutFlags() {
         const char* aspect = std::getenv("REO_DISPLAY_ASPECT");
         const char* fit = std::getenv("REO_DISPLAY_FIT");
@@ -367,6 +559,8 @@ class ResidentDxgiPresenter {
         f.sets[0].sampled_image_mask = 1;
         f.sets[0].fp_mask = 1;
         f.sets[0].meta[0].array_size = 1;
+        f.sets[0].storage_buffer_mask = 2u;  // presentation warp depth (binding 1)
+        f.sets[0].meta[1].array_size = 1;
         f.output_mask = 1;
         f.push_constant_size = sizeof(Parameters);
         program_ = device_.request_program(vertex.data(), vertex.size() * 4, fragment.data(),
@@ -375,7 +569,8 @@ class ResidentDxgiPresenter {
             throw std::runtime_error("GPU opaque presentation shader unavailable");
         const char* aa = std::getenv("REO_POST_AA");
         if (aa && std::strcmp(aa, "smaa") == 0)
-            smaa_ = std::make_unique<ResidentSmaa>(device_, vertex);
+            smaa_ = std::make_unique<ResidentSmaa>(device_, vertex, uint32_t(sizeof(Parameters)));
+        initDepth();
         if (canUseDxgiInterop()) {
             auto candidate = std::make_unique<Vulkan::DXGIInteropSwapchain>();
             if (candidate->init_interop_device(device_))
@@ -525,10 +720,12 @@ class ResidentDxgiPresenter {
             const char* value = std::getenv("REO_POST_AA");
             return value && std::strcmp(value, "fxaa") == 0;
         }();
-        if (smaa_)
+        if (smaa_) {
             smaa_->bindBlend(cmd);
-        else {
+            cmd.set_storage_buffer(0, 2, *depthBuffer_);
+        } else {
             cmd.set_program(program_);
+            cmd.set_storage_buffer(0, 1, *depthBuffer_);
             cmd.set_texture(0, 0, merged->get_view(),
                             (linear || fxaa) ? Vulkan::StockSampler::LinearClamp
                                              : Vulkan::StockSampler::NearestClamp);
@@ -555,27 +752,14 @@ class ResidentDxgiPresenter {
         }
         if (reo::performance::crosshair_visible())
             parameters.fps |= 0x40000000u;
-        {
-            // A scanout of the same display buffer as the previous present repeats the
-            // game frame; it is shown rotated by the camera motion in between.
-            const uint32_t fbp = reo::performance::warp::scanout_fbp.load(std::memory_order_relaxed);
-            const bool repeat = fbp == warpLastFbp_;
-            warpLastFbp_ = fbp;
-            reo::performance::warp::Result warp;
-            const bool applied = reo::performance::warp::test(warp) ||
-                                 reo::performance::warp::compute(repeat, warp);
-            if (applied) std::memcpy(parameters.warp, warp.rows, sizeof(parameters.warp));
-            // REO_CAMERA_WARP_LOG=1: applied warps (plus every 30th present); =2: every present.
-            static const int log = [] {
-                const char* value = std::getenv("REO_CAMERA_WARP_LOG");
-                return value ? std::atoi(value) : 0;
-            }();
-            if (log && warpLogged_ < 4000 && (applied || log == 2 || (warpLogged_ % 30) == 0)) {
-                ++warpLogged_;
-                std::fprintf(stderr, "[CAMERA-WARP] present=%llu fbp=%u repeat=%d applied=%d yaw=%.3f pitch=%.3f ms=%lld\n",
-                             (unsigned long long)submitted_, fbp, int(repeat), int(applied),
-                             warp.yaw_degrees, warp.pitch_degrees, (long long)reo::performance::steady_ms());
-            } else if (log) ++warpLogged_;
+        if (reo::performance::intro_hidden())
+            parameters.fps |= 0x20000000u;  // black while the intro is skipped
+        if (warpApplied_) {
+            std::memcpy(parameters.warp, warpResult_.rows, sizeof(parameters.warp));
+            std::memcpy(parameters.warpParams, warpResult_.params, sizeof(parameters.warpParams));
+            parameters.warpInfo[0] = warpResult_.mode;
+            parameters.warpInfo[1] = depthWidth_;
+            parameters.warpInfo[2] = depthHeight_;
         }
         cmd.push_constants(&parameters, 0, sizeof(parameters));
         cmd.draw(3);
@@ -614,6 +798,7 @@ class ResidentDxgiPresenter {
         device_.add_wait_semaphore(Vulkan::CommandBuffer::Type::Generic, std::move(acquire),
                                    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, true);
         auto priorPresent = std::move(vkPresented_.at(index));
+        prepareWarp();
         auto cmd = device_.request_command_buffer();
         recordPresentPass(*cmd, merged, *vkImages_.at(index), *vkViews_.at(index), false, linear);
         device_.submit(cmd);
@@ -658,6 +843,7 @@ class ResidentDxgiPresenter {
         // Public queue wait; no Device WSI private state/access is used.
         device_.add_wait_semaphore(Vulkan::CommandBuffer::Type::Generic, std::move(acquire),
                                    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, true);
+        prepareWarp();
         auto cmd = device_.request_command_buffer();
         recordPresentPass(*cmd, merged, *target_, *targetView_, true, linear);
         Vulkan::Semaphore release;

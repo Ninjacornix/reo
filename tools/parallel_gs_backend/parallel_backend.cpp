@@ -1095,6 +1095,16 @@ class ParallelBackend final : public Backend, private SignalInterface {
                     const size_t circuit = (capture.registers[0] & 1u) ? 7 : 9;
                     reo::performance::warp::scanout_fbp.store(
                         uint32_t(capture.registers[circuit] & 0x1FF), std::memory_order_relaxed);
+#if defined(_WIN32)
+                    // Depth source for the presentation warp: the context-1 Z buffer
+                    // (ZBP in 2048-word pages, the swizzle base in 64-word blocks).
+                    const auto& state = gs_->get_register_state();
+                    const auto zbuf = state.ctx[0].zbuf.desc;
+                    const auto frame = state.ctx[0].frame.desc;
+                    presenter_->setDepthSource(gs_->resident_vram_buffer(), uint32_t(zbuf.ZBP) * 32u,
+                                               uint32_t(frame.FBW), uint32_t(zbuf.PSM) | 0x30u,
+                                               scanout.internal_width, scanout.internal_height);
+#endif
                 }
                 complete = presenter_->present(scanout.image, false, target.linear);
                 timing.presented();

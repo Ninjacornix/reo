@@ -58,6 +58,7 @@ public partial class MainWindow : Window {
                                                               _ => 0 };
         UpdateScreenFitHint();
         Fullscreen.IsChecked = settings.Fullscreen;
+        SkipIntro.IsChecked = settings.SkipIntro;
         PerformanceOverlay.IsChecked = settings.PerformanceOverlay;
         AsyncVif.IsChecked = settings.AsyncVif;
         GpuMovies.IsChecked = settings.GpuMoviesChoice ?? false;
@@ -196,6 +197,7 @@ public partial class MainWindow : Window {
                 .Fits[Math.Clamp(ScreenFit.SelectedIndex, 0, DisplayOptions.Fits.Length - 1)];
         UpdateScreenFitHint();
         settings.Fullscreen = Fullscreen.IsChecked == true;
+        settings.SkipIntro = SkipIntro.IsChecked == true;
         settings.PerformanceOverlay = PerformanceOverlay.IsChecked == true;
         settings.AsyncVif = AsyncVif.IsChecked == true;
         if (ReferenceEquals(sender, GpuMovies)) {

@@ -66,6 +66,9 @@ internal static class KeyboardInputTests {
         check(tuned["REO_CAMERA_MOUSE"]=="0"&&tuned["REO_CAMERA_TPS"]=="distance=600,side=-40,mouse_sens=0.12,yaw_speed=2,pitch_speed=1.5,invert_y=1,crosshair=0,r3=0","modern camera tuning is clamped and uses invariant decimals");
         var saved=JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(new Settings{ModernCamera=new(){Enabled=true,Distance=420}}))!;
         check(saved.ModernCamera.Enabled&&saved.ModernCamera.Distance==420,"modern camera settings round-trip through settings.json");
+        var skip=IntroSkip.Environment("file1",true);
+        check(skip["REO_SKIP_INTRO"]=="1"&&skip["REO_TURBO"]=="16"&&skip["REO_TURBO_UNTIL"]=="0x5D4898"&&IntroSkip.Environment("file2",true)["REO_TURBO_UNTIL"]=="0x5B7D00","start at the main menu fast-forwards the boot to each edition's front menu");
+        check(IntroSkip.Environment("file1",false).Count==0&&JsonSerializer.Deserialize<Settings>("{}")!.SkipIntro,"skipping the intro is on by default and off sets nothing");
         check(JsonSerializer.Deserialize<Settings>("{}")!.ModernCamera is {Enabled:false,MouseLook:true,Crosshair:true,ShoulderSwitch:true},"older settings default to the original camera with mouse look ready");
     }
 }
