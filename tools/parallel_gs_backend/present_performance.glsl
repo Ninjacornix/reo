@@ -64,3 +64,23 @@ vec4 crosshairOverlay(vec4 color, uvec2 destination, uint flags) {
     if (crosshairShape(p, thickness + 1, gap - 1, arm + 2)) return vec4(color.rgb * 0.25, 1);
     return color;
 }
+
+// Black screen while the game connects (fps word bit 28; bits 16..23 animate):
+// eight dots on a small ring in the middle of the screen, the brightest one moving round.
+vec4 connectingSpinner(vec2 fragment, uvec2 destination, uint flags) {
+    if ((flags & 0x10000000u) == 0u) return vec4(0, 0, 0, 1);
+    float scale = max(1.0, float(destination.y) / 480.0);
+    vec2 centre = vec2(destination) * 0.5;
+    vec2 d = fragment - centre;
+    float lead = float((flags >> 16u) & 7u);
+    vec3 color = vec3(0.0);
+    for (int i = 0; i < 8; ++i) {
+        float a = 6.2831853 * float(i) / 8.0;
+        vec2 dot_ = vec2(cos(a), sin(a)) * 14.0 * scale;
+        float dist = length(d - dot_);
+        float age = mod(lead - float(i) + 8.0, 8.0);
+        float level = 0.9 - age * 0.1;
+        color = max(color, vec3(level) * (1.0 - smoothstep(2.5 * scale, 3.5 * scale, dist)));
+    }
+    return vec4(color, 1.0);
+}

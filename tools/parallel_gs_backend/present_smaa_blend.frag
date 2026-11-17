@@ -14,7 +14,7 @@ layout(set=0,binding=2,std430) readonly buffer DepthValues { uint values[]; } de
 #include "present_warp.glsl"
 layout(location=0) out vec4 hostColor;
 void main() {
-    if ((extent.fps & 0x20000000u) != 0u) { hostColor = vec4(0,0,0,1); return; }  // intro skip
+    if ((extent.fps & 0x20000000u) != 0u) { hostColor = connectingSpinner(gl_FragCoord.xy, extent.destination, extent.fps); return; }  // intro skip / network connect
     vec2 outputSize = vec2(extent.destination);
     vec2 picture = pictureSize(extent.source, extent.destination, extent.flags);
     vec2 origin = (outputSize - picture) * 0.5;

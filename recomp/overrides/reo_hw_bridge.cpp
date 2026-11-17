@@ -1058,6 +1058,58 @@ uint16_t pad2SkipIntro(uint8_t* rd, double now) {
     return pad2ButtonBit("START");
 }
 
+// Network Game straight to SERVER SELECT (runtime/gs/performance.h, network_veil). Once
+// the automatic account provider is armed (the original network module runs after
+// Network is chosen in the main menu), the screen stays black until the original server
+// list is shown; the provider answers the prompts and signs in meanwhile. Observation
+// only: no input is produced here. Server list: lobby overlay active, main mode 7,
+// server controller 3, server widget 2/0 (tools/coop_playtest/lobby_driver.py).
+uint16_t pad2NetworkVeil(uint8_t* rd, double now) {
+    namespace account = reo_network::automatic_account;
+    static const bool on = [] {
+        const char* v = std::getenv("REO_COOP_FAST_NETWORK");
+        return v && std::strcmp(v, "1") == 0;
+    }();
+    static double started = -1;
+    static bool finished = false;
+    if (!on || !rd || finished || !account::enabled())
+        return 0;
+    auto byte = [rd](uint32_t a) {
+        uint8_t value = 0;
+        reo_source_instrumentation::copyBytesForBank(rd, &value, rd + a, 1);
+        return value;
+    };
+    auto word = [rd](uint32_t a) {
+        uint32_t value = 0;
+        reo_source_instrumentation::copyBytesForBank(rd, &value, rd + a, sizeof(value));
+        return value;
+    };
+    auto finish = [&](const char* why) {
+        reo::performance::network_veil.store(false);
+        finished = true;
+        std::fprintf(stderr, "[NETWORK-FAST] %s t=%.3f\n", why, now);
+        return uint16_t(0);
+    };
+    if (started < 0) {
+        if (!account::armed.load()) return 0;
+        started = now;
+        reo::performance::network_veil.store(true);
+        std::fprintf(stderr, "[NETWORK-FAST] connecting behind the veil t=%.3f\n", now);
+    }
+#if defined(REO_GAME_FILE2)
+    const bool overlay = word(0x58D000) == 0x336F574Du && word(0x58D004) == 4u;
+    const bool servers = overlay && byte(0x6E32EA) == 7 && byte(0x6A9848) == 3 && byte(0x6A9849) == 0 &&
+                         byte(0x6E37D0) == 2 && byte(0x6E37D1) == 0;
+#else
+    const bool overlay = word(0x570000) == 0x336F574Du && word(0x570004) == 4u;
+    const bool servers = overlay && byte(0x6DF150) == 37 && byte(0x6DF151) == 7 && byte(0x6D91CA) == 7 &&
+                         byte(0x6995A0) == 3 && byte(0x6D9688) == 2 && byte(0x6D9689) == 0;
+#endif
+    if (servers) return finish("server select reached");
+    if (now - started > 90.0) return finish("time limit; showing the game");
+    return 0;
+}
+
 // Test-only route through original guest handlers. These reads observe menu state;
 // the only output is ordinary pad input, never a guest state/PC write.
 uint16_t pad2TestRoute(uint8_t* rd, double now) {
@@ -2417,6 +2469,7 @@ void pad2FeederLoop() {
             }
             pressed |= pad2TestRoute(routeRam, now);
             pressed |= pad2SkipIntro(routeRam, now);
+            pressed |= pad2NetworkVeil(routeRam, now);
             pressed |= pad2AutomaticAccount(routeRam, now);
             // Live input (runtime/input: keyboard and XInput, same bit order), only while this
             // process owns the foreground window so typing elsewhere does not press buttons.

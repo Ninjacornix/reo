@@ -5,7 +5,7 @@ game = sys.argv[1]  # file1|file2
 data = os.path.abspath(sys.argv[2])
 plugin = 'outbreak' if game == 'file1' else 'outbreak2'
 python = os.path.join(root, r'build-ninja\coop-research\openSNAP\.venv\Scripts\python.exe')
-source = os.path.join(root, r'build-ninja\hybrid\package-preview3\network-server\source')
+source = os.path.join(root, r'build-ninja\hybrid\package-preview5\network-server\source')
 os.makedirs(data, exist_ok=True)
 for f in ('launcher-empty.env', 'launcher-empty.dist'):
     open(os.path.join(data, f), 'a').close()
