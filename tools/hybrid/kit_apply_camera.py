@@ -34,6 +34,20 @@ def edit(rel, pairs):
 
 
 block = (root / 'tools/hybrid/camera_install_block.inc').read_text(encoding='utf-8')
+# A kit patched with an older install block: drop it so the current block is inserted
+# once (the block starts with the camera guard and ends right before the boot message).
+_boot = src / 'recomp/reo_bootstrap.cpp'
+_text = _boot.read_text(encoding='utf-8')
+_nl = '\r\n' if '\r\n' in _text else '\n'
+_start = _text.find('#if defined(REO_BUILD_NATIVE_ROOM_CAMERA) && REO_BUILD_NATIVE_ROOM_CAMERA' + _nl + '    // REO_NATIVE_ROOM_CAMERA=1')
+_end = _text.find('    printf("[BOOT] Starting execution at entry point')
+_current = _text.find(block.replace('\n', _nl))
+if _start >= 0 and _end > _start:
+    # Keep only the current block: remove older copies before it, or every copy if
+    # the current one is absent (it is inserted again below).
+    _cut = _current if _current >= _start else _end
+    if _cut > _start:
+        _boot.write_text(_text[:_start] + _text[_cut:], encoding='utf-8', newline='')
 edit('recomp/reo_bootstrap.cpp', [
     ('#include "overrides/reo_display_probe.h"\n',
      '#include "overrides/reo_display_probe.h"\n'
