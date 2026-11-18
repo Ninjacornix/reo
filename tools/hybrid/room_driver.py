@@ -26,6 +26,7 @@ ap.add_argument('--boot-fast', action='store_true')
 ap.add_argument('--asset-plan', type=Path)
 ap.add_argument('--data', type=Path)
 ap.add_argument('--env', action='append', default=[], help='Extra KEY=VALUE for the game process')
+ap.add_argument('--cheat', action='append', default=[], help='Extra cheat manifest row, e.g. "2 3243cc 1 0" (place address size value)')
 ap.add_argument('--explore', action='store_true', help='Walk/turn/press cross in cycles instead of the fixed movement check')
 ap.add_argument('--analog', action='store_true', help='With --explore: walk with the left stick and turn with the right stick (modern camera)')
 ap.add_argument('--press', action='append', default=[], help='SECONDS:BUTTON[+BUTTON|+AXIS=VALUE]:HOLD after room arrival (e.g. 10:r3:0.2, 5:rx=20000:30)')
@@ -94,7 +95,7 @@ def capture(label):
 
 try:
     shutil.copytree(SOURCE/'build-ninja/play/saves',args.out/'saves')
-    (args.out/'cheats.txt').write_text('REO-CHEATS-2\nbuiltin unlock\n')
+    (args.out/'cheats.txt').write_text('REO-CHEATS-2\nbuiltin unlock\n'+''.join(row+'\n' for row in args.cheat))
     map_name = 'Local\\REO-Chapter-'+args.out.name
     publisher = harness.Publisher(map_name)
     env = {key:value for key,value in os.environ.items() if not key.upper().startswith('REO_')}
@@ -108,7 +109,7 @@ try:
                REO_GAME_CLOCK_FROM_SECS='0', REO_GAME_CLOCK_SECONDS='300', REO_GAME_CLOCK_FILE=str(args.out/'clock.csv'))
     env['REO_AUDIO_LEVELS']='0,100,100,100,100'
     env.update(dict(item.split('=',1) for item in args.env))
-    if args.scenario>0:env['REO_CHEATS_FILE']=str(args.out/'cheats.txt')
+    if args.scenario>0 or args.cheat:env['REO_CHEATS_FILE']=str(args.out/'cheats.txt')
     if args.asset_plan: env.update(REO_ASSET_OVERLAY=str(args.asset_plan.resolve()), REO_CD_LOG='1')
     if args.boot_fast: env.update(REO_TURBO='16', REO_TURBO_UNTIL='0x5d4898')
     launch = {'scenario':args.scenario,'chapter':CHAPTERS[args.scenario], 'image':str(args.exe),

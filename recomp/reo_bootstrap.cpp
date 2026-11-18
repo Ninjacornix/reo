@@ -54,6 +54,64 @@
 namespace reo::native::input_adapter { bool install_before_run(PS2Runtime&, bool native) noexcept; }
 #endif
 #endif
+#if defined(REO_GAME_FILE1)
+#include <chrono>
+#include <cstdio>
+#include <cstring>
+namespace reo_game_rate {
+// REO_GAME_RATE=60: see the install in main. Holds the engine frame-step byte at 0.
+inline PS2Runtime::RecompiledFunction previous = nullptr, dma_wait = nullptr, frame_end = nullptr;
+// Diagnostics: where an update's host time goes (work, 18D650 DMA-done wait, 1A90B0 vsync wait).
+inline std::chrono::steady_clock::time_point last_start{};
+inline double work_ms = 0, dma_ms = 0, end_ms = 0;
+inline uint32_t updates = 0, last_vblanks = 0, update_vblank = 0, fast_steps = 0, slow_steps = 0;
+inline double ms_since(std::chrono::steady_clock::time_point t) {
+    return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t).count();
+}
+inline void timed_dma_wait(uint8_t* ram, R5900Context* ctx, PS2Runtime* runtime) {
+    const auto t = std::chrono::steady_clock::now();
+    dma_wait(ram, ctx, runtime);
+    dma_ms += ms_since(t);
+}
+inline void timed_frame_end(uint8_t* ram, R5900Context* ctx, PS2Runtime* runtime) {
+    const auto t = std::chrono::steady_clock::now();
+    frame_end(ram, ctx, runtime);
+    end_ms += ms_since(t);
+}
+inline void service(uint8_t* ram, R5900Context* ctx, PS2Runtime* runtime) {
+    const auto now = std::chrono::steady_clock::now();
+    if (last_start.time_since_epoch().count()) work_ms += std::chrono::duration<double, std::milli>(now - last_start).count();
+    last_start = now;
+    if (++updates % 300 == 0) {
+        uint32_t vblanks;
+        std::memcpy(&vblanks, ram + 0x294170, 4);
+        std::fprintf(stderr,
+            "[GAME-RATE-STATS] updates=300 vblanks=%u avg_update_ms=%.2f avg_dma_wait_ms=%.2f avg_vsync_wait_ms=%.2f\n",
+            vblanks - last_vblanks, work_ms / 300, dma_ms / 300, end_ms / 300);
+        last_vblanks = vblanks; work_ms = dma_ms = end_ms = 0;
+        std::fprintf(stderr, "[GAME-RATE-STATS] steps: one-vblank=%u two-or-more=%u\n", fast_steps, slow_steps);
+        fast_steps = slow_steps = 0;
+    }
+    // Adaptive step: the update that starts now counts the vblanks the previous one took.
+    // One vblank -> step 0 (60 Hz); two or more -> step 1 (the original 30 Hz step), so game
+    // time stays real time when rendering cannot keep up.
+    uint32_t vblank_now;
+    std::memcpy(&vblank_now, ram + 0x294170, 4);
+    const uint32_t elapsed = vblank_now - update_vblank;
+    update_vblank = vblank_now;
+    const bool fast = elapsed <= 1;
+    (fast ? fast_steps : slow_steps)++;
+    ram[0x3243cc] = fast ? 0 : 1;
+    // Flip interval: the vblank handler 19F600 flips when (vblanks since flip) > interval and
+    // the frame is ready; game init 1BAEC0 requests interval 1 via 1A0CF0 (0x29FA08, copied to
+    // 0x29FA04 at each flip). Interval 0 flips every vblank.
+    const uint32_t zero = 0;
+    std::memcpy(ram + 0x29fa08, &zero, 4);
+    std::memcpy(ram + 0x29fa04, &zero, 4);
+    previous(ram, ctx, runtime);
+}
+}
+#endif
 #if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_HOST_MOVIE) && REO_BUILD_NATIVE_HOST_MOVIE
 #include "overrides/native_host_movie/runtime_adapter.h"
 #endif
@@ -1728,6 +1786,23 @@ int main(int argc, char* argv[]) {
         reo::audio::install(runtime);
         reo::widescreen::install(runtime);
         reo::subtitles::install(runtime);
+    }
+    // REO_GAME_RATE=60 (experiment): the engine's own frame step. Byte 0x3243CC holds log2 of
+    // the vblanks counted per game update (option default 1 = 2 vblanks, 30 Hz; read by ~216
+    // gameplay functions that scale timers by 1 << step). Holding it at 0 asks for one vblank
+    // per update. Chained after the cheats on the per-frame service 0x19F6C0.
+    if (const char* rate = std::getenv("REO_GAME_RATE"); rate && !std::strcmp(rate, "60") &&
+        std::strcmp(g.serial, "SLUS-20765") == 0) {
+        reo_game_rate::previous = runtime.lookupFunction(0x19f6c0u);
+        if (!reo_game_rate::previous) throw std::runtime_error("REO_GAME_RATE: frame service unavailable");
+        runtime.registerFunction(0x19f6c0u, reo_game_rate::service);
+        reo_game_rate::dma_wait = runtime.lookupFunction(0x18d650u);
+        reo_game_rate::frame_end = runtime.lookupFunction(0x1a90b0u);
+        if (!reo_game_rate::dma_wait || !reo_game_rate::frame_end)
+            throw std::runtime_error("REO_GAME_RATE: frame waits unavailable");
+        runtime.registerFunction(0x18d650u, reo_game_rate::timed_dma_wait);
+        runtime.registerFunction(0x1a90b0u, reo_game_rate::timed_frame_end);
+        std::fprintf(stderr, "[GAME-RATE] step byte 0x3243CC held at 0 (one vblank per update)\n");
     }
 #endif
 #ifdef _WIN32

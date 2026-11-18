@@ -122,3 +122,46 @@ the nearest rendered pixel. Actors still move at 30 Hz (step 2).
 - No visual artifact on cuts, room changes, cutscenes and teleports (history reset).
 - Shadow comparison: the replayed frame with alpha=1 is pixel-identical to the
   original frame.
+
+## Route B, first result: the engine's own 60 Hz step (2026-11-19, File #1)
+
+The game logic itself can run at 60 Hz without speeding up: the engine already scales
+its timing by a frame step.
+
+- **Step byte `0x3243CC`** = log2(vblanks counted per update). Option defaults
+  (`1BAC20`) set 1 (two vblanks, 30 Hz). About 216 functions read it: timers count
+  down by `1 << step` (`1BA920`), durations are divided by `2^step` (`1BB5C0`,
+  `1BB650`), and the game clock `0x4BAE00` (h:m:s:frames, base 60) advances by the
+  step.
+- **Flip interval `0x29FA08`/`0x29FA04`.** The vblank handler `19F600` flips when
+  the vblanks since the last update (`0x29FA0C`, reset by `19F6C0`) exceed the
+  interval and the frame is ready (`0x29FA10`, set by `1A9070`). Game init `1BAEC0`
+  requests interval 1 through `1A0CF0`. The frame end `1A90B0` waits (vsync loop
+  `1133F0`) until the flip clears the ready flag.
+
+`REO_GAME_RATE=60` (`recomp/reo_bootstrap.cpp`, opt-in, File #1) wraps the per-update
+service `19F6C0`. It sets interval 0 (flip on the next vblank) and chooses the step
+per update from the vblanks the previous update took (`0x294170`): one vblank
+gives step 0, two or more give step 1. Game time stays real time when an update
+misses a vblank.
+
+| Run (Below Freezing Point, analog exploration, build `file1-ready-v48`) | Updates/s | Game clock units/s | Movement |
+|---|---|---|---|
+| default | 30.00 | 60.00 | 951 units, exit 0 |
+| step byte 0 only | 27.7 | 27.7 (half speed) | — |
+| step 0 + interval 0, fixed | 29.6 | 29.6 (half speed) | — |
+| `REO_GAME_RATE=60`, adaptive | **50.6** | **60.00** | 948 units, exit 0 |
+
+Where the remaining time goes (gameplay, `[GAME-RATE-STATS]` per 300 updates):
+about 8 ms of game work, then 8–12 ms waiting in `18D650` for the previous frame's
+DMA (the PS2 VIF1/VU1/GS path) to finish. About 15% of updates therefore miss the
+vblank and take the 30 Hz step. In light scenes, 300 updates take exactly 300
+vblanks.
+
+Not covered yet: co-op (peers would run at different rates), cutscenes, movies,
+File #2, a person playing. Above 60 Hz the engine cannot step finer than one
+vblank, so 120/144 Hz still needs presentation interpolation (steps 1–3 above) on
+top of this.
+
+Next: make the graphics path (VIF1/VU1/GS on the host) finish a gameplay frame
+within one vblank, so every update takes step 0.
