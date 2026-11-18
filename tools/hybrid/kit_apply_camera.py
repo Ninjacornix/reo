@@ -52,7 +52,9 @@ edit('recomp/reo_bootstrap.cpp', [
     ('#include "overrides/reo_display_probe.h"\n',
      '#include "overrides/reo_display_probe.h"\n'
      '#if defined(REO_BUILD_NATIVE_ROOM_CAMERA) && REO_BUILD_NATIVE_ROOM_CAMERA\n'
-     '#include "overrides/native_camera/room_camera_adapter.hpp"\n#endif\n'),
+     '#include "overrides/native_camera/room_camera_adapter.hpp"\n#endif\n'
+     '#if defined(REO_BUILD_NATIVE_ROOM_CAMERA) && REO_BUILD_NATIVE_ROOM_CAMERA && !defined(REO_GAME_FILE2)\n'
+     'namespace reo::native::input_adapter { bool install_before_run(PS2Runtime&, bool native) noexcept; }\n#endif\n'),
     ('    printf("[BOOT] Starting execution at entry point 0x%08X...\\n", g.entry_point);',
      block + '\n    printf("[BOOT] Starting execution at entry point 0x%08X...\\n", g.entry_point);'),
 ])

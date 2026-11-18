@@ -386,6 +386,43 @@ o2 `0x6621F0` with the Stage 4 native `gameplay_world::update_analog_control`
 The ledger's "selector mismatch" did not appear in about 28,000 live comparisons.
 File #2's `6875F0` is 164 bytes longer than File #1's body and is not mapped.
 
+### Step 4 — player and menu input core (`1B0980`, `1B0B80`, `1B0DB0`) (2026-11-18)
+
+Swap: `recomp/overrides/native_gameplay/input_adapter.cpp` replaces three File #1 EE
+entries with the Stage 4 native `gameplay_actors::input` (qualified in
+[INPUT.md](INPUT.md), 196,608 fixture comparisons). `REO_NATIVE_INPUT=shadow|1`, same
+build gate as the camera (`REO_BUILD_NATIVE_ROOM_CAMERA`). The install function is
+declared in `reo_bootstrap.cpp` instead of a new header, so adding it does not force a
+full kit rebuild.
+
+| Entry | Native | Guest state read / written |
+|---|---|---|
+| `1B0980` repeat (a0 = frame) | `input::repeat` | the 48-byte input frame |
+| `1B0B80` route (a0 = actor) | `input::route` | actor frame `+0xF78`, slot `+3`, AI control `+0xFF0`; mode `0x3243F2`, selected `0x4BADED`, layout `0x3243EC`, ports `0x2B8E90[8]`, controllers `0x324240 + 48*i` (4), layouts `0x2343C0` (6 x 12 bytes) |
+| `1B0DB0` menu | `input::menu` | frame `0x324210` from controller `0x324300`; actions `0x4BAE90` |
+
+The two calls in `1B0B80` (`1B0300`, `1B02D0`) are pure reads of the mode byte. A port,
+slot or layout outside the native core's range runs the original and is counted as
+refused.
+
+| Run (File #1, build `file1-ready-v43/v44`, analog exploration) | repeat | route | menu | Mismatched | Refused |
+|---|---|---|---|---|---|
+| shadow, Below Freezing Point (boot, menus, 200 s) | 35,264 | 11,684 | 7,052 | 0 | 0 |
+| shadow, Outbreak (boot, menus, 150 s) | 26,728 | 9,927 | 5,345 | 0 | 0 |
+| native, Below Freezing Point | 28,812 | 11,986 | 7,202 | — | 0 (walked 951 units, exit 0) |
+| native input + native analog, Outbreak | 20,598 | 10,253 | 5,149 | — | 0 (walked 901 units, exit 0) |
+
+Shadow also checks every other byte in each entry's window. Repeat and route: none
+changed. Menu: bytes `0x324200..0x32420B` (three button words just before the menu
+frame) sometimes clear while the original runs. No store in `1B0DB0` or its callee
+`1B0980` targets them (their only stores are the menu frame and `0x4BAE90`); the store
+to `0x324200` belongs to `1AF4D0`, which they do not call. They are another guest
+thread's writes during the comparison window, not an output of the swapped entries.
+
+With both swaps on, the player's input path from controller block to movement heading
+(`1B0B80` → `6621F0`) is native. File #2 addresses are not mapped. Level D (a person
+playing with `REO_NATIVE_INPUT=1`) is next.
+
 ### After step 3
 
 Choose further swaps only from a concrete user-visible need (a bug, a requested

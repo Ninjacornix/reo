@@ -49,6 +49,10 @@
 #if defined(REO_BUILD_NATIVE_ROOM_CAMERA) && REO_BUILD_NATIVE_ROOM_CAMERA
 #include "overrides/native_camera/room_camera_adapter.hpp"
 #include "overrides/native_gameplay/analog_control_adapter.hpp"
+#if defined(REO_BUILD_NATIVE_ROOM_CAMERA) && REO_BUILD_NATIVE_ROOM_CAMERA && !defined(REO_GAME_FILE2)
+// recomp/overrides/native_gameplay/input_adapter.cpp (declared here, no header).
+namespace reo::native::input_adapter { bool install_before_run(PS2Runtime&, bool native) noexcept; }
+#endif
 #endif
 #if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_HOST_MOVIE) && REO_BUILD_NATIVE_HOST_MOVIE
 #include "overrides/native_host_movie/runtime_adapter.h"
@@ -1623,6 +1627,18 @@ int main(int argc, char* argv[]) {
         if (std::strcmp(g.serial, "SLUS-20765") ||
             !reo::native::analog_control_adapter::install_before_run(runtime, mode))
             throw std::runtime_error("Selected native analog control unavailable; inspect build identity");
+    }
+#endif
+#if defined(REO_BUILD_NATIVE_ROOM_CAMERA) && REO_BUILD_NATIVE_ROOM_CAMERA && !defined(REO_GAME_FILE2)
+    // REO_NATIVE_INPUT=1 | shadow: button edges, repeat timing and controller routing
+    // 1B0980/1B0B80/1B0DB0 (File #1), docs/native-gameplay/HYBRID_INTEGRATION_PLAN.md step 4.
+    if (const auto* requested = std::getenv("REO_NATIVE_INPUT"); requested && *requested) {
+        const bool native = !std::strcmp(requested, "1");
+        if (!native && std::strcmp(requested, "shadow"))
+            throw std::runtime_error("REO_NATIVE_INPUT must be 1 or shadow");
+        if (std::strcmp(g.serial, "SLUS-20765") ||
+            !reo::native::input_adapter::install_before_run(runtime, native))
+            throw std::runtime_error("Selected native input unavailable; inspect build identity");
     }
 #endif
     // No PS2 hard drive on PC, so no HDD INSTALL in the main menu: the original HDD
