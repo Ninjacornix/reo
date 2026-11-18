@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.21-rc1 prerelease - 2026-11-18
+
+- Add a modern camera for both games (Controls > Modern camera): an over-the-shoulder third-person view and a first-person view (L3 or Z switches), mouse look and right-stick look, camera-relative movement, aiming from where the camera looks with a crosshair, a camera shoulder setting (right or left) and smooth 60 fps camera motion. The camera stays inside rooms (walls, floor and ceiling). The original fixed cameras remain the default.
+- Start at the main menu (Launcher settings, on by default): the boot logo and notice screens are skipped in the game itself, after the memory card loads; nothing runs hidden or sped up.
+- Network Game goes straight to the server list (File #1) or the area list (File #2) in about 10 seconds instead of about 40. The original connection, sign-in and network file steps still run behind a loading screen that shows what is happening; only their on-screen waiting is shortened.
+- Remove HDD INSTALL from both games' main menus; there is no PS2 hard drive on PC.
+- Remove the launcher's co-op lobby automation; the in-game Network Game opens the lobby directly.
+- Replace the player's analog movement control with a native implementation (File #1).
+- Game build kits change, so existing installations rebuild after updating.
+
 ## v1.0.21-rc0 prerelease - 2026-11-12
 
 - Add On, Off and Adaptive vertical sync in Graphics for both games (#85). Default to On and preserve the original game clock. Game build kits must be regenerated so existing installations rebuild with the new display controls.
