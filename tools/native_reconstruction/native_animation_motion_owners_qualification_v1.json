@@ -1,0 +1,3477 @@
+{
+  "schema": 1,
+  "status": "native complete sparse/strided motion banks, concrete descriptor lookup/unpack and model-bank pose/link capture/blending qualify on both compilers",
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "full_actor_motion_application": false,
+  "full_actor_track_tick_orchestration": false,
+  "linked_objects_and_active_attachments_complete": false,
+  "native_guest_or_register_state": false,
+  "actor_shadow_copy": false,
+  "physical_ps2_exceptional_parity": false,
+  "cohorts": {
+    "banks": {
+      "llvm": {
+        "path": "build-native-sjuni/animation-motion-banks-llvm-v4/receipt.json",
+        "sha256": "e2f189beb6749f6464b8fb7c7ba527af1b8034ea75ea235a6a3c013d89c14db5",
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "observed": {
+          "checks": 188768,
+          "bank_cases": 17,
+          "live_slots": 5495,
+          "query_cases": 116000,
+          "packed_block_seam_calls": 2283,
+          "release_seam_calls": 1161,
+          "refusal_cases": 2,
+          "lifetime_cases": 6,
+          "original_calls": 5759,
+          "game_run": false
+        },
+        "original_owned_bodies": [
+          {
+            "role": "complete original motion bank constructor body",
+            "path": "recomp/config/output/sub_001D1500_0x1d1500.cpp",
+            "sha256": "ed5250ad194fa882e20405662cada407fa8322a461169352d7f63f45312ceace",
+            "start": "0x1d1500",
+            "end_exclusive": "0x1d16b8",
+            "matched_comments": 107,
+            "omitted_zero_words": 3,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original motion bank constructor body",
+            "path": "recomp/config/output/sub_001D16C0_0x1d16c0.cpp",
+            "sha256": "babf143e521c11097bf1468e92623ebd225910ad093b693319a06a51811f21f8",
+            "start": "0x1d16c0",
+            "end_exclusive": "0x1d1940",
+            "matched_comments": 154,
+            "omitted_zero_words": 6,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original motion bank constructor body",
+            "path": "recomp/config/output/sub_001D1940_0x1d1940.cpp",
+            "sha256": "ea5f9c91ae28cc49c450e5aa3839c219ec29e9be624130a8572a3fa59b6114a4",
+            "start": "0x1d1940",
+            "end_exclusive": "0x1d1960",
+            "matched_comments": 8,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original motion bank constructor body",
+            "path": "recomp/config/output/sub_001D1960_0x1d1960.cpp",
+            "sha256": "a6ecc16cb3aa6d6476422d775f91b8cac097730381d220bfa485cafb55bf1423",
+            "start": "0x1d1960",
+            "end_exclusive": "0x1d1990",
+            "matched_comments": 12,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original motion bank constructor body",
+            "path": "recomp/config/output/sub_001D1990_0x1d1990.cpp",
+            "sha256": "021ea8b0e64807cb18117055e469d98c1b101c594850d27b8b8f0d2f022179a5",
+            "start": "0x1d1990",
+            "end_exclusive": "0x1d19d0",
+            "matched_comments": 16,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original motion bank constructor body",
+            "path": "recomp/config/output/sub_001D19D0_0x1d19d0.cpp",
+            "sha256": "6e9ce8164dafad1286d28b4f01705210516d7c778583a67dd41b363afe0ce7be",
+            "start": "0x1d19d0",
+            "end_exclusive": "0x1d1b10",
+            "matched_comments": 77,
+            "omitted_zero_words": 3,
+            "conflicts": 0
+          }
+        ]
+      },
+      "gcc": {
+        "path": "build-native-sjuni/animation-motion-banks-gcc-v3/receipt.json",
+        "sha256": "61f53ebe0d3555d7e3b127cc3dc7e40fbe8bbcfa54a6c56bfc34c9e6cf9ae881",
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "observed": {
+          "checks": 188768,
+          "bank_cases": 17,
+          "live_slots": 5495,
+          "query_cases": 116000,
+          "packed_block_seam_calls": 2283,
+          "release_seam_calls": 1161,
+          "refusal_cases": 2,
+          "lifetime_cases": 6,
+          "original_calls": 5759,
+          "game_run": false
+        },
+        "original_owned_bodies": [
+          {
+            "role": "complete original motion bank constructor body",
+            "path": "recomp/config/output/sub_001D1500_0x1d1500.cpp",
+            "sha256": "ed5250ad194fa882e20405662cada407fa8322a461169352d7f63f45312ceace",
+            "start": "0x1d1500",
+            "end_exclusive": "0x1d16b8",
+            "matched_comments": 107,
+            "omitted_zero_words": 3,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original motion bank constructor body",
+            "path": "recomp/config/output/sub_001D16C0_0x1d16c0.cpp",
+            "sha256": "babf143e521c11097bf1468e92623ebd225910ad093b693319a06a51811f21f8",
+            "start": "0x1d16c0",
+            "end_exclusive": "0x1d1940",
+            "matched_comments": 154,
+            "omitted_zero_words": 6,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original motion bank constructor body",
+            "path": "recomp/config/output/sub_001D1940_0x1d1940.cpp",
+            "sha256": "ea5f9c91ae28cc49c450e5aa3839c219ec29e9be624130a8572a3fa59b6114a4",
+            "start": "0x1d1940",
+            "end_exclusive": "0x1d1960",
+            "matched_comments": 8,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original motion bank constructor body",
+            "path": "recomp/config/output/sub_001D1960_0x1d1960.cpp",
+            "sha256": "a6ecc16cb3aa6d6476422d775f91b8cac097730381d220bfa485cafb55bf1423",
+            "start": "0x1d1960",
+            "end_exclusive": "0x1d1990",
+            "matched_comments": 12,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original motion bank constructor body",
+            "path": "recomp/config/output/sub_001D1990_0x1d1990.cpp",
+            "sha256": "021ea8b0e64807cb18117055e469d98c1b101c594850d27b8b8f0d2f022179a5",
+            "start": "0x1d1990",
+            "end_exclusive": "0x1d19d0",
+            "matched_comments": 16,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original motion bank constructor body",
+            "path": "recomp/config/output/sub_001D19D0_0x1d19d0.cpp",
+            "sha256": "6e9ce8164dafad1286d28b4f01705210516d7c778583a67dd41b363afe0ce7be",
+            "start": "0x1d19d0",
+            "end_exclusive": "0x1d1b10",
+            "matched_comments": 77,
+            "omitted_zero_words": 3,
+            "conflicts": 0
+          }
+        ]
+      }
+    },
+    "descriptors": {
+      "llvm": {
+        "path": "build-native-sjuni/animation-motion-descriptors-llvm-v3/receipt.json",
+        "sha256": "7b5000a7e3073485b4de2763fb9987aed41445f4d5e11ceaa63362154df33126",
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "observed": {
+          "checks": 253312,
+          "resolve_cases": 62384,
+          "unpack_cases": 22224,
+          "unsupported_profile_refusals": 11328,
+          "original_calls": 84608,
+          "game_run": false
+        },
+        "original_owned_bodies": [
+          {
+            "role": "complete original descriptor consumer",
+            "path": "recomp/config/output_ovl/o2/o2_005D4570_0x5d4570.cpp",
+            "sha256": "a0b6f38df10cd34dfcb438bf235b77b986bdba89c69119fb6ebf33e9602b7424",
+            "start": "0x5d4570",
+            "end_exclusive": "0x5d46c0",
+            "matched_comments": 79,
+            "omitted_zero_words": 5,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original descriptor consumer",
+            "path": "recomp/config/output_ovl/o2/o2_005D46C0_0x5d46c0.cpp",
+            "sha256": "59343973c2e932aebae176570eca2503b60c8362d68d5a0f0b70d0e73e4564fc",
+            "start": "0x5d46c0",
+            "end_exclusive": "0x5d4808",
+            "matched_comments": 77,
+            "omitted_zero_words": 5,
+            "conflicts": 0
+          }
+        ]
+      },
+      "gcc": {
+        "path": "build-native-sjuni/animation-motion-descriptors-gcc-v1/receipt.json",
+        "sha256": "3edb019eb2feef416d19e2ce27c6364f9b6116887473f2d1e24ed471cb3dd1ce",
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "observed": {
+          "checks": 253312,
+          "resolve_cases": 62384,
+          "unpack_cases": 22224,
+          "unsupported_profile_refusals": 11328,
+          "original_calls": 84608,
+          "game_run": false
+        },
+        "original_owned_bodies": [
+          {
+            "role": "complete original descriptor consumer",
+            "path": "recomp/config/output_ovl/o2/o2_005D4570_0x5d4570.cpp",
+            "sha256": "a0b6f38df10cd34dfcb438bf235b77b986bdba89c69119fb6ebf33e9602b7424",
+            "start": "0x5d4570",
+            "end_exclusive": "0x5d46c0",
+            "matched_comments": 79,
+            "omitted_zero_words": 5,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original descriptor consumer",
+            "path": "recomp/config/output_ovl/o2/o2_005D46C0_0x5d46c0.cpp",
+            "sha256": "59343973c2e932aebae176570eca2503b60c8362d68d5a0f0b70d0e73e4564fc",
+            "start": "0x5d46c0",
+            "end_exclusive": "0x5d4808",
+            "matched_comments": 77,
+            "omitted_zero_words": 5,
+            "conflicts": 0
+          }
+        ]
+      }
+    },
+    "pose_blending": {
+      "llvm": {
+        "path": "build-native-sjuni/animation-pose-blending-llvm-v6/receipt.json",
+        "sha256": "d7e9c48d40b7df2a9be674c8d254899f3bf2c6c2f418de7ce5b0f0c239e9bb38",
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "observed": {
+          "checks": 729410,
+          "blend_cases": 1416,
+          "pose_capture_cases": 118,
+          "binding_capture_cases": 118,
+          "matrix_cases": 4096,
+          "joint_cases": 218196,
+          "original_calls": 670456,
+          "game_run": false
+        },
+        "original_owned_bodies": [
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00191900_0x191900.cpp",
+            "sha256": "a69b12b37e23122584d1ad1388679158aec7915af17a0959b1f08bd12c78faf3",
+            "start": "0x191900",
+            "end_exclusive": "0x1919d0",
+            "matched_comments": 52,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00192690_0x192690.cpp",
+            "sha256": "95807fb058ed3120c10633c8431aaaf57a6a825cb47611bcc40d42bda2330eaf",
+            "start": "0x192690",
+            "end_exclusive": "0x192708",
+            "matched_comments": 30,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00192710_0x192710.cpp",
+            "sha256": "22d88de0edc4f48cf9f32563351187447174abb2bf57abca2823235b2a43e16b",
+            "start": "0x192710",
+            "end_exclusive": "0x192a60",
+            "matched_comments": 197,
+            "omitted_zero_words": 15,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00192A60_0x192a60.cpp",
+            "sha256": "772f006ee72f7e768efe3cc67974b7e5effe12e522a07b8db91cc71fce7fec3a",
+            "start": "0x192a60",
+            "end_exclusive": "0x192b70",
+            "matched_comments": 61,
+            "omitted_zero_words": 7,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00192B70_0x192b70.cpp",
+            "sha256": "919cfe0a739ea9fc6481b1b6239591b430ae99c94948359e6b4c988cebf429e5",
+            "start": "0x192b70",
+            "end_exclusive": "0x192c80",
+            "matched_comments": 60,
+            "omitted_zero_words": 8,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00192C80_0x192c80.cpp",
+            "sha256": "91395b81752908eb08bedbbead17c4ecd4a58af13ff724e5b11b45a61a5282a0",
+            "start": "0x192c80",
+            "end_exclusive": "0x192d10",
+            "matched_comments": 29,
+            "omitted_zero_words": 7,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00192D10_0x192d10.cpp",
+            "sha256": "dabe6fddb19a070e12076a0e7cc7c79d84460b3e7a0a8986887bd280cc02e400",
+            "start": "0x192d10",
+            "end_exclusive": "0x192df0",
+            "matched_comments": 49,
+            "omitted_zero_words": 7,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00189BE0_0x189be0.cpp",
+            "sha256": "7d336ce55bc8ae4eef0fdaaba0a06bd323e48fe45610e4af0d5855a06493950f",
+            "start": "0x189be0",
+            "end_exclusive": "0x189c30",
+            "matched_comments": 18,
+            "omitted_zero_words": 2,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00191280_0x191280.cpp",
+            "sha256": "848a8f2f95854dec5b1d2f10c545da4feec1ce65fef9b3abef4ab2587124bc33",
+            "start": "0x191280",
+            "end_exclusive": "0x191300",
+            "matched_comments": 31,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_0058CE00_0x58ce00.cpp",
+            "sha256": "306c231e5f304f5088a716789f8bc15ea849555997b7236c5269e1fd15b6635e",
+            "start": "0x58ce00",
+            "end_exclusive": "0x58ce38",
+            "matched_comments": 13,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_005D43C0_0x5d43c0.cpp",
+            "sha256": "c7bd703e1acbe294d5c678cc664964bdc4e7e658caaf1dda37452acd941dfecb",
+            "start": "0x5d43c0",
+            "end_exclusive": "0x5d446c",
+            "matched_comments": 42,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_005D42D0_0x5d42d0.cpp",
+            "sha256": "5573b5cf4c8064e1007cea3edc780cfab1f12af1730bbcc4cca480af078a8b57",
+            "start": "0x5d42d0",
+            "end_exclusive": "0x5d43b4",
+            "matched_comments": 57,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00191500_0x191500.cpp",
+            "sha256": "74d4b9a934d1e4c85136ac7745fe41df559477b6aa385748d358d9592095cbf9",
+            "start": "0x191500",
+            "end_exclusive": "0x191900",
+            "matched_comments": 256,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_005D6850_0x5d6850.cpp",
+            "sha256": "592a37b63b92e446e8a3da310ef21f08861b548c38cd150a76f6e6b04e8dcb9c",
+            "start": "0x5d6850",
+            "end_exclusive": "0x5d6904",
+            "matched_comments": 44,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_005D5FA0_0x5d5fa0.cpp",
+            "sha256": "1eadf40451fe10be51a999b645862d6f0c2104590ce038d1315bc3dee10b35c9",
+            "start": "0x5d5fa0",
+            "end_exclusive": "0x5d63fc",
+            "matched_comments": 279,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00191430_0x191430.cpp",
+            "sha256": "58aaff2d98c3cfb7d4854fbb78f11fe7677176e10df68e6584e5a08f73121adc",
+            "start": "0x191430",
+            "end_exclusive": "0x191500",
+            "matched_comments": 52,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00191660_0x191660.cpp",
+            "sha256": "59d3bca34f94cbbd70149b458dd1c83d5a9383506125f607c17fb5849eb13405",
+            "start": "0x191660",
+            "end_exclusive": "0x191738",
+            "matched_comments": 54,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o0/o0_00371880_0x371880.cpp",
+            "sha256": "231254d575eb9d7d6de5198cc50d0faceb73eb9cefe24030ceefa7f119e97c96",
+            "start": "0x371880",
+            "end_exclusive": "0x3718b0",
+            "matched_comments": 11,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00192220_0x192220.cpp",
+            "sha256": "21fead5766f4f7b348d7473876e437ff826ec0e402074d0317761791e763dbce",
+            "start": "0x192220",
+            "end_exclusive": "0x192450",
+            "matched_comments": 139,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00190100_0x190100.cpp",
+            "sha256": "b2b1a3d529c9f3438dfcfcfbb59e6f2e409174eacf8ac68ff5e7e11304abb9ca",
+            "start": "0x190100",
+            "end_exclusive": "0x190194",
+            "matched_comments": 37,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018F570_0x18f570.cpp",
+            "sha256": "29aee43b2a0e63c6fe9a3e5922cfd3f29cc4ca693763b2b0407e172a797ee698",
+            "start": "0x18f570",
+            "end_exclusive": "0x18f710",
+            "matched_comments": 102,
+            "omitted_zero_words": 2,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018F7E0_0x18f7e0.cpp",
+            "sha256": "6da086df77b56a1aa5c2367925487c0d25065adadc4bd4ccf373b2599f695103",
+            "start": "0x18f7e0",
+            "end_exclusive": "0x18f880",
+            "matched_comments": 40,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018F710_0x18f710.cpp",
+            "sha256": "2d646d5d6754cf66d3a81d6207751ba3f7e1629dcc4b8343c0f4ced962795acc",
+            "start": "0x18f710",
+            "end_exclusive": "0x18f7e0",
+            "matched_comments": 52,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018FDF0_0x18fdf0.cpp",
+            "sha256": "0430ef30ec9ff895806d903c01f0064528efd351105dc3643c04db56e6bf4d2c",
+            "start": "0x18fdf0",
+            "end_exclusive": "0x18fe20",
+            "matched_comments": 12,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001921B0_0x1921b0.cpp",
+            "sha256": "d01d46c69b8dddeeae960ca56e4325e2d4afc9af24da7cc8fc962759043985bc",
+            "start": "0x1921b0",
+            "end_exclusive": "0x1921f0",
+            "matched_comments": 16,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00191580_0x191580.cpp",
+            "sha256": "9332aaf382ed22b90c04225eb5f58bab45e2813417cfaf5b615eb34705ea7672",
+            "start": "0x191580",
+            "end_exclusive": "0x191658",
+            "matched_comments": 54,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00190060_0x190060.cpp",
+            "sha256": "0c1cf9b513c44b74cfb3d1fa3206af98ce9a3a1896992a0f380d350d16727650",
+            "start": "0x190060",
+            "end_exclusive": "0x190070",
+            "matched_comments": 4,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001919D0_0x1919d0.cpp",
+            "sha256": "7886eaa395fce554679dc341c56ce67680fb74d5d3b063c94736260a7fe72388",
+            "start": "0x1919d0",
+            "end_exclusive": "0x191ab0",
+            "matched_comments": 56,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018FE60_0x18fe60.cpp",
+            "sha256": "c71c7e224553950adabad1b7aa9e2c18fc04a3ab719b479626982e6055a9a82c",
+            "start": "0x18fe60",
+            "end_exclusive": "0x18feb0",
+            "matched_comments": 20,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_005D5BE0_0x5d5be0.cpp",
+            "sha256": "76ae00423f4e9ce7a7ebb027a07fb9e5bf851a03f7e9d5d7ba330380896d742a",
+            "start": "0x5d5be0",
+            "end_exclusive": "0x5d5f9c",
+            "matched_comments": 236,
+            "omitted_zero_words": 3,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00191300_0x191300.cpp",
+            "sha256": "56ebd8f4077f800c909aa2a7cb3cf02513b4b47bd9c6a66f6f389334f5ee43da",
+            "start": "0x191300",
+            "end_exclusive": "0x1913e0",
+            "matched_comments": 54,
+            "omitted_zero_words": 2,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_005D59A0_0x5d59a0.cpp",
+            "sha256": "ce0fefa5b9229a7d156c4d44a28267e6fda1543762f2cfb7f00aa6732360a1b5",
+            "start": "0x5d59a0",
+            "end_exclusive": "0x5d5aac",
+            "matched_comments": 67,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00191380_0x191380.cpp",
+            "sha256": "175b4329c97bb36c7cd903f163d968fcdcdb034050f76580ce282bf83b13eb8f",
+            "start": "0x191380",
+            "end_exclusive": "0x1913dc",
+            "matched_comments": 22,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_005D5BD0_0x5d5bd0.cpp",
+            "sha256": "9c188695dd9715078c2779a65dc8b659c6d0ad25305c70c72ca3bb166ae81bbe",
+            "start": "0x5d5bd0",
+            "end_exclusive": "0x5d5bd8",
+            "matched_comments": 1,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_005D5AD0_0x5d5ad0.cpp",
+            "sha256": "a56837c3c5a174ec1abe5c48790e04ffe15e38ea4b38bd7d197bef953d73f222",
+            "start": "0x5d5ad0",
+            "end_exclusive": "0x5d5bc8",
+            "matched_comments": 59,
+            "omitted_zero_words": 3,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_005D5AB0_0x5d5ab0.cpp",
+            "sha256": "935940bd933840e4c8a184b707c7edf26e893e1247bb99cd08725c4d0b774522",
+            "start": "0x5d5ab0",
+            "end_exclusive": "0x5d5ac8",
+            "matched_comments": 6,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00192B30_0x192b30.cpp",
+            "sha256": "f946380b42b2c71f7dd16fbe00703fc5ad30f09d65732729cbbd67da7e831d62",
+            "start": "0x192b30",
+            "end_exclusive": "0x192b68",
+            "matched_comments": 14,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001925C0_0x1925c0.cpp",
+            "sha256": "0f675b4bdff14f189b5c431d4c041aa9b690f5d68204d97106766b1aba5386f1",
+            "start": "0x1925c0",
+            "end_exclusive": "0x192690",
+            "matched_comments": 52,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00192DF0_0x192df0.cpp",
+            "sha256": "676239a481caab2a96375654f33e6b75b6146853d72e1fcfa8cebc62c5579a14",
+            "start": "0x192df0",
+            "end_exclusive": "0x193000",
+            "matched_comments": 126,
+            "omitted_zero_words": 6,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00190A10_0x190a10.cpp",
+            "sha256": "782fe96cf5c14ecf1d073accd18aa24cd7b77a8c221fc8dab7c73caf2c1a7484",
+            "start": "0x190a10",
+            "end_exclusive": "0x1911d0",
+            "matched_comments": 496,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00191DF0_0x191df0.cpp",
+            "sha256": "34e33ece617e951ebc4a3294b54a5407169cdfafdc8c1e90a1fc2334087737bb",
+            "start": "0x191df0",
+            "end_exclusive": "0x191e50",
+            "matched_comments": 24,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00191E50_0x191e50.cpp",
+            "sha256": "734ce48fb5f167c64ae909a781661dcd0d5a51ba48817c908481f944a517b9f7",
+            "start": "0x191e50",
+            "end_exclusive": "0x191ef0",
+            "matched_comments": 40,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00191D80_0x191d80.cpp",
+            "sha256": "277437ba1a570ba3766882385019f266975221e9e0e609cb1799e1f63bcc44d6",
+            "start": "0x191d80",
+            "end_exclusive": "0x191df0",
+            "matched_comments": 28,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018E3C0_0x18e3c0.cpp",
+            "sha256": "874fb3d93f52fda855eb22cf143e1925a130af7aba38621d613705b6006060ee",
+            "start": "0x18e3c0",
+            "end_exclusive": "0x18e480",
+            "matched_comments": 34,
+            "omitted_zero_words": 14,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018E7D0_0x18e7d0.cpp",
+            "sha256": "a4d87e56b39eb7189b4cbddd20c64a205a34a875e33eea3d9ad3ae3a9779bbfa",
+            "start": "0x18e7d0",
+            "end_exclusive": "0x18e910",
+            "matched_comments": 76,
+            "omitted_zero_words": 4,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018F260_0x18f260.cpp",
+            "sha256": "254a6d800794e0ed686f41c4c744b6cacc0d7cf965bafcd87f1f68b2491e4a63",
+            "start": "0x18f260",
+            "end_exclusive": "0x18f570",
+            "matched_comments": 191,
+            "omitted_zero_words": 5,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018F1E0_0x18f1e0.cpp",
+            "sha256": "6f138db2cd6c6f2364db4ae64c8945da8836f37571323c2f9344cb8dbe21ee9d",
+            "start": "0x18f1e0",
+            "end_exclusive": "0x18f260",
+            "matched_comments": 31,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018F040_0x18f040.cpp",
+            "sha256": "063205ecaafa7889756f8e1f13b3fc26544a72cc7913000ad137f05696cf472c",
+            "start": "0x18f040",
+            "end_exclusive": "0x18f1e0",
+            "matched_comments": 97,
+            "omitted_zero_words": 7,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018E710_0x18e710.cpp",
+            "sha256": "f6c6d74d828b165a55a0428fe7508a0fa095f445181363e7326c99c3a9622fa3",
+            "start": "0x18e710",
+            "end_exclusive": "0x18e7d0",
+            "matched_comments": 47,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018EEB0_0x18eeb0.cpp",
+            "sha256": "c73787aab6763e46a50c3bcf14b79fd58d2bd0ab9c96887413fb29b110866d5a",
+            "start": "0x18eeb0",
+            "end_exclusive": "0x18f040",
+            "matched_comments": 92,
+            "omitted_zero_words": 8,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018E660_0x18e660.cpp",
+            "sha256": "39b93c440886a3f58046aad36dff785a4f7c21231b32597ab2d3a6573274d97b",
+            "start": "0x18e660",
+            "end_exclusive": "0x18e710",
+            "matched_comments": 43,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018ED20_0x18ed20.cpp",
+            "sha256": "e020f473472d87839d4e031a6c3993cb482787bc42bbe63c1b71d60814e5ae68",
+            "start": "0x18ed20",
+            "end_exclusive": "0x18eeb0",
+            "matched_comments": 92,
+            "omitted_zero_words": 8,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018E590_0x18e590.cpp",
+            "sha256": "24db1cf15a70d89d0f69fa08b4917ad51715faec6adb866d6371e0c4323d0953",
+            "start": "0x18e590",
+            "end_exclusive": "0x18e660",
+            "matched_comments": 48,
+            "omitted_zero_words": 4,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018EBB0_0x18ebb0.cpp",
+            "sha256": "abc3c2ebf333f5df1b62ae51695b49df99f35e7bdd2956f328989c4e81e2479f",
+            "start": "0x18ebb0",
+            "end_exclusive": "0x18ed20",
+            "matched_comments": 84,
+            "omitted_zero_words": 8,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018E500_0x18e500.cpp",
+            "sha256": "c130126c301f21f33713685e8e32771d277138cc71801899122298ef156dbeaa",
+            "start": "0x18e500",
+            "end_exclusive": "0x18e590",
+            "matched_comments": 35,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018EA60_0x18ea60.cpp",
+            "sha256": "9be2bbe600c2c27a0b8088228bd7abc5dfcd84b3d19e10be7f1cfe795417e8fd",
+            "start": "0x18ea60",
+            "end_exclusive": "0x18ebb0",
+            "matched_comments": 76,
+            "omitted_zero_words": 8,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018E480_0x18e480.cpp",
+            "sha256": "ae1e93f73dfdb5ffa5842bf8413ff8eb22abe20874b799462c9edd2571857a78",
+            "start": "0x18e480",
+            "end_exclusive": "0x18e500",
+            "matched_comments": 31,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018E910_0x18e910.cpp",
+            "sha256": "ca16b3b1fbe31e1c822cfa83196ea002c6db4a1d841ab1bcb8abb456bfe24803",
+            "start": "0x18e910",
+            "end_exclusive": "0x18ea60",
+            "matched_comments": 76,
+            "omitted_zero_words": 8,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00192450_0x192450.cpp",
+            "sha256": "a13ca9f6fe910b07ed82ee2f1ddd949a866b35f07a79028ccca1bbb70dc78d70",
+            "start": "0x192450",
+            "end_exclusive": "0x192480",
+            "matched_comments": 11,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018E3B0_0x18e3b0.cpp",
+            "sha256": "42e6f40c7526c45922e9b69fe7086a6fd8a33a443ca85c4f11093c4603c35c6f",
+            "start": "0x18e3b0",
+            "end_exclusive": "0x18e3c0",
+            "matched_comments": 4,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00192BF0_0x192bf0.cpp",
+            "sha256": "1520fb1968fadf081f6e9c43309bcc0a44bb626665ad665c9abd2c24ae52c0e7",
+            "start": "0x192bf0",
+            "end_exclusive": "0x192c74",
+            "matched_comments": 33,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193220_0x193220.cpp",
+            "sha256": "dbd7bdb47b315a8d196deec2daeef635777f945d16cbf40dbbb1f4385ca39cb4",
+            "start": "0x193220",
+            "end_exclusive": "0x193228",
+            "matched_comments": 1,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193030_0x193030.cpp",
+            "sha256": "47a32e46524bb53feec2fe1976657ebb5d2fb82a5fc7d2d1decd6c61fe05cf6f",
+            "start": "0x193030",
+            "end_exclusive": "0x193140",
+            "matched_comments": 64,
+            "omitted_zero_words": 4,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193140_0x193140.cpp",
+            "sha256": "03356c64f771c9d8db4fabc41f9258f7bac78d72cb4beeee732bafb2ead584ab",
+            "start": "0x193140",
+            "end_exclusive": "0x193240",
+            "matched_comments": 62,
+            "omitted_zero_words": 2,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001930F0_0x1930f0.cpp",
+            "sha256": "c060fe548bd7a54da8f0dadd630b5f1d8506aaeadd4bd4843446ffa6e99f532e",
+            "start": "0x1930f0",
+            "end_exclusive": "0x193134",
+            "matched_comments": 17,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001939A0_0x1939a0.cpp",
+            "sha256": "5c0592e9c1c59a5ff9c944ecf06474a8c17a5805eebce58ae0239096f7d82024",
+            "start": "0x1939a0",
+            "end_exclusive": "0x193a00",
+            "matched_comments": 24,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193C80_0x193c80.cpp",
+            "sha256": "7f64881be5e90f5e97f2e8d97c21c058eef5562d5d0ded732fdbfd293693d5e3",
+            "start": "0x193c80",
+            "end_exclusive": "0x193e20",
+            "matched_comments": 99,
+            "omitted_zero_words": 5,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193230_0x193230.cpp",
+            "sha256": "8348a060a9e645491ea156ad3adc1fd4876d9cdf573c803c6e85136c8596e235",
+            "start": "0x193230",
+            "end_exclusive": "0x193238",
+            "matched_comments": 1,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193240_0x193240.cpp",
+            "sha256": "decd6871ff6d5827e6b9fe2bbaac01c6a955aa7950332da044c4f78626bde2b7",
+            "start": "0x193240",
+            "end_exclusive": "0x193260",
+            "matched_comments": 8,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193260_0x193260.cpp",
+            "sha256": "bde29bd960ef8638e59d3f7aa4076a4781894666566b7c9a8a2f976f305b1b01",
+            "start": "0x193260",
+            "end_exclusive": "0x193380",
+            "matched_comments": 72,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001913E0_0x1913e0.cpp",
+            "sha256": "a5c1aa0cd9c5c59a71fa2ca46076f3f6bbe0417fbed730d4ab91ffe674b2eb22",
+            "start": "0x1913e0",
+            "end_exclusive": "0x191430",
+            "matched_comments": 19,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193380_0x193380.cpp",
+            "sha256": "c3ff02700683de603e092b0de9015cac19fd1c08f1adb86791df8edeffa3c295",
+            "start": "0x193380",
+            "end_exclusive": "0x1934c0",
+            "matched_comments": 77,
+            "omitted_zero_words": 3,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193880_0x193880.cpp",
+            "sha256": "b377eaba5c4f107a4fae6936608d8cf594c611fe3a17c18e4a7bc020142852f7",
+            "start": "0x193880",
+            "end_exclusive": "0x1938a0",
+            "matched_comments": 8,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001938A0_0x1938a0.cpp",
+            "sha256": "94a33b3dbd03eff820b37733658d9977946ed07167a0597b4dce1daaf1bba78a",
+            "start": "0x1938a0",
+            "end_exclusive": "0x1939a0",
+            "matched_comments": 63,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193AF0_0x193af0.cpp",
+            "sha256": "cd3415eaf5294b51e55709c8b81475375bd4b143957b2606d953b92b08378833",
+            "start": "0x193af0",
+            "end_exclusive": "0x193bd0",
+            "matched_comments": 56,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193770_0x193770.cpp",
+            "sha256": "f3bbab365563a895dec15b5f8c8f981d9862ac13597bc1ec9d893f84e0d9d260",
+            "start": "0x193770",
+            "end_exclusive": "0x193790",
+            "matched_comments": 8,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193790_0x193790.cpp",
+            "sha256": "61ff43d0260626958a418d0c13f8a23713fa31a1db1580172b8a04767ad0c3de",
+            "start": "0x193790",
+            "end_exclusive": "0x193880",
+            "matched_comments": 59,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193A00_0x193a00.cpp",
+            "sha256": "53722957d11b4e0d9448ae57499eb04f8b789794771babec1c1c48b523aac31d",
+            "start": "0x193a00",
+            "end_exclusive": "0x193af0",
+            "matched_comments": 60,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001934C0_0x1934c0.cpp",
+            "sha256": "3bebf1f5cb70bcacd7ce6d569de76b89fe5b21c2aeba4514dce048c6ec29f65d",
+            "start": "0x1934c0",
+            "end_exclusive": "0x193580",
+            "matched_comments": 46,
+            "omitted_zero_words": 2,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193BD0_0x193bd0.cpp",
+            "sha256": "7388fdcaaf1641b823e1e48b6a5d5e39421502c395eb28f82425d6b34fd7a2f3",
+            "start": "0x193bd0",
+            "end_exclusive": "0x193c80",
+            "matched_comments": 44,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2E00_0x1a2e00.cpp",
+            "sha256": "9608d9a38167bdd82eae5137876eb675ac714fb366176c122de5bb9452b1a0a1",
+            "start": "0x1a2e00",
+            "end_exclusive": "0x1a2fec",
+            "matched_comments": 123,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2D70_0x1a2d70.cpp",
+            "sha256": "8cfdb628705470bd5676fe49a9d9cb1b26ea1b7eebb1eefda425156d6e22cb4c",
+            "start": "0x1a2d70",
+            "end_exclusive": "0x1a2da0",
+            "matched_comments": 10,
+            "omitted_zero_words": 2,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2CF0_0x1a2cf0.cpp",
+            "sha256": "1200edd2692974e6afe89af6655ce19b1d3dfd1d09aca29b526c4294872891e3",
+            "start": "0x1a2cf0",
+            "end_exclusive": "0x1a2d70",
+            "matched_comments": 29,
+            "omitted_zero_words": 3,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2C80_0x1a2c80.cpp",
+            "sha256": "ef44241e073505fe4f15e4f8c4fec6cd3d6157aaaad6e7b73e7b7e044fbced4d",
+            "start": "0x1a2c80",
+            "end_exclusive": "0x1a2c90",
+            "matched_comments": 4,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2B60_0x1a2b60.cpp",
+            "sha256": "a9fc6846d10fe1884327a84b6fc0c3e25801ca8154df323730e96a6c587514ba",
+            "start": "0x1a2b60",
+            "end_exclusive": "0x1a2bb0",
+            "matched_comments": 19,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2C90_0x1a2c90.cpp",
+            "sha256": "782e90be851b0dbae572d4423e073ab00c6d2ac50e5fe41c2ca99073e7b20055",
+            "start": "0x1a2c90",
+            "end_exclusive": "0x1a2cf0",
+            "matched_comments": 23,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2BB0_0x1a2bb0.cpp",
+            "sha256": "ac5583a81c70ddbf078c8cd55b3a31251375cd2021cf011a795a251a830d2294",
+            "start": "0x1a2bb0",
+            "end_exclusive": "0x1a2be0",
+            "matched_comments": 12,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2BE0_0x1a2be0.cpp",
+            "sha256": "c3851eb3e2a4e9d98270dd26ba2e804ce351e75f85f83b76d69e769e12f22174",
+            "start": "0x1a2be0",
+            "end_exclusive": "0x1a2c10",
+            "matched_comments": 12,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2C10_0x1a2c10.cpp",
+            "sha256": "c19ab7449014d464f77cc60e42e5458434abc818ef49b453935128fbbbe53d27",
+            "start": "0x1a2c10",
+            "end_exclusive": "0x1a2c80",
+            "matched_comments": 27,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2DA0_0x1a2da0.cpp",
+            "sha256": "8e45d4186de392749e83b4f9adf2086788e2d670fcbd7c16f5d3515682add651",
+            "start": "0x1a2da0",
+            "end_exclusive": "0x1a2ff0",
+            "matched_comments": 148,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2B30_0x1a2b30.cpp",
+            "sha256": "dc5ca50ec6ca8eca1ff8ba90455c2c87cfd671973e24e3c1e43c2f58aac29f7a",
+            "start": "0x1a2b30",
+            "end_exclusive": "0x1a2b60",
+            "matched_comments": 11,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A1FD0_0x1a1fd0.cpp",
+            "sha256": "d4fe11a7b2f898ecd69d56b8c8c0ce4c80941ea8e597cb015f07353c12689eeb",
+            "start": "0x1a1fd0",
+            "end_exclusive": "0x1a21f4",
+            "matched_comments": 134,
+            "omitted_zero_words": 3,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A1E00_0x1a1e00.cpp",
+            "sha256": "37055c65e69433701f1cc0605156f16d30f0e1bacb7f798bef4ef225c1481562",
+            "start": "0x1a1e00",
+            "end_exclusive": "0x1a1e40",
+            "matched_comments": 14,
+            "omitted_zero_words": 2,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A1DA0_0x1a1da0.cpp",
+            "sha256": "2b0d0534057e94ef3eb4e62183a3a8e9c77ffbe0c05746fdffe8528e8e79f138",
+            "start": "0x1a1da0",
+            "end_exclusive": "0x1a1db0",
+            "matched_comments": 4,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2A50_0x1a2a50.cpp",
+            "sha256": "396008f4e5377d73a95e58a635959d168d38c29276c17d5f18a083c3ba878d7e",
+            "start": "0x1a2a50",
+            "end_exclusive": "0x1a2ad0",
+            "matched_comments": 31,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A4E30_0x1a4e30.cpp",
+            "sha256": "00bd6047dec8e0e54ae7bf38677d2f96e129d7f18964ffdbeb603dff85a89ca0",
+            "start": "0x1a4e30",
+            "end_exclusive": "0x1a4f10",
+            "matched_comments": 48,
+            "omitted_zero_words": 8,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A29D0_0x1a29d0.cpp",
+            "sha256": "51234b915134034f44ebca8bd1c77fa5bb2f1ad011112fcbc0c60959cc91ce2f",
+            "start": "0x1a29d0",
+            "end_exclusive": "0x1a2a50",
+            "matched_comments": 31,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A4F10_0x1a4f10.cpp",
+            "sha256": "2463f52357259836caee7350900f754e8fc7984c36e6431616a34ff8a0661320",
+            "start": "0x1a4f10",
+            "end_exclusive": "0x1a5180",
+            "matched_comments": 147,
+            "omitted_zero_words": 9,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A5220_0x1a5220.cpp",
+            "sha256": "46641489ad77b27f6f3c7f15c1b1eec63a7382d3bb20e652465aa5fc24df17b0",
+            "start": "0x1a5220",
+            "end_exclusive": "0x1a5280",
+            "matched_comments": 24,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A51B0_0x1a51b0.cpp",
+            "sha256": "9b6373c89d9235e0449731bc70b18151cdeeb8e59c28335eefc9979b1d22a54f",
+            "start": "0x1a51b0",
+            "end_exclusive": "0x1a5220",
+            "matched_comments": 27,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A5180_0x1a5180.cpp",
+            "sha256": "7744bfb159d5288d8f3cf6c4ecf146a74a45b2e73added0fdb14a64196fee425",
+            "start": "0x1a5180",
+            "end_exclusive": "0x1a51b0",
+            "matched_comments": 11,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A4F20_0x1a4f20.cpp",
+            "sha256": "9195febfae417da16e7e64d6e33cf3ba171f2249ad7530c2e8d5ab0ff009a70c",
+            "start": "0x1a4f20",
+            "end_exclusive": "0x1a504c",
+            "matched_comments": 67,
+            "omitted_zero_words": 8,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2200_0x1a2200.cpp",
+            "sha256": "39784bcdaec37d031093a9d1276d958d2d5e86c3f680b885472aa5ce703cff9a",
+            "start": "0x1a2200",
+            "end_exclusive": "0x1a22d0",
+            "matched_comments": 50,
+            "omitted_zero_words": 2,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A22D0_0x1a22d0.cpp",
+            "sha256": "3600c85ed003eab3a442199af28819215bdfc2bc8dd6d2f841ad68eab3607e55",
+            "start": "0x1a22d0",
+            "end_exclusive": "0x1a2490",
+            "matched_comments": 110,
+            "omitted_zero_words": 2,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2490_0x1a2490.cpp",
+            "sha256": "4ce3b0a7e4c50b12735004da85d46384031edac2a035048f2ae85e5495f80964",
+            "start": "0x1a2490",
+            "end_exclusive": "0x1a2550",
+            "matched_comments": 34,
+            "omitted_zero_words": 14,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2900_0x1a2900.cpp",
+            "sha256": "65cdd854751bb004f5748f4717bcbf4a1eb873c18431891a2393b421dea9ac4b",
+            "start": "0x1a2900",
+            "end_exclusive": "0x1a29d0",
+            "matched_comments": 52,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001899F0_0x1899f0.cpp",
+            "sha256": "c81c59767c66ad7a5bb67e860d35341b165b0831d058910181740ebfc97160a7",
+            "start": "0x1899f0",
+            "end_exclusive": "0x189b08",
+            "matched_comments": 64,
+            "omitted_zero_words": 6,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2840_0x1a2840.cpp",
+            "sha256": "b2d6d500349ed89718cdfa4796ce6a86d4da7c77d8fb8d80322d48fd1caf520a",
+            "start": "0x1a2840",
+            "end_exclusive": "0x1a2900",
+            "matched_comments": 48,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2790_0x1a2790.cpp",
+            "sha256": "97c22eefa198b9e77c451463ae2f0af3cbefe436f1e99475c937633a5f789777",
+            "start": "0x1a2790",
+            "end_exclusive": "0x1a2840",
+            "matched_comments": 44,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A26C0_0x1a26c0.cpp",
+            "sha256": "be9fb2259dd36730e0ad57520c6a9b310c0d32b59b7e6f2a048e656ad85fdfe1",
+            "start": "0x1a26c0",
+            "end_exclusive": "0x1a2790",
+            "matched_comments": 52,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2600_0x1a2600.cpp",
+            "sha256": "0b6f27f2790998334e315d4e3d9c2d8701f2587fc738f0ed966d1cf24eb19ef8",
+            "start": "0x1a2600",
+            "end_exclusive": "0x1a26c0",
+            "matched_comments": 48,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2550_0x1a2550.cpp",
+            "sha256": "3fa6987dca854d795c8e8efcdef2fb64d59815e6728dfc0a386c01bf24499dbb",
+            "start": "0x1a2550",
+            "end_exclusive": "0x1a2600",
+            "matched_comments": 44,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A1DB0_0x1a1db0.cpp",
+            "sha256": "45b54b6427d2574b66745c5ea4e63c7d366bb9cee1a1c0eae1960d6f1ca3630b",
+            "start": "0x1a1db0",
+            "end_exclusive": "0x1a1e00",
+            "matched_comments": 18,
+            "omitted_zero_words": 2,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2AD0_0x1a2ad0.cpp",
+            "sha256": "87c077cab47447c01f94ade1fcf7e3ca05528412e47664ba44a09eb3dc7b7e5b",
+            "start": "0x1a2ad0",
+            "end_exclusive": "0x1a2af0",
+            "matched_comments": 7,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00189970_0x189970.cpp",
+            "sha256": "f027dc632f80b821d477f9a82e9b7623d15655772a842ed1a2c874e489472a64",
+            "start": "0x189970",
+            "end_exclusive": "0x1899f0",
+            "matched_comments": 32,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A4DA0_0x1a4da0.cpp",
+            "sha256": "38220aa67d46da0fae4d0174872a37ea035732cd507fd0f49995b7974601dbcd",
+            "start": "0x1a4da0",
+            "end_exclusive": "0x1a4e30",
+            "matched_comments": 36,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A1E40_0x1a1e40.cpp",
+            "sha256": "d7eb3ba593a90576f263485717b59325e19ee15774dd4b0237fcc08fc9950864",
+            "start": "0x1a1e40",
+            "end_exclusive": "0x1a1ed0",
+            "matched_comments": 36,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A1ED0_0x1a1ed0.cpp",
+            "sha256": "bc498097b66f1483b11e91ae0b8d4194afced8b92c17328c3ec062649379ca6e",
+            "start": "0x1a1ed0",
+            "end_exclusive": "0x1a2200",
+            "matched_comments": 193,
+            "omitted_zero_words": 11,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_0058BF50_0x58bf50.cpp",
+            "sha256": "0a2cc23e7e721b6b00e56b4e90a83137952dfd73dbccc801ef5b9a7302801ff6",
+            "start": "0x58bf50",
+            "end_exclusive": "0x58c124",
+            "matched_comments": 106,
+            "omitted_zero_words": 11,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_0058C6A0_0x58c6a0.cpp",
+            "sha256": "d7d339d372ba2dd6d4b75a3d32e47590fb5ed759ea03c4e341c5e39de2e76cf4",
+            "start": "0x58c6a0",
+            "end_exclusive": "0x58c714",
+            "matched_comments": 29,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          }
+        ]
+      },
+      "gcc": {
+        "path": "build-native-sjuni/animation-pose-blending-gcc-v1/receipt.json",
+        "sha256": "817e97014a5dfca5a0c89bece4dc37d321bbad158eabfafd1607f9d7e2743747",
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "observed": {
+          "checks": 729410,
+          "blend_cases": 1416,
+          "pose_capture_cases": 118,
+          "binding_capture_cases": 118,
+          "matrix_cases": 4096,
+          "joint_cases": 218196,
+          "original_calls": 670456,
+          "game_run": false
+        },
+        "original_owned_bodies": [
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00191900_0x191900.cpp",
+            "sha256": "a69b12b37e23122584d1ad1388679158aec7915af17a0959b1f08bd12c78faf3",
+            "start": "0x191900",
+            "end_exclusive": "0x1919d0",
+            "matched_comments": 52,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00192690_0x192690.cpp",
+            "sha256": "95807fb058ed3120c10633c8431aaaf57a6a825cb47611bcc40d42bda2330eaf",
+            "start": "0x192690",
+            "end_exclusive": "0x192708",
+            "matched_comments": 30,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00192710_0x192710.cpp",
+            "sha256": "22d88de0edc4f48cf9f32563351187447174abb2bf57abca2823235b2a43e16b",
+            "start": "0x192710",
+            "end_exclusive": "0x192a60",
+            "matched_comments": 197,
+            "omitted_zero_words": 15,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00192A60_0x192a60.cpp",
+            "sha256": "772f006ee72f7e768efe3cc67974b7e5effe12e522a07b8db91cc71fce7fec3a",
+            "start": "0x192a60",
+            "end_exclusive": "0x192b70",
+            "matched_comments": 61,
+            "omitted_zero_words": 7,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00192B70_0x192b70.cpp",
+            "sha256": "919cfe0a739ea9fc6481b1b6239591b430ae99c94948359e6b4c988cebf429e5",
+            "start": "0x192b70",
+            "end_exclusive": "0x192c80",
+            "matched_comments": 60,
+            "omitted_zero_words": 8,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00192C80_0x192c80.cpp",
+            "sha256": "91395b81752908eb08bedbbead17c4ecd4a58af13ff724e5b11b45a61a5282a0",
+            "start": "0x192c80",
+            "end_exclusive": "0x192d10",
+            "matched_comments": 29,
+            "omitted_zero_words": 7,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00192D10_0x192d10.cpp",
+            "sha256": "dabe6fddb19a070e12076a0e7cc7c79d84460b3e7a0a8986887bd280cc02e400",
+            "start": "0x192d10",
+            "end_exclusive": "0x192df0",
+            "matched_comments": 49,
+            "omitted_zero_words": 7,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00189BE0_0x189be0.cpp",
+            "sha256": "7d336ce55bc8ae4eef0fdaaba0a06bd323e48fe45610e4af0d5855a06493950f",
+            "start": "0x189be0",
+            "end_exclusive": "0x189c30",
+            "matched_comments": 18,
+            "omitted_zero_words": 2,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00191280_0x191280.cpp",
+            "sha256": "848a8f2f95854dec5b1d2f10c545da4feec1ce65fef9b3abef4ab2587124bc33",
+            "start": "0x191280",
+            "end_exclusive": "0x191300",
+            "matched_comments": 31,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_0058CE00_0x58ce00.cpp",
+            "sha256": "306c231e5f304f5088a716789f8bc15ea849555997b7236c5269e1fd15b6635e",
+            "start": "0x58ce00",
+            "end_exclusive": "0x58ce38",
+            "matched_comments": 13,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_005D43C0_0x5d43c0.cpp",
+            "sha256": "c7bd703e1acbe294d5c678cc664964bdc4e7e658caaf1dda37452acd941dfecb",
+            "start": "0x5d43c0",
+            "end_exclusive": "0x5d446c",
+            "matched_comments": 42,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_005D42D0_0x5d42d0.cpp",
+            "sha256": "5573b5cf4c8064e1007cea3edc780cfab1f12af1730bbcc4cca480af078a8b57",
+            "start": "0x5d42d0",
+            "end_exclusive": "0x5d43b4",
+            "matched_comments": 57,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00191500_0x191500.cpp",
+            "sha256": "74d4b9a934d1e4c85136ac7745fe41df559477b6aa385748d358d9592095cbf9",
+            "start": "0x191500",
+            "end_exclusive": "0x191900",
+            "matched_comments": 256,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_005D6850_0x5d6850.cpp",
+            "sha256": "592a37b63b92e446e8a3da310ef21f08861b548c38cd150a76f6e6b04e8dcb9c",
+            "start": "0x5d6850",
+            "end_exclusive": "0x5d6904",
+            "matched_comments": 44,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_005D5FA0_0x5d5fa0.cpp",
+            "sha256": "1eadf40451fe10be51a999b645862d6f0c2104590ce038d1315bc3dee10b35c9",
+            "start": "0x5d5fa0",
+            "end_exclusive": "0x5d63fc",
+            "matched_comments": 279,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00191430_0x191430.cpp",
+            "sha256": "58aaff2d98c3cfb7d4854fbb78f11fe7677176e10df68e6584e5a08f73121adc",
+            "start": "0x191430",
+            "end_exclusive": "0x191500",
+            "matched_comments": 52,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00191660_0x191660.cpp",
+            "sha256": "59d3bca34f94cbbd70149b458dd1c83d5a9383506125f607c17fb5849eb13405",
+            "start": "0x191660",
+            "end_exclusive": "0x191738",
+            "matched_comments": 54,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o0/o0_00371880_0x371880.cpp",
+            "sha256": "231254d575eb9d7d6de5198cc50d0faceb73eb9cefe24030ceefa7f119e97c96",
+            "start": "0x371880",
+            "end_exclusive": "0x3718b0",
+            "matched_comments": 11,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00192220_0x192220.cpp",
+            "sha256": "21fead5766f4f7b348d7473876e437ff826ec0e402074d0317761791e763dbce",
+            "start": "0x192220",
+            "end_exclusive": "0x192450",
+            "matched_comments": 139,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00190100_0x190100.cpp",
+            "sha256": "b2b1a3d529c9f3438dfcfcfbb59e6f2e409174eacf8ac68ff5e7e11304abb9ca",
+            "start": "0x190100",
+            "end_exclusive": "0x190194",
+            "matched_comments": 37,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018F570_0x18f570.cpp",
+            "sha256": "29aee43b2a0e63c6fe9a3e5922cfd3f29cc4ca693763b2b0407e172a797ee698",
+            "start": "0x18f570",
+            "end_exclusive": "0x18f710",
+            "matched_comments": 102,
+            "omitted_zero_words": 2,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018F7E0_0x18f7e0.cpp",
+            "sha256": "6da086df77b56a1aa5c2367925487c0d25065adadc4bd4ccf373b2599f695103",
+            "start": "0x18f7e0",
+            "end_exclusive": "0x18f880",
+            "matched_comments": 40,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018F710_0x18f710.cpp",
+            "sha256": "2d646d5d6754cf66d3a81d6207751ba3f7e1629dcc4b8343c0f4ced962795acc",
+            "start": "0x18f710",
+            "end_exclusive": "0x18f7e0",
+            "matched_comments": 52,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018FDF0_0x18fdf0.cpp",
+            "sha256": "0430ef30ec9ff895806d903c01f0064528efd351105dc3643c04db56e6bf4d2c",
+            "start": "0x18fdf0",
+            "end_exclusive": "0x18fe20",
+            "matched_comments": 12,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001921B0_0x1921b0.cpp",
+            "sha256": "d01d46c69b8dddeeae960ca56e4325e2d4afc9af24da7cc8fc962759043985bc",
+            "start": "0x1921b0",
+            "end_exclusive": "0x1921f0",
+            "matched_comments": 16,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00191580_0x191580.cpp",
+            "sha256": "9332aaf382ed22b90c04225eb5f58bab45e2813417cfaf5b615eb34705ea7672",
+            "start": "0x191580",
+            "end_exclusive": "0x191658",
+            "matched_comments": 54,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00190060_0x190060.cpp",
+            "sha256": "0c1cf9b513c44b74cfb3d1fa3206af98ce9a3a1896992a0f380d350d16727650",
+            "start": "0x190060",
+            "end_exclusive": "0x190070",
+            "matched_comments": 4,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001919D0_0x1919d0.cpp",
+            "sha256": "7886eaa395fce554679dc341c56ce67680fb74d5d3b063c94736260a7fe72388",
+            "start": "0x1919d0",
+            "end_exclusive": "0x191ab0",
+            "matched_comments": 56,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018FE60_0x18fe60.cpp",
+            "sha256": "c71c7e224553950adabad1b7aa9e2c18fc04a3ab719b479626982e6055a9a82c",
+            "start": "0x18fe60",
+            "end_exclusive": "0x18feb0",
+            "matched_comments": 20,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_005D5BE0_0x5d5be0.cpp",
+            "sha256": "76ae00423f4e9ce7a7ebb027a07fb9e5bf851a03f7e9d5d7ba330380896d742a",
+            "start": "0x5d5be0",
+            "end_exclusive": "0x5d5f9c",
+            "matched_comments": 236,
+            "omitted_zero_words": 3,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00191300_0x191300.cpp",
+            "sha256": "56ebd8f4077f800c909aa2a7cb3cf02513b4b47bd9c6a66f6f389334f5ee43da",
+            "start": "0x191300",
+            "end_exclusive": "0x1913e0",
+            "matched_comments": 54,
+            "omitted_zero_words": 2,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_005D59A0_0x5d59a0.cpp",
+            "sha256": "ce0fefa5b9229a7d156c4d44a28267e6fda1543762f2cfb7f00aa6732360a1b5",
+            "start": "0x5d59a0",
+            "end_exclusive": "0x5d5aac",
+            "matched_comments": 67,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00191380_0x191380.cpp",
+            "sha256": "175b4329c97bb36c7cd903f163d968fcdcdb034050f76580ce282bf83b13eb8f",
+            "start": "0x191380",
+            "end_exclusive": "0x1913dc",
+            "matched_comments": 22,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_005D5BD0_0x5d5bd0.cpp",
+            "sha256": "9c188695dd9715078c2779a65dc8b659c6d0ad25305c70c72ca3bb166ae81bbe",
+            "start": "0x5d5bd0",
+            "end_exclusive": "0x5d5bd8",
+            "matched_comments": 1,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_005D5AD0_0x5d5ad0.cpp",
+            "sha256": "a56837c3c5a174ec1abe5c48790e04ffe15e38ea4b38bd7d197bef953d73f222",
+            "start": "0x5d5ad0",
+            "end_exclusive": "0x5d5bc8",
+            "matched_comments": 59,
+            "omitted_zero_words": 3,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_005D5AB0_0x5d5ab0.cpp",
+            "sha256": "935940bd933840e4c8a184b707c7edf26e893e1247bb99cd08725c4d0b774522",
+            "start": "0x5d5ab0",
+            "end_exclusive": "0x5d5ac8",
+            "matched_comments": 6,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00192B30_0x192b30.cpp",
+            "sha256": "f946380b42b2c71f7dd16fbe00703fc5ad30f09d65732729cbbd67da7e831d62",
+            "start": "0x192b30",
+            "end_exclusive": "0x192b68",
+            "matched_comments": 14,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001925C0_0x1925c0.cpp",
+            "sha256": "0f675b4bdff14f189b5c431d4c041aa9b690f5d68204d97106766b1aba5386f1",
+            "start": "0x1925c0",
+            "end_exclusive": "0x192690",
+            "matched_comments": 52,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00192DF0_0x192df0.cpp",
+            "sha256": "676239a481caab2a96375654f33e6b75b6146853d72e1fcfa8cebc62c5579a14",
+            "start": "0x192df0",
+            "end_exclusive": "0x193000",
+            "matched_comments": 126,
+            "omitted_zero_words": 6,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00190A10_0x190a10.cpp",
+            "sha256": "782fe96cf5c14ecf1d073accd18aa24cd7b77a8c221fc8dab7c73caf2c1a7484",
+            "start": "0x190a10",
+            "end_exclusive": "0x1911d0",
+            "matched_comments": 496,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00191DF0_0x191df0.cpp",
+            "sha256": "34e33ece617e951ebc4a3294b54a5407169cdfafdc8c1e90a1fc2334087737bb",
+            "start": "0x191df0",
+            "end_exclusive": "0x191e50",
+            "matched_comments": 24,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00191E50_0x191e50.cpp",
+            "sha256": "734ce48fb5f167c64ae909a781661dcd0d5a51ba48817c908481f944a517b9f7",
+            "start": "0x191e50",
+            "end_exclusive": "0x191ef0",
+            "matched_comments": 40,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00191D80_0x191d80.cpp",
+            "sha256": "277437ba1a570ba3766882385019f266975221e9e0e609cb1799e1f63bcc44d6",
+            "start": "0x191d80",
+            "end_exclusive": "0x191df0",
+            "matched_comments": 28,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018E3C0_0x18e3c0.cpp",
+            "sha256": "874fb3d93f52fda855eb22cf143e1925a130af7aba38621d613705b6006060ee",
+            "start": "0x18e3c0",
+            "end_exclusive": "0x18e480",
+            "matched_comments": 34,
+            "omitted_zero_words": 14,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018E7D0_0x18e7d0.cpp",
+            "sha256": "a4d87e56b39eb7189b4cbddd20c64a205a34a875e33eea3d9ad3ae3a9779bbfa",
+            "start": "0x18e7d0",
+            "end_exclusive": "0x18e910",
+            "matched_comments": 76,
+            "omitted_zero_words": 4,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018F260_0x18f260.cpp",
+            "sha256": "254a6d800794e0ed686f41c4c744b6cacc0d7cf965bafcd87f1f68b2491e4a63",
+            "start": "0x18f260",
+            "end_exclusive": "0x18f570",
+            "matched_comments": 191,
+            "omitted_zero_words": 5,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018F1E0_0x18f1e0.cpp",
+            "sha256": "6f138db2cd6c6f2364db4ae64c8945da8836f37571323c2f9344cb8dbe21ee9d",
+            "start": "0x18f1e0",
+            "end_exclusive": "0x18f260",
+            "matched_comments": 31,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018F040_0x18f040.cpp",
+            "sha256": "063205ecaafa7889756f8e1f13b3fc26544a72cc7913000ad137f05696cf472c",
+            "start": "0x18f040",
+            "end_exclusive": "0x18f1e0",
+            "matched_comments": 97,
+            "omitted_zero_words": 7,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018E710_0x18e710.cpp",
+            "sha256": "f6c6d74d828b165a55a0428fe7508a0fa095f445181363e7326c99c3a9622fa3",
+            "start": "0x18e710",
+            "end_exclusive": "0x18e7d0",
+            "matched_comments": 47,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018EEB0_0x18eeb0.cpp",
+            "sha256": "c73787aab6763e46a50c3bcf14b79fd58d2bd0ab9c96887413fb29b110866d5a",
+            "start": "0x18eeb0",
+            "end_exclusive": "0x18f040",
+            "matched_comments": 92,
+            "omitted_zero_words": 8,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018E660_0x18e660.cpp",
+            "sha256": "39b93c440886a3f58046aad36dff785a4f7c21231b32597ab2d3a6573274d97b",
+            "start": "0x18e660",
+            "end_exclusive": "0x18e710",
+            "matched_comments": 43,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018ED20_0x18ed20.cpp",
+            "sha256": "e020f473472d87839d4e031a6c3993cb482787bc42bbe63c1b71d60814e5ae68",
+            "start": "0x18ed20",
+            "end_exclusive": "0x18eeb0",
+            "matched_comments": 92,
+            "omitted_zero_words": 8,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018E590_0x18e590.cpp",
+            "sha256": "24db1cf15a70d89d0f69fa08b4917ad51715faec6adb866d6371e0c4323d0953",
+            "start": "0x18e590",
+            "end_exclusive": "0x18e660",
+            "matched_comments": 48,
+            "omitted_zero_words": 4,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018EBB0_0x18ebb0.cpp",
+            "sha256": "abc3c2ebf333f5df1b62ae51695b49df99f35e7bdd2956f328989c4e81e2479f",
+            "start": "0x18ebb0",
+            "end_exclusive": "0x18ed20",
+            "matched_comments": 84,
+            "omitted_zero_words": 8,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018E500_0x18e500.cpp",
+            "sha256": "c130126c301f21f33713685e8e32771d277138cc71801899122298ef156dbeaa",
+            "start": "0x18e500",
+            "end_exclusive": "0x18e590",
+            "matched_comments": 35,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018EA60_0x18ea60.cpp",
+            "sha256": "9be2bbe600c2c27a0b8088228bd7abc5dfcd84b3d19e10be7f1cfe795417e8fd",
+            "start": "0x18ea60",
+            "end_exclusive": "0x18ebb0",
+            "matched_comments": 76,
+            "omitted_zero_words": 8,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018E480_0x18e480.cpp",
+            "sha256": "ae1e93f73dfdb5ffa5842bf8413ff8eb22abe20874b799462c9edd2571857a78",
+            "start": "0x18e480",
+            "end_exclusive": "0x18e500",
+            "matched_comments": 31,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018E910_0x18e910.cpp",
+            "sha256": "ca16b3b1fbe31e1c822cfa83196ea002c6db4a1d841ab1bcb8abb456bfe24803",
+            "start": "0x18e910",
+            "end_exclusive": "0x18ea60",
+            "matched_comments": 76,
+            "omitted_zero_words": 8,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00192450_0x192450.cpp",
+            "sha256": "a13ca9f6fe910b07ed82ee2f1ddd949a866b35f07a79028ccca1bbb70dc78d70",
+            "start": "0x192450",
+            "end_exclusive": "0x192480",
+            "matched_comments": 11,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_0018E3B0_0x18e3b0.cpp",
+            "sha256": "42e6f40c7526c45922e9b69fe7086a6fd8a33a443ca85c4f11093c4603c35c6f",
+            "start": "0x18e3b0",
+            "end_exclusive": "0x18e3c0",
+            "matched_comments": 4,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00192BF0_0x192bf0.cpp",
+            "sha256": "1520fb1968fadf081f6e9c43309bcc0a44bb626665ad665c9abd2c24ae52c0e7",
+            "start": "0x192bf0",
+            "end_exclusive": "0x192c74",
+            "matched_comments": 33,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193220_0x193220.cpp",
+            "sha256": "dbd7bdb47b315a8d196deec2daeef635777f945d16cbf40dbbb1f4385ca39cb4",
+            "start": "0x193220",
+            "end_exclusive": "0x193228",
+            "matched_comments": 1,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193030_0x193030.cpp",
+            "sha256": "47a32e46524bb53feec2fe1976657ebb5d2fb82a5fc7d2d1decd6c61fe05cf6f",
+            "start": "0x193030",
+            "end_exclusive": "0x193140",
+            "matched_comments": 64,
+            "omitted_zero_words": 4,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193140_0x193140.cpp",
+            "sha256": "03356c64f771c9d8db4fabc41f9258f7bac78d72cb4beeee732bafb2ead584ab",
+            "start": "0x193140",
+            "end_exclusive": "0x193240",
+            "matched_comments": 62,
+            "omitted_zero_words": 2,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001930F0_0x1930f0.cpp",
+            "sha256": "c060fe548bd7a54da8f0dadd630b5f1d8506aaeadd4bd4843446ffa6e99f532e",
+            "start": "0x1930f0",
+            "end_exclusive": "0x193134",
+            "matched_comments": 17,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001939A0_0x1939a0.cpp",
+            "sha256": "5c0592e9c1c59a5ff9c944ecf06474a8c17a5805eebce58ae0239096f7d82024",
+            "start": "0x1939a0",
+            "end_exclusive": "0x193a00",
+            "matched_comments": 24,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193C80_0x193c80.cpp",
+            "sha256": "7f64881be5e90f5e97f2e8d97c21c058eef5562d5d0ded732fdbfd293693d5e3",
+            "start": "0x193c80",
+            "end_exclusive": "0x193e20",
+            "matched_comments": 99,
+            "omitted_zero_words": 5,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193230_0x193230.cpp",
+            "sha256": "8348a060a9e645491ea156ad3adc1fd4876d9cdf573c803c6e85136c8596e235",
+            "start": "0x193230",
+            "end_exclusive": "0x193238",
+            "matched_comments": 1,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193240_0x193240.cpp",
+            "sha256": "decd6871ff6d5827e6b9fe2bbaac01c6a955aa7950332da044c4f78626bde2b7",
+            "start": "0x193240",
+            "end_exclusive": "0x193260",
+            "matched_comments": 8,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193260_0x193260.cpp",
+            "sha256": "bde29bd960ef8638e59d3f7aa4076a4781894666566b7c9a8a2f976f305b1b01",
+            "start": "0x193260",
+            "end_exclusive": "0x193380",
+            "matched_comments": 72,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001913E0_0x1913e0.cpp",
+            "sha256": "a5c1aa0cd9c5c59a71fa2ca46076f3f6bbe0417fbed730d4ab91ffe674b2eb22",
+            "start": "0x1913e0",
+            "end_exclusive": "0x191430",
+            "matched_comments": 19,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193380_0x193380.cpp",
+            "sha256": "c3ff02700683de603e092b0de9015cac19fd1c08f1adb86791df8edeffa3c295",
+            "start": "0x193380",
+            "end_exclusive": "0x1934c0",
+            "matched_comments": 77,
+            "omitted_zero_words": 3,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193880_0x193880.cpp",
+            "sha256": "b377eaba5c4f107a4fae6936608d8cf594c611fe3a17c18e4a7bc020142852f7",
+            "start": "0x193880",
+            "end_exclusive": "0x1938a0",
+            "matched_comments": 8,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001938A0_0x1938a0.cpp",
+            "sha256": "94a33b3dbd03eff820b37733658d9977946ed07167a0597b4dce1daaf1bba78a",
+            "start": "0x1938a0",
+            "end_exclusive": "0x1939a0",
+            "matched_comments": 63,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193AF0_0x193af0.cpp",
+            "sha256": "cd3415eaf5294b51e55709c8b81475375bd4b143957b2606d953b92b08378833",
+            "start": "0x193af0",
+            "end_exclusive": "0x193bd0",
+            "matched_comments": 56,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193770_0x193770.cpp",
+            "sha256": "f3bbab365563a895dec15b5f8c8f981d9862ac13597bc1ec9d893f84e0d9d260",
+            "start": "0x193770",
+            "end_exclusive": "0x193790",
+            "matched_comments": 8,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193790_0x193790.cpp",
+            "sha256": "61ff43d0260626958a418d0c13f8a23713fa31a1db1580172b8a04767ad0c3de",
+            "start": "0x193790",
+            "end_exclusive": "0x193880",
+            "matched_comments": 59,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193A00_0x193a00.cpp",
+            "sha256": "53722957d11b4e0d9448ae57499eb04f8b789794771babec1c1c48b523aac31d",
+            "start": "0x193a00",
+            "end_exclusive": "0x193af0",
+            "matched_comments": 60,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001934C0_0x1934c0.cpp",
+            "sha256": "3bebf1f5cb70bcacd7ce6d569de76b89fe5b21c2aeba4514dce048c6ec29f65d",
+            "start": "0x1934c0",
+            "end_exclusive": "0x193580",
+            "matched_comments": 46,
+            "omitted_zero_words": 2,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00193BD0_0x193bd0.cpp",
+            "sha256": "7388fdcaaf1641b823e1e48b6a5d5e39421502c395eb28f82425d6b34fd7a2f3",
+            "start": "0x193bd0",
+            "end_exclusive": "0x193c80",
+            "matched_comments": 44,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2E00_0x1a2e00.cpp",
+            "sha256": "9608d9a38167bdd82eae5137876eb675ac714fb366176c122de5bb9452b1a0a1",
+            "start": "0x1a2e00",
+            "end_exclusive": "0x1a2fec",
+            "matched_comments": 123,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2D70_0x1a2d70.cpp",
+            "sha256": "8cfdb628705470bd5676fe49a9d9cb1b26ea1b7eebb1eefda425156d6e22cb4c",
+            "start": "0x1a2d70",
+            "end_exclusive": "0x1a2da0",
+            "matched_comments": 10,
+            "omitted_zero_words": 2,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2CF0_0x1a2cf0.cpp",
+            "sha256": "1200edd2692974e6afe89af6655ce19b1d3dfd1d09aca29b526c4294872891e3",
+            "start": "0x1a2cf0",
+            "end_exclusive": "0x1a2d70",
+            "matched_comments": 29,
+            "omitted_zero_words": 3,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2C80_0x1a2c80.cpp",
+            "sha256": "ef44241e073505fe4f15e4f8c4fec6cd3d6157aaaad6e7b73e7b7e044fbced4d",
+            "start": "0x1a2c80",
+            "end_exclusive": "0x1a2c90",
+            "matched_comments": 4,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2B60_0x1a2b60.cpp",
+            "sha256": "a9fc6846d10fe1884327a84b6fc0c3e25801ca8154df323730e96a6c587514ba",
+            "start": "0x1a2b60",
+            "end_exclusive": "0x1a2bb0",
+            "matched_comments": 19,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2C90_0x1a2c90.cpp",
+            "sha256": "782e90be851b0dbae572d4423e073ab00c6d2ac50e5fe41c2ca99073e7b20055",
+            "start": "0x1a2c90",
+            "end_exclusive": "0x1a2cf0",
+            "matched_comments": 23,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2BB0_0x1a2bb0.cpp",
+            "sha256": "ac5583a81c70ddbf078c8cd55b3a31251375cd2021cf011a795a251a830d2294",
+            "start": "0x1a2bb0",
+            "end_exclusive": "0x1a2be0",
+            "matched_comments": 12,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2BE0_0x1a2be0.cpp",
+            "sha256": "c3851eb3e2a4e9d98270dd26ba2e804ce351e75f85f83b76d69e769e12f22174",
+            "start": "0x1a2be0",
+            "end_exclusive": "0x1a2c10",
+            "matched_comments": 12,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2C10_0x1a2c10.cpp",
+            "sha256": "c19ab7449014d464f77cc60e42e5458434abc818ef49b453935128fbbbe53d27",
+            "start": "0x1a2c10",
+            "end_exclusive": "0x1a2c80",
+            "matched_comments": 27,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2DA0_0x1a2da0.cpp",
+            "sha256": "8e45d4186de392749e83b4f9adf2086788e2d670fcbd7c16f5d3515682add651",
+            "start": "0x1a2da0",
+            "end_exclusive": "0x1a2ff0",
+            "matched_comments": 148,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2B30_0x1a2b30.cpp",
+            "sha256": "dc5ca50ec6ca8eca1ff8ba90455c2c87cfd671973e24e3c1e43c2f58aac29f7a",
+            "start": "0x1a2b30",
+            "end_exclusive": "0x1a2b60",
+            "matched_comments": 11,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A1FD0_0x1a1fd0.cpp",
+            "sha256": "d4fe11a7b2f898ecd69d56b8c8c0ce4c80941ea8e597cb015f07353c12689eeb",
+            "start": "0x1a1fd0",
+            "end_exclusive": "0x1a21f4",
+            "matched_comments": 134,
+            "omitted_zero_words": 3,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A1E00_0x1a1e00.cpp",
+            "sha256": "37055c65e69433701f1cc0605156f16d30f0e1bacb7f798bef4ef225c1481562",
+            "start": "0x1a1e00",
+            "end_exclusive": "0x1a1e40",
+            "matched_comments": 14,
+            "omitted_zero_words": 2,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A1DA0_0x1a1da0.cpp",
+            "sha256": "2b0d0534057e94ef3eb4e62183a3a8e9c77ffbe0c05746fdffe8528e8e79f138",
+            "start": "0x1a1da0",
+            "end_exclusive": "0x1a1db0",
+            "matched_comments": 4,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2A50_0x1a2a50.cpp",
+            "sha256": "396008f4e5377d73a95e58a635959d168d38c29276c17d5f18a083c3ba878d7e",
+            "start": "0x1a2a50",
+            "end_exclusive": "0x1a2ad0",
+            "matched_comments": 31,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A4E30_0x1a4e30.cpp",
+            "sha256": "00bd6047dec8e0e54ae7bf38677d2f96e129d7f18964ffdbeb603dff85a89ca0",
+            "start": "0x1a4e30",
+            "end_exclusive": "0x1a4f10",
+            "matched_comments": 48,
+            "omitted_zero_words": 8,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A29D0_0x1a29d0.cpp",
+            "sha256": "51234b915134034f44ebca8bd1c77fa5bb2f1ad011112fcbc0c60959cc91ce2f",
+            "start": "0x1a29d0",
+            "end_exclusive": "0x1a2a50",
+            "matched_comments": 31,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A4F10_0x1a4f10.cpp",
+            "sha256": "2463f52357259836caee7350900f754e8fc7984c36e6431616a34ff8a0661320",
+            "start": "0x1a4f10",
+            "end_exclusive": "0x1a5180",
+            "matched_comments": 147,
+            "omitted_zero_words": 9,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A5220_0x1a5220.cpp",
+            "sha256": "46641489ad77b27f6f3c7f15c1b1eec63a7382d3bb20e652465aa5fc24df17b0",
+            "start": "0x1a5220",
+            "end_exclusive": "0x1a5280",
+            "matched_comments": 24,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A51B0_0x1a51b0.cpp",
+            "sha256": "9b6373c89d9235e0449731bc70b18151cdeeb8e59c28335eefc9979b1d22a54f",
+            "start": "0x1a51b0",
+            "end_exclusive": "0x1a5220",
+            "matched_comments": 27,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A5180_0x1a5180.cpp",
+            "sha256": "7744bfb159d5288d8f3cf6c4ecf146a74a45b2e73added0fdb14a64196fee425",
+            "start": "0x1a5180",
+            "end_exclusive": "0x1a51b0",
+            "matched_comments": 11,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A4F20_0x1a4f20.cpp",
+            "sha256": "9195febfae417da16e7e64d6e33cf3ba171f2249ad7530c2e8d5ab0ff009a70c",
+            "start": "0x1a4f20",
+            "end_exclusive": "0x1a504c",
+            "matched_comments": 67,
+            "omitted_zero_words": 8,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2200_0x1a2200.cpp",
+            "sha256": "39784bcdaec37d031093a9d1276d958d2d5e86c3f680b885472aa5ce703cff9a",
+            "start": "0x1a2200",
+            "end_exclusive": "0x1a22d0",
+            "matched_comments": 50,
+            "omitted_zero_words": 2,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A22D0_0x1a22d0.cpp",
+            "sha256": "3600c85ed003eab3a442199af28819215bdfc2bc8dd6d2f841ad68eab3607e55",
+            "start": "0x1a22d0",
+            "end_exclusive": "0x1a2490",
+            "matched_comments": 110,
+            "omitted_zero_words": 2,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2490_0x1a2490.cpp",
+            "sha256": "4ce3b0a7e4c50b12735004da85d46384031edac2a035048f2ae85e5495f80964",
+            "start": "0x1a2490",
+            "end_exclusive": "0x1a2550",
+            "matched_comments": 34,
+            "omitted_zero_words": 14,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2900_0x1a2900.cpp",
+            "sha256": "65cdd854751bb004f5748f4717bcbf4a1eb873c18431891a2393b421dea9ac4b",
+            "start": "0x1a2900",
+            "end_exclusive": "0x1a29d0",
+            "matched_comments": 52,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001899F0_0x1899f0.cpp",
+            "sha256": "c81c59767c66ad7a5bb67e860d35341b165b0831d058910181740ebfc97160a7",
+            "start": "0x1899f0",
+            "end_exclusive": "0x189b08",
+            "matched_comments": 64,
+            "omitted_zero_words": 6,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2840_0x1a2840.cpp",
+            "sha256": "b2d6d500349ed89718cdfa4796ce6a86d4da7c77d8fb8d80322d48fd1caf520a",
+            "start": "0x1a2840",
+            "end_exclusive": "0x1a2900",
+            "matched_comments": 48,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2790_0x1a2790.cpp",
+            "sha256": "97c22eefa198b9e77c451463ae2f0af3cbefe436f1e99475c937633a5f789777",
+            "start": "0x1a2790",
+            "end_exclusive": "0x1a2840",
+            "matched_comments": 44,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A26C0_0x1a26c0.cpp",
+            "sha256": "be9fb2259dd36730e0ad57520c6a9b310c0d32b59b7e6f2a048e656ad85fdfe1",
+            "start": "0x1a26c0",
+            "end_exclusive": "0x1a2790",
+            "matched_comments": 52,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2600_0x1a2600.cpp",
+            "sha256": "0b6f27f2790998334e315d4e3d9c2d8701f2587fc738f0ed966d1cf24eb19ef8",
+            "start": "0x1a2600",
+            "end_exclusive": "0x1a26c0",
+            "matched_comments": 48,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2550_0x1a2550.cpp",
+            "sha256": "3fa6987dca854d795c8e8efcdef2fb64d59815e6728dfc0a386c01bf24499dbb",
+            "start": "0x1a2550",
+            "end_exclusive": "0x1a2600",
+            "matched_comments": 44,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A1DB0_0x1a1db0.cpp",
+            "sha256": "45b54b6427d2574b66745c5ea4e63c7d366bb9cee1a1c0eae1960d6f1ca3630b",
+            "start": "0x1a1db0",
+            "end_exclusive": "0x1a1e00",
+            "matched_comments": 18,
+            "omitted_zero_words": 2,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A2AD0_0x1a2ad0.cpp",
+            "sha256": "87c077cab47447c01f94ade1fcf7e3ca05528412e47664ba44a09eb3dc7b7e5b",
+            "start": "0x1a2ad0",
+            "end_exclusive": "0x1a2af0",
+            "matched_comments": 7,
+            "omitted_zero_words": 1,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_00189970_0x189970.cpp",
+            "sha256": "f027dc632f80b821d477f9a82e9b7623d15655772a842ed1a2c874e489472a64",
+            "start": "0x189970",
+            "end_exclusive": "0x1899f0",
+            "matched_comments": 32,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A4DA0_0x1a4da0.cpp",
+            "sha256": "38220aa67d46da0fae4d0174872a37ea035732cd507fd0f49995b7974601dbcd",
+            "start": "0x1a4da0",
+            "end_exclusive": "0x1a4e30",
+            "matched_comments": 36,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A1E40_0x1a1e40.cpp",
+            "sha256": "d7eb3ba593a90576f263485717b59325e19ee15774dd4b0237fcc08fc9950864",
+            "start": "0x1a1e40",
+            "end_exclusive": "0x1a1ed0",
+            "matched_comments": 36,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output/sub_001A1ED0_0x1a1ed0.cpp",
+            "sha256": "bc498097b66f1483b11e91ae0b8d4194afced8b92c17328c3ec062649379ca6e",
+            "start": "0x1a1ed0",
+            "end_exclusive": "0x1a2200",
+            "matched_comments": 193,
+            "omitted_zero_words": 11,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_0058BF50_0x58bf50.cpp",
+            "sha256": "0a2cc23e7e721b6b00e56b4e90a83137952dfd73dbccc801ef5b9a7302801ff6",
+            "start": "0x58bf50",
+            "end_exclusive": "0x58c124",
+            "matched_comments": 106,
+            "omitted_zero_words": 11,
+            "conflicts": 0
+          },
+          {
+            "role": "complete original skeleton/model/frame/root or math body",
+            "path": "recomp/config/output_ovl/o2/o2_0058C6A0_0x58c6a0.cpp",
+            "sha256": "d7d339d372ba2dd6d4b75a3d32e47590fb5ed759ea03c4e341c5e39de2e76cf4",
+            "start": "0x58c6a0",
+            "end_exclusive": "0x58c714",
+            "matched_comments": 29,
+            "omitted_zero_words": 0,
+            "conflicts": 0
+          }
+        ]
+      }
+    }
+  },
+  "source_sha256": {
+    "game/native/animation/motion_bank.cpp": "f824b6163e26cb9093fbc57f05e9afeb9354e40e5209043f45dfaaa20e4d29ee",
+    "game/native/animation/motion_bank.hpp": "8888cc253ffc2275b42c96a7e14f2633baa9d41449588ea6c4f0a97b1ea84ccc",
+    "game/native/animation/curves.cpp": "dab29945bf16938b04e58e897e82ba4c12c0830c94febab860c66a66a39eca2d",
+    "game/native/animation/curves.hpp": "c337a6c8946f21d7d14b7c50f06d1d3b906e2bd3f284646d82fc0b3fdded07c2",
+    "game/native/transform_math/transform_math.hpp": "03762e50d83ba8cbd4f3215389d1c75b15453b8c02668bc731a633172b3e9f35",
+    "game/native/transform_math/transform_math.cpp": "4126c772f24ee109f297bd36f3cb5e74f7483ea363fe575aef9145e1c809b449",
+    "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f",
+    "tools/native_reconstruction/animation/motion_bank_tests.cpp": "bf885b641612fbbbbadeb35bbcd6b0877a460afad166cdcbbc6a82aaf601ebc7",
+    "tools/native_reconstruction/animation/verify_motion_banks.py": "dfdaa897ead5a0b3837720f49c6fd9e168ffd93d2909da46674a2ceacb61a263",
+    "recomp/config/output/sub_001D1500_0x1d1500.cpp": "ed5250ad194fa882e20405662cada407fa8322a461169352d7f63f45312ceace",
+    "recomp/config/output/sub_001D16C0_0x1d16c0.cpp": "babf143e521c11097bf1468e92623ebd225910ad093b693319a06a51811f21f8",
+    "recomp/config/output/sub_001D1940_0x1d1940.cpp": "ea5f9c91ae28cc49c450e5aa3839c219ec29e9be624130a8572a3fa59b6114a4",
+    "recomp/config/output/sub_001D1960_0x1d1960.cpp": "a6ecc16cb3aa6d6476422d775f91b8cac097730381d220bfa485cafb55bf1423",
+    "recomp/config/output/sub_001D1990_0x1d1990.cpp": "021ea8b0e64807cb18117055e469d98c1b101c594850d27b8b8f0d2f022179a5",
+    "recomp/config/output/sub_001D19D0_0x1d19d0.cpp": "6e9ce8164dafad1286d28b4f01705210516d7c778583a67dd41b363afe0ce7be",
+    "game/native/animation/motion_descriptors.hpp": "dba8dd15ee4445d093fecb898b0f2c8ed2129ddee374f683fc3f2e25eb32eb11",
+    "game/native/animation/motion_descriptors.cpp": "24e8965cc96aaa06ad7a8b89ff796dedc07982dd112523186a11b62374126419",
+    "game/native/animation/motion_descriptor_profile.inc": "13522a33bad6078c3046bfa3954c0ed5c116a65de0b3eddb1b9e13755fc519da",
+    "tools/native_reconstruction/animation/motion_descriptor_tests.cpp": "34b04a6eaf80730db0e3241700553f2e0e9fc60757c698ff9dcd058cfb7c9dd2",
+    "tools/native_reconstruction/animation/verify_motion_descriptors.py": "b0898251b4cccb5fa9e5511bec67a1cf4dd17429f3c75659452f4f69c5b811f7",
+    "recomp/config/output_ovl/o2/o2_005D4570_0x5d4570.cpp": "a0b6f38df10cd34dfcb438bf235b77b986bdba89c69119fb6ebf33e9602b7424",
+    "recomp/config/output_ovl/o2/o2_005D46C0_0x5d46c0.cpp": "59343973c2e932aebae176570eca2503b60c8362d68d5a0f0b70d0e73e4564fc",
+    "game/native/animation/model_blend.hpp": "f0f0c0425366d7d0488406692282986765ecc9486eb5e6c118a777db50c6f7db",
+    "game/native/animation/model_blend.cpp": "8bb8306c2278def03ef293320064dc178932eb2d3a0500fa6ae0ec852599f9f9",
+    "game/native/animation/constraints.hpp": "dff5ae4fcb83a83e6bc73976661118ff49f7b45fd654538ddf2b5911b164f606",
+    "game/native/animation/constraints.cpp": "7ee5adc664a46a31450602201dbce4cc37bb9d48fd3f0645b222d53131fc897f",
+    "game/native/animation/constraint_math.hpp": "25a148646b33c3c22e5f26a137e21ba5aae11ef01a8d563c230ddd16469935e4",
+    "game/native/animation/constraint_math.cpp": "5c87b5248ebeeef3c5853d41f1ff18c06332dd85caad6189899d4d63aa267416",
+    "game/native/animation/model.hpp": "754180959bf0362bfec15dd08678bff976601a9583cabb581c7cdb0556c55ab8",
+    "game/native/animation/model.cpp": "c5a1b46de9fd4504f0ed0a5ee89c39c9f182abb14c2321f69cd9dde58ef06440",
+    "game/native/animation/model_math.hpp": "45b07adb6599a2f332214c58470399ef338196894e375b309cae3e63596349cb",
+    "game/native/animation/model_math.cpp": "36210e266aafd88deabee8602f8220c408c77372b17c77f28be743282d266ebe",
+    "tools/native_reconstruction/animation/pose_blending_tests.cpp": "71e0cb88332892868aa8a14f4f6713f6aadd1c9bc977a1d76f84b554d0b76f3e",
+    "tools/native_reconstruction/animation/verify_pose_blending.py": "dc5517f52b24a2de475a855a66b47b82a1d3d2f4b65b91e018e1aafedd65e9ff",
+    "recomp/config/output/sub_00191900_0x191900.cpp": "a69b12b37e23122584d1ad1388679158aec7915af17a0959b1f08bd12c78faf3",
+    "recomp/config/output/sub_00192690_0x192690.cpp": "95807fb058ed3120c10633c8431aaaf57a6a825cb47611bcc40d42bda2330eaf",
+    "recomp/config/output/sub_00192710_0x192710.cpp": "22d88de0edc4f48cf9f32563351187447174abb2bf57abca2823235b2a43e16b",
+    "recomp/config/output/sub_00192A60_0x192a60.cpp": "772f006ee72f7e768efe3cc67974b7e5effe12e522a07b8db91cc71fce7fec3a",
+    "recomp/config/output/sub_00192B70_0x192b70.cpp": "919cfe0a739ea9fc6481b1b6239591b430ae99c94948359e6b4c988cebf429e5",
+    "recomp/config/output/sub_00192C80_0x192c80.cpp": "91395b81752908eb08bedbbead17c4ecd4a58af13ff724e5b11b45a61a5282a0",
+    "recomp/config/output/sub_00192D10_0x192d10.cpp": "dabe6fddb19a070e12076a0e7cc7c79d84460b3e7a0a8986887bd280cc02e400",
+    "recomp/config/output/sub_00189BE0_0x189be0.cpp": "7d336ce55bc8ae4eef0fdaaba0a06bd323e48fe45610e4af0d5855a06493950f",
+    "recomp/config/output/sub_00191280_0x191280.cpp": "848a8f2f95854dec5b1d2f10c545da4feec1ce65fef9b3abef4ab2587124bc33",
+    "recomp/config/output_ovl/o2/o2_0058CE00_0x58ce00.cpp": "306c231e5f304f5088a716789f8bc15ea849555997b7236c5269e1fd15b6635e",
+    "recomp/config/output_ovl/o2/o2_005D43C0_0x5d43c0.cpp": "c7bd703e1acbe294d5c678cc664964bdc4e7e658caaf1dda37452acd941dfecb",
+    "recomp/config/output_ovl/o2/o2_005D42D0_0x5d42d0.cpp": "5573b5cf4c8064e1007cea3edc780cfab1f12af1730bbcc4cca480af078a8b57",
+    "recomp/config/output/sub_00191500_0x191500.cpp": "74d4b9a934d1e4c85136ac7745fe41df559477b6aa385748d358d9592095cbf9",
+    "recomp/config/output_ovl/o2/o2_005D6850_0x5d6850.cpp": "592a37b63b92e446e8a3da310ef21f08861b548c38cd150a76f6e6b04e8dcb9c",
+    "recomp/config/output_ovl/o2/o2_005D5FA0_0x5d5fa0.cpp": "1eadf40451fe10be51a999b645862d6f0c2104590ce038d1315bc3dee10b35c9",
+    "recomp/config/output/sub_00191430_0x191430.cpp": "58aaff2d98c3cfb7d4854fbb78f11fe7677176e10df68e6584e5a08f73121adc",
+    "recomp/config/output/sub_00191660_0x191660.cpp": "59d3bca34f94cbbd70149b458dd1c83d5a9383506125f607c17fb5849eb13405",
+    "recomp/config/output_ovl/o0/o0_00371880_0x371880.cpp": "231254d575eb9d7d6de5198cc50d0faceb73eb9cefe24030ceefa7f119e97c96",
+    "recomp/config/output/sub_00192220_0x192220.cpp": "21fead5766f4f7b348d7473876e437ff826ec0e402074d0317761791e763dbce",
+    "recomp/config/output/sub_00190100_0x190100.cpp": "b2b1a3d529c9f3438dfcfcfbb59e6f2e409174eacf8ac68ff5e7e11304abb9ca",
+    "recomp/config/output/sub_0018F570_0x18f570.cpp": "29aee43b2a0e63c6fe9a3e5922cfd3f29cc4ca693763b2b0407e172a797ee698",
+    "recomp/config/output/sub_0018F7E0_0x18f7e0.cpp": "6da086df77b56a1aa5c2367925487c0d25065adadc4bd4ccf373b2599f695103",
+    "recomp/config/output/sub_0018F710_0x18f710.cpp": "2d646d5d6754cf66d3a81d6207751ba3f7e1629dcc4b8343c0f4ced962795acc",
+    "recomp/config/output/sub_0018FDF0_0x18fdf0.cpp": "0430ef30ec9ff895806d903c01f0064528efd351105dc3643c04db56e6bf4d2c",
+    "recomp/config/output/sub_001921B0_0x1921b0.cpp": "d01d46c69b8dddeeae960ca56e4325e2d4afc9af24da7cc8fc962759043985bc",
+    "recomp/config/output/sub_00191580_0x191580.cpp": "9332aaf382ed22b90c04225eb5f58bab45e2813417cfaf5b615eb34705ea7672",
+    "recomp/config/output/sub_00190060_0x190060.cpp": "0c1cf9b513c44b74cfb3d1fa3206af98ce9a3a1896992a0f380d350d16727650",
+    "recomp/config/output/sub_001919D0_0x1919d0.cpp": "7886eaa395fce554679dc341c56ce67680fb74d5d3b063c94736260a7fe72388",
+    "recomp/config/output/sub_0018FE60_0x18fe60.cpp": "c71c7e224553950adabad1b7aa9e2c18fc04a3ab719b479626982e6055a9a82c",
+    "recomp/config/output_ovl/o2/o2_005D5BE0_0x5d5be0.cpp": "76ae00423f4e9ce7a7ebb027a07fb9e5bf851a03f7e9d5d7ba330380896d742a",
+    "recomp/config/output/sub_00191300_0x191300.cpp": "56ebd8f4077f800c909aa2a7cb3cf02513b4b47bd9c6a66f6f389334f5ee43da",
+    "recomp/config/output_ovl/o2/o2_005D59A0_0x5d59a0.cpp": "ce0fefa5b9229a7d156c4d44a28267e6fda1543762f2cfb7f00aa6732360a1b5",
+    "recomp/config/output/sub_00191380_0x191380.cpp": "175b4329c97bb36c7cd903f163d968fcdcdb034050f76580ce282bf83b13eb8f",
+    "recomp/config/output_ovl/o2/o2_005D5BD0_0x5d5bd0.cpp": "9c188695dd9715078c2779a65dc8b659c6d0ad25305c70c72ca3bb166ae81bbe",
+    "recomp/config/output_ovl/o2/o2_005D5AD0_0x5d5ad0.cpp": "a56837c3c5a174ec1abe5c48790e04ffe15e38ea4b38bd7d197bef953d73f222",
+    "recomp/config/output_ovl/o2/o2_005D5AB0_0x5d5ab0.cpp": "935940bd933840e4c8a184b707c7edf26e893e1247bb99cd08725c4d0b774522",
+    "recomp/config/output/sub_00192B30_0x192b30.cpp": "f946380b42b2c71f7dd16fbe00703fc5ad30f09d65732729cbbd67da7e831d62",
+    "recomp/config/output/sub_001925C0_0x1925c0.cpp": "0f675b4bdff14f189b5c431d4c041aa9b690f5d68204d97106766b1aba5386f1",
+    "recomp/config/output/sub_00192DF0_0x192df0.cpp": "676239a481caab2a96375654f33e6b75b6146853d72e1fcfa8cebc62c5579a14",
+    "recomp/config/output/sub_00190A10_0x190a10.cpp": "782fe96cf5c14ecf1d073accd18aa24cd7b77a8c221fc8dab7c73caf2c1a7484",
+    "recomp/config/output/sub_00191DF0_0x191df0.cpp": "34e33ece617e951ebc4a3294b54a5407169cdfafdc8c1e90a1fc2334087737bb",
+    "recomp/config/output/sub_00191E50_0x191e50.cpp": "734ce48fb5f167c64ae909a781661dcd0d5a51ba48817c908481f944a517b9f7",
+    "recomp/config/output/sub_00191D80_0x191d80.cpp": "277437ba1a570ba3766882385019f266975221e9e0e609cb1799e1f63bcc44d6",
+    "recomp/config/output/sub_0018E3C0_0x18e3c0.cpp": "874fb3d93f52fda855eb22cf143e1925a130af7aba38621d613705b6006060ee",
+    "recomp/config/output/sub_0018E7D0_0x18e7d0.cpp": "a4d87e56b39eb7189b4cbddd20c64a205a34a875e33eea3d9ad3ae3a9779bbfa",
+    "recomp/config/output/sub_0018F260_0x18f260.cpp": "254a6d800794e0ed686f41c4c744b6cacc0d7cf965bafcd87f1f68b2491e4a63",
+    "recomp/config/output/sub_0018F1E0_0x18f1e0.cpp": "6f138db2cd6c6f2364db4ae64c8945da8836f37571323c2f9344cb8dbe21ee9d",
+    "recomp/config/output/sub_0018F040_0x18f040.cpp": "063205ecaafa7889756f8e1f13b3fc26544a72cc7913000ad137f05696cf472c",
+    "recomp/config/output/sub_0018E710_0x18e710.cpp": "f6c6d74d828b165a55a0428fe7508a0fa095f445181363e7326c99c3a9622fa3",
+    "recomp/config/output/sub_0018EEB0_0x18eeb0.cpp": "c73787aab6763e46a50c3bcf14b79fd58d2bd0ab9c96887413fb29b110866d5a",
+    "recomp/config/output/sub_0018E660_0x18e660.cpp": "39b93c440886a3f58046aad36dff785a4f7c21231b32597ab2d3a6573274d97b",
+    "recomp/config/output/sub_0018ED20_0x18ed20.cpp": "e020f473472d87839d4e031a6c3993cb482787bc42bbe63c1b71d60814e5ae68",
+    "recomp/config/output/sub_0018E590_0x18e590.cpp": "24db1cf15a70d89d0f69fa08b4917ad51715faec6adb866d6371e0c4323d0953",
+    "recomp/config/output/sub_0018EBB0_0x18ebb0.cpp": "abc3c2ebf333f5df1b62ae51695b49df99f35e7bdd2956f328989c4e81e2479f",
+    "recomp/config/output/sub_0018E500_0x18e500.cpp": "c130126c301f21f33713685e8e32771d277138cc71801899122298ef156dbeaa",
+    "recomp/config/output/sub_0018EA60_0x18ea60.cpp": "9be2bbe600c2c27a0b8088228bd7abc5dfcd84b3d19e10be7f1cfe795417e8fd",
+    "recomp/config/output/sub_0018E480_0x18e480.cpp": "ae1e93f73dfdb5ffa5842bf8413ff8eb22abe20874b799462c9edd2571857a78",
+    "recomp/config/output/sub_0018E910_0x18e910.cpp": "ca16b3b1fbe31e1c822cfa83196ea002c6db4a1d841ab1bcb8abb456bfe24803",
+    "recomp/config/output/sub_00192450_0x192450.cpp": "a13ca9f6fe910b07ed82ee2f1ddd949a866b35f07a79028ccca1bbb70dc78d70",
+    "recomp/config/output/sub_0018E3B0_0x18e3b0.cpp": "42e6f40c7526c45922e9b69fe7086a6fd8a33a443ca85c4f11093c4603c35c6f",
+    "recomp/config/output/sub_00192BF0_0x192bf0.cpp": "1520fb1968fadf081f6e9c43309bcc0a44bb626665ad665c9abd2c24ae52c0e7",
+    "recomp/config/output/sub_00193220_0x193220.cpp": "dbd7bdb47b315a8d196deec2daeef635777f945d16cbf40dbbb1f4385ca39cb4",
+    "recomp/config/output/sub_00193030_0x193030.cpp": "47a32e46524bb53feec2fe1976657ebb5d2fb82a5fc7d2d1decd6c61fe05cf6f",
+    "recomp/config/output/sub_00193140_0x193140.cpp": "03356c64f771c9d8db4fabc41f9258f7bac78d72cb4beeee732bafb2ead584ab",
+    "recomp/config/output/sub_001930F0_0x1930f0.cpp": "c060fe548bd7a54da8f0dadd630b5f1d8506aaeadd4bd4843446ffa6e99f532e",
+    "recomp/config/output/sub_001939A0_0x1939a0.cpp": "5c0592e9c1c59a5ff9c944ecf06474a8c17a5805eebce58ae0239096f7d82024",
+    "recomp/config/output/sub_00193C80_0x193c80.cpp": "7f64881be5e90f5e97f2e8d97c21c058eef5562d5d0ded732fdbfd293693d5e3",
+    "recomp/config/output/sub_00193230_0x193230.cpp": "8348a060a9e645491ea156ad3adc1fd4876d9cdf573c803c6e85136c8596e235",
+    "recomp/config/output/sub_00193240_0x193240.cpp": "decd6871ff6d5827e6b9fe2bbaac01c6a955aa7950332da044c4f78626bde2b7",
+    "recomp/config/output/sub_00193260_0x193260.cpp": "bde29bd960ef8638e59d3f7aa4076a4781894666566b7c9a8a2f976f305b1b01",
+    "recomp/config/output/sub_001913E0_0x1913e0.cpp": "a5c1aa0cd9c5c59a71fa2ca46076f3f6bbe0417fbed730d4ab91ffe674b2eb22",
+    "recomp/config/output/sub_00193380_0x193380.cpp": "c3ff02700683de603e092b0de9015cac19fd1c08f1adb86791df8edeffa3c295",
+    "recomp/config/output/sub_00193880_0x193880.cpp": "b377eaba5c4f107a4fae6936608d8cf594c611fe3a17c18e4a7bc020142852f7",
+    "recomp/config/output/sub_001938A0_0x1938a0.cpp": "94a33b3dbd03eff820b37733658d9977946ed07167a0597b4dce1daaf1bba78a",
+    "recomp/config/output/sub_00193AF0_0x193af0.cpp": "cd3415eaf5294b51e55709c8b81475375bd4b143957b2606d953b92b08378833",
+    "recomp/config/output/sub_00193770_0x193770.cpp": "f3bbab365563a895dec15b5f8c8f981d9862ac13597bc1ec9d893f84e0d9d260",
+    "recomp/config/output/sub_00193790_0x193790.cpp": "61ff43d0260626958a418d0c13f8a23713fa31a1db1580172b8a04767ad0c3de",
+    "recomp/config/output/sub_00193A00_0x193a00.cpp": "53722957d11b4e0d9448ae57499eb04f8b789794771babec1c1c48b523aac31d",
+    "recomp/config/output/sub_001934C0_0x1934c0.cpp": "3bebf1f5cb70bcacd7ce6d569de76b89fe5b21c2aeba4514dce048c6ec29f65d",
+    "recomp/config/output/sub_00193BD0_0x193bd0.cpp": "7388fdcaaf1641b823e1e48b6a5d5e39421502c395eb28f82425d6b34fd7a2f3",
+    "recomp/config/output/sub_001A2E00_0x1a2e00.cpp": "9608d9a38167bdd82eae5137876eb675ac714fb366176c122de5bb9452b1a0a1",
+    "recomp/config/output/sub_001A2D70_0x1a2d70.cpp": "8cfdb628705470bd5676fe49a9d9cb1b26ea1b7eebb1eefda425156d6e22cb4c",
+    "recomp/config/output/sub_001A2CF0_0x1a2cf0.cpp": "1200edd2692974e6afe89af6655ce19b1d3dfd1d09aca29b526c4294872891e3",
+    "recomp/config/output/sub_001A2C80_0x1a2c80.cpp": "ef44241e073505fe4f15e4f8c4fec6cd3d6157aaaad6e7b73e7b7e044fbced4d",
+    "recomp/config/output/sub_001A2B60_0x1a2b60.cpp": "a9fc6846d10fe1884327a84b6fc0c3e25801ca8154df323730e96a6c587514ba",
+    "recomp/config/output/sub_001A2C90_0x1a2c90.cpp": "782e90be851b0dbae572d4423e073ab00c6d2ac50e5fe41c2ca99073e7b20055",
+    "recomp/config/output/sub_001A2BB0_0x1a2bb0.cpp": "ac5583a81c70ddbf078c8cd55b3a31251375cd2021cf011a795a251a830d2294",
+    "recomp/config/output/sub_001A2BE0_0x1a2be0.cpp": "c3851eb3e2a4e9d98270dd26ba2e804ce351e75f85f83b76d69e769e12f22174",
+    "recomp/config/output/sub_001A2C10_0x1a2c10.cpp": "c19ab7449014d464f77cc60e42e5458434abc818ef49b453935128fbbbe53d27",
+    "recomp/config/output/sub_001A2DA0_0x1a2da0.cpp": "8e45d4186de392749e83b4f9adf2086788e2d670fcbd7c16f5d3515682add651",
+    "recomp/config/output/sub_001A2B30_0x1a2b30.cpp": "dc5ca50ec6ca8eca1ff8ba90455c2c87cfd671973e24e3c1e43c2f58aac29f7a",
+    "recomp/config/output/sub_001A1FD0_0x1a1fd0.cpp": "d4fe11a7b2f898ecd69d56b8c8c0ce4c80941ea8e597cb015f07353c12689eeb",
+    "recomp/config/output/sub_001A1E00_0x1a1e00.cpp": "37055c65e69433701f1cc0605156f16d30f0e1bacb7f798bef4ef225c1481562",
+    "recomp/config/output/sub_001A1DA0_0x1a1da0.cpp": "2b0d0534057e94ef3eb4e62183a3a8e9c77ffbe0c05746fdffe8528e8e79f138",
+    "recomp/config/output/sub_001A2A50_0x1a2a50.cpp": "396008f4e5377d73a95e58a635959d168d38c29276c17d5f18a083c3ba878d7e",
+    "recomp/config/output/sub_001A4E30_0x1a4e30.cpp": "00bd6047dec8e0e54ae7bf38677d2f96e129d7f18964ffdbeb603dff85a89ca0",
+    "recomp/config/output/sub_001A29D0_0x1a29d0.cpp": "51234b915134034f44ebca8bd1c77fa5bb2f1ad011112fcbc0c60959cc91ce2f",
+    "recomp/config/output/sub_001A4F10_0x1a4f10.cpp": "2463f52357259836caee7350900f754e8fc7984c36e6431616a34ff8a0661320",
+    "recomp/config/output/sub_001A5220_0x1a5220.cpp": "46641489ad77b27f6f3c7f15c1b1eec63a7382d3bb20e652465aa5fc24df17b0",
+    "recomp/config/output/sub_001A51B0_0x1a51b0.cpp": "9b6373c89d9235e0449731bc70b18151cdeeb8e59c28335eefc9979b1d22a54f",
+    "recomp/config/output/sub_001A5180_0x1a5180.cpp": "7744bfb159d5288d8f3cf6c4ecf146a74a45b2e73added0fdb14a64196fee425",
+    "recomp/config/output/sub_001A4F20_0x1a4f20.cpp": "9195febfae417da16e7e64d6e33cf3ba171f2249ad7530c2e8d5ab0ff009a70c",
+    "recomp/config/output/sub_001A2200_0x1a2200.cpp": "39784bcdaec37d031093a9d1276d958d2d5e86c3f680b885472aa5ce703cff9a",
+    "recomp/config/output/sub_001A22D0_0x1a22d0.cpp": "3600c85ed003eab3a442199af28819215bdfc2bc8dd6d2f841ad68eab3607e55",
+    "recomp/config/output/sub_001A2490_0x1a2490.cpp": "4ce3b0a7e4c50b12735004da85d46384031edac2a035048f2ae85e5495f80964",
+    "recomp/config/output/sub_001A2900_0x1a2900.cpp": "65cdd854751bb004f5748f4717bcbf4a1eb873c18431891a2393b421dea9ac4b",
+    "recomp/config/output/sub_001899F0_0x1899f0.cpp": "c81c59767c66ad7a5bb67e860d35341b165b0831d058910181740ebfc97160a7",
+    "recomp/config/output/sub_001A2840_0x1a2840.cpp": "b2d6d500349ed89718cdfa4796ce6a86d4da7c77d8fb8d80322d48fd1caf520a",
+    "recomp/config/output/sub_001A2790_0x1a2790.cpp": "97c22eefa198b9e77c451463ae2f0af3cbefe436f1e99475c937633a5f789777",
+    "recomp/config/output/sub_001A26C0_0x1a26c0.cpp": "be9fb2259dd36730e0ad57520c6a9b310c0d32b59b7e6f2a048e656ad85fdfe1",
+    "recomp/config/output/sub_001A2600_0x1a2600.cpp": "0b6f27f2790998334e315d4e3d9c2d8701f2587fc738f0ed966d1cf24eb19ef8",
+    "recomp/config/output/sub_001A2550_0x1a2550.cpp": "3fa6987dca854d795c8e8efcdef2fb64d59815e6728dfc0a386c01bf24499dbb",
+    "recomp/config/output/sub_001A1DB0_0x1a1db0.cpp": "45b54b6427d2574b66745c5ea4e63c7d366bb9cee1a1c0eae1960d6f1ca3630b",
+    "recomp/config/output/sub_001A2AD0_0x1a2ad0.cpp": "87c077cab47447c01f94ade1fcf7e3ca05528412e47664ba44a09eb3dc7b7e5b",
+    "recomp/config/output/sub_00189970_0x189970.cpp": "f027dc632f80b821d477f9a82e9b7623d15655772a842ed1a2c874e489472a64",
+    "recomp/config/output/sub_001A4DA0_0x1a4da0.cpp": "38220aa67d46da0fae4d0174872a37ea035732cd507fd0f49995b7974601dbcd",
+    "recomp/config/output/sub_001A1E40_0x1a1e40.cpp": "d7eb3ba593a90576f263485717b59325e19ee15774dd4b0237fcc08fc9950864",
+    "recomp/config/output/sub_001A1ED0_0x1a1ed0.cpp": "bc498097b66f1483b11e91ae0b8d4194afced8b92c17328c3ec062649379ca6e",
+    "recomp/config/output_ovl/o2/o2_0058BF50_0x58bf50.cpp": "0a2cc23e7e721b6b00e56b4e90a83137952dfd73dbccc801ef5b9a7302801ff6",
+    "recomp/config/output_ovl/o2/o2_0058C6A0_0x58c6a0.cpp": "d7d339d372ba2dd6d4b75a3d32e47590fb5ed759ea03c4e341c5e39de2e76cf4"
+  },
+  "immutable_source_evidence": {
+    "game/native/animation/motion_bank.cpp": {
+      "path": "build-native-sjuni/animation-motion-banks-gcc-v3/source/game/native/animation/motion_bank.cpp",
+      "sha256": "f824b6163e26cb9093fbc57f05e9afeb9354e40e5209043f45dfaaa20e4d29ee"
+    },
+    "game/native/animation/motion_bank.hpp": {
+      "path": "build-native-sjuni/animation-motion-banks-gcc-v3/source/game/native/animation/motion_bank.hpp",
+      "sha256": "8888cc253ffc2275b42c96a7e14f2633baa9d41449588ea6c4f0a97b1ea84ccc"
+    },
+    "game/native/animation/curves.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/game/native/animation/curves.cpp",
+      "sha256": "dab29945bf16938b04e58e897e82ba4c12c0830c94febab860c66a66a39eca2d"
+    },
+    "game/native/animation/curves.hpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/game/native/animation/curves.hpp",
+      "sha256": "c337a6c8946f21d7d14b7c50f06d1d3b906e2bd3f284646d82fc0b3fdded07c2"
+    },
+    "game/native/transform_math/transform_math.hpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/game/native/transform_math/transform_math.hpp",
+      "sha256": "03762e50d83ba8cbd4f3215389d1c75b15453b8c02668bc731a633172b3e9f35"
+    },
+    "game/native/transform_math/transform_math.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/game/native/transform_math/transform_math.cpp",
+      "sha256": "4126c772f24ee109f297bd36f3cb5e74f7483ea363fe575aef9145e1c809b449"
+    },
+    "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp",
+      "sha256": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f"
+    },
+    "tools/native_reconstruction/animation/motion_bank_tests.cpp": {
+      "path": "build-native-sjuni/animation-motion-banks-gcc-v3/source/tools/native_reconstruction/animation/motion_bank_tests.cpp",
+      "sha256": "bf885b641612fbbbbadeb35bbcd6b0877a460afad166cdcbbc6a82aaf601ebc7"
+    },
+    "tools/native_reconstruction/animation/verify_motion_banks.py": {
+      "path": "build-native-sjuni/animation-motion-banks-gcc-v3/source/tools/native_reconstruction/animation/verify_motion_banks.py",
+      "sha256": "dfdaa897ead5a0b3837720f49c6fd9e168ffd93d2909da46674a2ceacb61a263"
+    },
+    "recomp/config/output/sub_001D1500_0x1d1500.cpp": {
+      "path": "build-native-sjuni/animation-motion-banks-gcc-v3/source/recomp/config/output/sub_001D1500_0x1d1500.cpp",
+      "sha256": "ed5250ad194fa882e20405662cada407fa8322a461169352d7f63f45312ceace"
+    },
+    "recomp/config/output/sub_001D16C0_0x1d16c0.cpp": {
+      "path": "build-native-sjuni/animation-motion-banks-gcc-v3/source/recomp/config/output/sub_001D16C0_0x1d16c0.cpp",
+      "sha256": "babf143e521c11097bf1468e92623ebd225910ad093b693319a06a51811f21f8"
+    },
+    "recomp/config/output/sub_001D1940_0x1d1940.cpp": {
+      "path": "build-native-sjuni/animation-motion-banks-gcc-v3/source/recomp/config/output/sub_001D1940_0x1d1940.cpp",
+      "sha256": "ea5f9c91ae28cc49c450e5aa3839c219ec29e9be624130a8572a3fa59b6114a4"
+    },
+    "recomp/config/output/sub_001D1960_0x1d1960.cpp": {
+      "path": "build-native-sjuni/animation-motion-banks-gcc-v3/source/recomp/config/output/sub_001D1960_0x1d1960.cpp",
+      "sha256": "a6ecc16cb3aa6d6476422d775f91b8cac097730381d220bfa485cafb55bf1423"
+    },
+    "recomp/config/output/sub_001D1990_0x1d1990.cpp": {
+      "path": "build-native-sjuni/animation-motion-banks-gcc-v3/source/recomp/config/output/sub_001D1990_0x1d1990.cpp",
+      "sha256": "021ea8b0e64807cb18117055e469d98c1b101c594850d27b8b8f0d2f022179a5"
+    },
+    "recomp/config/output/sub_001D19D0_0x1d19d0.cpp": {
+      "path": "build-native-sjuni/animation-motion-banks-gcc-v3/source/recomp/config/output/sub_001D19D0_0x1d19d0.cpp",
+      "sha256": "6e9ce8164dafad1286d28b4f01705210516d7c778583a67dd41b363afe0ce7be"
+    },
+    "game/native/animation/motion_descriptors.hpp": {
+      "path": "build-native-sjuni/animation-motion-descriptors-gcc-v1/source/game/native/animation/motion_descriptors.hpp",
+      "sha256": "dba8dd15ee4445d093fecb898b0f2c8ed2129ddee374f683fc3f2e25eb32eb11"
+    },
+    "game/native/animation/motion_descriptors.cpp": {
+      "path": "build-native-sjuni/animation-motion-descriptors-gcc-v1/source/game/native/animation/motion_descriptors.cpp",
+      "sha256": "24e8965cc96aaa06ad7a8b89ff796dedc07982dd112523186a11b62374126419"
+    },
+    "game/native/animation/motion_descriptor_profile.inc": {
+      "path": "build-native-sjuni/animation-motion-descriptors-gcc-v1/source/game/native/animation/motion_descriptor_profile.inc",
+      "sha256": "13522a33bad6078c3046bfa3954c0ed5c116a65de0b3eddb1b9e13755fc519da"
+    },
+    "tools/native_reconstruction/animation/motion_descriptor_tests.cpp": {
+      "path": "build-native-sjuni/animation-motion-descriptors-gcc-v1/source/tools/native_reconstruction/animation/motion_descriptor_tests.cpp",
+      "sha256": "34b04a6eaf80730db0e3241700553f2e0e9fc60757c698ff9dcd058cfb7c9dd2"
+    },
+    "tools/native_reconstruction/animation/verify_motion_descriptors.py": {
+      "path": "build-native-sjuni/animation-motion-descriptors-gcc-v1/source/tools/native_reconstruction/animation/verify_motion_descriptors.py",
+      "sha256": "b0898251b4cccb5fa9e5511bec67a1cf4dd17429f3c75659452f4f69c5b811f7"
+    },
+    "recomp/config/output_ovl/o2/o2_005D4570_0x5d4570.cpp": {
+      "path": "build-native-sjuni/animation-motion-descriptors-gcc-v1/source/recomp/config/output_ovl/o2/o2_005D4570_0x5d4570.cpp",
+      "sha256": "a0b6f38df10cd34dfcb438bf235b77b986bdba89c69119fb6ebf33e9602b7424"
+    },
+    "recomp/config/output_ovl/o2/o2_005D46C0_0x5d46c0.cpp": {
+      "path": "build-native-sjuni/animation-motion-descriptors-gcc-v1/source/recomp/config/output_ovl/o2/o2_005D46C0_0x5d46c0.cpp",
+      "sha256": "59343973c2e932aebae176570eca2503b60c8362d68d5a0f0b70d0e73e4564fc"
+    },
+    "game/native/animation/model_blend.hpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/game/native/animation/model_blend.hpp",
+      "sha256": "f0f0c0425366d7d0488406692282986765ecc9486eb5e6c118a777db50c6f7db"
+    },
+    "game/native/animation/model_blend.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/game/native/animation/model_blend.cpp",
+      "sha256": "8bb8306c2278def03ef293320064dc178932eb2d3a0500fa6ae0ec852599f9f9"
+    },
+    "game/native/animation/constraints.hpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/game/native/animation/constraints.hpp",
+      "sha256": "dff5ae4fcb83a83e6bc73976661118ff49f7b45fd654538ddf2b5911b164f606"
+    },
+    "game/native/animation/constraints.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/game/native/animation/constraints.cpp",
+      "sha256": "7ee5adc664a46a31450602201dbce4cc37bb9d48fd3f0645b222d53131fc897f"
+    },
+    "game/native/animation/constraint_math.hpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/game/native/animation/constraint_math.hpp",
+      "sha256": "25a148646b33c3c22e5f26a137e21ba5aae11ef01a8d563c230ddd16469935e4"
+    },
+    "game/native/animation/constraint_math.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/game/native/animation/constraint_math.cpp",
+      "sha256": "5c87b5248ebeeef3c5853d41f1ff18c06332dd85caad6189899d4d63aa267416"
+    },
+    "game/native/animation/model.hpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/game/native/animation/model.hpp",
+      "sha256": "754180959bf0362bfec15dd08678bff976601a9583cabb581c7cdb0556c55ab8"
+    },
+    "game/native/animation/model.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/game/native/animation/model.cpp",
+      "sha256": "c5a1b46de9fd4504f0ed0a5ee89c39c9f182abb14c2321f69cd9dde58ef06440"
+    },
+    "game/native/animation/model_math.hpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/game/native/animation/model_math.hpp",
+      "sha256": "45b07adb6599a2f332214c58470399ef338196894e375b309cae3e63596349cb"
+    },
+    "game/native/animation/model_math.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/game/native/animation/model_math.cpp",
+      "sha256": "36210e266aafd88deabee8602f8220c408c77372b17c77f28be743282d266ebe"
+    },
+    "tools/native_reconstruction/animation/pose_blending_tests.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/tools/native_reconstruction/animation/pose_blending_tests.cpp",
+      "sha256": "71e0cb88332892868aa8a14f4f6713f6aadd1c9bc977a1d76f84b554d0b76f3e"
+    },
+    "tools/native_reconstruction/animation/verify_pose_blending.py": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/tools/native_reconstruction/animation/verify_pose_blending.py",
+      "sha256": "dc5517f52b24a2de475a855a66b47b82a1d3d2f4b65b91e018e1aafedd65e9ff"
+    },
+    "recomp/config/output/sub_00191900_0x191900.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00191900_0x191900.cpp",
+      "sha256": "a69b12b37e23122584d1ad1388679158aec7915af17a0959b1f08bd12c78faf3"
+    },
+    "recomp/config/output/sub_00192690_0x192690.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00192690_0x192690.cpp",
+      "sha256": "95807fb058ed3120c10633c8431aaaf57a6a825cb47611bcc40d42bda2330eaf"
+    },
+    "recomp/config/output/sub_00192710_0x192710.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00192710_0x192710.cpp",
+      "sha256": "22d88de0edc4f48cf9f32563351187447174abb2bf57abca2823235b2a43e16b"
+    },
+    "recomp/config/output/sub_00192A60_0x192a60.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00192A60_0x192a60.cpp",
+      "sha256": "772f006ee72f7e768efe3cc67974b7e5effe12e522a07b8db91cc71fce7fec3a"
+    },
+    "recomp/config/output/sub_00192B70_0x192b70.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00192B70_0x192b70.cpp",
+      "sha256": "919cfe0a739ea9fc6481b1b6239591b430ae99c94948359e6b4c988cebf429e5"
+    },
+    "recomp/config/output/sub_00192C80_0x192c80.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00192C80_0x192c80.cpp",
+      "sha256": "91395b81752908eb08bedbbead17c4ecd4a58af13ff724e5b11b45a61a5282a0"
+    },
+    "recomp/config/output/sub_00192D10_0x192d10.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00192D10_0x192d10.cpp",
+      "sha256": "dabe6fddb19a070e12076a0e7cc7c79d84460b3e7a0a8986887bd280cc02e400"
+    },
+    "recomp/config/output/sub_00189BE0_0x189be0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00189BE0_0x189be0.cpp",
+      "sha256": "7d336ce55bc8ae4eef0fdaaba0a06bd323e48fe45610e4af0d5855a06493950f"
+    },
+    "recomp/config/output/sub_00191280_0x191280.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00191280_0x191280.cpp",
+      "sha256": "848a8f2f95854dec5b1d2f10c545da4feec1ce65fef9b3abef4ab2587124bc33"
+    },
+    "recomp/config/output_ovl/o2/o2_0058CE00_0x58ce00.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output_ovl/o2/o2_0058CE00_0x58ce00.cpp",
+      "sha256": "306c231e5f304f5088a716789f8bc15ea849555997b7236c5269e1fd15b6635e"
+    },
+    "recomp/config/output_ovl/o2/o2_005D43C0_0x5d43c0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output_ovl/o2/o2_005D43C0_0x5d43c0.cpp",
+      "sha256": "c7bd703e1acbe294d5c678cc664964bdc4e7e658caaf1dda37452acd941dfecb"
+    },
+    "recomp/config/output_ovl/o2/o2_005D42D0_0x5d42d0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output_ovl/o2/o2_005D42D0_0x5d42d0.cpp",
+      "sha256": "5573b5cf4c8064e1007cea3edc780cfab1f12af1730bbcc4cca480af078a8b57"
+    },
+    "recomp/config/output/sub_00191500_0x191500.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00191500_0x191500.cpp",
+      "sha256": "74d4b9a934d1e4c85136ac7745fe41df559477b6aa385748d358d9592095cbf9"
+    },
+    "recomp/config/output_ovl/o2/o2_005D6850_0x5d6850.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output_ovl/o2/o2_005D6850_0x5d6850.cpp",
+      "sha256": "592a37b63b92e446e8a3da310ef21f08861b548c38cd150a76f6e6b04e8dcb9c"
+    },
+    "recomp/config/output_ovl/o2/o2_005D5FA0_0x5d5fa0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output_ovl/o2/o2_005D5FA0_0x5d5fa0.cpp",
+      "sha256": "1eadf40451fe10be51a999b645862d6f0c2104590ce038d1315bc3dee10b35c9"
+    },
+    "recomp/config/output/sub_00191430_0x191430.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00191430_0x191430.cpp",
+      "sha256": "58aaff2d98c3cfb7d4854fbb78f11fe7677176e10df68e6584e5a08f73121adc"
+    },
+    "recomp/config/output/sub_00191660_0x191660.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00191660_0x191660.cpp",
+      "sha256": "59d3bca34f94cbbd70149b458dd1c83d5a9383506125f607c17fb5849eb13405"
+    },
+    "recomp/config/output_ovl/o0/o0_00371880_0x371880.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output_ovl/o0/o0_00371880_0x371880.cpp",
+      "sha256": "231254d575eb9d7d6de5198cc50d0faceb73eb9cefe24030ceefa7f119e97c96"
+    },
+    "recomp/config/output/sub_00192220_0x192220.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00192220_0x192220.cpp",
+      "sha256": "21fead5766f4f7b348d7473876e437ff826ec0e402074d0317761791e763dbce"
+    },
+    "recomp/config/output/sub_00190100_0x190100.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00190100_0x190100.cpp",
+      "sha256": "b2b1a3d529c9f3438dfcfcfbb59e6f2e409174eacf8ac68ff5e7e11304abb9ca"
+    },
+    "recomp/config/output/sub_0018F570_0x18f570.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_0018F570_0x18f570.cpp",
+      "sha256": "29aee43b2a0e63c6fe9a3e5922cfd3f29cc4ca693763b2b0407e172a797ee698"
+    },
+    "recomp/config/output/sub_0018F7E0_0x18f7e0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_0018F7E0_0x18f7e0.cpp",
+      "sha256": "6da086df77b56a1aa5c2367925487c0d25065adadc4bd4ccf373b2599f695103"
+    },
+    "recomp/config/output/sub_0018F710_0x18f710.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_0018F710_0x18f710.cpp",
+      "sha256": "2d646d5d6754cf66d3a81d6207751ba3f7e1629dcc4b8343c0f4ced962795acc"
+    },
+    "recomp/config/output/sub_0018FDF0_0x18fdf0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_0018FDF0_0x18fdf0.cpp",
+      "sha256": "0430ef30ec9ff895806d903c01f0064528efd351105dc3643c04db56e6bf4d2c"
+    },
+    "recomp/config/output/sub_001921B0_0x1921b0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001921B0_0x1921b0.cpp",
+      "sha256": "d01d46c69b8dddeeae960ca56e4325e2d4afc9af24da7cc8fc962759043985bc"
+    },
+    "recomp/config/output/sub_00191580_0x191580.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00191580_0x191580.cpp",
+      "sha256": "9332aaf382ed22b90c04225eb5f58bab45e2813417cfaf5b615eb34705ea7672"
+    },
+    "recomp/config/output/sub_00190060_0x190060.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00190060_0x190060.cpp",
+      "sha256": "0c1cf9b513c44b74cfb3d1fa3206af98ce9a3a1896992a0f380d350d16727650"
+    },
+    "recomp/config/output/sub_001919D0_0x1919d0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001919D0_0x1919d0.cpp",
+      "sha256": "7886eaa395fce554679dc341c56ce67680fb74d5d3b063c94736260a7fe72388"
+    },
+    "recomp/config/output/sub_0018FE60_0x18fe60.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_0018FE60_0x18fe60.cpp",
+      "sha256": "c71c7e224553950adabad1b7aa9e2c18fc04a3ab719b479626982e6055a9a82c"
+    },
+    "recomp/config/output_ovl/o2/o2_005D5BE0_0x5d5be0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output_ovl/o2/o2_005D5BE0_0x5d5be0.cpp",
+      "sha256": "76ae00423f4e9ce7a7ebb027a07fb9e5bf851a03f7e9d5d7ba330380896d742a"
+    },
+    "recomp/config/output/sub_00191300_0x191300.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00191300_0x191300.cpp",
+      "sha256": "56ebd8f4077f800c909aa2a7cb3cf02513b4b47bd9c6a66f6f389334f5ee43da"
+    },
+    "recomp/config/output_ovl/o2/o2_005D59A0_0x5d59a0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output_ovl/o2/o2_005D59A0_0x5d59a0.cpp",
+      "sha256": "ce0fefa5b9229a7d156c4d44a28267e6fda1543762f2cfb7f00aa6732360a1b5"
+    },
+    "recomp/config/output/sub_00191380_0x191380.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00191380_0x191380.cpp",
+      "sha256": "175b4329c97bb36c7cd903f163d968fcdcdb034050f76580ce282bf83b13eb8f"
+    },
+    "recomp/config/output_ovl/o2/o2_005D5BD0_0x5d5bd0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output_ovl/o2/o2_005D5BD0_0x5d5bd0.cpp",
+      "sha256": "9c188695dd9715078c2779a65dc8b659c6d0ad25305c70c72ca3bb166ae81bbe"
+    },
+    "recomp/config/output_ovl/o2/o2_005D5AD0_0x5d5ad0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output_ovl/o2/o2_005D5AD0_0x5d5ad0.cpp",
+      "sha256": "a56837c3c5a174ec1abe5c48790e04ffe15e38ea4b38bd7d197bef953d73f222"
+    },
+    "recomp/config/output_ovl/o2/o2_005D5AB0_0x5d5ab0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output_ovl/o2/o2_005D5AB0_0x5d5ab0.cpp",
+      "sha256": "935940bd933840e4c8a184b707c7edf26e893e1247bb99cd08725c4d0b774522"
+    },
+    "recomp/config/output/sub_00192B30_0x192b30.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00192B30_0x192b30.cpp",
+      "sha256": "f946380b42b2c71f7dd16fbe00703fc5ad30f09d65732729cbbd67da7e831d62"
+    },
+    "recomp/config/output/sub_001925C0_0x1925c0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001925C0_0x1925c0.cpp",
+      "sha256": "0f675b4bdff14f189b5c431d4c041aa9b690f5d68204d97106766b1aba5386f1"
+    },
+    "recomp/config/output/sub_00192DF0_0x192df0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00192DF0_0x192df0.cpp",
+      "sha256": "676239a481caab2a96375654f33e6b75b6146853d72e1fcfa8cebc62c5579a14"
+    },
+    "recomp/config/output/sub_00190A10_0x190a10.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00190A10_0x190a10.cpp",
+      "sha256": "782fe96cf5c14ecf1d073accd18aa24cd7b77a8c221fc8dab7c73caf2c1a7484"
+    },
+    "recomp/config/output/sub_00191DF0_0x191df0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00191DF0_0x191df0.cpp",
+      "sha256": "34e33ece617e951ebc4a3294b54a5407169cdfafdc8c1e90a1fc2334087737bb"
+    },
+    "recomp/config/output/sub_00191E50_0x191e50.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00191E50_0x191e50.cpp",
+      "sha256": "734ce48fb5f167c64ae909a781661dcd0d5a51ba48817c908481f944a517b9f7"
+    },
+    "recomp/config/output/sub_00191D80_0x191d80.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00191D80_0x191d80.cpp",
+      "sha256": "277437ba1a570ba3766882385019f266975221e9e0e609cb1799e1f63bcc44d6"
+    },
+    "recomp/config/output/sub_0018E3C0_0x18e3c0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_0018E3C0_0x18e3c0.cpp",
+      "sha256": "874fb3d93f52fda855eb22cf143e1925a130af7aba38621d613705b6006060ee"
+    },
+    "recomp/config/output/sub_0018E7D0_0x18e7d0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_0018E7D0_0x18e7d0.cpp",
+      "sha256": "a4d87e56b39eb7189b4cbddd20c64a205a34a875e33eea3d9ad3ae3a9779bbfa"
+    },
+    "recomp/config/output/sub_0018F260_0x18f260.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_0018F260_0x18f260.cpp",
+      "sha256": "254a6d800794e0ed686f41c4c744b6cacc0d7cf965bafcd87f1f68b2491e4a63"
+    },
+    "recomp/config/output/sub_0018F1E0_0x18f1e0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_0018F1E0_0x18f1e0.cpp",
+      "sha256": "6f138db2cd6c6f2364db4ae64c8945da8836f37571323c2f9344cb8dbe21ee9d"
+    },
+    "recomp/config/output/sub_0018F040_0x18f040.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_0018F040_0x18f040.cpp",
+      "sha256": "063205ecaafa7889756f8e1f13b3fc26544a72cc7913000ad137f05696cf472c"
+    },
+    "recomp/config/output/sub_0018E710_0x18e710.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_0018E710_0x18e710.cpp",
+      "sha256": "f6c6d74d828b165a55a0428fe7508a0fa095f445181363e7326c99c3a9622fa3"
+    },
+    "recomp/config/output/sub_0018EEB0_0x18eeb0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_0018EEB0_0x18eeb0.cpp",
+      "sha256": "c73787aab6763e46a50c3bcf14b79fd58d2bd0ab9c96887413fb29b110866d5a"
+    },
+    "recomp/config/output/sub_0018E660_0x18e660.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_0018E660_0x18e660.cpp",
+      "sha256": "39b93c440886a3f58046aad36dff785a4f7c21231b32597ab2d3a6573274d97b"
+    },
+    "recomp/config/output/sub_0018ED20_0x18ed20.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_0018ED20_0x18ed20.cpp",
+      "sha256": "e020f473472d87839d4e031a6c3993cb482787bc42bbe63c1b71d60814e5ae68"
+    },
+    "recomp/config/output/sub_0018E590_0x18e590.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_0018E590_0x18e590.cpp",
+      "sha256": "24db1cf15a70d89d0f69fa08b4917ad51715faec6adb866d6371e0c4323d0953"
+    },
+    "recomp/config/output/sub_0018EBB0_0x18ebb0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_0018EBB0_0x18ebb0.cpp",
+      "sha256": "abc3c2ebf333f5df1b62ae51695b49df99f35e7bdd2956f328989c4e81e2479f"
+    },
+    "recomp/config/output/sub_0018E500_0x18e500.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_0018E500_0x18e500.cpp",
+      "sha256": "c130126c301f21f33713685e8e32771d277138cc71801899122298ef156dbeaa"
+    },
+    "recomp/config/output/sub_0018EA60_0x18ea60.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_0018EA60_0x18ea60.cpp",
+      "sha256": "9be2bbe600c2c27a0b8088228bd7abc5dfcd84b3d19e10be7f1cfe795417e8fd"
+    },
+    "recomp/config/output/sub_0018E480_0x18e480.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_0018E480_0x18e480.cpp",
+      "sha256": "ae1e93f73dfdb5ffa5842bf8413ff8eb22abe20874b799462c9edd2571857a78"
+    },
+    "recomp/config/output/sub_0018E910_0x18e910.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_0018E910_0x18e910.cpp",
+      "sha256": "ca16b3b1fbe31e1c822cfa83196ea002c6db4a1d841ab1bcb8abb456bfe24803"
+    },
+    "recomp/config/output/sub_00192450_0x192450.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00192450_0x192450.cpp",
+      "sha256": "a13ca9f6fe910b07ed82ee2f1ddd949a866b35f07a79028ccca1bbb70dc78d70"
+    },
+    "recomp/config/output/sub_0018E3B0_0x18e3b0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_0018E3B0_0x18e3b0.cpp",
+      "sha256": "42e6f40c7526c45922e9b69fe7086a6fd8a33a443ca85c4f11093c4603c35c6f"
+    },
+    "recomp/config/output/sub_00192BF0_0x192bf0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00192BF0_0x192bf0.cpp",
+      "sha256": "1520fb1968fadf081f6e9c43309bcc0a44bb626665ad665c9abd2c24ae52c0e7"
+    },
+    "recomp/config/output/sub_00193220_0x193220.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00193220_0x193220.cpp",
+      "sha256": "dbd7bdb47b315a8d196deec2daeef635777f945d16cbf40dbbb1f4385ca39cb4"
+    },
+    "recomp/config/output/sub_00193030_0x193030.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00193030_0x193030.cpp",
+      "sha256": "47a32e46524bb53feec2fe1976657ebb5d2fb82a5fc7d2d1decd6c61fe05cf6f"
+    },
+    "recomp/config/output/sub_00193140_0x193140.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00193140_0x193140.cpp",
+      "sha256": "03356c64f771c9d8db4fabc41f9258f7bac78d72cb4beeee732bafb2ead584ab"
+    },
+    "recomp/config/output/sub_001930F0_0x1930f0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001930F0_0x1930f0.cpp",
+      "sha256": "c060fe548bd7a54da8f0dadd630b5f1d8506aaeadd4bd4843446ffa6e99f532e"
+    },
+    "recomp/config/output/sub_001939A0_0x1939a0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001939A0_0x1939a0.cpp",
+      "sha256": "5c0592e9c1c59a5ff9c944ecf06474a8c17a5805eebce58ae0239096f7d82024"
+    },
+    "recomp/config/output/sub_00193C80_0x193c80.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00193C80_0x193c80.cpp",
+      "sha256": "7f64881be5e90f5e97f2e8d97c21c058eef5562d5d0ded732fdbfd293693d5e3"
+    },
+    "recomp/config/output/sub_00193230_0x193230.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00193230_0x193230.cpp",
+      "sha256": "8348a060a9e645491ea156ad3adc1fd4876d9cdf573c803c6e85136c8596e235"
+    },
+    "recomp/config/output/sub_00193240_0x193240.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00193240_0x193240.cpp",
+      "sha256": "decd6871ff6d5827e6b9fe2bbaac01c6a955aa7950332da044c4f78626bde2b7"
+    },
+    "recomp/config/output/sub_00193260_0x193260.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00193260_0x193260.cpp",
+      "sha256": "bde29bd960ef8638e59d3f7aa4076a4781894666566b7c9a8a2f976f305b1b01"
+    },
+    "recomp/config/output/sub_001913E0_0x1913e0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001913E0_0x1913e0.cpp",
+      "sha256": "a5c1aa0cd9c5c59a71fa2ca46076f3f6bbe0417fbed730d4ab91ffe674b2eb22"
+    },
+    "recomp/config/output/sub_00193380_0x193380.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00193380_0x193380.cpp",
+      "sha256": "c3ff02700683de603e092b0de9015cac19fd1c08f1adb86791df8edeffa3c295"
+    },
+    "recomp/config/output/sub_00193880_0x193880.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00193880_0x193880.cpp",
+      "sha256": "b377eaba5c4f107a4fae6936608d8cf594c611fe3a17c18e4a7bc020142852f7"
+    },
+    "recomp/config/output/sub_001938A0_0x1938a0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001938A0_0x1938a0.cpp",
+      "sha256": "94a33b3dbd03eff820b37733658d9977946ed07167a0597b4dce1daaf1bba78a"
+    },
+    "recomp/config/output/sub_00193AF0_0x193af0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00193AF0_0x193af0.cpp",
+      "sha256": "cd3415eaf5294b51e55709c8b81475375bd4b143957b2606d953b92b08378833"
+    },
+    "recomp/config/output/sub_00193770_0x193770.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00193770_0x193770.cpp",
+      "sha256": "f3bbab365563a895dec15b5f8c8f981d9862ac13597bc1ec9d893f84e0d9d260"
+    },
+    "recomp/config/output/sub_00193790_0x193790.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00193790_0x193790.cpp",
+      "sha256": "61ff43d0260626958a418d0c13f8a23713fa31a1db1580172b8a04767ad0c3de"
+    },
+    "recomp/config/output/sub_00193A00_0x193a00.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00193A00_0x193a00.cpp",
+      "sha256": "53722957d11b4e0d9448ae57499eb04f8b789794771babec1c1c48b523aac31d"
+    },
+    "recomp/config/output/sub_001934C0_0x1934c0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001934C0_0x1934c0.cpp",
+      "sha256": "3bebf1f5cb70bcacd7ce6d569de76b89fe5b21c2aeba4514dce048c6ec29f65d"
+    },
+    "recomp/config/output/sub_00193BD0_0x193bd0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00193BD0_0x193bd0.cpp",
+      "sha256": "7388fdcaaf1641b823e1e48b6a5d5e39421502c395eb28f82425d6b34fd7a2f3"
+    },
+    "recomp/config/output/sub_001A2E00_0x1a2e00.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A2E00_0x1a2e00.cpp",
+      "sha256": "9608d9a38167bdd82eae5137876eb675ac714fb366176c122de5bb9452b1a0a1"
+    },
+    "recomp/config/output/sub_001A2D70_0x1a2d70.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A2D70_0x1a2d70.cpp",
+      "sha256": "8cfdb628705470bd5676fe49a9d9cb1b26ea1b7eebb1eefda425156d6e22cb4c"
+    },
+    "recomp/config/output/sub_001A2CF0_0x1a2cf0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A2CF0_0x1a2cf0.cpp",
+      "sha256": "1200edd2692974e6afe89af6655ce19b1d3dfd1d09aca29b526c4294872891e3"
+    },
+    "recomp/config/output/sub_001A2C80_0x1a2c80.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A2C80_0x1a2c80.cpp",
+      "sha256": "ef44241e073505fe4f15e4f8c4fec6cd3d6157aaaad6e7b73e7b7e044fbced4d"
+    },
+    "recomp/config/output/sub_001A2B60_0x1a2b60.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A2B60_0x1a2b60.cpp",
+      "sha256": "a9fc6846d10fe1884327a84b6fc0c3e25801ca8154df323730e96a6c587514ba"
+    },
+    "recomp/config/output/sub_001A2C90_0x1a2c90.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A2C90_0x1a2c90.cpp",
+      "sha256": "782e90be851b0dbae572d4423e073ab00c6d2ac50e5fe41c2ca99073e7b20055"
+    },
+    "recomp/config/output/sub_001A2BB0_0x1a2bb0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A2BB0_0x1a2bb0.cpp",
+      "sha256": "ac5583a81c70ddbf078c8cd55b3a31251375cd2021cf011a795a251a830d2294"
+    },
+    "recomp/config/output/sub_001A2BE0_0x1a2be0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A2BE0_0x1a2be0.cpp",
+      "sha256": "c3851eb3e2a4e9d98270dd26ba2e804ce351e75f85f83b76d69e769e12f22174"
+    },
+    "recomp/config/output/sub_001A2C10_0x1a2c10.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A2C10_0x1a2c10.cpp",
+      "sha256": "c19ab7449014d464f77cc60e42e5458434abc818ef49b453935128fbbbe53d27"
+    },
+    "recomp/config/output/sub_001A2DA0_0x1a2da0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A2DA0_0x1a2da0.cpp",
+      "sha256": "8e45d4186de392749e83b4f9adf2086788e2d670fcbd7c16f5d3515682add651"
+    },
+    "recomp/config/output/sub_001A2B30_0x1a2b30.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A2B30_0x1a2b30.cpp",
+      "sha256": "dc5ca50ec6ca8eca1ff8ba90455c2c87cfd671973e24e3c1e43c2f58aac29f7a"
+    },
+    "recomp/config/output/sub_001A1FD0_0x1a1fd0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A1FD0_0x1a1fd0.cpp",
+      "sha256": "d4fe11a7b2f898ecd69d56b8c8c0ce4c80941ea8e597cb015f07353c12689eeb"
+    },
+    "recomp/config/output/sub_001A1E00_0x1a1e00.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A1E00_0x1a1e00.cpp",
+      "sha256": "37055c65e69433701f1cc0605156f16d30f0e1bacb7f798bef4ef225c1481562"
+    },
+    "recomp/config/output/sub_001A1DA0_0x1a1da0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A1DA0_0x1a1da0.cpp",
+      "sha256": "2b0d0534057e94ef3eb4e62183a3a8e9c77ffbe0c05746fdffe8528e8e79f138"
+    },
+    "recomp/config/output/sub_001A2A50_0x1a2a50.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A2A50_0x1a2a50.cpp",
+      "sha256": "396008f4e5377d73a95e58a635959d168d38c29276c17d5f18a083c3ba878d7e"
+    },
+    "recomp/config/output/sub_001A4E30_0x1a4e30.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A4E30_0x1a4e30.cpp",
+      "sha256": "00bd6047dec8e0e54ae7bf38677d2f96e129d7f18964ffdbeb603dff85a89ca0"
+    },
+    "recomp/config/output/sub_001A29D0_0x1a29d0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A29D0_0x1a29d0.cpp",
+      "sha256": "51234b915134034f44ebca8bd1c77fa5bb2f1ad011112fcbc0c60959cc91ce2f"
+    },
+    "recomp/config/output/sub_001A4F10_0x1a4f10.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A4F10_0x1a4f10.cpp",
+      "sha256": "2463f52357259836caee7350900f754e8fc7984c36e6431616a34ff8a0661320"
+    },
+    "recomp/config/output/sub_001A5220_0x1a5220.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A5220_0x1a5220.cpp",
+      "sha256": "46641489ad77b27f6f3c7f15c1b1eec63a7382d3bb20e652465aa5fc24df17b0"
+    },
+    "recomp/config/output/sub_001A51B0_0x1a51b0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A51B0_0x1a51b0.cpp",
+      "sha256": "9b6373c89d9235e0449731bc70b18151cdeeb8e59c28335eefc9979b1d22a54f"
+    },
+    "recomp/config/output/sub_001A5180_0x1a5180.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A5180_0x1a5180.cpp",
+      "sha256": "7744bfb159d5288d8f3cf6c4ecf146a74a45b2e73added0fdb14a64196fee425"
+    },
+    "recomp/config/output/sub_001A4F20_0x1a4f20.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A4F20_0x1a4f20.cpp",
+      "sha256": "9195febfae417da16e7e64d6e33cf3ba171f2249ad7530c2e8d5ab0ff009a70c"
+    },
+    "recomp/config/output/sub_001A2200_0x1a2200.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A2200_0x1a2200.cpp",
+      "sha256": "39784bcdaec37d031093a9d1276d958d2d5e86c3f680b885472aa5ce703cff9a"
+    },
+    "recomp/config/output/sub_001A22D0_0x1a22d0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A22D0_0x1a22d0.cpp",
+      "sha256": "3600c85ed003eab3a442199af28819215bdfc2bc8dd6d2f841ad68eab3607e55"
+    },
+    "recomp/config/output/sub_001A2490_0x1a2490.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A2490_0x1a2490.cpp",
+      "sha256": "4ce3b0a7e4c50b12735004da85d46384031edac2a035048f2ae85e5495f80964"
+    },
+    "recomp/config/output/sub_001A2900_0x1a2900.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A2900_0x1a2900.cpp",
+      "sha256": "65cdd854751bb004f5748f4717bcbf4a1eb873c18431891a2393b421dea9ac4b"
+    },
+    "recomp/config/output/sub_001899F0_0x1899f0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001899F0_0x1899f0.cpp",
+      "sha256": "c81c59767c66ad7a5bb67e860d35341b165b0831d058910181740ebfc97160a7"
+    },
+    "recomp/config/output/sub_001A2840_0x1a2840.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A2840_0x1a2840.cpp",
+      "sha256": "b2d6d500349ed89718cdfa4796ce6a86d4da7c77d8fb8d80322d48fd1caf520a"
+    },
+    "recomp/config/output/sub_001A2790_0x1a2790.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A2790_0x1a2790.cpp",
+      "sha256": "97c22eefa198b9e77c451463ae2f0af3cbefe436f1e99475c937633a5f789777"
+    },
+    "recomp/config/output/sub_001A26C0_0x1a26c0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A26C0_0x1a26c0.cpp",
+      "sha256": "be9fb2259dd36730e0ad57520c6a9b310c0d32b59b7e6f2a048e656ad85fdfe1"
+    },
+    "recomp/config/output/sub_001A2600_0x1a2600.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A2600_0x1a2600.cpp",
+      "sha256": "0b6f27f2790998334e315d4e3d9c2d8701f2587fc738f0ed966d1cf24eb19ef8"
+    },
+    "recomp/config/output/sub_001A2550_0x1a2550.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A2550_0x1a2550.cpp",
+      "sha256": "3fa6987dca854d795c8e8efcdef2fb64d59815e6728dfc0a386c01bf24499dbb"
+    },
+    "recomp/config/output/sub_001A1DB0_0x1a1db0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A1DB0_0x1a1db0.cpp",
+      "sha256": "45b54b6427d2574b66745c5ea4e63c7d366bb9cee1a1c0eae1960d6f1ca3630b"
+    },
+    "recomp/config/output/sub_001A2AD0_0x1a2ad0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A2AD0_0x1a2ad0.cpp",
+      "sha256": "87c077cab47447c01f94ade1fcf7e3ca05528412e47664ba44a09eb3dc7b7e5b"
+    },
+    "recomp/config/output/sub_00189970_0x189970.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_00189970_0x189970.cpp",
+      "sha256": "f027dc632f80b821d477f9a82e9b7623d15655772a842ed1a2c874e489472a64"
+    },
+    "recomp/config/output/sub_001A4DA0_0x1a4da0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A4DA0_0x1a4da0.cpp",
+      "sha256": "38220aa67d46da0fae4d0174872a37ea035732cd507fd0f49995b7974601dbcd"
+    },
+    "recomp/config/output/sub_001A1E40_0x1a1e40.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A1E40_0x1a1e40.cpp",
+      "sha256": "d7eb3ba593a90576f263485717b59325e19ee15774dd4b0237fcc08fc9950864"
+    },
+    "recomp/config/output/sub_001A1ED0_0x1a1ed0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output/sub_001A1ED0_0x1a1ed0.cpp",
+      "sha256": "bc498097b66f1483b11e91ae0b8d4194afced8b92c17328c3ec062649379ca6e"
+    },
+    "recomp/config/output_ovl/o2/o2_0058BF50_0x58bf50.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output_ovl/o2/o2_0058BF50_0x58bf50.cpp",
+      "sha256": "0a2cc23e7e721b6b00e56b4e90a83137952dfd73dbccc801ef5b9a7302801ff6"
+    },
+    "recomp/config/output_ovl/o2/o2_0058C6A0_0x58c6a0.cpp": {
+      "path": "build-native-sjuni/animation-pose-blending-gcc-v1/source/recomp/config/output_ovl/o2/o2_0058C6A0_0x58c6a0.cpp",
+      "sha256": "d7d339d372ba2dd6d4b75a3d32e47590fb5ed759ea03c4e341c5e39de2e76cf4"
+    }
+  },
+  "model_change": "single additional PoseBlend friendship; model.cpp and all existing behavior byte-identical to v2",
+  "prerequisites": {
+    "tools/native_reconstruction/native_animation_models_qualification_v2.json": "ec7e9e88db42a3effda5cd46b1d9ecfb9c283f0d52439d7a009a65994cad936c",
+    "tools/native_reconstruction/native_animation_curves_qualification_v1.json": "b7b72029b2f1d2042f12bc88ef23f03407d90350229a23a91b0a19d2121e801b",
+    "build-native-sjuni/animation-owned-corpus-v2/receipt.json": "5e3ecb93c015d6805a37f8c2b80b0d4ec141b4bc60f2c18c3ef9b533126218a7",
+    "build-native-sjuni/motion-descriptor-profile-v1/receipt.json": "0f0da0fba491ba95a1868644ea3dbad4f6031569557d229bfd75b2b40acf056f"
+  },
+  "extra_sources": {
+    "docs/native-gameplay/ANIMATION_BANKS_AND_DESCRIPTORS.md": "e694c28ffad77c663f784d0858b4ceaa895a803b9b7783a540e11ac0cb5d52ca",
+    "tools/native_reconstruction/animation/qualify_motion_descriptor_profile.py": "59b311a37643e52406e6afc4fa25639f89f215c8c2ece8b984f07c5adc77d609",
+    "tools/native_reconstruction/animation/qualify_motion_owners_v1.py": "14555c79544ff26fd0a5526f44fd6e65f01917f57259bc2ba2aae6d2a6be667b"
+  },
+  "limits": [
+    "Original bank raw packing, token duplication and release are explicit provenance/identity seams; native shared ownership replaces those resource identities. Existing real Clip oracle qualifies actual parsing/sampling independently.",
+    "Concrete immutable File1 descriptor profile is bounded to its recorded table extents and resource action IDs0..63; unsupported indices fail rather than reading adjacent unrelated data.",
+    "Whole-bank bytes come from actual owned archives; duplicate cutscene basenames do not identify a specific room.",
+    "Mutable bank/Instance operations and lazy Clip decode belong to the serialized native resource/simulation owner. Corresponding model banks retain one immutable Skeleton identity.",
+    "Actor descriptor application, track transition/tick composition, collision metadata application, dual-bank orchestration and linked-object/attachment consumers remain open.",
+    "Finite strict FP32 RNE/gradual-underflow/contraction-off profile only; physical PS2 exceptional behavior is not claimed."
+  ]
+}

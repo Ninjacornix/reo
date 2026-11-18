@@ -1,0 +1,573 @@
+{
+  "schema": 1,
+  "status": "native joint shapes, ordered deepest-candidate registry and auxiliary boundary match original bodies",
+  "whole_stage4_complete": false,
+  "game_launched": false,
+  "cohorts": {
+    "llvm": {
+      "receipt": "build-native-sjuni/gameplay-collision-actors-llvm-v10/receipt.json",
+      "receipt_sha256": "4caebe63a345009bc4eede3982fc2c977688eb91d2da90d7e5c027ebfea98369",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "results": {
+        "checks": 81808,
+        "maximum_error": 0,
+        "registry_cases": 1000,
+        "boundary_cases": 200,
+        "declared_identity_math_ports": true,
+        "game_launched": false
+      },
+      "source_sha256": {
+        "game/native/gameplay_collision/actors.hpp": "1cd3018e15ddf32fe4e5facf124d28bcfc7243bda4f788728318f8e934483f78",
+        "game/native/gameplay_collision/actors.cpp": "b25e36df67b93898f74883a9badb9b7d58c1bfe43f4dc29b966f0ea6ded9025c",
+        "game/native/gameplay_collision/actors_tests.cpp": "205c05e7cb4544c424f0bc153a7498e11a403cafbc531cf8401d11877cf1f78b",
+        "game/native/gameplay_collision/response.hpp": "22a85d653f51fd86e9666de1a748060b141fe02c3ead9ff0bc2022a7298f9f6d",
+        "game/native/gameplay_collision/response.cpp": "f6a1a45cc02977713f68359cfe678ac4ec283c8dbf1baf8cb25dc6df0b7efddb",
+        "game/native/gameplay_collision/collision.hpp": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da",
+        "game/native/gameplay_collision/collision.cpp": "84f32cd3e551a8da284e97d75ff34d4b229616e8c72b31b1adaaa9096bed129f",
+        "game/native/gameplay_actors/entity.hpp": "78a907f8659a6afd3c991aacfa338a025adc6f03e13407c6925c05346ac02fd3",
+        "game/native/gameplay_actors/entity.cpp": "0bec95182c41091cfa8682394c01d9d89d8c53921ffd383bdfe0baa739f2f369",
+        "tools/native_reconstruction/gameplay_collision_oracle/response_reference.hpp": "674e6224558fe924ac0b14dfdaed30c1144bc4eb45cf5405fe5c9925f04bac24",
+        "tools/native_reconstruction/gameplay_collision_oracle/reference.hpp": "62e1f086a6a1c709ffd01f3e8cd3e674f6148406f560346934c9d7344b530203",
+        "third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
+        "tools/native_reconstruction/verify_gameplay_collision_actors.py": "cf79093701267cc9d5c3389314fd03e5ff7d486876b8f1bbdaeeda32922f5835",
+        "recomp/config/output_ovl/o2/o2_006F00D0_0x6f00d0.cpp": "180cf574898ca6024c234395b42d0496d91de3127f9e71be3f43b667ff24e3f8",
+        "recomp/config/output_ovl/o2/o2_006F0310_0x6f0310.cpp": "5dac2b2a65df0368bf32f82c2211cf04c04908e8c465362a58b40e1da17ccaff",
+        "recomp/config/output_ovl/o2/o2_006F0E00_0x6f0e00.cpp": "54b20421061c33465b4cc3a6cfe80f4729adc25016396d9e19668dd6d055c675",
+        "recomp/config/output_ovl/o2/o2_006F0E60_0x6f0e60.cpp": "0ba4611f4b6c868966fa6a4de78e7f04bd8e61527c233c7d3dfc6f2d2cacb094",
+        "recomp/config/output_ovl/o0/o0_00370AC0_0x370ac0.cpp": "7c9d1c7c9cad3b5561937836e3349f51bea3ef4e0b3aa9217c464f7f816af78d",
+        "recomp/config/output_ovl/o0/o0_00370B00_0x370b00.cpp": "dd7cba008760e6304771406c18422c4130e07a380bd01def85b0bdbb8045d6ef",
+        "recomp/config/output_ovl/o0/o0_00370C70_0x370c70.cpp": "ca717e41fe8dff11338600c8ee2939fbc9c9faf9f97f90d86abb8ef5e0ea89ef",
+        "recomp/config/output_ovl/o2/o2_00617000_0x617000.cpp": "500e8781325897594f493879a93ebd8adc7d51e330c7cb5efa4b43ac948159c8",
+        "recomp/config/output_ovl/o2/o2_00617430_0x617430.cpp": "1153241a8017e08c70b9110b91246a2974e01b506426dbd42fe2d75aa23ba598",
+        "recomp/config/output_ovl/o2/o2_006161E0_0x6161e0.cpp": "a769f12e9f810b407ae9c0ce31c2bef63094ed638016668483d9cd5502f8bad0",
+        "recomp/config/output_ovl/o2/o2_00616310_0x616310.cpp": "150b8fe11586566dac0ffd224f2c9c0105a7f2f0cd3e64eac3ad3c38ead4859f",
+        "recomp/config/output_ovl/o2/o2_00619A50_0x619a50.cpp": "9933b66ae02576a256f61e06fa7df7aff7fd96b249094cf78250465fdd0141ca",
+        "recomp/config/output_ovl/o2/o2_005DA600_0x5da600.cpp": "05ef835c275ca0d4893a151e8340880aec466eb39f69d33725997b1759274e5d",
+        "recomp/config/output_ovl/o2/o2_005DA620_0x5da620.cpp": "e570905ae28f4542c3bf24fad18736ef0b725ed139cf3b30c6394e219585a700",
+        "recomp/config/output_ovl/o2/o2_006EF150_0x6ef150.cpp": "15d8c9011a692c24d97d05550febb8af8d5392f99f5eaefd0bd5b65deee3642c",
+        "recomp/config/output_ovl/o2/o2_006EF270_0x6ef270.cpp": "5dbb6d00c9af4f157b3e52e9d51c3fd1a91ebfb9f07c962923af65d1c37d51ae",
+        "recomp/config/output_ovl/o2/o2_006EF720_0x6ef720.cpp": "8ad7027f54a0ee6520f2ee681cca45781dc55760b3961538b2e7ec0757ff88aa",
+        "recomp/config/output_ovl/o2/o2_006EFBC0_0x6efbc0.cpp": "4a1c8c9b0efa33aff6a070e2676b09ad52dbc168e9ce7b9d0739deab669adfb4",
+        "recomp/config/output_ovl/o2/o2_006EFDE0_0x6efde0.cpp": "0c111663977f83375c42d33f7c9556eebc679a1b377f09d79d8853b773176021",
+        "recomp/config/output_ovl/o2/o2_006F0010_0x6f0010.cpp": "c2260f56569a8f57a824f22e9266a227c8472cab2d93c50ce2c21f338381b05d",
+        "recomp/config/output_ovl/o2/o2_006F1430_0x6f1430.cpp": "19dbf9c1c2f8886aa27662d39df0c46348a6db0ee66fb3f4f987fc0c803fa9a5",
+        "recomp/config/output_ovl/o2/o2_006F1700_0x6f1700.cpp": "b566b664a530ab20bebd0f9eed7ae189593c7a5ae8f303d83a4c5e2125b3d649",
+        "recomp/config/output_ovl/o2/o2_006F1750_0x6f1750.cpp": "26eadf0205c86a5751df0aa38823d921802aa5e64f5a35792850f11517a25ec2",
+        "recomp/config/output_ovl/o0/o0_00376E70_0x376e70.cpp": "ffe3fa5f9cec26223786279ab41c89dd50612b7ff7e127903720111e87d2f3e6",
+        "recomp/config/output/sub_00191EF0_0x191ef0.cpp": "dfc094ca7455e8cd48559b0c6aad679b2bc756c056f650551beaf0aeeb616c1c"
+      },
+      "original_intervals": [
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006F00D0_0x6f00d0.cpp",
+          "start": "0x6f00d0",
+          "end_exclusive": "0x6f0310",
+          "sha256": "180cf574898ca6024c234395b42d0496d91de3127f9e71be3f43b667ff24e3f8",
+          "matched_comments": 140,
+          "omitted_zero_words": 4,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006F0310_0x6f0310.cpp",
+          "start": "0x6f0310",
+          "end_exclusive": "0x6f0e00",
+          "sha256": "5dac2b2a65df0368bf32f82c2211cf04c04908e8c465362a58b40e1da17ccaff",
+          "matched_comments": 657,
+          "omitted_zero_words": 43,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006F0E00_0x6f0e00.cpp",
+          "start": "0x6f0e00",
+          "end_exclusive": "0x6f0e60",
+          "sha256": "54b20421061c33465b4cc3a6cfe80f4729adc25016396d9e19668dd6d055c675",
+          "matched_comments": 22,
+          "omitted_zero_words": 2,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006F0E60_0x6f0e60.cpp",
+          "start": "0x6f0e60",
+          "end_exclusive": "0x6f0f30",
+          "sha256": "0ba4611f4b6c868966fa6a4de78e7f04bd8e61527c233c7d3dfc6f2d2cacb094",
+          "matched_comments": 50,
+          "omitted_zero_words": 2,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o0\\o0_00370AC0_0x370ac0.cpp",
+          "start": "0x370ac0",
+          "end_exclusive": "0x370b00",
+          "sha256": "7c9d1c7c9cad3b5561937836e3349f51bea3ef4e0b3aa9217c464f7f816af78d",
+          "matched_comments": 13,
+          "omitted_zero_words": 3,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o0\\o0_00370B00_0x370b00.cpp",
+          "start": "0x370b00",
+          "end_exclusive": "0x370c6c",
+          "sha256": "dd7cba008760e6304771406c18422c4130e07a380bd01def85b0bdbb8045d6ef",
+          "matched_comments": 91,
+          "omitted_zero_words": 0,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o0\\o0_00370C70_0x370c70.cpp",
+          "start": "0x370c70",
+          "end_exclusive": "0x370dd0",
+          "sha256": "ca717e41fe8dff11338600c8ee2939fbc9c9faf9f97f90d86abb8ef5e0ea89ef",
+          "matched_comments": 86,
+          "omitted_zero_words": 2,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_00617000_0x617000.cpp",
+          "start": "0x617000",
+          "end_exclusive": "0x6172f0",
+          "sha256": "500e8781325897594f493879a93ebd8adc7d51e330c7cb5efa4b43ac948159c8",
+          "matched_comments": 176,
+          "omitted_zero_words": 12,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_00617430_0x617430.cpp",
+          "start": "0x617430",
+          "end_exclusive": "0x6175b0",
+          "sha256": "1153241a8017e08c70b9110b91246a2974e01b506426dbd42fe2d75aa23ba598",
+          "matched_comments": 88,
+          "omitted_zero_words": 8,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006161E0_0x6161e0.cpp",
+          "start": "0x6161e0",
+          "end_exclusive": "0x616304",
+          "sha256": "a769f12e9f810b407ae9c0ce31c2bef63094ed638016668483d9cd5502f8bad0",
+          "matched_comments": 72,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_00616310_0x616310.cpp",
+          "start": "0x616310",
+          "end_exclusive": "0x616420",
+          "sha256": "150b8fe11586566dac0ffd224f2c9c0105a7f2f0cd3e64eac3ad3c38ead4859f",
+          "matched_comments": 65,
+          "omitted_zero_words": 3,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_00619A50_0x619a50.cpp",
+          "start": "0x619a50",
+          "end_exclusive": "0x619a70",
+          "sha256": "9933b66ae02576a256f61e06fa7df7aff7fd96b249094cf78250465fdd0141ca",
+          "matched_comments": 6,
+          "omitted_zero_words": 2,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005DA600_0x5da600.cpp",
+          "start": "0x5da600",
+          "end_exclusive": "0x5da61c",
+          "sha256": "05ef835c275ca0d4893a151e8340880aec466eb39f69d33725997b1759274e5d",
+          "matched_comments": 7,
+          "omitted_zero_words": 0,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005DA620_0x5da620.cpp",
+          "start": "0x5da620",
+          "end_exclusive": "0x5da680",
+          "sha256": "e570905ae28f4542c3bf24fad18736ef0b725ed139cf3b30c6394e219585a700",
+          "matched_comments": 23,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006EF150_0x6ef150.cpp",
+          "start": "0x6ef150",
+          "end_exclusive": "0x6ef270",
+          "sha256": "15d8c9011a692c24d97d05550febb8af8d5392f99f5eaefd0bd5b65deee3642c",
+          "matched_comments": 68,
+          "omitted_zero_words": 4,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006EF270_0x6ef270.cpp",
+          "start": "0x6ef270",
+          "end_exclusive": "0x6ef71c",
+          "sha256": "5dbb6d00c9af4f157b3e52e9d51c3fd1a91ebfb9f07c962923af65d1c37d51ae",
+          "matched_comments": 284,
+          "omitted_zero_words": 15,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006EF720_0x6ef720.cpp",
+          "start": "0x6ef720",
+          "end_exclusive": "0x6efaf0",
+          "sha256": "8ad7027f54a0ee6520f2ee681cca45781dc55760b3961538b2e7ec0757ff88aa",
+          "matched_comments": 235,
+          "omitted_zero_words": 9,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006EFBC0_0x6efbc0.cpp",
+          "start": "0x6efbc0",
+          "end_exclusive": "0x6efde0",
+          "sha256": "4a1c8c9b0efa33aff6a070e2676b09ad52dbc168e9ce7b9d0739deab669adfb4",
+          "matched_comments": 132,
+          "omitted_zero_words": 4,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006EFDE0_0x6efde0.cpp",
+          "start": "0x6efde0",
+          "end_exclusive": "0x6f0010",
+          "sha256": "0c111663977f83375c42d33f7c9556eebc679a1b377f09d79d8853b773176021",
+          "matched_comments": 139,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006F0010_0x6f0010.cpp",
+          "start": "0x6f0010",
+          "end_exclusive": "0x6f00d0",
+          "sha256": "c2260f56569a8f57a824f22e9266a227c8472cab2d93c50ce2c21f338381b05d",
+          "matched_comments": 47,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006F1430_0x6f1430.cpp",
+          "start": "0x6f1430",
+          "end_exclusive": "0x6f14e4",
+          "sha256": "19dbf9c1c2f8886aa27662d39df0c46348a6db0ee66fb3f4f987fc0c803fa9a5",
+          "matched_comments": 44,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006F1700_0x6f1700.cpp",
+          "start": "0x6f1700",
+          "end_exclusive": "0x6f1744",
+          "sha256": "b566b664a530ab20bebd0f9eed7ae189593c7a5ae8f303d83a4c5e2125b3d649",
+          "matched_comments": 14,
+          "omitted_zero_words": 3,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006F1750_0x6f1750.cpp",
+          "start": "0x6f1750",
+          "end_exclusive": "0x6f1898",
+          "sha256": "26eadf0205c86a5751df0aa38823d921802aa5e64f5a35792850f11517a25ec2",
+          "matched_comments": 79,
+          "omitted_zero_words": 3,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o0\\o0_00376E70_0x376e70.cpp",
+          "start": "0x376e70",
+          "end_exclusive": "0x376eec",
+          "sha256": "ffe3fa5f9cec26223786279ab41c89dd50612b7ff7e127903720111e87d2f3e6",
+          "matched_comments": 31,
+          "omitted_zero_words": 0,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output\\sub_00191EF0_0x191ef0.cpp",
+          "start": "0x191ef0",
+          "end_exclusive": "0x192000",
+          "sha256": "dfc094ca7455e8cd48559b0c6aad679b2bc756c056f650551beaf0aeeb616c1c",
+          "matched_comments": 64,
+          "omitted_zero_words": 4,
+          "conflicts": 0
+        }
+      ]
+    },
+    "gcc": {
+      "receipt": "build-native-sjuni/gameplay-collision-actors-gcc-v10/receipt.json",
+      "receipt_sha256": "e428929993bb848f6051c3320e5e2ba4a8c4f953c388f11db8b9472a1dee9aa1",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "results": {
+        "checks": 81808,
+        "maximum_error": 0,
+        "registry_cases": 1000,
+        "boundary_cases": 200,
+        "declared_identity_math_ports": true,
+        "game_launched": false
+      },
+      "source_sha256": {
+        "game/native/gameplay_collision/actors.hpp": "1cd3018e15ddf32fe4e5facf124d28bcfc7243bda4f788728318f8e934483f78",
+        "game/native/gameplay_collision/actors.cpp": "b25e36df67b93898f74883a9badb9b7d58c1bfe43f4dc29b966f0ea6ded9025c",
+        "game/native/gameplay_collision/actors_tests.cpp": "205c05e7cb4544c424f0bc153a7498e11a403cafbc531cf8401d11877cf1f78b",
+        "game/native/gameplay_collision/response.hpp": "22a85d653f51fd86e9666de1a748060b141fe02c3ead9ff0bc2022a7298f9f6d",
+        "game/native/gameplay_collision/response.cpp": "f6a1a45cc02977713f68359cfe678ac4ec283c8dbf1baf8cb25dc6df0b7efddb",
+        "game/native/gameplay_collision/collision.hpp": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da",
+        "game/native/gameplay_collision/collision.cpp": "84f32cd3e551a8da284e97d75ff34d4b229616e8c72b31b1adaaa9096bed129f",
+        "game/native/gameplay_actors/entity.hpp": "78a907f8659a6afd3c991aacfa338a025adc6f03e13407c6925c05346ac02fd3",
+        "game/native/gameplay_actors/entity.cpp": "0bec95182c41091cfa8682394c01d9d89d8c53921ffd383bdfe0baa739f2f369",
+        "tools/native_reconstruction/gameplay_collision_oracle/response_reference.hpp": "674e6224558fe924ac0b14dfdaed30c1144bc4eb45cf5405fe5c9925f04bac24",
+        "tools/native_reconstruction/gameplay_collision_oracle/reference.hpp": "62e1f086a6a1c709ffd01f3e8cd3e674f6148406f560346934c9d7344b530203",
+        "third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
+        "tools/native_reconstruction/verify_gameplay_collision_actors.py": "cf79093701267cc9d5c3389314fd03e5ff7d486876b8f1bbdaeeda32922f5835",
+        "recomp/config/output_ovl/o2/o2_006F00D0_0x6f00d0.cpp": "180cf574898ca6024c234395b42d0496d91de3127f9e71be3f43b667ff24e3f8",
+        "recomp/config/output_ovl/o2/o2_006F0310_0x6f0310.cpp": "5dac2b2a65df0368bf32f82c2211cf04c04908e8c465362a58b40e1da17ccaff",
+        "recomp/config/output_ovl/o2/o2_006F0E00_0x6f0e00.cpp": "54b20421061c33465b4cc3a6cfe80f4729adc25016396d9e19668dd6d055c675",
+        "recomp/config/output_ovl/o2/o2_006F0E60_0x6f0e60.cpp": "0ba4611f4b6c868966fa6a4de78e7f04bd8e61527c233c7d3dfc6f2d2cacb094",
+        "recomp/config/output_ovl/o0/o0_00370AC0_0x370ac0.cpp": "7c9d1c7c9cad3b5561937836e3349f51bea3ef4e0b3aa9217c464f7f816af78d",
+        "recomp/config/output_ovl/o0/o0_00370B00_0x370b00.cpp": "dd7cba008760e6304771406c18422c4130e07a380bd01def85b0bdbb8045d6ef",
+        "recomp/config/output_ovl/o0/o0_00370C70_0x370c70.cpp": "ca717e41fe8dff11338600c8ee2939fbc9c9faf9f97f90d86abb8ef5e0ea89ef",
+        "recomp/config/output_ovl/o2/o2_00617000_0x617000.cpp": "500e8781325897594f493879a93ebd8adc7d51e330c7cb5efa4b43ac948159c8",
+        "recomp/config/output_ovl/o2/o2_00617430_0x617430.cpp": "1153241a8017e08c70b9110b91246a2974e01b506426dbd42fe2d75aa23ba598",
+        "recomp/config/output_ovl/o2/o2_006161E0_0x6161e0.cpp": "a769f12e9f810b407ae9c0ce31c2bef63094ed638016668483d9cd5502f8bad0",
+        "recomp/config/output_ovl/o2/o2_00616310_0x616310.cpp": "150b8fe11586566dac0ffd224f2c9c0105a7f2f0cd3e64eac3ad3c38ead4859f",
+        "recomp/config/output_ovl/o2/o2_00619A50_0x619a50.cpp": "9933b66ae02576a256f61e06fa7df7aff7fd96b249094cf78250465fdd0141ca",
+        "recomp/config/output_ovl/o2/o2_005DA600_0x5da600.cpp": "05ef835c275ca0d4893a151e8340880aec466eb39f69d33725997b1759274e5d",
+        "recomp/config/output_ovl/o2/o2_005DA620_0x5da620.cpp": "e570905ae28f4542c3bf24fad18736ef0b725ed139cf3b30c6394e219585a700",
+        "recomp/config/output_ovl/o2/o2_006EF150_0x6ef150.cpp": "15d8c9011a692c24d97d05550febb8af8d5392f99f5eaefd0bd5b65deee3642c",
+        "recomp/config/output_ovl/o2/o2_006EF270_0x6ef270.cpp": "5dbb6d00c9af4f157b3e52e9d51c3fd1a91ebfb9f07c962923af65d1c37d51ae",
+        "recomp/config/output_ovl/o2/o2_006EF720_0x6ef720.cpp": "8ad7027f54a0ee6520f2ee681cca45781dc55760b3961538b2e7ec0757ff88aa",
+        "recomp/config/output_ovl/o2/o2_006EFBC0_0x6efbc0.cpp": "4a1c8c9b0efa33aff6a070e2676b09ad52dbc168e9ce7b9d0739deab669adfb4",
+        "recomp/config/output_ovl/o2/o2_006EFDE0_0x6efde0.cpp": "0c111663977f83375c42d33f7c9556eebc679a1b377f09d79d8853b773176021",
+        "recomp/config/output_ovl/o2/o2_006F0010_0x6f0010.cpp": "c2260f56569a8f57a824f22e9266a227c8472cab2d93c50ce2c21f338381b05d",
+        "recomp/config/output_ovl/o2/o2_006F1430_0x6f1430.cpp": "19dbf9c1c2f8886aa27662d39df0c46348a6db0ee66fb3f4f987fc0c803fa9a5",
+        "recomp/config/output_ovl/o2/o2_006F1700_0x6f1700.cpp": "b566b664a530ab20bebd0f9eed7ae189593c7a5ae8f303d83a4c5e2125b3d649",
+        "recomp/config/output_ovl/o2/o2_006F1750_0x6f1750.cpp": "26eadf0205c86a5751df0aa38823d921802aa5e64f5a35792850f11517a25ec2",
+        "recomp/config/output_ovl/o0/o0_00376E70_0x376e70.cpp": "ffe3fa5f9cec26223786279ab41c89dd50612b7ff7e127903720111e87d2f3e6",
+        "recomp/config/output/sub_00191EF0_0x191ef0.cpp": "dfc094ca7455e8cd48559b0c6aad679b2bc756c056f650551beaf0aeeb616c1c"
+      },
+      "original_intervals": [
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006F00D0_0x6f00d0.cpp",
+          "start": "0x6f00d0",
+          "end_exclusive": "0x6f0310",
+          "sha256": "180cf574898ca6024c234395b42d0496d91de3127f9e71be3f43b667ff24e3f8",
+          "matched_comments": 140,
+          "omitted_zero_words": 4,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006F0310_0x6f0310.cpp",
+          "start": "0x6f0310",
+          "end_exclusive": "0x6f0e00",
+          "sha256": "5dac2b2a65df0368bf32f82c2211cf04c04908e8c465362a58b40e1da17ccaff",
+          "matched_comments": 657,
+          "omitted_zero_words": 43,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006F0E00_0x6f0e00.cpp",
+          "start": "0x6f0e00",
+          "end_exclusive": "0x6f0e60",
+          "sha256": "54b20421061c33465b4cc3a6cfe80f4729adc25016396d9e19668dd6d055c675",
+          "matched_comments": 22,
+          "omitted_zero_words": 2,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006F0E60_0x6f0e60.cpp",
+          "start": "0x6f0e60",
+          "end_exclusive": "0x6f0f30",
+          "sha256": "0ba4611f4b6c868966fa6a4de78e7f04bd8e61527c233c7d3dfc6f2d2cacb094",
+          "matched_comments": 50,
+          "omitted_zero_words": 2,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o0\\o0_00370AC0_0x370ac0.cpp",
+          "start": "0x370ac0",
+          "end_exclusive": "0x370b00",
+          "sha256": "7c9d1c7c9cad3b5561937836e3349f51bea3ef4e0b3aa9217c464f7f816af78d",
+          "matched_comments": 13,
+          "omitted_zero_words": 3,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o0\\o0_00370B00_0x370b00.cpp",
+          "start": "0x370b00",
+          "end_exclusive": "0x370c6c",
+          "sha256": "dd7cba008760e6304771406c18422c4130e07a380bd01def85b0bdbb8045d6ef",
+          "matched_comments": 91,
+          "omitted_zero_words": 0,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o0\\o0_00370C70_0x370c70.cpp",
+          "start": "0x370c70",
+          "end_exclusive": "0x370dd0",
+          "sha256": "ca717e41fe8dff11338600c8ee2939fbc9c9faf9f97f90d86abb8ef5e0ea89ef",
+          "matched_comments": 86,
+          "omitted_zero_words": 2,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_00617000_0x617000.cpp",
+          "start": "0x617000",
+          "end_exclusive": "0x6172f0",
+          "sha256": "500e8781325897594f493879a93ebd8adc7d51e330c7cb5efa4b43ac948159c8",
+          "matched_comments": 176,
+          "omitted_zero_words": 12,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_00617430_0x617430.cpp",
+          "start": "0x617430",
+          "end_exclusive": "0x6175b0",
+          "sha256": "1153241a8017e08c70b9110b91246a2974e01b506426dbd42fe2d75aa23ba598",
+          "matched_comments": 88,
+          "omitted_zero_words": 8,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006161E0_0x6161e0.cpp",
+          "start": "0x6161e0",
+          "end_exclusive": "0x616304",
+          "sha256": "a769f12e9f810b407ae9c0ce31c2bef63094ed638016668483d9cd5502f8bad0",
+          "matched_comments": 72,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_00616310_0x616310.cpp",
+          "start": "0x616310",
+          "end_exclusive": "0x616420",
+          "sha256": "150b8fe11586566dac0ffd224f2c9c0105a7f2f0cd3e64eac3ad3c38ead4859f",
+          "matched_comments": 65,
+          "omitted_zero_words": 3,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_00619A50_0x619a50.cpp",
+          "start": "0x619a50",
+          "end_exclusive": "0x619a70",
+          "sha256": "9933b66ae02576a256f61e06fa7df7aff7fd96b249094cf78250465fdd0141ca",
+          "matched_comments": 6,
+          "omitted_zero_words": 2,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005DA600_0x5da600.cpp",
+          "start": "0x5da600",
+          "end_exclusive": "0x5da61c",
+          "sha256": "05ef835c275ca0d4893a151e8340880aec466eb39f69d33725997b1759274e5d",
+          "matched_comments": 7,
+          "omitted_zero_words": 0,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005DA620_0x5da620.cpp",
+          "start": "0x5da620",
+          "end_exclusive": "0x5da680",
+          "sha256": "e570905ae28f4542c3bf24fad18736ef0b725ed139cf3b30c6394e219585a700",
+          "matched_comments": 23,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006EF150_0x6ef150.cpp",
+          "start": "0x6ef150",
+          "end_exclusive": "0x6ef270",
+          "sha256": "15d8c9011a692c24d97d05550febb8af8d5392f99f5eaefd0bd5b65deee3642c",
+          "matched_comments": 68,
+          "omitted_zero_words": 4,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006EF270_0x6ef270.cpp",
+          "start": "0x6ef270",
+          "end_exclusive": "0x6ef71c",
+          "sha256": "5dbb6d00c9af4f157b3e52e9d51c3fd1a91ebfb9f07c962923af65d1c37d51ae",
+          "matched_comments": 284,
+          "omitted_zero_words": 15,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006EF720_0x6ef720.cpp",
+          "start": "0x6ef720",
+          "end_exclusive": "0x6efaf0",
+          "sha256": "8ad7027f54a0ee6520f2ee681cca45781dc55760b3961538b2e7ec0757ff88aa",
+          "matched_comments": 235,
+          "omitted_zero_words": 9,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006EFBC0_0x6efbc0.cpp",
+          "start": "0x6efbc0",
+          "end_exclusive": "0x6efde0",
+          "sha256": "4a1c8c9b0efa33aff6a070e2676b09ad52dbc168e9ce7b9d0739deab669adfb4",
+          "matched_comments": 132,
+          "omitted_zero_words": 4,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006EFDE0_0x6efde0.cpp",
+          "start": "0x6efde0",
+          "end_exclusive": "0x6f0010",
+          "sha256": "0c111663977f83375c42d33f7c9556eebc679a1b377f09d79d8853b773176021",
+          "matched_comments": 139,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006F0010_0x6f0010.cpp",
+          "start": "0x6f0010",
+          "end_exclusive": "0x6f00d0",
+          "sha256": "c2260f56569a8f57a824f22e9266a227c8472cab2d93c50ce2c21f338381b05d",
+          "matched_comments": 47,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006F1430_0x6f1430.cpp",
+          "start": "0x6f1430",
+          "end_exclusive": "0x6f14e4",
+          "sha256": "19dbf9c1c2f8886aa27662d39df0c46348a6db0ee66fb3f4f987fc0c803fa9a5",
+          "matched_comments": 44,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006F1700_0x6f1700.cpp",
+          "start": "0x6f1700",
+          "end_exclusive": "0x6f1744",
+          "sha256": "b566b664a530ab20bebd0f9eed7ae189593c7a5ae8f303d83a4c5e2125b3d649",
+          "matched_comments": 14,
+          "omitted_zero_words": 3,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_006F1750_0x6f1750.cpp",
+          "start": "0x6f1750",
+          "end_exclusive": "0x6f1898",
+          "sha256": "26eadf0205c86a5751df0aa38823d921802aa5e64f5a35792850f11517a25ec2",
+          "matched_comments": 79,
+          "omitted_zero_words": 3,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o0\\o0_00376E70_0x376e70.cpp",
+          "start": "0x376e70",
+          "end_exclusive": "0x376eec",
+          "sha256": "ffe3fa5f9cec26223786279ab41c89dd50612b7ff7e127903720111e87d2f3e6",
+          "matched_comments": 31,
+          "omitted_zero_words": 0,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output\\sub_00191EF0_0x191ef0.cpp",
+          "start": "0x191ef0",
+          "end_exclusive": "0x192000",
+          "sha256": "dfc094ca7455e8cd48559b0c6aad679b2bc756c056f650551beaf0aeeb616c1c",
+          "matched_comments": 64,
+          "omitted_zero_words": 4,
+          "conflicts": 0
+        }
+      ]
+    }
+  },
+  "limits": [
+    "1000 four-actor cases and200 boundary cases do not claim every actor behavior/state machine migrated.",
+    "Actual native EntityStore identity API is linked, but lifecycle completeness is qualified by the actor-store owner.",
+    "Scalar matrix/trigonometric/game-mode test surroundings are declared ports."
+  ]
+}

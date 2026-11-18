@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import stat
 import struct
 import subprocess
 import sys
@@ -116,7 +117,62 @@ def prepare_recipe_sources(staging, recipes):
     return by_pass
 
 
-def generate(recompiler, disc, metadata, destination, jobs=1, source_audit=False, game="file1"):
+def plain_generation_path(value):
+    """Inspect lexical ancestry before resolving: no symlink/junction aliases.
+
+    Extended I/O spelling preserves long Windows paths without resolving away a
+    reparse point before it can be rejected. Missing descendants are permitted.
+    """
+    path = Path(os.path.abspath(native(value)))
+    for current in (path, *path.parents):
+        try:
+            info = _generation_io(current).lstat()
+        except FileNotFoundError:
+            continue
+        if stat.S_ISLNK(info.st_mode) or (getattr(info, "st_file_attributes", 0) or 0) & 0x400:
+            raise ValueError("Generation path contains a symlink or reparse point: " + str(current))
+    return Path(native(_generation_io(path).resolve()))
+
+
+def _generation_io(path):
+    text = str(path)
+    if os.name == "nt" and not text.startswith("\\\\?\\"):
+        text = "\\\\?\\UNC\\" + text[2:] if text.startswith("\\\\") else "\\\\?\\" + text
+    return Path(text)
+
+
+def checked_staging_parent(destination, staging_parent, *, owned_work=None):
+    """Prepare an optional same-filesystem parent without moving old outputs."""
+    destination, parent = map(plain_generation_path, (destination, staging_parent))
+    if parent == destination or parent.is_relative_to(destination):
+        raise ValueError("Generation staging cannot be inside its canonical destination")
+    if owned_work is not None:
+        owner = plain_generation_path(owned_work)
+        if any(path == owner or not path.is_relative_to(owner) for path in (destination, parent)):
+            raise ValueError("Generation destination/staging escaped the owned work directory")
+    def existing_directory(path):
+        while not _generation_io(path).exists():
+            path = path.parent
+        result = _generation_io(path)
+        if not result.is_dir():
+            raise ValueError("Generation parent is not a directory")
+        return result
+    if existing_directory(destination.parent).stat().st_dev != existing_directory(parent).stat().st_dev:
+        raise ValueError("Atomic generation publication requires one filesystem")
+    for path in (destination.parent, parent):
+        _generation_io(path).mkdir(parents=True, exist_ok=True)
+        plain_generation_path(path)
+    if _generation_io(destination.parent).stat().st_dev != _generation_io(parent).stat().st_dev:
+        raise ValueError("Generation staging filesystem changed")
+    return _generation_io(parent)
+
+
+def generate(recompiler, disc, metadata, destination, jobs=1, source_audit=False, game="file1",
+             staging_parent=None):
+    if staging_parent is not None:
+        # extended() resolves aliases, so inspect supplied lexical paths first.
+        plain_generation_path(destination)
+        plain_generation_path(staging_parent)
     recompiler, disc, metadata, destination = map(extended, (recompiler, disc, metadata, destination))
     profile = GAMES[game]
     skip_main = profile["skip"]
@@ -128,8 +184,12 @@ def generate(recompiler, disc, metadata, destination, jobs=1, source_audit=False
         raise ValueError("The imported disc has no BIN overlay directory")
     if destination.exists():
         raise FileExistsError("Choose a fresh generation directory; existing outputs are preserved")
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    staging = Path(tempfile.mkdtemp(prefix=destination.name + ".generating-", dir=destination.parent))
+    if staging_parent is None:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        staging_base = destination.parent
+    else:
+        staging_base = checked_staging_parent(destination, staging_parent)
+    staging = Path(tempfile.mkdtemp(prefix=destination.name + ".generating-", dir=staging_base))
     logs = staging / "logs"
     logs.mkdir()
     work = staging / "inputs"
@@ -313,7 +373,17 @@ def generate(recompiler, disc, metadata, destination, jobs=1, source_audit=False
                         for p, digest in zip(sources, source_hashes)]}
     if game != "file1":
         record["game"] = game
+    if staging_parent is not None:
+        record["staging"] = {"parent": native(staging_base), "directory": native(staging),
+                             "destination": native(destination), "atomicRename": True}
     (staging / "generation.json").write_text(json.dumps(record, indent=2))
+    if staging_parent is not None:
+        plain_generation_path(staging)
+        plain_generation_path(destination)
+        if staging.stat().st_dev != destination.parent.stat().st_dev:
+            raise ValueError("Generation staging filesystem changed before publication")
+    if destination.exists() or destination.is_symlink():
+        raise FileExistsError("Canonical generation appeared during staging; both outputs are preserved")
     staging.rename(destination)
     return record
 
@@ -328,9 +398,11 @@ def main():
     parser.add_argument("--source-audit", action="store_true",
                         help="Enable per-instruction GPU source witnesses for developer audits")
     parser.add_argument("--game", choices=sorted(GAMES), default="file1")
+    parser.add_argument("--staging-parent", type=Path,
+                        help="Optional same-filesystem staging parent; default stays beside output")
     args = parser.parse_args()
     result = generate(args.recompiler, args.disc, args.metadata, args.output, args.jobs, args.source_audit,
-                      args.game)
+                      args.game, staging_parent=args.staging_parent)
     print(json.dumps({k: v for k, v in result.items() if k != "files"}, indent=2))
 
 

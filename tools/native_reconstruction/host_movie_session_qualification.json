@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "status": "native worker and guarded adapter object checks passed",
+  "source_sha256": {
+    "game/native/host_movie/session.hpp": "bc9e274052815c9a900afd8bdc6662b0f927c76b0fdd68db37ba47391ba99a80",
+    "game/native/host_movie/session.cpp": "df011272d87afd5c73275be7191897f07bd6109010b326efff46a9a800b23cd8",
+    "game/native/host_movie/CMakeLists.txt": "5dafd5d4e96505d154c61493f74eaf66f02a4ebed3d06022190f60b64748f025",
+    "game/native/CMakeLists.txt": "643d9d3cc888f9472f13cd65a8a6512f71407382eb78609484e8402a9d050f7d",
+    "game/native/movie_assets/catalogue.hpp": "ff6d60331dd2be72ac4b9dd033d1308b62ff23f6754adbdfe924ad9ca013d024",
+    "game/native/movie_assets/catalogue.cpp": "cefa444ace96b91078499652d307ec0e5c63ed7582852ae25fa2562f3446a666",
+    "recomp/overrides/native_host_movie/runtime_adapter.h": "885996aa9be0becb19f0d84a3b8d54dcb71f1c53039003dd3abb0f102bef62ff",
+    "recomp/overrides/native_host_movie/runtime_adapter.cpp": "24c48b44873fc17caf2272cc649aa83eaa82750771077b533ed8bf062e4b5727",
+    "recomp/overrides/native_host_movie/entries.inc": "5c4e8f0542cfc70a31fc1e07a28809bdf47962ec708f4d784c35c645b782d241",
+    "recomp/overrides/native_host_movie/render_bridge.h": "b26988d242201d5d67e9c15e9a722a0b2126614b9c489bbe2ad8f55d58872a20",
+    "tools/native_reconstruction/host_movie_session_check.cpp": "db95789c09843d680079ed5564fc85c6ecfae2622e1b7e31f74d2c8aa1f6925b",
+    "tools/native_reconstruction/verify_host_movie_session.py": "5c64d75c53f002391c4c58230e78505ed56fe9c3b3c56b5801e409d19bfac1e9"
+  },
+  "evidence_sha256": {
+    "build-native-sjuni/host-movie/session-gcc-v2/receipt.json": "aec3856c45758f6c72bfa38bfefa32e8f3dddad9b07559756fda15517dd04d70",
+    "build-native-sjuni/host-movie/session-llvm-v2/receipt.json": "a63d235862c41f9aa28c800f5d3cbfe56464007969aadc99a36ce733dc453d7f",
+    "build-native-sjuni/host-movie/sdk-objects-llvm-v1/receipt.json": "b8f2b6985328b55d7f7fc00e770301634eff20f816e6ca3c65b8e250fbef5e64",
+    "build-native-sjuni/playtests/native-mp4-v23/run.json": "3f4056dc2d4a4b0eb505e9a331312ccd5d49f12eaf7b840bf8e17d17cc2cdd24",
+    "build-native-sjuni/host-movie/sdk-objects-llvm-v3/receipt.json": "072cbc2e53e26838ff426c199ec4b33ea8fd81c8210cb614d8908e1012cc7426",
+    "build-native-sjuni/host-movie/sdk-objects-llvm-v4/receipt.json": "3a56222903871e649cb5250976757983a3cb5e407aa2a0876494bfe9aa70ebb1"
+  },
+  "game_run": false,
+  "limitations": [
+    "No game has selected this native worker yet.",
+    "Game renderer bridge and cue behavior require an actual coherent build and game validation.",
+    "No independent scanout or audible A/V synchronization measurement.",
+    "V23 startup refused the reviewed feed-end/timing wrappers; the guarded correction is pending a matching game rebuild.",
+    "V24 selected the native owner and joined cleanly after refusing a physical-container cue; corrected imported-range lookup is pending a matching game rebuild."
+  ],
+  "source_identity_note": "Worker test sources match their recorded receipts. The updated adapter has the additional SDK131 v3 object check; live registry/cue behavior remains pending V24."
+}

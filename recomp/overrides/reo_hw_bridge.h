@@ -38,6 +38,10 @@ class PrivateUsbKeyboard;
 namespace reo_network {
 class NetcnfProfileService;
 }
+namespace reo::native::ram_capture::v2 {class Coordinator;}
+#if defined(_WIN32) && defined(REO_BUILD_NATIVE_RESOURCE_READS)
+namespace reo::native::resources::win32 { class MountedResources; }
+#endif
 
 class ReoHwBridge {
   public:
@@ -59,6 +63,17 @@ class ReoHwBridge {
     // cdvdfsv sector read into guest RAM (bounds-checked; CDVD serializes readers).
     // Safe without guest execution: callers own the destination as a pending DMA.
     bool readCdSectors(uint32_t lsn, uint32_t count, uint32_t dst, uint8_t* rdram);
+    // Issued only by this successfully initialized actual bridge when its Pad
+    // body was compiled with coordinating writer instrumentation. Identity and
+    // linked-source evidence only; caller separately retains bridge/RAM lifetime
+    // and qualifies every other writer plus the matching Service instrumentation.
+    reo::native::ram_capture::v2::Coordinator* nativeSoundRamWriterCoordinator(PS2Runtime&) const noexcept;
+#if defined(_WIN32) && defined(REO_BUILD_NATIVE_RESOURCE_READS)
+    // Pre-run comparison against this bridge's actual frozen PAK map. First
+    // integration excludes overlays until their live identity also migrates.
+    bool nativeResourceLayoutMatches(
+        const reo::native::resources::win32::MountedResources& mount) const noexcept;
+#endif
 
   private:
     // PS2Memory callback: DMA channel start
@@ -91,6 +106,7 @@ class ReoHwBridge {
     void executeVu(int unit, uint32_t addr, uint8_t* rdram, R5900Context* ctx);
 
     PS2Runtime* m_runtime = nullptr;
+    uint8_t* m_nativeRamWriterBacking = nullptr;
     std::unique_ptr<SnapIopTransport> m_network;
     std::unique_ptr<PrivateUsbKeyboard> m_privateKeyboard;
     std::unique_ptr<reo_network::NetcnfProfileService> m_netProfile;

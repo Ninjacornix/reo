@@ -1,0 +1,224 @@
+{
+  "schema": 1,
+  "status": "qualified_native_motion_family_release_and_default_restoration_correction",
+  "source_sha256": {
+    "game/native/animation/motion_bank.hpp": "0cc078f480c3d1e20870bc62f672b286af2f35a3a5e7132736c9bfd53a79d351",
+    "game/native/animation/motion_bank.cpp": "28210eb36df1316888cac11e008e62c51a227d9c1c8dd33791f848ce106e2cd6",
+    "game/native/gameplay_world/humanoid_motion_assets.hpp": "cbd52187e6bccdd18ad8223cc125099832e4d71d37814f5c17fce428f3a3c165",
+    "game/native/gameplay_world/humanoid_motion_assets.cpp": "9e3f3c88bf839f92817f2af97747d741d298398b0c52a1b03a8cc7283468513f",
+    "game/native/gameplay_world/humanoid_motion_assets_tests.cpp": "dc67f50185bdab7a52d583b76accc87a118bf0db7d584ef091a068dcd8299cf3",
+    "game/native/gameplay_world/humanoid_motion_publication_tests.cpp": "6f489a1af1a0f6544e17e64fcd5624b5b535f5abc106770de7baba998a0ed27b",
+    "tools/native_reconstruction/animation/motion_bank_tests.cpp": "03728c1455eaa0f35d007f6ca86b1142b5e1c80d327968e0f74161251d7a8958",
+    "tools/native_reconstruction/animation/verify_motion_banks.py": "bb8a161588ea55daaeefdccec59c90bc844f6fce32434d3f5bc4a210a6c305fa",
+    "tools/native_reconstruction/humanoid_motion_loader_reference.inc": "a6e18c5f9aacd1a75be14c3e6e7e19cd22b60a972e5aaf3f0b45efc7e5bacba7",
+    "tools/native_reconstruction/verify_humanoid_motion_assets.py": "2e2d0695ab20df6b241c3fb69010f373b19347d55416c6fc542c874c42ed47b4",
+    "docs/native-gameplay/HUMANOID_MOTION_ASSETS.md": "59104049465e495b734d189f0f7820b2a45810b6c0f9de17ffa9aace203d4f16",
+    "docs/native-gameplay/MOTION_FAMILY_RELEASE.md": "c6da608036b57bce11c57fc44981acaf3adadef12fa1d025599753373bfdc548",
+    "docs/native-gameplay/STAGE4_PLAN.md": "2472c8b34c0f575e24d5eb24979f786541ff9aaa6d1b3e3b8d0a760ac74f8550"
+  },
+  "cohorts": {
+    "llvm": {
+      "banks": {
+        "receipt": "build-native-sjuni/motion-family-clear-llvm-v1/receipt.json",
+        "sha256": "8c8183af1f5c2f79fa7c8ba5fef3be85b5e0ae31041fada43d3a371ceac78186",
+        "observed": {
+          "family_clear_cases": 9,
+          "checks": 436495,
+          "bank_cases": 43,
+          "live_slots": 13375,
+          "query_cases": 210000,
+          "cleared_query_cases": 20000,
+          "clear_cases": 4,
+          "packed_block_seam_calls": 6801,
+          "release_seam_calls": 3921,
+          "refusal_cases": 24,
+          "lifetime_cases": 9,
+          "original_calls": 17689,
+          "game_run": false
+        }
+      },
+      "shared": {
+        "receipt": "build-native-sjuni/humanoid-base-release-llvm-v2/receipt.json",
+        "sha256": "288396290c5389329932d79ba8b83786ad52798f586b397ec5b77650d0c18dcd",
+        "observed": {
+          "base_releases": 2,
+          "native_checks": 317927,
+          "original_checks": 13661821,
+          "original_bank_cases": 948,
+          "original_calls": 431695,
+          "common_loads": 90,
+          "character_loads": 720,
+          "snapshot_cases": 94,
+          "npc_bindings_cases": 2,
+          "loader_name_cases": 66048,
+          "character_releases": 8,
+          "released_queries": 50000,
+          "game_run": false
+        },
+        "publication": {
+          "checks": 35,
+          "publications": 7,
+          "rebindings": 55,
+          "refusals": 8,
+          "scripted_bindings": 2,
+          "busy_checks": 1,
+          "retirements": 1,
+          "game_run": false
+        }
+      },
+      "models": {
+        "receipt": "build-native-sjuni/base-release-primary-models-llvm-v1/receipt.json",
+        "sha256": "8e3458f20cab0ef5c9c7925e9f1c6cc855c9c55f79d20f19693813a1fccbe254",
+        "observed": {
+          "retirements": 256,
+          "retirement_noops": 257,
+          "reloads": 256,
+          "detached_refusals": 256,
+          "retirement_original_cases": 513,
+          "generation_handoffs": 1,
+          "checks": 92609,
+          "loads": 256,
+          "reuses": 256,
+          "replacements": 512,
+          "shared_releases": 512,
+          "refusals": 1025,
+          "original_cases": 1280,
+          "original_calls": 16265,
+          "scene_cases": 1196,
+          "scene_parameters": 52,
+          "scene_original_cases": 1196,
+          "game_run": false
+        }
+      },
+      "initializer": {
+        "receipt": "build-native-sjuni/base-release-primary-initialization-llvm-v1/receipt.json",
+        "sha256": "5d6b853c0cd8e7ae49125d67f8ba106aa3acb993040cbd75658b1f39b43b1432",
+        "observed": {
+          "checks": 39664817,
+          "initializations": 32768,
+          "custom_initializations": 4384,
+          "custom_missing_models": 24,
+          "restores": 4096,
+          "setters": 65536,
+          "constraints": 128,
+          "bank_publications": 1,
+          "refusals": 5,
+          "saved_decodes": 65538,
+          "saved_initializations": 65536,
+          "saved_query_cases": 65792,
+          "saved_refusals": 9,
+          "selector_cases": 65536,
+          "selector_restores": 255,
+          "original_calls": 947325,
+          "game_run": false
+        }
+      }
+    },
+    "gcc": {
+      "banks": {
+        "receipt": "build-native-sjuni/motion-family-clear-gcc-v1/receipt.json",
+        "sha256": "a7aa2a4f66fbc20b7f3c011d19cde6181af73106c819b331842519ee719db9c5",
+        "observed": {
+          "family_clear_cases": 9,
+          "checks": 436495,
+          "bank_cases": 43,
+          "live_slots": 13375,
+          "query_cases": 210000,
+          "cleared_query_cases": 20000,
+          "clear_cases": 4,
+          "packed_block_seam_calls": 6801,
+          "release_seam_calls": 3921,
+          "refusal_cases": 24,
+          "lifetime_cases": 9,
+          "original_calls": 17689,
+          "game_run": false
+        }
+      },
+      "shared": {
+        "receipt": "build-native-sjuni/humanoid-base-release-gcc-v2/receipt.json",
+        "sha256": "31d072aa59f360da10c5007ffb506fdf4983de42d83e472a19ad073c63f8eca6",
+        "observed": {
+          "base_releases": 2,
+          "native_checks": 317927,
+          "original_checks": 13661821,
+          "original_bank_cases": 948,
+          "original_calls": 431695,
+          "common_loads": 90,
+          "character_loads": 720,
+          "snapshot_cases": 94,
+          "npc_bindings_cases": 2,
+          "loader_name_cases": 66048,
+          "character_releases": 8,
+          "released_queries": 50000,
+          "game_run": false
+        },
+        "publication": {
+          "checks": 35,
+          "publications": 7,
+          "rebindings": 55,
+          "refusals": 8,
+          "scripted_bindings": 2,
+          "busy_checks": 1,
+          "retirements": 1,
+          "game_run": false
+        }
+      },
+      "models": {
+        "receipt": "build-native-sjuni/base-release-primary-models-gcc-v1/receipt.json",
+        "sha256": "3a1861a656c76189a0b31bb7941eff550c4a5986bb71da77f4b9416192f545ad",
+        "observed": {
+          "retirements": 256,
+          "retirement_noops": 257,
+          "reloads": 256,
+          "detached_refusals": 256,
+          "retirement_original_cases": 513,
+          "generation_handoffs": 1,
+          "checks": 92609,
+          "loads": 256,
+          "reuses": 256,
+          "replacements": 512,
+          "shared_releases": 512,
+          "refusals": 1025,
+          "original_cases": 1280,
+          "original_calls": 16265,
+          "scene_cases": 1196,
+          "scene_parameters": 52,
+          "scene_original_cases": 1196,
+          "game_run": false
+        }
+      },
+      "initializer": {
+        "receipt": "build-native-sjuni/base-release-primary-initialization-gcc-v1/receipt.json",
+        "sha256": "a5d6215e88a95fc6fe3ccfe625d57f1f73b8b7ef23cec712f0c6a1cf58d068fa",
+        "observed": {
+          "checks": 39664817,
+          "initializations": 32768,
+          "custom_initializations": 4384,
+          "custom_missing_models": 24,
+          "restores": 4096,
+          "setters": 65536,
+          "constraints": 128,
+          "bank_publications": 1,
+          "refusals": 5,
+          "saved_decodes": 65538,
+          "saved_initializations": 65536,
+          "saved_query_cases": 65792,
+          "saved_refusals": 9,
+          "selector_cases": 65536,
+          "selector_restores": 255,
+          "original_calls": 947325,
+          "game_run": false
+        }
+      }
+    }
+  },
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "correction": "Historical1B1DF0 work-buffer port hid actual partial-bank release; complete bodies and native restoration now include it.",
+  "limitations": [
+    "Native global wrapper admission here is1B1DF0 family0, with all three bank-local profiles compared.",
+    "Complete scene-entry/exit ownership and primary cinematic playback remain open.",
+    "No installed game slowdown or performance measurement is claimed."
+  ]
+}

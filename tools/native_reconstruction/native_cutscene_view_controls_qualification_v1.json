@@ -1,0 +1,304 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "scope": "Complete cinematic visibility/fullscreen callbacks and ordinary descriptor loading over one retained asset-relative workspace, composed with the sole canonical controller.",
+  "game_run": false,
+  "device_opened": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_scenario/fullscreen_color.hpp": "680169cd6acd63654f68e4effa1321bad0bec649b3f1611760c68b8b29136d72",
+    "game/native/gameplay_scenario/fullscreen_color.cpp": "a215af5f02009c951979191ee986cc21f4fa5f7f02cc61c5b26128afd25d910a",
+    "game/native/gameplay_scenario/cutscene_descriptor_workspace.hpp": "90cd507fc5cc7271bcf53abb94442e1afd25bc5cb0258e30469f54edaf67f1f4",
+    "game/native/gameplay_scenario/cutscene_descriptor_workspace.cpp": "bdbe4c7706c6e6e724acc1f335d8e5efc889361040dc3a63121044ab0997abff",
+    "game/native/gameplay_scenario/workspace_fullscreen_color.hpp": "9f4c879f585b76d02871a9cbf06ff8f95913a762afdc5db6b2bf09171c74f3d0",
+    "game/native/gameplay_scenario/workspace_fullscreen_color.cpp": "44000f48ad97e2a7288d27be8fa6da5603f670c74c3964fbaf5fad8085e97990",
+    "game/native/gameplay_scenario/cutscene_view_controls.hpp": "5eaa2b21f6e53e97658a9d31dc9181f412944ef8957cf995600cbe1d5b884b9d",
+    "game/native/gameplay_scenario/cutscene_view_controls.cpp": "14ebce9a2df239efd9330001acc19d8debf4ce5e0d742c86bc08ba8b0e830039",
+    "game/native/gameplay_scenario/cutscene_descriptor_loader.hpp": "6f46f1c014631af5f7cb1ae005146df87a42e778a8318c26094f060f9dce0d5e",
+    "game/native/gameplay_scenario/cutscene_descriptor_loader.cpp": "ea92bcab4321381e9f2b4e53b656f91037290438e9d2deb3125f909678cb249d",
+    "game/native/gameplay_scenario/cutscene_playback.hpp": "f3a74816083fb65983c860d626f3c6c6b59b99ae5bf03ea51153cc84fd00b6fe",
+    "game/native/gameplay_scenario/cutscene_playback.cpp": "9b1f5b0695d3816935979f07ff4b4aaf970f3dd28359778982d8b983c405c668",
+    "game/native/gameplay_scenario/CMakeLists.txt": "008358802e6580236fe08aea0a2070380663ae562f3939877985895f9b93b3ed",
+    "docs/native-gameplay/CUTSCENE_VIEW_CONTROLS.md": "5aa02246cc0be5d16a9c774a7170e95ddd25652f828c9ad928e9a09112b6870f",
+    "docs/native-gameplay/CUTSCENE_DISPLAY.md": "5891fed7888d29e370d8b1f16cbd56390041ccc2dabacbe49bdef61d2afc984e",
+    "tools/native_reconstruction/fullscreen_color_tests.cpp": "6467ed841009127f77323b28543742aaad309d2d8a40d01ddaa9b51aa02e47bf",
+    "tools/native_reconstruction/verify_fullscreen_color.py": "720ab7b2c9886b3b94a1e21e260d228c9b600f35bdebaa74f363d05a6a0927f1",
+    "tools/native_reconstruction/descriptor_workspace_tests.cpp": "b30edc2c139bdd6c3f287efa85a185e8c4f414dcb1d0e6767f6a84da391ffb52",
+    "tools/native_reconstruction/verify_descriptor_workspace.py": "655229dc85d0747c1d4f90920e5e99a2449507cbf507a35c3d4de7ed38b00f06",
+    "tools/native_reconstruction/cutscene_view_controls_tests.cpp": "76953df3057e39bd0c2201baaa9cce82a53811f444e42039655582ff104396b9",
+    "tools/native_reconstruction/verify_cutscene_view_controls.py": "1af9a749d76a5bfbfbbe7f9413658363cc92717314d15e3924ff2b183980409c",
+    "tools/native_reconstruction/cutscene_descriptor_loader_tests.cpp": "b022c335184c5fac56d1f4ae29868cf7aa17d58f4da791fd70682bd6d2a08104",
+    "tools/native_reconstruction/verify_cutscene_descriptor_loader.py": "0f1bb141bcce057955d8ff4a6bbed1dd6e43f9c7357b89aac8d09bb88695dd60",
+    "tools/native_reconstruction/cutscene_playback_tests.cpp": "2260635b94857695bdf498a88027339684319505286f63eab7b22ac64b029689",
+    "tools/native_reconstruction/verify_cutscene_playback.py": "ba78548e0e92ebc1d033b3f57ea23edc93c0c837bdb0c93eb51daafb4ed2808c",
+    "tools/native_reconstruction/cutscene_view_owner_tests.inc": "1c84ff9e21d607d0a6546ce6f5cc2fd57abcc92d3546b3abf89819fdbbb44e7e",
+    "tools/native_reconstruction/audit_event_workspace_indices.py": "fad462817e71dbb0957adfd951ce88e09c6daa922d1bca6b4a82990b4ba0b0c0"
+  },
+  "receipts": {
+    "fullscreen_llvm": {
+      "path": "build-native-sjuni/fullscreen-color-llvm-v3/receipt.json",
+      "sha256": "0315f05eda23974815a7d5600da449d5a87e3a95f33409ab08cc78e74b5d782f",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 1179655,
+        "cases": 131072,
+        "samples": 131072,
+        "original_calls": 524288,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "fullscreen_gcc": {
+      "path": "build-native-sjuni/fullscreen-color-gcc-v3/receipt.json",
+      "sha256": "7978853b0655b85dcb0c7a55bdb91d505c9bac3e905cff35051fd4bd024be326",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 1179655,
+        "cases": 131072,
+        "samples": 131072,
+        "original_calls": 524288,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "workspace_llvm": {
+      "path": "build-native-sjuni/descriptor-workspace-llvm-v3/receipt.json",
+      "sha256": "b4fc283c528ed31051eece173289b5c33000cc70017047601356f01cb925b58f",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "owned_scenes": 1097,
+        "owned_color_keys": 4058,
+        "owned_samples": 12174,
+        "checks": 714870,
+        "cases": 8192,
+        "consumed_frames": 1171,
+        "retained_tail_records": 158369,
+        "stale_refusals": 8191,
+        "original_calls": 81464,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "workspace_gcc": {
+      "path": "build-native-sjuni/descriptor-workspace-gcc-v3/receipt.json",
+      "sha256": "a746b37c6c3abe0b71385c22636ef808484b1c126bb620e4c51bf6ed1ae06cb0",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "owned_scenes": 1097,
+        "owned_color_keys": 4058,
+        "owned_samples": 12174,
+        "checks": 714870,
+        "cases": 8192,
+        "consumed_frames": 1171,
+        "retained_tail_records": 158369,
+        "stale_refusals": 8191,
+        "original_calls": 81464,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "view_llvm": {
+      "path": "build-native-sjuni/cutscene-view-controls-llvm-v4/receipt.json",
+      "sha256": "7d2cda6c5180fab81ec03fb6dc0b314629bb5c490a4fd5b3d3db6e810797e4b4",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 1128449,
+        "cases": 2048,
+        "visibility_writes": 3539200,
+        "color_bindings": 42520,
+        "consumed_frames": 55301,
+        "mask_gates": 524288,
+        "original_calls": 587288,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "view_gcc": {
+      "path": "build-native-sjuni/cutscene-view-controls-gcc-v4/receipt.json",
+      "sha256": "14d0300402396c7026bc44c778397622da7e70c9cdb115a20fea90a0e650efeb",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 1128449,
+        "cases": 2048,
+        "visibility_writes": 3539200,
+        "color_bindings": 42520,
+        "consumed_frames": 55301,
+        "mask_gates": 524288,
+        "original_calls": 587288,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "loader_llvm": {
+      "path": "build-native-sjuni/cutscene-descriptor-loader-llvm-v3/receipt.json",
+      "sha256": "00fb38c6c91afc63ebed06d00d5e04ab17f4773f0bd4101302e87e572b94f09b",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 21870333,
+        "loads": 1644,
+        "reparses": 1644,
+        "missing_reads": 3,
+        "sections": 146676,
+        "retained_tail_checks": 21546264,
+        "original_calls": 14265,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "loader_gcc": {
+      "path": "build-native-sjuni/cutscene-descriptor-loader-gcc-v3/receipt.json",
+      "sha256": "f5df5b42e12a4b4c3a52892d17f8c84b1cf53eaefac70a57be9f040c2195a74d",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 21870333,
+        "loads": 1644,
+        "reparses": 1644,
+        "missing_reads": 3,
+        "sections": 146676,
+        "retained_tail_checks": 21546264,
+        "original_calls": 14265,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "controller_llvm": {
+      "path": "build-native-sjuni/cutscene-playback-llvm-v22/receipt.json",
+      "sha256": "8829ccb12632b475a4f18e6dd9c0b92964e60c6d67181626604646f9127bff6a",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "view_ticks": 2048,
+        "view_guards": 26057,
+        "display_ticks": 32,
+        "display_guards": 26057,
+        "display_publications": 65,
+        "camera_ticks": 256,
+        "camera_guards": 26057,
+        "camera_publications": 257,
+        "close_refusals": 146888,
+        "checks": 2744818,
+        "controller_cases": 56173,
+        "advance_cases": 9363,
+        "acknowledgements": 9984,
+        "native_worker_calls": 89995,
+        "refusals": 17,
+        "original_calls": 510720,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "controller_gcc": {
+      "path": "build-native-sjuni/cutscene-playback-gcc-v22/receipt.json",
+      "sha256": "2d520a545688263b6010803a8a841369d2e48a95e3bc86763d62ab7b15c3138a",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "view_ticks": 2048,
+        "view_guards": 26057,
+        "display_ticks": 32,
+        "display_guards": 26057,
+        "display_publications": 65,
+        "camera_ticks": 256,
+        "camera_guards": 26057,
+        "camera_publications": 257,
+        "close_refusals": 146888,
+        "checks": 2744818,
+        "controller_cases": 56173,
+        "advance_cases": 9363,
+        "acknowledgements": 9984,
+        "native_worker_calls": 89995,
+        "refusals": 17,
+        "original_calls": 510720,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "application_llvm": {
+      "path": "build-native-sjuni/session-rooms-llvm-v7/receipt.json",
+      "sha256": "d02de0a78bebd5645e9df2e39cfca20eaa58e48743d4f524befa0aa48a660070",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "status": "passed",
+        "checks": 21728,
+        "rooms": 4,
+        "queries": 586,
+        "hits": 328,
+        "original_calls": 0,
+        "game_launched": false
+      },
+      "parent_tests": null,
+      "source_unchanged": null,
+      "source_drift": {}
+    },
+    "application_gcc": {
+      "path": "build-native-sjuni/session-rooms-gcc-v7/receipt.json",
+      "sha256": "313cc3ededadf2b2f9eace99e93fb4a77357285d3090a1a0e93bc8c64eb0b98a",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "status": "passed",
+        "checks": 21728,
+        "rooms": 4,
+        "queries": 586,
+        "hits": 328,
+        "original_calls": 0,
+        "game_launched": false
+      },
+      "parent_tests": null,
+      "source_unchanged": null,
+      "source_drift": {}
+    },
+    "parents_llvm": {
+      "path": "build-native-sjuni/session-rooms-parents-llvm-v6/receipt.json",
+      "sha256": "cc2b82777a78732f8effe160c32b27e1b3aed0903c4b890fa1000d498d86d400",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": null,
+      "parent_tests": 25,
+      "source_unchanged": null,
+      "source_drift": {}
+    },
+    "parents_gcc": {
+      "path": "build-native-sjuni/session-rooms-parents-gcc-v6/receipt.json",
+      "sha256": "ce4ea9eddb96bf9fca54f60fe9aa4e38125139e18a313142b46db280891cde4f",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": null,
+      "parent_tests": 25,
+      "source_unchanged": null,
+      "source_drift": {}
+    }
+  },
+  "event_namespace_audit": {
+    "path": "build-native-sjuni/event-workspace-indices-v4/receipt.json",
+    "sha256": "5471584277299256c01ba30bfba163c8c26086ae02a6ca8046904200c70509b5",
+    "status": "namespace_absent",
+    "assets": 0,
+    "original_bodies": 5,
+    "matched_instruction_comments": 338,
+    "writer_bound_established": false
+  },
+  "limits": [
+    "Source5EF740 uses existing SceneModels128 literal visibility bytes and independent numeric room-view masks. No duplicate style, light or frame bank is introduced.",
+    "The semantic descriptor workspace models actual startup-clear/load-tail/typed-consumption operations; every admitted0950 descriptor, including cold dm2500A EOF lookahead, is exercised. The separate resource2100..23FF/1D2FE0 writer remains an explicit unsupported boundary; absent E-model assets grant no node-index bound.",
+    "Complete5ED900/5F15A0/1AA3E0 loader flow is compared with independent actual-file read/formatting fixtures; production reads the real authored ScenarioArchive index. SDK disk scheduling and movie5EDA40 merging are not implemented by this checkpoint.",
+    "Controller bindings reject foreign state/clock, duplicates and callbacks; missing/stale capabilities preserve reached prefixes and refuse explicitly.",
+    "Source cohorts retain their exact copied dependencies. Current application v7/parent25 v6 independently compile and test the final production/CMake registration without drift. Later new cinematic-light files are excluded."
+  ]
+}

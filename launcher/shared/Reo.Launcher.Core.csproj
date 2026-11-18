@@ -1,13 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><DefineConstants>$(DefineConstants);REO_CROSS_PLATFORM</DefineConstants></PropertyGroup>
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><AllowUnsafeBlocks>true</AllowUnsafeBlocks><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><DefineConstants>$(DefineConstants);REO_CROSS_PLATFORM</DefineConstants></PropertyGroup>
   <ItemGroup>
+    <Compile Include="../SlowdownTransport.cs" Link="Shared/SlowdownTransport.cs" />
+    <Compile Include="../SlowdownMonitor.cs" Link="Shared/SlowdownMonitor.cs" />
+    <Compile Include="../SlowdownAnalysis.cs" Link="Shared/SlowdownAnalysis.cs" />
+    <Compile Include="../SlowdownTrace.cs" Link="Shared/SlowdownTrace.cs" />
     <Compile Include="../GraphicsOptions.cs" Link="Shared/GraphicsOptions.cs" />
     <Compile Include="../Cheats.cs" Link="Shared/Cheats.cs" />
     <Compile Include="../GameScenePreviewRenderer.cs" Link="Shared/GameScenePreviewRenderer.cs" />
     <Compile Include="../GlobalItemCatalogue.cs" Link="Shared/GlobalItemCatalogue.cs" />
     <Compile Include="../DeveloperOptions.cs" Link="Shared/DeveloperOptions.cs" />
     <Compile Include="../LogTail.cs" Link="Shared/LogTail.cs" />
-    <Compile Include="../LobbySettings.cs" Link="Shared/LobbySettings.cs" />
     <Compile Include="../GameRemoval.cs" Link="Shared/GameRemoval.cs" />
     <Compile Include="../AssetExports.cs" Link="Shared/AssetExports.cs" />
     <Compile Include="../RandomizerSeeds.cs" Link="Shared/RandomizerSeeds.cs" />
@@ -36,6 +39,8 @@
     <Compile Include="../GameCatalog.cs" Link="Shared/GameCatalog.cs" />
     <Compile Include="../Pad.cs" Link="Shared/Pad.cs" />
     <Compile Include="../InputMapping.cs" Link="Shared/InputMapping.cs" />
+    <Compile Include="../ModernCamera.cs" Link="Shared/ModernCamera.cs" />
+    <Compile Include="../IntroSkip.cs" Link="Shared/IntroSkip.cs" />
     <Compile Include="../HostNetworking.cs" Link="Shared/HostNetworking.cs" />
     <Compile Include="../BuildPathLinks.cs" Link="Shared/BuildPathLinks.cs" />
     <Compile Include="../LocalGameBuild.cs" Link="Shared/LocalGameBuild.cs" />
@@ -79,7 +84,7 @@
     <Compile Include="../GameSession.cs" Link="Shared/GameSession.cs" />
     <Compile Include="../GameImageCache.cs" Link="Shared/GameImageCache.cs" />
     <Compile Include="../GameWindowIcon.cs" Link="Shared/GameWindowIcon.cs" />
-    <Compile Include="../LobbyAutomation.cs" Link="Shared/LobbyAutomation.cs" />
+    <Compile Include="../GuestMemory.cs" Link="Shared/GuestMemory.cs" />
     <Compile Include="../GameArtwork.Download.cs" Link="Shared/GameArtwork.Download.cs" />
     <Compile Include="../GameArtwork.cs" Link="Shared/GameArtwork.cs" />
   </ItemGroup>

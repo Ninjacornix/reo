@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "status": "qualified owned LSC filename queue/control only",
+  "manifest_sha256": "85561766ee4b16868570701c045da3bf572ffdfd69433b1505805e3b4447434c",
+  "stage3_complete": false,
+  "production_selected": false,
+  "game_run": false,
+  "device_opened": false,
+  "lower_file_implementation_parity": false,
+  "original_cases": 53,
+  "original_operations": 339,
+  "original_instructions": 33211,
+  "unit_checks_per_compiler": 111,
+  "post_construction_allocations": 0,
+  "negative_operation_differences": {
+    "stale_head": 31,
+    "nonzero_repeat": 10,
+    "callback_state_order": 2,
+    "clear_stale_slots": 5
+  },
+  "receipts": {
+    "build-native-sjuni\\lsc-queue\\original-v2\\receipt.json": "7c4dd9e2532a90a4b2948a29c610d23beb97d59f4171652dfbbd56578d31fb20",
+    "build-native-sjuni\\lsc-queue\\original-freeze-v2\\manifest.json": "207a6a6a91df5c61006e2ad32af4a003cfacbec53f1770c32f9f1e109aa2e352",
+    "build-native-sjuni\\lsc-queue\\qualified-gcc-v1\\receipt.json": "770f2e9cec97f47542ba7c553e90e66a490e176b1358f7e1b92c6402a5a63c19",
+    "build-native-sjuni\\lsc-queue\\qualified-llvm-v1\\receipt.json": "58ffad034c7e897d8f50485b3a7d53aa79a0f18facf9ab3eb347b37ad6e2bcff",
+    "build-native-sjuni\\lsc-queue\\engine-v1\\receipt.json": "ac4d52e29ee34032e2600a6df8ea00b8178f94904f920b36cc73c180a1ad622f"
+  },
+  "parent_checks": {
+    "gcc": {
+      "status": "passed new independent LSC target in parent Release build",
+      "logs_sha256": {
+        "build": "d5f695235deb22e0ad0622d9e4201eac5dd7bc5a1845b75d0dddf0d8f9cedb3b",
+        "tests": "5be7402a26117a8b41fe3b635a693559f04be22bc6c99c4fac87a1f750a3bc5e"
+      },
+      "executable_sha256": "4329094946e956d6369848ea5d899ca2f00e1a531fae17b7a3eb592c0cd79bd7",
+      "registered_suites": 51
+    },
+    "llvm": {
+      "status": "passed new independent LSC target in parent Release build",
+      "logs_sha256": {
+        "build": "b5d2b9693df9f57cf1dcc67937c49da639f10c4f8e849e1c559112abf9a8365e",
+        "tests": "40afca8eba7428db106fd911d54f78dba43e21953e5accb087be45b4e231e2f2"
+      },
+      "executable_sha256": "cae6d8b9ba51dc8a2b67b8cee5b3a3651522b2fbafa6681ed5428ac078d0d415",
+      "registered_suites": 51
+    }
+  },
+  "additional_sources": {
+    "game/native/CMakeLists.txt": "47e49e67bda28870ba5dfc472bce8eea8a7e488ac523d12adccbd2bcad6e1088",
+    "game/native/lsc_queue/README.md": "3d438de64ee749854c6a09874b7742669e5727c884310ac8b7a94108f6ae4090",
+    "docs/native-media/LSC_QUEUE_IMPLEMENTATION.md": "07a1d4200c9b5c80da3ee50e7db0a796bfa8ffbab83aefa205b42ca02b4fed8f"
+  },
+  "limitations": [
+    "Original lower-file/strlen/diagnostic/notification ports are explicit external boundaries.",
+    "Actual retained file worker/publication and retirement ownership remain unimplemented.",
+    "Pool module lifetime, seamless decoder, movie and game integration remain."
+  ]
+}

@@ -4,6 +4,7 @@
 #include "mpeg2_vld_core.h"
 #include <array>
 #include <deque>
+#include <functional>
 #include <optional>
 #include <span>
 #include <stdexcept>
@@ -19,6 +20,7 @@ struct StreamPicture {
     uint64_t begin = 0, end = 0, ordinal = 0, gop = 0;
     uint16_t temporalReference = 0;
     uint8_t kind = 0;
+    uint32_t rate = 0, drop = 0, hours = 0, minutes = 0, seconds = 0, frames = 0;
     uint32_t width = 0, height = 0;
     bool progressive = false, closedGop = false, brokenLink = false;
     std::optional<PesTimestamp> timestamp;
@@ -101,7 +103,7 @@ class Mpeg2ElementaryStream {
     uint64_t pendingBase_ = 0, accepted_ = 0, ordinal_ = 0, gop_ = 0;
     bool failed_ = false, eof_ = false, sequence_ = false, sequenceExtension_ = false;
     bool progressiveSequence_ = false, closedGop_ = false, brokenLink_ = false;
-    uint32_t width_ = 0, height_ = 0;
+    uint32_t width_ = 0, height_ = 0, rate_ = 0, gopTime_ = 0;
     std::array<std::array<uint16_t, 64>, 4> matrices_{};
     std::optional<StreamPicture> current_;
     std::deque<StreamPicture> complete_;
@@ -181,6 +183,7 @@ class Mpeg2ElementaryStream {
                 throw std::runtime_error("Movie sequence change requires a new decoder session");
             width_ = width;
             height_ = height;
+            rate_ = rate;
             bits.get(10);
             bits.get(1);
             if (bits.get(1)) {
@@ -199,7 +202,7 @@ class Mpeg2ElementaryStream {
             sequence_ = true;
             sequenceExtension_ = false;
         } else if (code == 0xb8) {
-            bits.get(25);
+            gopTime_ = bits.get(25);
             closedGop_ = bits.get(1) != 0;
             brokenLink_ = bits.get(1) != 0;
             ++gop_;
@@ -210,6 +213,12 @@ class Mpeg2ElementaryStream {
             p.begin = begin;
             p.ordinal = ++ordinal_;
             p.gop = gop_;
+            p.rate = rate_;
+            p.drop = (gopTime_ >> 24) & 1;
+            p.hours = (gopTime_ >> 19) & 31;
+            p.minutes = (gopTime_ >> 13) & 63;
+            p.seconds = (gopTime_ >> 6) & 63;
+            p.frames = gopTime_ & 63;
             p.width = width_;
             p.height = height_;
             p.closedGop = closedGop_;
@@ -474,7 +483,11 @@ class Mpeg2ElementaryStream {
 // PES parsing is independent of decoding. The audio/private stream packets
 // remain on their existing CRI route; this class emits selected video bytes.
 class MpegProgramStream {
+  public:
+    using PacketObserver = std::function<void(uint8_t, const PesTimestamp&, std::span<const uint8_t>)>;
+  private:
     Mpeg2ElementaryStream& video_;
+    PacketObserver observer_;
     uint8_t stream_;
     std::vector<uint8_t> pending_;
     uint64_t accepted_ = 0, base_ = 0;
@@ -488,8 +501,13 @@ class MpegProgramStream {
     }
     void packet(std::span<const uint8_t> bytes) {
         const auto code = bytes[3];
-        if (code != stream_)
+        if (code != stream_ && (!observer_ || !((code >= 0xc0 && code <= 0xdf) || code == 0xbd || code == 0xbf)))
             return;
+        if (code == 0xbf) {
+            PesTimestamp packet;packet.packetOffset = base_;
+            observer_(code, packet, bytes.subspan(6));
+            return;
+        }
         size_t at = 6;
         PesTimestamp time;
         time.packetOffset = base_;
@@ -541,8 +559,12 @@ class MpegProgramStream {
         }
         if (at > bytes.size())
             throw std::runtime_error("PES header exceeds packet");
-        time.elementaryBegin = video_.accepted();
+        time.elementaryBegin = code == stream_ ? video_.accepted() : 0;
         time.elementaryEnd = time.elementaryBegin + bytes.size() - at;
+        if (observer_)
+            observer_(code, time, bytes.subspan(at));
+        if (code != stream_)
+            return;
         if (time.hasPts && at < bytes.size())
             video_.timestamp(time);
         video_.feed(time.elementaryBegin, bytes.subspan(at));
@@ -594,8 +616,9 @@ class MpegProgramStream {
     }
 
   public:
-    explicit MpegProgramStream(Mpeg2ElementaryStream& video, uint8_t stream = 0xe0)
-        : video_(video), stream_(stream) {
+    explicit MpegProgramStream(Mpeg2ElementaryStream& video, uint8_t stream = 0xe0,
+                               PacketObserver observer = {})
+        : video_(video), observer_(std::move(observer)), stream_(stream) {
         if (stream < 0xe0 || stream > 0xef)
             throw std::invalid_argument("Not a video PES stream");
     }

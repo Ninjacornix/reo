@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "status": "bounded SifInitRpc stage probe qualified; live stage attribution pending",
+  "patch_sha256": "d31881e4b99e651e4dc1293cb6af487fbf723e822a8bb7e104ad433883398f6c",
+  "dependency_receipt_sha256": "473ad00c8fcae9966455fc8f47047f2dccd619d747077fc1ffaec2c2e3444df6",
+  "evidence": {
+    "build-native-sjuni/cri-timer/playtest-v14/observations.json": "55f413ec4381d67234a986e902b0048b20a24f2ac498a33d2207e7ae17e039a1",
+    "build-native-sjuni/sif-init-timing/qualified-llvm-v2/receipt.json": "b7b4b77de81af86a0d99f8ee0e5417ad90d82acf5922ff0764a4a7e89417ac82",
+    "build-native-sjuni/sif-init-timing/qualified-gcc-v2/receipt.json": "1bc33d5db0e9edac775622c6abd110f1890bc609ea1010b2048bbbfdb944744e",
+    "build-native-sjuni/sif-init-timing/sdk/objects-llvm-v1/sif-init-sdk-receipt.json": "0d09095190d96e6b66d940984041d0e4257755f81264657e23bb3bb95ffc9fd3",
+    "build-native-sjuni/sif-init-timing/sdk/objects-gcc-v1/sif-init-sdk-receipt.json": "847790eac5feda29681c92496a64fa9b5380366cc3f5273f009030f953d1d6a4"
+  },
+  "game_probe_run": false,
+  "root_cause_confirmed": false
+}

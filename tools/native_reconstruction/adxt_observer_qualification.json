@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "status": "bounded original ABI observer qualified; actual game observation pending",
+  "manifest": {
+    "path": "tools/native_reconstruction/adxt_observer_manifest_v2.json",
+    "sha256": "01eeeb3c79476e1ab9bfa9f9014df0e283a4b281f768fb945baa91efdd27c723"
+  },
+  "native_archive_manifest": {
+    "path": "tools/native_reconstruction/adxt_service_divisor_manifest_v3.json",
+    "sha256": "40fb6372508627806234753ac8ff9dc32f821ce44d8c5ff049cb1ae2dcdd2975"
+  },
+  "evidence": {
+    "build-native-sjuni/adxt-binding/observer-protocol-llvm-v2/receipt.json": {
+      "sha256": "6ba6383f685887845092b08ff4aff2e96f3992dc5fe057139d2a671b3af764a9",
+      "status": "bounded original-call ADXT observer qualified with declared ports"
+    },
+    "build-native-sjuni/adxt-binding/observer-actual130-llvm-v3/receipt.json": {
+      "sha256": "00b214abc74323a5c09e03169fdbebea8e4d4ea8244ac8402c648cea3352cf91",
+      "status": "passed"
+    },
+    "build-native-sjuni/audio-media-factory/observer-llvm-v1/receipt.json": {
+      "sha256": "3f526232a80bd3adfd77c44e444b9833e76ffcd5534052e78ee9f97d3e641096",
+      "status": "native media factory protocol passed"
+    },
+    "build-native-sjuni/adxt-binding/observer-protocol-gcc-v2/receipt.json": {
+      "sha256": "2473048508f4ba97fc41b8e17a54aea77e8d5400f873e8c47ed94ede70576da4",
+      "status": "bounded original-call ADXT observer qualified with declared ports"
+    },
+    "build-native-sjuni/adxt-binding/observer-actual130-gcc-v3/receipt.json": {
+      "sha256": "ca8f282892f0abfe5cf77735719ead2258ad385cad26b69df8dfc8ed457b5d61",
+      "status": "passed"
+    },
+    "build-native-sjuni/audio-media-factory/observer-gcc-v1/receipt.json": {
+      "sha256": "224b765233dda4a8fb4082c8e0707a44e98f80587a16f312248e62873fedc322",
+      "status": "native media factory protocol passed"
+    }
+  },
+  "registered_entries": 33,
+  "full_ram_and_context_comparisons_per_compiler": 33,
+  "protocol_cases_per_compiler": 4,
+  "faults_detected_per_compiler": 1,
+  "actual_sdk_objects_per_compiler": 2,
+  "factory_scenarios_per_compiler": 12,
+  "factory_manifest_v1_v2_difference": "offline analyzer malformed/partial-input handling only; observer/factory bodies unchanged",
+  "documentation_sha256": "0dd42755fd665d589ee78932cc735dac292afb6b6be759bea3afdbec426f09a9",
+  "native_source_guest_binding": false,
+  "actual_runtime_acquisition": false,
+  "game_run": false,
+  "device_opened": false
+}

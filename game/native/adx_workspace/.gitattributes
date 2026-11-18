@@ -1,0 +1,2 @@
+# Preserve the published byte identity of the historical freeze receipt.
+frozen_identity.json -text whitespace=cr-at-eol

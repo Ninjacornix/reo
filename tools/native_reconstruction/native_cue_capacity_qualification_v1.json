@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "status": "seventeen-cue native controller passes80 suites on both compilers",
+  "evidence_sha256": {
+    "tools/native_reconstruction/native_cue_capacity_manifest_v2.json": "6cd0fcaeddaf4972131a6f5f35716e3747fca380ada3cf63feea15815af5d187",
+    "build-native-sjuni/media-cue-capacity-results-llvm-v2/receipt.json": "49b1cff4e0e2cf6d15402286fbe885f9c5d7d564d93059d35c5e9ebb67ae41e4",
+    "build-native-sjuni/media-cue-capacity-results-gcc-v2/receipt.json": "a33122e31778c83aca255721ca5affa82d643dc30181645f0e682e926017ad36"
+  },
+  "maximum_outstanding_cues": 17,
+  "lower_transfer_slots": 16,
+  "overflow_refused_at": 18,
+  "dense_samples_per_channel": 69649,
+  "delayed_and_prepared_pcm_digest_equal": true,
+  "game_launched": false,
+  "actual_native_workers": true,
+  "limitations": [
+    "Declares native output ports; no new game or physical audio device.",
+    "Original local collector cap assumes count ownership; arbitrary indirect mutation remains outside admission.",
+    "The initial delayed test awaited a partial block held by its own pending-header fence; corrected predicate then complete PCM checks pass.",
+    "New coherent candidate and game retest required."
+  ]
+}

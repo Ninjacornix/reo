@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "status": "native attenuation arithmetic and owned raw-volume lookup qualified; player/game integration pending",
+  "manifest_sha256": "ad0834e552a1bd5dc64b0549200a7343c367d970cacd3d4f5733b1562b20b38f",
+  "original_receipt": {
+    "path": "build-native-sjuni/adxt-attenuation/original-v3/receipt.json",
+    "sha256": "a1ef871ac397eed47e5eb903ea2dad4f38c90947ec1a6b0df192d1c9edafeb67",
+    "cases": 1870,
+    "instructions": 507764,
+    "expected_before_native_implementation": true
+  },
+  "evidence": {
+    "build-native-sjuni/adxt-attenuation/qualified-llvm-v1/receipt.json": {
+      "sha256": "2b1d3839185a319a8e6e3921493f8c5e8e41e9e764e9c2a44b4d2b9629c94fa3",
+      "status": "native signed attenuation and raw volume match owned setter/type5 observations",
+      "cases": 1856
+    },
+    "build-native-sjuni/adxt-attenuation/qualified-gcc-v1/receipt.json": {
+      "sha256": "f81b532500dfdaa19be8079e9395d5f8c01e3b38140af035255b772d495eb264",
+      "status": "native signed attenuation and raw volume match owned setter/type5 observations",
+      "cases": 1856
+    }
+  },
+  "detected_faults_per_compiler": 3,
+  "native_player_integrated": false,
+  "game_run": false,
+  "actual_audio_device_test": false,
+  "physical_decibel_units_claimed": false,
+  "retained_preparation_scopes": {
+    "original-v1": "source-audit range incorrectly spanned a separate getter companion; no replay",
+    "original-v2": "replay precondition incorrectly tested command type as uint32; actual producer stores uint16 and preserves adjacent bytes"
+  }
+}

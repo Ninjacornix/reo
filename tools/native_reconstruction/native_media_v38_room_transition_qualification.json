@@ -1,0 +1,792 @@
+{
+  "schema": 1,
+  "status": "actual V38 ordinary door transition reached ready room4, destination movement and clean normal retirement passed",
+  "analysis_only": true,
+  "game_launched_by_analysis": false,
+  "live_process_access": false,
+  "build_run": false,
+  "existing_evidence_modified": false,
+  "stage3_complete": false,
+  "source_revision": "ad93542da65d327af65422031ee1c4f3d58d35b7",
+  "executable_sha256": "1f6853aad57b6125d6ed3f20d5ed0ddd853fc67fb5a1330da7e8da5b5aa597a5",
+  "identity": {
+    "pid": 334112,
+    "image": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\game-cache\\eab8715b4c55b18e067ee26d5c1c7082123365a66797831b3ab102f51cff5b28\\reo_launcher_game.exe",
+    "creationFileTime": 134386775151610598,
+    "logs": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\sessions\\20261109-065827-488",
+    "controller": "Local\\REO-Pad-d36b6a990e0f4c1487b9f9b5a78b4e1d",
+    "executable_sha256": "1f6853aad57b6125d6ed3f20d5ed0ddd853fc67fb5a1330da7e8da5b5aa597a5",
+    "fixture_input": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\native-session-input.json",
+    "route": "gameplay-manual",
+    "background": true,
+    "background_capture": false,
+    "expected_movie_fault": false,
+    "expected_audio_stall": false,
+    "source_service_disabled": false,
+    "fixture_progression_unlocks": true,
+    "fixture_scenario": 0,
+    "card": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\gallery-cards\\3bd4edfaa6c2468795d36616ba238736",
+    "window_may_play_audio": true
+  },
+  "ordinary_pad_input_only": true,
+  "guest_writes": false,
+  "global_keyboard_input": false,
+  "focus_requested": false,
+  "door_evidence": {
+    "index": 2,
+    "rdt_offset": "0x63108",
+    "record_sha256": "2c54fd07e38f66239ef74018e1bda696dd447692648be4f6512d35e5526d8158",
+    "kind": 0,
+    "event": 4,
+    "corners_xz": [
+      [
+        9310,
+        12900
+      ],
+      [
+        9270,
+        12900
+      ],
+      [
+        9270,
+        13000
+      ],
+      [
+        9310,
+        13000
+      ]
+    ],
+    "height_min_max": [
+      25,
+      245
+    ],
+    "door_index": 2,
+    "destination_room": 4,
+    "destination_door": 0,
+    "yaw": 49152,
+    "selector_node60": 0
+  },
+  "cross_before": {
+    "seconds": 81.88999999995576,
+    "scenario": 1,
+    "room": 1,
+    "phase": 2,
+    "modal": 0,
+    "ui": 0,
+    "paused": 0,
+    "request": 0,
+    "loop_slot": 0,
+    "local": 0,
+    "ready": true,
+    "input_mode": 0,
+    "launch_humans": 1,
+    "human_slots": [
+      0
+    ],
+    "x": 9250.0,
+    "z": 12922.4609375,
+    "height": 20.0,
+    "yaw": 17602,
+    "interaction_offset": 0.0,
+    "actor_state": "01000a00",
+    "camera_heading": 0.21860338772511925,
+    "H0": 1,
+    "H4": 0,
+    "H6": 0,
+    "profile": 0,
+    "actor_class": 0,
+    "health": 2300,
+    "dynamic_state": 0,
+    "inhibitors": 134217728,
+    "pressed": 0,
+    "contact": "000000000000000000000000000000000000000000000000000000000000000000000000",
+    "probe_x": 9295.686722849268,
+    "probe_z": 12917.101520060192
+  },
+  "driver_initial": {
+    "seconds": 69.31199999997625,
+    "scenario": 1,
+    "room": 1,
+    "phase": 2,
+    "modal": 0,
+    "ui": 0,
+    "paused": 0,
+    "request": 0,
+    "loop_slot": 0,
+    "local": 0,
+    "ready": true,
+    "input_mode": 0,
+    "launch_humans": 1,
+    "human_slots": [
+      0
+    ],
+    "x": 8396.0,
+    "z": 13156.0,
+    "height": 0.0,
+    "yaw": 56500,
+    "interaction_offset": 0.0,
+    "actor_state": "01000100",
+    "camera_heading": 3.141592653589793,
+    "H0": 1,
+    "H4": 0,
+    "H6": 0,
+    "profile": 0,
+    "actor_class": 0,
+    "health": 2300,
+    "dynamic_state": 0,
+    "inhibitors": 134217728,
+    "pressed": 0,
+    "contact": "000000000000000000000000000000000000000000000000000000000000000000000000",
+    "probe_x": 8360.950392550925,
+    "probe_z": 13185.791358103748
+  },
+  "transition_observed": {
+    "seconds": 85.03099999995902,
+    "scenario": 1,
+    "room": 4,
+    "phase": 3,
+    "modal": 0,
+    "ui": 0,
+    "paused": 0,
+    "request": 1,
+    "loop_slot": 0,
+    "local": 255,
+    "ready": false
+  },
+  "destination_ready": {
+    "seconds": 86.45299999997951,
+    "scenario": 1,
+    "room": 4,
+    "phase": 2,
+    "modal": 0,
+    "ui": 0,
+    "paused": 0,
+    "request": 0,
+    "loop_slot": 0,
+    "local": 0,
+    "ready": true,
+    "input_mode": 0,
+    "launch_humans": 1,
+    "human_slots": [
+      0
+    ],
+    "x": 9450.8134765625,
+    "z": 12951.4658203125,
+    "height": 50.0,
+    "yaw": 16383,
+    "interaction_offset": 0.0,
+    "actor_state": "015f0100",
+    "camera_heading": 3.141592653589793,
+    "H0": 0,
+    "H4": 0,
+    "H6": 0,
+    "profile": 0,
+    "actor_class": 0,
+    "health": 2300,
+    "dynamic_state": 10,
+    "inhibitors": 0,
+    "pressed": 0,
+    "contact": "000101000028114600004842cd924a46ff3f00000000000002ff00000000000000000000",
+    "probe_x": 9496.81347635109,
+    "probe_z": 12951.470230507259
+  },
+  "destination_movement": {
+    "before": {
+      "seconds": 86.45299999997951,
+      "scenario": 1,
+      "room": 4,
+      "phase": 2,
+      "modal": 0,
+      "ui": 0,
+      "paused": 0,
+      "request": 0,
+      "loop_slot": 0,
+      "local": 0,
+      "ready": true,
+      "input_mode": 0,
+      "launch_humans": 1,
+      "human_slots": [
+        0
+      ],
+      "x": 9450.8134765625,
+      "z": 12951.4658203125,
+      "height": 50.0,
+      "yaw": 16383,
+      "interaction_offset": 0.0,
+      "actor_state": "015f0100",
+      "camera_heading": 3.141592653589793,
+      "H0": 0,
+      "H4": 0,
+      "H6": 0,
+      "profile": 0,
+      "actor_class": 0,
+      "health": 2300,
+      "dynamic_state": 10,
+      "inhibitors": 0,
+      "pressed": 0,
+      "contact": "000101000028114600004842cd924a46ff3f00000000000002ff00000000000000000000",
+      "probe_x": 9496.81347635109,
+      "probe_z": 12951.470230507259
+    },
+    "attempts": [
+      {
+        "axis": [
+          23000,
+          0
+        ],
+        "after": {
+          "seconds": 87.45299999997951,
+          "scenario": 1,
+          "room": 4,
+          "phase": 2,
+          "modal": 0,
+          "ui": 0,
+          "paused": 0,
+          "request": 0,
+          "loop_slot": 0,
+          "local": 0,
+          "ready": true,
+          "input_mode": 0,
+          "launch_humans": 1,
+          "human_slots": [
+            0
+          ],
+          "x": 9450.8134765625,
+          "z": 12951.4658203125,
+          "height": 50.0,
+          "yaw": 16383,
+          "interaction_offset": 0.0,
+          "actor_state": "015f0100",
+          "camera_heading": -1.5707963267948966,
+          "H0": 0,
+          "H4": 0,
+          "H6": 0,
+          "profile": 0,
+          "actor_class": 0,
+          "health": 2300,
+          "dynamic_state": 10,
+          "inhibitors": 0,
+          "pressed": 0,
+          "contact": "000101000028114600004842cd924a46ff3f00000000000002ff00000000000000000000",
+          "probe_x": 9496.81347635109,
+          "probe_z": 12951.470230507259
+        },
+        "distance": 0.0
+      },
+      {
+        "axis": [
+          -23000,
+          0
+        ],
+        "after": {
+          "seconds": 88.46899999998277,
+          "scenario": 1,
+          "room": 4,
+          "phase": 2,
+          "modal": 0,
+          "ui": 0,
+          "paused": 0,
+          "request": 0,
+          "loop_slot": 0,
+          "local": 0,
+          "ready": true,
+          "input_mode": 0,
+          "launch_humans": 1,
+          "human_slots": [
+            0
+          ],
+          "x": 9450.8134765625,
+          "z": 12951.4658203125,
+          "height": 50.0,
+          "yaw": 77,
+          "interaction_offset": 0.0,
+          "actor_state": "01000a00",
+          "camera_heading": -2.754987828072258,
+          "H0": 0,
+          "H4": 0,
+          "H6": 0,
+          "profile": 0,
+          "actor_class": 0,
+          "health": 2300,
+          "dynamic_state": 0,
+          "inhibitors": 134217728,
+          "pressed": 0,
+          "contact": "000101000028114600004842cd924a46ff3f00000000000002ff00000000000000000000",
+          "probe_x": 9451.15305847497,
+          "probe_z": 12997.464566861996
+        },
+        "distance": 0.0
+      },
+      {
+        "axis": [
+          0,
+          23000
+        ],
+        "after": {
+          "seconds": 89.46899999998277,
+          "scenario": 1,
+          "room": 4,
+          "phase": 2,
+          "modal": 0,
+          "ui": 0,
+          "paused": 0,
+          "request": 0,
+          "loop_slot": 0,
+          "local": 0,
+          "ready": true,
+          "input_mode": 0,
+          "launch_humans": 1,
+          "human_slots": [
+            0
+          ],
+          "x": 9417.7841796875,
+          "z": 12907.033203125,
+          "height": 50.0,
+          "yaw": 37634,
+          "interaction_offset": 0.0,
+          "actor_state": "01000a00",
+          "camera_heading": -2.6761971116685324,
+          "H0": 0,
+          "H4": 0,
+          "H6": 0,
+          "profile": 0,
+          "actor_class": 0,
+          "health": 2300,
+          "dynamic_state": 0,
+          "inhibitors": 134217728,
+          "pressed": 0,
+          "contact": "000101000028114600004842cd924a46ff3f00000000000002ff00000000000000000000",
+          "probe_x": 9397.094180317374,
+          "probe_z": 12865.948851772397
+        },
+        "distance": 55.36417544033149
+      }
+    ],
+    "moved": true
+  },
+  "driver_elapsed_seconds": 89.46899999998277,
+  "background": {
+    "records": 285,
+    "owned_window_records": 1425,
+    "visible_records": 285,
+    "foreground_records": 0,
+    "visible_nonminimized_records": 0,
+    "unique_human_ready_phase2_room4_samples": 198,
+    "first_room4_observer_seconds": 72.04700000002049,
+    "last_room4_observer_seconds": 284.26600000000326,
+    "room4_observed_span_seconds": 212.21899999998277,
+    "first_room4_human": {
+      "input_mode": 0,
+      "launch_humans": 1,
+      "slots": [
+        0
+      ],
+      "phase": 2,
+      "modal": 0,
+      "ui": 0,
+      "paused": 0,
+      "x": 9450.8134765625,
+      "height": 50.0,
+      "z": 12951.4658203125,
+      "actor_state": "015f0100",
+      "inhibited": 0,
+      "ready": true
+    },
+    "last_room4_human": {
+      "input_mode": 0,
+      "launch_humans": 1,
+      "slots": [
+        0
+      ],
+      "phase": 2,
+      "modal": 0,
+      "ui": 0,
+      "paused": 0,
+      "x": 9417.7841796875,
+      "height": 50.0,
+      "z": 12907.033203125,
+      "actor_state": "01000b00",
+      "inhibited": 0,
+      "ready": true
+    },
+    "receipt": {
+      "status": "owned process ended",
+      "identity": {
+        "pid": 334112,
+        "image": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\game-cache\\eab8715b4c55b18e067ee26d5c1c7082123365a66797831b3ab102f51cff5b28\\reo_launcher_game.exe",
+        "creationFileTime": 134386775151610598
+      },
+      "executable_sha256": "1f6853aad57b6125d6ed3f20d5ed0ddd853fc67fb5a1330da7e8da5b5aa597a5",
+      "source_sha256": "0ac633002ef0927963a79f40d3b88582c14f53a13c2c555b7815881a28763c83",
+      "overlay_code_signature_sha256": "f95fcd471de211e380747a7330e305220c8d5ffbbd9ed4d9c53a7e2da9e9da93",
+      "guest_writes": false,
+      "threads_suspended": false,
+      "focus_requested": false,
+      "desktop_read": false,
+      "records": 285,
+      "errors": [],
+      "elapsed_seconds": 285.26600000000326,
+      "output_sha256": "ca63614b0247012256538bf9484c21f12fbaf3e520d3f0d7107a03cdf790f016"
+    }
+  },
+  "launcher_check": {
+    "status": "native GameSession launch and retirement passed",
+    "selected": true,
+    "audio_selected": true,
+    "resource_selected": true,
+    "native_error": false,
+    "duration_completed": true,
+    "cue_owner_joined": true,
+    "audio_underrun_frames": 0,
+    "audio_stall_handshake": true,
+    "native_source_service_visits": 66917,
+    "source_service_handshake": true,
+    "background_window_handshake": true,
+    "media_error": false,
+    "forced_cleanup": false,
+    "exit_code": 0,
+    "movie_status": "Movies: native MP4",
+    "logs": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\sessions\\20261109-065827-488",
+    "elapsed_seconds": 301.6093777,
+    "game_launched": true,
+    "ui_window_constructed": false,
+    "route": "gameplay-manual",
+    "background": true,
+    "background_capture": false,
+    "fixture_progression_unlocks": true,
+    "expected_movie_fault": false,
+    "expected_audio_stall": false,
+    "source_service_disabled": false,
+    "fixture_scenario": 0,
+    "card": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\gallery-cards\\3bd4edfaa6c2468795d36616ba238736",
+    "subjective_av_confirmation": false,
+    "step3_complete": false
+  },
+  "exit": {
+    "pid": 334112,
+    "exitCode": 0,
+    "utc": "2026-11-09T06:03:36.3011638Z"
+  },
+  "native_audio_trace": {
+    "schema": 1,
+    "status": "observations parsed",
+    "file": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\sessions\\20261109-065827-488\\native-audio-control.csv",
+    "retention": "# dropped=0; owner_joined=1; control_snapshots=2",
+    "trace_version": 2,
+    "dropped_snapshots": 0,
+    "invalid_rows": [],
+    "counter_or_time_resets": [],
+    "snapshots": 16840,
+    "first_observation": {
+      "begin_ns": 298902836884400,
+      "output_frames": 0,
+      "underrun_frames": 0
+    },
+    "last_observation": {
+      "end_ns": 299183481946700,
+      "output_frames": 13455840,
+      "underrun_frames": 0
+    },
+    "shortage_windows": 0,
+    "measured_underrun_increase": 0,
+    "largest_shortage_windows": [],
+    "largest_service_gaps": [],
+    "limitations": [
+      "A counter increase is bounded by two control observations, not an individual audio-callback timestamp.",
+      "Late/skipped counters identify observed stream shortages; they do not prove their upstream cause.",
+      "Replacement or counter rebasing can hide per-stream increments; aggregate counts must not be summed across streams.",
+      "A service observation gap includes host scheduling and unobserved work.",
+      "Muted/gain state at an endpoint does not establish audibility during the whole interval.",
+      "Dropped/invalid records and activity after the last snapshot limit coverage; compare final native totals.",
+      "This analysis is neither an A/V synchronization check nor a controlled fix/retest."
+    ]
+  },
+  "final_reports": [
+    {
+      "line": 5047,
+      "text": "[NATIVE-AUDIO-SERVICE-REPORT] joined=1 visits=66917 order_deferrals=1"
+    },
+    {
+      "line": 5048,
+      "text": "[NATIVE-ADXT-SOURCE-REPORT] joined=1 frames=13456800 signal_frames=11126951 underrun_frames=0"
+    },
+    {
+      "line": 5049,
+      "text": "[NATIVE-AUDIO-REPORT] owner_joined=1 output_started=1 frames=13456800 signal_frames=11126951 underrun_frames=0 hard_failures=0 queue_rejections=0 native_sources=1 source_joined=1 submix_calls=28035 submix_failures=0"
+    },
+    {
+      "line": 5051,
+      "text": "[NATIVE-AUDIO-CUE-REPORT] joined=1 accepted=0 finished=0 records=0 failures=0"
+    },
+    {
+      "line": 5052,
+      "text": "[NATIVE-HOST-MOVIE-REPORT] joined=1 sources=6 delivered_frames=697 error=none"
+    },
+    {
+      "line": 5056,
+      "text": "[NATIVE-AUDIO-CUE-REPORT] joined=1 accepted=0 finished=0 records=0 failures=0"
+    },
+    {
+      "line": 5057,
+      "text": "[NATIVE-HOST-MOVIE-REPORT] joined=1 sources=6 delivered_frames=697 error=none"
+    }
+  ],
+  "resource_reports": [
+    {
+      "line": 261,
+      "text": "[NATIVE-RESOURCE-READS] mounted import=1 sources=86 route=e762b3602b9792b15ca946593f560839c2708bfc962bbb2b69dba4e1664d9a62 manifest=ae3668c7e98defe0eb16ce107490078451e9c2f57cb2fb87c162f37520f2600b overlay=none mode=synchronous-exact maxBytes=8388608"
+    },
+    {
+      "line": 690,
+      "text": "[NATIVE-RESOURCE-READS] payload successes=1 lba=17440187 sectors=1 bytes=2048"
+    },
+    {
+      "line": 706,
+      "text": "[NATIVE-RESOURCE-READS] payload successes=2 lba=17899462 sectors=1 bytes=2048"
+    },
+    {
+      "line": 722,
+      "text": "[NATIVE-RESOURCE-READS] payload successes=3 lba=18614986 sectors=1 bytes=2048"
+    },
+    {
+      "line": 738,
+      "text": "[NATIVE-RESOURCE-READS] payload successes=4 lba=17440188 sectors=1 bytes=2048"
+    },
+    {
+      "line": 799,
+      "text": "[NATIVE-RESOURCE-READS] payload successes=8 lba=17440192 sectors=1 bytes=2048"
+    },
+    {
+      "line": 920,
+      "text": "[NATIVE-RESOURCE-READS] payload successes=16 lba=17899464 sectors=1 bytes=2048"
+    },
+    {
+      "line": 2456,
+      "text": "[NATIVE-RESOURCE-READS] payload successes=32 lba=18552741 sectors=1 bytes=2048"
+    },
+    {
+      "line": 2596,
+      "text": "[NATIVE-RESOURCE-READS] payload successes=64 lba=18200544 sectors=1 bytes=2048"
+    },
+    {
+      "line": 2806,
+      "text": "[NATIVE-RESOURCE-READS] payload successes=128 lba=17673243 sectors=2 bytes=4096"
+    },
+    {
+      "line": 3682,
+      "text": "[NATIVE-RESOURCE-READS] payload successes=256 lba=17673065 sectors=3 bytes=6144"
+    }
+  ],
+  "resource_success_milestones": [
+    1,
+    2,
+    3,
+    4,
+    8,
+    16,
+    32,
+    64,
+    128,
+    256
+  ],
+  "resource_successes_lower_bound": 256,
+  "resource_successes_upper_bound_exclusive": 512,
+  "resource_total_exact": false,
+  "logged_resource_payload_failures": 0,
+  "logged_resource_payload_exceptions": 0,
+  "source_sha256": {
+    "build-native-sjuni/candidate-inputs-v38/source/recomp/overrides/native_resource_reads/runtime_adapter.cpp": "dbd8d2892eb74837edc38d012997274111d41e2c352520c0d7473fc1c7d018cf",
+    "build-native-sjuni/candidate-work-v38-retry1/project/recomp/overrides/native_resource_reads/runtime_adapter.cpp": "dbd8d2892eb74837edc38d012997274111d41e2c352520c0d7473fc1c7d018cf",
+    "build-native-sjuni/candidate-inputs-v38/source/recomp/overrides/native_adxt/ordinary_runtime.cpp": "5096f8f723548b6a7fb614144bc1246b9c92be4ca2530aca2f3210b6e88223b7",
+    "build-native-sjuni/candidate-work-v38-retry1/project/recomp/overrides/native_adxt/ordinary_runtime.cpp": "5096f8f723548b6a7fb614144bc1246b9c92be4ca2530aca2f3210b6e88223b7",
+    "build-native-sjuni/candidate-inputs-v38/source/recomp/overrides/native_adxt/source_profile.cpp": "c258a55e34d0a9d2cf0c7b56f91932888c3a70f649be7243adabf9498d22e96e",
+    "build-native-sjuni/candidate-work-v38-retry1/project/recomp/overrides/native_adxt/source_profile.cpp": "c258a55e34d0a9d2cf0c7b56f91932888c3a70f649be7243adabf9498d22e96e",
+    "build-native-sjuni/candidate-inputs-v38/source/recomp/overrides/native_sound_ram/composite_backend.cpp": "8be820507fb4c41b256e1d88cdfbb0e9815d861aa251e4268e082822b1cfff97",
+    "build-native-sjuni/candidate-work-v38-retry1/project/recomp/overrides/native_sound_ram/composite_backend.cpp": "8be820507fb4c41b256e1d88cdfbb0e9815d861aa251e4268e082822b1cfff97"
+  },
+  "source_bodies_match_sealed_kit_and_actual_project": true,
+  "previous_cases": [
+    {
+      "session": "20261109-063550-071",
+      "check": {
+        "status": "native GameSession launch and retirement passed",
+        "selected": true,
+        "audio_selected": true,
+        "resource_selected": true,
+        "native_error": false,
+        "duration_completed": true,
+        "cue_owner_joined": true,
+        "audio_underrun_frames": 0,
+        "audio_stall_handshake": true,
+        "native_source_service_visits": 138317,
+        "source_service_handshake": true,
+        "background_window_handshake": true,
+        "media_error": false,
+        "forced_cleanup": false,
+        "exit_code": 0,
+        "movie_status": "Movies: native MP4",
+        "logs": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\sessions\\20261109-063550-071",
+        "elapsed_seconds": 602.027423,
+        "game_launched": true,
+        "ui_window_constructed": false,
+        "route": "gameplay",
+        "background": true,
+        "background_capture": false,
+        "fixture_progression_unlocks": true,
+        "expected_movie_fault": false,
+        "expected_audio_stall": false,
+        "source_service_disabled": false,
+        "fixture_scenario": 0,
+        "card": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\gallery-cards\\cc66e7b078b146b2a84e4b431ea2d7b9",
+        "subjective_av_confirmation": false,
+        "step3_complete": false
+      },
+      "drivers": []
+    },
+    {
+      "session": "20261109-064738-265",
+      "check": {
+        "status": "native GameSession launch and retirement passed",
+        "selected": true,
+        "audio_selected": true,
+        "resource_selected": true,
+        "native_error": false,
+        "duration_completed": true,
+        "cue_owner_joined": true,
+        "audio_underrun_frames": 0,
+        "audio_stall_handshake": true,
+        "native_source_service_visits": 52259,
+        "source_service_handshake": true,
+        "background_window_handshake": true,
+        "media_error": false,
+        "forced_cleanup": false,
+        "exit_code": 0,
+        "movie_status": "Movies: native MP4",
+        "logs": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\sessions\\20261109-064738-265",
+        "elapsed_seconds": 241.6365504,
+        "game_launched": true,
+        "ui_window_constructed": false,
+        "route": "gameplay-manual",
+        "background": true,
+        "background_capture": false,
+        "fixture_progression_unlocks": true,
+        "expected_movie_fault": false,
+        "expected_audio_stall": false,
+        "source_service_disabled": false,
+        "fixture_scenario": 0,
+        "card": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\gallery-cards\\ce959c60bb1a456cbb6d5833a65632d1",
+        "subjective_av_confirmation": false,
+        "step3_complete": false
+      },
+      "drivers": [
+        {
+          "name": "room-transition-driver-v12.json",
+          "status": "no admitted door transition established by bounded ordinary input",
+          "error": null,
+          "elapsed_seconds": 97.375
+        },
+        {
+          "name": "room-transition-driver-v13.json",
+          "status": "failed",
+          "error": "[WinError 299] Only part of a ReadProcessMemory or WriteProcessMemory request was completed.",
+          "elapsed_seconds": null
+        }
+      ]
+    },
+    {
+      "session": "20261109-065221-230",
+      "check": {
+        "status": "native GameSession launch and retirement passed",
+        "selected": true,
+        "audio_selected": true,
+        "resource_selected": true,
+        "native_error": false,
+        "duration_completed": true,
+        "cue_owner_joined": true,
+        "audio_underrun_frames": 0,
+        "audio_stall_handshake": true,
+        "native_source_service_visits": 52695,
+        "source_service_handshake": true,
+        "background_window_handshake": true,
+        "media_error": false,
+        "forced_cleanup": false,
+        "exit_code": 0,
+        "movie_status": "Movies: native MP4",
+        "logs": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\sessions\\20261109-065221-230",
+        "elapsed_seconds": 241.6770541,
+        "game_launched": true,
+        "ui_window_constructed": false,
+        "route": "gameplay-manual",
+        "background": true,
+        "background_capture": false,
+        "fixture_progression_unlocks": true,
+        "expected_movie_fault": false,
+        "expected_audio_stall": false,
+        "source_service_disabled": false,
+        "fixture_scenario": 0,
+        "card": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\gallery-cards\\bb26620623ed49d1b1e459fed68065a1",
+        "subjective_av_confirmation": false,
+        "step3_complete": false
+      },
+      "drivers": [
+        {
+          "name": "room-transition-driver-v14.json",
+          "status": "no admitted door transition established by bounded ordinary input",
+          "error": null,
+          "elapsed_seconds": 95.0
+        },
+        {
+          "name": "room-transition-driver-v15.json",
+          "status": "failed",
+          "error": "[WinError 299] Only part of a ReadProcessMemory or WriteProcessMemory request was completed.",
+          "elapsed_seconds": null
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "One route and destination are validated, not every room, door or script.",
+    "RDT XZ probe geometry supports the target; actual transition establishes admission, not actor height alone.",
+    "Power-of-two native resource logging bounds success count; it does not provide an exact final counter or per-transition attribution.",
+    "One-Hz observer samples are not continuous focus history or physical video/audio continuity.",
+    "Earlier no-door runs established soak/retirement only; failed late WinError299 probes do not turn normal exit0 into a game crash.",
+    "This route includes no WGC/loopback capture or subjective synchronization judgment; final Step3 closure belongs to the aggregate gate."
+  ],
+  "evidence_sha256": {
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-065827-488/background-state-v4-receipt.json": "f90f698eda4be235bd890e2f43963c3bb67107142b5c45ef6160c3e4b3ca839d",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-065827-488/background-state-v4.jsonl": "ca63614b0247012256538bf9484c21f12fbaf3e520d3f0d7107a03cdf790f016",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-065827-488/exit.json": "d09fd0bbab60ede7a37f7b000a77ced57f5bcedc8f1231d9520d81d58545f586",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-065827-488/launch.json": "089b612bf8974b4ca0428c39416ccd9292ca986be9ef32adcdc4a3dcecd4daab",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-065827-488/native-audio-control.csv": "40e376f9e9231f86989ee56f14d6ffbf34532647fb3f406e97cfda56b320b6dd",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-065827-488/native-game-session-check.json": "0ff78c4f32bea906a49bb32084fbb9f903ccd6f64f2a0e776415690b43fd54f5",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-065827-488/native-game-session-running.json": "530830f5ac2ba2d833bfd05422c2caf464e00f17f00b494edbbb87acac675933",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-065827-488/room-driver.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-065827-488/room-driver.stdout.txt": "9d6b48796ca329c361388f89608891a21925298c01160d8ceae640ccd79206bd",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-065827-488/room-transition-driver-v16.json": "c14a7fc5e6df37fbba016d7428bec531ee252d23d51858b78172a58b71b47aa0",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-065827-488/stderr.log": "891d6d1a676ee09b60fe3fbac23271b5a9acbb32406039ac166394c73c64039d",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-065827-488/stdout.log": "6ab49238b41f1245cba95b9aa161dd2dad00c99e6523d83a06d7bbd637cce084",
+    "build-native-sjuni/v38-game-cases-v1/room-precise/progress.json": "1cdc8969624daed72d82dd66351f21eac76868ca8678f136f491e935f296b189",
+    "build-native-sjuni/first-room-door-targets-v1.json": "fde6b719e3e7e888e8b83cec0f6fcab57681a196d4c7d7dfce089fb5898bb779",
+    "build-native-sjuni/native-media-game-v38/native-media-package-receipt.json": "579d9d2f36be493d348e030e5e927df45307e71da2ffd8e4fba1ad4d5e0b8124",
+    "build-native-sjuni/candidate-inputs-v38/build-kit.json": "6c90686085228c52cb5833593204ece00d1ecc8895427c19494572329f920b83",
+    "build-native-sjuni/qualify_v38_room_transition.py": "31e01b3be50849118059386c242721892dcd7718e964fa5fc7c5c312796e64bd",
+    "tools/native_reconstruction/analyze_audio_control_trace.py": "874becefd4b2eb77c4011ab5993fe461123967a283974038f7b932f7bb3ea3da",
+    "tools/native_reconstruction/native_media_launcher_v38_qualification.json": "b964618b6c29df2cd0901932011d29edcfc59a0857d8981f4cf8e70b1acf37a7",
+    "build-native-sjuni/drive_room_transition_v16.py": "b327280cabb40fa54c47e81472d28513f8e6e54b3a5b7fe5cee08c7380612b6f",
+    "build-native-sjuni/run_v38_background_case_v5.py": "df40a2ec2fc6ee6d955e87ae9d4d592db265e05579827fdc4dbf92881ae565be",
+    "build-native-sjuni/observe_launcher_background_v4.py": "0ac633002ef0927963a79f40d3b88582c14f53a13c2c555b7815881a28763c83",
+    "build-native-sjuni/start_room_driver_v16.py": "a8c59a21f808f7e230227a5ebad7fd0c7ccca0e18d364515db7598dd10fc72ae",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-063550-071/native-game-session-check.json": "328a144b517167ceb4f7b7f8ceaa695eb8922ac3b6c73cb1926249f96f36a91d",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-063550-071/exit.json": "5a7cdf6d6aea17d5365b6cbc2b597ddd1065367d1f9c427bf9e149492ea13d34",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-064738-265/native-game-session-check.json": "77e2e97e27ec3f6a096822b01b1beda78347ecb2b0904e4a3205ef29ec00c6d4",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-064738-265/exit.json": "ee447fcdbfbd75786a232412e064c584ea811d945427111d45b0fdb441eecbc7",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-064738-265/room-transition-driver-v12.json": "c9c22b221c52e8357e7cd071752cb4c090d531b644571a2d6f388316803674cd",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-064738-265/room-transition-driver-v13.json": "c5bedee86d7ee595cf280300323d1385f9f0a50d6ffc5095744affe203257a31",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-065221-230/native-game-session-check.json": "5c55c4ca8301faeb14d732ce46b0542e0af90a2a2a8357750a3a3d6171aebcec",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-065221-230/exit.json": "58c7ebc129b157f63e1144bfb32a03b2b0d06ccce34d6ccad61e102142ed1b14",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-065221-230/room-transition-driver-v14.json": "5be79ba542b44442d8b796d999a9df423f2c469e9a5765ecb96890350a91b33c",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-065221-230/room-transition-driver-v15.json": "200af327f247c397ddd8e670747e97c39a18d43f33de0254c1d98a7bbabd9a5f",
+    "build-native-sjuni/v38-room-transition-analysis-v1/analysis.json": "b52b02a12d74c064e302aaa2de9b85fac6a3f0c217eece3fae0b4eea78c2cc0a",
+    "docs/native-media/NATIVE_MEDIA_V38_ROOM_TRANSITION.md": "732b39a0349329ff40ab4a1d9cd904c024ec2373ea186246a2415cf15b03de84"
+  }
+}

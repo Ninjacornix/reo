@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "status": "native temporal and joined timecodes qualified; complete short native GPU stream validated",
+  "manifest_sha256": "59c5ee75ab9945f5d27653892b9ba9ce40582bc8a6d36d42637e36f9668913e0",
+  "temporal": {
+    "cases": 83,
+    "operations": 399,
+    "snapshots": 482,
+    "original_instructions_per_compiler": 313992,
+    "detected_faults": 6
+  },
+  "joined": {
+    "cases": 121,
+    "operations": 507,
+    "snapshots": 628,
+    "original_instructions_per_compiler": 739484,
+    "detected_faults": 6,
+    "pre_native": true,
+    "earlier_52_original_results_unchanged": true
+  },
+  "receipts": {
+    "build-native-sjuni/movie-timestamp/qualified-gcc-v2/receipt.json": "6ec9ef1dfa2d4e1e2e76dbe3dbf7335461415adb1482d742e24b210742bdb96b",
+    "build-native-sjuni/movie-timestamp/qualified-llvm-v2/receipt.json": "c09e39ad2d276f9546e1f0013c295da36fa5dd2855388fb61e64398725fe50e3",
+    "build-native-sjuni/movie-timecode/qualified-gcc-v2/receipt.json": "bcadce21845e187b59cc366c91b2144935db4203b844d037e26a335d34fba787",
+    "build-native-sjuni/movie-timecode/qualified-llvm-v2/receipt.json": "2ffe4c97487634f260f317adb705b172f73bc4957c6dd9636c3ecc59abf2153d"
+  },
+  "original_receipts": {
+    "build-native-sjuni/movie-timestamp/original-gcc-v1/receipt.json": "11950188b82d07a95f5196cda341a75bebe353ed4000da6b33d8173b95bb4de5",
+    "build-native-sjuni/movie-timestamp/original-llvm-v1/receipt.json": "a445b6e3b9e2beb469050ce56663a42b0bfbf6550fe4aa4daf15ebb5c7d85db8",
+    "build-native-sjuni/movie-timecode/original-gcc-v6/receipt.json": "bc9bfece5d32b9290f4f87ed43d7ae0bdafbdc11bbf916349326c9180d374ac1",
+    "build-native-sjuni/movie-timecode/original-llvm-v6/receipt.json": "077ea04482b11ff2de87d7015b31515285b01118c1a1c7b8d405b3c00fdebf64"
+  },
+  "parent_suites": 70,
+  "parent_checks": {
+    "gcc": {
+      "build": {
+        "path": "build-native-sjuni/movie-timestamp/parent-gcc-build-v1.txt",
+        "sha256": "af77cf39f46e1b91de0bade499152df281498d19e12fc6ea2c7c648af83afb3a"
+      },
+      "tests": {
+        "path": "build-native-sjuni/movie-timestamp/parent-gcc-tests-v1.txt",
+        "sha256": "63e6b3e1c54e0c16b5db7ff2ae011b5d9c0edf8be6511bcd010d231ee3ca87f7"
+      }
+    },
+    "llvm": {
+      "build": {
+        "path": "build-native-sjuni/movie-timestamp/parent-llvm-build-v1.txt",
+        "sha256": "5a7df7f73d10bb9a6e7e3022df2ef8b798244ad0de44729a56f46439a79e4452"
+      },
+      "tests": {
+        "path": "build-native-sjuni/movie-timestamp/parent-llvm-tests-v1.txt",
+        "sha256": "29c2a5f7c0a65e7af69a2522b997f3e4fe2fcbc62720d95378f6bd3d6a678ecd"
+      }
+    }
+  },
+  "additional_sources": {
+    "game/native/movie_timestamp/README.md": "9d7161eb386c22399cfc1073c5732a0317ee708d1cfae80c5edb6a5e93aab5e3",
+    "docs/native-media/MOVIE_TIMESTAMP_RESULTS.md": "adbc5a4a41c3d9eac2e0445600b114716517df9d782379389f4b759d4e681c8a",
+    "tools/native_reconstruction/inventory_sfd_routes.py": "355b9aa984bde16b3a3019c836e38eba7b3ec1553669168bc00bcbe471da9060"
+  },
+  "game_run": false,
+  "audio_device_opened": false,
+  "production_selected": false,
+  "stage3_complete": false,
+  "file1_routes": {
+    "receipt": "build-native-sjuni/movie-routes/file1-v1/receipt.json",
+    "sha256": "dcfff404f0d6123b96b00b30530a315e26f025fd3f21fce02565d9f91cd1fd09",
+    "members": 201,
+    "bytes": 2256709632,
+    "embedded_audio_packet_members": 0
+  },
+  "clean_native_build": {
+    "receipt": "build-native-sjuni/movie-pipeline/clean-build-llvm-v1/receipt.json",
+    "sha256": "7bf044fe96c973cd7d8f231234a50fe46187db3ce2e563fb463b62fdd1d05299"
+  },
+  "gpu": {
+    "receipt": "build-native-sjuni/movie-pipeline/gpu-v2/receipt.json",
+    "sha256": "ae6e2f1cec82467923dee1887b8202cb0d16cd4f1808c3d5051a0080533b05e4",
+    "result": {
+      "status": "real GPU media pipeline checks passed",
+      "graphs": 2,
+      "pixel_sha256": "4eb588549f774d0691a29edd11c5a2865636f6a591245c4ed5dd21f9f8edeaa6",
+      "decoded": 195,
+      "presented": 195,
+      "whole_video_stream": true,
+      "renderer_fence_blocked_rebuild": true,
+      "game_run": false,
+      "audio_device_opened": false
+    },
+    "additional_sources": {
+      "tools\\native_reconstruction\\run_movie_pipeline_gpu.py": "bb9727f0338069c98285d6ff6a686bb0eb35d9f486394c172ac09dece1b7bed9",
+      "tools\\native_reconstruction\\movie_pipeline_gpu_check.cpp": "02ba6510c3bf8265adb2f86c422c5b0ff324d4732b49c8663f553c00843bffdf",
+      "tools\\parallel_gs_backend\\movie_runtime\\native_video_graph.h": "ea27f652bd43a4bece0c7e025dba9a42695cd7584b75b0762e0a4d6252186106",
+      "tools\\parallel_gs_backend\\movie_runtime\\native_frame_surface.h": "cddf676ebaf51ed15b9780470b5d6b78abccbced7bcd5a01d51a7cd3e9c08fef",
+      "tools\\parallel_gs_backend\\movie_runtime\\same_owner_movie_bridge.h": "a264ad2a03d5e25a400e6f580df69e04d5fd2a9119d0acdb86639a7de31af90c",
+      "tools\\parallel_gs_backend\\movie_runtime\\mpeg2_vld_core.h": "48cc80853c0497e264419278844c763feea6498bc6beb12c9c546cf26d3565c9",
+      "tools\\parallel_gs_backend\\movie_runtime\\mpeg2_stream.h": "000db1282240fa27ff6418e32082e28f1231d32fcfef44ffb02666038de0a0f9",
+      "tools\\parallel_gs_backend\\movie_runtime\\movie_picture_identity.h": "db7761cc817713848ff30c2baa109ce6329b7929f1952e86d75cfa10685ad625",
+      "tools\\parallel_gs_backend\\movie_runtime\\import_receipt.h": "0264773d9dfcc11d1f26470d2290ae2535ada68119f8b17c3461e1c3c6521798",
+      "tools\\parallel_gs_backend\\movie_runtime\\movie_asset_sha256.h": "6ba4d27eeb6ec04b34880755fac7aff9804b563d5c2eeb4cb606526271be707e",
+      "tools\\parallel_gs_backend\\movie_runtime\\assets\\movie_ipu_csc_nv12.spv": "cb5ed3a99141ff571222c2d46c55d2bd54134033fd5f131002c419c5562d17a8",
+      "tools\\parallel_gs_backend\\movie_runtime\\import_receipt.cpp": "4cf839849653515ee984a5a79c9534f282ab95aca68b95de139347d21e0c7899"
+    },
+    "independent_selected_payload_picture_counts": {
+      "I": 12,
+      "P": 55,
+      "B": 128
+    },
+    "unpaced_offline": true
+  },
+  "limitations": [
+    "Finite File1 profiles and exact original literals; no standards-correction or host-time synthesis.",
+    "The GPU result is a complete short 195-picture video stream with actual decoder/read fences; monitor cadence and audible synchronization remain separate.",
+    "File1 data has no embedded audio PES; the separate native ADX game-consumer route still requires integration and validation.",
+    "Broader geometries, logical/physical scheduler binding and coherent candidate/resource/media transitions still gate stage3."
+  ]
+}

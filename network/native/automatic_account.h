@@ -186,8 +186,10 @@ class Flow {
         if (button_ == Button::None)
             return {};
         attempts_++;
+        // Held for at least two game frames (30 Hz logic), then released for as long; the
+        // original menus take one press per released-then-held edge.
         pressAt_ = now + .08;
-        releaseAt_ = now + .40;
+        releaseAt_ = now + .20;
         return {button_};
     }
 };

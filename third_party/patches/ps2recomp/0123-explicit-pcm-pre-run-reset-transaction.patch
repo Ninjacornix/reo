@@ -1,0 +1,279 @@
+diff --git a/ps2xRuntime/include/ps2_runtime.h b/ps2xRuntime/include/ps2_runtime.h
+index 7f8ad78..533392c 100644
+--- a/ps2xRuntime/include/ps2_runtime.h
++++ b/ps2xRuntime/include/ps2_runtime.h
+@@ -20,6 +20,7 @@
+ #include <atomic>
+ #include <array>
+ #include <mutex>
++#include <condition_variable>
+ #include <memory>
+ #include <filesystem>
+ #include <iostream>
+@@ -489,6 +490,26 @@ public:
+     // Accepted registrations are strongly retained; there is no unregister.
+     bool registerExternalWorker(std::shared_ptr<ExternalWorker> worker) noexcept;
+ 
++    // Explicit initialization transaction, not a PCM-use or worker-registration
++    // exemption. Keep this runtime alive through the token; release before run.
++    class PreRunSetupLease final
++    {
++    public:
++        PreRunSetupLease() noexcept = default;
++        PreRunSetupLease(PreRunSetupLease&& other) noexcept;
++        ~PreRunSetupLease();
++        PreRunSetupLease(const PreRunSetupLease&) = delete;
++        PreRunSetupLease& operator=(const PreRunSetupLease&) = delete;
++        PreRunSetupLease& operator=(PreRunSetupLease&&) = delete;
++        explicit operator bool() const noexcept { return m_runtime != nullptr; }
++    private:
++        friend class PS2Runtime;
++        explicit PreRunSetupLease(PS2Runtime* runtime) noexcept : m_runtime(runtime) {}
++        PS2Runtime* m_runtime = nullptr;
++    };
++    // Allocation-free; refuses sealed/stopped runtime. No mutex remains held.
++    PreRunSetupLease acquirePreRunSetup() noexcept;
++
+     using RecompiledFunction = void (*)(uint8_t *, R5900Context *, PS2Runtime *);
+ 
+     class GuestExecutionScope
+@@ -731,6 +752,9 @@ private:
+     // so signal/join can retain a snapshot without allocations or held locks.
+     std::shared_ptr<ExternalWorkerList> m_externalWorkers;
+     bool m_externalWorkersSealed = false;
++    std::condition_variable m_preRunSetupChanged;
++    size_t m_preRunSetupCount = 0;
++    void releasePreRunSetup() noexcept;
+ 
+     // TODO remove this later
+     std::atomic<uint32_t> m_debugPc{0};
+diff --git a/ps2xRuntime/include/ps2_syscalls.h b/ps2xRuntime/include/ps2_syscalls.h
+index 02bd49c..28ebcff 100644
+--- a/ps2xRuntime/include/ps2_syscalls.h
++++ b/ps2xRuntime/include/ps2_syscalls.h
+@@ -40,8 +40,8 @@ namespace ps2_syscalls
+ #define PS2_RUNTIME_HAS_DTX_LAYOUT_SNAPSHOT 1
+     // Host-only admission snapshot; no guest objects or pending requests copied.
+     PS2DtxCompatLayout dtxCompatLayoutSnapshot();
+-    void setDtxCompatLayout(const PS2DtxCompatLayout &layout);
+-    void clearDtxCompatLayout();
++    void setDtxCompatLayout(const PS2DtxCompatLayout &layout, PS2Runtime *runtime = nullptr);
++    void clearDtxCompatLayout(PS2Runtime *runtime = nullptr);
+     void EnsureVSyncWorkerRunning(uint8_t *rdram, PS2Runtime *runtime);
+     uint64_t GetCurrentVSyncTick();
+     uint64_t WaitForNextVSyncTick(uint8_t *rdram, PS2Runtime *runtime);
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+index 840ad34..a09a00a 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+@@ -296,7 +296,23 @@ void release(uint32_t voice) {
+     std::lock_guard<std::mutex> lock(mutex);
+     voices.erase(voice);
+ }
+-void reset() { if(backend_detail::invoke_void<&BackendApiV1::reset>())return; std::lock_guard<std::mutex> lock(mutex);reoAudioResetStreams();channels.clear();voices.clear();externalClock=false;lastTick=std::chrono::steady_clock::now(); }
++namespace {
++void resetLegacyState() { std::lock_guard<std::mutex> lock(mutex);reoAudioResetStreams();channels.clear();voices.clear();externalClock=false;lastTick=std::chrono::steady_clock::now(); }
++}
++bool resetBeforeRuntimeRun(PS2Runtime& runtime) noexcept {
++    auto setup=runtime.acquirePreRunSetup();
++    if(!setup)return false;
++    {
++        std::unique_lock<std::mutex> lock(backend_detail::registry.mutex);
++        while(backend_detail::registry.boot_resetting)backend_detail::registry.changed.wait(lock);
++        if(backend_detail::registry.mode!=backend_detail::Mode::unselected || backend_detail::registry.installing)return false;
++        backend_detail::registry.boot_resetting=true;
++    }
++    backend_detail::BootResetReservation reservation;
++    resetLegacyState(); // Never hold registry/runtime locks across host hooks.
++    return true;
++}
++void reset() { if(backend_detail::invoke_void<&BackendApiV1::reset>())return; resetLegacyState(); }
+ void shutdown() {
+     bool native=false;auto binding=backend_detail::shutdown_binding(native);
+     if(native){if(binding)(void)binding->shutdown();return;}
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h
+index 1ff2e9f..fe3248c 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.h
+@@ -1,7 +1,11 @@
+ #pragma once
+ #include <cstdint>
+ #include <cstddef>
++class PS2Runtime;
+ namespace ps2_cri_audio {
++// Only explicit runtime initialization may reset unselected legacy state without
++// selecting it. False requires the caller to use ordinary public reset().
++bool resetBeforeRuntimeRun(PS2Runtime& runtime) noexcept;
+ // Shared host stream also clocks bank voices before the first CRI PCM arrives.
+ void ensureHostOutput();
+ // Planar signed 16-bit PCM. Keys are opaque SJRMT stream handles.
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioDispatch.h b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioDispatch.h
+index 9200835..d555d96 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioDispatch.h
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioDispatch.h
+@@ -83,7 +83,7 @@ struct Binding {
+     }
+ };
+ enum class Mode { unselected, legacy, native };
+-struct Registry {std::mutex mutex;Mode mode=Mode::unselected;bool installing=false;std::weak_ptr<Binding> binding;};
++struct Registry {std::mutex mutex;std::condition_variable changed;Mode mode=Mode::unselected;bool installing=false,boot_resetting=false;std::weak_ptr<Binding> binding;};
+ inline Registry registry;
+ struct Worker final:PS2Runtime::ExternalWorker {
+     std::shared_ptr<Binding> binding;
+@@ -91,6 +91,12 @@ struct Worker final:PS2Runtime::ExternalWorker {
+     void requestStop() noexcept override {binding->stop();}
+     bool join() noexcept override {return binding->join();}
+ };
++struct BootResetReservation {
++    ~BootResetReservation(){
++        {std::lock_guard<std::mutex> lock(registry.mutex);registry.boot_resetting=false;}
++        registry.changed.notify_all();
++    }
++};
+ struct Reservation {
+     ~Reservation(){std::lock_guard<std::mutex> lock(registry.mutex);registry.installing=false;}
+ };
+@@ -104,7 +110,8 @@ struct Call {
+ };
+ inline Call acquire() noexcept {
+     Mode mode;std::shared_ptr<Binding> binding;
+-    {std::lock_guard<std::mutex> lock(registry.mutex);
++    {std::unique_lock<std::mutex> lock(registry.mutex);
++        while(registry.boot_resetting)registry.changed.wait(lock);
+         if(registry.mode==Mode::unselected)registry.mode=Mode::legacy;
+         mode=registry.mode;if(mode==Mode::native)binding=registry.binding.lock();
+     }
+@@ -125,7 +132,8 @@ template<auto Member,class T,class... Args>Result<T> invoke_result(T stopped,Arg
+ }
+ inline std::shared_ptr<Binding> shutdown_binding(bool& native) noexcept {
+     std::shared_ptr<Binding> value;
+-    {std::lock_guard<std::mutex> lock(registry.mutex);
++    {std::unique_lock<std::mutex> lock(registry.mutex);
++        while(registry.boot_resetting)registry.changed.wait(lock);
+         if(registry.mode==Mode::unselected)registry.mode=Mode::legacy;
+         native=registry.mode==Mode::native;if(native)value=registry.binding.lock();
+     }
+@@ -145,7 +153,7 @@ BackendInstallStatusV1 installBackendBeforeRunV1(PS2Runtime& runtime,BackendRegi
+     {std::lock_guard<std::mutex> lock(registry.mutex);
+         if(registry.mode==Mode::legacy)return BackendInstallStatusV1::legacy_in_use;
+         if(registry.mode==Mode::native)return BackendInstallStatusV1::native_in_use;
+-        if(registry.installing)return BackendInstallStatusV1::installation_busy;
++        if(registry.installing||registry.boot_resetting)return BackendInstallStatusV1::installation_busy;
+         registry.installing=true;
+     }
+     Reservation reservation;
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+index dbf6dc3..a01af18 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+@@ -89,9 +89,9 @@ namespace ps2_syscalls
+             ps2_cri_audio::configure(rna.handle,resolveRnaRing(rna.sjHandle0),resolveRnaRing(rna.sjHandle1),
+                 rna.channelCount,rna.sampleFreq,rna.volume,rna.playEnabled);
+         }
+-        void resetDtxRpcStateUnlocked()
++        void resetDtxRpcStateUnlocked(PS2Runtime *runtime = nullptr)
+         {
+-            ps2_cri_audio::reset();
++            if (!runtime || !ps2_cri_audio::resetBeforeRuntimeRun(*runtime)) ps2_cri_audio::reset();
+             g_pcmPending.clear();g_sjxReplies.clear();g_pcmRings.clear();
+             g_dtx_remote_by_id.clear();
+             g_dtx_transfer_by_id.clear();
+@@ -1339,18 +1339,18 @@ namespace ps2_syscalls
+         return g_dtxCompatLayout;
+     }
+ 
+-    void setDtxCompatLayout(const PS2DtxCompatLayout &layout)
++    void setDtxCompatLayout(const PS2DtxCompatLayout &layout, PS2Runtime *runtime)
+     {
+         std::scoped_lock lock(g_rpc_mutex, g_dtx_rpc_mutex);
+         g_dtxCompatLayout = layout;
+-        resetDtxRpcStateUnlocked();
++        resetDtxRpcStateUnlocked(runtime);
+     }
+ 
+-    void clearDtxCompatLayout()
++    void clearDtxCompatLayout(PS2Runtime *runtime)
+     {
+         std::scoped_lock lock(g_rpc_mutex, g_dtx_rpc_mutex);
+         g_dtxCompatLayout = {};
+-        resetDtxRpcStateUnlocked();
++        resetDtxRpcStateUnlocked(runtime);
+     }
+ 
+     bool resolveSoundDriverIopTransfer(PS2Runtime *runtime, uint32_t addr, uint32_t size, uint8_t *&ptr)
+diff --git a/ps2xRuntime/src/lib/game_overrides.cpp b/ps2xRuntime/src/lib/game_overrides.cpp
+index bc55790..ff9ce4d 100644
+--- a/ps2xRuntime/src/lib/game_overrides.cpp
++++ b/ps2xRuntime/src/lib/game_overrides.cpp
+@@ -177,7 +177,7 @@ namespace ps2_game_overrides
+     void applyMatching(PS2Runtime &runtime, const std::string &elfPath, uint32_t entry)
+     {
+         ps2_syscalls::clearSoundDriverCompatLayout();
+-        ps2_syscalls::clearDtxCompatLayout();
++        ps2_syscalls::clearDtxCompatLayout(&runtime);
+         ps2_stubs::clearMpegCompatLayout();
+ 
+         std::vector<Descriptor> descriptors;
+@@ -289,7 +289,7 @@ namespace
+         layout.urpcFnTableBase = 0x0034FED0u;
+         layout.urpcObjTableBase = 0x0034FFD0u;
+         layout.dispatcherFuncAddr = 0x002FABC0u;
+-        ps2_syscalls::setDtxCompatLayout(layout);
++        ps2_syscalls::setDtxCompatLayout(layout, &runtime);
+     }
+ 
+     void applyRecvxMpegCompat(PS2Runtime &runtime)
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+index 9e39876..2cc80e1 100644
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -3162,15 +3162,47 @@ bool PS2Runtime::registerExternalWorker(std::shared_ptr<ExternalWorker> worker)
+     catch (...) { return false; }
+ }
+ 
++PS2Runtime::PreRunSetupLease::PreRunSetupLease(PreRunSetupLease&& other) noexcept
++    : m_runtime(other.m_runtime)
++{
++    other.m_runtime = nullptr;
++}
++
++PS2Runtime::PreRunSetupLease::~PreRunSetupLease()
++{
++    if (m_runtime) m_runtime->releasePreRunSetup();
++}
++
++PS2Runtime::PreRunSetupLease PS2Runtime::acquirePreRunSetup() noexcept
++{
++    std::lock_guard<std::mutex> lock(m_externalWorkersMutex);
++    if (m_externalWorkersSealed || m_stopRequested.load(std::memory_order_acquire) ||
++        m_preRunSetupCount == size_t(-1)) return {};
++    ++m_preRunSetupCount;
++    return PreRunSetupLease(this);
++}
++
++void PS2Runtime::releasePreRunSetup() noexcept
++{
++    {
++        std::lock_guard<std::mutex> lock(m_externalWorkersMutex);
++        --m_preRunSetupCount;
++    }
++    m_preRunSetupChanged.notify_all();
++}
++
+ bool PS2Runtime::externalWorkerResetAllowed()
+ {
+     std::lock_guard<std::mutex> lock(m_externalWorkersMutex);
+-    return !m_externalWorkers || m_externalWorkers->empty();
++    return m_preRunSetupCount == 0 && (!m_externalWorkers || m_externalWorkers->empty());
+ }
+ 
+ void PS2Runtime::beginExternalWorkerRun()
+ {
+-    std::lock_guard<std::mutex> lock(m_externalWorkersMutex);
++    std::unique_lock<std::mutex> lock(m_externalWorkersMutex);
++    // A setup token holds no mutex across initialization hooks. Wait here,
++    // releasing the registration mutex, before any run can seal publication.
++    m_preRunSetupChanged.wait(lock, [this] { return m_preRunSetupCount == 0; });
+     if (m_externalWorkersSealed && m_externalWorkers && !m_externalWorkers->empty())
+         throw std::logic_error("An attached external worker runtime cannot restart");
+     m_externalWorkersSealed = true;

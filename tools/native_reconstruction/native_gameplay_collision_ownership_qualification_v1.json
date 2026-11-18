@@ -1,0 +1,304 @@
+{
+  "schema": 1,
+  "status": "native proxy ownership, model-derived regions and actor wall-caller boundary pass focused comparisons",
+  "whole_stage4_complete": false,
+  "game_launched": false,
+  "cohorts": {
+    "llvm": {
+      "receipt": "build-native-sjuni/gameplay-collision-ownership-llvm-v7/receipt.json",
+      "receipt_sha256": "9c2cafc221ddd1d482948d792a5a4c6ce684de7b35fba79baa66831a815138ef",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "results": {
+        "checks": 344728,
+        "maximum_error": 0,
+        "pool_sequences": 1500,
+        "derived_poses": 1200,
+        "wall_callers": 200,
+        "declared_matrix_sweep_ports": true,
+        "game_launched": false
+      },
+      "source_sha256": {
+        "game/native/gameplay_collision/collision.cpp": "84f32cd3e551a8da284e97d75ff34d4b229616e8c72b31b1adaaa9096bed129f",
+        "game/native/gameplay_collision/collision.hpp": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da",
+        "game/native/gameplay_collision/response.cpp": "f6a1a45cc02977713f68359cfe678ac4ec283c8dbf1baf8cb25dc6df0b7efddb",
+        "game/native/gameplay_collision/response.hpp": "22a85d653f51fd86e9666de1a748060b141fe02c3ead9ff0bc2022a7298f9f6d",
+        "game/native/gameplay_collision/sweep.cpp": "5a2b3290c393144d02afa11de0552b9118ecd053ba51d0f3fddc8b2324b28d1a",
+        "game/native/gameplay_collision/sweep.hpp": "56b60e42b5fde050a93d563c2c459b258dab0f805f0125c44bd4e7107532ab39",
+        "game/native/gameplay_collision/actors.cpp": "b25e36df67b93898f74883a9badb9b7d58c1bfe43f4dc29b966f0ea6ded9025c",
+        "game/native/gameplay_collision/actors.hpp": "1cd3018e15ddf32fe4e5facf124d28bcfc7243bda4f788728318f8e934483f78",
+        "game/native/gameplay_collision/ownership.cpp": "b41bd2b71c27650dd8bd8071fbdfe6a9c6030b88fa54570e704c4f9f41d54500",
+        "game/native/gameplay_collision/ownership.hpp": "76b7569576762e8eaf8204a9276fd87c32b81d925d2f46406808c227fb11e8e8",
+        "game/native/gameplay_collision/ownership_tests.cpp": "77d9fd14d5f4a314dbe0daf50647d2f577c5cb927ee93b69eae9cd7e0922f974",
+        "game/native/gameplay_actors/entity.hpp": "78a907f8659a6afd3c991aacfa338a025adc6f03e13407c6925c05346ac02fd3",
+        "game/native/gameplay_actors/entity.cpp": "0bec95182c41091cfa8682394c01d9d89d8c53921ffd383bdfe0baa739f2f369",
+        "tools/native_reconstruction/gameplay_collision_oracle/reference.hpp": "62e1f086a6a1c709ffd01f3e8cd3e674f6148406f560346934c9d7344b530203",
+        "tools/native_reconstruction/gameplay_collision_oracle/ownership_ports.hpp": "6ce4f81a22d95a9aadcddb1acabac634cc1b9f01b119b7fc3cf1e67e92639f63",
+        "third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
+        "tools/native_reconstruction/verify_gameplay_collision_ownership.py": "d2f4cb886265b37e79c531e44fc8ecd82d2c5e86eeb544976692ba31d8060b0d",
+        "recomp/config/output_ovl/o2/o2_005C1120_0x5c1120.cpp": "b034fa696f3713a0512552321c289a9cd09872b62345eede21228b7a522a7bc0",
+        "recomp/config/output_ovl/o2/o2_005C11B0_0x5c11b0.cpp": "f17de57695c98d4e405957f0287aae8a890d759705b05437be584fd33cc87a2c",
+        "recomp/config/output_ovl/o2/o2_005C12A0_0x5c12a0.cpp": "801bbb58ead4e143966d283bd2c70783e233ebfe176214a9f2b0459786aafcba",
+        "recomp/config/output_ovl/o2/o2_005C5D30_0x5c5d30.cpp": "97ca05a148931c8e1f0354b17c8fc627da0c25e0932ae76fcace0bac4ef49a59",
+        "recomp/config/output_ovl/o2/o2_005C6100_0x5c6100.cpp": "284a49cd8954aff71ce897118a92d23926a24acc7933cb78e31ff3d4cecc391b",
+        "recomp/config/output_ovl/o2/o2_005C62F0_0x5c62f0.cpp": "e0cee1932903105fc70060f3060b49db83d73928cb1d5d581148f7c49d20fdf1",
+        "recomp/config/output_ovl/o2/o2_005C63B0_0x5c63b0.cpp": "07e9c6683397acad55f1b4657e77ea716c12eddd128ff5b89dc6fdddd6135bab",
+        "recomp/config/output_ovl/o2/o2_005C6480_0x5c6480.cpp": "17bc2feca3cff67365ab636e2bae16b48691057a1042a0ea5f86ab4aca71adf7",
+        "recomp/config/output_ovl/o2/o2_005C6550_0x5c6550.cpp": "a751dda98960e3e149d0263f2f40215686198a18e3363d35f269e5f237ee8c12",
+        "recomp/config/output_ovl/o2/o2_005C66C0_0x5c66c0.cpp": "702ab2167166e79271bcd28d58380c6f15e702a72bb0dd5c67bec54cc28e41c5",
+        "recomp/config/output_ovl/o2/o2_005DA420_0x5da420.cpp": "a862a98eb0fa31deeee3641eda6c22bd68e261fe6a0f0b5ae7ee360587b7648c"
+      },
+      "original_intervals": [
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005C1120_0x5c1120.cpp",
+          "start": "0x5c1120",
+          "end_exclusive": "0x5c11b0",
+          "sha256": "b034fa696f3713a0512552321c289a9cd09872b62345eede21228b7a522a7bc0",
+          "matched_comments": 36,
+          "omitted_zero_words": 0,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005C11B0_0x5c11b0.cpp",
+          "start": "0x5c11b0",
+          "end_exclusive": "0x5c129c",
+          "sha256": "f17de57695c98d4e405957f0287aae8a890d759705b05437be584fd33cc87a2c",
+          "matched_comments": 58,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005C12A0_0x5c12a0.cpp",
+          "start": "0x5c12a0",
+          "end_exclusive": "0x5c1388",
+          "sha256": "801bbb58ead4e143966d283bd2c70783e233ebfe176214a9f2b0459786aafcba",
+          "matched_comments": 56,
+          "omitted_zero_words": 2,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005C5D30_0x5c5d30.cpp",
+          "start": "0x5c5d30",
+          "end_exclusive": "0x5c60fc",
+          "sha256": "97ca05a148931c8e1f0354b17c8fc627da0c25e0932ae76fcace0bac4ef49a59",
+          "matched_comments": 237,
+          "omitted_zero_words": 6,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005C6100_0x5c6100.cpp",
+          "start": "0x5c6100",
+          "end_exclusive": "0x5c62e8",
+          "sha256": "284a49cd8954aff71ce897118a92d23926a24acc7933cb78e31ff3d4cecc391b",
+          "matched_comments": 121,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005C62F0_0x5c62f0.cpp",
+          "start": "0x5c62f0",
+          "end_exclusive": "0x5c63b0",
+          "sha256": "e0cee1932903105fc70060f3060b49db83d73928cb1d5d581148f7c49d20fdf1",
+          "matched_comments": 47,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005C63B0_0x5c63b0.cpp",
+          "start": "0x5c63b0",
+          "end_exclusive": "0x5c6474",
+          "sha256": "07e9c6683397acad55f1b4657e77ea716c12eddd128ff5b89dc6fdddd6135bab",
+          "matched_comments": 48,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005C6480_0x5c6480.cpp",
+          "start": "0x5c6480",
+          "end_exclusive": "0x5c6550",
+          "sha256": "17bc2feca3cff67365ab636e2bae16b48691057a1042a0ea5f86ab4aca71adf7",
+          "matched_comments": 51,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005C6550_0x5c6550.cpp",
+          "start": "0x5c6550",
+          "end_exclusive": "0x5c6610",
+          "sha256": "a751dda98960e3e149d0263f2f40215686198a18e3363d35f269e5f237ee8c12",
+          "matched_comments": 47,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005C66C0_0x5c66c0.cpp",
+          "start": "0x5c66c0",
+          "end_exclusive": "0x5c680c",
+          "sha256": "702ab2167166e79271bcd28d58380c6f15e702a72bb0dd5c67bec54cc28e41c5",
+          "matched_comments": 83,
+          "omitted_zero_words": 0,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005DA420_0x5da420.cpp",
+          "start": "0x5da420",
+          "end_exclusive": "0x5da5c8",
+          "sha256": "a862a98eb0fa31deeee3641eda6c22bd68e261fe6a0f0b5ae7ee360587b7648c",
+          "matched_comments": 104,
+          "omitted_zero_words": 2,
+          "conflicts": 0
+        }
+      ]
+    },
+    "gcc": {
+      "receipt": "build-native-sjuni/gameplay-collision-ownership-gcc-v7/receipt.json",
+      "receipt_sha256": "5cd849b39afbc5b7fde6ccc891202adeba2030fe29e721572f96ba6548edf29f",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "results": {
+        "checks": 344728,
+        "maximum_error": 0,
+        "pool_sequences": 1500,
+        "derived_poses": 1200,
+        "wall_callers": 200,
+        "declared_matrix_sweep_ports": true,
+        "game_launched": false
+      },
+      "source_sha256": {
+        "game/native/gameplay_collision/collision.cpp": "84f32cd3e551a8da284e97d75ff34d4b229616e8c72b31b1adaaa9096bed129f",
+        "game/native/gameplay_collision/collision.hpp": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da",
+        "game/native/gameplay_collision/response.cpp": "f6a1a45cc02977713f68359cfe678ac4ec283c8dbf1baf8cb25dc6df0b7efddb",
+        "game/native/gameplay_collision/response.hpp": "22a85d653f51fd86e9666de1a748060b141fe02c3ead9ff0bc2022a7298f9f6d",
+        "game/native/gameplay_collision/sweep.cpp": "5a2b3290c393144d02afa11de0552b9118ecd053ba51d0f3fddc8b2324b28d1a",
+        "game/native/gameplay_collision/sweep.hpp": "56b60e42b5fde050a93d563c2c459b258dab0f805f0125c44bd4e7107532ab39",
+        "game/native/gameplay_collision/actors.cpp": "b25e36df67b93898f74883a9badb9b7d58c1bfe43f4dc29b966f0ea6ded9025c",
+        "game/native/gameplay_collision/actors.hpp": "1cd3018e15ddf32fe4e5facf124d28bcfc7243bda4f788728318f8e934483f78",
+        "game/native/gameplay_collision/ownership.cpp": "b41bd2b71c27650dd8bd8071fbdfe6a9c6030b88fa54570e704c4f9f41d54500",
+        "game/native/gameplay_collision/ownership.hpp": "76b7569576762e8eaf8204a9276fd87c32b81d925d2f46406808c227fb11e8e8",
+        "game/native/gameplay_collision/ownership_tests.cpp": "77d9fd14d5f4a314dbe0daf50647d2f577c5cb927ee93b69eae9cd7e0922f974",
+        "game/native/gameplay_actors/entity.hpp": "78a907f8659a6afd3c991aacfa338a025adc6f03e13407c6925c05346ac02fd3",
+        "game/native/gameplay_actors/entity.cpp": "0bec95182c41091cfa8682394c01d9d89d8c53921ffd383bdfe0baa739f2f369",
+        "tools/native_reconstruction/gameplay_collision_oracle/reference.hpp": "62e1f086a6a1c709ffd01f3e8cd3e674f6148406f560346934c9d7344b530203",
+        "tools/native_reconstruction/gameplay_collision_oracle/ownership_ports.hpp": "6ce4f81a22d95a9aadcddb1acabac634cc1b9f01b119b7fc3cf1e67e92639f63",
+        "third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
+        "tools/native_reconstruction/verify_gameplay_collision_ownership.py": "d2f4cb886265b37e79c531e44fc8ecd82d2c5e86eeb544976692ba31d8060b0d",
+        "recomp/config/output_ovl/o2/o2_005C1120_0x5c1120.cpp": "b034fa696f3713a0512552321c289a9cd09872b62345eede21228b7a522a7bc0",
+        "recomp/config/output_ovl/o2/o2_005C11B0_0x5c11b0.cpp": "f17de57695c98d4e405957f0287aae8a890d759705b05437be584fd33cc87a2c",
+        "recomp/config/output_ovl/o2/o2_005C12A0_0x5c12a0.cpp": "801bbb58ead4e143966d283bd2c70783e233ebfe176214a9f2b0459786aafcba",
+        "recomp/config/output_ovl/o2/o2_005C5D30_0x5c5d30.cpp": "97ca05a148931c8e1f0354b17c8fc627da0c25e0932ae76fcace0bac4ef49a59",
+        "recomp/config/output_ovl/o2/o2_005C6100_0x5c6100.cpp": "284a49cd8954aff71ce897118a92d23926a24acc7933cb78e31ff3d4cecc391b",
+        "recomp/config/output_ovl/o2/o2_005C62F0_0x5c62f0.cpp": "e0cee1932903105fc70060f3060b49db83d73928cb1d5d581148f7c49d20fdf1",
+        "recomp/config/output_ovl/o2/o2_005C63B0_0x5c63b0.cpp": "07e9c6683397acad55f1b4657e77ea716c12eddd128ff5b89dc6fdddd6135bab",
+        "recomp/config/output_ovl/o2/o2_005C6480_0x5c6480.cpp": "17bc2feca3cff67365ab636e2bae16b48691057a1042a0ea5f86ab4aca71adf7",
+        "recomp/config/output_ovl/o2/o2_005C6550_0x5c6550.cpp": "a751dda98960e3e149d0263f2f40215686198a18e3363d35f269e5f237ee8c12",
+        "recomp/config/output_ovl/o2/o2_005C66C0_0x5c66c0.cpp": "702ab2167166e79271bcd28d58380c6f15e702a72bb0dd5c67bec54cc28e41c5",
+        "recomp/config/output_ovl/o2/o2_005DA420_0x5da420.cpp": "a862a98eb0fa31deeee3641eda6c22bd68e261fe6a0f0b5ae7ee360587b7648c"
+      },
+      "original_intervals": [
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005C1120_0x5c1120.cpp",
+          "start": "0x5c1120",
+          "end_exclusive": "0x5c11b0",
+          "sha256": "b034fa696f3713a0512552321c289a9cd09872b62345eede21228b7a522a7bc0",
+          "matched_comments": 36,
+          "omitted_zero_words": 0,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005C11B0_0x5c11b0.cpp",
+          "start": "0x5c11b0",
+          "end_exclusive": "0x5c129c",
+          "sha256": "f17de57695c98d4e405957f0287aae8a890d759705b05437be584fd33cc87a2c",
+          "matched_comments": 58,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005C12A0_0x5c12a0.cpp",
+          "start": "0x5c12a0",
+          "end_exclusive": "0x5c1388",
+          "sha256": "801bbb58ead4e143966d283bd2c70783e233ebfe176214a9f2b0459786aafcba",
+          "matched_comments": 56,
+          "omitted_zero_words": 2,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005C5D30_0x5c5d30.cpp",
+          "start": "0x5c5d30",
+          "end_exclusive": "0x5c60fc",
+          "sha256": "97ca05a148931c8e1f0354b17c8fc627da0c25e0932ae76fcace0bac4ef49a59",
+          "matched_comments": 237,
+          "omitted_zero_words": 6,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005C6100_0x5c6100.cpp",
+          "start": "0x5c6100",
+          "end_exclusive": "0x5c62e8",
+          "sha256": "284a49cd8954aff71ce897118a92d23926a24acc7933cb78e31ff3d4cecc391b",
+          "matched_comments": 121,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005C62F0_0x5c62f0.cpp",
+          "start": "0x5c62f0",
+          "end_exclusive": "0x5c63b0",
+          "sha256": "e0cee1932903105fc70060f3060b49db83d73928cb1d5d581148f7c49d20fdf1",
+          "matched_comments": 47,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005C63B0_0x5c63b0.cpp",
+          "start": "0x5c63b0",
+          "end_exclusive": "0x5c6474",
+          "sha256": "07e9c6683397acad55f1b4657e77ea716c12eddd128ff5b89dc6fdddd6135bab",
+          "matched_comments": 48,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005C6480_0x5c6480.cpp",
+          "start": "0x5c6480",
+          "end_exclusive": "0x5c6550",
+          "sha256": "17bc2feca3cff67365ab636e2bae16b48691057a1042a0ea5f86ab4aca71adf7",
+          "matched_comments": 51,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005C6550_0x5c6550.cpp",
+          "start": "0x5c6550",
+          "end_exclusive": "0x5c6610",
+          "sha256": "a751dda98960e3e149d0263f2f40215686198a18e3363d35f269e5f237ee8c12",
+          "matched_comments": 47,
+          "omitted_zero_words": 1,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005C66C0_0x5c66c0.cpp",
+          "start": "0x5c66c0",
+          "end_exclusive": "0x5c680c",
+          "sha256": "702ab2167166e79271bcd28d58380c6f15e702a72bb0dd5c67bec54cc28e41c5",
+          "matched_comments": 83,
+          "omitted_zero_words": 0,
+          "conflicts": 0
+        },
+        {
+          "path": "recomp\\config\\output_ovl\\o2\\o2_005DA420_0x5da420.cpp",
+          "start": "0x5da420",
+          "end_exclusive": "0x5da5c8",
+          "sha256": "a862a98eb0fa31deeee3641eda6c22bd68e261fe6a0f0b5ae7ee360587b7648c",
+          "matched_comments": 104,
+          "omitted_zero_words": 2,
+          "conflicts": 0
+        }
+      ]
+    }
+  },
+  "limits": [
+    "128 bounded slots with native domain/generation rejection. No original double-free/foreign-memory behavior is reproduced.",
+    "Original-body comparison uses declared scalar matrix/vector ports and already qualified sweep result port.",
+    "Derived geometry rejects original undefined no-near-depth index and degenerate inverse input instead of fabricating a PS2 stack result.",
+    "Native room/scenario dispatch integration is still external to this library."
+  ]
+}

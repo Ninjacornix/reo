@@ -1,0 +1,29 @@
+# Native model bindings and room-object lifetime
+
+Status, 2026-11-09: interpreter qualification v13 closes the real native model-binding provider used by the room-object lifetime owner. It adds no opcode mask entries: coverage remains 316/432 ordinary and 289/432 offline, including original no-op bindings. Actual game installation, rendering and complete stock Program admission remain unproven. Stage 4 is incomplete.
+
+## Canonical targets and source behavior
+
+[`SceneModelBindings`](../../game/native/gameplay_scenario/scene_model_bindings.hpp) connects the canonical `SceneModels` owner to the native scene EntityStore. A binding retains a strong typed `ObjectInstance` lease and its generation-checked native identity, or a shared native 16-float matrix for task-owned pose data. Fresh reads validate the entity generation and read its **current** basis and W lanes. They do not use a copied actor/object pose as persistent shadow state. The source current-model pose and mutable external bound pose remain separate values.
+
+Actual `5D8280` sets one of 128 binding-mask bits, replaces the target, and copies all 64 current-pose bytes into the external matrix. `5D8300` clears the bit and target without copying back. Native replacement, unbind and live reads preserve those data effects. The native target identity is not an encoded original address. Retirement/reuse refuses a stale identity; a strong lease keeps storage safe until cleanup. Mutation and shutdown reject reentrant publication, and shutdown seals/clears the registry before releasing target payloads.
+
+The room-object constructor's mark is a **literal byte assignment of 1** at `6ADB4C`, distinct from the script visibility bit-80 operations. A resolved `FF` therefore writes style word 31's high byte to `01` and skips binding, as in the source. Other resolved indices 128 through 254 require an unowned pose and refuse creation. Retirement uses unguarded `5D8300` and a full 64-byte copyback in the original, so indices beyond 127 explicitly refuse that native retirement profile. The native owner does not invent missing slots or silently claim those writes succeeded.
+
+## Complete object pose and checked callers
+
+The source constructor `6ADA88` initializes an identity matrix. Binding copies all four W lanes into it; subsequent Euler reset `370320→1902D0` changes only basis XYZ. The existing 12-float `Basis` alone could not preserve this contract. `ObjectInstance` now owns the four canonical `pose_w` components alongside its basis. The full-retain provider route copies all 16 values back before object retirement. Calling the real adapter's legacy 12-float retain route explicitly fails because the missing W values cannot be guessed.
+
+Object yaw now uses the already qualified native original-polynomial transform math. The prior test-only Y-rotation port was corrected to preserve W and translation, matching the actual helper. Historical port-based receipts remain independent evidence. No shared math production implementation was modified.
+
+`ModelBindings::admit` and `healthy` give the room-object caller checked dependency admission while retaining compatibility with declared historical test providers. Creation and enable refuse invalid models before flag changes/allocation. Required post-call failures propagate as `model_refused`. Unsupported FP controls return `numeric_refused` before publication. `close_checked` retains failures and drains valid bindings, proxies and native instances; the compatibility `close` wrapper remains available. Repeated checked close retains the recorded result. The existing stale-handle, first-inactive lookup, retained slot-3 proxy and 64-instance-pool contracts remain unchanged in admitted paths.
+
+## Evidence and limits
+
+Both primitive binding cohorts pass 12,326 assertions, including 2,048 complete original `5D8280`/`5D8300` invocations over 512 cases and nine lifetime/error cases. They compare all 16 copied float representations, mutable external values, masks, generation reuse, foreign/wrong targets, explicit FF retirement refusal and reentrant shutdown. This data-copy qualification includes unused/nonfinite copied values; it does not establish exceptional arithmetic behavior.
+
+Both real-provider composition cohorts pass 128,424 assertions over 14 cases: **seven owned rooms** with stock and declared controlled variants. They construct 22 instances, perform 176 updates and 14 first disables, and execute the actual original remap/bind/unbind helpers inside the complete original room-object callers. Visibility/style aliasing, all 128 current poses, masks, target presence and all four canonical W lanes are compared. Controlled W changes are copied back by actual disable. Ten model and ten numeric refusal cases verify refusal before flags/allocation and visible teardown failure. Geometry retains its declared surrounding/tolerance profile; this is not a blanket bit-exact rendering or whole-physics claim.
+
+The refreshed historical-provider cohort also passes both compilers: 90,430 assertions over 21 cases, with 33 constructions, 264 updates, 21 disables and all retained-proxy/pool gates. Full v13 VM cohorts pass 12,289,928 assertions and 14,136 dispatcher invocations, checking 6,064 owned instruction comments. The new type-five position/half-54 fields are exported with nonzero preservation witnesses; the unqualified periodic-effect prototype is excluded from the exact compiled-unit inventory.
+
+These overlapping counts are not unique instructions or a percentage of whole-game completion. No game, live process, window, physical audio or performance test was used. Original register/memory scaffolding exists only in offline tests. Renderer consumption, actual model asset/pose initialization, native caller installation, remaining script/event families and complete stock/co-op/save validation remain separate work.

@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "status": "native shared session RNG and options match six complete original bodies on both compilers",
+  "stage4_complete": false,
+  "game_run": false,
+  "actual_callers_migrated": false,
+  "cohorts": {
+    "llvm": {
+      "receipt": "build-native-sjuni/gameplay-session-llvm-v2/receipt.json",
+      "sha256": "0d2399cfb12a4b5f7b7c848a4a22b894efe500478517af4af673d1888f96d657",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 2007552,
+        "rng_requests": 655360,
+        "option_cases": 4096,
+        "seed_cases": 256,
+        "original_bodies_executed": true,
+        "game_run": false
+      }
+    },
+    "gcc": {
+      "receipt": "build-native-sjuni/gameplay-session-gcc-v2/receipt.json",
+      "sha256": "768de2b2201aefb4cfe63b22222727ccf0ed8126f728cb9c4cb53f8c4a17c473",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 2007552,
+        "rng_requests": 655360,
+        "option_cases": 4096,
+        "seed_cases": 256,
+        "original_bodies_executed": true,
+        "game_run": false
+      }
+    }
+  },
+  "evidence_sha256": {
+    "recomp/config/output/sub_001AEC50_0x1aec50.cpp": "00403c9e03c1433a8f961053cac8cf544350f0c71c0e2a772d97496187c91b69",
+    "recomp/config/output/sub_001AEC80_0x1aec80.cpp": "3161c709c4844d8e192f7a9555f08fad7de6d0907c8f13a618fb38f53535aacd",
+    "recomp/config/output/sub_001AED60_0x1aed60.cpp": "501be9c2e88678b9c226c4c41011fc1a70f049d32b43ba69052970ac356009c2",
+    "recomp/config/output/sub_001AEDB0_0x1aedb0.cpp": "597fd9c68146b0270188ddd91a3b331421cfce78ffe6add413508fc1170508ce",
+    "recomp/config/output/sub_001AEE40_0x1aee40.cpp": "2b2d63e3a6d0a9821040ff2dc9dbc509c3a40777d400b065cff94b0158020ec0",
+    "recomp/config/output/sub_001BADF0_0x1badf0.cpp": "3baa46b30790033940f030cf7d16b805eb86ddd0be21ccc269538a2b1c9000d5",
+    "game/native/gameplay_session/session.hpp": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd",
+    "game/native/gameplay_session/session.cpp": "8f3f77da4ee0c08be63bd41687a330afa469bf33e0cad871951215a14ddc7a87",
+    "tools/native_reconstruction/gameplay_session/tests.cpp": "375944916af099d8b833a6d5f59ad2f1bf869b67943f71905bd5b15888760936",
+    "tools/native_reconstruction/gameplay_session/verify.py": "8f99ca1b0c98030773487af9da347828e6f0ac5f9a137722ae3ccdf5748ab57a",
+    "tools/native_reconstruction/gameplay_save/original_fixture.hpp": "aef7a22aefca2a7c512202ffa86f2ea11a1b16829212b27c48e195de82d18d48",
+    "build-native-sjuni/gameplay-session-llvm-v2/receipt.json": "0d2399cfb12a4b5f7b7c848a4a22b894efe500478517af4af673d1888f96d657",
+    "build-native-sjuni/gameplay-session-llvm-v2/compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/gameplay-session-llvm-v2/functions.h": "7afc585738c40ec5a15418d6ba7a345c05c6c857ae6a7a561b95a166d9cca557",
+    "build-native-sjuni/gameplay-session-llvm-v2/o2_functions.h": "2ef5ce0ef577aaf029e864e690f34907d91081e812dcb77f66e061f84313ef9d",
+    "build-native-sjuni/gameplay-session-llvm-v2/original.cpp": "8a98f2918dd922c21d66259c8097937cdb4ef3118ac33aa28b156e5a5d4922c4",
+    "build-native-sjuni/gameplay-session-llvm-v2/original_declarations.inc": "7afc585738c40ec5a15418d6ba7a345c05c6c857ae6a7a561b95a166d9cca557",
+    "build-native-sjuni/gameplay-session-llvm-v2/original_fixture.hpp": "aef7a22aefca2a7c512202ffa86f2ea11a1b16829212b27c48e195de82d18d48",
+    "build-native-sjuni/gameplay-session-llvm-v2/ps2_recompiled_functions.h": "7afc585738c40ec5a15418d6ba7a345c05c6c857ae6a7a561b95a166d9cca557",
+    "build-native-sjuni/gameplay-session-llvm-v2/ps2_recompiled_stubs.h": "2ef5ce0ef577aaf029e864e690f34907d91081e812dcb77f66e061f84313ef9d",
+    "build-native-sjuni/gameplay-session-llvm-v2/ps2_runtime.h": "2ef5ce0ef577aaf029e864e690f34907d91081e812dcb77f66e061f84313ef9d",
+    "build-native-sjuni/gameplay-session-llvm-v2/ps2_runtime_macros.h": "2ef5ce0ef577aaf029e864e690f34907d91081e812dcb77f66e061f84313ef9d",
+    "build-native-sjuni/gameplay-session-llvm-v2/ps2_stubs.h": "2ef5ce0ef577aaf029e864e690f34907d91081e812dcb77f66e061f84313ef9d",
+    "build-native-sjuni/gameplay-session-llvm-v2/ps2_syscalls.h": "2ef5ce0ef577aaf029e864e690f34907d91081e812dcb77f66e061f84313ef9d",
+    "build-native-sjuni/gameplay-session-llvm-v2/run.txt": "7cf3d39bafb60484a03aa097161e54b46ae03b898d922f7fb3c7facb5aaede91",
+    "build-native-sjuni/gameplay-session-llvm-v2/session.exe": "ce2b19a8d25281f4821d9a489a2b4d550856df883c3eb118e6bef659e6d0351d",
+    "build-native-sjuni/gameplay-session-llvm-v2/tests.cpp": "375944916af099d8b833a6d5f59ad2f1bf869b67943f71905bd5b15888760936",
+    "build-native-sjuni/gameplay-session-llvm-v2/source/game/native/gameplay_session/session.cpp": "8f3f77da4ee0c08be63bd41687a330afa469bf33e0cad871951215a14ddc7a87",
+    "build-native-sjuni/gameplay-session-llvm-v2/source/game/native/gameplay_session/session.hpp": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd",
+    "build-native-sjuni/gameplay-session-gcc-v2/receipt.json": "768de2b2201aefb4cfe63b22222727ccf0ed8126f728cb9c4cb53f8c4a17c473",
+    "build-native-sjuni/gameplay-session-gcc-v2/compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/gameplay-session-gcc-v2/functions.h": "7afc585738c40ec5a15418d6ba7a345c05c6c857ae6a7a561b95a166d9cca557",
+    "build-native-sjuni/gameplay-session-gcc-v2/o2_functions.h": "2ef5ce0ef577aaf029e864e690f34907d91081e812dcb77f66e061f84313ef9d",
+    "build-native-sjuni/gameplay-session-gcc-v2/original.cpp": "8a98f2918dd922c21d66259c8097937cdb4ef3118ac33aa28b156e5a5d4922c4",
+    "build-native-sjuni/gameplay-session-gcc-v2/original_declarations.inc": "7afc585738c40ec5a15418d6ba7a345c05c6c857ae6a7a561b95a166d9cca557",
+    "build-native-sjuni/gameplay-session-gcc-v2/original_fixture.hpp": "aef7a22aefca2a7c512202ffa86f2ea11a1b16829212b27c48e195de82d18d48",
+    "build-native-sjuni/gameplay-session-gcc-v2/ps2_recompiled_functions.h": "7afc585738c40ec5a15418d6ba7a345c05c6c857ae6a7a561b95a166d9cca557",
+    "build-native-sjuni/gameplay-session-gcc-v2/ps2_recompiled_stubs.h": "2ef5ce0ef577aaf029e864e690f34907d91081e812dcb77f66e061f84313ef9d",
+    "build-native-sjuni/gameplay-session-gcc-v2/ps2_runtime.h": "2ef5ce0ef577aaf029e864e690f34907d91081e812dcb77f66e061f84313ef9d",
+    "build-native-sjuni/gameplay-session-gcc-v2/ps2_runtime_macros.h": "2ef5ce0ef577aaf029e864e690f34907d91081e812dcb77f66e061f84313ef9d",
+    "build-native-sjuni/gameplay-session-gcc-v2/ps2_stubs.h": "2ef5ce0ef577aaf029e864e690f34907d91081e812dcb77f66e061f84313ef9d",
+    "build-native-sjuni/gameplay-session-gcc-v2/ps2_syscalls.h": "2ef5ce0ef577aaf029e864e690f34907d91081e812dcb77f66e061f84313ef9d",
+    "build-native-sjuni/gameplay-session-gcc-v2/run.txt": "7cf3d39bafb60484a03aa097161e54b46ae03b898d922f7fb3c7facb5aaede91",
+    "build-native-sjuni/gameplay-session-gcc-v2/session.exe": "25ce663d78aad24c5e35cf4be2331ff13f08e22f494b31abecfd11d548743554",
+    "build-native-sjuni/gameplay-session-gcc-v2/tests.cpp": "375944916af099d8b833a6d5f59ad2f1bf869b67943f71905bd5b15888760936",
+    "build-native-sjuni/gameplay-session-gcc-v2/source/game/native/gameplay_session/session.cpp": "8f3f77da4ee0c08be63bd41687a330afa469bf33e0cad871951215a14ddc7a87",
+    "build-native-sjuni/gameplay-session-gcc-v2/source/game/native/gameplay_session/session.hpp": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd"
+  },
+  "limits": [
+    "Original screen/audio/default observers are declared ports, not migrated provider behavior.",
+    "No actual game callers or world owners replaced in these isolated comparisons.",
+    "This shared RNG has two streams; the legacy save codec has a separately verified recurrence ordering."
+  ]
+}

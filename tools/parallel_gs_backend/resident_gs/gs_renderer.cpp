@@ -22,6 +22,7 @@
 #include "anisotropic_spirv.hpp"
 #include "scanout_spirv.hpp"
 #include "runtime/gs/shader_warmup.h"
+#include "runtime/diagnostics/slowdown_recorder.h"
 #include "shaders/swizzle_utils.h"
 #include "thread_id.hpp"
 #include "gs_util.hpp"
@@ -776,6 +777,8 @@ void GSRenderer::kick_compilation_tasks(const GSOptions &options)
 		if (task.program == shaders.vram_copy || task.program == shaders.binning ||
 		    task.program == shaders.upload[0] || task.program == shaders.upload[1]) critical.push_back(task);
 	const auto start = std::chrono::steady_clock::now();
+	reo::slowdown::capability(8);
+	reo::slowdown::emit(3, 1);
 	if (const char *path = std::getenv("REO_FRAME_PACING_FILE"); path && *path) {
 		const auto name = std::string(path) + ".warmup.csv";
 		if (auto *file = std::fopen(name.c_str(), "wb")) {
@@ -852,6 +855,7 @@ void GSRenderer::kick_compilation_tasks(const GSOptions &options)
 	LOGI("Shader warmup: %zu pipelines prepared in %.1f ms on %zu workers before gameplay.\n",
 	     progress->completed.load(), std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now()-start).count(), target_threads);
 	std::fputs("[SHADER-WARMUP] ready\n", stderr);
+	reo::slowdown::emit(3, 0);
 }
 
 GSRenderer::GSRenderer(PageTracker &tracker_)

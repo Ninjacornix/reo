@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "status": "exploratory V31 finite-prefix rate comparison; perceptual A/V and intended phase remain unconfirmed",
+  "report": {
+    "schema": 1,
+    "status": "exploratory finite-prefix cursor comparison; audible synchronization unconfirmed",
+    "association": {
+      "native_audio_slot": 0,
+      "native_audio_generation": 2,
+      "movie_generation": 4,
+      "movie_clip": 0,
+      "method": "explicit developer-selected trace identities; C4 and native output slot namespaces are not equated"
+    },
+    "range_seconds": [
+      5,
+      195
+    ],
+    "points": 5695,
+    "excluded_points": 0,
+    "median_difference_ms": -57.933333333338055,
+    "minimum_difference_ms": -71.93333333333385,
+    "maximum_difference_ms": -34.03333333333336,
+    "early_window": [
+      5,
+      25
+    ],
+    "late_window": [
+      175,
+      195
+    ],
+    "early_median_ms": -56.89999999999973,
+    "late_median_ms": -60.14999999999304,
+    "late_minus_early_ms": -3.249999999993314,
+    "maximum_snapshot_gap_ms": 17.6604,
+    "maximum_source_observation_age_ms": 17.6617,
+    "first_pair": {
+      "movie_line": 2911,
+      "audio_line": 7704,
+      "ordinal": 150,
+      "video_seconds": 5.005,
+      "inferred_mixer_cursor_seconds": 4.95,
+      "difference_ms": -54.999999999999716,
+      "snapshot_gap_ms": 10.9858,
+      "source_observation_age_ms": 10.9875
+    },
+    "last_pair": {
+      "movie_line": 8605,
+      "audio_line": 19103,
+      "ordinal": 5844,
+      "video_seconds": 194.9948,
+      "inferred_mixer_cursor_seconds": 194.93,
+      "difference_ms": -64.79999999999109,
+      "snapshot_gap_ms": 13.741,
+      "source_observation_age_ms": 13.7423
+    },
+    "evidence_sha256": {
+      "native-audio-control.csv": "d490a69c8e396c61c6684bcdbae60d8cefba569301c9df3d3474785bb21ff6a2",
+      "native-movie-producer.csv": "535a12b7b04ae76e91cd1a10b3d097a23360fa46ed62e17ba0768e8b0c1802f7"
+    },
+    "source_sha256": "c173d851682a4d158d7d280555045019a3175ef434323371e977715d2180d896",
+    "new_game_run": false,
+    "subjective_av_confirmation": false,
+    "step3_complete": false,
+    "limitations": [
+      "The cursor is inferred from copied source samples minus queued samples; it is not an audio endpoint presentation timestamp.",
+      "Source details and output queues are asynchronous observations; bounded matching does not make them atomic.",
+      "The 5..195-second finite prefix excludes startup and padded end-of-stream samples.",
+      "Movie time is ordinal * 1001/30000, not independent display scanout.",
+      "A stable relative rate does not establish an authored phase offset, perceptual sync or absence of every hitch.",
+      "Selected trace identities are explicit; the independent observed C4 recipe corroborates the E3 resource without equating slot namespaces."
+    ],
+    "pairs_sha256": "b679c8f43ffd7dea2323e42417a387f061e3d999e5b614ba53293c78311a1392"
+  },
+  "evidence_sha256": {
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-221600-845/exploratory-media-clock-comparison.json": "d0676482ff48c419c69c7442626137d084e24a90545fae36aa19c9c4c817e145",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261108-221600-845/exploratory-media-clock-pairs.csv": "b679c8f43ffd7dea2323e42417a387f061e3d999e5b614ba53293c78311a1392",
+    "build-native-sjuni/compare_v31_media_clock_v1.py": "c173d851682a4d158d7d280555045019a3175ef434323371e977715d2180d896",
+    "tools/native_reconstruction/host_movie_v31_prefetch_qualification.json": "82805869b108862500291b6c4cf55a8db912a5168d685ef91c8045e1613d4d5d",
+    "tools/native_reconstruction/owned_cue_admission_qualification_v1.json": "4a42111115656ed029f1f5a2163157cd46c1b023970d570a72e6371e2188a4e8",
+    "game/native/adxt_phased_player/player.cpp": "7e3c93a3a5f663e43fd847f523e5ed970ff6525029759f4a61a8be03903411e5"
+  },
+  "step3_complete": false
+}

@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "status": "V22 resolves exercised three-source missing-route failure and reaches responsive bar gameplay; broader Step3 remains open",
+  "source_revision": "1690d61ffaa169b707a14da963b2216ea9fa48e0",
+  "kit_sha256": "70ee8b7394319c836c773a858267a86aed5c63132312ee93588335a8df2f9d83",
+  "executable_sha256": "cf3837e1aa331963fe12f0cfa302088e61f1621fff721a6f41eeb6330b6a98bc",
+  "session": "build-native-sjuni/playtests/adxt-ordinary-v22",
+  "elapsed_seconds": 734.7660000000033,
+  "generic_supervisor_verdict": "not-evaluated",
+  "supervisor_outcome": "exited-no-fatal-diagnostic",
+  "fatal_diagnostics": 0,
+  "private_source_output": {
+    "joined": 1,
+    "frames": 34180800,
+    "signal_frames": 32026716,
+    "underrun_frames": 0
+  },
+  "triple_state3_samples_seconds": [
+    458.672,
+    459.672,
+    595.766
+  ],
+  "evidence_sha256": {
+    "build-native-sjuni/playtests/adxt-ordinary-v22/run.json": "d76a374a6f38b6c3912db98b9e13bcdfcd1ab6cac118abb742a669669fac0978",
+    "build-native-sjuni/playtests/adxt-ordinary-v22/session.json": "c9e727e6b2dca166a490f952cfbe89b9333a10888ea77a8157e533c4a56fffed",
+    "build-native-sjuni/playtests/adxt-ordinary-v22/player1/logs/stderr.log": "d1df5dd3f9f6aa9a620d7746c48673dbfe33c89119d88fea40fd3f966cf0f9b7",
+    "build-native-sjuni/playtests/adxt-ordinary-v22/movie-work.csv": "6e3e2bb89dc9389b21e4df45550f540e4ebf55a1602cf209039a0ea68ab92693",
+    "build-native-sjuni/playtests/adxt-ordinary-v22/frame-pacing.csv": "5d2884b449794f6859cb4830ba9b984506ee6dee44f5ea03b85e626856bdb39a",
+    "build-native-sjuni/playtests/adxt-ordinary-v22/movie-work-analysis.json": "d0ae898748ba757c0eb581466ef186d0417d4b58b934b029ecda08cc5016efbe",
+    "build-native-sjuni/playtests/adxt-ordinary-v22/movie-work-analysis.md": "5ee40ad53f8524330a4523455c0fed3a0925f7852a7bdd9770365e89a664270c",
+    "build-native-sjuni/playtests/adxt-ordinary-v22/audio-candidate-analysis.json": "2d37d16d53b3480e640e2a0734ccbd72207426ecea8b80ac8507bd17809cc576",
+    "build-native-sjuni/playtests/adxt-ordinary-v22/media-controls-v1-receipt.json": "6f87bc656d5de6220400f2019d1920e1acb07e300bbd92845eea03dbdc6a5af9",
+    "build-native-sjuni/playtests/adxt-ordinary-v22/media-controls-pause-v1-receipt.json": "baff5c6208374a7855220836511cba5250e3d24127a018fd3fbbcfbfc2ea0f63",
+    "build-native-sjuni/playtests/adxt-ordinary-v22/media-observations-v1-receipt.json": "8f5858c1aabc0a1d8950ff71486c3f6c1463dcf14756ee63eaa3f4b66b8504f3",
+    "build-native-sjuni/playtests/adxt-ordinary-v22/actors-room-transition.json": "a9c8741e76fdf8f29b1d10bfc80e641aa7c7632ac73ee55247762f260493f9ba",
+    "build-native-sjuni/playtests/adxt-ordinary-v22/actors-settled-after-movement.json": "c4eb1f0105205ea38d13c6ba103d0a5ce193b23924408a5ea659d46b9a97219e"
+  },
+  "source_document_sha256": "d4e3f09796b7cdb513b55138cb4052857241f4f88ff0975166039e84ec65c91c",
+  "waveform_equivalence_proven": false,
+  "audio_pause_validated": false,
+  "movie_stutter_fixed": false,
+  "stage3_complete": false,
+  "sleep_performed": false
+}

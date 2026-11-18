@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "cohort": "native-bank-group-capture-3",
+  "purpose": "Mechanically derived adapter2 with one versioned grouped source copy; source-derived after original expectations were known",
+  "parent_identity_sha256": "2d7efe5f594096d8e1083214341451bde5aa4396d1b7b37750c0a594e9f66616",
+  "candidate_sha256": {
+    "backend_status.h": "468176ea15bc537caaaa85ef9cb5f7bb089fa017709ecb20265ef8a0551396ba",
+    "compare_original.py": "3de1e273f0ae71757450d0ed0266491e6baa82548ecf93d2b197faa2243bb6d5",
+    "derive.py": "6b6243db1bb31bc618fc5d8316e0f2a4a65345d2723c281ab47c2e31ccb0e616",
+    "group_capture_tests.cpp": "3e38f8e0909a84284f2a5b5de4f7987e343e7795d76f87b54e4ce8cd9c3c8c67",
+    "packet_adapter.cpp": "9d1027a61fea8259670dd32df998bb7731b433472558bfd9ffc4c5700cd25cbb",
+    "packet_adapter.h": "74d60e96820978ddc5125b0bdf1db56b47abe2f62c7af76de50defcebc3e8d07",
+    "packet_adapter_tests.cpp": "3226ab030e1f9a1305207ac7ea5ed06992332e209f86589f4ac4135d91ff2916",
+    "test_capture.h": "2f60cb0cbb0562c098dc19030d6ff5c20acd0671b9100ef0eecb53b18cfc373f",
+    "verify.py": "d77119090ededf7a81605d20ac2cf1bfe3531635b0f3946bb5e47dc653ca5948"
+  },
+  "bank_v2_identity_sha256": "77b6c1bc20f6c1ea261ea19df9bcde3a5fa516c94e7b2c7d8d6503ca0f7aefca",
+  "actual125_header_sha256": "631db6363db9a8945711f5c305ed8bfb0628ca50b3625cc2492e2afb3987f126",
+  "actual125_receipt_sha256": "3019662f2fd62dbe4a9b3c7b99528bd631338424597ad78d2a4a04bcebeb3d6a",
+  "original_expected_observations_previously_seen": true,
+  "runtime_memory_provider_qualified": false,
+  "integration_installed": false,
+  "game_run": false,
+  "device_opened": false
+}

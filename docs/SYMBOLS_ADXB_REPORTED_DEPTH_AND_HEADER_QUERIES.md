@@ -1,0 +1,16 @@
+# ADXB reported depth, block size, filter and loop-presence queries
+
+Static File #1 US research, 2026-11-04. Original **SLUS_207.65**, SHA-256 **06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46**. All listed original bodies fully reviewed against header producers and service consumers. No game, audio or build executed. Accessors receive role credit from typed producers and callers rather than their short instruction shape.
+
+| Guest entry / source | Proposed label | Confidence | Evidence and remaining uncertainty |
+| --- | --- | --- | --- |
+| [0x124E88](../recomp/config/output/sub_00124E88_0x124e88.cpp) | `query_ADXB_reported_sample_bit_depth_by_format_and_subtype_candidate` | Confirmed full decision table and parsed bit/subtype producers | Format98==2(SPSD):subtype9A2->4bits,1->8bits,otherwise16. Format98==1(WAVE):subtype2->4bits,otherwise16. Allotherformats16. This result differs from storedD for some formats; no assumption of encoded-bit or device-output identity. |
+| [0x12D7C0](../recomp/config/output/sub_0012D7C0_0x12d7c0.cpp) | `get_ADXB_reported_sample_depth_from_outer_stream_candidate` | Confirmed complete typed adapter | Loadsinner4,tail124E88;retainsformat/subtypetable,notjustinnerbitsD. |
+| [0x12D7D8](../recomp/config/output/sub_0012D7D8_0x12d7d8.cpp) | `get_ADXB_samples_per_encoded_block_from_outer_stream_candidate` | Confirmed headerformula/free-outputadmission | Loadsinner4,tail124EE8;12CFD8usesresultasminimumfreeoutputhalfwords. Doesnotreportcurrentproducedsamples90. |
+| [0x12D7F0](../recomp/config/output/sub_0012D7F0_0x12d7f0.cpp) | `get_ADXB_encoded_block_byte_count_from_outer_stream_candidate` | Confirmed full adapter/headerproducer | Loadsinner4,tail124EF0signedbyteF. Header-specificnormalizationapplies;notacountofbuffersorrequests. |
+| [0x124F00](../recomp/config/output/sub_00124F00_0x124f00.cpp) | `get_ADXB_header_filter_parameter_candidate` | Confirmed126898producer/coefficientuse | Returnssignedhalf1C,usedasfilterinputto134EB0/126510forADX;clearedonotherreviewedheaders. Doesnotreadcurrentfilterstateorhardware. |
+| [0x12D820](../recomp/config/output/sub_0012D820_0x12d820.cpp) | `get_ADXB_header_filter_parameter_from_outer_stream_candidate` | Confirmed full typedadapter | Loadsinner4,tail124F00. Signextension/defaultzeroandheaderpresencecaveatsretained. |
+| [0x124F10](../recomp/config/output/sub_00124F10_0x124f10.cpp) | `get_ADXB_header_loop_presence_field_candidate` | Confirmed126AC8producer/control | Returnssignedhalf24;parserstoresBE16loopfieldandcontinuesonlyexact1. Areturned1doesnotprovealllaterloopmetadatawasvalidatedorapplied,especiallywhenheadercallerignoresparserstatus. |
+| [0x12D838](../recomp/config/output/sub_0012D838_0x12d838.cpp) | `get_ADXB_header_loop_presence_from_outer_stream_candidate` | Confirmed full typedadapter | Loadsinner4,tail124F10;notplaybackloopprogressorrepeatsetting. |
+
+Other tiny metadata readers whose units or downstream roles remain unresolved are not credited just because they return a header offset. Offsets, addresses and format/subtype tags are hexadecimal; reported bit depths are decimal. Related: [ADX loop/filter producers](SYMBOLS_ADX_HEADER_HISTORY_LOOP_AND_AINF.md), [SPSD/WAVE subtype producers](SYMBOLS_ADXB_SPSD_WAVE_AND_FORMAT_SIGNATURES.md), [central index](FUNCTION_INDEX.md).

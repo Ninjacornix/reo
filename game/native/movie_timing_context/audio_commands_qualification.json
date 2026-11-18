@@ -1,0 +1,115 @@
+{
+  "schema": 1,
+  "status": "requested native audio control scope implemented and qualified",
+  "manifest_sha256": "a56fe9b8a59458f8c4b38a92c0e1491049756634eba330934ea79e5ce5d8b790",
+  "requested_items": {
+    "pause_resume_to_native_session_and_same_filter": true,
+    "frame_step_clock_and_audio_reconciliation": true,
+    "buffering_repeated_pause_failures_and_shutdown_validation": true
+  },
+  "original_cases": 206,
+  "original_operations": 810,
+  "initial_and_final_snapshots": 1016,
+  "original_instructions_per_compiler": 709922,
+  "all_cases_frozen_before_native_audio_commands": true,
+  "detected_counterfactuals": 8,
+  "receipts": {
+    "build-native-sjuni/movie-audio-commands/qualified-gcc-video-v1/receipt.json": "afc4f85f6a5462c326dc5c7eed52643a8f1afdcc56ab8ff34594876ac9ca7244",
+    "build-native-sjuni/movie-audio-commands/qualified-llvm-video-v1/receipt.json": "dae54c8be5dfedc120722a3e643f968ab9c447b9c7d0e9a1d2448feeb256f0c4"
+  },
+  "original_receipts": {
+    "build-native-sjuni/movie-audio-commands/original-gcc-v3/receipt.json": "1c1cde93426becfd67321ec4dd2a7b335494f646dad4b21b929729d1535044f6",
+    "build-native-sjuni/movie-audio-commands/original-llvm-v3/receipt.json": "56d83ead6500b9064df42881366b5a5769d824774e83e00f3bc69ce3fd12fbf5"
+  },
+  "failed_original_receipts": {
+    "build-native-sjuni/movie-audio-commands/original-gcc-v1/receipt.json": "8f982e49728d8af147a6cb7b23756dd16c4f7d99d4cea2af9c2f81741c504c92",
+    "build-native-sjuni/movie-audio-commands/original-gcc-v2/receipt.json": "ff3f88ceda5fb3981f5ba2dc448932d65269e1505bc4e25d34321a4263ca033c"
+  },
+  "original_runner_corrections": [
+    "v1 omitted the final 166630 return delay slot; v2 omitted the 1656E8 return delay slot; v3 admits complete ranges. These are harness failures, not game incidents."
+  ],
+  "original_compiler_results_equal": true,
+  "native_compiler_transcripts_equal": true,
+  "parent_suites": 68,
+  "parent_checks": {
+    "gcc": {
+      "build": "90230072575018902f272c43260a5699190e5391dc8a27041905b40fdba5664c",
+      "tests": "6ea55970d44b0a9c93105d2724548eb7fa0dd1406a382a6143c24a2e23b39897"
+    },
+    "llvm": {
+      "build": "a63689ca965a277759487df42363189a6a8c4250840018da252f91fa54c4daed",
+      "tests": "cc15886f204db494795ed76b5c11cb6dba48874b21e76135e78057e6f1de5551"
+    }
+  },
+  "native_owner_matrix": {
+    "channels": [
+      1,
+      2
+    ],
+    "sample_rates": [
+      24000,
+      44100,
+      48000
+    ],
+    "buffer_user_frame_resume_cycles_per_configuration": 8,
+    "source_worker_decoder_pcm_mixer_and_session_controls": true,
+    "device_provider": "explicit callback/fence model; no real audio device",
+    "failure_cases": [
+      "status/frequency/discard failure retains earlier clock effects",
+      "pause failure retains request/nesting and preserves filter",
+      "filter refusal after discard",
+      "busy/reentry and callback-time owner release",
+      "foreign/stale keys before service tick",
+      "service-tick failure",
+      "detach refuses subsequent controls",
+      "provider detach refusal then successful join retry"
+    ]
+  },
+  "requalified_profiles": {
+    "audio_clock": {
+      "build-native-sjuni/movie-audio-clock/qualified-gcc-commands-v1/receipt.json": "28c7bbdd02d0435b64b29d69723c35f487cc3c0de7f9e07edcedf2356e71b09e",
+      "build-native-sjuni/movie-audio-clock/qualified-llvm-commands-v1/receipt.json": "1a23e290648303ae6246a191cf57adf05a5847d86464040d5f61303be5870e96"
+    },
+    "timing": {
+      "build-native-sjuni/movie-timing-context/qualified-gcc-video-v1/receipt.json": "861fabac03979682e83babe3dc5ad36ad68676b37b728528e36641709cea10f2",
+      "build-native-sjuni/movie-timing-context/qualified-llvm-video-v1/receipt.json": "a43facac00bc445bd4b9e9334dce06636c00ce3b17a4a8c660c26859a22131ed"
+    },
+    "buffering": {
+      "build-native-sjuni/movie-buffering/qualified-gcc-video-v1/receipt.json": "ca1cceeb8b6ffefd18bbc7c092ae920a1b3f4e3347c03f287b7d5957d15fc2b4",
+      "build-native-sjuni/movie-buffering/qualified-llvm-video-v1/receipt.json": "f8424f7f85f310a20e84836bb3aef7d8bf3192fec9500a878d6631ce02f93803"
+    }
+  },
+  "sdk_control_qualifications": {
+    "game\\native\\adxt_control_session\\qualification.json": "d4219b53bd8f5b79d7649c3a4a5c888fcd01c0bc63b1fee672ac462d0a40e5b9",
+    "game\\native\\adxt_control_session\\service_binding\\qualification.json": "e2ee05b64ca4858464f4df5f692d63513908acc4ed3b65cc619fa08803a9ac47",
+    "game\\native\\adxt_serviced_clock\\qualification.json": "68261a68b425ec72899820c95a81e067e6984444c6341fa87e07dd0bb5055404",
+    "game\\native\\adxt_estimated_clock\\qualification.json": "8edd30a520ade4916ee7125222177ac1d7766865befca6f0c35ba71e7efa1e6d"
+  },
+  "ancestor_qualification_path": "build-native-sjuni/movie-audio-commands/ancestor-v1/game/native/movie_timing_context/qualification.json",
+  "ancestor_qualification_sha256": "e4779976b44303c18cc66c12e749763780e86282c686c680181932ea8d59a090",
+  "production_selected": false,
+  "game_run": false,
+  "device_opened": false,
+  "stage3_complete": false,
+  "limitations": [
+    "Prepared serialized channel-7/decoder-3 graph; actual movie graph creation/destruction remains external.",
+    "Original comparison executes movie dispatch/policies/filter with SDK pause/discard/frequency ports; it is not new complete SDK or game execution.",
+    "Void pause incidental guest return registers are retained in original evidence but excluded from native return ABI.",
+    "Native owner tests use actual source/decoder/PCM/session with an output device model; no audible or in-game audiovisual validation.",
+    "Prepared video ownership/presentation is qualified separately; full movie start/stop/rebuild, scheduler and coherent game integration remain in step 3."
+  ],
+  "parent_log_paths": {
+    "gcc": {
+      "build": "build-native-sjuni/movie-video-frames/parent-gcc-build-v1.txt",
+      "tests": "build-native-sjuni/movie-video-frames/parent-gcc-tests-v1.txt"
+    },
+    "llvm": {
+      "build": "build-native-sjuni/movie-video-frames/parent-llvm-build-v1.txt",
+      "tests": "build-native-sjuni/movie-video-frames/parent-llvm-tests-v1.txt"
+    }
+  },
+  "ancestor_before_video": {
+    "path": "build-native-sjuni/movie-video-frames/ancestor-v1/game/native/movie_timing_context/audio_commands_qualification.json",
+    "sha256": "c340c5652876c73a9318e565f0ca7f14782cfc8bb53dc03b66d691a60c7d9179"
+  }
+}

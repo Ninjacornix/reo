@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "status": "qualified_partial_native_primary_actor_appearance_assets",
+  "source_sha256": {
+    "game/native/gameplay_world/actor_assets.hpp": "d79a299a996f356cbe8c139c0a0cf4d0978599aee2a67e33013fed55d0088cf5",
+    "game/native/gameplay_world/actor_assets.cpp": "45724fb7428946d5321ebf0d4b617d012aec6b3c1b2a226af3cf4223177e062c",
+    "game/native/gameplay_world/primary_actor_members.inc": "05d743a82a3d2dad4ea72d621ea185196ce01f6b13f98941c73fcf35b810cff1",
+    "game/native/gameplay_world/npc_actor_assets_tests.cpp": "bf8fb95fc2e599bc5f6c4363a0af8edb82be494c10e94fa66743fae8b06fefd7",
+    "tools/native_reconstruction/generate_primary_actor_members.py": "b99e2b70fcc51613092b4eef2bdb688e3c731e6a28bf3e9964381560d3a70482",
+    "tools/native_reconstruction/verify_npc_actor_assets.py": "52bd88fff249c6ac193157c878502834d459495231ccf788a41d29d8dc81c479",
+    "tools/native_reconstruction/npc_actor_asset_reference_tests.inc": "c31f9ad2e0258394d723da5b85b83afd1ffcf0c8c312fdcfd6be7092974dd5db",
+    "docs/native-gameplay/PRIMARY_ACTOR_ASSETS.md": "51dfcdb56580334fc85625c5d4768422c9ca3fe1ab6633279fb5ad5d9fba87f3",
+    "docs/native-gameplay/STAGE4_PLAN.md": "b63613067a64cccdf9f6b7bea5a976401931fb3dc03f1293e9d48c134ca7bd2c"
+  },
+  "cohorts": {
+    "llvm": {
+      "receipt": "build-native-sjuni/primary-actor-assets-llvm-v2/receipt.json",
+      "sha256": "38fec01b1b90c9c0a4a478ca3fc2144f5180cbcea1e594378db39cdef0ee735a",
+      "observed": {
+        "checks": 2299848,
+        "name_cases": 66815,
+        "assets": 133,
+        "skeletons": 133,
+        "hp_assets": 8,
+        "parts": 590,
+        "shared_assets": 11,
+        "auxiliary_assets": 233,
+        "auxiliary_names": 262144,
+        "primary_names": 327680,
+        "primary_assets": 46,
+        "primary_nodes": 1973,
+        "game_run": false
+      },
+      "baseline": {
+        "checks": 5681,
+        "refusals": 18,
+        "owned_models": 406,
+        "owned_skeletons": 406,
+        "owned_absent_skeletons": 0,
+        "owned_absent_models": 3,
+        "model_bindings": 4,
+        "binding_refusals": 4,
+        "scripted_constructions": 52,
+        "owned_scripted_constructions": 330,
+        "constructor_profile_refusals": 76,
+        "owned_missing": 1
+      },
+      "parent_tests": 13
+    },
+    "gcc": {
+      "receipt": "build-native-sjuni/primary-actor-assets-gcc-v2/receipt.json",
+      "sha256": "9d528fcd500db42d372f8e241e1db4b14ea31fb487be2ed142c750171ff542bd",
+      "observed": {
+        "checks": 2299848,
+        "name_cases": 66815,
+        "assets": 133,
+        "skeletons": 133,
+        "hp_assets": 8,
+        "parts": 590,
+        "shared_assets": 11,
+        "auxiliary_assets": 233,
+        "auxiliary_names": 262144,
+        "primary_names": 327680,
+        "primary_assets": 46,
+        "primary_nodes": 1973,
+        "game_run": false
+      },
+      "baseline": {
+        "checks": 5681,
+        "refusals": 18,
+        "owned_models": 406,
+        "owned_skeletons": 406,
+        "owned_absent_skeletons": 0,
+        "owned_absent_models": 3,
+        "model_bindings": 4,
+        "binding_refusals": 4,
+        "scripted_constructions": 52,
+        "owned_scripted_constructions": 330,
+        "constructor_profile_refusals": 76,
+        "owned_missing": 1
+      },
+      "parent_tests": 13
+    }
+  },
+  "game_launched": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "member_profile": {
+    "receipt": "build-native-sjuni/primary-actor-member-profile-v1/receipt.json",
+    "sha256": "1a1de7f6fce6ee80d9dd13a2c1b12fb20f5f01835fa28fb48fc6b0b2296be2d4"
+  },
+  "declared_boundaries": [
+    "Full 1AA740 filename selection and preceding slot clear run; acquisition returns controlled failed read",
+    "Actual successful native model bytes/parts/skeletons checked separately; original texture/material packing not claimed"
+  ],
+  "remaining": [
+    "Full primary initialization and shared bank bindings",
+    "Scene lifecycle, model reuse/retirement caller migration",
+    "Coherent native game installation and every Stage4 acceptance gate"
+  ]
+}

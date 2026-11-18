@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "status": "bounded larger LSC source profile qualified on both compilers; game control binding pending",
+  "native_manifest": "tools/native_reconstruction/native_lsc_capacity_manifest_v3.json",
+  "native_manifest_sha256": "18e718e28b4b65155e244a0c382b60c9eba92b9f3d040552d823b0c01e174b3e",
+  "native_inputs": 404,
+  "native_suites_per_compiler": 78,
+  "original_ring_cases_per_compiler": 2,
+  "original_ring_compared_calls_per_compiler": 36,
+  "original_ring_physical_byte_observations_per_compiler": 5862672,
+  "factory_scenarios_per_compiler": 21,
+  "ordinary_scenarios_per_compiler": 23,
+  "ordinary_faults_per_compiler": 10,
+  "actual_sdk131_objects_per_compiler": 5,
+  "receipts": {
+    "build-native-sjuni/lsc-capacity/native-gcc-v3/receipt.json": "0d63ea4a19dc10f857ef05fff92817ae111a230b8f315057940473cef409278e",
+    "build-native-sjuni/large-sjrb/gcc-v1/receipt.json": "1c10a03e4fd4c9a6463714e9cbc3ca00830a8422f86fc4aa03dc8d2d6c4f03c6",
+    "build-native-sjuni/audio-media-factory/large-capacity-gcc-v1/receipt.json": "ae1447d0cba05c396decbd093667c1077b92e7e225673cfa22b9b31e5f03c177",
+    "build-native-sjuni/adxt-binding/ordinary-large-capacity-gcc-v1/receipt.json": "332eab05188fb7c2f63ddb6a68d29ecea39e20a521bc186f273955c78e88b825",
+    "build-native-sjuni/adxt-binding/ordinary-large-capacity-actual131-gcc-v1/receipt.json": "345f128ed147f85c59fd7284f3fb69254e39743657c295666efb8047c1c9d087",
+    "build-native-sjuni/lsc-capacity/native-llvm-v3/receipt.json": "98b9f85f9748ec1f59c511a7f06acf5a00b90fb02e5e7aa2dbfe1001be6de587",
+    "build-native-sjuni/large-sjrb/llvm-v1/receipt.json": "ef3a06393a0b55a7cf010df1ee5f8ab4c949ef46318df189cc269de65b09b556",
+    "build-native-sjuni/audio-media-factory/large-capacity-llvm-v1/receipt.json": "2cc7c0d672fd6484b69ef3e99ae66f58a1359efe7929abc04fd58cdf4acc5d37",
+    "build-native-sjuni/adxt-binding/ordinary-large-capacity-llvm-v1/receipt.json": "784b3575d9c8649b2ecfa9e0f2a1f9bcfb4392e77a4bd29292fea40f4d422912",
+    "build-native-sjuni/adxt-binding/ordinary-large-capacity-actual131-llvm-v1/receipt.json": "393021b992a0b733c2cb630702262bac8b1d60e53279e5706af0462b61f427d8"
+  },
+  "failed_receipts": {
+    "build-native-sjuni/lsc-capacity/native-gcc-v1/receipt.json": "359079ece6ad6a2432a6eedcf714ab828849ec74df4d586e33acf4c8ccefe317",
+    "build-native-sjuni/lsc-capacity/native-llvm-v1/receipt.json": "41dbb35f66bb34a3960c038eee5cc3dbc11208f3429ef5962ef3f9f7d214841c"
+  },
+  "retained_failed_source_root": "build-native-sjuni/lsc-capacity/failed-source-v1",
+  "source_sha256": {
+    "tools/native_reconstruction/verify_large_sjrb.py": "831792787eef015a7c73c25afd60056a4063d42d4da6fa8b096722067e3e3081",
+    "docs/native-media/LSC_CAPACITY_PROFILE.md": "04d916a6874ac027e3718b7b1dfc58950a8720f8cf196a8c7ef8488c6137d5aa",
+    "docs/native-media/ADXT_DYNAMIC_LSC_SOURCE_CONTRACT.md": "d832342086354fc772c83ea5248d703151d6a81b7d311316644067466794a5ce",
+    "docs/NATIVE_RECONSTRUCTION_PLAN.md": "bff3431d9a4d19f00c9b528df3524a1da7b437010cd2121e023d86ffc794ea8c",
+    "game/native/adxt_lsc_input/README.md": "cdad0f8c2dc6615acd9f306792b9aacaf1ab462a8655c153bd1be52e3a164498",
+    "game/native/adxt_shared_source/README.md": "c7b217f3012ed50c9ca2c4ce83f900f82806767c3719386eb48e8df6cea3c249"
+  },
+  "latest_linked_game_revision": "1690d61ffaa169b707a14da963b2216ea9fa48e0",
+  "larger_profile_game_selected": false,
+  "matching_larger_profile_game_built": false,
+  "stage3_complete": false
+}

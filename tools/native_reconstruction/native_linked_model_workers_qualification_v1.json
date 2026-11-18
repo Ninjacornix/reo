@@ -1,0 +1,139 @@
+{
+  "schema": 1,
+  "status": "qualified_partial_native_linked_model_workers",
+  "game_launched": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_update/linked_model_workers.hpp": "50a2442f83da45cbd8b88761c98f1bc578dc2269ab9e3cf411152cf3229b2b8c",
+    "game/native/gameplay_update/linked_model_workers.cpp": "3864f500f05d20ab6b3a3127a9349e46329c6f7f5603a42bde0b02f0afc1b8bc",
+    "game/native/gameplay_update/CMakeLists.txt": "f1dcf1814b9c7fdb0104e301104f7c234c9aeab557ae0f85e2d580667e6e3bb4",
+    "game/native/gameplay_world/world.hpp": "20e3f3698b5f8b9ca95a470f14b406b0d3682aee0c1c949234314c3e02c7b8aa",
+    "game/native/gameplay_world/scripted_motion_assets_tests.cpp": "7b0899180151966f0879db0a87a0dbd2c05f37e4d76fb3052fbba9787b41bf53",
+    "tools/native_reconstruction/gameplay_update_sources.py": "186d04b103e0e34085467301ec4322acfc0306d9d1fdcf785e2931d6fbe573b4",
+    "tools/native_reconstruction/animation/verify_linked_models.py": "6cc56558063ec7b27d35a2ff5a65af4e1e60ba9e7aea22807379b120f7421846",
+    "docs/native-gameplay/LINKED_MODEL_WORKERS.md": "26ce20bc579b5581fa664d59ce1ff5d6e2c240ee9c9f4b70305c272cb9d3b58f",
+    "docs/native-gameplay/STAGE4_PLAN.md": "48e026e20e58c2bad518dc3768f541f0ba612bd359ba90e1f74df5b9a830a99c"
+  },
+  "cohorts": {
+    "llvm": {
+      "owned_composition": {
+        "receipt": "build-native-sjuni/scripted-model-worker-llvm-v2/receipt.json",
+        "sha256": "ebdc4e7d7649916b2924f3cbc65fb7af4d5887c2f0f17f5068592e2af00a5915",
+        "observed": {
+          "checks": 13265,
+          "owned_members": 89,
+          "owned_blocks": 750,
+          "consumer_updates": 16,
+          "original_loader_cases": 128,
+          "ordinary_model_workers": 1
+        }
+      },
+      "original_models": {
+        "receipt": "build-native-sjuni/linked-model-worker-poses-llvm-v1/receipt.json",
+        "sha256": "3a978c85d2a9ffcec586a4956fedff1a3297e52f1e01e44fb51dac6f75b6f00b",
+        "observed": {
+          "checks": 195138,
+          "lifetime_guard_cases": 2,
+          "refusal_cases": 10,
+          "correction_cases": 298,
+          "pool_cases": 816,
+          "model_passes": 256,
+          "visible_cases": 426,
+          "inactive_visible_cases": 212,
+          "dependent_copies": 18,
+          "joint_cases": 41856,
+          "original_calls": 1526661,
+          "game_run": false
+        }
+      },
+      "original_ordering": {
+        "receipt": "build-native-sjuni/linked-model-update-order-llvm-v1/receipt.json",
+        "sha256": "bf07165c2fbc312ee6721cdb32f582d5718f2c045aa4769d496e13480bc08617",
+        "observed": {
+          "status": "passed",
+          "cases": 2048,
+          "trace_words": 90134,
+          "paused_after": 1574,
+          "limit_paths": 568,
+          "native_owner_checks": 22,
+          "phase_cases": 4096,
+          "phase_trace_words": 282904,
+          "committed_updates": 686,
+          "audio_tick_cases": 12,
+          "hold_phase_cases": 241
+        }
+      },
+      "parent_build": {
+        "path": "build-native-sjuni/linked-model-worker-parent-llvm-v1.log",
+        "sha256": "f787859c69c40c506ae07bd71e9a8571561a5366c582c93879a7a86e207d8a8b"
+      },
+      "parent_tests": {
+        "path": "build-native-sjuni/linked-model-worker-tests-llvm-v1.log",
+        "sha256": "c0f775d701a0bed968710d4acc4c44c5522636e9f63c1eaf314f3c3508994dfb"
+      }
+    },
+    "gcc": {
+      "owned_composition": {
+        "receipt": "build-native-sjuni/scripted-model-worker-gcc-v2/receipt.json",
+        "sha256": "823335254dc89f5fe6d4a89caad8b9ba0346e659b5645c2468fe5bfeb63f3e39",
+        "observed": {
+          "checks": 13265,
+          "owned_members": 89,
+          "owned_blocks": 750,
+          "consumer_updates": 16,
+          "original_loader_cases": 128,
+          "ordinary_model_workers": 1
+        }
+      },
+      "original_models": {
+        "receipt": "build-native-sjuni/linked-model-worker-poses-gcc-v1/receipt.json",
+        "sha256": "c45ce7db66d601c58155ac3854e06803c42f1f0f2c5290720b2dba27ee14dd5c",
+        "observed": {
+          "checks": 195138,
+          "lifetime_guard_cases": 2,
+          "refusal_cases": 10,
+          "correction_cases": 298,
+          "pool_cases": 816,
+          "model_passes": 256,
+          "visible_cases": 426,
+          "inactive_visible_cases": 212,
+          "dependent_copies": 18,
+          "joint_cases": 41856,
+          "original_calls": 1526661,
+          "game_run": false
+        }
+      },
+      "original_ordering": {
+        "receipt": "build-native-sjuni/linked-model-update-order-gcc-v1/receipt.json",
+        "sha256": "1557b0f213bcdedfa307ee8793bae7a260eb35432d983c4d1e083d8c7b6ec707",
+        "observed": {
+          "status": "passed",
+          "cases": 2048,
+          "trace_words": 90134,
+          "paused_after": 1574,
+          "limit_paths": 568,
+          "native_owner_checks": 22,
+          "phase_cases": 4096,
+          "phase_trace_words": 282904,
+          "committed_updates": 686,
+          "audio_tick_cases": 12,
+          "hold_phase_cases": 241
+        }
+      },
+      "parent_build": {
+        "path": "build-native-sjuni/linked-model-worker-parent-gcc-v1.log",
+        "sha256": "5a13594d6c283e574c430184c1f6a0b5b4fee950b4d1daaad7356ea1549a8390"
+      },
+      "parent_tests": {
+        "path": "build-native-sjuni/linked-model-worker-tests-gcc-v1.log",
+        "sha256": "6ec48f6528fa1e0ee9415ecffb2095c948e92d1e3ea552c3ef597e35411ebe87"
+      }
+    }
+  },
+  "boundaries": [
+    "Actual native376B80 adoption at its real worker position qualified, remaining phase effects/workers retain explicit providers.",
+    "Authored root selection and cinematic lifecycle calls remain open.",
+    "No game launched or speedup measured. Step4 remains incomplete."
+  ]
+}

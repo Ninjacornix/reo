@@ -1,0 +1,109 @@
+{
+  "schema": 1,
+  "status": "combined committed native project passes 82 suites on both compilers",
+  "stage4_complete": false,
+  "game_run": false,
+  "revision": "77f7e59c01946fb9cffa9c984cf3a1cda06752ca",
+  "cohorts": {
+    "llvm": {
+      "path": "build-native-sjuni/gameplay-combined-llvm-v3/receipt.json",
+      "sha256": "892e776208ec631b2ee304f901367f817d24e4c9673f7f16d3fc855a41048a3d",
+      "source_members": 693,
+      "archive_count": 74,
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "runner_sha256": "58c64c457923f10e7591d9e1c77359b0f052cd9faede0710107fac0c92664157",
+      "checks": [
+        {
+          "label": "configure",
+          "command": [
+            "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+            "-S",
+            "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\gameplay-combined-llvm-v3\\source\\game\\native",
+            "-B",
+            "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\gameplay-combined-llvm-v3\\source\\build-native-sjuni\\combined-build",
+            "-G",
+            "Ninja",
+            "-DCMAKE_BUILD_TYPE=Release",
+            "-DCMAKE_MAKE_PROGRAM=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe",
+            "-DCMAKE_CXX_COMPILER=C:\\Users\\Ninjacornix\\AppData\\Local\\OutbreakRecomp\\launcher\\toolchains\\llvm-mingw-20251216-ucrt-x86_64\\bin\\x86_64-w64-mingw32-clang++.exe"
+          ],
+          "exit_code": 0
+        },
+        {
+          "label": "build",
+          "command": [
+            "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+            "--build",
+            "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\gameplay-combined-llvm-v3\\source\\build-native-sjuni\\combined-build",
+            "--parallel",
+            "6"
+          ],
+          "exit_code": 0
+        },
+        {
+          "label": "tests",
+          "command": [
+            "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\ctest.exe",
+            "--test-dir",
+            "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\gameplay-combined-llvm-v3\\source\\build-native-sjuni\\combined-build",
+            "--output-on-failure"
+          ],
+          "exit_code": 0
+        }
+      ]
+    },
+    "gcc": {
+      "path": "build-native-sjuni/gameplay-combined-gcc-v2/receipt.json",
+      "sha256": "6d6032d136a923e5cf43a64788f9d85c02df7d3618ffa65f663a1de5e56ec389",
+      "source_members": 693,
+      "archive_count": 74,
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "runner_sha256": "58c64c457923f10e7591d9e1c77359b0f052cd9faede0710107fac0c92664157",
+      "checks": [
+        {
+          "label": "configure",
+          "command": [
+            "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+            "-S",
+            "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\gameplay-combined-gcc-v2\\source\\game\\native",
+            "-B",
+            "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\gameplay-combined-gcc-v2\\source\\build-native-sjuni\\combined-build",
+            "-G",
+            "Ninja",
+            "-DCMAKE_BUILD_TYPE=Release",
+            "-DCMAKE_MAKE_PROGRAM=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe",
+            "-DCMAKE_CXX_COMPILER=C:\\msys64\\mingw64\\bin\\g++.exe"
+          ],
+          "exit_code": 0
+        },
+        {
+          "label": "build",
+          "command": [
+            "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+            "--build",
+            "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\gameplay-combined-gcc-v2\\source\\build-native-sjuni\\combined-build",
+            "--parallel",
+            "6"
+          ],
+          "exit_code": 0
+        },
+        {
+          "label": "tests",
+          "command": [
+            "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\ctest.exe",
+            "--test-dir",
+            "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\gameplay-combined-gcc-v2\\source\\build-native-sjuni\\combined-build",
+            "--output-on-failure"
+          ],
+          "exit_code": 0
+        }
+      ]
+    }
+  },
+  "limits": [
+    "Committed source snapshot; no working-tree sources compiled.",
+    "Existing80tests plus native task/entity tests; focused original-body oracle qualifications remain separate.",
+    "No whole Stage4 installation or game acceptance is established.",
+    "Failed earlier snapshots retained missing owned identity fixtures/output-root prerequisites and old ADX oracle import; no production C++ changes were needed for final passes."
+  ]
+}

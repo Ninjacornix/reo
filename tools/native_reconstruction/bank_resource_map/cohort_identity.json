@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "scope": "Static File1 packed bank loader and owned span correspondence",
+  "authored_sha256": {
+    "map_resources.py": "a8b44f1642870e95eb0d9ec0537a4eb8f5b0884914cd061e559198ab2347e4a5",
+    "test_map_resources.py": "c5db3eb0a1f2331bbe40374104c632f7ae27fd4c2948889dd3ce881b7c28e167"
+  },
+  "source_sha256": {
+    "recomp/config/output/sub_001D3DC0_0x1d3dc0.cpp": "18a1686a5febab42cf3e46b4f4f7afee01f6b426c27a09d9faca3ec69ee4ac66",
+    "recomp/config/output/sub_001AB050_0x1ab050.cpp": "7074183f79f2e7db5abfff792577dd4a49714e6df92eb61e61d0c2a945d8e250",
+    "recomp/config/output/sub_001AB310_0x1ab310.cpp": "5fe2d28f62b3be99a72ba7bbe2769e9dd09b0e08910216a0024ae2aac41503cc",
+    "recomp/config/output/sub_001AC730_0x1ac730.cpp": "224b41114a94f2d6c23b0952c3a4e53ba909e10cb1976faea5101b89a7b59339",
+    "recomp/config/output/sub_001ACFB0_0x1acfb0.cpp": "e368980738c2d1f2ac54565b07ac88cf3ede25f9a6e5ddcb8327d01e284ab85a",
+    "recomp/config/output/sub_001A7900_0x1a7900.cpp": "9cc51d4d575157b8ca39ca4bcdf545b6f0f16e21889cce5e8240675970332201",
+    "recomp/config/output/sub_001A77D0_0x1a77d0.cpp": "f785a696080647d9b177f8ea2a106937dddd74f351cb905ff69e15a7444fe3aa",
+    "recomp/config/output/sub_001A85A0_0x1a85a0.cpp": "ba7ff9cd3d54dcbeafa6a0ffe546d228d37612346e5c404564f7352c583d12d6",
+    "recomp/config/output/sub_001A7DE0_0x1a7de0.cpp": "6a04c9c4d1f05a1cb7ce66f76623251c76746eba31a00c6f9b1c9a9bf33f9c34",
+    "recomp/config/output/sub_001A82B0_0x1a82b0.cpp": "cbd760f47b231f5b1ac9f45cf2bc7d71ada0743d23443d4d79136aad0197f3b3",
+    "recomp/config/output/sub_001A8500_0x1a8500.cpp": "8ec64134746457754ab788567312464e567d3635cfafe9473865d0b9d51dc43e",
+    "recomp/config/output/sub_001AD220_0x1ad220.cpp": "645b6e3df703c6836da5182902d8af82f275208c8638f89ad61b3aec25722a88",
+    "recomp/config/output/sub_001AD410_0x1ad410.cpp": "7340a89c9bd566af871cad6a73e0184d3050db9b2d0cdc7ccfb9bf0fc7b4d42f",
+    "recomp/config/output/sub_001AD4E0_0x1ad4e0.cpp": "1e0c429adff0e60738703a508f5c134efc697cdd0520ad0b7db43d77923609e9",
+    "recomp/config/output/sub_001B8380_0x1b8380.cpp": "9c66883f06e80a687c5bc1a912e15aef8e52f4ceb136bf337a24506d2c7ffb4b",
+    "recomp/config/output/sub_001BE6D0_0x1be6d0.cpp": "262cfd37361045ded3086bd9e5f6c9d22bfe15399a11454ac49856d85f509cf5",
+    "build-native-sjuni\\dependency-gs-sound-profile-reapply-v4\\ps2xRuntime\\src\\lib\\Kernel\\Syscalls\\RPC.cpp": "0050649df52cbe65b65580ae27aca7732a6e8d95d03076f7f0f80ec294e2c9a7",
+    "build-native-sjuni\\dependency-gs-sound-profile-reapply-v4\\ps2xRuntime\\src\\lib\\Kernel\\Syscalls\\Helpers\\ReoSoundBanks.cpp": "d691d6f6ab60b26f8fe8ebc0a87bfedc168a37ee4c7a6ea8ca3e641bb31fef6f",
+    "build-native-sjuni\\dependency-gs-sound-profile-reapply-v4\\ps2xRuntime\\src\\lib\\Kernel\\Syscalls\\Helpers\\CriAudio.cpp": "082a52c408dbe6969b0ff9dfe8759f49a05cf1a18fe35863ae14f2c25d478d67",
+    "build-native-sjuni\\dependency-gs-sound-profile-reapply-v4\\ps2xRuntime\\include\\runtime\\ps2_iop.h": "e10cfedb0c86382bb57679bcc1a9bf7d92a9da5b9711f8b67db72d5437110b35",
+    "recomp/overrides/reo_override.cpp": "2d3de8e8479cc8473fabb41a34538e99c43920a8e9a096056e6660917d1e45bc",
+    "recomp/overrides/native_cd_owner/runtime_adapter.cpp": "ceb169ef93e6952fc73626c97f04ea06690c6f07be045420d60feb82e42ccd07",
+    "recomp/config/outbreak.toml": "a66eade11717385c394a1ae61510a763e5590e88ee8506738245f4dba12b247c",
+    "recomp/overrides/native_banks/v3/packet_adapter.cpp": "9d1027a61fea8259670dd32df998bb7731b433472558bfd9ffc4c5700cd25cbb",
+    "game/native/audio_banks/v2/algorithms.cpp": "4f4dafb01f3e980c958e26a3af6f78a2240860a3951ae039b3ac487507d3e93e"
+  },
+  "elf_sha256": "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46",
+  "prior_iso_sha256": "69ae2c48e6f01e2605659feabb54eb9b82c63a809bdc8a78ad2d160b3c59a4a1",
+  "game_run": false,
+  "device_opened": false,
+  "decoder_executed": false,
+  "payloads_extracted": false
+}

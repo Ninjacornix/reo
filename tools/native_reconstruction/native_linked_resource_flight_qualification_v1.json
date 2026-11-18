@@ -1,0 +1,184 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "game_run": false,
+  "device_opened": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_world/linked_resource_flight.hpp": "cd067e6fd7468431179060d878205ae501b02178676ffbb465aeebc5b8c0c0cb",
+    "game/native/gameplay_world/linked_resource_flight.cpp": "3431dfe5dc5f48baa77af69c868ab8a236fefe6863ed2f857c859b9276b1badf",
+    "game/native/gameplay_world/linked_flight_effects.hpp": "150148bb52c774a093b8ed0630c056dd0b24f581cbd601292db85c01e11dc40b",
+    "game/native/gameplay_world/linked_flight_effects.cpp": "276896300c3e9e0e5108ad4f90f2ef90e09fb0e70ecd3f59af465f46f22428f7",
+    "game/native/gameplay_world/packed_actor_audio.hpp": "959e5fa2f767c6e38c8ca07fc12c8976e158d41e7f4721b0a9b39464cc632966",
+    "game/native/gameplay_world/packed_actor_audio.cpp": "191535681df4c7603ab3b4999e82b0919ebe2fc97876a5b76b46bb96d88d2ddb",
+    "game/native/gameplay_world/resource_pose_work.hpp": "44073c430193e67ee7f7eb835f7a2967a1106f5b2dd2d392e9d2e7af37b99b75",
+    "game/native/gameplay_world/resource_pose_work.cpp": "7da5988f9825261630830b8716eb01966a9857fad40389030f3897292a19eacc",
+    "game/native/gameplay_lighting/timed_lights.hpp": "783b574d38d7552eee3bff93b43d49c36a74f8a3c978e322fc8659c4f4dbe1b9",
+    "game/native/gameplay_lighting/timed_lights.cpp": "86c100fdc0b594b53514df9e51911b4862aaf4b2240625d5aa8b1e4e1607bd4d",
+    "game/native/gameplay_world/pose_weapon_effects.hpp": "5b8f13d167f454fa9650908f106d7c0198545727de3fb01c7d45abfeacbb991f",
+    "game/native/gameplay_world/pose_weapon_effects.cpp": "50381388a2713b237fe9b257928ac9fa20585496edaf85001b9366b23ec23f1e",
+    "tools/native_reconstruction/packed_actor_audio_tests.cpp": "f621eb33073d60d9008398535ffcd7c8908e905ffe73e4e7adbf6dc8b9b14d2f",
+    "tools/native_reconstruction/verify_packed_actor_audio.py": "a7427ad170da2a0cae3be0c27d435489cade61aaf908eb216ab8e92c34ccdc21",
+    "tools/native_reconstruction/linked_resource_flight_tests.cpp": "d953f116497a6047baab797becd77744bdc482ab37df3d18bc93a1246a8c35ed",
+    "tools/native_reconstruction/linked_flight_owner_tests.inc": "675b7bba94619bba09efdb6bd8db783a03ae4ac8a13a6d2cdaed054a6c4f6d09",
+    "tools/native_reconstruction/verify_linked_resource_flight.py": "455fc4481bb04327fdcbc563912e7b7065ed00b48447e61b3b26861b5b37631b",
+    "tools/native_reconstruction/timed_lights_tests.cpp": "f128b24ed1b5f5bd20c8d1344eaee60702e729da4d387e386b574b56fb90ac80",
+    "tools/native_reconstruction/verify_timed_lights.py": "36b1d19a1d797a315a44faa3b303963366511232bfd59c4b53bad222f808b417",
+    "game/native/gameplay_world/linked_flight_contract_tests.cpp": "696dfe7ff4fd5b560444c564956cb5aa5cd1940dd2af1e1728c2773fa7127852",
+    "game/native/gameplay_world/CMakeLists.txt": "51b02f579f8ecc1e8be9109410e675c11b84ae227a84ba4b0cfe3f6195b99514",
+    "docs/native-gameplay/LINKED_RESOURCE_FLIGHT.md": "1615d572f193de8d6bf58d1c7937e9196b1a7c4d38de13166d7fd119a16a6936",
+    "tools/native_reconstruction/qualify_linked_resource_flight_v1.py": "55dc29559b59c51cadb5e2eb75388679965675d2c7c474cf1541164d17c10502"
+  },
+  "cohorts": {
+    "llvm": {
+      "packed_audio": {
+        "path": "build-native-sjuni/packed-actor-audio-llvm-v3/receipt.json",
+        "sha256": "9b42e64bfab9f658e65d1a83066e23c31e1f49b7c7e619809708e663c6a5427c",
+        "observed": {
+          "checks": 135004,
+          "cases": 18432,
+          "requests": 12192,
+          "mixed_frames": 1179648,
+          "signal_samples": 16,
+          "refusals": 3,
+          "original_calls": 52112,
+          "game_run": false
+        },
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "subsequent_parent_header_changes": {
+          "game/native/gameplay_world/world.hpp": "e0a352aa9ab0834e9a22542771ce46772ad8058d4fe1972af73103a2e1670daf",
+          "game/native/gameplay_world/speech_state.hpp": "29ef549e1b5b667480c4d5617a80cdcbcb725919f1d4066b254c2494ce02a609"
+        }
+      },
+      "flight_and_attachment": {
+        "path": "build-native-sjuni/linked-flight-owner-llvm-v1/receipt.json",
+        "sha256": "84dbc2ade4f3255108e8e356fcc3c43f3d84c4ac13632367d9248eac57fce39f",
+        "observed": {
+          "checks": 2118977,
+          "flight_cases": 262144,
+          "constructors": 8192,
+          "effect_requests": 45460,
+          "original_calls": 586103,
+          "reached_provider_refusals": 5,
+          "owner_cases": 1024,
+          "owner_frames": 4096,
+          "owner_light_frames": 8576,
+          "owner_pcm_frames": 1048576,
+          "owner_pcm_signal": 0,
+          "owner_refusals": 4,
+          "game_run": false
+        },
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "subsequent_parent_header_changes": {
+          "game/native/gameplay_world/world.hpp": "e0a352aa9ab0834e9a22542771ce46772ad8058d4fe1972af73103a2e1670daf",
+          "game/native/gameplay_world/speech_state.hpp": "29ef549e1b5b667480c4d5617a80cdcbcb725919f1d4066b254c2494ce02a609",
+          "game/native/gameplay_contact_world/contacts.hpp": "2595e6259e11229f89eb9c034680451a8d3777379f7468f84364d83f9800e83b",
+          "game/native/gameplay_collision/room_objects.hpp": "fc5dba750a3e29a5f763d9e9fb526943971003988bbe13f3bce43c0088051207"
+        }
+      },
+      "timed_lights": {
+        "path": "build-native-sjuni/ungated-timed-light-llvm-v3/receipt.json",
+        "sha256": "6062c59143b3b75a23ffcd4395ab339956a5e086e43c8ae83181345bf737a97b",
+        "observed": {
+          "checks": 5503362,
+          "policy_cases": 131072,
+          "guard_cases": 65536,
+          "lifecycles": 3072,
+          "frames": 97088,
+          "refusals": 7,
+          "original_calls": 1037457,
+          "original_admissions": 3075,
+          "original_retirements": 24917,
+          "game_run": false
+        },
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "subsequent_parent_header_changes": {}
+      },
+      "current_parents": {
+        "path": "build-native-sjuni/session-rooms-parents-llvm-v6/receipt.json",
+        "sha256": "cc2b82777a78732f8effe160c32b27e1b3aed0903c4b890fa1000d498d86d400",
+        "observed": 25,
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "subsequent_parent_header_changes": {}
+      }
+    },
+    "gcc": {
+      "packed_audio": {
+        "path": "build-native-sjuni/packed-actor-audio-gcc-v3/receipt.json",
+        "sha256": "6bc1876cf7fae111fd24ebe16dd4347b8887290b9ba0627094d356c86516ff77",
+        "observed": {
+          "checks": 135004,
+          "cases": 18432,
+          "requests": 12192,
+          "mixed_frames": 1179648,
+          "signal_samples": 16,
+          "refusals": 3,
+          "original_calls": 52112,
+          "game_run": false
+        },
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "subsequent_parent_header_changes": {
+          "game/native/gameplay_world/world.hpp": "e0a352aa9ab0834e9a22542771ce46772ad8058d4fe1972af73103a2e1670daf",
+          "game/native/gameplay_world/speech_state.hpp": "29ef549e1b5b667480c4d5617a80cdcbcb725919f1d4066b254c2494ce02a609"
+        }
+      },
+      "flight_and_attachment": {
+        "path": "build-native-sjuni/linked-flight-owner-gcc-v1/receipt.json",
+        "sha256": "a215bb5c1c1c022680cd15fbe12abc6945b50f802d96409aef16a284868fde5a",
+        "observed": {
+          "checks": 2118977,
+          "flight_cases": 262144,
+          "constructors": 8192,
+          "effect_requests": 45460,
+          "original_calls": 586103,
+          "reached_provider_refusals": 5,
+          "owner_cases": 1024,
+          "owner_frames": 4096,
+          "owner_light_frames": 8576,
+          "owner_pcm_frames": 1048576,
+          "owner_pcm_signal": 0,
+          "owner_refusals": 4,
+          "game_run": false
+        },
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "subsequent_parent_header_changes": {
+          "game/native/gameplay_world/world.hpp": "e0a352aa9ab0834e9a22542771ce46772ad8058d4fe1972af73103a2e1670daf",
+          "game/native/gameplay_contact_world/contacts.hpp": "2595e6259e11229f89eb9c034680451a8d3777379f7468f84364d83f9800e83b",
+          "game/native/gameplay_world/speech_state.hpp": "29ef549e1b5b667480c4d5617a80cdcbcb725919f1d4066b254c2494ce02a609",
+          "game/native/gameplay_collision/room_objects.hpp": "fc5dba750a3e29a5f763d9e9fb526943971003988bbe13f3bce43c0088051207"
+        }
+      },
+      "timed_lights": {
+        "path": "build-native-sjuni/ungated-timed-light-gcc-v3/receipt.json",
+        "sha256": "24e07d5fd7a382fdf2d2c9c1cd8a583ebd79530866ecf07e5335d08ef27c3217",
+        "observed": {
+          "checks": 5503362,
+          "policy_cases": 131072,
+          "guard_cases": 65536,
+          "lifecycles": 3072,
+          "frames": 97088,
+          "refusals": 7,
+          "original_calls": 1037457,
+          "original_admissions": 3075,
+          "original_retirements": 24917,
+          "game_run": false
+        },
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "subsequent_parent_header_changes": {}
+      },
+      "current_parents": {
+        "path": "build-native-sjuni/session-rooms-parents-gcc-v6/receipt.json",
+        "sha256": "ce4ea9eddb96bf9fca54f60fe9aa4e38125139e18a313142b46db280891cde4f",
+        "observed": 25,
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "subsequent_parent_header_changes": {}
+      }
+    }
+  },
+  "limits": [
+    "Full kind20/other reached pose callbacks and full host/game acceptance remain required.",
+    "Owner event0x12 matches silent PCM for the explicitly bound weapon01 cue; this is not an audible in-game bank assignment claim.",
+    "Class2/3 sound tags require their actual producer. Unassigned original class routes refuse."
+  ]
+}

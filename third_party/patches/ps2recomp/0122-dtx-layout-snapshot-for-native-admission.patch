@@ -1,0 +1,31 @@
+diff --git a/ps2xRuntime/include/ps2_syscalls.h b/ps2xRuntime/include/ps2_syscalls.h
+index 0411a2a..02bd49c 100644
+--- a/ps2xRuntime/include/ps2_syscalls.h
++++ b/ps2xRuntime/include/ps2_syscalls.h
+@@ -37,6 +37,9 @@ namespace ps2_syscalls
+     void resetSoundDriverRpcState();
+     void setSoundDriverCompatLayout(const PS2SoundDriverCompatLayout &layout);
+     void clearSoundDriverCompatLayout();
++#define PS2_RUNTIME_HAS_DTX_LAYOUT_SNAPSHOT 1
++    // Host-only admission snapshot; no guest objects or pending requests copied.
++    PS2DtxCompatLayout dtxCompatLayoutSnapshot();
+     void setDtxCompatLayout(const PS2DtxCompatLayout &layout);
+     void clearDtxCompatLayout();
+     void EnsureVSyncWorkerRunning(uint8_t *rdram, PS2Runtime *runtime);
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+index 531fb38..dbf6dc3 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+@@ -1333,6 +1333,12 @@ namespace ps2_syscalls
+         g_soundDriverCompatLayout = {};
+     }
+ 
++    PS2DtxCompatLayout dtxCompatLayoutSnapshot()
++    {
++        std::scoped_lock lock(g_rpc_mutex, g_dtx_rpc_mutex);
++        return g_dtxCompatLayout;
++    }
++
+     void setDtxCompatLayout(const PS2DtxCompatLayout &layout)
+     {
+         std::scoped_lock lock(g_rpc_mutex, g_dtx_rpc_mutex);

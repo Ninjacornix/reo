@@ -1,0 +1,81 @@
+{
+  "schema": 2,
+  "status": "qualified_native_ordinary_primary_zero_capabilities",
+  "source_sha256": {
+    "game/native/gameplay_world/primary_actor_records.cpp": "85e9397c153951cfd2bb45fe8d10943e65adaf723006bd1fc93b4aff5779b148",
+    "game/native/gameplay_world/primary_actor_records_tests.cpp": "b25ef9e81417a3bb65e8df6f9785a293feb212092c0edc7eb90b0aef83795ea8",
+    "game/native/gameplay_world/world.hpp": "3280514a4bdba9fe27edf3463e692728f66ae66bb7d698074bc2fe8a37f33ce1"
+  },
+  "paired_compiler_receipts": [
+    {
+      "receipt": "build-native-sjuni/primary-actor-records-gcc-v3/receipt.json",
+      "sha256": "9cd589fe590161dfcd819565501b77ea2278363e6b0bfa86741c8c9d7096c857",
+      "observed": {
+        "checks": 2233691,
+        "complete_source_clears": 64,
+        "canonical_bootstraps": 64,
+        "capacity_refusals": 8,
+        "busy_proofs": 1,
+        "lifetimes": 512,
+        "game_run": false
+      },
+      "source_unchanged": true
+    },
+    {
+      "receipt": "build-native-sjuni/primary-actor-records-llvm-v3/receipt.json",
+      "sha256": "0c9e04768a47899a208e534fc8a5f98fd86222ec705a2fd8c2c3dd452a209ac1",
+      "observed": {
+        "checks": 2233691,
+        "complete_source_clears": 64,
+        "canonical_bootstraps": 64,
+        "capacity_refusals": 8,
+        "busy_proofs": 1,
+        "lifetimes": 512,
+        "game_run": false
+      },
+      "source_unchanged": true
+    }
+  ],
+  "original_owned_bodies": [
+    {
+      "role": "complete ordinary actor postprocess or reached helper body",
+      "path": "recomp/config/output/sub_00107C68_0x107c68.cpp",
+      "sha256": "8a15a069852a969aa5cb812b3cface0b91ca126f2036dd2ae1c9eba5e844b99e",
+      "start": "0x107c68",
+      "end_exclusive": "0x107d28",
+      "matched_comments": 46,
+      "omitted_zero_words": 2,
+      "conflicts": 0
+    },
+    {
+      "role": "complete ordinary actor postprocess or reached helper body",
+      "path": "recomp/config/output_ovl/o2/o2_0066A730_0x66a730.cpp",
+      "sha256": "d7bd7b6b88a38e47ffff7506583ec4edfdec7888cb1b8b5cb8061049b4fd836f",
+      "start": "0x66a730",
+      "end_exclusive": "0x66a744",
+      "matched_comments": 5,
+      "omitted_zero_words": 0,
+      "conflicts": 0
+    },
+    {
+      "role": "complete ordinary actor postprocess or reached helper body",
+      "path": "recomp/config/output_ovl/o2/o2_005EAEB0_0x5eaeb0.cpp",
+      "sha256": "8ac2b83f26e53e1a45f89348c8a40bee33caa817accaecef0e543cecaa850685",
+      "start": "0x5eaeb0",
+      "end_exclusive": "0x5eb0c4",
+      "matched_comments": 109,
+      "omitted_zero_words": 24,
+      "conflicts": 0
+    }
+  ],
+  "limits": [
+    "Complete66A730 and107C68 execute, clearing all8700 bytes. Native projection is typed canonical actor state, never a production RAM mirror.",
+    "Bootstrap-only empty primary storage. Existing records refuse; resolved model/alignment capabilities remain absent. Complete5EAEB0 caller is audited but not executed or ported by this helper. No game run or full Stage4 acceptance."
+  ],
+  "notes": [
+    "Actual66A730 grants zero AI/route numeric components. Source10AC pointer stays absent; route.output.link is0 rather than generic query default-1.",
+    "Every actor.slot remains0 until real5EB520 assigns the physical indices."
+  ],
+  "game_run": false,
+  "stage4_complete": false
+}

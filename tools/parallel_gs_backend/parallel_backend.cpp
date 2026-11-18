@@ -1,8 +1,16 @@
 #include "parallel_backend.h"
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) && REO_BUILD_NATIVE_SOUND_RAM_CAPTURE >= 2
+#include "resident_geometry/parent/parent_owner_service.hpp"
+#endif
+#if defined(PS2_RUNTIME_HAS_GS_SOUND_RAM_PROFILE)
+#include "gs_sound_ram_profile.h"
+#endif
 #include "runtime/gs/internal_resolution.h"
 #include "runtime/gs/frame_pacing.h"
+#include "runtime/gs/performance.h"
 #include "shader_location.hpp"
 #include "parent_first_entry.h"
+#include "parent_natural_runtime.h"
 #include "native_movie_owner.h"
 #include "resident_vif_live_hooks.h"
 #if defined(_WIN32)
@@ -517,6 +525,11 @@ class ParallelBackend final : public Backend, private SignalInterface {
         ThreadIndexScope threadIndex;
         requireLive();
         return copyPrivileged();
+    }
+    bool soundRamProfileObservedV1() const noexcept {
+        return live_ && !config_.residentGeometry.enabled &&
+            !reo_parent_natural::actualFirstEntryEnrollmentRequested() &&
+            !reo_parent_natural::anyActualOwnerBound();
     }
     explicit ParallelBackend(Config config) : config_(std::move(config)) {
 #if defined(_WIN32)
@@ -1076,6 +1089,23 @@ class ParallelBackend final : public Backend, private SignalInterface {
 #endif
                 if (!config_.presentationEpochCurrent(capture.epoch))
                     return {};
+                {
+                    // Display buffer of this scanout: the presenter tells a new game
+                    // frame from a repeated one (presentation warp).
+                    const size_t circuit = (capture.registers[0] & 1u) ? 7 : 9;
+                    reo::performance::warp::scanout_fbp.store(
+                        uint32_t(capture.registers[circuit] & 0x1FF), std::memory_order_relaxed);
+#if defined(_WIN32)
+                    // Depth source for the presentation warp: the context-1 Z buffer
+                    // (ZBP in 2048-word pages, the swizzle base in 64-word blocks).
+                    const auto& state = gs_->get_register_state();
+                    const auto zbuf = state.ctx[0].zbuf.desc;
+                    const auto frame = state.ctx[0].frame.desc;
+                    presenter_->setDepthSource(gs_->resident_vram_buffer(), uint32_t(zbuf.ZBP) * 32u,
+                                               uint32_t(frame.FBW), uint32_t(zbuf.PSM) | 0x30u,
+                                               scanout.internal_width, scanout.internal_height);
+#endif
+                }
                 complete = presenter_->present(scanout.image, false, target.linear);
                 timing.presented();
             } else {
@@ -1199,8 +1229,19 @@ class ParallelBackend final : public Backend, private SignalInterface {
 };
 } // namespace
 gs_backend_bridge::Factory makeFactory(Config config) {
-    return [config = std::move(config)] { return std::make_unique<ParallelBackend>(config); };
+    gs_backend_bridge::Factory factory = [config = std::move(config)] { return std::make_unique<ParallelBackend>(config); };
+#if defined(PS2_RUNTIME_HAS_GS_SOUND_RAM_PROFILE)
+    return gs_backend_bridge::withSoundRamProfileProbeV1(std::move(factory),&soundRamProfileObservedV1);
+#else
+    return factory;
+#endif
 }
+#if defined(PS2_RUNTIME_HAS_GS_SOUND_RAM_PROFILE)
+bool soundRamProfileObservedV1(gs_backend_bridge::Backend& backend) noexcept {
+    auto* actual=dynamic_cast<ParallelBackend*>(&backend);
+    return actual && actual->soundRamProfileObservedV1();
+}
+#endif
 ResidentDiagnostics residentDiagnostics(gs_backend_bridge::Backend& value) {
     auto* backend = dynamic_cast<ParallelBackend*>(&value);
     if (!backend)
@@ -1212,5 +1253,12 @@ gs_backend_bridge::Privileged snapshotPrivileged(gs_backend_bridge::Backend& bac
     if (!concrete)
         throw std::invalid_argument("Not a concrete paraLLEl-GS backend");
     return concrete->snapshot();
+}
+reo::native::ram_capture::v2::Coordinator* nativeSoundRamWriterCoordinatorV2() noexcept {
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) && REO_BUILD_NATIVE_SOUND_RAM_CAPTURE >= 2
+    return reo_parent_install::Service::nativeSoundRamCaptureCoordinatorV2();
+#else
+    return nullptr;
+#endif
 }
 } // namespace reo_parallel_backend

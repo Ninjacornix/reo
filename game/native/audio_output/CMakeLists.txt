@@ -1,0 +1,17 @@
+cmake_minimum_required(VERSION 3.20)
+project(reo_native_audio_output LANGUAGES CXX)
+
+find_package(Threads REQUIRED)
+add_library(reo_native_audio_output STATIC audio_output_owner.cpp)
+target_include_directories(reo_native_audio_output PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(reo_native_audio_output PUBLIC cxx_std_20)
+target_link_libraries(reo_native_audio_output PUBLIC Threads::Threads)
+
+option(REO_NATIVE_AUDIO_OUTPUT_TESTS "Build isolated host output lifetime checks" ON)
+if(REO_NATIVE_AUDIO_OUTPUT_TESTS)
+    enable_testing()
+    add_executable(reo_native_audio_output_tests test_audio_output_owner.cpp)
+    target_link_libraries(reo_native_audio_output_tests PRIVATE reo_native_audio_output)
+    add_test(NAME audio_output_owner_contract COMMAND reo_native_audio_output_tests)
+    set_tests_properties(audio_output_owner_contract PROPERTIES TIMEOUT 30)
+endif()

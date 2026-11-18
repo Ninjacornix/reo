@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "files": {
+    "docs/native-media/MOVIE_PAUSE_CONTROLLER_CONTRACT.md": "8e321c2128d26a5ad184a8b5430d536a69232a0eee6dee3f92bf66c88418117e",
+    "game/native/CMakeLists.txt": "2c232619e7c156ffdf80b2d5c18959e2c93909b050835fca02a06dd40496251e",
+    "game/native/movie_counter_clock/clock.hpp": "5724b55787792f161cb92e226b46a798d25bf7d175e7a1cb503f52a960e975ef",
+    "game/native/movie_pause/CMakeLists.txt": "e64564473144b38312b3b6f2bec761f1d1a645d8ea9904d3c6e442caf1436610",
+    "game/native/movie_pause/controller.cpp": "1fa8db6b573ad16e2d85818cef0a51bacbbf35604e3fa84a63bf67c8a31ed2ae",
+    "game/native/movie_pause/controller.hpp": "b5f3bfd6faff74d7df7253bc08d01b00f53c29156e83f874d7ed3371281358c1",
+    "game/native/movie_pause/controller_tests.cpp": "0fc8d319799b429b27d84d0bc0ecf801b8ea150971b094ff697f70b27791cff0",
+    "game/native/movie_pause/fixture.cpp": "1c3d66670fe3642fcc54209e263f3829ac330eb642ffe62a74869d60bb74d995",
+    "game/native/movie_pause/verify.py": "1dcfe3e7e6edde17c41f7d63b63985418c5a4d6673086cc12f224b74a2049ad9",
+    "game/native/movie_selected_clock/clock.hpp": "c0f1127f084294fcb61f0995c5a75a4b6b9ea3da1db8e5f94c2d410a742c0dec",
+    "tools/native_reconstruction/ee_mac_oracle.py": "0466ee2828bcc268deafbb9ed93d8e7096cd0b89fa0ed489af28cae0120128cd",
+    "tools/native_reconstruction/movie_counter_clock_oracle.py": "1f68ef6b0c62d64e850ab5671bdde98c28ef02255e32a8d08f66541a83c641b0",
+    "tools/native_reconstruction/movie_pause_oracle.py": "0f049092ff7781fdf91303aa05ddc131f55898ebc2d805608d997d76f29dd92a",
+    "tools/native_reconstruction/movie_position_oracle.py": "d89897b841f07056c15f8e18d978b7f4c9bfe208531f1570157276df65a9b5b0",
+    "tools/native_reconstruction/movie_selected_clock_oracle.py": "8e76e291fc61355f1397b24e93f4bbf13223746c99c9f821ceff586e6c956486",
+    "tools/native_reconstruction/sjuni_oracle.py": "9d71114ffb0d8b2826012517c8d381d5ba2cdb5dd602c1f48e12450d99697d95",
+    "game/native/movie_pause/README.md": "40e6bda91bb1605a58d4d8b52183d1d4faa31da8f7e0abffe7304e864ef15a3e"
+  }
+}

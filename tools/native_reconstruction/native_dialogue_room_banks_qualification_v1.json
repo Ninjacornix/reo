@@ -1,0 +1,536 @@
+{
+  "schema": 1,
+  "status": "qualified_native_dialogue_room_banks_and_session_owner",
+  "stage4_complete": false,
+  "game_run": false,
+  "audio_device_opened": false,
+  "source_sha256": {
+    "game/native/gameplay_world/dialogue_bank_bindings.hpp": "1f00206206adaf5bb77a3cd246ee722fb08525daeab7dc276eb205cee058e032",
+    "game/native/gameplay_world/dialogue_bank_bindings.cpp": "6ceae0f4e273ca75ce2f95c3dd489d6a913e2792a8f68fc67423aa48ad260385",
+    "game/native/gameplay_world/dialogue_room_banks.hpp": "f25346507b92a47d68181bb784f981c8ee9acfbbd5c9f70010a0b609c3281af8",
+    "game/native/gameplay_world/dialogue_room_banks.cpp": "807975f444272cecaa96bc6fdcc3816aee4b5ddc239497fab984c55958a058e2",
+    "game/native/gameplay_world/dialogue_pool.hpp": "726d0485d939583921d2cce98241c18fe6834c928e0e61fcaeb9cbca9993fe4e",
+    "game/native/gameplay_world/dialogue_pool.cpp": "e262b6875b64b56e07418db132704f2e9b3782326f86f59027662131d996a8b3",
+    "game/native/gameplay_application/session_dialogue.hpp": "7dbb4388e2b3aba8afba75988f1e5eca3bbdc79f53c4a410c4052dd22b7727e3",
+    "game/native/gameplay_application/session_dialogue.cpp": "cf47c1b518e215eee62b2ea862957e4709701678f1a12b0f26d71e1f880373fa",
+    "game/native/gameplay_application/session_dialogue_tests.cpp": "d7af6dca3fc70c9dddd42697b668af5e126cf2c631eb3d59c2b060a81944cacd",
+    "game/native/gameplay_application/dialogue_workers_tests.cpp": "ccc4886ef664a93e23680238ae835264d11829614a041c7a983f07e83c6ad170",
+    "tools/native_reconstruction/dialogue_bank_bindings_tests.cpp": "4cb7f00737296a5b1765e3953453af498454acd8214479031172abd1749b83ee",
+    "tools/native_reconstruction/verify_dialogue_bank_bindings.py": "209269ecb3cf0ab11b0416bd38eb109c498e964a9e18d12677c5757c36fc79f1",
+    "tools/native_reconstruction/dialogue_room_banks_tests.cpp": "dbcb54c79eff06d9492c8951e6334d566c4067a9a20d03a1f04c5e3d908b87a3",
+    "tools/native_reconstruction/verify_dialogue_room_banks.py": "3a5f84ae63e5b417195838eff14fddb3e9bee1bd17ca35c52a4c277bd7afa226",
+    "tools/native_reconstruction/dialogue_responses_tests.cpp": "d53477bdb426aed7d32a4a16c9029eb00eb9db862ea6611dea105a0ec34ab40d",
+    "tools/native_reconstruction/qualify_dialogue_room_banks_v1.py": "56adf5b81482b4c2577e6891d585eef74e6272994e1725b6e4b713b312594101",
+    "docs/native-gameplay/DIALOGUE_ROOM_BANKS.md": "35afc1a405306a194a892589a2b1e3222bead1f122827d1fa31e52c8eb996734",
+    "recomp/config/output_ovl/o2/o2_005EB6D0_0x5eb6d0.cpp": "2a08a0c989e30b3748f8a173ebdc9099aa31f00b24f7e9c6a20b4221cacfddd8"
+  },
+  "owned_cmake_fragments": {
+    "game/native/gameplay_world/CMakeLists.txt": {
+      "text": "target_sources(reo_native_dialogue PRIVATE dialogue_bank_bindings.cpp dialogue_room_banks.cpp)\n",
+      "sha256": "0e2d74db12aef8a7055f90f4d467a08d4b02e2de9aefc6c5719f30d8a8d1220b"
+    },
+    "game/native/gameplay_application/CMakeLists.txt": {
+      "text": "add_library(reo_native_session_dialogue STATIC session_dialogue.cpp)\ntarget_compile_features(reo_native_session_dialogue PUBLIC cxx_std_20)\ntarget_link_libraries(reo_native_session_dialogue PUBLIC reo_native_gameplay_application reo_native_dialogue)\nadd_executable(session_dialogue_tests session_dialogue_tests.cpp)\ntarget_link_libraries(session_dialogue_tests PRIVATE reo_native_session_dialogue)\nadd_test(NAME native_session_dialogue COMMAND session_dialogue_tests)\nif(CMAKE_CXX_COMPILER_ID MATCHES \"Clang|GNU\")\n    target_compile_options(reo_native_session_dialogue PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)\n    target_compile_options(session_dialogue_tests PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)\nendif()\n",
+      "sha256": "dbdedcf6b203d76ee1a401e26cd149eaf1a748aa5a6aab597773f3ae9bbbe3eb"
+    }
+  },
+  "results": {
+    "physical_publication": {
+      "checks": 3461739,
+      "complete_publications": 70217,
+      "missing_half_loads_preserved": 11703,
+      "invalid_character_write_prefixes": 8192,
+      "retained_bank_leases": 32796,
+      "source_calls": 78409,
+      "game_run": false
+    },
+    "complete_room_refresh": {
+      "checks": 294193,
+      "complete_original_bank_refreshes": 120,
+      "complete_original_resets": 90,
+      "source_sector_reads": 270,
+      "cache_hits": 30,
+      "equal_count_read_prefixes": 15,
+      "retained_text_leases": 15,
+      "source_calls": 336744,
+      "game_run": false,
+      "audio_device_opened": false
+    },
+    "complete_continuation": {
+      "checks": 7141270,
+      "complete_original_frames": 4128,
+      "external_shared_timer_commands": 131,
+      "exact_unsupported_read_prefixes": 2,
+      "source_calls": 23585035,
+      "queued_speech_messages": 62,
+      "source_choice_calls": 213,
+      "source_reply_calls": 197,
+      "source_monitor_calls": 4129,
+      "source_direct_calls": 404,
+      "source_history_increments": 10,
+      "record_preludes": 18,
+      "native_guards": 131,
+      "retained_text_lifetimes": 40,
+      "game_run": false,
+      "audio_device_opened": false
+    },
+    "current_parents": {
+      "parent_tests": 34,
+      "owned_session_checks": 55,
+      "owned_worker_checks": 44
+    }
+  },
+  "receipts": [
+    {
+      "domain": "physical_publication",
+      "path": "build-native-sjuni/dialogue-bank-bindings-gcc-v3/receipt.json",
+      "sha256": "8cbaf5468be32fd7a5f99cb5657f58c0603d37551742e38fbe7aa725504150ec",
+      "live_source_drift": []
+    },
+    {
+      "domain": "physical_publication",
+      "path": "build-native-sjuni/dialogue-bank-bindings-llvm-v3/receipt.json",
+      "sha256": "6df690459bae1d2728bfb49b375bcb1f03143e06e33531b4f99c4f0f13173091",
+      "live_source_drift": []
+    },
+    {
+      "domain": "complete_room_refresh",
+      "path": "build-native-sjuni/dialogue-room-banks-gcc-v3/receipt.json",
+      "sha256": "f45f51bc2aafbaee9efae0fdf7c8612c20df580cec13dfeca2111f8c5be7a466",
+      "live_source_drift": [
+        "game/native/gameplay_application/CMakeLists.txt",
+        "game/native/gameplay_effects/CMakeLists.txt",
+        "game/native/gameplay_effects/periodic_visuals.cpp",
+        "game/native/gameplay_effects/periodic_visuals.hpp",
+        "game/native/gameplay_scenario/interpreter.cpp",
+        "game/native/gameplay_scenario/interpreter.hpp",
+        "game/native/gameplay_scenario/scene_matrix_programs.cpp",
+        "game/native/gameplay_scenario/scene_matrix_programs.hpp",
+        "game/native/gameplay_scenario/scene_model_bindings.cpp",
+        "game/native/gameplay_scenario/scene_model_bindings.hpp",
+        "game/native/gameplay_world/CMakeLists.txt",
+        "game/native/gameplay_world/forward_pose_visuals.cpp",
+        "game/native/gameplay_world/forward_pose_visuals.hpp",
+        "game/native/gameplay_world/inventory_ui.cpp",
+        "game/native/gameplay_world/inventory_ui.hpp"
+      ]
+    },
+    {
+      "domain": "complete_room_refresh",
+      "path": "build-native-sjuni/dialogue-room-banks-llvm-v3/receipt.json",
+      "sha256": "9a623d069d2fb273025961759c7e3014c083a278781ce37547466d4fdd8f7383",
+      "live_source_drift": [
+        "game/native/gameplay_application/CMakeLists.txt",
+        "game/native/gameplay_effects/CMakeLists.txt",
+        "game/native/gameplay_effects/periodic_visuals.cpp",
+        "game/native/gameplay_effects/periodic_visuals.hpp",
+        "game/native/gameplay_scenario/interpreter.cpp",
+        "game/native/gameplay_scenario/interpreter.hpp",
+        "game/native/gameplay_scenario/scene_matrix_programs.cpp",
+        "game/native/gameplay_scenario/scene_matrix_programs.hpp",
+        "game/native/gameplay_scenario/scene_model_bindings.cpp",
+        "game/native/gameplay_scenario/scene_model_bindings.hpp",
+        "game/native/gameplay_world/CMakeLists.txt",
+        "game/native/gameplay_world/forward_pose_visuals.cpp",
+        "game/native/gameplay_world/forward_pose_visuals.hpp",
+        "game/native/gameplay_world/inventory_ui.cpp",
+        "game/native/gameplay_world/inventory_ui.hpp"
+      ]
+    },
+    {
+      "domain": "complete_continuation",
+      "path": "build-native-sjuni/dialogue-responses-gcc-v10/receipt.json",
+      "sha256": "e2217424e0e239aee485a292fbb64cb8ce5d2989d59b2d9bd7a5ce4f3bf753cb",
+      "live_source_drift": [
+        "game/native/gameplay_application/CMakeLists.txt",
+        "game/native/gameplay_effects/CMakeLists.txt",
+        "game/native/gameplay_effects/periodic_visuals.cpp",
+        "game/native/gameplay_effects/periodic_visuals.hpp",
+        "game/native/gameplay_scenario/interpreter.cpp",
+        "game/native/gameplay_scenario/interpreter.hpp",
+        "game/native/gameplay_scenario/scene_matrix_programs.cpp",
+        "game/native/gameplay_scenario/scene_matrix_programs.hpp",
+        "game/native/gameplay_scenario/scene_model_bindings.cpp",
+        "game/native/gameplay_scenario/scene_model_bindings.hpp",
+        "game/native/gameplay_world/CMakeLists.txt",
+        "game/native/gameplay_world/forward_pose_visuals.cpp",
+        "game/native/gameplay_world/forward_pose_visuals.hpp",
+        "game/native/gameplay_world/inventory_ui.cpp",
+        "game/native/gameplay_world/inventory_ui.hpp",
+        "tools/native_reconstruction/dialogue_room_banks_tests.cpp"
+      ]
+    },
+    {
+      "domain": "complete_continuation",
+      "path": "build-native-sjuni/dialogue-responses-llvm-v10/receipt.json",
+      "sha256": "3543aeb7420bfc8a8778184d0b6cbf578166eb31e65598e6aaabe0ce959a44e2",
+      "live_source_drift": [
+        "game/native/gameplay_application/CMakeLists.txt",
+        "game/native/gameplay_effects/CMakeLists.txt",
+        "game/native/gameplay_effects/periodic_visuals.cpp",
+        "game/native/gameplay_effects/periodic_visuals.hpp",
+        "game/native/gameplay_scenario/interpreter.cpp",
+        "game/native/gameplay_scenario/interpreter.hpp",
+        "game/native/gameplay_scenario/scene_matrix_programs.cpp",
+        "game/native/gameplay_scenario/scene_matrix_programs.hpp",
+        "game/native/gameplay_scenario/scene_model_bindings.cpp",
+        "game/native/gameplay_scenario/scene_model_bindings.hpp",
+        "game/native/gameplay_world/CMakeLists.txt",
+        "game/native/gameplay_world/forward_pose_visuals.cpp",
+        "game/native/gameplay_world/forward_pose_visuals.hpp",
+        "game/native/gameplay_world/inventory_ui.cpp",
+        "game/native/gameplay_world/inventory_ui.hpp",
+        "tools/native_reconstruction/dialogue_room_banks_tests.cpp"
+      ]
+    },
+    {
+      "domain": "current_parents",
+      "path": "build-native-sjuni/surface-follower-parents-gcc-v2/receipt.json",
+      "sha256": "bbd34c79413de9bd32a1fc902d9b22af726eabcbcc1602cdc08f7cacca8cde31",
+      "live_source_drift": []
+    },
+    {
+      "domain": "current_parents",
+      "path": "build-native-sjuni/surface-follower-parents-llvm-v2/receipt.json",
+      "sha256": "74f6ea7ac8daf591cc5172eaf302004fa4d363201cada7e88ad22abbda95a3a6",
+      "live_source_drift": []
+    }
+  ],
+  "immutable_snapshot_refresh": {
+    "gcc": {
+      "path": "build-native-sjuni/dialogue-room-banks-gcc-v3-snapshot/receipt.json",
+      "sha256": "4b90719a28eeaba2b9b24ea8648918de4782b67b6ee5b7d61607629983a43d8c",
+      "refresh": {
+        "previous_snapshot": "build-native-sjuni/dialogue-room-banks-gcc-v1-snapshot",
+        "previous_receipt_sha256": "86f054ecfd9e1c969d8793fef6feaaee0adc8746191bedc085452aceeffce0f9",
+        "parent_changed_sources": [
+          "game/native/gameplay_application/dialogue_workers_tests.cpp",
+          "game/native/gameplay_application/session_resources_tests.cpp",
+          "game/native/gameplay_world/dialogue_room_banks.cpp"
+        ],
+        "library_refresh": "build-native-sjuni/dialogue-corrected-library-gcc-v1/receipt.json"
+      }
+    },
+    "llvm": {
+      "path": "build-native-sjuni/dialogue-room-banks-llvm-v3-snapshot/receipt.json",
+      "sha256": "a2a910c4c160df7fb2bf6285ec4ff6c0e4327e07958573cc681c6d04c0c8d331",
+      "refresh": {
+        "previous_snapshot": "build-native-sjuni/dialogue-room-banks-llvm-v1-snapshot",
+        "previous_receipt_sha256": "6412f915639f7e030fa4063d7fa4cad9582472f3c92081a52841feef59988dc7",
+        "parent_changed_sources": [
+          "game/native/gameplay_application/dialogue_workers_tests.cpp",
+          "game/native/gameplay_application/session_resources_tests.cpp",
+          "game/native/gameplay_world/dialogue_room_banks.cpp"
+        ],
+        "library_refresh": "build-native-sjuni/dialogue-corrected-library-llvm-v1/receipt.json"
+      }
+    }
+  },
+  "finish_caller_audit": {
+    "role": "complete finish caller, child entry only adopted",
+    "path": "recomp/config/output_ovl/o2/o2_005EB6D0_0x5eb6d0.cpp",
+    "sha256": "2a08a0c989e30b3748f8a173ebdc9099aa31f00b24f7e9c6a20b4221cacfddd8",
+    "start": "0x5eb6d0",
+    "end_exclusive": "0x5eb778",
+    "matched_comments": 36,
+    "omitted_zero_words": 6,
+    "conflicts": 0,
+    "comparisons": [
+      {
+        "pc": "0x005eb6d0",
+        "owned_word": "0x27bdffd0",
+        "comment_word": "0x27bdffd0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb6d4",
+        "owned_word": "0xffbf0020",
+        "comment_word": "0xffbf0020",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb6d8",
+        "owned_word": "0x7fb10010",
+        "comment_word": "0x7fb10010",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb6dc",
+        "owned_word": "0x0c06b5d4",
+        "comment_word": "0x0c06b5d4",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb6e0",
+        "owned_word": "0x7fb00000",
+        "comment_word": "0x7fb00000",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb6e4",
+        "owned_word": "0x0c06b18c",
+        "comment_word": "0x0c06b18c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb6e8",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005eb6ec",
+        "owned_word": "0x0c17b0e8",
+        "comment_word": "0x0c17b0e8",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb6f0",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005eb6f4",
+        "owned_word": "0x0c0746a0",
+        "comment_word": "0x0c0746a0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb6f8",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005eb6fc",
+        "owned_word": "0x0c1a3144",
+        "comment_word": "0x0c1a3144",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb700",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005eb704",
+        "owned_word": "0x3c010032",
+        "comment_word": "0x3c010032",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb708",
+        "owned_word": "0x902443da",
+        "comment_word": "0x902443da",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb70c",
+        "owned_word": "0x3c010032",
+        "comment_word": "0x3c010032",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb710",
+        "owned_word": "0x902543dc",
+        "comment_word": "0x902543dc",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb714",
+        "owned_word": "0x3c010032",
+        "comment_word": "0x3c010032",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb718",
+        "owned_word": "0x0c17af8c",
+        "comment_word": "0x0c17af8c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb71c",
+        "owned_word": "0x902643de",
+        "comment_word": "0x902643de",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb720",
+        "owned_word": "0x0c07507c",
+        "comment_word": "0x0c07507c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb724",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005eb728",
+        "owned_word": "0x3c10004a",
+        "comment_word": "0x3c10004a",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb72c",
+        "owned_word": "0x0000882d",
+        "comment_word": "0x0000882d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb730",
+        "owned_word": "0x10000005",
+        "comment_word": "0x10000005",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb734",
+        "owned_word": "0x26105c30",
+        "comment_word": "0x26105c30",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb738",
+        "owned_word": "0x0c17b040",
+        "comment_word": "0x0c17b040",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb73c",
+        "owned_word": "0x0200282d",
+        "comment_word": "0x0200282d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb740",
+        "owned_word": "0x26310001",
+        "comment_word": "0x26310001",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb744",
+        "owned_word": "0x261010e0",
+        "comment_word": "0x261010e0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb748",
+        "owned_word": "0x3c01004c",
+        "comment_word": "0x3c01004c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb74c",
+        "owned_word": "0x8c22aea0",
+        "comment_word": "0x8c22aea0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb750",
+        "owned_word": "0x0222102a",
+        "comment_word": "0x0222102a",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb754",
+        "owned_word": "0x1440fff8",
+        "comment_word": "0x1440fff8",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb758",
+        "owned_word": "0x0220202d",
+        "comment_word": "0x0220202d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb75c",
+        "owned_word": "0x0c06b18c",
+        "comment_word": "0x0c06b18c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb760",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005eb764",
+        "owned_word": "0xdfbf0020",
+        "comment_word": "0xdfbf0020",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb768",
+        "owned_word": "0x7bb10010",
+        "comment_word": "0x7bb10010",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb76c",
+        "owned_word": "0x7bb00000",
+        "comment_word": "0x7bb00000",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb770",
+        "owned_word": "0x03e00008",
+        "comment_word": "0x03e00008",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005eb774",
+        "owned_word": "0x27bd0030",
+        "comment_word": "0x27bd0030",
+        "status": "matched"
+      }
+    ]
+  },
+  "retained_diagnostic_evidence": [
+    {
+      "path": "build-native-sjuni/dialogue-bank-bindings-gcc-v1/receipt.json",
+      "sha256": "555d59e82431df781f1c7ea0d71a5d017aa336242cb6f12c15db9b175c0b8ddd",
+      "reason": "Live World source changed before snapshot admission."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-bank-bindings-gcc-v2/receipt.json",
+      "sha256": "a1d12f4984d19135a41d02b9c57239fbd55805c33a7b40caf4ce83b27ac94676",
+      "reason": "Mixed frozen include roots in the draft fixture."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-room-banks-gcc-v1/receipt.json",
+      "sha256": "66970ac505ba135a7ca47ab48977ff9df6fdd9b3d398b202156e1a9227ebdcc3",
+      "reason": "Fixture indentation warning; its room projection is also superseded."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-room-banks-gcc-v2/receipt.json",
+      "sha256": "653b163d317f90c542b6215be32e217b3f4ecd5296f8f50a0dbaebac9656aa6c",
+      "reason": "Superseded room_variant-to-room projection in both fixture and native loader."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-room-banks-llvm-v2/receipt.json",
+      "sha256": "f8f24cf757cf9c844a5aa2060570753eddc40972639d4e2572c7e0ff88e8a08c",
+      "reason": "Same superseded room projection."
+    },
+    {
+      "path": "build-native-sjuni/surface-follower-parents-gcc-v1/receipt.json",
+      "sha256": "906808efe4b1d808e722c0651fcf66060380486392a98c9c5684dc47d90481b7",
+      "reason": "Owned SessionDialogue fixture lacked controlled script channel setup."
+    },
+    {
+      "path": "build-native-sjuni/surface-follower-parents-llvm-v1/receipt.json",
+      "sha256": "c046a653aa86703e65040e3257ccdf6519fe0191fe4d3c6f6346cc9261b71e15",
+      "reason": "Same fixture setup failure; all34 CTests passed."
+    }
+  ],
+  "limits": [
+    "Only real1D41F0 child at5EB720 is explicitly adopted; complete5EB6D0 finish remains a required owner.",
+    "Current owned application fixture proves canonical inactive-actor frame/worker, I/O, timer and lifetime composition; active actor/physics services remain explicit providers.",
+    "Scene front/priority text banks and final font rendering are separate reached owners.",
+    "Reset models all consumed native roles; original unused DC4/DC6 bytes and unused header words have no fabricated native state."
+  ]
+}

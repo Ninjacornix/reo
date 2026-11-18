@@ -1,0 +1,6 @@
+add_library(reo_native_gameplay_events STATIC events.cpp statistics.cpp actor_counters.cpp)
+target_compile_features(reo_native_gameplay_events PUBLIC cxx_std_20)
+target_include_directories(reo_native_gameplay_events PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(reo_native_gameplay_events PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()

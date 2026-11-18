@@ -1,0 +1,103 @@
+{
+  "schema": "reo.native.session_rooms.qualification.v1",
+  "status": "passed",
+  "source_sha256": {
+    "game/native/gameplay_application/CMakeLists.txt": "3dbba1fe967acf2293e2a0d9891cb06d3cf164b9064351455eaea169c75aa3e6",
+    "game/native/gameplay_application/native_session.hpp": "43f14f3edd2a3184f8f3c6220021c48769d0ecab40c8ae7d19bc4403213f5ab6",
+    "game/native/gameplay_application/native_session.cpp": "8f77d411b2dd15e363ad9a07fe73c33f665f93a0d86f21ff1380db22dbdfc8fb",
+    "game/native/gameplay_application/session_rooms.hpp": "a992fa917d5d478012e76e5c6e7bdf61da65eb882857d2fe21164b325ce2bdf5",
+    "game/native/gameplay_application/session_rooms.cpp": "ff2c20b283530c0cca686b5116e7599bfd8fac96524f47d9157585e024117b4d",
+    "game/native/gameplay_application/session_rooms_tests.cpp": "a8b60a433946d73091c2714153fa0d550e4b67821451c3e5c4edc71bfb9e43d4",
+    "game/native/gameplay_contact_world/contacts.hpp": "339c36fa5735312827446fe219601638bc994102e13f7978a1df0bee8a7324d2",
+    "game/native/gameplay_world/world.hpp": "21da9ef0612684d7f5e9c53715808b9ebc864a39ddcd7616fd8014000dc71680",
+    "tools/native_reconstruction/verify_native_session.py": "fdd3a6d56cedca920dfd3cc78c7220094466c4385c79ad351202e53a0d029597",
+    "tools/native_reconstruction/verify_session_rooms.py": "37d9882e79c2e4e310bad9b4ba36df8cc7d7949f0dc462a8c51320b55572a3c3",
+    "docs/native-gameplay/SESSION_ROOM_RESOURCES.md": "3765a3ed2f98a0370f69b85b4359dd4db9966e223c657d3912f8c7c95ac37787",
+    "docs/native-gameplay/NATIVE_SESSION_APPLICATION.md": "cc5fd6a5d2614766d358baff86aafce07aaa9d2e7f685cc5ec497403a925299f",
+    "docs/native-gameplay/STAGE4_INTEGRATION_AUDIT.md": "dc83d0c1ab83b157fc4f9263da1a3ed98effcb12d46e851d8a966b8e00768d86"
+  },
+  "cohorts": [
+    {
+      "compiler": "llvm",
+      "receipts": {
+        "room_resources": {
+          "path": "build-native-sjuni/session-rooms-llvm-v3/receipt.json",
+          "sha256": "771beb4b23bb63127b8db31bed3379c9d40108a565887cedcb5168d3807da272"
+        },
+        "current_parents": {
+          "path": "build-native-sjuni/session-rooms-parents-llvm-v1/receipt.json",
+          "sha256": "eaf6f0f52cdff8d91929741eed0963dbb402a7c5ac0e865f5a46cba967039976"
+        }
+      },
+      "result": {
+        "status": "passed",
+        "checks": 21542,
+        "rooms": 4,
+        "queries": 586,
+        "hits": 328,
+        "original_calls": 0,
+        "game_launched": false
+      },
+      "original_result": {
+        "status": "passed",
+        "checks": 31814,
+        "rooms": 4,
+        "queries": 586,
+        "hits": 328,
+        "original_calls": 10250,
+        "game_launched": false
+      },
+      "matched_original_instruction_comments": 97,
+      "captured_inputs": 670,
+      "native_archives": 54,
+      "parent_tests": 22,
+      "parent_inputs": 680
+    },
+    {
+      "compiler": "gcc",
+      "receipts": {
+        "room_resources": {
+          "path": "build-native-sjuni/session-rooms-gcc-v3/receipt.json",
+          "sha256": "68f9cc4d49e574b47656fb26de412d8b9ef00402ba848465454c78cf9e0b51a3"
+        },
+        "current_parents": {
+          "path": "build-native-sjuni/session-rooms-parents-gcc-v1/receipt.json",
+          "sha256": "b907393b3c1ec22a3fbdf09e8b7afad22b02a72b38ae654c93cc46c82cb5ccfb"
+        }
+      },
+      "result": {
+        "status": "passed",
+        "checks": 21542,
+        "rooms": 4,
+        "queries": 586,
+        "hits": 328,
+        "original_calls": 0,
+        "game_launched": false
+      },
+      "original_result": {
+        "status": "passed",
+        "checks": 31814,
+        "rooms": 4,
+        "queries": 586,
+        "hits": 328,
+        "original_calls": 10250,
+        "game_launched": false
+      },
+      "matched_original_instruction_comments": 97,
+      "captured_inputs": 670,
+      "native_archives": 54,
+      "parent_tests": 22,
+      "parent_inputs": 680
+    }
+  ],
+  "game_launched": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "shared_working_tree_prerequisites": [
+    "Current World.hpp qualification identity also includes root agent contact_style_discriminator, qualified by its actual full-clear source producer; only collision_disabled_mask is staged by this checkpoint."
+  ],
+  "limitations": [
+    "Current-room movable-object placements refuse until actual model/proxy construction and same-owner Update publication binding are composed.",
+    "Production selection, broader scripts/full frames, host input/network/media and semantic saves remain open."
+  ]
+}

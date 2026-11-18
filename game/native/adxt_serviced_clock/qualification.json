@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "status": "qualified complete outer serviced-discard path and independent native completion",
+  "stage3_complete": false,
+  "production_selected": false,
+  "production_player_binding": false,
+  "game_run": false,
+  "device_opened": false,
+  "original_cases": 93,
+  "native_admitted_cases": 92,
+  "native_numeric_exclusions": 1,
+  "original_instructions": 43863,
+  "original_fp_steps": 1023,
+  "manifest_sha256": "d64d5c281f595a6bd098a08b399175d660b1abd0e53cef4429dc8f4f817c8a10",
+  "prior_native_manifest_sha256": "afdb4ffa7dee3e82336616fef41106dbf5b06055baaacd848326b14d5bc4c75d",
+  "pre_native_input_manifest_sha256": "7be99635af40ef5fcc042b2364ddaa8e94d38e470a18125b06c5a62f48983dce",
+  "annotation_correction_manifest_sha256": "423a1f9577c4650989c50943c86cfec82895cb89ba555c7e490c2ddd2cba7b7c",
+  "receipts": {
+    "build-native-sjuni/adxt-serviced-discard/original-gcc-v2/receipt.json": "180084ba77f2e2db2c104b2686f2119b2d3ac593aaf964cee0e9f0373b77b3d3",
+    "build-native-sjuni/adxt-serviced-discard/original-llvm-v2/receipt.json": "e9a940d82d3de6faea889208749f56b59146b425f1d0239ad545003d16078922",
+    "build-native-sjuni/adxt-serviced-discard/qualified-gcc-v2/receipt.json": "0458985d075b7838da99f537c5280a4f669aa27b7990665c1342d9fe25e5fac5",
+    "build-native-sjuni/adxt-serviced-discard/qualified-llvm-v2/receipt.json": "c1557ff72be28c6a67a9579ff7d4c3cd4c5a6788e7a1e502799cd9be2122ff00",
+    "build-native-sjuni/adxt-serviced-discard/parent-gcc-v2/receipt.json": "58b9b53ca073dfa8598f866f3a695d3333216ca52b13f45bc13c6e3ea44c0d0b",
+    "build-native-sjuni/adxt-serviced-discard/parent-llvm-v2/receipt.json": "1056333b914106c36997cef445d676aee08237e05b9684b98a2e3910eeea5c71"
+  },
+  "additional_sources": {
+    "game/native/adxt_serviced_clock/README.md": "118e8b5fc0f4ce1012763d5a142d5f0ca49ed355b771f7bdd8304307d50e3109",
+    "docs/native-media/ADXT_SERVICED_DISCARD_IMPLEMENTATION.md": "201fef166ba1bac995e6ab29a677b44d8036dda7128681a817b305e629a25d76",
+    "game/native/CMakeLists.txt": "73ed58a276c6080996ae0f3221f46c03a979c62920f4aa4eeb8eae455f6d5dde",
+    "docs/NATIVE_RECONSTRUCTION_PLAN.md": "aa6d37cf878713af3eaabfa8698a97cc720760eeb38429eb02eaadf13a55eb86"
+  }
+}

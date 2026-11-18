@@ -1,0 +1,490 @@
+{
+  "schema": "reo.native.scene_record_parameters.qualification.v1",
+  "status": "passed",
+  "source_sha256": {
+    "game/native/gameplay_scenario/CMakeLists.txt": "b9ea5314d57b7400e5e7d999e2f9acaa583ca114cf4485b68c25cfd82b9787be",
+    "game/native/gameplay_scenario/enemy_descriptors.hpp": "71dc3da9373d22d33cfcda65daf638bdcc055dec9cbd55187410dff6f00198ec",
+    "game/native/gameplay_scenario/interpreter.cpp": "61536c449084f780d12c943439cf491ffdd780c250fa410c149862df3ad12e72",
+    "game/native/gameplay_scenario/interpreter.hpp": "cdaae74dc1a476b2db5a9d9076a5ccd89b6f36cb0894ec92f039e28e5c8f7884",
+    "game/native/gameplay_scenario/scene_record_parameters.hpp": "b985cad1c0a2a76048099f159c1f29fdb0285460990f8749b9eccf35920a319e",
+    "game/native/gameplay_scenario/scene_record_parameter_tests.cpp": "4c45d0b1f6f05ecd9045942a7abc9744ea00a95ce380687353c112627875002f",
+    "game/native/gameplay_update/scenario_publication.hpp": "dc4180ce6c953a733691a86ee87138201da163b8ea0caeed6ca929f01ec45eb4",
+    "game/native/gameplay_update/update.cpp": "27fe808336c5040389366ace27ff899f16ab26d2aa03f32b9137f7f248a05e83",
+    "game/native/gameplay_update/reception.hpp": "b9aa2637626a8fa00211ed43abae3b0b696e1e321591d7c4ca49fed6a5e16c96",
+    "game/native/gameplay_update/reception.cpp": "9f381b66e82510cd69b236bf8bf2ab76a6dd5a6bd35b7d4a5764d42e39c759eb",
+    "game/native/gameplay_update/actor_message_queue.hpp": "90dd01ba2b2d3248a2840015c7d190a8eabb6510afffe9fc3e451e47e54d23fd",
+    "game/native/gameplay_update/actor_message_queue.cpp": "ab2464e068a11262d5a699c80e4faf24c09dcf21eba3ca2613258010011aca94",
+    "tools/native_reconstruction/gameplay_scenario/scene_record_fields.hpp": "ea607812e89e020cc0a5de222b5b9c79e5991a4817c2ca87746f44418a06223d",
+    "tools/native_reconstruction/gameplay_scenario/scene_record_parameter_vm_tests.inc": "3b0d41e25c953a58fff4c362a8728921d21b34b39cd139dadeca7e5f8e03c931",
+    "tools/native_reconstruction/gameplay_scenario/script_audio_vm_tests.inc": "0ffc3a433949e8f4812f0cea04340391e229f3b7f0c80c5a69439d2cd6f8af8d",
+    "tools/native_reconstruction/gameplay_scenario/scripted_actor_vm_tests.inc": "2b679857de8aa7564e4bcc17c4df4825d75c7547a4928edf02d5655ed5285d51",
+    "tools/native_reconstruction/gameplay_scenario/enemy_vm_tests.inc": "8ead515db3e0b7e3a5f7ddb896e3eb2b961e98324b784824008f684559e7e486",
+    "tools/native_reconstruction/gameplay_scenario/tests.cpp": "99d48d9caa7d07a81b25f1596db0175d0a88ee9e33dad514256377ffef65d22e",
+    "tools/native_reconstruction/gameplay_scenario/verify.py": "a7ad42ce0c1e9d3524667f994eee03a925253d0ecdbefc83d1299eac21105510",
+    "tools/native_reconstruction/gameplay_scenario/verify_scene_record_parameters.py": "440fc3aa9ce13c614757af453bf63fb4b5351dac9b2cc034615c892f0406f100",
+    "tools/native_reconstruction/gameplay_scenario/verify_scene_record_eligibility_admission.py": "b755d7a34d78cf425cfacfad8c699cf49e7bab58754ec686721bcc39f0e8025f",
+    "docs/native-gameplay/SCENE_RECORD_PARAMETERS.md": "717fa218dae9f97d9faa520f623488d8d2d79a93f80cb225b24b5d0e95ef6f41",
+    "docs/native-gameplay/STAGE4_INTEGRATION_AUDIT.md": "e3ab2f72b23f3a4600062f67c4ce85cad7bbec8cc5c0ce442b27059bcb29ddf0"
+  },
+  "cohorts": [
+    {
+      "compiler": "llvm",
+      "full_interpreter": {
+        "receipt": {
+          "path": "build-native-sjuni/scene-record-parameters-vm-llvm-v2/receipt.json",
+          "sha256": "a4bc6104c8c8645ad9eea45b6bd9f22aef14356e748c46eeb3f823c8adcd48b4"
+        },
+        "result": {
+          "checks": 564131793,
+          "scene_record_parameter_dispatches": 4032,
+          "scene_record_parameter_packets": 160,
+          "script_audio_vm_dispatches": 11340,
+          "script_audio_vm_port_calls": 2340,
+          "script_audio_vm_frames": 362880,
+          "script_audio_vm_signal": 5832
+        },
+        "checked_owned_instruction_comments": 11131
+      },
+      "sender_receiver_queue": {
+        "receipt": {
+          "path": "build-native-sjuni/scene-record-parameters-llvm-v3/receipt.json",
+          "sha256": "337150b47800059f8d767c81e2c4ff5e4c2fa6ec1c46d73241ff05a025e27a2f"
+        },
+        "result": {
+          "status": "passed",
+          "checks": 217393135,
+          "sender_cases": 1120,
+          "adapter_cases": 1120,
+          "receiver_cases": 8352,
+          "queue_cases": 9,
+          "game_launched": false
+        },
+        "historical_unrelated_live_drift": {
+          "game/native/gameplay_scenario/cutscene_playback.cpp": "8159f34ed2c2bf7943793a8a339e1f0d92b9da8d3e7ae900e343e933b3b428bf",
+          "game/native/gameplay_scenario/cutscene_playback.hpp": "26eccc3ca3ca9c78ed8c16a45cf2aea7597391dac5a91cfc806c2d44b625e223",
+          "game/native/gameplay_world/CMakeLists.txt": "7b215ce6a00a02aab0c39850cbdc92362bf5a2b07fff34651408fdcf4bbc9e9f",
+          "tools/native_reconstruction/animation/actor_scene_triggers_tests.cpp": "92cf27306febd17b92516d541faab1a66648eb52b2024f50691025a2acf64d9f",
+          "tools/native_reconstruction/animation/constrained_attachment_tests.cpp": "088ff4802e927a35ab7e6a9c8fec6d2cd08f1b8b8ad2c75e53e54eb6a2284d14"
+        }
+      },
+      "owned_program_admission": {
+        "receipt": {
+          "path": "build-native-sjuni/scene-record-parameters-admission-llvm-v1/receipt.json",
+          "sha256": "4dca8fd2ce1e211756efcc5eeaf869c487b9661fb9036a080cd7394a33146988"
+        },
+        "baseline_commit": "42b792a2",
+        "admitted": {
+          "before": [
+            28,
+            23
+          ],
+          "after": [
+            31,
+            26
+          ]
+        },
+        "evbs": [
+          {
+            "name": "r001.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3244,
+                "opcode": 358
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3244,
+                "opcode": 358
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 1748,
+                "opcode": 368
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3396,
+                "opcode": 417
+              }
+            ]
+          },
+          {
+            "name": "r002.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3336,
+                "opcode": 358
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3336,
+                "opcode": 358
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3480,
+                "opcode": 342
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3480,
+                "opcode": 342
+              }
+            ]
+          },
+          {
+            "name": "r028.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2040,
+                "opcode": 358
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2040,
+                "opcode": 358
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 224,
+                "opcode": 336
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2168,
+                "opcode": 417
+              }
+            ]
+          },
+          {
+            "name": "r035.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 156,
+                "opcode": 336
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2620,
+                "opcode": 417
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 156,
+                "opcode": 336
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2620,
+                "opcode": 417
+              }
+            ]
+          },
+          {
+            "name": "r041.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4844,
+                "opcode": 342
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4844,
+                "opcode": 342
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4844,
+                "opcode": 342
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4844,
+                "opcode": 342
+              }
+            ]
+          }
+        ]
+      },
+      "current_parents": {
+        "receipt": {
+          "path": "build-native-sjuni/scene-record-parameters-parents-llvm-v2/receipt.json",
+          "sha256": "b9b7e4e97ac724898960ff76c5e2c84b92c8fc1cfb3615a5873012cf6302f91c"
+        },
+        "parent_tests": 13,
+        "source_drift": {}
+      }
+    },
+    {
+      "compiler": "gcc",
+      "full_interpreter": {
+        "receipt": {
+          "path": "build-native-sjuni/scene-record-parameters-vm-gcc-v2/receipt.json",
+          "sha256": "e999d69e9b55e0dab62f48bd2bead7dfe470a6c0f6402b9a9896c450ac32baae"
+        },
+        "result": {
+          "checks": 564131793,
+          "scene_record_parameter_dispatches": 4032,
+          "scene_record_parameter_packets": 160,
+          "script_audio_vm_dispatches": 11340,
+          "script_audio_vm_port_calls": 2340,
+          "script_audio_vm_frames": 362880,
+          "script_audio_vm_signal": 5832
+        },
+        "checked_owned_instruction_comments": 11131
+      },
+      "sender_receiver_queue": {
+        "receipt": {
+          "path": "build-native-sjuni/scene-record-parameters-gcc-v3/receipt.json",
+          "sha256": "a93af09c56f16f237a4bb1951630ac159fb78590be80212a264560013dcec43a"
+        },
+        "result": {
+          "status": "passed",
+          "checks": 217393135,
+          "sender_cases": 1120,
+          "adapter_cases": 1120,
+          "receiver_cases": 8352,
+          "queue_cases": 9,
+          "game_launched": false
+        },
+        "historical_unrelated_live_drift": {
+          "game/native/gameplay_scenario/cutscene_playback.cpp": "8159f34ed2c2bf7943793a8a339e1f0d92b9da8d3e7ae900e343e933b3b428bf",
+          "game/native/gameplay_scenario/cutscene_playback.hpp": "26eccc3ca3ca9c78ed8c16a45cf2aea7597391dac5a91cfc806c2d44b625e223",
+          "game/native/gameplay_world/CMakeLists.txt": "7b215ce6a00a02aab0c39850cbdc92362bf5a2b07fff34651408fdcf4bbc9e9f",
+          "tools/native_reconstruction/animation/actor_scene_triggers_tests.cpp": "92cf27306febd17b92516d541faab1a66648eb52b2024f50691025a2acf64d9f",
+          "tools/native_reconstruction/animation/constrained_attachment_tests.cpp": "088ff4802e927a35ab7e6a9c8fec6d2cd08f1b8b8ad2c75e53e54eb6a2284d14"
+        }
+      },
+      "owned_program_admission": {
+        "receipt": {
+          "path": "build-native-sjuni/scene-record-parameters-admission-gcc-v1/receipt.json",
+          "sha256": "6d7566aa829e4f4f3d71e076750761ed5c2d437e2d530b2b6b12fbc3aed374c0"
+        },
+        "baseline_commit": "42b792a2",
+        "admitted": {
+          "before": [
+            28,
+            23
+          ],
+          "after": [
+            31,
+            26
+          ]
+        },
+        "evbs": [
+          {
+            "name": "r001.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3244,
+                "opcode": 358
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3244,
+                "opcode": 358
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 1748,
+                "opcode": 368
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3396,
+                "opcode": 417
+              }
+            ]
+          },
+          {
+            "name": "r002.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3336,
+                "opcode": 358
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3336,
+                "opcode": 358
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3480,
+                "opcode": 342
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 3480,
+                "opcode": 342
+              }
+            ]
+          },
+          {
+            "name": "r028.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2040,
+                "opcode": 358
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2040,
+                "opcode": 358
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 224,
+                "opcode": 336
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2168,
+                "opcode": 417
+              }
+            ]
+          },
+          {
+            "name": "r035.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 156,
+                "opcode": 336
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2620,
+                "opcode": 417
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 2,
+                "offset": 156,
+                "opcode": 336
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 2620,
+                "opcode": 417
+              }
+            ]
+          },
+          {
+            "name": "r041.evb",
+            "before": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4844,
+                "opcode": 342
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4844,
+                "opcode": 342
+              }
+            ],
+            "after": [
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4844,
+                "opcode": 342
+              },
+              {
+                "status": 2,
+                "block": 1,
+                "offset": 4844,
+                "opcode": 342
+              }
+            ]
+          }
+        ]
+      },
+      "current_parents": {
+        "receipt": {
+          "path": "build-native-sjuni/scene-record-parameters-parents-gcc-v2/receipt.json",
+          "sha256": "8afc7dd750b8f91a8e25b320d4f2240435869fa71f1c88a36fca53c5722e61f9"
+        },
+        "parent_tests": 13,
+        "source_drift": {}
+      }
+    }
+  ],
+  "source_scope": [
+    "The immutable full-interpreter and sender/receiver comparison snapshots precede the pure StatePublication sink getter and canonical Update injection. Current source parent cohorts qualify the subsequent adoption and real-queue tests.",
+    "The full VM and current parents include the corrected all-eight-primary-slot ScriptAudio source (758832ab8ac43ed258f7f288c0ce7fd0c54eea2abb5f2b1bfd658b0c936d4737). Historical opcode73 v1 receipts do not establish this extent."
+  ],
+  "limitations": [
+    "Declared transport ports capture initialized typed fields; no actual networking, framing or socket is exercised.",
+    "Native queue/reception deliver the real descriptor mutation; absent routed capability refuses before script effects, while a present rejected send preserves the original ignored-return behavior.",
+    "Whole-bank admission is 31 ordinary /26 offline out of171; all five EVBs still refuse unsupported later commands.",
+    "No installed native gameplay/session bootstrap, semantic save adoption, game launch or Stage4 completion is claimed."
+  ],
+  "game_launched": false,
+  "installed_in_game": false,
+  "stage4_complete": false
+}

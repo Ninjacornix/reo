@@ -523,7 +523,8 @@
               <compat:Rc1TextBlock x:Name="ControllerDetail" FontSize="14" TextWrapping="Wrap" Margin="0,0,0,10" Classes="Hint" />
               <WrapPanel Margin="0,2,0,12">
                 <Button x:Name="BindingsTab" Click="ShowBindings" Content="Button map" Margin="0,0,8,0" />
-                <Button x:Name="LayoutTab" Click="ShowInputLayout" Content="Stick settings" />
+                <Button x:Name="LayoutTab" Click="ShowInputLayout" Content="Stick settings" Margin="0,0,8,0" />
+                <Button x:Name="ModernCameraTab" Click="ShowModernCamera" Content="Modern camera" />
               </WrapPanel>
               <Border Height="1" Background="{StaticResource Line}" Margin="0,0,0,12" />
               <StackPanel x:Name="InputBindingsPanel">
@@ -572,6 +573,51 @@
                     <local:StickPlot x:Name="RightPlot" Grid.Column="1" Height="140" />
                   </Grid>
                 </StackPanel>
+              </StackPanel>
+              <StackPanel x:Name="ModernCameraPanel" IsVisible="false">
+                <Grid Margin="0,0,0,10">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <compat:Rc1TextBlock x:Name="ModernCameraLabel" Text="Modern camera" FontSize="18" VerticalAlignment="Center" />
+                  <CheckBox x:Name="ModernCameraSwitch" IsCheckedChanged="ModernCameraChanged" Grid.Column="1" VerticalAlignment="Center" AutomationProperties.Name="Third-person camera" AutomationProperties.LabeledBy="{Binding ElementName=ModernCameraLabel}" Classes="ToggleSwitch" />
+                </Grid>
+                <compat:Rc1TextBlock x:Name="ModernCameraSupport" FontSize="14" TextWrapping="Wrap" Margin="0,0,0,10" Classes="Hint" />
+                <Grid Margin="0,0,0,10">
+                  <compat:Rc1TextBlock x:Name="ModernCameraViewLabel" Text="Starting view" VerticalAlignment="Center" />
+                  <ComboBox x:Name="ModernCameraView" SelectionChanged="ModernCameraViewChanged" Width="300" HorizontalAlignment="Right" AutomationProperties.Name="Starting camera view" AutomationProperties.LabeledBy="{Binding ElementName=ModernCameraViewLabel}">
+                    <ComboBoxItem Content="Third person" />
+                    <ComboBoxItem Content="First person" />
+                  </ComboBox>
+                </Grid>
+                <CheckBox x:Name="ModernCameraMouse" IsCheckedChanged="ModernCameraChanged" Content="Mouse look" Margin="0,0,0,6" />
+                <CheckBox x:Name="ModernCameraInvert" IsCheckedChanged="ModernCameraChanged" Content="Invert vertical look" Margin="0,0,0,6" />
+                <CheckBox x:Name="ModernCameraCrosshair" IsCheckedChanged="ModernCameraChanged" Content="Show crosshair" Margin="0,0,0,12" />
+                <Grid Margin="0,5,0,12">
+                  <compat:Rc1TextBlock x:Name="ModernCameraMouseLabel" Text="Mouse sensitivity: 100%" VerticalAlignment="Center" />
+                  <Slider x:Name="ModernCameraMouseSensitivity" ValueChanged="ModernCameraSliderChanged" Minimum="10" Maximum="400" Value="100" Width="300" HorizontalAlignment="Right" AutomationProperties.Name="Mouse sensitivity" Classes="AudioSlider" />
+                </Grid>
+                <Grid Margin="0,5,0,12">
+                  <compat:Rc1TextBlock x:Name="ModernCameraStickLabel" Text="Stick look speed: 100%" VerticalAlignment="Center" />
+                  <Slider x:Name="ModernCameraStickSpeed" ValueChanged="ModernCameraSliderChanged" Minimum="10" Maximum="400" Value="100" Width="300" HorizontalAlignment="Right" AutomationProperties.Name="Stick look speed" Classes="AudioSlider" />
+                </Grid>
+                <Grid Margin="0,5,0,12">
+                  <compat:Rc1TextBlock x:Name="ModernCameraDistanceLabel" Text="Distance: 170" VerticalAlignment="Center" />
+                  <Slider x:Name="ModernCameraDistance" ValueChanged="ModernCameraSliderChanged" Minimum="60" Maximum="600" Value="170" Width="300" HorizontalAlignment="Right" AutomationProperties.Name="Camera distance" Classes="AudioSlider" />
+                </Grid>
+                <Grid Margin="0,0,0,10">
+                  <compat:Rc1TextBlock x:Name="ModernCameraSideLabel" Text="Camera shoulder" VerticalAlignment="Center" />
+                  <ComboBox x:Name="ModernCameraSide" SelectionChanged="ModernCameraViewChanged" Width="300" HorizontalAlignment="Right" AutomationProperties.Name="Camera shoulder" AutomationProperties.LabeledBy="{Binding ElementName=ModernCameraSideLabel}">
+                    <ComboBoxItem Content="Right" />
+                    <ComboBoxItem Content="Left" />
+                  </ComboBox>
+                </Grid>
+                <Grid Margin="0,5,0,12">
+                  <compat:Rc1TextBlock x:Name="ModernCameraShoulderLabel" Text="Shoulder offset: 45" VerticalAlignment="Center" />
+                  <Slider x:Name="ModernCameraShoulder" ValueChanged="ModernCameraSliderChanged" Minimum="0" Maximum="120" Value="45" Width="300" HorizontalAlignment="Right" AutomationProperties.Name="Shoulder offset" Classes="AudioSlider" />
+                </Grid>
+                <Button x:Name="ModernCameraResetButton" Click="ResetModernCamera" Content="Reset camera settings" HorizontalAlignment="Left" Margin="0,6,0,0" />
               </StackPanel>
             </StackPanel>
             <StackPanel x:Name="PageSaves" MaxWidth="940" HorizontalAlignment="Stretch" IsVisible="false">
@@ -725,30 +771,6 @@
                     <TextBox x:Name="AccountUsername" TextChanged="OnlineSettingChanged" Margin="0,12,0,8" AutomationProperties.Name="Player name" AutomationProperties.HelpText="Four to ten letters, numbers or underscores. Underscores cannot start, end or repeat." Classes="CoopTextInput" />
                     <compat:Rc1TextBlock Text="4 to 10 letters, numbers or underscores." FontSize="14" Classes="Hint" />
                     <compat:Rc1TextBlock x:Name="AccountStatus" FontSize="14" Margin="0,12,0,0" AutomationProperties.LiveSetting="Polite" Classes="CoopStatus Hint" />
-                    <compat:Rc1TextBlock Text="WAITING ROOM" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,32,0,14" />
-                    <Grid>
-                      <Grid.ColumnDefinitions>
-                        <ColumnDefinition />
-                        <ColumnDefinition Width="Auto" />
-                      </Grid.ColumnDefinitions>
-                      <compat:Rc1TextBlock x:Name="AutoLobbyLabel" Text="Enter automatically" FontSize="17" VerticalAlignment="Center" Margin="0,0,12,0" />
-                      <CheckBox x:Name="AutoLobby" IsCheckedChanged="OnlineSettingChanged" Grid.Column="1" AutomationProperties.Name="Enter the waiting room automatically" AutomationProperties.LabeledBy="{Binding ElementName=AutoLobbyLabel}" AutomationProperties.HelpText="After launch, sign in and open or join the host's room. Press any button to take over." Classes="ToggleSwitch" />
-                    </Grid>
-                    <StackPanel x:Name="RoomSettings" Margin="0,18,0,0" IsVisible="false">
-                      <Label Content="Room name" Target="{Binding ElementName=RoomName}" Padding="0" Foreground="{StaticResource Ink}" FontSize="14" />
-                      <Grid Margin="0,8,0,14">
-                        <TextBox x:Name="RoomName" TextChanged="RoomSettingChanged" MaxLength="15" AutomationProperties.Name="Waiting room name" AutomationProperties.HelpText="Up to 15 letters, numbers or underscores. Leave blank to use your player name." Classes="CoopTextInput" />
-                        <compat:Rc1TextBlock Text="Use player name" Foreground="{StaticResource Muted}" FontSize="14" Margin="11,8" IsHitTestVisible="False" IsVisible="{Binding #RoomName.Text, Converter={x:Static StringConverters.IsNullOrEmpty}}" />
-                      </Grid>
-                      <DockPanel MinHeight="48">
-                        <ComboBox x:Name="RoomPlayers" SelectionChanged="RoomSettingChanged" DockPanel.Dock="Right" Width="150" MinWidth="120" Margin="12,0,0,0" AutomationProperties.Name="Maximum players" DisplayMemberBinding="{Binding Label}" SelectedValueBinding="{Binding Value}" />
-                        <compat:Rc1TextBlock Text="Maximum players" FontSize="14" VerticalAlignment="Center" />
-                      </DockPanel>
-                      <DockPanel MinHeight="48" Margin="0,8,0,0">
-                        <ComboBox x:Name="RoomWait" SelectionChanged="RoomSettingChanged" DockPanel.Dock="Right" Width="150" MinWidth="120" Margin="12,0,0,0" AutomationProperties.Name="Room waiting time" DisplayMemberBinding="{Binding Label}" SelectedValueBinding="{Binding Value}" />
-                        <compat:Rc1TextBlock Text="Waiting time" FontSize="14" VerticalAlignment="Center" />
-                      </DockPanel>
-                    </StackPanel>
                     <compat:Rc1TextBlock x:Name="CoopValidation" Foreground="{StaticResource Danger}" FontSize="14" Margin="0,22,0,0" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" IsVisible="false" />
                   </StackPanel>
                   <StackPanel Grid.Column="2">
@@ -909,12 +931,43 @@
                     <compat:Rc1TextBlock x:Name="LauncherMoviesLabel" Text="Background movies" FontSize="18" VerticalAlignment="Center" Margin="0,0,12,0" />
                     <CheckBox x:Name="LauncherBackgroundMovies" IsCheckedChanged="LauncherBackgroundMoviesChanged" Grid.Column="1" AutomationProperties.Name="Launcher background movies" AutomationProperties.LabeledBy="{Binding ElementName=LauncherMoviesLabel}" Classes="ToggleSwitch" />
                   </Grid>
+                  <compat:Rc1TextBlock Text="STARTUP" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,26,0,18" />
+                  <Grid MinHeight="48">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <compat:Rc1TextBlock x:Name="SkipIntroLabel" Text="Start at the main menu" FontSize="18" VerticalAlignment="Center" Margin="0,0,12,0" />
+                    <CheckBox x:Name="SkipIntro" IsCheckedChanged="SaveSettings" Grid.Column="1" AutomationProperties.Name="Start at the main menu" AutomationProperties.LabeledBy="{Binding ElementName=SkipIntroLabel}" Classes="ToggleSwitch" ToolTip.Tip="Skips the startup logos and the title screen." />
+                  </Grid>
                 </StackPanel>
               </Grid>
             </StackPanel>
             <StackPanel x:Name="PageDeveloper" MaxWidth="940" HorizontalAlignment="Stretch" IsVisible="false">
               <compat:Rc1TextBlock Text="Developer" FontSize="24" Margin="0,3,0,28" />
               <compat:Rc1TextBlock x:Name="DeveloperSessionNote" Text="Changes apply to your next session." FontSize="14" Margin="0,0,0,18" Classes="Hint" IsVisible="false" />
+              <Grid Margin="0,0,0,14">
+                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <StackPanel Margin="0,0,12,0">
+                  <compat:Rc1TextBlock x:Name="DevSlowdownsLabel" Text="Record slowdowns" FontSize="18" />
+                  <compat:Rc1TextBlock Text="Records performance evidence when the game slows down. Reports stay on this computer." TextWrapping="Wrap" Classes="Hint" Margin="0,5,0,0" />
+                </StackPanel>
+                <CheckBox x:Name="DevSlowdowns" Grid.Column="1" IsCheckedChanged="DeveloperSettingChanged" Classes="ToggleSwitch" AutomationProperties.Name="Record slowdowns" AutomationProperties.LabeledBy="{Binding ElementName=DevSlowdownsLabel}" AutomationProperties.HelpText="Applies to the next game launch. Windows live recorder; File #2 has limited clock coverage." />
+              </Grid>
+              <Grid Margin="0,0,0,14">
+                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <StackPanel Margin="0,0,12,0">
+                  <compat:Rc1TextBlock x:Name="DevStrictSlowdownsLabel" Text="Sensitive detection" FontSize="18" />
+                  <compat:Rc1TextBlock Text="Captures shorter hitches, smaller speed drops and continuous timing evidence. Applies to your next launch." TextWrapping="Wrap" Classes="Hint" Margin="0,5,0,0" />
+                </StackPanel>
+                <CheckBox x:Name="DevStrictSlowdowns" Grid.Column="1" IsCheckedChanged="DeveloperSettingChanged" Classes="ToggleSwitch" AutomationProperties.Name="Sensitive slowdown detection" AutomationProperties.LabeledBy="{Binding ElementName=DevStrictSlowdownsLabel}" />
+              </Grid>
+              <compat:Rc1TextBlock x:Name="PerformanceRecordingStatus" TextWrapping="Wrap" Classes="Hint" Margin="0,0,0,12" />
+              <WrapPanel Margin="0,0,0,22">
+                <Button x:Name="MarkPerformanceProblem" Content="Mark problem" Click="MarkProblem" IsEnabled="false" Margin="0,0,8,8" />
+                <Button Content="Open performance reports" Click="OpenPerformanceReports" Margin="0,0,8,8" />
+                <Button Content="Export report" Click="ExportPerformanceReport" Margin="0,0,0,8" />
+              </WrapPanel>
               <Grid>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition />

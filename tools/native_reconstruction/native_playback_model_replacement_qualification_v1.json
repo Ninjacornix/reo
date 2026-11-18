@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "status": "qualified_partial_native_playback_model_replacement",
+  "source_sha256": {
+    "game/native/animation/playback.hpp": "f99a7b9928cee4fc0008d4e6b16d6816c93d4d7a1655cc4b8a47c02dded644fd",
+    "game/native/animation/playback.cpp": "ef384391e322abb83de52f7cd3cfad02fe0ce8c0862f5f5f38c085dfe901d30b",
+    "tools/native_reconstruction/animation/playback_tests.cpp": "bf1cc5367e4252cfe4e030bb5195de1b5d24dbae248f1a5734667de8e8fa6708",
+    "docs/native-gameplay/PLAYBACK_MODEL_REPLACEMENT.md": "633f76ec3ac37e50127e664d238e1106e858782ca7cb9d2ba3d470c33f98a67a"
+  },
+  "cohorts": {
+    "llvm": {
+      "receipt": "build-native-sjuni/playback-model-replacement-llvm-v3/receipt.json",
+      "sha256": "1c4d1199cacb6b6b12cc8a693060cc97af598794b8f464e7397abc35ad771829",
+      "observed": {
+        "model_replacement_cases": 72,
+        "replacement_continuations": 264,
+        "replacement_refusals": 64,
+        "checks": 2949346,
+        "configuration_cases": 320,
+        "plain_bind_cases": 128,
+        "primary_tick_cases": 1024,
+        "four_channel_cases": 256,
+        "joint_cases": 1613940,
+        "whole_model_cases": 28,
+        "whole_configuration_cases": 768,
+        "whole_tick_cases": 9216,
+        "whole_missing_cases": 768,
+        "whole_boundary_refusals": 768,
+        "orchestration_cases": 512,
+        "complement_cases": 4096,
+        "original_prelude_calls": 768,
+        "original_calls": 13251310,
+        "game_run": false
+      }
+    },
+    "gcc": {
+      "receipt": "build-native-sjuni/playback-model-replacement-gcc-v3/receipt.json",
+      "sha256": "369fe9adb81f0646d803f9bd7a6264e0728a40abb22aa4eebf03c72c6dcd3ac6",
+      "observed": {
+        "model_replacement_cases": 72,
+        "replacement_continuations": 264,
+        "replacement_refusals": 64,
+        "checks": 2949346,
+        "configuration_cases": 320,
+        "plain_bind_cases": 128,
+        "primary_tick_cases": 1024,
+        "four_channel_cases": 256,
+        "joint_cases": 1613940,
+        "whole_model_cases": 28,
+        "whole_configuration_cases": 768,
+        "whole_tick_cases": 9216,
+        "whole_missing_cases": 768,
+        "whole_boundary_refusals": 768,
+        "orchestration_cases": 512,
+        "complement_cases": 4096,
+        "original_prelude_calls": 768,
+        "original_calls": 13251310,
+        "game_run": false
+      }
+    }
+  },
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false
+}

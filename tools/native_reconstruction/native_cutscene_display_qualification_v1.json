@@ -1,0 +1,200 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "scope": "Full375920/18F6A0 CPU camera publication and scheduled display fade transitions, composed by the canonical cinematic controller.",
+  "game_run": false,
+  "device_opened": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_scenario/camera_projection.hpp": "07d9b5ca2329f4fd4a86724fa2162f4fe9d70110c2cbcddcf3038e8817b90de1",
+    "game/native/gameplay_scenario/camera_projection.cpp": "9ad24677e4516bdeb7bf277db4c188bd4bfbd241f0fa479ae5b7d1292d445af3",
+    "game/native/gameplay_scenario/display_fade.hpp": "e2adc2aa3267c9b2b59bee82ded9632fe6580565c9685317c6a1bf79172382d2",
+    "game/native/gameplay_scenario/display_fade.cpp": "910afb65f80203a0e86ce988778494968b49864f8dd3f7ae1d53bfaa4f842991",
+    "game/native/gameplay_scenario/cutscene_display.hpp": "d4260f9ed44f0361b61ae2dbda8d17021560a24fd60cc411c3639b7ce49d82f4",
+    "game/native/gameplay_scenario/cutscene_playback.hpp": "f078439119c6723afa636f824db2c319238c8bdfa96a003643eddff67fab19d1",
+    "game/native/gameplay_scenario/cutscene_playback.cpp": "8be75e7a3fbb028d3974d7cc58380575d6994a9205d078ce8beb8e48ece74e5c",
+    "tools/native_reconstruction/camera_projection_tests.cpp": "4b6f96f0b65bc3d5fc360c2463bb755e3561f5e5019c0274071d8283d82f649c",
+    "tools/native_reconstruction/verify_camera_projection.py": "cba0da176e140d6ac59f78e055f3150e3d6fb63779c83c1819e0534385514c53",
+    "tools/native_reconstruction/display_fade_tests.cpp": "49833799eec75983e1cef217644667c3475a74eb1163e006cc77389191cdffcc",
+    "tools/native_reconstruction/verify_display_fade.py": "f5442a372a03fe81191e0e1fc2dc53cd08d6fdefed16c6d9f496a1acb60b2189",
+    "tools/native_reconstruction/cutscene_playback_tests.cpp": "684558a25a5598369d16c691eab0bee53dfb931ad5ebed468df1fd2f49bbac69",
+    "tools/native_reconstruction/verify_cutscene_playback.py": "9e3773a936b9efc9670c0d777f6c95c8b636b0d38147689fe0fe81ab63884803",
+    "tools/native_reconstruction/cutscene_display_owner_tests.inc": "c0307f8e2ed21ab701ea33e77575c486eafcbf9a61be32d5b39238c4a0a7fd2e",
+    "game/native/gameplay_scenario/CMakeLists.txt": "d501eb3d95bee1ef5a99a5f4da0f69360f19cb5a5e577a8ab6ec6e9d76ca7fea"
+  },
+  "receipts": {
+    "projection_llvm": {
+      "path": "build-native-sjuni/camera-projection-llvm-v4/receipt.json",
+      "sha256": "11c0c949b75f8f1ae67571c6f675e2a05d47177a00f9b62bdf9ee07da8bee0d2",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 6946816,
+        "cases": 65536,
+        "publications": 131072,
+        "original_calls": 1769472,
+        "game_run": false
+      },
+      "source_unchanged": true,
+      "source_drift": null,
+      "native_archive_count": 0
+    },
+    "projection_gcc": {
+      "path": "build-native-sjuni/camera-projection-gcc-v4/receipt.json",
+      "sha256": "261b5bfee58f426539ea670df39a1dc58f99556ba10693010700ea269ea5c73e",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 6946816,
+        "cases": 65536,
+        "publications": 131072,
+        "original_calls": 1769472,
+        "game_run": false
+      },
+      "source_unchanged": true,
+      "source_drift": null,
+      "native_archive_count": 0
+    },
+    "fade_llvm": {
+      "path": "build-native-sjuni/display-fade-llvm-v2/receipt.json",
+      "sha256": "2b866e508c9efb57d4f3a00da16fe60d62cf8bc159e5fb50b1c62f61a91600f7",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 22552074,
+        "cases": 131072,
+        "steps": 524288,
+        "initializations": 7711,
+        "original_calls": 1266001,
+        "game_run": false
+      },
+      "source_unchanged": true,
+      "source_drift": null,
+      "native_archive_count": 0
+    },
+    "fade_gcc": {
+      "path": "build-native-sjuni/display-fade-gcc-v2/receipt.json",
+      "sha256": "a31bcc520a5115f57b69f31b71fec0b5db90fe27ab8819d489ecd5a53f7dae10",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 22552074,
+        "cases": 131072,
+        "steps": 524288,
+        "initializations": 7711,
+        "original_calls": 1266001,
+        "game_run": false
+      },
+      "source_unchanged": true,
+      "source_drift": null,
+      "native_archive_count": 0
+    },
+    "controller_llvm": {
+      "path": "build-native-sjuni/cutscene-playback-llvm-v21/receipt.json",
+      "sha256": "79e06808ca5fbc558919db57da3ead920264e2330f30edd2c5f638555e0c9262",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "display_ticks": 32,
+        "display_guards": 3529,
+        "display_publications": 65,
+        "camera_ticks": 256,
+        "camera_guards": 3529,
+        "camera_publications": 257,
+        "close_refusals": 124355,
+        "checks": 2501424,
+        "controller_cases": 56173,
+        "advance_cases": 9363,
+        "acknowledgements": 9984,
+        "native_worker_calls": 67463,
+        "refusals": 16,
+        "original_calls": 458738,
+        "game_run": false
+      },
+      "source_unchanged": true,
+      "source_drift": null,
+      "native_archive_count": 0
+    },
+    "controller_gcc": {
+      "path": "build-native-sjuni/cutscene-playback-gcc-v21/receipt.json",
+      "sha256": "2f5d1585a55b376dd776ece1db567128572e2a6f32407a760506ee997abf81bd",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "display_ticks": 32,
+        "display_guards": 3529,
+        "display_publications": 65,
+        "camera_ticks": 256,
+        "camera_guards": 3529,
+        "camera_publications": 257,
+        "close_refusals": 124355,
+        "checks": 2501424,
+        "controller_cases": 56173,
+        "advance_cases": 9363,
+        "acknowledgements": 9984,
+        "native_worker_calls": 67463,
+        "refusals": 16,
+        "original_calls": 458738,
+        "game_run": false
+      },
+      "source_unchanged": true,
+      "source_drift": null,
+      "native_archive_count": 0
+    },
+    "current_application_llvm": {
+      "path": "build-native-sjuni/session-rooms-llvm-v5/receipt.json",
+      "sha256": "93a52e9459ad3278e6b851739815fcbe9b8aca23863253a49421ec8fb859d3a9",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "status": "passed",
+        "checks": 21718,
+        "rooms": 4,
+        "queries": 586,
+        "hits": 328,
+        "original_calls": 0,
+        "game_launched": false
+      },
+      "source_unchanged": null,
+      "source_drift": {},
+      "native_archive_count": 57
+    },
+    "current_application_gcc": {
+      "path": "build-native-sjuni/session-rooms-gcc-v5/receipt.json",
+      "sha256": "01b7b19ee0d24de46f15227c151345e47cce8b1e7bb4153d1fd7bf05feb724a4",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "status": "passed",
+        "checks": 21718,
+        "rooms": 4,
+        "queries": 586,
+        "hits": 328,
+        "original_calls": 0,
+        "game_launched": false
+      },
+      "source_unchanged": null,
+      "source_drift": {},
+      "native_archive_count": 57
+    },
+    "current_parents_llvm": {
+      "path": "build-native-sjuni/session-rooms-parents-llvm-v4/receipt.json",
+      "sha256": "d5aa8c27c4965d50c187411311b5119031aed956905c1981b731e785111d0c79",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": 23,
+      "source_unchanged": null,
+      "source_drift": {},
+      "native_archive_count": 0
+    },
+    "current_parents_gcc": {
+      "path": "build-native-sjuni/session-rooms-parents-gcc-v4/receipt.json",
+      "sha256": "c7018b504526d0e254d427e1905e1a2858f54a2e78634e856c51a5fea7cc6faa",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": 23,
+      "source_unchanged": null,
+      "source_drift": {},
+      "native_archive_count": 0
+    }
+  },
+  "limits": [
+    "CameraDisplaySink is a required concrete Stage5 boundary. Ordered1AF780 operations24/22 are test observations; no graphics device or successful default renderer is implemented.",
+    "Projection context, viewport, camera state, fade state, display mode and callback marker are borrowed from their real owner. No guessed configuration or separate simulation clock is created.",
+    "Fade advancement is the actual scheduled1BB480 transition. A controller or presentation visit does not advance it automatically; task installation and its complete outer scheduler remain separate consumers.",
+    "Complete projection and fade bodies execute in direct qualifiers and composed controller. Startup display configuration18F970 and remaining fullscreen/scene/movie lifecycle work are not newly migrated by this checkpoint.",
+    "Native projection preserves source zero-divide saturation and derived nonfinite intermediate buffers in the admitted host scalar/SIMD profile; physical PS2 exceptional arithmetic parity is not claimed.",
+    "New unregistered fullscreen/workspace/view-control files are excluded. FullStep4 completion and game installation are not claimed."
+  ]
+}

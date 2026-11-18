@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "status": "qualified cinematic requested/reserved character sets",
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_scenario/cutscene_actor_reservations_tests.cpp": "0839691b0eb838eca0e85c8c3c58d8463110412e8385048e7274e3e120ce3d9f",
+    "game/native/gameplay_scenario/cutscene_actor_reservations.hpp": "d6f9186a2fb12fa38c68f2f7b12874b6a72d0f7c0485fb6e6c1b0c22c0e2f44d",
+    "recomp/config/output_ovl/o2/o2_005F0C60_0x5f0c60.cpp": "6c9840ecce75f44f100307276f5d5cc660402ffa29967c07a19f2224da4b28fc",
+    "recomp/config/output_ovl/o2/o2_005F0CF0_0x5f0cf0.cpp": "7918e514a0956885576ef000934d9e13fc5bab76b4a96f681be523d72a2d3d31",
+    "recomp/config/output_ovl/o2/o2_005F0D90_0x5f0d90.cpp": "a9cf5c11752b550fe2236e1416d04bca32e415bd060d9fc8ac6a739d762b351a",
+    "tools/native_reconstruction/verify_cutscene_actor_reservations.py": "6d3f54bd8279b8bfce673ae2a31d8e767068f6357e095a7f730bb7f216d247f5",
+    "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f",
+    "game/native/gameplay_scenario/CMakeLists.txt": "7bf39ddfa191e29a3d12803325ec1195c65f482807079af3d464137c2e38a33b"
+  },
+  "cohorts": {
+    "llvm": {
+      "path": "build-native-sjuni/cutscene-reservations-llvm-v1/receipt.json",
+      "sha256": "fd500d671a287b8fe4dcf8155222b2174cef927141f13a32eee1f37ae15c0d81",
+      "observed": {
+        "status": "passed",
+        "checks": 870427,
+        "initializations": 389,
+        "queries": 133384,
+        "appends": 8326,
+        "refusals": 388,
+        "game_run": false
+      },
+      "native_only": {
+        "status": "passed",
+        "checks": 9106,
+        "initializations": 389,
+        "queries": 133384,
+        "appends": 8326,
+        "refusals": 388,
+        "game_run": false
+      },
+      "cmake_parent": {
+        "path": "build-native-sjuni/cutscene-reservations-llvm-v1/cmake-parent.log",
+        "sha256": "f6faadde2d60c985c4aa20d181b522f9248d88aecbe909e0d9114e38cf5187a4"
+      }
+    },
+    "gcc": {
+      "path": "build-native-sjuni/cutscene-reservations-gcc-v1/receipt.json",
+      "sha256": "db2588c3b8fbff490f66c1cc7627e555418edc90161c44f371d7720783da6e52",
+      "observed": {
+        "status": "passed",
+        "checks": 870427,
+        "initializations": 389,
+        "queries": 133384,
+        "appends": 8326,
+        "refusals": 388,
+        "game_run": false
+      },
+      "native_only": {
+        "status": "passed",
+        "checks": 9106,
+        "initializations": 389,
+        "queries": 133384,
+        "appends": 8326,
+        "refusals": 388,
+        "game_run": false
+      },
+      "cmake_parent": {
+        "path": "build-native-sjuni/cutscene-reservations-gcc-v1/cmake-parent.log",
+        "sha256": "d2aa4d33d71c5b6290a3023e06d790cdd7760ceea77074c48fabd00e8d2b37be"
+      }
+    }
+  },
+  "limitations": [
+    "Full5F0C60/5F0CF0/5F0D90 execute against pinned owned words. Bounded fill/copy are explicit ports.",
+    "Native count/full refusals prevent unsafe original overflows; no source out-of-bounds cases execute.",
+    "Full5F0DC0 selection, actor cloning, temporary binding, model handoff and scene lifecycle remain open."
+  ]
+}

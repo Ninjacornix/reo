@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "status": "passed actual repeated native ADX cycles; full stop prefix and original/player/device parity excluded",
+  "game_run": false,
+  "device_opened": false,
+  "references": 89,
+  "distinct_loop_payloads": 80,
+  "complete_cycle_channel_samples": 962466636,
+  "complete_cycle_pcm_bytes": 1924933272,
+  "full_stop_prefix_differences": 18,
+  "full_run_byte_equality": false,
+  "sources": {
+    "tools/native_reconstruction/adx_loop_asset_stream_check.cpp": "7d9106014f0764c647d4c4431d0e6cec5a84e35c6ca577623e16ddcc30c3f617",
+    "tools/native_reconstruction/verify_adx_loop_asset_streams.py": "48952eeda55b03cb1c7d2cf8cb7d6fd74e1fc3ee4ce46feea1bdd53bc69e94c0",
+    "tools/native_reconstruction/compare_adx_loop_runs.py": "97aaf95f492d8b719bcdf078485823c95eda9c84a69272e1c0fa8f019db82b0f",
+    "docs/native-media/ADX_ACTUAL_LOOP_STREAM_VALIDATION.md": "6c4a1e4e436039c8ce6e1f277d63cbe9a97af32b34d573e686f5db540683efd5",
+    "docs/NATIVE_RECONSTRUCTION_PLAN.md": "2750f1a677cb4041de19412fffa5a5d6f4873fc944fe31a27c5bbe9731a331d9"
+  },
+  "receipts": {
+    "build-native-sjuni/adx-loop-asset-streams/probe-gcc-v1/receipt.json": "8509ef29bd64252c4769b5587e1aa0a25f495c9b0fa98892d7c420d3261efe1e",
+    "build-native-sjuni/adx-loop-asset-streams/full-gcc-v1/receipt.json": "19758393bffa884b8c92400edf57c952709ce0391db4baa0feffc118092f5610",
+    "build-native-sjuni/adx-loop-asset-streams/full-llvm-v1/receipt.json": "6ce657f31ea504f8fb0db2d8dc6a8f50d725f0b1b0d2fe98f26fb01013bb400e",
+    "build-native-sjuni/adx-loop-asset-streams/comparison-v1/receipt.json": "9a18376b7f8101c7ecaabd526583538394ed17356ed1b636843bb14fafd189db"
+  }
+}

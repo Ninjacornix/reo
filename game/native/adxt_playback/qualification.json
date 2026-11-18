@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "status": "qualified isolated startup/drain control and phased PCM bridge",
+  "game_run": false,
+  "device_opened": false,
+  "complete_player": false,
+  "original_clients": 330,
+  "admitted_clients": 318,
+  "uneven_channel_exclusions": 12,
+  "original_instructions": 101033,
+  "unit_checks_per_compiler": 51,
+  "manifest_sha256": "d37d943c4daf2f65dc6166747f0f597ffcda28fbfa1e28c9fe1f9810d92822d8",
+  "receipts": {
+    "build-native-sjuni/adxt-playback/original-v2/receipt.json": "898d1f80e1f1548a871a57e9c7b1967daa5789aeb2ab225db978ada5c5584468",
+    "build-native-sjuni/adxt-playback/native-gcc-v2/receipt.json": "039817295275b33c4ba7ffe12685e7ace594f73f24dc3dfa14a9e1a4dc0d3500",
+    "build-native-sjuni/adxt-playback/native-llvm-v2/receipt.json": "c80d0b40b81e59d96c731fbc7d8e76e57cfd2c4a12bb0320c7d72ca75b9f658f",
+    "build-native-sjuni/adxt-playback/parent-gcc-v1/receipt.json": "7754f287aedcb05c3ec0a2adb28f7047f4ac6863b5bf45c8749f5bd7f6ff760f",
+    "build-native-sjuni/adxt-playback/parent-llvm-v1/receipt.json": "6b11f4e091a40574757eff71b630558d31178f3f156674b34b221e98a09199da"
+  },
+  "report_sha256": "211a2b78e867c0f1b7919a39834f02e5cb7f5437bd50ccffca9331c781381ab6"
+}

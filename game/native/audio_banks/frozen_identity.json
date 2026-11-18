@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "purpose": "Candidate DSP/session frozen before independent original expected observations",
+  "reference_base": "c46d1c7d8ab00fbfa18d2c1f764c559e4e5dc78f",
+  "reference_patch_count": 124,
+  "reference_header_sha256": "28963da544d533ae8f04765558ff0665c4dc87c38cfba767a4828705c07616c8",
+  "reference_cpp_sha256": "e164ba72cc002311d4811d803be2e2df9a6228d5abcaa0c4fa419a31ee09b818",
+  "candidate_sha256": {
+    "session.cpp": "8c0dc8a47dfcb57771edf8d05b70e263c280a2a86a5c2a1471c8c45d1d19559e",
+    "session.hpp": "69d14f54e7de6d80ccfb0a6b35868bff0dcf33c3aa36a65fbb2bfc6cd7d881e8",
+    "algorithms.cpp": "f0c88569224e1c8c2c5ce117e3296118f96a4b891a09a000ca2707c24fd9b923",
+    "algorithms.hpp": "3b324870afdc42282910fe52f58e1fb3dd137f0550d590d547fd58e8ebd401e9",
+    "source_members.inc": "15a9255f036a2658b173ada284a12385e929b66731618f227fe4770eb63c7f71",
+    "source_mix.inc": "d28e10cdcc91cd4ae2941dd018c17ee902953c92d24a0fdc109fac3ec291f328",
+    "source_records.inc": "44ea539c47bfd2dc31271c0aa96b9876d73818c9923a9739edae50127287dc0a"
+  },
+  "original_expected_observations_read": false,
+  "game_run": false,
+  "device_opened": false,
+  "integration_installed": false
+}

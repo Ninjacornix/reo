@@ -1,0 +1,13 @@
+# Network DNAS: saved stack-usage counters and printing
+
+Static File #1 US research, 2026-11-04. Catalogue **o4**, runtime id **5**, base **0x6E0000**, owned `netdnas.bin`, SHA-256 **8f090617fa1ef420ad73ae2d1c960998c55259d372677804d2a1e07e1a182e16**. No game, build, replay, attachment, network request or live-memory read occurred.
+
+Five bodies were independently read. Owned77E7E8 format string is `Peek stack usage = %d bytes [%s:%d, Hit#%d]` followed bynewline. That supports the stack-usage domain candidate; actual sampling callers, stack-pointer relation and observed byte values remain unknown. These simple saved counters are not a new live recorder or a measured slowdown report.
+
+| Guest entry / source | Proposed label | Confidence | Evidence and remaining uncertainty |
+| --- | --- | --- | --- |
+| [o4 0x7110B8](../recomp/config/output_ovl/o4/o4_007110B8_0x7110b8.cpp) | `initialize_netdnas_stack_usage_baseline_and_minimum_counters_candidate` | Confirmed lifecycle/data/control flow; domain limits retained | Storesoriginala0intoboth764C44baseline and764C40minimum,returns0. Unitsderivefromownedprintinglabel;doesnotcaptureactualstackpointerhere. |
+| [o4 0x7110D0](../recomp/config/output_ovl/o4/o4_007110D0_0x7110d0.cpp) | `get_netdnas_stack_usage_baseline_counter_candidate` | Confirmed lifecycle/data/control flow; domain limits retained | Returns764C44;no newstack sample or highwatercalculation. |
+| [o4 0x7110E0](../recomp/config/output_ovl/o4/o4_007110E0_0x7110e0.cpp) | `record_netdnas_new_unsigned_minimum_with_source_and_hit_metadata_candidate` | Confirmed lifecycle/data/control flow; domain limits retained | Ifunsigneda0<764C40,updatesminimumandstoresa1filepointerat7F1DB8,a2lineat7F1DB0,a3hitcountat7F1DB4;elseunchanged. Returns0;doesnotwalkstack,samplethreadsorvalidateunits/lifetime. |
+| [o4 0x711118](../recomp/config/output_ovl/o4/o4_00711118_0x711118.cpp) | `query_netdnas_stack_usage_difference_and_saved_location_candidate` | Confirmed lifecycle/data/control flow; domain limits retained | Baseline764C44zero returns275D withoutoutputs. Elseoptionaloutputsreceivebaseline-minimum,filepointer,line,hitcount;returns0. Nofreshmeasurementorunderflowguard;labelunitsfromformatteronly. |
+| [o4 0x711180](../recomp/config/output_ovl/o4/o4_00711180_0x711180.cpp) | `print_netdnas_saved_stack_usage_difference_and_location_candidate` | Confirmed lifecycle/data/control flow; domain limits retained | Queries711118 intostacklocals;failurepropagates. Success6F1728(callerstream,owned77E7E8,usage,file,line,hit),ignoreswriterresult,returns0. Ownedstringexact Peek stack usage = %d bytes [%s:%d, Hit#%d] plusnewline. Doesnotenablewatchdogorsamplegame. |

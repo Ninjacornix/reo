@@ -1,0 +1,330 @@
+# 0121: Versioned complete PCM facade dispatch with pre-run runtime ownership
+# Default remains legacy. No native backend/device implementation is installed.
+# Match rebuilt runtime sources/headers; capability declarations are not fence proof.
+
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+index 083c265..840ad34 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+@@ -1,5 +1,6 @@
+ #include "../../../vblank_music_diag.h"
+ #include "CriAudio.h"
++#include "CriAudioDispatch.h"
+ #include "ReoSoundBanks.h"
+ #include "ps2_host_backend.h"
+ #include <algorithm>
+@@ -182,8 +183,14 @@ void tickLocked() {
+     }
+ }
+ }
+-void ensureHostOutput() { reoAudioPoll();ensureOutput(); }
++void ensureHostOutput() { if(backend_detail::invoke_void<&BackendApiV1::ensure_host_output>())return; reoAudioPoll();ensureOutput(); }
+ void render(float* dst,unsigned frames) {
++    auto call=backend_detail::acquire();
++    if(call.native){
++        if(call.admitted){backend_detail::Scope scope(backend_detail::active_call,call.binding.get());auto& r=call.binding->registration;r.api.render(r.owner.get(),dst,frames);}
++        else if(dst)std::fill(dst,dst+static_cast<size_t>(frames)*2,0.0f);
++        return;
++    }
+     {
+         std::lock_guard<std::mutex> lock(mutex);
+         externalClock=true;
+@@ -196,6 +203,14 @@ void render(float* dst,unsigned frames) {
+     if (dst) for (unsigned i=0;i<frames*2;++i) dst[i]=std::clamp(dst[i]*master,-1.0f,1.0f);
+ }
+ bool queue(uint32_t key,const uint8_t* bytes,uint32_t length,uint64_t& endByte) {
++    auto call=backend_detail::acquire();
++    if(call.native){
++        if(!call.admitted||!key||!bytes||!length||(length&1)||length>0x4000)return false;
++        backend_detail::Scope scope(backend_detail::active_call,call.binding.get());auto& r=call.binding->registration;
++        uint64_t acceptedEnd=endByte;const bool accepted=r.api.queue(r.owner.get(),key,bytes,length,acceptedEnd);
++        if(accepted)endByte=acceptedEnd;
++        return accepted;
++    }
+     if (!key || !bytes || !length || (length&1) || length>0x4000) return false;
+     ensureOutput();
+     std::unique_lock<std::mutex> lock(mutex);tickLocked();
+@@ -232,6 +247,7 @@ bool queue(uint32_t key,const uint8_t* bytes,uint32_t length,uint64_t& endByte)
+     return true;
+ }
+ void configure(uint32_t voice,uint32_t left,uint32_t right,uint32_t nch,uint32_t freq,uint32_t vol,bool playing) {
++    if(backend_detail::invoke_void<&BackendApiV1::configure>(voice,left,right,nch,freq,vol,playing))return;
+     ensureOutput();std::lock_guard<std::mutex> lock(mutex);tickLocked();
+     auto& v=voices[voice];
+     if (playing) v.draining=false;
+@@ -262,6 +278,7 @@ void configure(uint32_t voice,uint32_t left,uint32_t right,uint32_t nch,uint32_t
+ // Natural end of a stream: play out the PCM already queued for this voice, then stop (renderLocked).
+ // configure(playing=false) alone remains an immediate pause/stop that retains or discards nothing.
+ void drain(uint32_t voice) {
++    if(backend_detail::invoke_void<&BackendApiV1::drain>(voice))return;
+     std::lock_guard<std::mutex> lock(mutex);
+     auto it=voices.find(voice);
+     if (it==voices.end() || !it->second.playing) return;
+@@ -269,17 +286,20 @@ void drain(uint32_t voice) {
+     if (li==channels.end() || li->second.pcm.empty()) return;
+     it->second.draining=true;it->second.lateSamples=0;
+ }
+-size_t queuedSamples(uint32_t key) { std::lock_guard<std::mutex> lock(mutex);auto i=channels.find(key);return i==channels.end()?0:i->second.pcm.size(); }
+-uint64_t consumed(uint32_t key) { std::lock_guard<std::mutex> lock(mutex);tickLocked();auto i=channels.find(key);return i==channels.end()?0:i->second.consumed; }
+-void discard(uint32_t key) { std::lock_guard<std::mutex> lock(mutex);auto i=channels.find(key);if(i!=channels.end()){i->second.pcm.clear();i->second.consumed=i->second.queued;} }
++size_t queuedSamples(uint32_t key) { const auto selected=backend_detail::invoke_result<&BackendApiV1::queued_samples>(size_t(0),key);if(selected.native)return selected.value; std::lock_guard<std::mutex> lock(mutex);auto i=channels.find(key);return i==channels.end()?0:i->second.pcm.size(); }
++uint64_t consumed(uint32_t key) { const auto selected=backend_detail::invoke_result<&BackendApiV1::consumed>(uint64_t(0),key);if(selected.native)return selected.value; std::lock_guard<std::mutex> lock(mutex);tickLocked();auto i=channels.find(key);return i==channels.end()?0:i->second.consumed; }
++void discard(uint32_t key) { if(backend_detail::invoke_void<&BackendApiV1::discard>(key))return; std::lock_guard<std::mutex> lock(mutex);auto i=channels.find(key);if(i!=channels.end()){i->second.pcm.clear();i->second.consumed=i->second.queued;} }
+ // RNA destruction is an immediate lifecycle boundary, not a natural-end drain.
+ // Keep shared channel queues and other voices intact; ring ownership is separate.
+ void release(uint32_t voice) {
++    if(backend_detail::invoke_void<&BackendApiV1::release>(voice))return;
+     std::lock_guard<std::mutex> lock(mutex);
+     voices.erase(voice);
+ }
+-void reset() { std::lock_guard<std::mutex> lock(mutex);reoAudioResetStreams();channels.clear();voices.clear();externalClock=false;lastTick=std::chrono::steady_clock::now(); }
++void reset() { if(backend_detail::invoke_void<&BackendApiV1::reset>())return; std::lock_guard<std::mutex> lock(mutex);reoAudioResetStreams();channels.clear();voices.clear();externalClock=false;lastTick=std::chrono::steady_clock::now(); }
+ void shutdown() {
++    bool native=false;auto binding=backend_detail::shutdown_binding(native);
++    if(native){if(binding)(void)binding->shutdown();return;}
+     if (ready && IsAudioDeviceReady()) { StopAudioStream(stream);UnloadAudioStream(stream); }
+     ready=false;stream={};reset();
+     ps2_reo_sound::reset();
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioBackend.h b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioBackend.h
+new file mode 100644
+index 0000000..aaef01e
+--- /dev/null
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioBackend.h
+@@ -0,0 +1,53 @@
++#pragma once
++#include <cstddef>
++#include <cstdint>
++#include <memory>
++
++#define PS2_RUNTIME_HAS_PCM_BACKEND_DISPATCH 1
++class PS2Runtime;
++
++namespace ps2_cri_audio {
++constexpr std::uint32_t backendAbiVersionV1 = 1;
++// Eleven complete facade methods plus the stop/join lifecycle pair. These
++// advertise interface coverage; they do not certify a device/provider fence.
++constexpr std::uint64_t backendRequiredCapabilitiesV1 = (1ull << 12) - 1;
++struct BackendApiV1 {
++    std::uint32_t abi_version{}, structure_bytes{};
++    std::uint64_t capabilities{};
++    void (*ensure_host_output)(void*) noexcept{};
++    bool (*queue)(void*,std::uint32_t,const std::uint8_t*,std::uint32_t,std::uint64_t&) noexcept{};
++    void (*configure)(void*,std::uint32_t,std::uint32_t,std::uint32_t,std::uint32_t,std::uint32_t,std::uint32_t,bool) noexcept{};
++    std::uint64_t (*consumed)(void*,std::uint32_t) noexcept{};
++    void (*render)(void*,float*,unsigned) noexcept{};
++    void (*discard)(void*,std::uint32_t) noexcept{};
++    void (*drain)(void*,std::uint32_t) noexcept{};
++    void (*release)(void*,std::uint32_t) noexcept{};
++    std::size_t (*queued_samples)(void*,std::uint32_t) noexcept{};
++    void (*reset)(void*) noexcept{};
++    void (*shutdown)(void*) noexcept{};
++    void (*request_stop)(void*) noexcept{};
++    bool (*join)(void*) noexcept{};
++};
++struct BackendRegistrationV1 {
++    BackendApiV1 api;
++    std::shared_ptr<void> owner;
++};
++enum class BackendInstallStatusV1 {
++    installed, invalid_api, invalid_owner, legacy_in_use, native_in_use,
++    installation_busy, runtime_rejected, publication_lost, allocation_failed
++};
++enum class BackendSelectionV1 { unselected, legacy, native_running, native_stopping, native_joined, native_expired };
++struct BackendStatusV1 {
++    BackendSelectionV1 selection{BackendSelectionV1::unselected};
++    std::uint64_t capabilities{}, active_calls{};
++    bool runtime_worker_registered{}, shutdown_called{};
++};
++// Versioned C++ static-library interface, not a portable plugin ABI. This
++// installs no implementation by default. Call after initialize/loadELF, before
++// run and before ANY PCM facade operation. The actual runtime registration
++// gate is checked and an owning worker retained before publication. The owner
++// must be inert until publication; all callbacks are nonthrowing. Stop is only
++// a signal; join must prove actual owner/provider quiescence, not a timeout.
++BackendInstallStatusV1 installBackendBeforeRunV1(PS2Runtime&,BackendRegistrationV1) noexcept;
++BackendStatusV1 backendStatusV1() noexcept;
++} // namespace ps2_cri_audio
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioDispatch.h b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioDispatch.h
+new file mode 100644
+index 0000000..9200835
+--- /dev/null
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioDispatch.h
+@@ -0,0 +1,178 @@
++#pragma once
++// Private implementation: included once by CriAudio.cpp, never by a backend.
++#include "CriAudioBackend.h"
++#include "ps2_runtime.h"
++#include <condition_variable>
++#include <mutex>
++#include <utility>
++
++#if !defined(PS2_RUNTIME_HAS_EXTERNAL_WORKERS) || !PS2_RUNTIME_HAS_EXTERNAL_WORKERS
++#error PCM backend dispatch requires matching external-worker runtime headers
++#endif
++
++namespace ps2_cri_audio {
++namespace backend_detail {
++struct Binding;
++inline thread_local Binding* active_call{};
++inline thread_local Binding* active_lifecycle{};
++struct Scope {
++    Binding*& slot;Binding* previous;
++    Scope(Binding*& value,Binding* current) noexcept:slot(value),previous(value){slot=current;}
++    ~Scope(){slot=previous;}
++};
++struct Binding {
++    BackendRegistrationV1 registration;
++    std::mutex mutex;std::condition_variable changed;
++    std::uint64_t calls{};
++    bool published=false,accepting=true,stop_called=false,stop_inflight=false,shutdown_started=false,shutdown_done=false,joining=false,joined=false;
++    explicit Binding(BackendRegistrationV1 value):registration(std::move(value)){}
++    bool acquire() noexcept {
++        std::lock_guard<std::mutex> lock(mutex);
++        if(!accepting)return false;
++        ++calls;return true;
++    }
++    bool publish() noexcept {
++        std::lock_guard<std::mutex> lock(mutex);
++        if(!accepting)return false;
++        published=true;return true;
++    }
++    void release() noexcept {
++        {std::lock_guard<std::mutex> lock(mutex);--calls;}
++        changed.notify_all();
++    }
++    void stop() noexcept {
++        bool signal=false;
++        {std::lock_guard<std::mutex> lock(mutex);accepting=false;if(!stop_called){stop_called=true;signal=published;stop_inflight=signal;}}
++        if(signal){
++            {Scope scope(active_lifecycle,this);registration.api.request_stop(registration.owner.get());}
++            {std::lock_guard<std::mutex> lock(mutex);stop_inflight=false;}
++            changed.notify_all();
++        }
++    }
++    bool shutdown() noexcept {
++        stop();
++        // A callback/producer cannot wait for its own facade lease. Closing
++        // admission is still immediate; the runtime owner completes shutdown.
++        if(active_call==this||active_lifecycle==this)return false;
++        {std::unique_lock<std::mutex> lock(mutex);
++            while(stop_inflight)changed.wait(lock);
++            while(shutdown_started&&!shutdown_done)changed.wait(lock);
++            if(shutdown_done)return true;
++            if(!published){shutdown_done=true;return true;}
++            shutdown_started=true;
++            while(calls)changed.wait(lock);
++        }
++        {Scope scope(active_lifecycle,this);registration.api.shutdown(registration.owner.get());}
++        {std::lock_guard<std::mutex> lock(mutex);shutdown_done=true;}
++        changed.notify_all();return true;
++    }
++    bool join() noexcept {
++        stop();
++        if(active_call==this||active_lifecycle==this)return false;
++        if(!shutdown())return false;
++        {std::unique_lock<std::mutex> lock(mutex);
++            while(joining)changed.wait(lock);
++            if(joined)return true;
++            if(!published){joined=true;return true;}
++            joining=true;
++        }
++        bool success;
++        {Scope scope(active_lifecycle,this);success=registration.api.join(registration.owner.get());}
++        {std::lock_guard<std::mutex> lock(mutex);joining=false;joined=success;}
++        changed.notify_all();return success;
++    }
++};
++enum class Mode { unselected, legacy, native };
++struct Registry {std::mutex mutex;Mode mode=Mode::unselected;bool installing=false;std::weak_ptr<Binding> binding;};
++inline Registry registry;
++struct Worker final:PS2Runtime::ExternalWorker {
++    std::shared_ptr<Binding> binding;
++    explicit Worker(std::shared_ptr<Binding> value):binding(std::move(value)){}
++    void requestStop() noexcept override {binding->stop();}
++    bool join() noexcept override {return binding->join();}
++};
++struct Reservation {
++    ~Reservation(){std::lock_guard<std::mutex> lock(registry.mutex);registry.installing=false;}
++};
++struct Call {
++    const bool native;
++    std::shared_ptr<Binding> binding;
++    const bool admitted;
++    Call(Mode mode,std::shared_ptr<Binding> value) noexcept:native(mode==Mode::native),binding(std::move(value)),admitted(native&&binding&&binding->acquire()){}
++    ~Call(){if(admitted)binding->release();}
++    Call(const Call&)=delete;Call& operator=(const Call&)=delete;
++};
++inline Call acquire() noexcept {
++    Mode mode;std::shared_ptr<Binding> binding;
++    {std::lock_guard<std::mutex> lock(registry.mutex);
++        if(registry.mode==Mode::unselected)registry.mode=Mode::legacy;
++        mode=registry.mode;if(mode==Mode::native)binding=registry.binding.lock();
++    }
++    return Call(mode,std::move(binding));
++}
++template<auto Member,class... Args>bool invoke_void(Args&&... args) noexcept {
++    auto call=acquire();if(!call.native)return false;
++    if(call.admitted){Scope scope(active_call,call.binding.get());auto& r=call.binding->registration;
++        (r.api.*Member)(r.owner.get(),std::forward<Args>(args)...);}
++    return true;
++}
++template<class T>struct Result {bool native;T value;};
++template<auto Member,class T,class... Args>Result<T> invoke_result(T stopped,Args&&... args) noexcept {
++    auto call=acquire();if(!call.native)return {false,stopped};
++    if(!call.admitted)return {true,stopped};
++    Scope scope(active_call,call.binding.get());auto& r=call.binding->registration;
++    return {true,(r.api.*Member)(r.owner.get(),std::forward<Args>(args)...)};
++}
++inline std::shared_ptr<Binding> shutdown_binding(bool& native) noexcept {
++    std::shared_ptr<Binding> value;
++    {std::lock_guard<std::mutex> lock(registry.mutex);
++        if(registry.mode==Mode::unselected)registry.mode=Mode::legacy;
++        native=registry.mode==Mode::native;if(native)value=registry.binding.lock();
++    }
++    return value;
++}
++inline bool complete(const BackendApiV1& a) noexcept {
++    return a.abi_version==backendAbiVersionV1&&a.structure_bytes==sizeof(BackendApiV1)&&
++        a.capabilities==backendRequiredCapabilitiesV1&&a.ensure_host_output&&a.queue&&a.configure&&a.consumed&&a.render&&
++        a.discard&&a.drain&&a.release&&a.queued_samples&&a.reset&&a.shutdown&&a.request_stop&&a.join;
++}
++} // namespace backend_detail
++
++BackendInstallStatusV1 installBackendBeforeRunV1(PS2Runtime& runtime,BackendRegistrationV1 registration) noexcept {
++    using namespace backend_detail;
++    if(!complete(registration.api))return BackendInstallStatusV1::invalid_api;
++    if(!registration.owner)return BackendInstallStatusV1::invalid_owner;
++    {std::lock_guard<std::mutex> lock(registry.mutex);
++        if(registry.mode==Mode::legacy)return BackendInstallStatusV1::legacy_in_use;
++        if(registry.mode==Mode::native)return BackendInstallStatusV1::native_in_use;
++        if(registry.installing)return BackendInstallStatusV1::installation_busy;
++        registry.installing=true;
++    }
++    Reservation reservation;
++    try {
++        auto binding=std::make_shared<Binding>(std::move(registration));
++        auto worker=std::make_shared<Worker>(binding);
++        if(!runtime.registerExternalWorker(worker))return BackendInstallStatusV1::runtime_rejected;
++        {std::lock_guard<std::mutex> lock(registry.mutex);
++            if(registry.mode!=Mode::unselected)return BackendInstallStatusV1::publication_lost;
++            if(!binding->publish())return BackendInstallStatusV1::runtime_rejected;
++            registry.binding=binding;registry.mode=Mode::native;
++        }
++        return BackendInstallStatusV1::installed;
++    }catch(...){return BackendInstallStatusV1::allocation_failed;}
++}
++BackendStatusV1 backendStatusV1() noexcept {
++    using namespace backend_detail;
++    BackendStatusV1 out;std::shared_ptr<Binding> binding;Mode mode;
++    {std::lock_guard<std::mutex> lock(registry.mutex);mode=registry.mode;if(mode==Mode::native)binding=registry.binding.lock();}
++    if(mode==Mode::unselected)return out;
++    if(mode==Mode::legacy){out.selection=BackendSelectionV1::legacy;return out;}
++    if(!binding){out.selection=BackendSelectionV1::native_expired;return out;}
++    {std::lock_guard<std::mutex> lock(binding->mutex);
++        out.selection=binding->joined?BackendSelectionV1::native_joined:binding->accepting?BackendSelectionV1::native_running:BackendSelectionV1::native_stopping;
++        out.capabilities=binding->registration.api.capabilities;out.active_calls=binding->calls;
++        out.runtime_worker_registered=true;out.shutdown_called=binding->shutdown_done;
++    }
++    return out;
++}
++} // namespace ps2_cri_audio

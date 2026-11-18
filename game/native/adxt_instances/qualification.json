@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "status": "isolated native ownership qualified; game consumers not bound",
+  "manifest_sha256": "6c6c08a2f579f9f8bf090640b362a011c0a68f3d6202158c143d06739ad43843",
+  "evidence": {
+    "llvm_build": {
+      "path": "build-native-sjuni/adxt-instances/clean-build-llvm-v1/receipt.json",
+      "sha256": "9d0613d473d4bf6de41c2b68667abfb0815e55b7dc3d96de4f4089b1717b7a81"
+    },
+    "gcc_build": {
+      "path": "build-native-sjuni/adxt-instances/clean-build-gcc-v1/receipt.json",
+      "sha256": "f3f2bcd1411a7c2dc21f49c7c7a182c89ed88652446c74bb3b5d5964554e0a1a"
+    },
+    "llvm_ownership": {
+      "path": "build-native-sjuni/adxt-instances/qualified-llvm-v1/receipt.json",
+      "sha256": "4882fb9222063e818967e3ce712bff7a91de66b18a22b0a5732c3d86f55bd881"
+    },
+    "gcc_ownership": {
+      "path": "build-native-sjuni/adxt-instances/qualified-gcc-v1/receipt.json",
+      "sha256": "24e694bc35bfb9dbd8e8d3321fb306f21ddeafd1dde525615450b210f95675ce"
+    }
+  },
+  "original_guest_ABI_parity": false,
+  "game_integration": false,
+  "actual_output_device_test": false,
+  "limitations": [
+    "Stable native API over already qualified child cores; no guest construction/error-code identity claim.",
+    "Real source workers use an explicit output callback/fence model.",
+    "Original service ordering and actual game bindings remain stage-3 gates."
+  ]
+}

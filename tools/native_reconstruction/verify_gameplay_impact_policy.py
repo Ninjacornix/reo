@@ -1,0 +1,37 @@
+"""Compare native5DD580 with complete owned original policy and matrix math."""
+import argparse,hashlib,json,os,re,subprocess
+from pathlib import Path
+from audit_retail_effect_descriptors import compare_source,elf_reader
+from verify_gameplay_collision import COMPILERS
+ROOT=Path(__file__).resolve().parents[2]
+def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+def main():
+ p=argparse.ArgumentParser();p.add_argument('--compiler',choices=COMPILERS,required=True);p.add_argument('--output',required=True,type=Path);a=p.parse_args();out=a.output.resolve();allowed=(ROOT/'build-native-sjuni').resolve()
+ if out.exists()or out==allowed or not out.is_relative_to(allowed):raise ValueError('Fresh private output required')
+ profiles=[('o2',0x5dd580),('main',0x191820),('main',0x191070),('main',0x191d80),('main',0x191e50),('main',0x191df0),('o0',0x370500)];sources=[];bodies=[];audits=[]
+ for owner,at in profiles:
+  image=ROOT/('game_data/SLUS_207.65'if owner=='main'else f'build-function-index/owned-overlays/{owner}.bin');expected='06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46'if owner=='main'else'bfac1906d63d585736e46573295cff12e308720af6b49914e1ad8695dfcf50c2'if owner=='o0'else'45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226'
+  if sha(image)!=expected:raise ValueError('Owned source image changed')
+  data=image.read_bytes();base=0x370000 if owner=='o0'else 0x570000;read=elf_reader(data)if owner=='main'else lambda pos,size:data[pos-base:pos-base+size]
+  source=ROOT/(f'recomp/config/output/sub_{at:08X}_0x{at:x}.cpp'if owner=='main'else f'recomp/config/output_ovl/{owner}/{owner}_{at:08X}_0x{at:x}.cpp');text=source.read_text();end=int(re.search(r'// Address: 0x[0-9a-fA-F]+ - 0x([0-9a-fA-F]+)',text)[1],16);sources.append(source);audits.append(compare_source('contact-impact-policy',str(source.relative_to(ROOT)),at,end,read));bodies.append(text[text.index('// Function:'):])
+ helper=ROOT/'tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp';ports=ROOT/'tools/native_reconstruction/gameplay_collision_oracle/impact_policy_ports.hpp';support=ROOT/'game/native/gameplay_collision/delivery_core_tests.cpp'
+ paths=[ROOT/'game/native/gameplay_collision'/n for n in ['impact_policy.hpp','impact_policy.cpp','impact_policy_tests.cpp','delivery.hpp','delivery.cpp','contact_component.hpp','actors.hpp','actors.cpp','hit_regions.hpp','hit_regions.cpp','postmove_view.hpp','postmove.hpp','response.hpp','response.cpp','collision.hpp','collision.cpp','trace.hpp','spatial.hpp','footprint.hpp','regions.hpp','room_objects.hpp','ownership.hpp']]+[ROOT/'game/native/gameplay_actors'/n for n in ['entity.hpp','entity.cpp','hit.hpp','status.hpp','health.hpp']]+[ROOT/'game/native/gameplay_session'/n for n in ['session.hpp','session.cpp']]+[ROOT/'game/native/transform_math/transform_math.hpp',helper,ports,support,Path(__file__),*sources];paths += [ROOT/p for p in ['game/native/gameplay_scene/records.hpp', 'game/native/gameplay_scene/record_pool.hpp', 'game/native/gameplay_scenario/scene_control_types.hpp', 'game/native/gameplay_collision/sweep.hpp']]
+ inputs={p.relative_to(ROOT).as_posix():sha(p)for p in paths}
+ header=helper.read_text()+'\n#define GPR_S32(c,n) std::bit_cast<std::int32_t>(GPR_U32(c,n))\n#define PS2_VOPMUL(a,b) _mm_mul_ps(_mm_shuffle_ps((a),(a),_MM_SHUFFLE(3,0,2,1)),_mm_shuffle_ps((b),(b),_MM_SHUFFLE(3,1,0,2)))\n'
+ header+='\ntemplate<class T>T ref_read(const std::uint8_t* p,std::uint32_t at){return transform_read<T>(p,at);}\ntemplate<class T>void ref_write(std::uint8_t* p,std::uint32_t at,T v){transform_write(p,at,v);}\n'
+ names=[('sub'if o=='main'else o,at)for o,at in profiles];header+='\n'.join(f'void {o}_{at:08X}_0x{at:x}(std::uint8_t*,R5900Context*,PS2Runtime*);'for o,at in names)+'\n'+ports.read_text()
+ header+='\ninline void original_transform_port(std::uint8_t* m,R5900Context* c,PS2Runtime* r){switch(c->pc){'+''.join(f'case 0x{at:x}:return {o}_{at:08X}_0x{at:x}(m,c,r);'for o,at in names)+'case 0x5dd6f0:return o2_005DD6F0_0x5dd6f0(m,c,r);case 0x5dd9d0:return o2_005DD9D0_0x5dd9d0(m,c,r);default:throw std::runtime_error("Undeclared contact-impact call");}}\n'
+ out.mkdir();(out/'impact_reference.hpp').write_text(header);prefix=support.read_text().split('int main()')[0].replace('#include "delivery.hpp"','#include "game/native/gameplay_collision/delivery.hpp"').replace('#include "delivery_reference.hpp"','#include "impact_reference.hpp"').replace('ctx.g[29].lo = 0x7f0000;','SET_GPR_U32(&ctx,29,0x7f0000);').replace('ctx.g[31].lo = 0x1234;','SET_GPR_U32(&ctx,31,0x1234);');(out/'impact_support.hpp').write_text(prefix);original=out/'original.cpp';original.write_text('#include "game/native/gameplay_collision/impact_policy.hpp"\n#include <vector>\n#include "impact_reference.hpp"\n#pragma GCC diagnostic ignored "-Wunused-variable"\n'+'\n'.join(bodies));compiler=COMPILERS[a.compiler];exe=out/'impact.exe';env=dict(os.environ);env['PATH']=str(compiler.parent)+os.pathsep+env.get('PATH','')
+ command=[str(compiler),'-std=c++20','-O2','-Wall','-Wextra','-Wpedantic','-Werror','-Wno-unused-parameter','-fno-fast-math','-ffp-contract=off','-msse4.1','-I'+str(ROOT),'-I'+str(out),*[str(ROOT/'game/native/gameplay_collision'/n)for n in ['impact_policy.cpp','impact_policy_tests.cpp','actors.cpp','delivery.cpp','hit_regions.cpp','response.cpp','collision.cpp']],str(ROOT/'game/native/gameplay_actors/entity.cpp'),str(ROOT/'game/native/gameplay_session/session.cpp'),str(original),'-o',str(exe)];record=dict(schema=1,status='failed',source_sha256=inputs,compiler_sha256=sha(compiler),original_word_audits=audits,game_launched=False,checks=[])
+ try:
+  for label,cmd in [('compile',command),('test',[str(exe)])]:
+   result=subprocess.run(cmd,capture_output=True,env=env,timeout=120);(out/(label+'.stdout.txt')).write_bytes(result.stdout);(out/(label+'.stderr.txt')).write_bytes(result.stderr);record['checks'].append(dict(label=label,command=cmd,exit=result.returncode))
+   if result.returncode:raise RuntimeError(label+': '+result.stderr.decode(errors='replace')[-2500:])
+   if label=='test':record['results']=json.loads(result.stdout)
+  for name,digest in inputs.items():
+   if sha(ROOT/name)!=digest:raise ValueError('Source changed: '+name)
+  record['status']='native contact impact policy and full matrix construction match original with declared mutable child populations'
+ finally:
+  record['output_sha256']={p.name:sha(p)for p in out.iterdir()if p.is_file()};(out/'receipt.json').write_text(json.dumps(record,indent=2)+'\n')
+ print(json.dumps(record['results']))
+if __name__=='__main__':main()

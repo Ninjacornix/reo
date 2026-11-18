@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "cohort": "gs-sound-ram-profile-1",
+  "status": "identified source cohort; prior expectations known; final source-qualified tests recorded separately",
+  "base_revision": "c46d1c7d8ab00fbfa18d2c1f764c559e4e5dc78f",
+  "full127_receipt_sha256": "909917fc2f766c8a43a10abbc0b94189fa24254ecfaa7f710e4eb24dc941b58a",
+  "patch_sha256": "bea5a843348b02a1b3abeeeea78ede6cb27236d2e6a64e0f19807d9ce193f38c",
+  "authored_sha256": {
+    "gateway_tests.cpp": "4da14118fd300cdca806ab7f6c65e17b8dfbad249ff9cd9fd2959884b789880a",
+    "gs_gateway.inc": "84e28f9955575757fc42529aba233a07e1313bb07f74334f7d07248f46b977bd",
+    "gs_sound_ram_profile.h": "4c1777e933458e09ec319b91ba15cb09e4b5a3915b36aed39775bc13c7493395",
+    "objects.py": "e2bfc3d8983a5bcd55b136742f8dfaaca2c5d1cbbe5f2b00e0fbc8c34414ff55",
+    "prepare_patch.py": "3bf1d47592bebab0731ff8d52c1cc0838c5a0c2b34824de91636b7f8d22bc40f",
+    "profile_control.inc": "798d510fe843a5bbff657c7b988e2515dcef946fb3616ba79807c1018ec6b993",
+    "regressions.py": "9f0cf672d9f1138a1babc92a8a8ae98cbafc00914c1571b7f7d628ad6091e225",
+    "tests.cpp": "76b57655317f9b1247d379f9c3336c02545e7ebfad6173288ce4d648aa59a5c0",
+    "verify.py": "fc7d85cd52ad6c6238d1035b17ad62e6e94c47c0810efd485a5ac010d69c20d8"
+  },
+  "app_sha256": {
+    "tools/parallel_gs_backend/parallel_backend.cpp": "92b86841b46e1b53cd5991594f98cec633c94cb4d2c9654b8fafd338c87802ab",
+    "tools/parallel_gs_backend/parallel_backend.h": "a7a536fdb2fa6498324b9182cccb7d9e2820090a7afbffd913c3a0c60b6cc134"
+  },
+  "actual_profile_header_sha256": "d99bf2fa5724b6c152725eaa2ca9d95e87527cdf812add82f92e18a9a724be9b",
+  "source_export_identity": {
+    "gs_backend_route.h": {
+      "author_raw_sha256": "63fdf7994e3460d04a3c803f21ea5d1b5657384ab62bcfeba61993ea5fc7e21f",
+      "fresh_reapply_raw_sha256": "77eb32f284446474ddc1a41bbd9be3425aedf0fab32e571a93b01e0a549e3302",
+      "universal_newline_text_equal": true
+    },
+    "gs_backend_route.cpp": {
+      "author_raw_sha256": "e2b8257bbd15e12dbb84de68aa2072bb4aadba5e26d04e4799e0f76e918e08fa",
+      "fresh_reapply_raw_sha256": "25556d627ead1830e01be9cf48cf7d616ebb50261b9950cd1b167e902fc78ccb",
+      "universal_newline_text_equal": true
+    },
+    "gs_sound_ram_profile.h": {
+      "author_raw_sha256": "4c1777e933458e09ec319b91ba15cb09e4b5a3915b36aed39775bc13c7493395",
+      "fresh_reapply_raw_sha256": "d99bf2fa5724b6c152725eaa2ca9d95e87527cdf812add82f92e18a9a724be9b",
+      "universal_newline_text_equal": true
+    },
+    "ps2_gs_gpu.cpp": {
+      "author_raw_sha256": "44d93d12856ee8fae7bbdc9e02a1fd76041ebb3cb23385f5eb57d74011d2cbc0",
+      "fresh_reapply_raw_sha256": "4237daaea5b35b4e23eba739abfca9d0bfbd5b43e03316dbfdaee937049972ce",
+      "universal_newline_text_equal": true
+    },
+    "ps2_runtime.cpp": {
+      "author_raw_sha256": "2ba08504c8ef8466fda76071f7d7aae35a5f11546b08fb10fde11ab59e579788",
+      "fresh_reapply_raw_sha256": "dcccc728f7e08683b0c113a1d0e2f082eec264833fee41f4759651bd60c25591",
+      "universal_newline_text_equal": true
+    }
+  },
+  "source_newline_note": "Author is written LF; this Windows git reapply emits CRLF. Raw identities of both are retained; completed objects use the exact fresh reapply bytes. No algorithm text differs.",
+  "runtime_ram_factory_implemented": false,
+  "bootstrap_installed": false,
+  "device_opened": false,
+  "game_run": false
+}

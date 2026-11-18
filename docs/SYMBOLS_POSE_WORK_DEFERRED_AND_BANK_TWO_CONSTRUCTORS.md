@@ -1,0 +1,14 @@
+# Deferred and bank-two pose work constructors
+
+Static File #1 US owned o2 analysis, 2026-11-05. Two complete original bodies; [identity](FUNCTION_INDEX.md). Offsets/masks hexadecimal, counts decimal. No work allocation or rendering executed.
+
+| Guest entry / source | Proposed label | Confidence | Evidence and remaining uncertainty |
+| --- | --- | --- | --- |
+| [o2 0x5828C0](../recomp/config/output_ovl/o2/o2_005828C0_0x5828c0.cpp) | `construct_room_local_pose_work_from_preset_without_initial_descriptor_attachment` | Confirmed full room/pool/record flow and deliberate child omission | Inputs ownera0,64-bytebasisa1,XYZa2,fouranglesa3,presett0,variantt1. Requires ownerhalf1E2==3243DC,581FE0(1) nonnull. Setsactive0=1,type2=9,preset3=lowt0,type4=low8(signed708FA0[5*lowt0]+6),variant5=lowt1,byte30=nextsignedpresetbyte. Update14=582B80,render18=371EF0,24/28=owner,31=64-currentfreecount,lifetime12=180 decimal. CopiesXYZto38,angles90..96,basis50;zerosC0XYZ. Unlike582720, NO5DA2C0 call andno otherdescriptorattachment. Leavespresetbyte2unusedhere. No presetextent/pointerguard;roomrejectionreturnregisternotnormalized. |
+| [o2 0x582A40](../recomp/config/output_ovl/o2/o2_00582A40_0x582a40.cpp) | `construct_bank_two_pose_work_with_direct_preset_type_and_negative_lifetime` | Confirmed full constructor and separate preset bank | Inputs ownera0,basisa1,XYZa2,preseta3.581FE0(1) required;NOownerroomgate. Setsactive0=1,type2=9,preset3=lowa3,type4=signedbyte708FE8[5*lowpreset]storedlow8,byte30=nextsignedbyte,update14=582B80,render18=371EF0,owner28=input,31=64-currentfreecount,lifetime12=-1. CopiesXYZ38,basis50,zerosC0XYZ;doesNOTcopyanglesorstoreowner24.5DA2C0(work,signedpresetbyte2,bank2). Childfailuredoesnotrollbackwork;functiondoesnotrestoreworkpointerasexplicitreturnafterchild. No index/pointerboundsorindependent-render-successguarantee. |
+
+Both use the [scene pose pool](SYMBOLS_SCENE_POSE_WORK_POOL_AND_CALLBACK_SERVICE.md). [582720 construction](SYMBOLS_POSE_WORK_CONSTRUCTION_AND_OWNER_EXPIRY.md) uses the first preset table too but attaches bank1, so those entry points are not interchangeable. [Descriptor pool](SYMBOLS_LINKED_VISUAL_DESCRIPTOR_POOL_AND_ATTACHMENT.md) defines bank2 independently. The outer update decrements signedhalf lifetime12 even when initialized-1; no infinite-duration promise is inferred.
+
+Only consumed preset-byte offsets and bounded reads were used. Full table capacity, original visual names and allocation frequency remain unresolved; no frame sample or new performance diagnosis is claimed.
+
+Owned bounded preset0 samples:708FA0[5]={0,FF,3,1,0},SHA-256 `c2577b9c310d263a688d17259d46b6d05cfd1bede5b3222b5171971f5a9cfc23`;708FE8[5]={64,FF,2,2,0},SHA-256 `ec3a8411ac26e2ab70820d66b8650ceb52e596b15f1383077f5a400582f699a3`. Valueshex;neithersampleestablishesfulltableextent.

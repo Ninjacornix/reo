@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "status": "62 captured ordinary sources passed offline native playback on both compilers",
+  "sources": {
+    "tools/native_reconstruction/adxt_captured_sources.cpp": "aa937675fd6725d15e18b68b624a998082f711dfb4a5f15c15e79eb5421f79e4",
+    "tools/native_reconstruction/verify_adxt_captured_sources.py": "5dbbe449df43f0fc4fe092af87e5f10288aaf17a9b051e23a6409c8ec0a24c4c",
+    "recomp/overrides/native_adxt/source_profile.h": "7cb45a68ebe5042e97a4a0358d42755abe1e5c6008d2bc832bbb18edfa8e5c32",
+    "recomp/overrides/native_adxt/source_profile.cpp": "9860708cc2d787e03516f94b54d114eac590f973cd59ace0994bf9a98f9136fe",
+    "tools/native_reconstruction/analyze_adxt_observer.py": "fea4797c5258998c72adc8680632d6eced5f5171f8545a773dcc3fad673d333f",
+    "docs/native-media/ADXT_CAPTURED_SOURCE_REPLAY.md": "ffd1f012400d71ace30775fb1b141750be7393c63629c8bba8e27524156062a8"
+  },
+  "evidence": {
+    "build-native-sjuni/candidate-work-v17/candidate-build-result.json": "d2aab186887dea378387d9584cd6cd6beac7d141d420f37c5b0e9854c72f9ee2",
+    "build-native-sjuni/playtests/adxt-observe-v17b/run.json": "7980018feef97c07880042e9e6638e8987109b93deb47ca1b165292affc464f0",
+    "build-native-sjuni/playtests/adxt-observe-v17b/adxt-original.jsonl": "7638b2f922695d496b2f290c7ee85455d64811aa1f9b81f8d44e736fd2abdec1",
+    "build-native-sjuni/playtests/adxt-observe-v17b/player1/logs/stderr.log": "c9c43c69e5dc2f5c00047e54dc72f2cfc8c596df5b1c6100b8d9584c70bf5edc",
+    "build-native-sjuni/adxt-binding/actual-v17b-analysis-v1/findings.json": "2fd2ca50e1b9ff3edcfeed9cfcaf94101bb2b88603adef87b329a85cc76be0ee",
+    "build-native-sjuni/adxt-binding/captured-llvm-v1/receipt.json": "c21a3373d5292063b9ba3b12f76e98ccecdcfd380257024a7135c67ea70a7ea3",
+    "build-native-sjuni/adxt-binding/captured-gcc-v1/receipt.json": "4ffc5378d93c26dbc1b3df15d1339bbbdb50c78345d4880c014f3ac39892b89d",
+    "build-native-sjuni/adxt-binding/captured-llvm-v2/receipt.json": "8a898e3b3f9ec6dfe9cf86f78432032ef229fbc1cddb8fe123d86414329031df",
+    "build-native-sjuni/adxt-quiescent-reset/native-llvm-v1/receipt.json": "1aa423ed52fbaa136d7336533ba8e119fd00b4c3bd9aeb300cd4c79137951889",
+    "build-native-sjuni/adxt-binding/captured-gcc-v2/receipt.json": "82f39a6ca87df8906843556d8c014ff761e2e839860dda74733aff7cf6cb1a12",
+    "build-native-sjuni/adxt-quiescent-reset/native-gcc-v1/receipt.json": "ba30083a761ae150676d3fd5769c715e4d4074425ba32095cdb9a1352544029c"
+  },
+  "finite_pcm_baselines_compared": 57,
+  "two_iteration_loops": 5,
+  "game_capture": true,
+  "native_source_game_binding": false,
+  "original_gameplay_pcm_parity": false,
+  "original_timing_replayed": false,
+  "original_mix_order_replayed": false,
+  "stage3_complete": false,
+  "raw_game_loop_control_preserved": true,
+  "native_archive_manifest_sha256": "0ef1c6d137b649e0c7b1f5cb905f8d2bf84735cabbadd59e2037d18e9e39e59b"
+}

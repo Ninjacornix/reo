@@ -1,0 +1,38 @@
+# HTTP overlay PEM block reader, encryption headers and decoder dispatch
+
+Static owned File #1 o6 `nethttp.bin`,runtime ID6/base6E0000,SHA-256 `68dbc8f16c5d0cc8a43205beb86ddac405a12c1d6b843b5961211bbe6ec30117`. Seven full catalogue bodies independently reviewed, including all section/line/nibble loop entry branches, delay slots, label-alias branches, output transfers and early failures. No runtime, files/keys decoded, crypto vectors, network/live attachment or build. PEM names are established by owned strings and parser mechanics; arbitrary format correctness, tested decryption and measured game cost remain unknown. Evidence numeric hexadecimal unless explicit. [Base64](SYMBOLS_HTTP_BASE64_STREAMS.md), [cipher/padding contexts](SYMBOLS_HTTP_CIPHER_CONTEXT_AND_PADDING.md), [digest derivation/default-input stub](SYMBOLS_HTTP_DIGEST_CONTEXT_DERIVATION_AND_FIELDS.md), [MD5 method](SYMBOLS_HTTP_MD2_MD5_DIGEST_PATHS.md), [privatekeydecoder](SYMBOLS_HTTP_DSA_KEY_DECODERS_AND_PROVIDER.md).
+
+| Guest entry / source | Proposed label | Confidence | Evidence and remaining uncertainty |
+| --- | --- | --- | --- |
+| [o6 0x70BAB0](../recomp/config/output_ovl/o6/o6_0070BAB0_0x70bab0.cpp) | `read_pem_private_key_with_fixed_label_and_generic_type_decoder` | Confirmed complete argumentwrapper andownedlabel | Passesdecoder6FF5E0,label73D098 PRIVATE KEY,originalstream/out/callback to70BBD8. Genericdecoderrequestedtype6/74selectedbyactualmatchedRSA/DSAlabel. No parsingorinputpromptperformedbywrapperitself. |
+| [o6 0x70BAE8](../recomp/config/output_ovl/o6/o6_0070BAE8_0x70bae8.cpp) | `read_pem_passphrase_through_disabled_default_crypto_input` | Confirmed complete prompt/error/retryflow; defaultcalleeconstant | Selects705258defaultpromptifnonnull,elseowned73D0A8 Enter PEM pass phrase:. Calls705270(buffer,capacity,prompt,originalflag). Nonzeroreturnlogs9/77/6D,wipesEXACTcapacitybytes,andreturns-1. Zeroresultstrlen<4 printsownedshortpassphrasemessageandretries;else returnsstrlen. Existing705270->6FFF80 always-1,soowneddefaultpathreachesimmediatewipe/errorandnointeractiveprompt. No behaviorclaimedforarbitrarypatchedcallbacks. |
+| [o6 0x70BBD8](../recomp/config/output_ovl/o6/o6_0070BBD8_0x70bbd8.cpp) | `scan_pem_blocks_match_label_parse_optional_cipher_and_dispatch_decoder` | Confirmed full blockskip/aliases/decryption/decodercleanup | Args(decoder,requestedlabel,stream,outcell,passwordcallback). Repeated70C390 yieldsownedlabel/header/decodedbytes/u64length;unmatchedblocksfreeallthreebuffersandcontinue. Acceptsexactlabel plusRSA/DSAPRIVATE KEY=>PRIVATE KEY,X509 CERTIFICATE=>CERTIFICATE,NEW CERTIFICATE REQUEST=>CERTIFICATE REQUEST. Allocates704BF0cipherctx,70C040parsesheader,70BE80optionallydecryptsinplace. ForrequestedPRIVATE KEY,actualRSA/DSAcallsgenericdecoder(type6/74,out,&cursor,length);otheractualmatchedprivate label hasno decoderrouteandreturns0. Otherlabelsdecoder(out,&cursor,length). Decode0logs9/67/80D;cleanupfreesbuffersandnonnullctx. Rawreaderfailure0returnsdirect. No full-consumption/testedcrypto/streamboundsclaim. |
+| [o6 0x70BE80](../recomp/config/output_ovl/o6/o6_0070BE80_0x70be80.cpp) | `decrypt_pem_payload_in_place_with_md5_derived_key_and_optional_passphrase_callback` | Confirmed full earlybranches,derivation/update/finalandwipe | Args(cipherctx,data,u64lengthcell,passwordcallback). Ifctxmethod0==0 returns1unchanged. Obtainsnonzero passwordleninto400-bytestackbuffer viaoptionalcallback(buf,400,0)else70BAE8;<=0logs9/6A/68 and0. Derives7052A0(ciphermethod,MD5factory7077C8,salt=ctx+2C,password,len,iterations1,outkeySP0,NULLIV). Derive0/init704D30failure=>0WITHOUTlaterpassword/keywipeor7051B0. Successcalls704F08inplaceignoringitsstatus,then704FF8and7051B0;wipes400passwordbytesand20keybytes. Finalfailurelogs9/6A/65,0;successstoresu64combinednarrowedoutputlength,1. Cipherpadding/helper admissioninherited;noindependentcapacity/saltlength/passwordlen<=400proof. |
+| [o6 0x70C040](../recomp/config/output_ovl/o6/o6_0070C040_0x70c040.cpp) | `parse_pem_encryption_header_select_cipher_and_decode_iv` | Confirmed full prefix/token/newline/cipherlookup/hexflow | Resetsctx7051B0first. NULL/empty/LFheader=>1unencrypted. RequiresProc-Type: prefixBbytes,then4,thencomma,ENCRYPTEDprefix9;scansthroughnewline,requiresDEK-Info: prefixA. Ciphernameacceptsuppercaseletters/hyphen/digits;temporarilyNULsdelimiter,705980lookup,restoresdelimiterandadvancesonebyte. GetsmethodIVlengthC705520,70C280decodesexactthatmanyhexbytesintostackSP0,then704D30(ctx,method,NULLkey,IV). Headererrors9/76/{6B,6A,70,69,72};literal4/commafailure0withoutlogging. No immutableinput/fullNUL-bound/IV<=20/prefixcanonicality proof. |
+| [o6 0x70C280](../recomp/config/output_ovl/o6/o6_0070C280_0x70c280.cpp) | `decode_fixed_count_pem_hex_iv_bytes_and_commit_cursor_on_success` | Confirmed complete initialgatesandnibbleloop | Args(charcursorcell,out,bytecount). Positivecountfirstzeroesentireoutput,count*2nibblesacceptASCII0..9,A..F,a..f;highnibblethenlowOR. Invalidlogs9/65/67,returns0withPARTIALoutputbutcallercharcursorUNCHANGED. Successadvancescursorby2*count,returns1. Nonpositiveor doubledcount<=0gatescanreturn1unchanged;signedoverflow/capacity/availablecharsnotvalidated. |
+| [o6 0x70C390](../recomp/config/output_ovl/o6/o6_0070C390_0x70c390.cpp) | `read_pem_begin_header_body_end_and_decode_base64_to_owned_buffers` | Confirmed full line/section/endmatch/Base64/allocationflow | Args(stream,outlabel,outheader,outdata,u64lengthout). Allocatesthree6FB3E0buffersand703930decoder;scans6F3D48(maxFE) linesforBEGINprefix,normalizessignedbytes<21attailtoLF/NUL. ChecksENDstyle6bytesuffix,extractslabel;readsheaderlinesuntilblankorEND. ENDwithoutblank swapsaccumulatedheaderbufferintobodyandreturnsnewemptyheader. Normalbodyacceptslines<=41includingLF;non41lineendsbodyafteroneadditionalENDlineread. RequiresmatchingENDprefix/exactlabel/suffix,Base64update703D18inplaceandfinal7040C8;negativeerrorsorzerototalfail. Successpublishesbufferdata4pointers/u64decodedlenandfreesonlybufferheaders/decoder,transferringthreepayloadallocations. Errorreleasesadmittedbuffers/decoder,doesnotpublishoutputs. Prefix/suffix/linecountarithmeticandnegativecopylengthchecksnotcomplete;noarbitrarymalformedstreamadmission or generic64columntoleranceclaim. |
+
+All owned terminated strings below were independently read; complete73D078..73D1D2 span (including alignment gaps and final END terminator) SHA-256 `530da95ed4b85e1cc97565c3af95ed2e0e2dfc73714ce114555f16a4ab94010c`:
+
+| Owned address | Literal |
+| --- | --- |
+|73D078/73D140|CERTIFICATE |
+|73D088|X509 CRL |
+|73D098/73D108|PRIVATE KEY |
+|73D0A8|Enter PEM pass phrase: |
+|73D0C0|pass phrase is too short, must be at least %d chars followed by LF |
+|73D0F8|RSA PRIVATE KEY |
+|73D118|DSA PRIVATE KEY |
+|73D128|X509 CERTIFICATE |
+|73D150|NEW CERTIFICATE REQUEST |
+|73D168|CERTIFICATE REQUEST |
+|73D180|Proc-Type: followed by space |
+|73D190|ENCRYPTED |
+|73D1A0|DEK-Info: followed by space |
+|73D1B0|-----BEGIN followed by space |
+|73D1C0|----- followed by LF |
+|73D1C8|-----END followed by space |
+
+The reader has distinct no-blank-header and normal body paths, and the default password callback reaches an already verified constant-failure input stub. Early decrypt failures bypass the later wipe/cleanup block; this is a static branch fact, not evidence of secrets observed or a reproduced security failure. Successful rawblock ownership transfers to caller, while70BBD8 consumes and frees those buffers after child decode. Fixed-capacity/pointer/cipher-selection conditions are not generalized into universal input safety.
+
+Audit:925 verified instruction words, zero conflicts,11 omitted zero words (NOP padding), zero omitted nonzero words.

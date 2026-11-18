@@ -1,0 +1,171 @@
+{
+  "schema": "reo.native.session_resources.qualification.v1",
+  "status": "passed",
+  "source_sha256": {
+    "game/native/gameplay_application/native_session.hpp": "7d350263ade3d161c2d2f0e06b6688f0eb36eef039c5fd708fdd5aa02a38fcad",
+    "game/native/gameplay_application/native_session.cpp": "f327cb1037a44f4b0f1eb3d9c08467e31a3826e3f7d9cdd839b4bed8920434f5",
+    "game/native/gameplay_application/session_rooms.hpp": "d35f1c4e28b464ef2fea5649921bc6c87d5823e6c279a61d67367d66d5f733d6",
+    "game/native/gameplay_application/session_rooms.cpp": "19b026edf30477b757755776622ed441f8e08e6b7e63e2749435686ee300b425",
+    "game/native/gameplay_application/session_resources.hpp": "66a16031cbb692a1992b9ff9ba49db283cb2af5ea374a67614213647f358fa29",
+    "game/native/gameplay_application/session_resources.cpp": "ec5b9e8e7465fa2da6c38caa5ec6c2a9f15b9b5314b1ae1ab8b6175cfa00fb96",
+    "game/native/gameplay_application/session_resource_assets.cpp": "97ef5624f5a81c2ca95083d7a310168e7b76703e21115d9d658dc55b93a5f527",
+    "game/native/gameplay_application/session_resource_import.hpp": "385099f8bb23935950fe3f6df351662f59a7b19b763f71d48aeb12b500cec8b0",
+    "game/native/gameplay_application/session_resource_import.cpp": "f702fd313eb178c0cb236e6a6f6f883425273b069dc607488bb6652515f84fbf",
+    "game/native/gameplay_application/session_resource_workers.hpp": "aec40bb940bff6d381c7d4b11446cf4f6bc3366b87847841710dfcd5522d8808",
+    "game/native/gameplay_application/session_resource_workers.cpp": "86f0f201dca13b27ad16523ad3ae554e00240ad2a1ef44d12c26dca58e6383be",
+    "game/native/gameplay_application/starting_resources.inc": "ea4d4c93767dcba3309f5de9df7f50d8ce4804a561e53af56c3a4b34c8c99334",
+    "game/native/gameplay_application/CMakeLists.txt": "6236484049674b8a6d552526569d645c09cdffec2c9c6ef0c16ae04ffcaa6724",
+    "game/native/gameplay_application/session_resources_tests.cpp": "36c4e0509c9869f036dd874a2b005c8a84167e71aaa9e1c5719eb5b4d254626f",
+    "tools/native_reconstruction/session_resource_import_tests.cpp": "729b50c9c965e1fb2212bac4d0747903fd3403cf97ed7bd0bbedfe114d0771ec",
+    "tools/native_reconstruction/verify_session_resource_import.py": "c36a02516d68aa4fe8eb875cd16a925e0b42ee2a12b99c2a502499da026927a6",
+    "tools/native_reconstruction/verify_session_resources_current.py": "d09dac41f051278560a54e27639ec532f46d35da59e2360e79bfd1bf7e9f3864",
+    "tools/native_reconstruction/verify_session_resources_parents.py": "6cbf81168071632126e9f3bc0d54ad59c4f435bd632bef4697045c485f07ef6a",
+    "tools/native_reconstruction/qualify_session_resources_v1.py": "199f4212b1d51a4996db761be75d0bfd8c18ff41b5562164b9931dce17b3cae6",
+    "docs/native-gameplay/SESSION_RESOURCES.md": "1267705d0462879238d9cfb4bfe4b612805282eefa9a9004d558c1ace997102e",
+    "docs/native-gameplay/NATIVE_SESSION_APPLICATION.md": "9e0e58b2e927d9c673a8d7db280d4e3030d7c950e583d2a6e9e1040120d70b06",
+    "docs/native-gameplay/STAGE4_INTEGRATION_AUDIT.md": "f863bc2b4ef0451356abfe2014f8c7f06c7da083d5adc44016058b663569166e",
+    "docs/native-gameplay/STAGE4_PLAN.md": "5eca020bb453863398d222ef7e4da016107ecc50a178c3551e19d1b3d0474ae6"
+  },
+  "evidence": [
+    {
+      "path": "build-native-sjuni/session-resource-import-llvm-v4/receipt.json",
+      "sha256": "026b7abe6007bb96299de18842b48896180eca1e3b91e3bab6b146bda9cd1d2e"
+    },
+    {
+      "path": "build-native-sjuni/session-resources-current-llvm-v5/receipt.json",
+      "sha256": "66539370aa2e55d6fe87d835e420aaed669638453347cc0ae770aa97d988a84d"
+    },
+    {
+      "path": "build-native-sjuni/session-resources-vm-llvm-v1/receipt.json",
+      "sha256": "a5be033b1b68cd09830a82002437743110d5227d447c9add94b0cf0d881e387d"
+    },
+    {
+      "path": "build-native-sjuni/session-resources-parents-llvm-v3/receipt.json",
+      "sha256": "0c5f0574bb5b5a37dc2bba3b188021c7f1a7f42c6db92bdefa8751bd2c0a2cb9"
+    },
+    {
+      "path": "build-native-sjuni/session-resource-import-gcc-v4/receipt.json",
+      "sha256": "9ebf6c637154c78d2d124b0d39d577f367dc6b1636907fb38f2bcc486429d158"
+    },
+    {
+      "path": "build-native-sjuni/session-resources-current-gcc-v5/receipt.json",
+      "sha256": "556ce37d75a4fe1e7d9eb841e30262548928af401c9edb977e52b4ee286a772d"
+    },
+    {
+      "path": "build-native-sjuni/session-resources-vm-gcc-v1/receipt.json",
+      "sha256": "d7e4eec36801f24393e4651328604af53280a76d37dfa7971bdb2b774a3cd7f3"
+    },
+    {
+      "path": "build-native-sjuni/session-resources-parents-gcc-v3/receipt.json",
+      "sha256": "302ace303e2dc80ea502e67991c441491585619667f5a726580b984123ddcdfb"
+    }
+  ],
+  "observed": [
+    {
+      "compiler": "llvm",
+      "bootstrap": {
+        "status": "passed",
+        "checks": 9125409,
+        "cases": 8765,
+        "original_calls": 4240265,
+        "original_reads": 17530,
+        "selected": 953401,
+        "placed": 953201,
+        "starting": 18425,
+        "asset_mode_prefixes": 256,
+        "refusals": 4,
+        "game_launched": false
+      },
+      "graph": {
+        "checks": 68,
+        "selected": 222,
+        "placed": 222,
+        "starting": 4,
+        "workers": 4,
+        "refusals": 9,
+        "guards": 1,
+        "game_run": false
+      },
+      "vm_checks": 586070532,
+      "parent_tests": 31,
+      "speech": {
+        "checks": 4715864,
+        "owned_clips": 33,
+        "frames": 21649,
+        "model_patches": 129696,
+        "game_run": false
+      },
+      "room_lighting": {
+        "checks": 285448,
+        "room_keys": 227,
+        "visits": 4086,
+        "lighting_reads": 1752,
+        "fog_reads": 2676,
+        "default_misses": 1362,
+        "game_run": false
+      }
+    },
+    {
+      "compiler": "gcc",
+      "bootstrap": {
+        "status": "passed",
+        "checks": 9125409,
+        "cases": 8765,
+        "original_calls": 4240265,
+        "original_reads": 17530,
+        "selected": 953401,
+        "placed": 953201,
+        "starting": 18425,
+        "asset_mode_prefixes": 256,
+        "refusals": 4,
+        "game_launched": false
+      },
+      "graph": {
+        "checks": 68,
+        "selected": 222,
+        "placed": 222,
+        "starting": 4,
+        "workers": 4,
+        "refusals": 9,
+        "guards": 1,
+        "game_run": false
+      },
+      "vm_checks": 586070532,
+      "parent_tests": 31,
+      "speech": {
+        "checks": 4715864,
+        "owned_clips": 33,
+        "frames": 21649,
+        "model_patches": 129696,
+        "game_run": false
+      },
+      "room_lighting": {
+        "checks": 285448,
+        "room_keys": 227,
+        "visits": 4086,
+        "lighting_reads": 1752,
+        "fog_reads": 2676,
+        "default_misses": 1362,
+        "game_run": false
+      }
+    }
+  ],
+  "game_launched": false,
+  "device_opened": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "prerequisites": [
+    "4aafc8d7:canonical World cinematic lookup and no-data resource friends plus actual actor sound/CF2 producer metadata.",
+    "Current qualified native canonical actor sound readers and projectile/pose dependency graph."
+  ],
+  "limitations": [
+    "Actual ordinary591C50 archive profile only; offline adjustment and filesystem mode refuse.",
+    "NativeSession owns one descriptor/model/inventory/pose graph; immutable asset validation templates are not an extra mutable runtime bank.",
+    "Room replacement refuses pending actual591920 persistent reset/rebind; an empty or retired owner does not admit resource Programs.",
+    "Resource model update requires the sole CutscenePlayback actual4BAE9A state. The owned room test uses its real zero-current-object dynamic branch.",
+    "Required companion/audio/spatial/inherited-mode1/projectile consumers and terminal phase/actor/physics services remain explicit refusals.",
+    "Controlled roster/cinematic/174 fixtures prove composition, not authored launch or complete cinematic/gameplay acceptance.",
+    "Complete scenario EVB admission, semantic save/resume, input/transport/media installation and replacement/acceptance of installedgameV39 remain Stage4 gates.",
+    "Original CPU/register/memory models exist solely in offline qualification."
+  ]
+}

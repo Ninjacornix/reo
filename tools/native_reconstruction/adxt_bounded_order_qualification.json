@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "status": "bounded ordinary route admission qualified; V20 failure retained and game retest pending",
+  "source_manifest": "tools/native_reconstruction/adxt_ordinary_runtime_manifest_v5.json",
+  "source_manifest_sha256": "fa438ad858ac7a523b0aae8335f007ed7bf7b48debdf29f6b351ded7e8abaf98",
+  "native_archive_manifest": "tools/native_reconstruction/native_movie_capability_manifest_v1.json",
+  "native_archive_manifest_sha256": "06676ae214796a4bd2eb4a97f366f81b34430e7a4117237cf43571d19f1cfdd7",
+  "native_suites_per_compiler": 78,
+  "adapter_scenarios_per_compiler": 21,
+  "detected_runtime_faults_per_compiler": [
+    "drop-child-retirement",
+    "fallback-unsupported-producer",
+    "ignore-child-replacement",
+    "omit-native-discard",
+    "require-unused-mono-pan",
+    "ignore-active-stereo-pan",
+    "require-raw-order-for-two",
+    "ignore-three-source-order"
+  ],
+  "actual_sdk130_objects_per_compiler": 5,
+  "receipts": {
+    "build-native-sjuni/movie-instance-audio/native-llvm-v1/receipt.json": "9798d4693d086563e0af520cc08db66efdfa63bbcc69a2d4a6ff6420f7507b0e",
+    "build-native-sjuni/adxt-binding/ordinary-bounded-order-llvm-v1/receipt.json": "6f8cb3b3133b05ab42c229f49a16998e68d0b8969b98a4489daa4aded1e9618e",
+    "build-native-sjuni/adxt-binding/ordinary-bounded-order-actual130-llvm-v1/receipt.json": "329ed2f7d693a1e3606b4dbe47f48bcb8571d784202fd759fce322318e877a7c",
+    "build-native-sjuni/movie-instance-audio/native-gcc-v1/receipt.json": "45ed65c4c755be89f2772768ee327f05ccf225507741c5228ab175f0757b7b42",
+    "build-native-sjuni/adxt-binding/ordinary-bounded-order-gcc-v1/receipt.json": "66b027af087b4474578f6230191f4a2c0bac8c27b3e8dde48fe36967a8f8bfe0",
+    "build-native-sjuni/adxt-binding/ordinary-bounded-order-actual130-gcc-v1/receipt.json": "07d11c185d7813225369357d5c186e656cd4556a11ec335308bcf85ca1c97315"
+  },
+  "game_test": "V20 mono correction passes; stops at missing raw route; bounded correction not yet game-tested",
+  "three_source_order_resolved": false,
+  "native_source_pcm_signal_observed": false,
+  "stage3_complete": false
+}

@@ -3,6 +3,8 @@
 #include "recomp/overrides/native_geometry/reo_vu_native_sha256.h"
 #include <cstdlib>
 #include <functional>
+#include <optional>
+#include <span>
 #include <string>
 
 namespace reo::assets {
@@ -24,6 +26,12 @@ inline std::string pathKey(std::string name) {
 class PlanReader {
     std::vector<uint8_t> bytes; size_t at = 0;
   public:
+    // Copies already-retained plan bytes; parsing/limits below are shared with
+    // the pathname constructor. No caller buffer is borrowed after construction.
+    explicit PlanReader(std::span<const uint8_t> input) {
+        require(input.size() <= 16 * 1024 * 1024, "Asset plan exceeds limit");
+        bytes.assign(input.begin(), input.end());
+    }
     explicit PlanReader(const std::filesystem::path& path) {
         Source source(path); require(source.size <= 16 * 1024 * 1024, "Asset plan exceeds limit");
         bytes.resize(static_cast<size_t>(source.size)); source.read(0, bytes.size(), bytes.data());
@@ -45,8 +53,40 @@ struct MountedArchive { VirtualFile file; uint32_t lba; };
 class Overlay {
     std::map<std::string, MountedArchive> archives;
   public:
-    explicit Overlay(const std::filesystem::path& root, const std::filesystem::path& plan) {
-        PlanReader reader(plan); char magic[8]; reader.read(magic, 8);
+    using SourceResolver = std::function<std::shared_ptr<Source>(const std::filesystem::path&)>;
+    struct SourceExpectation {
+        std::optional<uint64_t> length;
+        std::optional<Digest> sha256;
+    };
+    using VerifiedSourceResolver = std::function<std::shared_ptr<Source>(
+        const std::filesystem::path&, const SourceExpectation&)>;
+    explicit Overlay(const std::filesystem::path& root, const std::filesystem::path& plan)
+        : Overlay(root, PlanReader(plan), [](const std::filesystem::path& path, const SourceExpectation&) {
+              return std::make_shared<Source>(path);
+          }) {}
+    // Resolver supplies every ELF/base/replacement source. It is trusted wiring,
+    // not verification of a pathname's identity. The existing content/extent
+    // checks still run against the returned sources. No mutable global is used.
+    Overlay(const std::filesystem::path& root, std::span<const uint8_t> plan, SourceResolver resolver)
+        : Overlay(root, PlanReader(plan), [resolver = std::move(resolver)](
+              const std::filesystem::path& path, const SourceExpectation&) {
+              require(bool(resolver), "Asset source resolver is empty");
+              return resolver(path);
+          }) {}
+    // Expected metadata comes from the same parser that admits each source.
+    // A verifier can hash a retained handle before adoption without reparsing
+    // the plan. Existing content/extent validation below still runs in full.
+    Overlay(const std::filesystem::path& root, std::span<const uint8_t> plan, VerifiedSourceResolver resolver)
+        : Overlay(root, PlanReader(plan), std::move(resolver)) {}
+  private:
+    Overlay(const std::filesystem::path& root, PlanReader reader, const VerifiedSourceResolver& resolver) {
+        require(bool(resolver), "Asset source resolver is empty");
+        const auto sourceFor = [&](const std::filesystem::path& path, const SourceExpectation& expected = {}) {
+            auto source = resolver(path, expected);
+            require(bool(source), "Asset source resolver returned null");
+            return source;
+        };
+        char magic[8]; reader.read(magic, 8);
         require(std::memcmp(magic, "REOPAK1\0", 8) == 0, "Unsupported asset overlay plan");
         const auto game = reader.number(); require(game == 1 || game == 2, "Invalid asset game");
         const auto elfHash = reader.hash();
@@ -56,8 +96,8 @@ class Overlay {
             const std::string pair(expected + i * 2, 2);
             require(elfHash[i] == std::stoul(pair, nullptr, 16), "Asset plan targets unsupported executable");
         }
-        Source elf(root / (game == 1 ? "SLUS_207.65" : "SLUS_209.84"));
-        require(digest(elf, 0, elf.size) == elfHash, "Asset plan executable identity mismatch");
+        const auto elf = sourceFor(root / (game == 1 ? "SLUS_207.65" : "SLUS_209.84"), {{}, elfHash});
+        require(digest(*elf, 0, elf->size) == elfHash, "Asset plan executable identity mismatch");
         const uint32_t count = reader.number(); require(count <= 4096, "Too many asset replacements");
         std::map<std::string, Replacements> changes;
         std::map<std::string, std::shared_ptr<Source>> sources;
@@ -70,7 +110,7 @@ class Overlay {
             const auto name = target.substr(0, slash);
             require(name == "NETBIO00.DAT" || name == "NETBIO01.DAT" || (game == 1 && name == "NETBIO02.DAT"),
                     "Unsupported asset archive");
-            auto& source = sources[name]; if (!source) source = std::make_shared<Source>(root / name);
+            auto& source = sources[name]; if (!source) source = sourceFor(root / name);
             IndexPath path; uint64_t base = 0, extent = source->size; size_t start = slash + 1;
             while (start < target.size()) {
                 const auto end = target.find('/', start); const auto token = target.substr(start, end - start);
@@ -94,9 +134,9 @@ class Overlay {
             uint8_t leafMagic[4]{}; if (extent >= 4) source->read(base, 4, leafMagic);
             require(std::memcmp(leafMagic, "AFS\0", 4) != 0, "Cannot replace whole nested archives");
             require(digest(*source, base, extent) == baseHash, "Original asset hash mismatch");
-            const auto replacementPath = std::filesystem::u8path(file);
+            const auto replacementPath = std::filesystem::path(std::u8string(file.begin(), file.end()));
             require(replacementPath.is_absolute(), "Replacement file path must be absolute");
-            auto replacement = std::make_shared<Source>(replacementPath);
+            auto replacement = sourceFor(replacementPath, {length, newHash});
             require(replacement->size == length && digest(*replacement, 0, length) == newHash, "Replacement asset hash mismatch");
             replacement->traceReplacement = true;
             // Thousands of installed assets must not consume thousands of open CRT
@@ -115,6 +155,7 @@ class Overlay {
         }
         std::fprintf(stderr, "[ASSET-PAKS-1] %u validated replacements, %zu virtual archives\n", count, archives.size());
     }
+  public:
     const MountedArchive* find(const std::string& key) const {
         const auto found = archives.find(pathKey(key)); return found == archives.end() ? nullptr : &found->second;
     }

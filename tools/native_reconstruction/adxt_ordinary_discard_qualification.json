@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "status": "ordinary serviced discard/rebase declared-port and production-header qualification passed",
+  "source_manifest_sha256": "091007d48cedb8ffb9a70f5d807be13dda1e1e0464caf56d9261ee77177088ed",
+  "parent_qualification_sha256": "2c02dd6b778aa9cffe421fba3908f883d65c1bb6070fec9ed2d26f6e40f9901e",
+  "native_archive_manifest_sha256": "0ef1c6d137b649e0c7b1f5cb905f8d2bf84735cabbadd59e2037d18e9e39e59b",
+  "native_archives_rebuilt": false,
+  "adapter_scenarios": 16,
+  "detected_faults": [
+    "drop-child-retirement",
+    "fallback-unsupported-producer",
+    "ignore-child-replacement",
+    "omit-native-discard"
+  ],
+  "evidence": {
+    "build-native-sjuni/adxt-binding/ordinary-discard-llvm-v2/receipt.json": "ad5a10b76b97afc1d72b8e44cf06b625bc07b486d0034cff61cdfeb0d24203b4",
+    "build-native-sjuni/adxt-binding/ordinary-discard-actual130-llvm-v1/receipt.json": "5a8362fcde2de20ea24b274d25c0531169eda6e11888a7fb74c4584043e77cad",
+    "build-native-sjuni/adxt-binding/ordinary-discard-gcc-v2/receipt.json": "40acf454726d2d5b9541f73a72a4ab0f676d9bb138b30a8478cbdb490f11b509",
+    "build-native-sjuni/adxt-binding/ordinary-discard-actual130-gcc-v1/receipt.json": "675a6a7aa0fa074aee1fd96d8afd509c7968d34d8409371aa28df06da7655f57"
+  },
+  "retained_failed_negative_compile_runs": {
+    "build-native-sjuni/adxt-binding/ordinary-discard-llvm-v1/receipt.json": "78a1c2d69fc4ef65380fc2aa18727d4f0fb8480921a7e8cb85416dc87a283d6a",
+    "build-native-sjuni/adxt-binding/ordinary-discard-gcc-v1/receipt.json": "b6b5c3c9245d8216ec741f400d45320631bdacf1869df3c64c7f58d2423dd578"
+  },
+  "first_verifier_sha256": "c425e4a63a2117edd3ff536afc079c90f6baad6df46d2a741e7b344b63078a4f",
+  "actual_native_workers": true,
+  "actual_immutable_import": true,
+  "original_guest_bodies_executed": false,
+  "actual_runtime_acquisition": false,
+  "native_source_game_activation_proven": false,
+  "game_run": false,
+  "device_opened": false,
+  "outside_sealed_v18": true,
+  "stage3_complete": false,
+  "source_manifest_path": "tools/native_reconstruction/adxt_ordinary_runtime_manifest_v3.json",
+  "metadata_line_ending_correction": {
+    "prior_working_manifest_sha256": "e7aa83c28d6fc9d95e14885ed0e2cf877c455e67ce6497da2323a698def02766",
+    "prior_committed_manifest_sha256": "0c78bb707c533b60f43cb988fd068a12cddc46819ae3131628a4118465962499",
+    "retained_working_metadata": "build-native-sjuni\\adxt-binding\\ordinary-discard-pre-lf-metadata",
+    "source_and_execution_inputs_unchanged": true
+  }
+}

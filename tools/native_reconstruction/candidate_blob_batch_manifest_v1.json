@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "files": {
+    "tools/native_reconstruction/prepare_native_candidate.py": "53a9b144d5d5e924ffa62de4c6eefe73c75f39c0cf406049d6ff044b88feb8b3",
+    "tools/native_reconstruction/test_commit_blob_batch.py": "ea07e6daf8a62cff2c7d0bfe00df89192b6abe2901e274918af8857646e88b07",
+    "docs/native-media/CANDIDATE_IMMUTABLE_BLOB_READS.md": "119731e2b2b346888f51c683f04baba9534f11f2b6af0488b7d4670702f7f364"
+  }
+}

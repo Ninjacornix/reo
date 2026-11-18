@@ -2,6 +2,7 @@
 // Opt-in original Outbreak clock observation. Normal bootstrap RAM only.
 #include "ps2_runtime.h"
 #include "ps2_runtime_macros.h"
+#include "../../runtime/diagnostics/slowdown_recorder.h"
 #include <array>
 #include <atomic>
 #include <chrono>
@@ -25,6 +26,7 @@ inline std::array<Row, capacity> rows{};
 inline std::array<std::atomic<bool>, capacity> ready{};
 inline std::atomic<unsigned> reserved{0}, dropped{0}, invalid{0};
 inline bool enabled = false, started = false, closed = false;
+inline bool csv_enabled = false, live_enabled = false;
 inline uint8_t* expected_ram = nullptr;
 inline double from_seconds = 0, duration_seconds = 120;
 inline std::string output_file;
@@ -56,7 +58,9 @@ inline bool setting(const char* name, double fallback, double low, double high, 
 inline void configure(const char* serial, uint8_t* ram, size_t normal_ram_size) {
     const char* log = std::getenv("REO_GAME_CLOCK_LOG");
     enabled = false;
-    if (!log || std::strcmp(log, "1"))
+    csv_enabled = log && !std::strcmp(log, "1");
+    live_enabled = reo::slowdown::active();
+    if (!csv_enabled && !live_enabled)
         return;
     if (!serial || std::strcmp(serial, "SLUS-20765") || !ram || normal_ram_size != PS2_RAM_SIZE ||
         word(ram, 0x1b0b80) != 0x27bdffd0u || word(ram, 0x1b0b84) != 0xffbf0020u ||
@@ -76,13 +80,14 @@ inline void configure(const char* serial, uint8_t* ram, size_t normal_ram_size) 
     for (auto& flag : ready)
         flag.store(false, std::memory_order_relaxed);
     enabled = true;
+    if (live_enabled) reo::slowdown::capability(2);
     std::fprintf(stderr, "[GAME-CLOCK] configured from=%.3f duration=%.3f capacity=%u file=%s\n",
                  from_seconds, duration_seconds, capacity, output_file.c_str());
 }
 // Called only by one main-ELF entry wrapper on the guest owner, before original
 // controller copy. No background RAM sampling or guest state/context writes.
 inline void sample(uint8_t* r, R5900Context* c, PS2Runtime* p) {
-    if (!enabled || closed || !r || r != expected_ram || !c || !p || p->memory().getRDRAM() != r ||
+    if (!enabled || (closed && !live_enabled) || !r || r != expected_ram || !c || !p || p->memory().getRDRAM() != r ||
         c->pc != 0x1b0b80u || GPR_U32(c, 31) != 0x66a0d8u)
         return;
     const uint8_t id = r[0x4baded];
@@ -99,19 +104,9 @@ inline void sample(uint8_t* r, R5900Context* c, PS2Runtime* p) {
     const int64_t elapsed =
         std::chrono::duration_cast<std::chrono::nanoseconds>(now - first_room).count();
     const double seconds = double(elapsed) * 1e-9;
-    if (seconds < from_seconds)
-        return;
-    if (seconds >= from_seconds + duration_seconds) {
-        closed = true;
-        return;
-    }
     if (r[0x4bae00] >= 100 || r[0x4bae01] >= 60 || r[0x4bae02] >= 60 || r[0x4bae03] >= 60) {
         invalid.fetch_add(1, std::memory_order_relaxed);
-        return;
-    }
-    const unsigned n = reserved.fetch_add(1, std::memory_order_relaxed);
-    if (n >= capacity) {
-        dropped.fetch_add(1, std::memory_order_relaxed);
+        if (live_enabled) reo::slowdown::emit(4);
         return;
     }
     Row q{};
@@ -140,12 +135,25 @@ inline void sample(uint8_t* r, R5900Context* c, PS2Runtime* p) {
     q.cache_scenario = r[0x7434b0];
     q.cache_room = r[0x7434b1];
     q.cache_variant = r[0x7434b2];
+    if (live_enabled) {
+        const uint64_t state = uint64_t(q.room) | (uint64_t(q.step) << 16) |
+            (uint64_t(q.phase) << 24) | (uint64_t(q.paused) << 32) |
+            (uint64_t(q.request) << 40) | (uint64_t(q.cache_room) << 48) |
+            (uint64_t(q.cache_scenario) << 56);
+        const uint64_t extra = uint64_t(q.cache_variant) | (uint64_t(q.subphase) << 8) |
+            (uint64_t(q.destination) << 16);
+        reo::slowdown::emit(1, q.clock_units, q.room_counter, state, extra, q.actor);
+    }
+    if (!csv_enabled || seconds < from_seconds) return;
+    if (seconds >= from_seconds + duration_seconds) { closed = true; return; }
+    const unsigned n = reserved.fetch_add(1, std::memory_order_relaxed);
+    if (n >= capacity) { dropped.fetch_add(1, std::memory_order_relaxed); return; }
     rows[n] = q;
     ready[n].store(true, std::memory_order_release);
 }
 // runtime.run() joins IRQ/all guest/GS workers before returning in this baseline.
 inline void export_after_join() {
-    if (!enabled)
+    if (!enabled || !csv_enabled)
         return;
     FILE* f = std::fopen(output_file.c_str(), "wb");
     if (!f) {

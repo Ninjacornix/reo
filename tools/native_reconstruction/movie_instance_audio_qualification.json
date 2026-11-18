@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "status": "canonical movie/audio capability qualified; actual game binding and Step 3 incomplete",
+  "source_manifest": "tools/native_reconstruction/movie_instance_audio_manifest_v1.json",
+  "source_manifest_sha256": "d629dfb99404b0298019289fd9fdeffd88691db20e12ec945bcbf3398b49e965",
+  "receipts": {
+    "build-native-sjuni/movie-instance-audio/llvm-v3/receipt.json": "7fcf91fa49e78c1355cb9d1b20a98843830d52ab7993d481963d995000ca8710",
+    "build-native-sjuni/movie-instance-audio/gcc-v3/receipt.json": "c34cbfefc6779af4e666a23234bf810f6cd0e927ac0b530d626106e7d075961c"
+  },
+  "workflows_per_compiler": 6,
+  "existing_regression_suites_per_compiler": 3,
+  "detected_runtime_faults_per_compiler": [
+    "follow-replaced-source",
+    "lose-persistent-pause",
+    "tick-inside-owner-borrow"
+  ],
+  "full_native_cohort_rebuilt": false,
+  "game_run": false,
+  "device_opened": false,
+  "actual_runtime_binding": false,
+  "stage3_complete": false
+}

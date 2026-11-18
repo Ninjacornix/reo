@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "scope": "Canonical World/motion/pose/body/height phases execute through the native update worker with owned auxiliary and secondary leases.",
+  "cohorts": {
+    "llvm": {
+      "path": "build-native-sjuni/gameplay-collision-workers-llvm-v2/receipt.json",
+      "sha256": "747f9ce4877a78bf054fb192e5d09c39a1055f667f0721f7afcc495c01a9f8b3",
+      "result": {
+        "status": "passed",
+        "checks": 117,
+        "game_run": false
+      },
+      "scenario_source_commit": "cb57fa187df5740d3a7ff569f3d5550fc21646a2",
+      "source_snapshot": "build-native-sjuni/gameplay-collision-workers-llvm-v2/source"
+    },
+    "gcc": {
+      "path": "build-native-sjuni/gameplay-collision-workers-gcc-v2/receipt.json",
+      "sha256": "1761b6cc4625c1bbba9b42bc2c4817a77cdc6880c89d0cacffc1326cbc890ec9",
+      "result": {
+        "status": "passed",
+        "checks": 117,
+        "game_run": false
+      },
+      "scenario_source_commit": "cb57fa187df5740d3a7ff569f3d5550fc21646a2",
+      "source_snapshot": "build-native-sjuni/gameplay-collision-workers-gcc-v2/source"
+    }
+  },
+  "stage4_complete": false,
+  "installed_in_game": false,
+  "game_run": false,
+  "original_bodies_executed_in_this_cohort": false,
+  "declared_fixtures": [
+    "Remaining individual behavior/worker/UI effects",
+    "Secondary wall effect; actual secondary floor is native",
+    "Admitted loop/yield script fixture"
+  ],
+  "remaining": [
+    "Actual scene spawning, all behavior/actions/task payloads and networking",
+    "Full model/IK/attachment and secondary wall consumers",
+    "Native whole-game installation and acceptance"
+  ]
+}

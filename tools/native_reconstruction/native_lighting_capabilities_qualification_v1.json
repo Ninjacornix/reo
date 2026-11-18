@@ -1,0 +1,109 @@
+{
+  "schema": 1,
+  "status": "passed for canonical shared lighting access",
+  "game_launched": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/CMakeLists.txt": "122dcd468908c50369da96281bd31bdbd41532577a407a9b28fa65ceeb321d74",
+    "game/native/gameplay_scenario/lighting.cpp": "a3e1ecab710e62a0d81e18b39c71a59d47b4777ca222bf5e7ca735aee95d00ae",
+    "game/native/gameplay_scenario/lighting.hpp": "7358d6e0166de5992233dc0ea9d29b0c0f7b9cdb1c183714fefd2e3a481fa56b",
+    "game/native/gameplay_lighting/CMakeLists.txt": "ee15edee2d769a2d02c79c8d684bbf995035fb99f34d148e1cdda47b9a14ed00",
+    "game/native/gameplay_lighting/lights.cpp": "7f4c92e78127fec701ef3ea70a408a85f5cf883f5475a029ef074b32a81f844a",
+    "game/native/gameplay_lighting/lights.hpp": "d198b14355ff30b7580ec7c3dee55701a510810c92882206c192d97fc6e173c0",
+    "tools/native_reconstruction/lighting_pool_tests.cpp": "6df85afcc694372f3942e02d6ea1e62bee38c16c995915e7acdf77f0f22092c6",
+    "tools/native_reconstruction/verify_lighting_pool.py": "feb9208616a64887879e4921349475d8efaae644becb2d36915778eb85d5afe3",
+    "tools/native_reconstruction/gameplay_scenario/lighting_vm_fixture.inc": "75e8b2586d9cedbc71610344cc9c12ba2b8226a9e131d30d27fd2eeaf2ab9140",
+    "tools/native_reconstruction/gameplay_scenario/tests.cpp": "f4dbe070ef60411e8b1cdf95c013ec99c1d32b9c7a4b4c5c923510d1245d13c7",
+    "tools/native_reconstruction/gameplay_scenario/verify.py": "331217b880719c2996a6b7b6d0cd37573a9c3c36bbbd32d03b0d46237cada65d"
+  },
+  "cohorts": [
+    {
+      "receipt": "build-native-sjuni/lighting-canonical-pool-llvm-v1/receipt.json",
+      "sha256": "f1aed090ac3e5671f87b6b46238cdc7fa7ec7b22b3277686bf9a13bf164a18fe",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 4712151,
+        "allocations": 2733,
+        "retirements": 683,
+        "resets": 32,
+        "refusals": 38,
+        "original_calls": 12590,
+        "game_run": false
+      }
+    },
+    {
+      "receipt": "build-native-sjuni/lighting-canonical-assets-llvm-v1/receipt.json",
+      "sha256": "aeafc38944d37237b074cd2e69759b11f5609247252930823d972734b4dcefaf",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "owned_lig_count": 166,
+        "checked_owned_instruction_comments": 343
+      }
+    },
+    {
+      "receipt": "build-native-sjuni/lighting-canonical-vm-llvm-v2/receipt.json",
+      "sha256": "b8dbaa0eee61daa676734423b7bb42462cefb3d1891c29a1aa9e2523765236f9",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "owned_lig_count": null,
+        "checked_owned_instruction_comments": 6993
+      }
+    },
+    {
+      "receipt": "build-native-sjuni/lighting-canonical-pool-gcc-v1/receipt.json",
+      "sha256": "688caa5776085061762a042200f9a0d784dd603698f345361680d7f99e9f1a36",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 4712151,
+        "allocations": 2733,
+        "retirements": 683,
+        "resets": 32,
+        "refusals": 38,
+        "original_calls": 12590,
+        "game_run": false
+      }
+    },
+    {
+      "receipt": "build-native-sjuni/lighting-canonical-assets-gcc-v1/receipt.json",
+      "sha256": "5c1a6c3e31f0922f0293f72dd1eb0ef250317ba93551480c26f3364e424e58a2",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "owned_lig_count": 166,
+        "checked_owned_instruction_comments": 343
+      }
+    },
+    {
+      "receipt": "build-native-sjuni/lighting-canonical-vm-gcc-v2/receipt.json",
+      "sha256": "40c38497340c52b9bb5da2bf31b497d1673010173bbd6d49d3d7106183e1e2b0",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "owned_lig_count": null,
+        "checked_owned_instruction_comments": 6993
+      }
+    }
+  ],
+  "parent_checks": [
+    {
+      "path": "build-native-sjuni/stage4-lighting-canonical-parent-llvm-v1.txt",
+      "sha256": "c731f3b9b7fcb1cdb83f4e05d252b483b89d62501af9a4b178d51879c6f1c005"
+    },
+    {
+      "path": "build-native-sjuni/stage4-lighting-canonical-tests-llvm-v1.txt",
+      "sha256": "0d21bd0a20f0dec1d18e4f63f7cb3941cfb6a713d38cb4b8ae9f10b8a51e27e3"
+    },
+    {
+      "path": "build-native-sjuni/stage4-lighting-canonical-parent-gcc-v1.txt",
+      "sha256": "f453c685b6597d1056b10aa91fb538d12a8db42acf668bb448deeefde3ea3ce2"
+    },
+    {
+      "path": "build-native-sjuni/stage4-lighting-canonical-tests-gcc-v1.txt",
+      "sha256": "4470b8cfb46b2f6fee251dadd8e8be1c34eba47340a8cd8531db1e41914cc7e7"
+    }
+  ],
+  "limitations": [
+    "Timed light task and actual actor bindings remain open.",
+    "Room commands retain qualified physical-slot reuse; temporary handles reject reused generations.",
+    "No renderer or game installation claim."
+  ]
+}

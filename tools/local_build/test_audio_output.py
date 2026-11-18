@@ -16,6 +16,15 @@ void InitAudioDevice(void)
     config.playback.pDeviceID = NULL;  // NULL for the default playback AUDIO.System.device
     result = ma_device_init(&AUDIO.System.context, &config, &AUDIO.System.device);
 }
+void CloseAudioDevice(void)
+{
+    if (AUDIO.System.isReady)
+    {
+        ma_mutex_uninit(&AUDIO.System.lock);
+        ma_device_uninit(&AUDIO.System.device);
+        ma_context_uninit(&AUDIO.System.context);
+    }
+}
 """
 
     def test_transform_preserves_other_code_and_fails_on_changed_calls(self):
@@ -23,10 +32,22 @@ void InitAudioDevice(void)
         self.assertIn('// upstream license remains here', result)
         self.assertIn('reoAudioOutputDevice(&AUDIO.System.context, &reoOutputId)', result)
         self.assertIn('reoAudioInitDevice(&AUDIO.System.context, &config, &AUDIO.System.device)', result)
+        self.assertIn('ma_device_uninit(&AUDIO.System.device);\n        ma_mutex_uninit(&AUDIO.System.lock);', result)
         with self.assertRaises(ValueError):
             instrument(self.SOURCE.replace('ma_device_init(', 'different_init('))
         with self.assertRaises(ValueError):
             instrument(self.SOURCE + self.SOURCE)
+
+    def test_shutdown_transform_fails_closed_on_changed_or_repeated_order(self):
+        with self.assertRaises(ValueError):
+            instrument(self.SOURCE.replace('ma_mutex_uninit(', 'different_mutex_uninit('))
+        with self.assertRaises(ValueError):
+            instrument(self.SOURCE + self.SOURCE[self.SOURCE.index('void CloseAudioDevice'):])
+
+    def test_transform_supports_candidate_exec_without_file(self):
+        namespace = {'__name__': 'candidate_audio_transform'}
+        exec(Path(__file__).with_name('prepare_audio_output.py').read_text(), namespace)
+        self.assertEqual(namespace['instrument'](self.SOURCE), instrument(self.SOURCE))
 
     def test_staging_is_source_preserving_and_does_not_force_rebuild(self):
         with tempfile.TemporaryDirectory() as temporary:

@@ -1,0 +1,321 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "stage4_complete": false,
+  "installed_in_game": false,
+  "game_run": false,
+  "original_ordering_body_executed": false,
+  "scope": "static owned ordering plus real canonical primary/auxiliary/secondary integration and partial failures",
+  "cohorts": {
+    "llvm": {
+      "path": "build-native-sjuni/gameplay-collision-phase-llvm-v1/receipt.json",
+      "sha256": "d4d7086c0661e2f507c572ddd96e67be5e89a357a3b3434369e270c6f238067a",
+      "result": {
+        "status": "passed",
+        "checks": 25,
+        "game_run": false
+      }
+    },
+    "gcc": {
+      "path": "build-native-sjuni/gameplay-collision-phase-gcc-v1/receipt.json",
+      "sha256": "c5222e7c8e98defc1136987a225c8c81adfca723ff829c0e0f83048a0336f9bb",
+      "result": {
+        "status": "passed",
+        "checks": 25,
+        "game_run": false
+      }
+    }
+  },
+  "source_sha256": {
+    "game/native/gameplay_world/world.hpp": "a30e79cbc4f90cb498389eac860f0bdd00ddb1553872c4ac8d97954d5c5c666f",
+    "game/native/gameplay_world/world.cpp": "cd762f94701b343e8f884c844bc9d4502c416f82c864c97e67e540ca9c4e0e42",
+    "game/native/gameplay_world/collision.hpp": "6bd12b66066d521a48d11198039518856a73518580a9c875d701f8f084fd978e",
+    "game/native/gameplay_world/collision.cpp": "e77fa2c00d2a584a787038c32c8cd6ff0c808b554fa57cb755e0b51213e91961",
+    "game/native/gameplay_world/collision_phase.hpp": "471626511a4d436db5171187537cdccd0d5a5edafc77dd0d1ac3b4c1834d409a",
+    "game/native/gameplay_world/collision_phase.cpp": "bffc7c5aec9624f9c48dbc0230ced25b84bc22a87cfb11adbfe515c7d0cbdd1c",
+    "game/native/gameplay_world/collision_phase_tests.cpp": "0767574ce39733a9ad3bcf27bbfc896c447eec1e046823a216c51c41c1b56785",
+    "game/native/gameplay_actors/entity.hpp": "78a907f8659a6afd3c991aacfa338a025adc6f03e13407c6925c05346ac02fd3",
+    "game/native/gameplay_actors/entity.cpp": "0bec95182c41091cfa8682394c01d9d89d8c53921ffd383bdfe0baa739f2f369",
+    "game/native/gameplay_actors/health.hpp": "1555ff5b97a8320726b67bc6c5a61b9bd3ef334ddb56a9babd9268b4c1cd486e",
+    "game/native/gameplay_actors/status.hpp": "06a1eb9e4a826a792e8f348976f8c4fa5f14e387b44ce53ce229b06f3b83a170",
+    "game/native/gameplay_actors/hit.hpp": "98ffbcf41947f487d639316d4adbabce966dfda71d5903c3b2f16158d4191495",
+    "game/native/gameplay_actors/input.hpp": "e939cc757fc206245960659be0cab87f415cd9547199df2e2cbfb42192dd6b22",
+    "game/native/gameplay_actors/input.cpp": "7a7dd57b2e105a79b2ffea7b5505ee7dad6fe696ff0d2732a8ee4b796347a497",
+    "game/native/gameplay_session/session.hpp": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd",
+    "game/native/gameplay_session/session.cpp": "8f3f77da4ee0c08be63bd41687a330afa469bf33e0cad871951215a14ddc7a87",
+    "game/native/gameplay_collision/collision.hpp": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da",
+    "game/native/gameplay_collision/collision.cpp": "84f32cd3e551a8da284e97d75ff34d4b229616e8c72b31b1adaaa9096bed129f",
+    "game/native/gameplay_collision/response.hpp": "22a85d653f51fd86e9666de1a748060b141fe02c3ead9ff0bc2022a7298f9f6d",
+    "game/native/gameplay_collision/response.cpp": "f6a1a45cc02977713f68359cfe678ac4ec283c8dbf1baf8cb25dc6df0b7efddb",
+    "game/native/gameplay_collision/actors.hpp": "1cd3018e15ddf32fe4e5facf124d28bcfc7243bda4f788728318f8e934483f78",
+    "game/native/gameplay_collision/actors.cpp": "b25e36df67b93898f74883a9badb9b7d58c1bfe43f4dc29b966f0ea6ded9025c",
+    "game/native/gameplay_collision/actor_views.hpp": "c79a6f6afca089408fbdd2fedf6dc99338021fc1e03a25948e40baa0200f45cd",
+    "game/native/gameplay_collision/actor_views.cpp": "80a54e075da6b10c9586d084a93ff9f651e7e0ff8b04569a2ec0f55bd7f90fa3",
+    "game/native/gameplay_collision/postmove_view.hpp": "60a61ac4e6c1c0b54b4aae7067055528327b657399c70a85d0b80d5a019c6316",
+    "game/native/gameplay_collision/postmove.hpp": "9547fa2cc1f2c59c8f399b0fddda752b617f7b10847a3836c76698e8894de6b6",
+    "game/native/gameplay_collision/contact_component.hpp": "10c088f8695296e2bce347a1b13b30f3f337642e594bca19288f5a424495d27c",
+    "game/native/gameplay_collision/hit_regions.hpp": "6549e791d8c22db70cf78fcd3cf5eecf10615e1fc910bd54ceec5c4d90476ed0",
+    "game/native/gameplay_collision/spatial.hpp": "92d543fa718a384b4887be0e6b2ee264515070f3f5a51be6cc9ae67312dee258",
+    "game/native/gameplay_collision/sweep.cpp": "5a2b3290c393144d02afa11de0552b9118ecd053ba51d0f3fddc8b2324b28d1a",
+    "game/native/gameplay_collision/ownership.cpp": "b41bd2b71c27650dd8bd8071fbdfe6a9c6030b88fa54570e704c4f9f41d54500",
+    "game/native/gameplay_collision/trace.cpp": "12066af8bf21b9e1441b7e453ff4da27b6dd1c809afba325a5d3156913eecfa5",
+    "game/native/gameplay_collision/room_objects.cpp": "031c491690b839a9fc074171d811508520ab3593d763f2081258697ee43ad8d4",
+    "game/native/gameplay_collision/footprint.cpp": "7a5bbe811655ffc0ef3a6474cd9c7672372292ab1752b888de8b99b6931ab919",
+    "game/native/gameplay_collision/regions.cpp": "f03b26532cc46a402513e81e751ed6e6ba41fd25781f94c83127514037ad2f4c",
+    "game/native/gameplay_collision/postmove.cpp": "4942b6b7ce1d920459f9f1cd28e4476a68d8b3caf75825105ce972e753473f7e",
+    "game/native/gameplay_collision/postmove_view.cpp": "c5c6e8313c4b915c4fbc5126e7f962ae71cd39d4c3e4c229ec8eba0a72ffe6d6",
+    "game/native/gameplay_collision/secondary_ground.cpp": "3aefd09441ae4410a3c219f3aed58a1e40802d7488822b24ea8813ac649507d1",
+    "game/native/transform_math/transform_math.hpp": "03762e50d83ba8cbd4f3215389d1c75b15453b8c02668bc731a633172b3e9f35",
+    "game/native/transform_math/transform_math.cpp": "4126c772f24ee109f297bd36f3cb5e74f7483ea363fe575aef9145e1c809b449",
+    "game/native/gameplay_collision/secondary_ground.hpp": "62f48f1a797fa4a3ed4db9ec45c0bb7dd2fcd27f6fc8e697ac4dcc61a9cd093b",
+    "game/native/gameplay_collision/footprint.hpp": "7a0ca201a87cffb6b20f847a773cdea4e840dc9de4acb72c911c649cbe5c5a3c",
+    "game/native/gameplay_collision/regions.hpp": "7de95d63c00dbbdadb9c739c42fc81b5f7a6fd05ef817eb7a86acbd7a8cdf8e1",
+    "game/native/gameplay_collision/sweep.hpp": "56b60e42b5fde050a93d563c2c459b258dab0f805f0125c44bd4e7107532ab39",
+    "game/native/gameplay_collision/ownership.hpp": "76b7569576762e8eaf8204a9276fd87c32b81d925d2f46406808c227fb11e8e8",
+    "game/native/gameplay_collision/trace.hpp": "494a53ef88e2a916d99ed2b2cfb503a3a9ea5235c6fdef053054f58adb1c7170",
+    "game/native/gameplay_collision/room_objects.hpp": "4a1733c2d06627b2da4c608dfdc6bc31f058042941bcc18d98ac23c6aafc8d8f",
+    "tools/native_reconstruction/verify_world_bodies.py": "051072547f488079ce501fd03ab5191998c2394cc4db08f6eeb38dab8aa739e3"
+  },
+  "original_static_word_audit": {
+    "role": "native collision-height pass ordering",
+    "path": "recomp/config/output_ovl/o2/o2_005DA680_0x5da680.cpp",
+    "sha256": "0d6114760fe33d860837da6ebeb29cfc9251575fe6d539253007d951c85e220a",
+    "start": "0x5da680",
+    "end_exclusive": "0x5da714",
+    "matched_comments": 36,
+    "omitted_zero_words": 1,
+    "conflicts": 0,
+    "comparisons": [
+      {
+        "pc": "0x005da680",
+        "owned_word": "0x27bdffe0",
+        "comment_word": "0x27bdffe0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da684",
+        "owned_word": "0x24020001",
+        "comment_word": "0x24020001",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da688",
+        "owned_word": "0xffbf0010",
+        "comment_word": "0xffbf0010",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da68c",
+        "owned_word": "0x3c010074",
+        "comment_word": "0x3c010074",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da690",
+        "owned_word": "0x7fb00000",
+        "comment_word": "0x7fb00000",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da694",
+        "owned_word": "0xa0225d58",
+        "comment_word": "0xa0225d58",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da698",
+        "owned_word": "0x0000802d",
+        "comment_word": "0x0000802d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da69c",
+        "owned_word": "0x00101900",
+        "comment_word": "0x00101900",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6a0",
+        "owned_word": "0x3c02004a",
+        "comment_word": "0x3c02004a",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6a4",
+        "owned_word": "0x00702023",
+        "comment_word": "0x00702023",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6a8",
+        "owned_word": "0x24425c30",
+        "comment_word": "0x24425c30",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6ac",
+        "owned_word": "0x000418c0",
+        "comment_word": "0x000418c0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6b0",
+        "owned_word": "0x00831821",
+        "comment_word": "0x00831821",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6b4",
+        "owned_word": "0x00031940",
+        "comment_word": "0x00031940",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6b8",
+        "owned_word": "0x0c198db4",
+        "comment_word": "0x0c198db4",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6bc",
+        "owned_word": "0x00432021",
+        "comment_word": "0x00432021",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6c0",
+        "owned_word": "0x26100001",
+        "comment_word": "0x26100001",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6c4",
+        "owned_word": "0x2e020008",
+        "comment_word": "0x2e020008",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6c8",
+        "owned_word": "0x1440fff5",
+        "comment_word": "0x1440fff5",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6cc",
+        "owned_word": "0x00101900",
+        "comment_word": "0x00101900",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6d0",
+        "owned_word": "0x3c01003b",
+        "comment_word": "0x3c01003b",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6d4",
+        "owned_word": "0x10000004",
+        "comment_word": "0x10000004",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6d8",
+        "owned_word": "0x8c3059f0",
+        "comment_word": "0x8c3059f0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6dc",
+        "owned_word": "0x0c198db4",
+        "comment_word": "0x0c198db4",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6e0",
+        "owned_word": "0x0200202d",
+        "comment_word": "0x0200202d",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6e4",
+        "owned_word": "0x8e10001c",
+        "comment_word": "0x8e10001c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6e8",
+        "owned_word": "0x00000000",
+        "comment_word": "0x00000000",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6ec",
+        "owned_word": "0x00000000",
+        "comment_word": "0x00000000",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6f0",
+        "owned_word": "0x1600fffa",
+        "comment_word": "0x1600fffa",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6f4",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005da6f8",
+        "owned_word": "0x3c010074",
+        "comment_word": "0x3c010074",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da6fc",
+        "owned_word": "0x0c18ddd0",
+        "comment_word": "0x0c18ddd0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da700",
+        "owned_word": "0xa0205d58",
+        "comment_word": "0xa0205d58",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da704",
+        "owned_word": "0xdfbf0010",
+        "comment_word": "0xdfbf0010",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da708",
+        "owned_word": "0x7bb00000",
+        "comment_word": "0x7bb00000",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da70c",
+        "owned_word": "0x03e00008",
+        "comment_word": "0x03e00008",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005da710",
+        "owned_word": "0x27bd0020",
+        "comment_word": "0x27bd0020",
+        "status": "matched"
+      }
+    ]
+  },
+  "dependencies": {
+    "tools/native_reconstruction/native_gameplay_world_collision_qualification_v1.json": "5515b4dd24768e72d7f45a37816acd5355d4b7c8344924e809eeaa79b16e0fd7",
+    "tools/native_reconstruction/native_gameplay_secondary_ground_qualification_v1.json": "40cb2a07806d6805f810cc32eeb8e3e18380e600bdf716c79fc5389d8c5aee98"
+  },
+  "remaining": [
+    "Native auxiliary and secondary spawning/pose/wall owners",
+    "Game worker installation and acceptance"
+  ]
+}

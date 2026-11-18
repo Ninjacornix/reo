@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "status": "stable native game controls, source replacement and factory protocol qualified; guest ABI binding absent",
+  "manifest": {
+    "path": "tools/native_reconstruction/adxt_game_control_manifest_v2.json",
+    "sha256": "aa1a03a4fd91bd7ab32c8034219ff8406dd4fb00592dfba65ce86beec84c80c9"
+  },
+  "evidence": {
+    "build-native-sjuni/adxt-game-control/native-llvm-v2/receipt.json": {
+      "sha256": "e8d9edba53d7bdb248d819efb76d5a0c51791b6bedfeb8b687b4ba922d2d2585",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-game-control/qualified-llvm-v1/receipt.json": {
+      "sha256": "dcd96b7e2ada2c88f309b67fa6664adfb00889dffa7ece90760dbd26151fdfe1",
+      "status": "stable native game controls and admission faults qualified"
+    },
+    "build-native-sjuni/audio-media-factory/game-controls-llvm-v1/receipt.json": {
+      "sha256": "818d672115b1f5e27bcc39679f9969632c2a9fd70326e987afded1901199fbbf",
+      "status": "native media factory protocol passed"
+    },
+    "build-native-sjuni/audio-media-factory/game-controls-actual130-llvm-v1/receipt.json": {
+      "sha256": "e6b5c4cdf99883def20ffcb80c72861e4b6f83d7f6e6d67285b4575be0de9fe1",
+      "status": "passed"
+    },
+    "build-native-sjuni/adxt-game-control/native-gcc-v2/receipt.json": {
+      "sha256": "ed69c3e525b90e12e61fe6eecde1dd9f1412ffe623f77d7cd5607d5a973b1aac",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-game-control/qualified-gcc-v1/receipt.json": {
+      "sha256": "1a41718cc1cf066381e8ee572fb89461a475cc565df4874c3605f8bf7807a9e7",
+      "status": "stable native game controls and admission faults qualified"
+    },
+    "build-native-sjuni/audio-media-factory/game-controls-gcc-v1/receipt.json": {
+      "sha256": "7555c3b50c191fed90a5e75fe5add6a937a11e0a2ceeaf52a1319b072404dfee",
+      "status": "native media factory protocol passed"
+    },
+    "build-native-sjuni/audio-media-factory/game-controls-actual130-gcc-v1/receipt.json": {
+      "sha256": "f77caa8c624199097b66ac9caf4b88a5ade2130dcc886aef6f7d574f1180c01a",
+      "status": "passed"
+    }
+  },
+  "native_suites": 75,
+  "detected_faults_per_compiler": 3,
+  "factory_scenarios_per_compiler": 12,
+  "actual_sdk_objects_per_compiler": 1,
+  "failed_cohort": {
+    "manifest": "tools/native_reconstruction/adxt_game_control_manifest_v1.json",
+    "snapshot": "build-native-sjuni/adxt-game-control/v1-source",
+    "reason": "GCC fixture misleading-indentation diagnostic; LLVM 75 suites passed; V2 formatting only"
+  },
+  "verifier_sha256": "235b9c5c98e0efac15a65b571b0283539e1e7f7157f0dfe42fe450dcc763f671",
+  "contract_sha256": "91e6e7e19aa7acf421c8e32bf3d41294c6d8d2d4028203870e0968c8dee9b87d",
+  "results_sha256": "42ca71231c97947d31342c2fa3719a18e08bd06a66a226988887328915528a51",
+  "guest_binding": false,
+  "actual_runtime_acquisition_exercised": false,
+  "game_run": false,
+  "actual_audio_device_test": false
+}

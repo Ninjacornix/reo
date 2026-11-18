@@ -1,5 +1,25 @@
 # Dependency patches
 
+Patch `0130` adds an explicit versioned muted RNA metadata refresh for the
+native-source adapter. It retains exact runtime sound-control admission and
+actual unsorted RNA traversal, validates every row before requesting voice
+configuration, and never queues original PCM or changes playback clocks. The
+complete 131-patch series reapplies at the recorded pin. A matching rebuilt
+runtime is required. See [the handoff and qualification limits](../../docs/native-media/MUTED_RNA_METADATA.md).
+
+Patch `0128` admits the measured sound state RPC `0x10` and reproduces the
+existing generic reply through owned RAM transport, including alias and clamp
+rules. Existing query routes and ABI layouts are unchanged. The full 129-patch
+series, frozen reply comparisons and both compilers' affected objects pass;
+matching linked game retest remains required. See the
+[reply qualification](../../docs/native-media/SOUND_RPC10_COMPATIBILITY.md).
+
+Patch `0127` adds bounded native sound RPC refusal identity logs. It preserves
+existing request coverage, guest access, completion and published ABI layouts.
+The complete 128-patch series and both compilers' affected objects/capture
+checks pass; a matching rebuilt runtime is required. See the
+[diagnostic evidence](../../docs/native-media/SOUND_RPC_DIAGNOSTIC_IDENTITY.md).
+
 These patches change dependency checkouts; they are stored here so the dependency source and local changes remain reproducible and reviewable.
 
 ## PS2Recomp
@@ -82,3 +102,34 @@ Do this after applying the runtime patch series and before compiling affected
 runtime sources. These generated `.inc` files must remain local.
 
 Patch 0100 adds optional 64 MB native memory backing for enemy assets while retaining the original 32 MB console heap, stack and reported RAM size. CPU memory helpers, disc reads and DMA paths use the configured backing size. The default remains 32 MB. The Randomizer requests the additional bank before guest execution.
+
+Patch `0124` extends the existing opt-in PCM backend registry with a complete V2
+PCM/bank owner, whole-call sound RPC/control admission and runtime/RAM-qualified
+status transfers. Existing V1 PCM registration and ordinary legacy behavior remain
+available; no backend is installed by default. Its focused diff is reproduced from
+the qualified124 source and the entire125-patch series is checked in a fresh
+pinned checkout. GCC and bundled LLVM isolated tests retain original PCM/bank
+observations and compile all five affected production objects against matching
+headers. See [the implementation and qualification report](../../docs/native-media/AUDIO_BANK_BACKEND_DISPATCH.md)
+for the exact source/receipt identities, terminal cancellation policy and remaining
+aggregate/capture/device validation. A matching rebuilt dependency is required;
+adding the header to an old sealed runtime library does not supply V2.
+
+Patch `0125` adds a separate optional native-sound RAM capture companion while
+preserving published V1/V2 layouts. Its new install transaction holds the actual
+pre-run lease through publication; selected sound RPC/status paths use explicit
+accepted-call read/control/forward-copy capabilities and bounded owned packet
+loans. No default reader or production factory is installed. The full126-patch
+series reapplies from the recorded pin, and both compiler suites compile matching
+production objects. The [qualification report](../../docs/native-media/NATIVE_SOUND_RAM_CAPTURE_DISPATCH.md)
+records exact inputs, refusal limits and reviewed completion-order corrections.
+Use a coherent rebuilt runtime and matching headers before enabling it.
+
+Patch `0126` adds a retained selected-backend profile for sound capture, with
+actual pre-run/GS-owner admission and control exclusion across renderer and RAM
+reinitialization. It preserves the concrete backend type and ordinary rendering.
+The full127-patch series reapplies; matching source objects, concurrency controls
+and prior audio observations pass on GCC and bundled LLVM. The
+[profile qualification](../../docs/native-media/GS_SOUND_RAM_PROFILE.md) records
+the exact cohort and remaining RAM/factory/device obligations. This capability
+does not itself authorize memory copies or install a native audio backend.

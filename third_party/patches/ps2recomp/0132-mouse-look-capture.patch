@@ -1,0 +1,193 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Host/Win32ModalRender.cpp b/ps2xRuntime/src/lib/Kernel/Host/Win32ModalRender.cpp
+index f87f15f..bb17e3f 100644
+--- a/ps2xRuntime/src/lib/Kernel/Host/Win32ModalRender.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Host/Win32ModalRender.cpp
+@@ -10,6 +10,7 @@
+ #define NOMINMAX
+ #include <windows.h>
+ #include <algorithm>
++#include <atomic>
+ #include <cstdio>
+ #include <cstdlib>
+ 
+@@ -25,6 +26,75 @@ namespace
+     bool g_havePlacement = false;
+     bool g_cursorHidden = false;
+ 
++    // Mouse look for native camera mods (0132). Requested from the game thread;
++    // capture, raw-input deltas and cursor clipping live on the window thread.
++    std::atomic<bool> g_mouseLookRequested{false};
++    std::atomic<int> g_mouseDx{0}, g_mouseDy{0}, g_mouseWheel{0};
++    std::atomic<unsigned> g_mouseButtons{0};
++    bool g_mouseCaptured = false, g_mouseFree = false, g_rawMouseRegistered = false;
++    // Windowed: capture starts only after a click in the window (and after each
++    // release). Fullscreen captures on focus.
++    bool g_mouseClickedIn = false;
++
++    void releaseMouse()
++    {
++        if (!g_mouseCaptured) return;
++        ClipCursor(nullptr);
++        SetCursor(LoadCursorW(nullptr, MAKEINTRESOURCEW(32512)));
++        g_mouseCaptured = false;
++        g_mouseButtons.store(0);
++    }
++
++    void updateMouseCapture(HWND hwnd)
++    {
++        const bool windowed = (GetWindowLongPtrW(hwnd, GWL_STYLE) & WS_OVERLAPPEDWINDOW) != 0;
++        const bool foreground = GetForegroundWindow() == hwnd && !IsIconic(hwnd);
++        if (!foreground) g_mouseClickedIn = false;
++        const bool wanted = g_mouseLookRequested.load() && !g_mouseFree && foreground &&
++                            (!windowed || g_mouseClickedIn);
++        if (!wanted) { releaseMouse(); return; }
++        RECT client{};
++        if (!GetClientRect(hwnd, &client)) return;
++        POINT corners[2]{{client.left, client.top}, {client.right, client.bottom}};
++        MapWindowPoints(hwnd, nullptr, corners, 2);
++        RECT clip{corners[0].x, corners[0].y, corners[1].x, corners[1].y};
++        ClipCursor(&clip);
++        SetCursor(nullptr);
++        if (!g_mouseCaptured)
++        {
++            g_mouseCaptured = true;
++            g_mouseDx.store(0); g_mouseDy.store(0); g_mouseWheel.store(0);
++        }
++    }
++
++    void readRawMouse(LPARAM lParam)
++    {
++        UINT size = 0;
++        if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, nullptr, &size, sizeof(RAWINPUTHEADER)) != 0 ||
++            size == 0 || size > 256) return;
++        alignas(8) unsigned char buffer[256];
++        if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, buffer, &size, sizeof(RAWINPUTHEADER)) != size)
++            return;
++        const auto* input = reinterpret_cast<const RAWINPUT*>(buffer);
++        if (input->header.dwType != RIM_TYPEMOUSE) return;
++        const RAWMOUSE& mouse = input->data.mouse;
++        if (!(mouse.usFlags & MOUSE_MOVE_ABSOLUTE))
++        {
++            g_mouseDx.fetch_add(mouse.lLastX);
++            g_mouseDy.fetch_add(mouse.lLastY);
++        }
++        unsigned buttons = g_mouseButtons.load();
++        const USHORT flags = mouse.usButtonFlags;
++        if (flags & RI_MOUSE_LEFT_BUTTON_DOWN) buttons |= 1u;
++        if (flags & RI_MOUSE_LEFT_BUTTON_UP) buttons &= ~1u;
++        if (flags & RI_MOUSE_RIGHT_BUTTON_DOWN) buttons |= 2u;
++        if (flags & RI_MOUSE_RIGHT_BUTTON_UP) buttons &= ~2u;
++        if (flags & RI_MOUSE_MIDDLE_BUTTON_DOWN) buttons |= 4u;
++        if (flags & RI_MOUSE_MIDDLE_BUTTON_UP) buttons &= ~4u;
++        if (flags & RI_MOUSE_WHEEL) g_mouseWheel.fetch_add(static_cast<short>(mouse.usButtonData));
++        g_mouseButtons.store(buttons);
++    }
++
+     void restoreCursor()
+     {
+         if (g_cursorHidden)
+@@ -112,7 +182,19 @@ namespace
+                 return 0;
+             }
+             break;
++        case WM_INPUT:
++            if (g_mouseCaptured) readRawMouse(lParam);
++            break;
++        case WM_LBUTTONDOWN:
++            // A click in the window starts (or resumes) mouse look; that click is not passed on.
++            if (g_mouseLookRequested.load() && !g_mouseCaptured)
++            {
++                g_mouseFree = false; g_mouseClickedIn = true; updateMouseCapture(hwnd);
++                return 0;
++            }
++            break;
+         case WM_SETCURSOR:
++            if (g_mouseCaptured && LOWORD(lParam) == HTCLIENT) { SetCursor(nullptr); return TRUE; }
+             if (LOWORD(lParam) == HTCLIENT && fullscreenClient(hwnd))
+             {
+                 updateCursor(hwnd);
+@@ -123,9 +205,10 @@ namespace
+         case WM_KILLFOCUS:
+             g_fullscreenChord = false;
+             restoreCursor();
++            releaseMouse();
+             break;
+         case WM_ACTIVATEAPP:
+-            if (!wParam) restoreCursor();
++            if (!wParam) { restoreCursor(); releaseMouse(); }
+             break;
+         case WM_MOUSELEAVE:
+         case WM_DESTROY:
+@@ -133,6 +216,13 @@ namespace
+             break;
+         case WM_KEYUP:
+             if (wParam == VK_RETURN && g_fullscreenChord) { g_fullscreenChord = false; return 0; }
++            // C frees the cursor while mouse look is on; a click in the window captures it again.
++            if (wParam == 'C' && g_mouseLookRequested.load())
++            {
++                g_mouseFree = !g_mouseFree;
++                if (g_mouseFree) g_mouseClickedIn = false;
++                updateMouseCapture(hwnd);
++            }
+             break;
+         case WM_ENTERSIZEMOVE:
+             SetTimer(hwnd, kModalTimerId, USER_TIMER_MINIMUM, nullptr); // 10 ms
+@@ -158,7 +248,10 @@ namespace
+         const auto result = CallWindowProcW(g_prevProc, hwnd, msg, wParam, lParam);
+         if (msg == WM_WINDOWPOSCHANGED || msg == WM_STYLECHANGED || msg == WM_SIZE ||
+             msg == WM_SETFOCUS || msg == WM_MOUSEMOVE || (msg == WM_ACTIVATEAPP && wParam))
++        {
+             updateCursor(hwnd);
++            if (g_mouseLookRequested.load()) updateMouseCapture(hwnd);
++        }
+         return result;
+     }
+ }
+@@ -171,6 +264,29 @@ void ps2InstallModalRender(void *nativeWindow, void (*render)())
+     g_render = render;
+     g_prevProc = reinterpret_cast<WNDPROC>(
+         SetWindowLongPtrW(hwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&modalAwareProc)));
++    // Relative mouse motion for mouse look (foreground only; no legacy-message suppression).
++    RAWINPUTDEVICE mouse{1, 2, 0, hwnd};
++    g_rawMouseRegistered = RegisterRawInputDevices(&mouse, 1, sizeof(mouse)) != FALSE;
++}
++
++// Mouse look API for native camera mods (0132). Safe from any thread.
++void ps2HostSetMouseLook(bool enabled)
++{
++    g_mouseLookRequested.store(enabled);
++}
++// Drains accumulated relative motion and wheel since the last call. Returns
++// whether the cursor is currently captured for mouse look.
++bool ps2HostTakeMouseDelta(int *dx, int *dy, int *wheel)
++{
++    if (dx) *dx = g_mouseDx.exchange(0);
++    if (dy) *dy = g_mouseDy.exchange(0);
++    if (wheel) *wheel = g_mouseWheel.exchange(0);
++    return g_mouseCaptured;
++}
++// Bit 0 left, bit 1 right, bit 2 middle; zero while not captured.
++unsigned ps2HostMouseButtons()
++{
++    return g_mouseButtons.load();
+ }
+ 
+ namespace
+@@ -228,11 +344,17 @@ void *ps2PresentationWindow(void *nativeWindow, int width, int height)
+ }
+ #elif defined(__APPLE__) && defined(REO_MACOS_METAL_PRESENT)
+ void* reoMetalLayerForWindow(void* nativeWindow, int width, int height);
++void ps2HostSetMouseLook(bool) {}
++bool ps2HostTakeMouseDelta(int *dx, int *dy, int *wheel) { if (dx) *dx = 0; if (dy) *dy = 0; if (wheel) *wheel = 0; return false; }
++unsigned ps2HostMouseButtons() { return 0; }
+ void ps2InstallModalRender(void *, void (*)()) {}
+ void *ps2PresentationWindow(void *nativeWindow, int width, int height) {
+     return reoMetalLayerForWindow(nativeWindow, width, height);
+ }
+ #else
++void ps2HostSetMouseLook(bool) {}
++bool ps2HostTakeMouseDelta(int *dx, int *dy, int *wheel) { if (dx) *dx = 0; if (dy) *dy = 0; if (wheel) *wheel = 0; return false; }
++unsigned ps2HostMouseButtons() { return 0; }
+ void ps2InstallModalRender(void *, void (*)()) {}
+ void *ps2PresentationWindow(void *nativeWindow, int, int) { return nativeWindow; }
+ #endif

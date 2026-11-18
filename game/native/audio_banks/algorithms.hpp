@@ -1,0 +1,74 @@
+// Source-derived from PS2Recomp ReoSoundBanks.{h,cpp}, qualified124.
+// Original dependency GNU GPLv3 license retained: LICENSE-PS2Recomp.
+#pragma once
+#include "session.hpp"
+#include <cstddef>
+#include <cstdint>
+#include <vector>
+#include <memory>
+#include <unordered_map>
+
+// Owned Tsnd/HSYN bank format. Private helper: no guest state or output hooks.
+namespace reo::native::audio_banks::detail {
+constexpr unsigned kOutputRate = 48000;
+constexpr unsigned kSequenceRate = 240; // TsndInitTimer: 36864000 / 0x25800.
+constexpr unsigned kFramesPerTick = kOutputRate / kSequenceRate;
+
+struct Sample {
+    uint32_t bdOffset = 0;
+    uint16_t sampleRate = 0, adsr1 = 0, adsr2 = 0;
+    uint8_t flags = 0, rootNote = 0, programVolume = 0, regionVolume = 0, sampleVolume = 0;
+    int8_t programTranspose = 0, programFine = 0, regionTranspose = 0, regionFine = 0, sampleFine = 0;
+    uint32_t programRecord = 0, regionRecord = 0, sampleRecord = 0, vagiRecord = 0;
+    uint8_t velocityCurve = 0, regionLow = 0, regionCenter = 0, regionHigh = 0;
+    uint8_t velocityLow = 0, velocityCenter = 0, velocityHigh = 0;
+    uint16_t bendDown = 0, bendUp = 0;
+    int basePan = 64;
+};
+
+struct DecodedSample {
+    std::vector<int16_t> pcm;
+    size_t loopStart = 0;
+    bool hasLoop = false;
+};
+
+class Bank {
+public:
+    bool load(const uint8_t* hd, size_t hdBytes, const uint8_t* bd, size_t bdBytes,
+              const uint8_t* tq, size_t tqBytes);
+    bool sequence(unsigned index, uint32_t& offset, uint8_t& priority) const;
+    bool resolve(unsigned program, uint8_t note, uint8_t velocity, std::vector<Sample>& out) const;
+    bool decode(const Sample& sample, DecodedSample& out) const;
+    std::shared_ptr<const DecodedSample> decoded(const Sample& sample) const;
+    const std::vector<uint8_t>& tq() const { return tq_; }
+    uint64_t fingerprint() const {
+        uint64_t hash=14695981039346656037ull;
+        for(auto byte:hd_) { hash^=byte;hash*=1099511628211ull; }
+        return hash;
+    }
+    unsigned sequenceCount() const;
+private:
+    std::vector<uint8_t> hd_, bd_, tq_;
+    uint32_t prog_ = 0, sset_ = 0, smpl_ = 0, vagi_ = 0;
+    std::unordered_map<uint32_t,std::shared_ptr<const DecodedSample>> decoded_;
+    bool record(uint32_t chunk, unsigned index, size_t bytes, uint32_t& offset) const;
+};
+
+enum class EventType { Note, Program, Volume, Pan, Pitch, Expression, Control,
+                       AllNotesOff, AllSoundOff, End, Unsupported };
+struct Event { EventType type; uint16_t value = 0; uint8_t note = 0, group = 0; };
+// One instance is one Tsnd TQ queue slot. Voice allocation/mixing is separate.
+class Sequence {
+public:
+    bool start(const Bank& bank, unsigned index, uint8_t programOffset);
+    bool tick(const Bank& bank, bool voicesActive, std::vector<Event>& events);
+    bool active() const { return active_; }
+    auto observe() const noexcept {return SequenceInfo{cursor_,wait_,programOffset_,active_,hasNote_};}
+private:
+    uint32_t cursor_ = 0;
+    uint16_t wait_ = 0;
+    uint8_t programOffset_ = 0;
+    bool active_ = false, hasNote_ = false;
+};
+
+}

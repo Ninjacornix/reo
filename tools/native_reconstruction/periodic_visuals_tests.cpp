@@ -1,0 +1,737 @@
+#include "game/native/gameplay_effects/periodic_visuals.hpp"
+#ifdef REO_RESOURCE_DEBRIS
+#include "game/native/gameplay_collision/trace.hpp"
+#endif
+#include "reference.hpp"
+#include "functions.h"
+#include "owned_constants.hpp"
+#include <atomic>
+#include <fstream>
+#include <iostream>
+#include <source_location>
+#include <thread>
+#ifdef REO_RESOURCE_COMPANIONS
+#include "game/native/gameplay_effects/resource_companion_actions.hpp"
+#endif
+#ifdef REO_WEAPON_RESOURCES
+#include "owned_weapons.hpp"
+#include <cstdio>
+#include <string>
+unsigned weapon_file_reads{},weapon_missing_file_reads{};
+std::string weapon_string(const std::uint8_t* memory,unsigned at){if(at>0x2000000-128)throw std::runtime_error("Invalid weapon string");for(unsigned n=0;n<128;++n)if(!memory[at+n])return {reinterpret_cast<const char*>(memory+at),n};throw std::runtime_error("Unbounded weapon string");}
+#endif
+#ifdef REO_RESOURCE_PLACEMENT
+#include "game/native/gameplay_world/resource_factory.hpp"
+const reo::native::gameplay_collision::response::Grid* placement_floors{};
+unsigned placement_floor_queries{};
+#endif
+namespace e=reo::native::gameplay_effects;
+namespace s=reo::native::gameplay_scenario;
+namespace m=reo::native::transform_math;
+unsigned checks{},calls{},banks{},updates{},created{},expired{},piece_cases{},camera_cases{},heap_allocations{},heap_releases{};
+unsigned signed_timer_cases{},task_cases{};
+void check(bool value,std::source_location at=std::source_location::current()){
+    ++checks;if(!value)throw std::runtime_error("Periodic visual check "+std::to_string(checks)+" at "+at.file_name()+":"+std::to_string(at.line()));
+}
+template<class T>T get(const std::uint8_t* memory,std::uint32_t at){return transform_read<T>(memory,at);}
+template<class T>void put(std::uint8_t* memory,std::uint32_t at,T value){transform_write(memory,at,value);}
+constexpr std::uint32_t model=0x3b85b0,heap=0x800000,parts=0x900000,child_pool=0xb00000;
+bool allocated{};
+bool task_retired{};
+#ifdef REO_CONTACT_STYLES_ONLY
+bool contact_style_port(std::uint8_t*,R5900Context*);
+#endif
+#ifdef REO_RESOURCE_FLIGHT_ONLY
+bool resource_flight_port(std::uint8_t*,R5900Context*);
+#endif
+#ifdef REO_WEAPON_FIRE
+bool weapon_fire_port(std::uint8_t*,R5900Context*);
+#endif
+#ifdef REO_ACTOR_FORCED_TERMINAL
+bool actor_forced_terminal_capture{};
+bool actor_forced_terminal_port(std::uint8_t*,R5900Context*);
+#endif
+#ifdef REO_ACTOR_RECEPTION
+bool actor_reception_capture{};
+bool actor_reception_port(std::uint8_t*,R5900Context*);
+#endif
+#ifdef REO_ACTOR_RECOVERY
+bool actor_recovery_capture{};
+bool actor_recovery_port(std::uint8_t*,R5900Context*);
+#endif
+#ifdef REO_ACTOR_GAUGE_PROGRESSION
+bool gauge_progression_capture{};
+bool gauge_progression_port(std::uint8_t*,R5900Context*);
+#endif
+#ifdef REO_RESOURCE_COMPANIONS
+bool companion_live_capture{};unsigned companion_light_requests{},companion_cue_requests{};std::uint16_t companion_last_cue{};
+#endif
+#ifdef REO_RESOURCE_COMPANION_POLICY
+bool companion_policy_capture{};
+struct CompanionPolicyCapture {unsigned children{},released{},retired{},spawned{},cues{};std::int16_t sample_time{};std::uint16_t child_attributes{},cue{};float fade_delta{};bool faded{};} companion_policy_observed;
+#endif
+void original_transform_port(std::uint8_t* memory,R5900Context* context,PS2Runtime* runtime){
+    ++calls;const auto done=[&](){context->pc=GPR_U32(context,31);};
+#ifdef REO_CONTACT_STYLES_ONLY
+    if(contact_style_port(memory,context)){done();return;}
+#endif
+#ifdef REO_RESOURCE_FLIGHT_ONLY
+    if(resource_flight_port(memory,context)){done();return;}
+#endif
+#ifdef REO_WEAPON_FIRE
+    if(weapon_fire_port(memory,context)){done();return;}
+#endif
+#ifdef REO_ACTOR_FORCED_TERMINAL
+    if(actor_forced_terminal_capture&&actor_forced_terminal_port(memory,context)){done();return;}
+#endif
+#ifdef REO_ACTOR_RECEPTION
+    if(actor_reception_capture&&actor_reception_port(memory,context)){done();return;}
+#endif
+#ifdef REO_ACTOR_RECOVERY
+    if(actor_recovery_capture&&actor_recovery_port(memory,context)){done();return;}
+#endif
+#ifdef REO_ACTOR_GAUGE_PROGRESSION
+    if(gauge_progression_capture&&gauge_progression_port(memory,context)){done();return;}
+#endif
+#ifdef REO_OWNED_RECIPES
+    if(context->pc==0x1b0300){SET_GPR_U32(context,2,memory[0x3243f2]);done();return;}
+#endif
+#ifdef REO_RESOURCE_WRAPPERS
+    if(context->pc==0x811190||context->pc==0x810870){
+#ifdef REO_RESOURCE_EFFECTS
+        extern bool effect_capture;
+        if(effect_capture&&memory[GPR_U32(context,5)]==9&&memory[GPR_U32(context,5)+1]==20){extern void effect_position_message_port(std::uint8_t*,R5900Context*);effect_position_message_port(memory,context);done();return;}
+#endif
+#ifdef REO_RESOURCE_DEPLOYMENT
+        if(memory[GPR_U32(context,5)]==9&&memory[GPR_U32(context,5)+1]==20){extern void deployment_message_port(std::uint8_t*,R5900Context*);deployment_message_port(memory,context);done();return;}
+#endif
+#ifdef REO_RESOURCE_HEALTH
+        if(memory[GPR_U32(context,5)]==14){extern void health_message_port(std::uint8_t*,R5900Context*);health_message_port(memory,context);done();return;}
+#endif
+        extern void wrapper_message_port(std::uint8_t*,R5900Context*);wrapper_message_port(memory,context);done();return;}
+#endif
+#ifdef REO_RESOURCE_HEALTH
+    if(context->pc==0x6e1430||context->pc==0x665ca0||context->pc==0x1c1ce0||context->pc==0x1b4820||context->pc==0x811d40||context->pc==0x8115f0){extern void health_ui_port(std::uint8_t*,R5900Context*);health_ui_port(memory,context);done();return;}
+#endif
+#ifdef REO_RESOURCE_COMPANIONS
+    if(companion_live_capture){
+        if(context->pc==0x6b2680){++companion_light_requests;done();return;}
+        if(context->pc==0x1b8c70){++companion_cue_requests;companion_last_cue=std::uint16_t(GPR_U32(context,5));done();return;}
+    }
+#endif
+#ifdef REO_RESOURCE_COMPANION_POLICY
+    if(companion_policy_capture){
+        constexpr unsigned work=0x120000;
+        switch(context->pc){
+        case 0x652880:check(GPR_U32(context,4)==work&&GPR_U32(context,5)==0xa00000&&GPR_U32(context,6)==1);++companion_policy_observed.children;companion_policy_observed.sample_time=get<std::int16_t>(memory,work+0x10);companion_policy_observed.child_attributes=std::uint16_t(GPR_U32(context,7));SET_GPR_U32(context,2,1);done();return;
+        case 0x652d60:check(GPR_U32(context,4)==work);++companion_policy_observed.released;done();return;
+        case 0x651d00:check(GPR_U32(context,4)==work);++companion_policy_observed.retired;done();return;
+        case 0x654180:check(GPR_U32(context,4)==work);companion_policy_observed.faded=true;companion_policy_observed.fade_delta=context->f[12];done();return;
+        case 0x6b2680:check(GPR_U32(context,5)==work+0x44);++companion_policy_observed.spawned;done();return;
+        case 0x1b8c70:++companion_policy_observed.cues;companion_policy_observed.cue=std::uint16_t(GPR_U32(context,5));done();return;
+        default:break;
+        }
+    }
+#endif
+    switch(context->pc){
+#ifdef REO_RESOURCE_DEPLETION
+    case 0x1b93d0:{extern void depletion_audio_port(std::uint8_t*,R5900Context*);depletion_audio_port(memory,context);done();return;}
+#endif
+#ifdef REO_RESOURCE_DEBRIS
+    case 0x57d560:{extern void debris_floor_port(std::uint8_t*,R5900Context*);debris_floor_port(memory,context);done();return;}
+#endif
+    case 0x573740:check(GPR_U32(context,4)==0x10000);task_retired=true;done();return;
+    case 0x107c68:{const auto at=GPR_U32(context,4),n=GPR_U32(context,6);check(at<=0x2000000&&n<=0x2000000-at);std::memset(memory+at,std::uint8_t(GPR_U32(context,5)),n);SET_GPR_U32(context,2,at);done();return;}
+#ifdef REO_RESOURCE_FACTORY
+    case 0x107ab0:{const auto dst=GPR_U32(context,4),src=GPR_U32(context,5),size=GPR_U32(context,6);
+#ifdef REO_RESOURCE_OWNERSHIP
+        const auto descriptor_range=[](unsigned at,unsigned bytes){return at>=0x3c5630&&at<=0x3c9230-bytes;};const auto stack_range=[](unsigned at,unsigned bytes){return at>=0x1e00000&&at<=0x2000000-bytes;};
+        if((size==60&&(descriptor_range(dst,size)||stack_range(dst,size))&&(descriptor_range(src,size)||stack_range(src,size)))||(size==4&&descriptor_range(dst,size)&&descriptor_range(src,size))){std::memmove(memory+dst,memory+src,size);SET_GPR_U32(context,2,dst);done();return;}
+#endif
+#ifdef REO_WEAPON_RESOURCES
+        if(size==16&&dst>=0x2b3864&&dst<=0x2b38d4){check(src>=0x1e00000&&src<0x2000000-size);std::memmove(memory+dst,memory+src,size);SET_GPR_U32(context,2,dst);done();return;}
+#endif
+#ifdef REO_RESOURCE_PLACEMENT
+        if(size==32&&dst>=0x3e10f0&&dst<0x3e72f0){check(src>=0x1e00000&&src<0x2000000-size);std::memmove(memory+dst,memory+src,size);SET_GPR_U32(context,2,dst);done();return;}
+#endif
+        check(src>=0x100000&&src<=0x110000&&size<=0x110000-src);check((dst==0x74bb50&&size<=129*24)||(dst==0x74b940&&size<=129*4)||(dst==0x74c770&&size<=128*4)||(dst==0x74c970&&size<=384*2));std::memmove(memory+dst,memory+src,size);SET_GPR_U32(context,2,dst);done();return;}
+#endif
+#ifdef REO_RESOURCE_PLACEMENT
+    case 0x616f60:{check(placement_floors);const auto at=GPR_U32(context,4),out=GPR_U32(context,5);check(at<=0x2000000-12&&out<0x2000000);const auto floor=placement_floors->floor(get<reo::native::gameplay_collision::Vec3>(memory,at),std::uint8_t(GPR_U32(context,6)));memory[out]=floor.material;context->f[0]=floor.height;++placement_floor_queries;done();return;}
+#endif
+#ifdef REO_RESOURCE_INVENTORY
+    case 0x18dbb0:{const auto dst=GPR_U32(context,4),src=GPR_U32(context,5),size=GPR_U32(context,6);check(size==29&&dst>=0x4a5c30&&dst<=0x4ae330-size&&src>=0x1e00000&&src<0x2000000-size);std::memmove(memory+dst,memory+src,size);SET_GPR_U32(context,2,dst);done();return;}
+#endif
+#ifdef REO_WEAPON_RESOURCES
+    case 0x10a830:{const auto dst=GPR_U32(context,4);const auto format=weapon_string(memory,GPR_U32(context,5));check(dst>=0x1e00000&&dst<0x2000000-128&&(format=="weapon%02d"||format=="data/rom/motion/weapon/wp%02d.wmd"));const auto n=std::snprintf(reinterpret_cast<char*>(memory+dst),128,format.c_str(),std::bit_cast<std::int32_t>(GPR_U32(context,6)));check(n>=0&&n<128);SET_GPR_U32(context,2,n);done();return;}
+    case 0x1cc8f0:{const auto name=weapon_string(memory,GPR_U32(context,4));const auto dst=GPR_U32(context,5);check(dst>=0x749180&&dst<0x74b180&&(dst-0x749180)%2048==0&&GPR_U32(context,6)==1&&GPR_U32(context,7)==0);bool found{};for(const auto& weapon:owned_weapons){std::array<char,128> expected{};std::snprintf(expected.data(),expected.size(),"data/rom/motion/weapon/wp%02d.wmd",weapon.selector);if(name==expected.data()){check(weapon.bytes.size()<=2048);if(weapon.bytes.empty())++weapon_missing_file_reads;else std::memcpy(memory+dst,weapon.bytes.data(),weapon.bytes.size());found=true;break;}}check(found);++weapon_file_reads;SET_GPR_U32(context,2,0);done();return;}
+#endif
+    case 0x18dc50:check(!allocated&&GPR_U32(context,5)==4&&GPR_U32(context,4)<0x100000);allocated=true;++heap_allocations;SET_GPR_U32(context,2,1);done();return;
+    case 0x18dca0:check(allocated&&GPR_U32(context,4)==1);SET_GPR_U32(context,2,heap);done();return;
+    case 0x18dc90:check(allocated&&GPR_U32(context,4)==1);allocated=false;++heap_releases;done();return;
+    case 0x1b10c0:case 0x1b1110:check(GPR_U32(context,4)==1);done();return;
+#include "original_dispatch.hpp"
+    default:throw std::runtime_error("Unadmitted periodic visual source call "+std::to_string(context->pc));
+    }
+}
+// Complete original bodies are separately compiled with the exact same
+// generated reference/runtime headers and linked into this fresh fixture.
+R5900Context call(std::uint8_t* memory,std::uint32_t function,std::array<std::uint32_t,7> args={},float f12=0){
+    R5900Context context;context.pc=function;SET_GPR_U32(&context,29,0x1f00000);SET_GPR_U32(&context,31,0x100);
+    for(unsigned i=0;i<args.size();++i){SET_GPR_U32(&context,4+i,args[i]);}context.f[12]=f12;PS2Runtime runtime;
+    original_transform_port(memory,&context,&runtime);
+#ifdef REO_RESOURCE_DEBRIS
+    // This owned dispatcher tail-jumps to separate complete phase functions.
+    // Drain only those admitted targets, preserving the original return ABI.
+    if(function==0x58fbc0&&(context.pc==0x58fd10||context.pc==0x58fe50))original_transform_port(memory,&context,&runtime);
+#endif
+    if(context.pc!=0x100||GPR_U32(&context,29)!=0x1f00000)throw std::runtime_error("Original visual return function="+std::to_string(function)+" pc="+std::to_string(context.pc)+" sp="+std::to_string(GPR_U32(&context,29)));
+    check(context.pc==0x100&&GPR_U32(&context,29)==0x1f00000);return context;
+}
+std::vector<std::vector<std::byte>> load(const char* path){
+    std::ifstream source(path,std::ios::binary);std::uint32_t n{};source.read(reinterpret_cast<char*>(&n),4);check(n==12);std::vector<std::vector<std::byte>> data;
+    for(unsigned i=0;i<n;++i){std::uint32_t size{};source.read(reinterpret_cast<char*>(&size),4);check(size&&size<0x200000);data.emplace_back(size);source.read(reinterpret_cast<char*>(data.back().data()),size);check(bool(source));}return data;
+}
+void prepare(std::uint8_t* memory,std::span<const std::byte> nbd,std::span<const std::byte> efdata,std::uint32_t nbd_at=0x100000){
+    owned_constants(memory);
+    std::memcpy(memory+nbd_at,nbd.data(),nbd.size());std::memcpy(memory+0xa00000,efdata.data(),efdata.size());
+    std::memcpy(memory+0x3926d0,efdata.data(),1024);
+    const auto raw_model=nbd_at+get<std::uint32_t>(memory,nbd_at+0x14),raw_forest=nbd_at+get<std::uint32_t>(memory,nbd_at+0x24);
+    const auto count=call(memory,0x1a31b0,{raw_model});put(memory,model+0x808,parts);
+    for(unsigned i=0;i<GPR_U32(&count,2);++i){const auto c=call(memory,0x1a34b0,{raw_model,i});put(memory,parts+152*i+4,GPR_U32(&c,2));call(memory,0x1a3500,{raw_model,i,parts+152*i+8});}
+    put(memory,0x32440c,std::uint32_t(0x400000));call(memory,0x1d3350,{model,raw_forest,0});
+    put(memory,0x392670+0x18,model);put(memory,0x392670+0x1c,std::uint32_t(0xa00400));put(memory,0x324444,child_pool);call(memory,0x651850);
+}
+struct Live {std::uint32_t original;std::shared_ptr<s::PeriodicVisual> visual;};
+struct CapturingEmitter final:s::PeriodicEmitter {
+    e::PeriodicVisuals& owner;std::vector<Live>& live;std::uint8_t* memory;
+    CapturingEmitter(e::PeriodicVisuals& o,std::vector<Live>& l,std::uint8_t* m):owner(o),live(l),memory(m){}
+    bool admitted()const noexcept override{return owner.admitted();}
+    bool bound_to(const reo::native::gameplay_session::Random& random)const noexcept override{return owner.bound_to(random);}
+    s::EmissionResult emit(const s::PeriodicEmission& request)noexcept override{
+        auto result=owner.emit(request);if(result.status==s::EmissionStatus::completed){live.insert(live.begin(),{get<std::uint32_t>(memory,0x3b5848),result.visual});++created;}return result;
+    }
+};
+void compare(e::PeriodicVisuals& owner,std::span<const Live> live,const std::uint8_t* memory){
+    const auto frame=owner.retain();check(frame&&frame->visuals.size()==live.size()&&owner.size()==live.size());
+    std::size_t count{};
+    for(std::size_t j=0;j<live.size();++j){const auto at=live[j].original;const auto& output=frame->visuals[j];
+        check(output.visible==(memory[at+1]!=0));check(output.pieces.size()==memory[at+0x31]);count+=output.pieces.size();
+        check(live[j].visual->delay==get<std::int16_t>(memory,at+0xc)&&live[j].visual->remaining==get<std::int16_t>(memory,at+0xe));
+        for(std::size_t i=0;i<output.pieces.size();++i){const auto& part=output.pieces[i];const auto child=get<std::uint32_t>(memory,at+0x134+4*std::uint32_t(i));
+            if(!output.visible)continue;
+            check(part.visible==(memory[at+0xf4+i]!=0));if(!part.visible)continue;
+            check(part.root==get<std::uint16_t>(memory,child+2)&&part.material==memory[child+1]);check(part.flags==get<std::uint32_t>(memory,child+4));
+            check(std::memcmp(&part.parameters.translation,memory+child+0x24,12)==0);check(std::memcmp(part.parameters.rotation.data(),memory+child+0x30,6)==0);check(std::memcmp(&part.parameters.scale,memory+child+0x38,12)==0);
+            const auto* mesh=output.bank->geometry().material(part.root,part.material);check(mesh&&part.mesh<std::size_t(output.bank->geometry().meshes().size()));
+            for(std::size_t slot=0;slot<mesh->indices.size();++slot){check(std::bit_cast<std::uint32_t>(part.material_values[slot])==get<std::uint32_t>(memory,child+0x50+4*std::uint32_t(slot)));}
+            check(std::memcmp(&part.parameters208,memory+child+0xc,12)==0);++piece_cases;
+        }
+    }
+    check(owner.piece_count()==count);check(std::size_t(256-get<std::uint16_t>(memory,0x3b5820))==count);check(std::size_t(168-get<std::uint16_t>(memory,0x3b5828))==live.size());
+}
+#ifdef REO_RESOURCE_PULSES
+#include "tools/native_reconstruction/resource_pulses_tests.inc"
+#endif
+#ifdef REO_RESOURCE_STATIC
+#include "tools/native_reconstruction/resource_static_tests.inc"
+#endif
+#ifdef REO_RESOURCE_FACTORY
+#include "tools/native_reconstruction/resource_factory_tests.inc"
+#endif
+#ifdef REO_RESOURCE_PLACEMENT
+#include "tools/native_reconstruction/resource_placement_tests.inc"
+#endif
+#ifdef REO_RESOURCE_DELAYED
+#include "tools/native_reconstruction/resource_delayed_tests.inc"
+#endif
+#ifdef REO_RESOURCE_ACTIONS
+#include "tools/native_reconstruction/resource_actions_tests.inc"
+#endif
+#ifdef REO_RESOURCE_INVENTORY
+#include "tools/native_reconstruction/resource_inventory_tests.inc"
+#endif
+#ifdef REO_RESOURCE_CONTENT
+#include "tools/native_reconstruction/resource_content_tests.inc"
+#endif
+#ifdef REO_RESOURCE_PAIRS
+#include "tools/native_reconstruction/resource_pairs_tests.inc"
+#endif
+#ifdef REO_RESOURCE_RECIPES
+#include "tools/native_reconstruction/resource_recipes_tests.inc"
+#endif
+#ifdef REO_OWNED_RECIPES
+#include "tools/native_reconstruction/owned_resource_recipes_tests.inc"
+#endif
+#ifdef REO_RESOURCE_CONSUMPTION
+#include "tools/native_reconstruction/resource_consumption_tests.inc"
+#endif
+#ifdef REO_RESOURCE_WRAPPERS
+#include "tools/native_reconstruction/resource_wrappers_tests.inc"
+#endif
+#ifdef REO_RESOURCE_HEALTH
+#include "tools/native_reconstruction/resource_health_tests.inc"
+#endif
+#ifdef REO_WEAPON_RESOURCES
+#include "tools/native_reconstruction/weapon_resources_tests.inc"
+#endif
+#ifdef REO_EQUIPMENT_RESOURCES
+#include "tools/native_reconstruction/equipment_resources_tests.inc"
+#endif
+#ifdef REO_EQUIPMENT_SELECTION
+#include "tools/native_reconstruction/equipment_selection_tests.inc"
+#endif
+#ifdef REO_RESOURCE_COMPANION_POLICY
+#include "tools/native_reconstruction/resource_companion_policy_tests.inc"
+#endif
+#ifdef REO_RESOURCE_COMPANIONS
+#include "tools/native_reconstruction/resource_companions_tests.inc"
+#endif
+#ifdef REO_RESOURCE_DEPLOYMENT
+#include "tools/native_reconstruction/resource_deployment_tests.inc"
+#endif
+#ifdef REO_RESOURCE_EFFECTS
+#include "tools/native_reconstruction/resource_effects_tests.inc"
+#endif
+#ifdef REO_RESOURCE_DEBRIS
+#include "tools/native_reconstruction/resource_debris_tests.inc"
+#endif
+#ifdef REO_RESOURCE_DEPLETION
+#include "tools/native_reconstruction/resource_depletion_tests.inc"
+#endif
+#ifdef REO_RESOURCE_FLIGHT_ONLY
+#include "tools/native_reconstruction/resource_flight_owner_tests.inc"
+#endif
+#ifdef REO_CONTACT_STYLES_ONLY
+#include "tools/native_reconstruction/contact_styles_tests.inc"
+#endif
+#ifdef REO_ACTOR_CONTACT_ONLY
+#include "tools/native_reconstruction/actor_contact_owner_tests.inc"
+#endif
+#ifdef REO_WEAPON_ACTIONS_ONLY
+#ifdef REO_WEAPON_FIRE
+#include "tools/native_reconstruction/weapon_fire_tests.inc"
+#endif
+#include "tools/native_reconstruction/weapon_actions_tests.inc"
+#endif
+#ifdef REO_RESOURCE_OWNERSHIP
+#include "tools/native_reconstruction/resource_ownership_tests.inc"
+#endif
+#ifdef REO_ACTOR_RESOURCE_OPERATIONS
+#include "tools/native_reconstruction/actor_resource_operations_tests.inc"
+#endif
+#ifdef REO_RESOURCE_AUXILIARY_LISTS
+#include "tools/native_reconstruction/resource_auxiliary_lists_tests.inc"
+#endif
+#ifdef REO_ACTOR_TERMINAL_TIMER
+#include "tools/native_reconstruction/actor_terminal_timer_tests.inc"
+#endif
+#ifdef REO_ACTOR_GAUGE_PROGRESSION
+#include "tools/native_reconstruction/actor_gauge_progression_tests.inc"
+#endif
+#ifdef REO_ACTOR_RECOVERY
+#include "tools/native_reconstruction/actor_recovery_tests.inc"
+#endif
+#ifdef REO_ACTOR_FORCED_TERMINAL
+#include "tools/native_reconstruction/actor_forced_terminal_tests.inc"
+#endif
+#ifdef REO_ACTOR_ZERO_HEALTH
+#include "tools/native_reconstruction/actor_zero_health_tests.inc"
+#endif
+#ifdef REO_ACTOR_RECEPTION
+#include "tools/native_reconstruction/actor_reception_tests.inc"
+#include "tools/native_reconstruction/actor_message_queue_tests.inc"
+#endif
+int main(int argc,char** argv)try{
+    check(argc==
+#ifdef REO_RESOURCE_STATIC
+#ifdef REO_WEAPON_RESOURCES
+    5
+#elif defined(REO_RESOURCE_FACTORY)
+        4
+#else
+        3
+#endif
+#else
+        2
+#endif
+    );const auto corpus=load(argv[1]);std::vector<std::uint8_t> ram(0x2000000);auto* memory=ram.data();
+#ifdef REO_CONTACT_STYLES_ONLY
+    compare_contact_styles(corpus,memory);
+#ifdef REO_ACTOR_CONTACT_ONLY
+    compare_actor_contact_owner(corpus,memory);
+#endif
+    std::cout<<"{\"checks\":"<<checks<<",\"contact_cases\":"<<contact_cases<<",\"contact_frames\":"<<contact_frames<<",\"contact_selectors\":"<<contact_selectors<<",\"contact_channels\":"<<contact_channels<<",\"contact_refusals\":"<<contact_refusals
+#ifdef REO_ACTOR_CONTACT_ONLY
+    <<",\"channel_owner_cases\":"<<channel_owner_cases<<",\"channel_owner_frames\":"<<channel_owner_frames<<",\"channel_owner_peak\":"<<channel_owner_peak<<",\"channel_owner_refusals\":"<<channel_owner_refusals
+#endif
+    <<",\"original_helper_calls\":"<<calls<<",\"game_run\":false}\n";
+    return 0;
+#endif
+#ifdef REO_RESOURCE_FLIGHT_ONLY
+    compare_resource_flight_owner(corpus,std::filesystem::path(argv[1]).parent_path(),ram);
+    std::cout<<"{\"checks\":"<<checks<<",\"flight_owner_cases\":"<<flight_owner_cases<<",\"flight_owner_frames\":"<<flight_owner_frames<<",\"flight_owner_cues\":"<<flight_owner_cues<<",\"flight_pcm_frames\":"<<flight_pcm_frames<<",\"flight_signal_samples\":"<<flight_signal_samples<<",\"flight_owner_refusals\":"<<flight_owner_refusals<<",\"original_helper_calls\":"<<calls<<",\"game_run\":false}\n";
+    return 0;
+#endif
+#ifdef REO_WEAPON_ACTIONS_ONLY
+    owned_constants(memory);
+    compare_weapon_actions(corpus,argv[2],argv[3],argv[4],std::filesystem::path(argv[1]).parent_path()/"owned_depletion_cue.bin",ram);
+    std::cout<<"{\"checks\":"<<checks<<",\"weapon_action_cases\":"<<weapon_action_cases<<",\"weapon_action_refusals\":"<<weapon_action_refusals
+#ifdef REO_WEAPON_FIRE
+        <<",\"weapon_fire_cases\":"<<weapon_fire_cases<<",\"weapon_fire_callbacks\":"<<weapon_fire_callbacks<<",\"weapon_fire_refusals\":"<<weapon_fire_refusals
+#endif
+        <<",\"original_helper_calls\":"<<calls<<",\"game_run\":false}\n";
+    return 0;
+#endif
+#ifdef REO_FORCED_TERMINAL_ONLY
+    owned_constants(memory);
+    compare_actor_forced_terminal(argv[2],argv[3],ram);
+    std::cout<<"{\"checks\":"<<checks<<",\"forced_terminal_cases\":"<<forced_terminal_cases
+             <<",\"forced_terminal_messages\":"<<forced_terminal_messages<<",\"forced_terminal_refusals\":"<<forced_terminal_refusals
+             <<",\"local_player_message_cases\":"<<local_player_message_cases
+             <<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"game_run\":false}\n";
+    return 0;
+#endif
+#ifdef REO_RECEPTION_ONLY
+    owned_constants(memory);compare_actor_reception(argv[4],argv[2],ram);compare_actor_message_queue();
+    std::cout<<"{\"checks\":"<<checks<<",\"reception_cases\":"<<reception_cases<<",\"reception_equipment\":"<<reception_equipment<<",\"reception_refusals\":"<<reception_refusals<<",\"reception_queue_cases\":"<<reception_queue_cases<<",\"reception_auxiliary_cases\":"<<reception_auxiliary_cases<<",\"reception_speech_cases\":"<<reception_speech_cases<<",\"reception_presence_cases\":"<<reception_presence_cases<<",\"reception_speech_refusals\":"<<reception_speech_refusals<<",\"game_run\":false}\n";return 0;
+#endif
+#ifdef REO_RESOURCE_COMPANIONS_FOCUSED
+    compare_resource_companions(corpus,ram);
+    compare_companion_factory(corpus,argv[2],argv[3],ram);
+    compare_companion_capacity(corpus,ram);
+    std::cout<<"{\"checks\":"<<checks<<",\"companion_live_cases\":"<<companion_live_cases<<",\"companion_live_frames\":"<<companion_live_frames<<",\"companion_live_pieces\":"<<companion_live_pieces<<",\"companion_live_missing\":"<<companion_live_missing<<",\"companion_live_unavailable\":"<<companion_live_unavailable<<",\"companion_live_lights\":"<<companion_live_lights<<",\"companion_live_audio\":"<<companion_live_audio<<",\"companion_factory_cases\":"<<companion_factory_cases<<",\"companion_factory_refusals\":"<<companion_factory_refusals<<",\"companion_capacity_cases\":"<<companion_capacity_cases<<",\"original_helper_calls\":"<<calls<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"game_run\":false}\n";
+    return 0;
+#endif
+#ifdef REO_RECOVERY_ONLY
+    owned_constants(memory);
+    compare_actor_recovery(argv[2],argv[3],ram);
+    std::cout<<"{\"checks\":"<<checks<<",\"actor_recovery_cases\":"<<actor_recovery_cases<<",\"actor_recovery_animation\":"<<actor_recovery_animation<<",\"actor_recovery_ui\":"<<actor_recovery_ui<<",\"actor_recovery_refusals\":"<<actor_recovery_refusals<<",\"actor_recovery_messages\":"<<actor_recovery_messages<<",\"actor_recovery_compositions\":"<<actor_recovery_compositions<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"game_run\":false}\n";
+    return 0;
+#endif
+#ifdef REO_ZERO_HEALTH_ONLY
+    owned_constants(memory);
+    compare_actor_zero_health(argv[2],argv[3],ram);
+    std::cout<<"{\"checks\":"<<checks<<",\"zero_health_cases\":"<<zero_health_cases<<",\"zero_health_parent_cases\":"<<zero_health_parent_cases<<",\"zero_health_messages\":"<<zero_health_messages<<",\"zero_health_models\":"<<zero_health_models<<",\"zero_health_compositions\":"<<zero_health_compositions<<",\"zero_health_refusals\":"<<zero_health_refusals<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"game_run\":false}\n";
+    return 0;
+#endif
+    for(unsigned asset=0;asset<corpus.size();asset+=2){
+        auto bank=e::EffectBank::import(corpus[asset],corpus[asset+1]);++banks;
+        for(unsigned profile=0;profile<3;++profile){
+            std::fill(ram.begin(),ram.end(),0);prepare(memory,corpus[asset],corpus[asset+1]);e::PeriodicVisuals owner(bank);std::vector<Live> live;
+            const auto emit=[&](unsigned serial){
+                const s::PeriodicEmission request{std::uint16_t(36+serial%3),{float(int(serial%41)-20)*3.5f,float(int(serial%19)-9),float(serial%73)*2.25f},0x1a193};
+                put(memory,0x70000,request.position);auto result=call(memory,0x6525d0,{0,0x70000,0,request.descriptor,0,request.flags,0x6535c0});const auto at=GPR_U32(&result,2);auto native=owner.emit(request);
+                check(at?(native.status==s::EmissionStatus::completed&&native.visual):(native.status==s::EmissionStatus::pool_full&&!native.visual));
+                if(!at)return;
+                const auto delay=profile==1?std::int16_t(serial%9):std::int16_t(0);const float distance=profile==2?float(int(serial%37)-18):30.f;
+                native.visual->position=request.position;native.visual->delay=delay;native.visual->scale=distance;put(memory,at+0x38,request.position);put(memory,at+0xc,delay);put(memory,at+0xf0,distance);
+                live.insert(live.begin(),{at,std::move(native.visual)});++created;
+            };
+            if(profile==2){for(unsigned i=0;i<170;++i)emit(i);check(owner.size()==168&&owner.piece_count()==256);}
+            for(unsigned tick=0;tick<400;++tick){
+                if(profile!=2&&tick%3==0)emit(tick);
+                const m::Vector camera{float(int(tick%101)-50),float(int(tick%29)-14),float(tick%139)};put(memory,0x324138,camera);
+                for(const auto& value:live){call(memory,0x6535c0,{value.original});}
+                const auto before=live.size();live.erase(std::remove_if(live.begin(),live.end(),[&](const auto& value){return memory[value.original]==0;}),live.end());expired+=unsigned(before-live.size());
+                const auto report=owner.update(camera);check(report.status==e::VisualStatus::completed);compare(owner,live,memory);++updates;
+                if(tick%17==0&&!live.empty()){
+                    const auto retained=owner.retain();const auto first=retained->visuals.front();const auto id=first.id;const auto oldbank=first.bank;
+                    call(memory,0x652d60,{live.front().original});call(memory,0x651d00,{live.front().original});check(owner.retire(id));check(!owner.retire(id));live.erase(live.begin());check(first.bank==oldbank&&retained->visuals.front().id==id);
+                }
+            }
+            const auto retained=owner.retain();owner.close();owner.close();check(owner.size()==0&&owner.piece_count()==0&&!owner.admitted()&&!owner.retain());check(bool(retained));check(owner.update({}).status==e::VisualStatus::closed);
+        }
+    }
+    for(unsigned i=0;i<65536;++i){
+        const m::Vector p{float(int(i%67)-33)*.125f,float(int(i%59)-29),float(i%43)*.25f};const auto camera=i%7==0?p:m::Vector{float(i%29),float(int(i%47)-23)*.5f,float(i%79)};const float distance=float(int(i%101)-50)*.25f;
+        put(memory,0x71000,p);put(memory,0x324138,camera);call(memory,0x652ce0,{0x72000,0x70fdc},distance);const auto result=e::toward_camera(p,camera,distance);check(std::memcmp(&result,memory+0x71000,12)==0);++camera_cases;
+    }
+    {
+        auto bank=e::EffectBank::import(corpus[0],corpus[1]);std::fill(ram.begin(),ram.end(),0);prepare(memory,corpus[0],corpus[1]);e::PeriodicVisuals owner(bank);
+        for(unsigned seed=0;seed<65536;++seed){
+            put(memory,0x70000,m::Vector{1,2,3});const auto result=call(memory,0x6525d0,{0,0x70000,0,36,0,0x1a193,0x6535c0});const auto at=GPR_U32(&result,2);auto native=owner.emit({36,{1,2,3}});check(at&&native.visual);
+            const auto delay=std::bit_cast<std::int16_t>(std::uint16_t(seed)),remaining=std::bit_cast<std::int16_t>(std::uint16_t(seed*257));native.visual->delay=delay;native.visual->remaining=remaining;native.visual->scale=0;put(memory,at+0xc,delay);put(memory,at+0xe,remaining);put(memory,at+0xf0,0.f);
+            put(memory,0x324138,m::Vector{10,20,30});call(memory,0x6535c0,{at});check(owner.update({10,20,30}).status==e::VisualStatus::completed);
+            check(native.visual->delay==get<std::int16_t>(memory,at+0xc)&&native.visual->remaining==get<std::int16_t>(memory,at+0xe));
+            const auto frame=owner.retain();if(memory[at]){check(frame->visuals.size()==1&&frame->visuals[0].visible==(memory[at+1]!=0));call(memory,0x652d60,{at});call(memory,0x651d00,{at});check(owner.retire(frame->visuals[0].id));}else check(frame->visuals.empty());
+            ++signed_timer_cases;
+        }
+    }
+    // The real periodic task now emits through this exact visual/resource
+    // owner; no successful visual fixture substitutes for6525D0 in this chain.
+#ifdef REO_RECOVERY_ONLY
+    owned_constants(memory);
+    compare_actor_recovery(argv[2],argv[3],ram);
+    std::cout<<"{\"checks\":"<<checks<<",\"actor_recovery_cases\":"<<actor_recovery_cases<<",\"actor_recovery_animation\":"<<actor_recovery_animation<<",\"actor_recovery_ui\":"<<actor_recovery_ui<<",\"actor_recovery_refusals\":"<<actor_recovery_refusals<<",\"actor_recovery_messages\":"<<actor_recovery_messages<<",\"actor_recovery_compositions\":"<<actor_recovery_compositions<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"game_run\":false}\n";
+    return 0;
+#endif
+#ifdef REO_ZERO_HEALTH_ONLY
+    owned_constants(memory);
+    compare_actor_zero_health(argv[2],argv[3],ram);
+    std::cout<<"{\"checks\":"<<checks<<",\"zero_health_cases\":"<<zero_health_cases<<",\"zero_health_parent_cases\":"<<zero_health_parent_cases<<",\"zero_health_messages\":"<<zero_health_messages<<",\"zero_health_models\":"<<zero_health_models<<",\"zero_health_compositions\":"<<zero_health_compositions<<",\"zero_health_refusals\":"<<zero_health_refusals<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases
+    <<",\"game_run\":false}\n";
+    return 0;
+#endif
+    for(unsigned asset=0;asset<corpus.size();asset+=2){
+        auto bank=e::EffectBank::import(corpus[asset],corpus[asset+1]);
+        for(unsigned profile=0;profile<8;++profile){
+            std::fill(ram.begin(),ram.end(),0);prepare(memory,corpus[asset],corpus[asset+1]);e::PeriodicVisuals owner(bank);std::vector<Live> live;live.reserve(168);CapturingEmitter emitter(owner,live,memory);
+            s::FlagState flags;reo::native::gameplay_session::Random random;random.restore({std::uint16_t(profile*991),std::uint16_t(0x918a^profile),std::uint8_t(profile)});
+            put(memory,0x3244b0,random.state().primary);put(memory,0x3244b8,random.state().secondary);put(memory,0x2b8de8,random.state().observed);
+            s::PeriodicState state;state.position={float(profile),-5,17};put(memory,0x10000+0x70,state.position);put(memory,0x10000+0x28,std::uint32_t(0x20000));put(memory,0x20000+0x52,std::uint16_t(0x8000));
+            for(unsigned tick=0;tick<200;++tick){
+                if(tick==180){flags.write(s::FlagBank::bounded_halfword,0,true);put(memory,0x4bac50,std::uint16_t(1));}
+                task_retired=false;call(memory,0x5d9680,{0x10000});const auto step=s::update_periodic(state,0x8000,flags,random,emitter);check(step.status==s::PeriodicStatus::completed&&step.retire==task_retired);
+                check(state.phase==memory[0x10000+8]&&state.timer==get<std::int16_t>(memory,0x10000+0xc)&&state.packed==get<std::int16_t>(memory,0x10000+0xe));
+                const auto rng=random.state();check(rng.primary==get<std::uint16_t>(memory,0x3244b0)&&rng.secondary==get<std::uint16_t>(memory,0x3244b8)&&rng.observed==memory[0x2b8de8]);
+                put(memory,0x324138,m::Vector{10,20,30});for(const auto& value:live){call(memory,0x6535c0,{value.original});}
+                live.erase(std::remove_if(live.begin(),live.end(),[&](const auto& value){return memory[value.original]==0;}),live.end());
+                check(owner.update({10,20,30}).status==e::VisualStatus::completed);compare(owner,live,memory);++task_cases;if(step.retire)break;
+            }
+        }
+    }
+#ifdef REO_RESOURCE_PULSES
+    compare_resource_pulses(corpus,ram);
+#endif
+#ifdef REO_RESOURCE_STATIC
+    compare_resource_static(argv[2],ram);
+#endif
+#ifdef REO_RESOURCE_FACTORY
+    compare_resource_factory(argv[2],argv[3],ram);
+#endif
+#ifdef REO_RESOURCE_PLACEMENT
+    compare_resource_placement(argv[2],argv[3],ram);
+#endif
+#ifdef REO_RESOURCE_DELAYED
+    compare_resource_delayed(argv[2],argv[3],ram);
+#endif
+#ifdef REO_RESOURCE_ACTIONS
+    compare_resource_actions(argv[2],argv[3],ram);
+#endif
+#ifdef REO_RESOURCE_INVENTORY
+    compare_resource_inventory(argv[2],argv[3],ram);
+#endif
+#ifdef REO_RESOURCE_CONTENT
+    compare_resource_content(argv[2],argv[3],ram);
+#endif
+#ifdef REO_RESOURCE_PAIRS
+    compare_resource_pairs(argv[2],argv[3],ram);
+#endif
+#ifdef REO_RESOURCE_RECIPES
+    compare_resource_recipes(argv[2],argv[3],ram);
+#endif
+#ifdef REO_OWNED_RECIPES
+    compare_owned_resource_recipes(argv[2],argv[3],ram);
+#endif
+#ifdef REO_RESOURCE_CONSUMPTION
+    compare_resource_consumption(argv[2],argv[3],ram);
+#endif
+#ifdef REO_RESOURCE_WRAPPERS
+    compare_resource_wrappers(argv[2],argv[3],ram);
+#endif
+#ifdef REO_RESOURCE_HEALTH
+    std::cerr<<"begin resource health\n";
+    compare_resource_health(argv[2],argv[3],ram);
+#endif
+#ifdef REO_RESOURCE_DEPLOYMENT
+    std::cerr<<"begin resource deployment\n";
+    compare_resource_deployment(corpus,argv[2],argv[3],ram);
+    std::cerr<<"end resource deployment\n";
+#endif
+#ifdef REO_RESOURCE_EFFECTS
+    std::cerr<<"begin resource effects\n";
+    compare_resource_effects(corpus,argv[2],argv[3],ram);
+    std::cerr<<"end resource effects\n";
+#endif
+#ifdef REO_RESOURCE_DEBRIS
+    std::cerr<<"begin resource debris\n";
+    compare_resource_debris(corpus,argv[2],argv[3],ram);
+    compare_resource_debris_capacity(corpus,argv[2],argv[3],ram);
+    std::cerr<<"end resource debris\n";
+#endif
+#ifdef REO_RESOURCE_DEPLETION
+    std::cerr<<"begin resource depletion\n";
+    compare_resource_depletion(corpus,argv[2],argv[3],argv[4],std::filesystem::path(argv[1]).parent_path()/"owned_depletion_cue.bin",ram);
+    std::cerr<<"end resource depletion\n";
+#endif
+#ifdef REO_WEAPON_RESOURCES
+    compare_weapon_resources(argv[4],ram);
+#endif
+#ifdef REO_RESOURCE_OWNERSHIP
+    std::cerr<<"begin resource ownership\n";
+    compare_resource_ownership(argv[2],argv[3],ram);
+    std::cerr<<"end resource ownership\n";
+#endif
+#ifdef REO_ACTOR_RESOURCE_OPERATIONS
+    std::cerr<<"begin actor resource operations\n";
+    compare_actor_resource_operations(argv[2],argv[3],ram);
+    std::cerr<<"end actor resource operations\n";
+#endif
+#ifdef REO_RESOURCE_AUXILIARY_LISTS
+    compare_resource_auxiliary_lists(argv[2],argv[3],ram);
+#endif
+#ifdef REO_ACTOR_TERMINAL_TIMER
+    compare_actor_terminal_timer(argv[2],argv[3],ram);
+#endif
+#ifdef REO_ACTOR_GAUGE_PROGRESSION
+    compare_actor_gauge_progression(argv[2],argv[3],ram);
+#endif
+#ifdef REO_ACTOR_RECOVERY
+    compare_actor_recovery(argv[2],argv[3],ram);
+#endif
+#ifdef REO_ACTOR_FORCED_TERMINAL
+    compare_actor_forced_terminal(argv[2],argv[3],ram);
+#endif
+#ifdef REO_ACTOR_ZERO_HEALTH
+    compare_actor_zero_health(argv[2],argv[3],ram);
+#endif
+#ifdef REO_EQUIPMENT_RESOURCES
+    compare_equipment_resources(argv[4],argv[2],ram);
+#endif
+#ifdef REO_EQUIPMENT_SELECTION
+    compare_equipment_selection(argv[4],argv[2],ram);
+#endif
+#ifdef REO_ACTOR_RECEPTION
+    compare_actor_reception(argv[4],argv[2],ram);compare_actor_message_queue();
+#endif
+#ifdef REO_RESOURCE_COMPANION_POLICY
+    compare_resource_companion_policy(ram);
+#endif
+#ifdef REO_RESOURCE_COMPANIONS
+    compare_resource_companions(corpus,ram);
+    compare_companion_factory(corpus,argv[2],argv[3],ram);
+    compare_companion_capacity(corpus,ram);
+#endif
+    auto bank=e::EffectBank::import(corpus[0],corpus[1]);e::PeriodicVisuals owner(bank);check(owner.emit({35,{}}).status==s::EmissionStatus::unavailable);check(owner.emit({36,{},1}).status==s::EmissionStatus::unavailable);
+    check(owner.emit({36,{std::numeric_limits<float>::quiet_NaN(),0,0}}).status==s::EmissionStatus::unavailable);check(owner.update({std::numeric_limits<float>::quiet_NaN(),0,0}).status==e::VisualStatus::invalid_camera&&owner.size()==0);
+    std::atomic<bool> done{},bad{};std::atomic<unsigned> reads{};
+    std::thread reader([&]{std::uint64_t revision{};while(!done.load()){const auto frame=owner.retain();if(!frame){std::this_thread::yield();continue;}if(frame->revision<revision)bad=true;revision=frame->revision;for(const auto& visual:frame->visuals)if(!visual.bank||visual.bank->geometry().roots().empty())bad=true;++reads;}});
+    for(unsigned i=0;i<2000;++i){if(i%5==0)check(owner.emit({36,{}}).status==s::EmissionStatus::completed);check(owner.update({10,20,30}).status==e::VisualStatus::completed);if(i%10==0)std::this_thread::yield();}
+    done=true;reader.join();check(!bad&&reads>0);owner.close();bank.reset();check(!owner.retain());
+    std::cout<<"{\"checks\":"<<checks<<",\"banks\":"<<banks<<",\"updates\":"<<updates<<",\"created\":"<<created<<",\"expired\":"<<expired<<",\"piece_cases\":"<<piece_cases<<",\"camera_cases\":"<<camera_cases<<",\"signed_timer_cases\":"<<signed_timer_cases<<",\"task_cases\":"<<task_cases
+#ifdef REO_RESOURCE_PULSES
+    <<",\"resource_pulse_frames\":"<<resource_pulse_frames<<",\"resource_pulse_emissions\":"<<resource_pulse_emissions<<",\"resource_pulse_refusals\":"<<resource_pulse_refusals
+#endif
+#ifdef REO_RESOURCE_STATIC
+    <<",\"static_banks\":"<<static_banks<<",\"static_roots\":"<<static_roots<<",\"static_matrices\":"<<static_matrices<<",\"static_lookups\":"<<static_lookups<<",\"static_large_roots\":"<<static_large_roots<<",\"static_refusals\":"<<static_refusals
+#endif
+#ifdef REO_RESOURCE_FACTORY
+    <<",\"factory_cases\":"<<factory_cases<<",\"factory_visible\":"<<factory_visible<<",\"factory_missing_geometry\":"<<factory_missing_geometry<<",\"factory_passes\":"<<factory_passes<<",\"factory_refusals\":"<<factory_refusals
+#endif
+#ifdef REO_RESOURCE_PLACEMENT
+    <<",\"placement_cases\":"<<placement_cases<<",\"placement_owned\":"<<placement_owned<<",\"placement_refusals\":"<<placement_refusals<<",\"placement_full\":"<<placement_full<<",\"placement_floor_queries\":"<<placement_floor_queries
+#endif
+#ifdef REO_RESOURCE_DELAYED
+    <<",\"delayed_constructors\":"<<delayed_constructors<<",\"delayed_frames\":"<<delayed_frames<<",\"delayed_rebuilds\":"<<delayed_rebuilds<<",\"delayed_refusals\":"<<delayed_refusals<<",\"delayed_full_cases\":"<<delayed_full_cases
+#endif
+#ifdef REO_RESOURCE_ACTIONS
+    <<",\"resource_actions\":"<<resource_actions<<",\"resource_action_retirements\":"<<resource_action_retirements<<",\"resource_action_failures\":"<<resource_action_failures
+#endif
+#ifdef REO_RESOURCE_INVENTORY
+    <<",\"inventory_lookups\":"<<inventory_lookups<<",\"inventory_removals\":"<<inventory_removals<<",\"inventory_compactions\":"<<inventory_compactions<<",\"inventory_insertions\":"<<inventory_insertions<<",\"inventory_detachments\":"<<inventory_detachments<<",\"inventory_refusals\":"<<inventory_refusals
+#endif
+#ifdef REO_RESOURCE_CONTENT
+    <<",\"content_cases\":"<<content_cases<<",\"content_rebinds\":"<<content_rebinds<<",\"content_refusals\":"<<content_refusals
+#endif
+#ifdef REO_RESOURCE_PAIRS
+    <<",\"pair_queries\":"<<pair_queries<<",\"pair_quantity_cases\":"<<pair_quantity_cases<<",\"pair_release_cases\":"<<pair_release_cases<<",\"pair_refusals\":"<<pair_refusals
+#endif
+#ifdef REO_RESOURCE_RECIPES
+    <<",\"recipe_primitive_cases\":"<<recipe_primitive_cases<<",\"recipe_active_cases\":"<<recipe_active_cases<<",\"recipe_owner_cases\":"<<recipe_owner_cases<<",\"recipe_refusals\":"<<recipe_refusals
+#endif
+#ifdef REO_OWNED_RECIPES
+    <<",\"owned_recipe_cases\":"<<owned_recipe_cases<<",\"owned_recipe_event_cases\":"<<owned_recipe_event_cases<<",\"owned_recipe_event_mask\":"<<owned_recipe_event_mask<<",\"owned_recipe_refusals\":"<<owned_recipe_refusals
+#endif
+#ifdef REO_RESOURCE_CONSUMPTION
+    <<",\"consumption_cases\":"<<consumption_cases<<",\"consumption_owner_cases\":"<<consumption_owner_cases<<",\"consumption_refusals\":"<<consumption_refusals
+#endif
+#ifdef REO_RESOURCE_WRAPPERS
+    <<",\"wrapper_cases\":"<<wrapper_cases<<",\"wrapper_messages\":"<<wrapper_messages<<",\"wrapper_frontends\":"<<wrapper_frontends<<",\"wrapper_refusals\":"<<wrapper_refusals
+#endif
+#ifdef REO_RESOURCE_HEALTH
+    <<",\"health_cases\":"<<health_cases<<",\"health_event_cases\":"<<health_event_cases<<",\"health_ui_cases\":"<<health_ui_cases<<",\"health_refusals\":"<<health_refusals
+#endif
+#ifdef REO_RESOURCE_DEPLOYMENT
+    <<",\"deployment_counts\":"<<deployment_counts<<",\"deployment_admissions\":"<<deployment_admissions<<",\"deployment_cases\":"<<deployment_cases<<",\"deployment_effects\":"<<deployment_effects<<",\"deployment_messages\":"<<deployment_messages<<",\"deployment_frontends\":"<<deployment_frontends<<",\"deployment_lifecycle\":"<<deployment_lifecycle<<",\"deployment_capacity\":"<<deployment_capacity<<",\"deployment_refusals\":"<<deployment_refusals
+#endif
+#ifdef REO_RESOURCE_EFFECTS
+    <<",\"effect_cases\":"<<effect_cases<<",\"effect_depletions\":"<<effect_depletions<<",\"effect_deployments\":"<<effect_deployments<<",\"effect_mutations\":"<<effect_mutations<<",\"effect_refusals\":"<<effect_refusals
+#endif
+#ifdef REO_RESOURCE_DEBRIS
+    <<",\"debris_cases\":"<<debris_cases<<",\"debris_frames\":"<<debris_frames<<",\"debris_missing\":"<<debris_missing<<",\"debris_floor_queries\":"<<debris_floor_queries<<",\"debris_refusals\":"<<debris_refusals<<",\"debris_capacity\":"<<debris_capacity<<",\"debris_child_full\":"<<debris_child_full
+#endif
+#ifdef REO_RESOURCE_DEPLETION
+    <<",\"depletion_cases\":"<<depletion_cases<<",\"depletion_live\":"<<depletion_live<<",\"depletion_refusals\":"<<depletion_refusals<<",\"depletion_audio_commands\":"<<depletion_audio_commands<<",\"depletion_signal\":"<<depletion_signal
+#endif
+#ifdef REO_RESOURCE_USE
+    <<",\"owned_use_cases\":"<<owned_use_cases<<",\"owned_use_live\":"<<owned_use_live<<",\"owned_use_retirements\":"<<owned_use_retirements<<",\"owned_use_refusals\":"<<owned_use_refusals
+#endif
+#ifdef REO_RESOURCE_OWNERSHIP
+    <<",\"ownership_claims\":"<<ownership_claims<<",\"ownership_admissions\":"<<ownership_admissions<<",\"ownership_assignments\":"<<ownership_assignments<<",\"ownership_swaps\":"<<ownership_swaps<<",\"ownership_exchanges\":"<<ownership_exchanges<<",\"ownership_capacity\":"<<ownership_capacity<<",\"ownership_refusals\":"<<ownership_refusals
+#endif
+#ifdef REO_ACTOR_RESOURCE_OPERATIONS
+    <<",\"actor_operation_cases\":"<<actor_operation_cases<<",\"actor_operation_live\":"<<actor_operation_live<<",\"actor_operation_gates\":"<<actor_operation_gates<<",\"actor_operation_refusals\":"<<actor_operation_refusals<<",\"actor_operation_transfer_mask\":"<<actor_operation_transfer_mask<<",\"actor_operation_publications\":"<<actor_operation_publications
+#endif
+#ifdef REO_RESOURCE_AUXILIARY_LISTS
+    <<",\"auxiliary_list_cases\":"<<auxiliary_list_cases<<",\"auxiliary_transfer_cases\":"<<auxiliary_transfer_cases<<",\"auxiliary_live_cases\":"<<auxiliary_live_cases<<",\"auxiliary_truncation_cases\":"<<auxiliary_truncation_cases<<",\"auxiliary_refusals\":"<<auxiliary_refusals
+#endif
+#ifdef REO_ACTOR_TERMINAL_TIMER
+    <<",\"terminal_timer_cases\":"<<terminal_timer_cases<<",\"terminal_timer_transitions\":"<<terminal_timer_transitions<<",\"terminal_timer_live\":"<<terminal_timer_live<<",\"terminal_timer_compositions\":"<<terminal_timer_compositions<<",\"terminal_timer_refusals\":"<<terminal_timer_refusals
+#endif
+#ifdef REO_ACTOR_GAUGE_PROGRESSION
+    <<",\"gauge_progression_cases\":"<<gauge_progression_cases<<",\"gauge_progression_callbacks\":"<<gauge_progression_callbacks<<",\"gauge_progression_live\":"<<gauge_progression_live<<",\"gauge_progression_refusals\":"<<gauge_progression_refusals<<",\"gauge_progression_compositions\":"<<gauge_progression_compositions<<",\"gauge_progression_recoveries\":"<<gauge_progression_recoveries<<",\"gauge_progression_notifications\":"<<gauge_progression_notifications
+#endif
+#ifdef REO_ACTOR_RECOVERY
+    <<",\"actor_recovery_cases\":"<<actor_recovery_cases<<",\"actor_recovery_animation\":"<<actor_recovery_animation<<",\"actor_recovery_ui\":"<<actor_recovery_ui<<",\"actor_recovery_refusals\":"<<actor_recovery_refusals<<",\"actor_recovery_messages\":"<<actor_recovery_messages<<",\"actor_recovery_compositions\":"<<actor_recovery_compositions
+#endif
+#ifdef REO_ACTOR_FORCED_TERMINAL
+    <<",\"forced_terminal_cases\":"<<forced_terminal_cases<<",\"forced_terminal_messages\":"<<forced_terminal_messages
+    <<",\"forced_terminal_refusals\":"<<forced_terminal_refusals<<",\"local_player_message_cases\":"<<local_player_message_cases
+#endif
+#ifdef REO_ACTOR_ZERO_HEALTH
+    <<",\"zero_health_cases\":"<<zero_health_cases<<",\"zero_health_parent_cases\":"<<zero_health_parent_cases<<",\"zero_health_messages\":"<<zero_health_messages<<",\"zero_health_models\":"<<zero_health_models<<",\"zero_health_compositions\":"<<zero_health_compositions<<",\"zero_health_refusals\":"<<zero_health_refusals
+#endif
+#ifdef REO_WEAPON_RESOURCES
+    <<",\"weapon_refreshes\":"<<weapon_refreshes<<",\"weapon_loaded_banks\":"<<weapon_loaded_banks<<",\"weapon_missing_banks\":"<<weapon_missing_banks<<",\"weapon_pcm_frames\":"<<weapon_pcm_frames<<",\"weapon_signal_samples\":"<<weapon_signal_samples<<",\"weapon_refusals\":"<<weapon_refusals<<",\"weapon_file_reads\":"<<weapon_file_reads<<",\"weapon_missing_file_reads\":"<<weapon_missing_file_reads
+#endif
+#ifdef REO_EQUIPMENT_RESOURCES
+    <<",\"equipment_cases\":"<<equipment_cases<<",\"equipment_full_cases\":"<<equipment_full_cases<<",\"equipment_refusals\":"<<equipment_refusals
+#endif
+#ifdef REO_EQUIPMENT_SELECTION
+    <<",\"equipment_selections\":"<<equipment_selections<<",\"equipment_selection_full\":"<<equipment_selection_full<<",\"equipment_selection_refusals\":"<<equipment_selection_refusals
+#endif
+#ifdef REO_RESOURCE_COMPANION_POLICY
+    <<",\"companion_policy_cases\":"<<companion_policy_cases<<",\"companion_policy_renders\":"<<companion_policy_renders<<",\"companion_policy_fades\":"<<companion_policy_fades<<",\"companion_policy_retirements\":"<<companion_policy_retirements<<",\"companion_policy_spawn_intents\":"<<companion_policy_spawn_intents<<",\"companion_policy_audio_intents\":"<<companion_policy_audio_intents
+#endif
+#ifdef REO_RESOURCE_COMPANIONS
+    <<",\"companion_live_cases\":"<<companion_live_cases<<",\"companion_live_frames\":"<<companion_live_frames<<",\"companion_live_pieces\":"<<companion_live_pieces<<",\"companion_live_missing\":"<<companion_live_missing<<",\"companion_live_unavailable\":"<<companion_live_unavailable<<",\"companion_live_lights\":"<<companion_live_lights<<",\"companion_live_audio\":"<<companion_live_audio<<",\"companion_factory_cases\":"<<companion_factory_cases<<",\"companion_factory_refusals\":"<<companion_factory_refusals<<",\"companion_capacity_cases\":"<<companion_capacity_cases<<",\"companion_action_audio_frames\":"<<companion_action_audio_frames<<",\"companion_action_audio_signal\":"<<companion_action_audio_signal<<",\"companion_action_audio_requests\":"<<companion_action_audio_requests
+#endif
+#ifdef REO_ACTOR_RECEPTION
+    <<",\"reception_cases\":"<<reception_cases<<",\"reception_equipment\":"<<reception_equipment<<",\"reception_refusals\":"<<reception_refusals<<",\"reception_queue_cases\":"<<reception_queue_cases<<",\"reception_auxiliary_cases\":"<<reception_auxiliary_cases<<",\"reception_speech_cases\":"<<reception_speech_cases<<",\"reception_presence_cases\":"<<reception_presence_cases<<",\"reception_speech_refusals\":"<<reception_speech_refusals
+#endif
+    <<",\"original_helper_calls\":"<<calls<<",\"heap_allocations\":"<<heap_allocations<<",\"heap_releases\":"<<heap_releases<<",\"concurrent_reader_pass\":true,\"game_run\":false}\n";
+    return 0;
+}catch(const std::exception& error){std::cerr<<error.what()
+#ifdef REO_RESOURCE_PULSES
+    <<" pulse frames="<<resource_pulse_frames<<" emissions="<<resource_pulse_emissions
+#endif
+#ifdef REO_RESOURCE_STATIC
+    <<" static bank="<<static_banks<<" root="<<static_roots
+#endif
+#ifdef REO_RESOURCE_FACTORY
+    <<" factory cases="<<factory_cases
+#endif
+#ifdef REO_RESOURCE_DELAYED
+    <<" delayed constructors="<<delayed_constructors<<" frames="<<delayed_frames<<" rebuilds="<<delayed_rebuilds
+#endif
+#ifdef REO_RESOURCE_INVENTORY
+    <<" inventory compact="<<inventory_compactions<<" remove="<<inventory_removals<<" detach="<<inventory_detachments
+#endif
+#ifdef REO_RESOURCE_COMPANION_POLICY
+    <<" companion cases="<<companion_policy_cases<<" seed="<<companion_policy_seed<<" phase="<<companion_policy_phase
+#endif
+#ifdef REO_RESOURCE_DEPLETION
+    <<" depletion cases="<<depletion_cases<<" live="<<depletion_live
+#endif
+    <<'\n';return 1;}

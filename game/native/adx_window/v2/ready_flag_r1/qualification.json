@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "status": "qualified independent signed enable correction; actual loop/player/device integration separate",
+  "game_run": false,
+  "device_opened": false,
+  "new_clients": 48,
+  "new_observations_per_compiler": 720,
+  "original_instructions_per_pass": 91968,
+  "legacy_differences": 24,
+  "prior_clients": 123,
+  "prior_observations": 8034,
+  "unit_checks": 996,
+  "mechanical_predicate_only": true,
+  "parent_suites": 36,
+  "sources": {
+    "game/native/adx_window/v2/ready_flag_r1/CMakeLists.txt": "d9d6a372d5ba7c248055d34d52c61337df90132418c41a926322b57fcedeb683",
+    "game/native/adx_window/v2/ready_flag_r1/manifest.json": "94c4804c342b2a017a0cf9250cb0b0ba1997859415b6ae4e8916f1d953b32310",
+    "game/native/adx_window/v2/ready_flag_r1/README.md": "8b20e14593ae4e7ad04a1bf73aad82ad8548335184705bd79908c8fa51edba07",
+    "game/native/adx_window/v2/ready_flag_r1/stream_window.cpp": "d1488337f5e2b2ad57949093669f159feb2647a6003857ba74fbf4aa3699b0d7",
+    "game/native/adx_window/v2/ready_flag_r1/verify.py": "383af9e635b3c474a3c570b39e10b64b46b01c0dd5b887e3ec2a78faf3f47791",
+    "tools/native_reconstruction/adx_ready_flag_oracle.py": "68b70c2afa27e26e7bce7b1ac0a8a7e2bccd2fe0690585a8eb3c084233a0f4a5",
+    "docs/native-media/ADX_READY_FLAG_CORRECTION.md": "6536aada850e79fc5e817597309b2497d9a3af9290217e426b34235c489da9f9",
+    "docs/native-media/ADX_READY_FLAG_IMPLEMENTATION.md": "27cb9fddb95adb606fc9f11cda41e1e4b4e1ab98daac9f1955bc1b2c87be4ccc",
+    "docs/NATIVE_RECONSTRUCTION_PLAN.md": "fce49b2f177a993a8856f6a9c6adc7a85e543bb352d140042a633c2d79df5589",
+    "game/native/CMakeLists.txt": "22fddd2396addeb452092140feb012b4fcf45adfd79159f2cafefa1fc0cc8904",
+    "game/native/adx_window/v2/README.md": "dffe674bc578262deaf1b039bd95bddc6b9789ef85e66aeb0a46c28beb6a8753"
+  },
+  "receipts": {
+    "build-native-sjuni/adx-ready-flag/frozen-v1/manifest.json": "3a0404ceecc5a7cd36bda450af985404888a5d896e36c29ef5276777052a0173",
+    "build-native-sjuni/adx-ready-flag/original-gcc-v1/receipt.json": "fbc031eebaa1d6ca55e4e81972c6e8199d28bffb4bed72266ae86be6f825c00a",
+    "build-native-sjuni/adx-ready-flag/original-llvm-v1/receipt.json": "dab8ee8b51d00552703d1af292b1ba7ad08c02b93cb7a8bfe9ab64b2e04e3b01",
+    "build-native-sjuni/adx-ready-flag/native-gcc-v1/receipt.json": "0548e224e6e8dd692a1131d4b740fcb7615c84ede4eccf92a17fee5e2f8f8ba2",
+    "build-native-sjuni/adx-ready-flag/native-llvm-v1/receipt.json": "d005d68cd00db4bf8e8d5db5eab2a103fc70a29b9346bc59b92f24e148c0fb33",
+    "build-native-sjuni/adx-ready-flag/parent-gcc-v1/receipt.json": "69e49768e864c6869caf4f82913fb9c476f4432e321e6ea85663b9bafdb2c5d3",
+    "build-native-sjuni/adx-ready-flag/parent-llvm-v1/receipt.json": "306fcde09670915207491cf21931be8c978caccf9935036dfcc14a1591859abc"
+  }
+}

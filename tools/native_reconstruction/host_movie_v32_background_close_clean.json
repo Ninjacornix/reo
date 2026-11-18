@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "status": "unmodified V32 main-menu background case retires normally; hang not reproduced",
+  "executable_sha256": "973543320c9b63c61bd1195e787505e578fd9ca73f481c660f704ab61faae1ff",
+  "launcher_revision": "c521c49b3552d016eeb7181b837f8ab516aad6ce",
+  "result": {
+    "status": "native GameSession launch and retirement passed",
+    "selected": true,
+    "audio_selected": true,
+    "resource_selected": true,
+    "native_error": false,
+    "duration_completed": true,
+    "cue_owner_joined": true,
+    "media_error": false,
+    "forced_cleanup": false,
+    "exit_code": 0,
+    "movie_status": "Movies: native MP4",
+    "logs": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\sessions\\20261109-014458-947",
+    "elapsed_seconds": 91.9754845,
+    "game_launched": true,
+    "ui_window_constructed": false,
+    "route": "main-menu",
+    "subjective_av_confirmation": false,
+    "step3_complete": false
+  },
+  "evidence_sha256": {
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-014458-947/controller-health.jsonl": "2dd391a3456a31d2ab8ba72bc3bebcffdc14838d9b2ade6882b8d6f457820e26",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-014458-947/controller-rumble.jsonl": "66590413df398fc42da7904cc667d0fe814578190dbe8b1a3d51dd7450ee40ee",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-014458-947/exit.json": "05271a2a8fdeeea8b3b571002092a45901cf3570d80b8d17ee02fe59b94474e2",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-014458-947/frames.csv": "f0458eae9fecfe594e377ffe5dbb2730f60f81a6844dac945cd5f60c3dba3268",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-014458-947/frames.csv.warmup.csv": "15c6122e0483846352116446a5030201c8b01ba1d6959c273e8587f3f1b72c82",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-014458-947/launch.json": "f760e5227ea2e8db0355de78ed20a55ffcb3b3544b41a3253d9d4258664d899f",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-014458-947/mods.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-014458-947/native-audio-control.csv": "48754d17a4d2ac173c7d06a1339b613e62168d15c64dbb20b4c9d4512ee7e219",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-014458-947/native-game-session-check.json": "8b25d6585368743d1414018acd500b1155877699b5eb3cfbcc1ac01afa60aa5f",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-014458-947/native-game-session-running.json": "7d39e36dbfd10d1d6bf362aacd64770868ed209f9f13c6da3569c13cdfea0bfc",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-014458-947/native-movie-consumer.csv": "c234fbb54f7eab65d25abba448cda6c4488fdbbc95d3d274092e6046f972b1d4",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-014458-947/native-movie-prepare.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-014458-947/native-movie-prepare.stdout.log": "2a480519dd0249149db1151ca9ebaef3cf479fa97b1348713cb6f64ddc9840aa",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-014458-947/native-movie-producer.csv": "c7081e7965f8bb0913333a4f0384ee5ed01411cde12f067b5a17b3b7a5e0811a",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-014458-947/pss-before-close.json": "4c6e4b382ccd1aa9f52eb78ffb4f36412e436e9168472cda34559e219dc2d9aa",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-014458-947/pss-before-close.stderr.txt": "ad825dbd259a599f7cb052b90a93d7d34fbd82e60d4f7a6bbd5adbec877c32ff",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-014458-947/pss-before-close.stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-014458-947/stderr.log": "f5d6850c77d3305372c5e3b1ccb3fbee1e469a66dbb595d752aaa0cd57f01389",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-014458-947/stdout.log": "d356380793d3892c995ae89d44002589f69c9a89ffd993dc472ff32c38c41597"
+  },
+  "limitations": [
+    "PSS helper failed before snapshot because its query handle lacked SYNCHRONIZE; no stack or window state obtained.",
+    "Later sample target exited before its scheduled age.",
+    "No capture or window manipulation; no new fix installed."
+  ],
+  "step3_complete": false
+}

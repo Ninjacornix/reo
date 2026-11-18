@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "files": {
+    "docs/native-media/MOVIE_AUDIO_TIME_FILTER_CONTRACT.md": "89ac11b06e4d99df9a754e812634a3aecb0eba2b9111a476f5d8748512c3dd5d",
+    "game/native/CMakeLists.txt": "2c232619e7c156ffdf80b2d5c18959e2c93909b050835fca02a06dd40496251e",
+    "game/native/movie_audio_filter/CMakeLists.txt": "fd02157a7dea4359e8515483c8f1295ddf140ee6e1b2252845f60654cb280ec0",
+    "game/native/movie_audio_filter/filter.cpp": "3de587d7c5a61d30c09520e6f2b832dcea2d015f283948ba37e4c4db68ca21f6",
+    "game/native/movie_audio_filter/filter.hpp": "9e2e0aba34a64a8eed15eddc194acd8a8a75e05efbe07a19b624e4b49472a37b",
+    "game/native/movie_audio_filter/filter_tests.cpp": "ffc0e169a1acc79b9c76df658ca6df699952dc39ef904f871fc8f459d289fdb1",
+    "game/native/movie_audio_filter/fixture.cpp": "058288dff8eaa852c7fc7b4d3d8d3d95cfda415a6b9b4a46bdb7ba534716c8b9",
+    "game/native/movie_audio_filter/README.md": "1d483171cd372295f1f4268184b25e83a7f3087d03d1c5746b9aa22572fae0e1",
+    "game/native/movie_audio_filter/verify.py": "4120f141765cc2cf977ddfd99064bdfb1e873656e071c16bb3af2d3c4b44fc41",
+    "tools/native_reconstruction/adx_stereo_oracle.py": "f66047d0ee59114cdf80d5d1e1bb4833aa566b35c9a7dea7e9d24930ad428c17",
+    "tools/native_reconstruction/ee_copy_store_oracle.py": "046d127951a875baa5bcdbbb7320ec9694590087fd4a86b7e54d7e367e572cff",
+    "tools/native_reconstruction/ee_mac_oracle.py": "0466ee2828bcc268deafbb9ed93d8e7096cd0b89fa0ed489af28cae0120128cd",
+    "tools/native_reconstruction/movie_audio_filter_oracle.py": "5aaed79a32926935ca7779126e404ee780ec713e9b10114bff66d11ff7f67461",
+    "tools/native_reconstruction/movie_position_oracle.py": "d89897b841f07056c15f8e18d978b7f4c9bfe208531f1570157276df65a9b5b0",
+    "tools/native_reconstruction/sjuni_oracle.py": "9d71114ffb0d8b2826012517c8d381d5ba2cdb5dd602c1f48e12450d99697d95",
+    "tools/native_reconstruction/test_ee_copy_store_oracle.py": "ac922c0e9fcc2016271ab9ff205bc915e811ede816c200713d4b8e3c6244e5d2",
+    "tools/native_reconstruction/verify_ee_copy_store.py": "48717f4ce25089dfb77856b87f245d5255b7eae283d2c2742e3480e7072e6eaf"
+  }
+}

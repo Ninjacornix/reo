@@ -1,0 +1,97 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_world/weapon_actions.hpp": "0e8424837a32e709f81a5f475d3b35e62c18079b441e02df605089634dbc06ee",
+    "game/native/gameplay_world/weapon_actions.cpp": "aa1fd3ba8e31d66e29b18ec111de7a08a104e0a5a25194b50f844e979c336ee1",
+    "game/native/gameplay_world/weapon_fire.hpp": "f6923f9c70e78f62503b2f5240cac6b60757c18b35330f97ce5263d6c642734a",
+    "game/native/gameplay_world/weapon_fire.cpp": "add77bfc09a644c83da4926f9cb57d3ad3b73019a16d6622ace2dbeeb4740a57",
+    "game/native/gameplay_world/weapon_fire_profile.inc": "7d3774c388910d090d8bcc0ddf7a4b6b95f8e5126e7c005a71f7e677dfde8f44",
+    "game/native/gameplay_world/resource_depletion.hpp": "bc6fbf731388047484b619bd4694fdebdddd0d6420ab196ea4bbd64f4691be52",
+    "game/native/gameplay_world/resource_depletion.cpp": "a9f2e8e2d1dfa8988615742850b05da353e6802c1aec2315f77f3868bf30fb2c",
+    "game/native/gameplay_world/resource_deployment.hpp": "5dba8e48ec040749570cd901a510c2698b9262d4dc3bef0581ac5fea13e97998",
+    "game/native/gameplay_world/resource_deployment.cpp": "7b9839bd138ae406afdb5087e64562e964a10ec13cdcecc856ae5934874a08f8",
+    "tools/native_reconstruction/weapon_actions_tests.inc": "879c825dd091a0d854c0907fc4bc6bcb723260479c177eb6f1cb3d2f3b503e53",
+    "tools/native_reconstruction/weapon_fire_tests.inc": "29c05b6d9fa137ce4b44282ddc71157fcd7b81d7e6c3244fbc8f5c826ab81b6f",
+    "tools/native_reconstruction/verify_periodic_visuals.py": "1a7ef525f92fbd527de088abb10a3f5c4d24909d49256d239f8b4325b6ca77c7",
+    "tools/native_reconstruction/periodic_visuals_tests.cpp": "196a6d26c966575b09d34f2792c8cf65ef01d25c57ba102f34808ebc8eba3524",
+    "tools/native_reconstruction/generate_weapon_fire_profile.py": "c117dc5b1d336fe1cc3c53998aa98b2c23f8c4976b947678ed496b20e2f75fdc",
+    "tools/native_reconstruction/qualify_weapon_actions_v1.py": "18bce7c6baad8ec1ab09080155b46a0551b73add2e8579bd5467a4b35692b5f0",
+    "docs/native-gameplay/WEAPON_ACTIONS.md": "5fa698658b0bfb1e2611e406f07581a0a3c585ea621b13feb463c402cf107c6d",
+    "game/native/gameplay_world/CMakeLists.txt": "dfa8ced6be275c4468bb04a4b0aee9d6b32a42dff33c8ac57de4a3b308e23786"
+  },
+  "cohorts": {
+    "llvm": {
+      "path": "build-native-sjuni/weapon-fire-llvm-v2/receipt.json",
+      "sha256": "49035e6cf0cf174a23730c701b76beacf70220dc414c4eca8da147ddd29e6ac9",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 1479187,
+        "weapon_action_cases": 65536,
+        "weapon_action_refusals": 2,
+        "weapon_fire_cases": 32768,
+        "weapon_fire_callbacks": 51257,
+        "weapon_fire_refusals": 2,
+        "original_helper_calls": 1030320,
+        "game_run": false
+      },
+      "subsequent_dependency_changes": {}
+    },
+    "gcc": {
+      "path": "build-native-sjuni/weapon-fire-gcc-v2/receipt.json",
+      "sha256": "8c6aa56e79b914853e18a7302ed7f637f674714df71286eaa60212d260f59eaa",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 1479187,
+        "weapon_action_cases": 65536,
+        "weapon_action_refusals": 2,
+        "weapon_fire_cases": 32768,
+        "weapon_fire_callbacks": 51257,
+        "weapon_fire_refusals": 2,
+        "original_helper_calls": 1030320,
+        "game_run": false
+      },
+      "subsequent_dependency_changes": {}
+    }
+  },
+  "cmake_builds": {
+    "llvm": {
+      "command": [
+        "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+        "--build",
+        "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\gameplay-native-llvm-v1",
+        "--target",
+        "reo_native_weapon_actions",
+        "--parallel",
+        "2"
+      ],
+      "returncode": 0,
+      "library": "build-native-sjuni/gameplay-native-llvm-v1/gameplay_world/libreo_native_weapon_actions.a",
+      "sha256": "913877730a5c6899666e03aaa01fe4b74b2630c56149ecaad28b6a399b704d0e",
+      "output": "ninja: no work to do.\r\n"
+    },
+    "gcc": {
+      "command": [
+        "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+        "--build",
+        "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\gameplay-native-gcc-v1",
+        "--target",
+        "reo_native_weapon_actions",
+        "--parallel",
+        "2"
+      ],
+      "returncode": 0,
+      "library": "build-native-sjuni/gameplay-native-gcc-v1/gameplay_world/libreo_native_weapon_actions.a",
+      "sha256": "c36d83faddbf4ed6e1a61dce3c35b0c2f13ba5afe56bda43d5e4793a06ac8fb1",
+      "output": "ninja: no work to do.\r\n"
+    }
+  },
+  "limits": [
+    "Feedback and four reached effect constructors are controlled ports, not newly supplied effect implementations.",
+    "Audio selectorFF avoids bank requests in this caller cohort; no audible weapon claim.",
+    "No native full-session installation or complete Stage4 acceptance claim."
+  ]
+}

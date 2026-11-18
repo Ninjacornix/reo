@@ -17,6 +17,9 @@ public sealed class GameSession {
     TaskCompletionSource graphicsReady = new(TaskCreationOptions.RunContinuationsAsynchronously);
     internal Task WaitForGraphicsReadyAsync(TimeSpan timeout) => graphicsReady.Task.WaitAsync(timeout);
     public string? MovieStatus { get; private set; }
+    public SlowdownSession? Performance { get; private set; }
+    SlowdownStatus? performanceError;
+    public SlowdownStatus? PerformanceStatus => Performance?.Status ?? performanceError;
     internal string? AudioMapName { get; set; }
     internal string? SubtitleMapName { get; set; }
     public string? RandomizerSeedSummary { get; private set; }
@@ -37,13 +40,14 @@ public sealed class GameSession {
                              string? diagnosticRoute = null,
                              IProgress<ImportProgress>? importProgress = null,
                              CancellationToken cancel = default,
-                             LobbyAutomation.Options? lobby = null,
                              uint? diagnosticSeed = null, bool diagnosticColdCache = false,
                              string? accountHome = null, string? workingDirectory = null) {
         if (Running)
             throw new InvalidOperationException("The launcher already has a game session running.");
         var graphics = GraphicsOptions.From(settings);
         OriginalAssets = null;
+        Performance = null;
+        performanceError = null;
         var selectedAssetPaks = AssetPaks.Selected(settings);
         var onlineEnvironment = OnlineOptions.LaunchEnvironment(settings);
         if (diagnosticColdCache && diagnosticRoute == null)
@@ -174,6 +178,12 @@ public sealed class GameSession {
         if (File.Exists(stringPlan)) Set("REO_EXECUTABLE_STRINGS", stringPlan);
         Set("REO_AUDIO_LEVELS", AudioLevels.From(settings).LaunchValue);
         Set("REO_SUBTITLES", settings.ShowSubtitles ? "1" : "0");
+        // Modern camera: File #1 and File #2 builds that contain the native camera.
+        bool modernCamera = selectedGame.Id is "file1" or "file2" && settings.ModernCamera.Enabled && ModernCamera.Supported(image);
+        if (modernCamera)
+            foreach (var (name, value) in ModernCamera.Environment(settings.ModernCamera))
+                Set(name, value);
+        controller.AnalogKeyboardMovement = modernCamera;
         if (SubtitleMapName != null) Set("REO_SUBTITLE_MAP", SubtitleMapName);
         if (!string.IsNullOrWhiteSpace(settings.AudioOutputId)) Set("REO_AUDIO_DEVICE", settings.AudioOutputId);
         if (AudioMapName != null) Set("REO_AUDIO_MAP", AudioMapName);
@@ -187,6 +197,10 @@ public sealed class GameSession {
         }
         foreach (var pair in onlineEnvironment)
             Set(pair.Key, pair.Value);
+        // Network Game goes straight to the server list: the automatic sign-in runs behind
+        // a black "connecting" screen (REO_COOP_FAST_NETWORK, reo_hw_bridge.cpp).
+        if (settings.SkipIntro && onlineEnvironment.ContainsKey("REO_COOP_AUTO_ACCOUNT"))
+            Set("REO_COOP_FAST_NETWORK", "1");
         if (onlineEnvironment.Count > 0)
             Set("REO_NETCODE_METRICS_FILE", Path.Combine(Logs!, "network-metrics.jsonl"));
         // Developer recordings come first so diagnostic routes below keep their own settings.
@@ -194,16 +208,6 @@ public sealed class GameSession {
             Set(pair.Key, pair.Value);
         if (start.Environment.ContainsKey("REO_COOP_TRACE_FILE"))
             NetworkTrace.Start(Logs!);
-        string? keyboardQueue = null;
-        if (lobby != null && automaticAccount && diagnosticRoute == null) {
-            // Title -> Network -> automatic sign-in uses the native route; the launcher then steers
-            // the lobby. Pad input from the launcher map also applies while the game is unfocused.
-            Set("REO_TEST_ROUTE", "network-auto");
-            Set("REO_COOP_TEST_INPUT", "1");
-            keyboardQueue = Path.Combine(Logs, "keyboard.bin");
-            LobbyAutomation.CreateKeyboardQueue(keyboardQueue);
-            Set("REO_COOP_KEYBOARD_FILE", keyboardQueue);
-        }
         string cheatFile = Cheats.Export(settings, Logs, selectedMods);
         Mods.SaveSession(selectedMods, Logs);
         var weaponShuffle = selectedMods.SingleOrDefault(m => m.WeaponShuffle != null)?.WeaponShuffle;
@@ -264,6 +268,9 @@ public sealed class GameSession {
         Set("REO_GS_SPRITE_DEPTH_PARALLEL", "1");
         Set("REO_VIF1_GPU_RESIDENT", "0");
         foreach (var pair in graphics.Environment)
+            Set(pair.Key, pair.Value);
+        // Diagnostic routes drive the original menus themselves.
+        foreach (var pair in IntroSkip.Environment(selectedGame.Id, settings.SkipIntro && diagnosticRoute == null))
             Set(pair.Key, pair.Value);
         if (diagnosticRoute != null) {
             Set("REO_FRAME_PACING_FILE", Path.Combine(Logs, "frames.csv"));
@@ -331,6 +338,11 @@ public sealed class GameSession {
         var stdout = new StreamWriter(Path.Combine(Logs, "stdout.log")) { AutoFlush = true };
         var stderr = new StreamWriter(Path.Combine(Logs, "stderr.log")) { AutoFlush = true };
         AutomaticAccount? account = null;
+        SlowdownSession? recording = null;
+        if (settings.Developer.RecordSlowdowns) {
+            try { Performance = recording = new SlowdownSession(Logs, start, settings.Developer.StrictSlowdowns); }
+            catch (Exception error) { performanceError = new("unavailable", "Performance diagnostics error: " + error.Message); }
+        }
         Process = new Process { StartInfo = start };
         if (settings.ResolvedCoopMode == "host") HostRandomizerConfiguration = randomizerConfiguration;
         try {
@@ -348,19 +360,14 @@ public sealed class GameSession {
             if (!Process.Start())
                 throw new IOException("Windows could not start the game.");
         } catch {
+            recording?.Dispose();
             account?.Dispose();
             cardLease.Dispose();
             stdout.Dispose();
             stderr.Dispose();
             throw;
         }
-        LobbyAutomation? automation = null;
-        if (keyboardQueue != null) {
-            automation = new LobbyAutomation(Process, discElf, controller, keyboardQueue, lobby!,
-                                             text => NetworkStatus = text);
-            _ = automation.Run();
-        }
-        _ = RecordExit(Process, Logs, cardLease, account, automation);
+        _ = RecordExit(Process, Logs, cardLease, account, recording);
         if (randomizerConfiguration != null && settings.ResolvedCoopMode == "join")
             _ = WatchRandomizerSession(Process,Logs,settings.CoopHost,randomizerConfiguration);
         controller.GameProcessId = Process.Id;
@@ -374,6 +381,13 @@ public sealed class GameSession {
         if (OperatingSystem.IsWindows()) _ = Task.Run(() => ControllerRumble.Trace(lightProcess, controller, lightLogs));
         _ = Pump(Process.StandardOutput, stdout);
         graphicsExitDiagnostic = ObserveStandardError(Process.StandardError, stderr, account);
+        if (recording != null) {
+            var recordedProcess = Process;
+            _ = Task.Run(() => {
+                try { recording.Start(recordedProcess, image, hash, selectedGame.Id); }
+                catch (Exception error) { recording.Failed(error); }
+            });
+        }
         await File.WriteAllTextAsync(
             Path.Combine(Logs, "launch.json"),
             JsonSerializer.Serialize(
@@ -391,7 +405,7 @@ public sealed class GameSession {
                       server = onlineEnvironment.GetValueOrDefault("REO_COOP_HOST"),
                       accountUsername = onlineEnvironment.GetValueOrDefault("REO_COOP_USERNAME"),
                       networkProfileMarker,
-                      automaticLobby = keyboardQueue != null,
+                      fastNetwork = start.Environment.ContainsKey("REO_COOP_FAST_NETWORK"),
                       inputDevice = controller.SelectedDevice.Name,
                       fullscreen = graphics.Fullscreen,
                       graphicsEnvironment = graphics.Environment,
@@ -444,16 +458,16 @@ public sealed class GameSession {
         }
     }
     async Task RecordExit(Process process, string logs, FileStream cardLease,
-                          AutomaticAccount? account, LobbyAutomation? automation) {
+                          AutomaticAccount? account, SlowdownSession? recording = null) {
         try {
             await process.WaitForExitAsync();
         } finally {
-            automation?.Dispose();
             account?.Dispose();
             NetworkStatus = randomizerStopReason;
             graphicsStatus = null;
             graphicsReady.TrySetCanceled();
             cardLease.Dispose();
+            recording?.Dispose();
         }
         await Task.Run(() => NetworkTrace.Finish(logs));
         await File.WriteAllTextAsync(Path.Combine(logs, "exit.json"), JsonSerializer.Serialize(new {
@@ -516,7 +530,7 @@ public sealed class GameSession {
     internal static bool SupportsEnemySpawnRandomizer(string image) =>
         HasMarker(image, "[MOD-ENEMY-SPAWN-1] installed seed=%u") &&
         HasMarker(image, RandomizerSession.Capability) && HasMarker(image, "[MOD-ENEMY-ASSETS-1]");
-    static bool HasMarker(string image, string value) {
+    internal static bool HasMarker(string image, string value) {
         byte[] marker = System.Text.Encoding.ASCII.GetBytes(value);
         byte[] buffer = new byte[1024 * 1024 + marker.Length];
         using var source = File.OpenRead(image);

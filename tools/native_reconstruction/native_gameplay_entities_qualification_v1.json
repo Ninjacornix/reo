@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "stage4_complete": false,
+  "game_run": false,
+  "actual_gameplay_callers_migrated": false,
+  "cohorts": {
+    "llvm": {
+      "path": "build-native-sjuni/gameplay-entities-llvm-v1/receipt.json",
+      "sha256": "b301aaae38e2bf75cea4d3866eae84974df71d5cb1d54e349747322cf26b1968",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 1056,
+        "status": "passed",
+        "game_run": false
+      }
+    },
+    "gcc": {
+      "path": "build-native-sjuni/gameplay-entities-gcc-v1/receipt.json",
+      "sha256": "a5fd328283c17fb1aa266e88e372228e861138235f6a34f90b558561e5c3122b",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 1056,
+        "status": "passed",
+        "game_run": false
+      }
+    }
+  },
+  "evidence_sha256": {
+    "build-native-sjuni/gameplay-entities-llvm-v1/receipt.json": "b301aaae38e2bf75cea4d3866eae84974df71d5cb1d54e349747322cf26b1968",
+    "game/native/gameplay_actors/entity.hpp": "78a907f8659a6afd3c991aacfa338a025adc6f03e13407c6925c05346ac02fd3",
+    "game/native/gameplay_actors/entity.cpp": "0bec95182c41091cfa8682394c01d9d89d8c53921ffd383bdfe0baa739f2f369",
+    "game/native/gameplay_actors/entity_tests.cpp": "69275c4afcf5b6f729e08ac20f3ab4da0f307e63f5b265fd2cc19ae1edd569f6",
+    "tools/native_reconstruction/verify_gameplay_entities.py": "20713eb53beae2ee554b21704e61f59b7bf535978e34a179e0b6bfe2d2e80161",
+    "build-native-sjuni/gameplay-entities-llvm-v1/compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/gameplay-entities-llvm-v1/entities.exe": "1131f0762a3c510639ed390bf9f806897cb818b39c0c7768dc26ce3092f8e81b",
+    "build-native-sjuni/gameplay-entities-llvm-v1/run.txt": "21cf0c7a6b58b3e11a5920cb7177b39dda1d288386401c55ba2c233301f79afa",
+    "build-native-sjuni/gameplay-entities-llvm-v1/source/entity.cpp": "0bec95182c41091cfa8682394c01d9d89d8c53921ffd383bdfe0baa739f2f369",
+    "build-native-sjuni/gameplay-entities-llvm-v1/source/entity.hpp": "78a907f8659a6afd3c991aacfa338a025adc6f03e13407c6925c05346ac02fd3",
+    "build-native-sjuni/gameplay-entities-llvm-v1/source/entity_tests.cpp": "69275c4afcf5b6f729e08ac20f3ab4da0f307e63f5b265fd2cc19ae1edd569f6",
+    "build-native-sjuni/gameplay-entities-gcc-v1/receipt.json": "a5fd328283c17fb1aa266e88e372228e861138235f6a34f90b558561e5c3122b",
+    "build-native-sjuni/gameplay-entities-gcc-v1/compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/gameplay-entities-gcc-v1/entities.exe": "763d7799ca6f96d67ef618ff366b7c1c6ca51a91bb967e465895046df8c884d8",
+    "build-native-sjuni/gameplay-entities-gcc-v1/run.txt": "21cf0c7a6b58b3e11a5920cb7177b39dda1d288386401c55ba2c233301f79afa",
+    "build-native-sjuni/gameplay-entities-gcc-v1/source/entity.cpp": "0bec95182c41091cfa8682394c01d9d89d8c53921ffd383bdfe0baa739f2f369",
+    "build-native-sjuni/gameplay-entities-gcc-v1/source/entity.hpp": "78a907f8659a6afd3c991aacfa338a025adc6f03e13407c6925c05346ac02fd3",
+    "build-native-sjuni/gameplay-entities-gcc-v1/source/entity_tests.cpp": "69275c4afcf5b6f729e08ac20f3ab4da0f307e63f5b265fd2cc19ae1edd569f6"
+  },
+  "status": "native entity lifetime policy passes",
+  "limits": [
+    "New native lifetime policy, not an emulation of legacy allocation.",
+    "Payload is typed native Entity; concrete full actor-family state and real consumers remain to migrate.",
+    "Single simulation-owner thread; this does not qualify concurrent actor access."
+  ]
+}

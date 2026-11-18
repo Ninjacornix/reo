@@ -1,0 +1,114 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "game_run": false,
+  "device_opened": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_effects/surface_follower_visual.hpp": "99118f866b27db7f1f052d3af64eaafd0c6ec57cee9ee8511cef27eeafda3a64",
+    "game/native/gameplay_effects/surface_follower_visual.cpp": "1b648ec3b757630252a62fd1fde956f4bacbe990d1306231168b2f3c1c7abcf8",
+    "game/native/gameplay_effects/periodic_visuals.hpp": "04642820ea636bce9853f988d08b3653ed4184311ea885bb80f76fceff399626",
+    "game/native/gameplay_effects/periodic_visuals.cpp": "8c1759f7a786be9fc7015677cc4354cd5728f029cecad85177256502aae2da9d",
+    "game/native/gameplay_world/forward_pose_visuals.hpp": "9f80802e971f028cc6c1292b889cf4449afdffedfb7afb7fb270a346f5e9ddfb",
+    "game/native/gameplay_world/forward_pose_visuals.cpp": "0d17ce65e7c49d68d40cb773d23255fed69c99b8b5fc046812f2ea67c98cdc8f",
+    "game/native/gameplay_effects/surface_follower_owner_tests.cpp": "f7b12095c99d8cfe7f8467395f51a2daca820df394b90e051ec1423e1136adc9",
+    "tools/native_reconstruction/surface_follower_visual_tests.cpp": "4519b8418e93643682126decdffdc785d70c198ecfc7da0cf751d4ee7463dc0f",
+    "tools/native_reconstruction/verify_surface_follower_visual.py": "71bb081d196fd0987bae0da80165254bf5f9c51d86d916c53f30b7c61b14503a",
+    "tools/native_reconstruction/verify_surface_follower_owner.py": "dcdad910a0995ab4c80d0d57dc0bb2d5091507a0d3e3181b76a2060afa455a8d",
+    "tools/native_reconstruction/verify_surface_follower_owner_current.py": "f117168e143dfa18c4cd7e96392402296fc9e3e604434efa64d3e462cd99907e",
+    "tools/native_reconstruction/verify_surface_follower_parents.py": "cf03da1a855e47c86a4d709a03761231ac053704c33f0469ce059733d437dd66",
+    "docs/native-gameplay/SURFACE_FOLLOWER_VISUAL.md": "abff200003e217a846352c0fd3dee52e82c5df9f47010a9be28f02654fa2bbb8",
+    "tools/native_reconstruction/qualify_surface_follower_visual.py": "5bed39e02fcb151d8c7491c17ad57574c5696a0ba63262cfc3ba768550450553"
+  },
+  "receipts": {
+    "build-native-sjuni/surface-follower-visual-llvm-v2/receipt.json": {
+      "sha256": "7ae915defb027ac4f997084ac74b16220602b8493ce4da602cfd26ec50b8337a",
+      "observed": {
+        "checks": 38535168,
+        "cases": 2621440,
+        "retirements": 1835008,
+        "original_calls": 4456448,
+        "game_run": false
+      },
+      "parent_tests": null
+    },
+    "build-native-sjuni/surface-follower-owner-current-llvm-v1/receipt.json": {
+      "sha256": "c1b24fcc2959cb8611c08203fd9e9779d00dd9c245a19e52d92e023e16b59eaf",
+      "observed": {
+        "checks": 3086,
+        "owned_banks": 6,
+        "constructors": 1020,
+        "frames": 480,
+        "budget_cases": 6,
+        "identity_cases": 12,
+        "game_run": false
+      },
+      "parent_tests": null
+    },
+    "build-native-sjuni/surface-follower-owner-llvm-v1/receipt.json": {
+      "sha256": "1d0f4c1540cd94b0900cb8f8f024beedc619ddb2ac8cc2dd76371b8aad589191",
+      "observed": {
+        "checks": 10346,
+        "owned_banks": 6,
+        "constructors": 1020,
+        "frames": 480,
+        "budget_cases": 6,
+        "identity_cases": 12,
+        "game_run": false
+      },
+      "parent_tests": null
+    },
+    "build-native-sjuni/surface-follower-parents-llvm-v2/receipt.json": {
+      "sha256": "74f6ea7ac8daf591cc5172eaf302004fa4d363201cada7e88ad22abbda95a3a6",
+      "observed": null,
+      "parent_tests": 34
+    },
+    "build-native-sjuni/surface-follower-visual-gcc-v2/receipt.json": {
+      "sha256": "2ad1ef204e8f408337e1866af08d436dbf77af4f6d08f160e70bd42bf9ce03db",
+      "observed": {
+        "checks": 38535168,
+        "cases": 2621440,
+        "retirements": 1835008,
+        "original_calls": 4456448,
+        "game_run": false
+      },
+      "parent_tests": null
+    },
+    "build-native-sjuni/surface-follower-owner-current-gcc-v1/receipt.json": {
+      "sha256": "aac6d2e57d8118ce2bf4b996c6bf61c91ae356e701ea7876c08a27ae4f098a4c",
+      "observed": {
+        "checks": 3086,
+        "owned_banks": 6,
+        "constructors": 1020,
+        "frames": 480,
+        "budget_cases": 6,
+        "identity_cases": 12,
+        "game_run": false
+      },
+      "parent_tests": null
+    },
+    "build-native-sjuni/surface-follower-owner-gcc-v1/receipt.json": {
+      "sha256": "43db35d077cff4b80c68a4052c3e915b18aea932944f9aed6bd4bd5430867d5c",
+      "observed": {
+        "checks": 10346,
+        "owned_banks": 6,
+        "constructors": 1020,
+        "frames": 480,
+        "budget_cases": 6,
+        "identity_cases": 12,
+        "game_run": false
+      },
+      "parent_tests": null
+    },
+    "build-native-sjuni/surface-follower-parents-gcc-v2/receipt.json": {
+      "sha256": "bbd34c79413de9bd32a1fc902d9b22af726eabcbcc1602cdc08f7cacca8cde31",
+      "observed": null,
+      "parent_tests": 34
+    }
+  },
+  "cmake_required": [
+    "target_sources(reo_native_gameplay_effects PRIVATE surface_follower_visual.cpp)",
+    "add_test(NAME native_surface_follower_owner COMMAND surface_follower_owner_tests)"
+  ]
+}

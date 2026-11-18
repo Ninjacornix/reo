@@ -9,6 +9,7 @@ from unittest.mock import patch
 from build_game import build, game_profile
 from generate_game import GAMES, prepare_recipe_sources
 from generate_queue_control import generate as queue
+from long_paths import native
 
 
 class GameProfileTests(unittest.TestCase):
@@ -63,9 +64,10 @@ class GameProfileTests(unittest.TestCase):
             target.write_text("# Not executed")
         observed = []
 
-        def generate(recompiler, selected_disc, selected_metadata, output, *, jobs, game):
+        def generate(recompiler, selected_disc, selected_metadata, output, *, jobs, game, staging_parent):
             observed.append(game)
             self.assertEqual(selected_disc, disc.resolve())
+            self.assertEqual(Path(native(staging_parent)),(self.root / "work/generation-staging").resolve())
             (output / "output").mkdir(parents=True)
             (output / "output/generated.cpp").write_text("// synthetic generated source")
             (output / "local_source_catalogues").mkdir()

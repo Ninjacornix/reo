@@ -1,0 +1,30 @@
+# Actor command transition and retry helpers
+
+Static File #1 US research, 2026-11-04. Twelve full original bodies reviewed,
+including every FD0/phase branch. Addresses/offsets are hexadecimal, counts
+explicit decimal. No game/build/replay/attachment/live-memory inspection.
+Command, route and restore labels are candidate roles, not original enum names.
+BA0 bit80000 gates many FB7/state mutations; the reason remains unresolved.
+
+| Guest entry / source | Proposed label | Confidence | Evidence and remaining uncertainty |
+| --- | --- | --- | --- |
+| [o2 0x625630](../recomp/config/output_ovl/o2/o2_00625630_0x625630.cpp) | `classify_actor_command_transition_flags_candidate` | High mechanics; candidate role | BA0bit20 returns2 first. Otherwise bit200 returns1 only if unsigned actor8>=3; all other cases0. Does not mutate actor, inspect global input or wait. |
+| [o2 0x625670](../recomp/config/output_ovl/o2/o2_00625670_0x625670.cpp) | `poll_actor_command_transition_and_route_primary_state_candidate` | Probable role; full body reviewed | Signed1140 phase0 optionally emits684810(actor,1) when1B0310/681970(1,FB5) admit, then incrementsphase. Phase1 classifier0 resets1140,FCF=2 and FB7=0/state1=1 unless BA0bit80000, then optional same emission; classifier2 resets1140,FCF=4, sends6260E0(FB5),684810(actor,6). Classifier1 and other phases retain state. |
+| [o2 0x6257A0](../recomp/config/output_ovl/o2/o2_006257A0_0x6257a0.cpp) | `tick_actor_related_record_retry_sequence_candidate` | Probable role; full body reviewed | a0 actor,a1 work; signed workbyte0 phases0..4. Phase0 queries6B8500(1,BB4), if present sets work8=trunc(recordDBC/2)+16 andphase1; otherwise workC countdown periodically sets DA8=1 when actorstate1 nonzero. Phase1 decrements8 untilzero, requery then sets DBC+16/phase2 orphase0. Phase2 sets DA8=1/phase3. Phase3 decrements8 and polls6B85A0(1,BB4), zero->phase4. Phase4 decrements8, signednegative resetsphase0,8=0,C=8. No blocking retry loop; one invocation advances bounded work. |
+| [o2 0x625930](../recomp/config/output_ovl/o2/o2_00625930_0x625930.cpp) | `tick_actor_saved_transform_restore_sequence_candidate` | Probable role; full body reviewed | FD0 cases0/1/2/3/4/A. Phase0 sets BA0bit1000000, clears80000, resets102C, selects FB7=0, calls581C50(1154,actor), restores ABC/AC0/AC4 XYZ and AC8 yaw, snapshots FDC and offsets it160 via377460; FC4=5 and684810(actor,1). Phase1 enters2; phase2 clears80000 and counts FC4 to0 thenphase3/FB7=1. Phase3 uses horizontal665E10 to FDC; distance<20 clears1000000, advancesphase andemits; bit80000 also advances/emits then immediately entersphase4. Phase4 clears1000000,FCF=2,FD0..3=0 and FF8[16bytes]=0. PhaseA similarly resets andemits. No movement-speed change is introduced by this documentation. |
+| [o2 0x625C50](../recomp/config/output_ovl/o2/o2_00625C50_0x625c50.cpp) | `tick_actor_route_endpoint_and_room_transfer_sequence_candidate` | Probable role; full body reviewed | Everycall sets BA0bit1000000,54A\|5,byte32=FF. FD0phase0 snapshotsroot toFDC,5816F0(1154,actor,FDC,&yaw,0),storesFF4/incrementsphase;1154>=10 insteadgets FDC from4A5C30+10E0*(1020-1). Phase1 bit80000 clears1020,queues626180(1),resetsFCF=2. Otherwise distance20/same1E2 tests and1154<10 split decide FB7=1 movement versusphaseadvance; first case offsetsFDC160 alongFF4. Phase2 waits until distance<30 or roomdiff, then581B60 outputs choose continuation1154/1E2 plus626120(FB5,newroom,4)/queuedmode2, orqueuedmode1/FCF2 reset. Clears BA0bits1000000/80000 after acceptedtransfer. Phase3 state1=(actor1E2==global3243DC). Entity/route indices not locally validated; original numeric transitions preserved. |
+| [o2 0x6260E0](../recomp/config/output_ovl/o2/o2_006260E0_0x6260e0.cpp) | `publish_zero_actor_transition_payload_candidate` | Probable role; full body reviewed | Builds four zero bytes;681790(1,originala0,payload,unsignedglobal4BADED). No local ownership decision or acknowledgement. |
+| [o2 0x626120](../recomp/config/output_ovl/o2/o2_00626120_0x626120.cpp) | `publish_actor_transition_pair_payload_candidate` | Probable role; full body reviewed | Builds bytes[1,1,low8(a1),low8(a2)];681790(1,originala0,payload,unsignedglobal4BADED). Payload length/meaning follows callee; does not directly change actor pose. |
+| [o2 0x626160](../recomp/config/output_ovl/o2/o2_00626160_0x626160.cpp) | `set_actor_primary_transition_and_clear_four_substates` | High; full body reviewed | Clears FD0/FD1/FD2/FD3 thenstoreslow8(a1) intoFCF. Other work untouched. |
+| [o2 0x626180](../recomp/config/output_ovl/o2/o2_00626180_0x626180.cpp) | `queue_actor_control_publication_mode_candidate` | Probable role; full body reviewed | Stores1138=1,1139=low8(a1). No emission here;626190 consumesqueuedmode. |
+| [o2 0x626190](../recomp/config/output_ovl/o2/o2_00626190_0x626190.cpp) | `flush_queued_actor_control_publication_candidate` | Probable role; full body reviewed | If signed1138nonzero, clearsit BEFORE684810(actor,unsigned1139). Zero returnswithoutcall. One pendingbyte, no queue/allocation/wait. |
+| [o2 0x6261C0](../recomp/config/output_ovl/o2/o2_006261C0_0x6261c0.cpp) | `actor_command_post_update_original_noop` | High; original words verified | Original jrra andzero/NOP delay slot; no state or output writes. |
+| [o2 0x6261D0](../recomp/config/output_ovl/o2/o2_006261D0_0x6261d0.cpp) | `clear_actor_transient_command_and_restore_saved_word_candidate` | Probable role; full body reviewed | Clearsglobal4B9D18 andBA0bit200000. IfBD0nonzero clearsit,copiesF80toF84,zerosF90/F7C/F78; otherwiseonlyglobal/flagclear. No resourcefree, motiontick orpointerdereference throughthese savedwords. |
+
+The related-record polling and FD0 transition handlers operate across calls;
+there is no native thread wait or global-update loop inside these helpers.
+Navigation interpretation is supported by explicit positions, distance gates,
+room1E2 transfer and heading offsets; exact command enums remain unassigned.
+
+Owned o2 SHA-256:45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226.
+Original words and omitted-NOP gaps verified against file-backed o2, base570000.

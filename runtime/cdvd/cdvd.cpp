@@ -58,7 +58,7 @@ void CDVD::open_image() {
             const uint64_t bytes = fs::file_size(path);
             assets::require(bytes < 0x100000000ull && lba + (bytes + 2047) / 2048 + 0x4000 < 0x10000000,
                             "Game PAK file map exceeds bounds");
-            m_pakFiles.push_back({static_cast<uint32_t>(lba), bytes, path});
+            m_pakFiles.push_back({static_cast<uint32_t>(lba), bytes, path, name});
             // libcdvd prefetches past EOF (0FLIST.DIR is read as two sectors).
             // Give each file a bounded zero-filled read-ahead area so that such
             // reads cannot accidentally consume bytes from another mapped file.

@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "status": "native start gate through canonical owners qualified; actual guest hook absent",
+  "manifest": {
+    "path": "tools/native_reconstruction/adxt_start_gate_manifest_v1.json",
+    "sha256": "65209de7c8c75a3b1625169dbc5a00dbc809749b22dccf640cac7b5fe67e28ba"
+  },
+  "evidence": {
+    "build-native-sjuni/adxt-start-gate/native-llvm-v1/receipt.json": {
+      "sha256": "74d9c155574af9bd18ac5015e3aa1fff84f324dff144668114cd325b6118497a",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-game-control/start-gate-llvm-v1/receipt.json": {
+      "sha256": "6efbf3a3fed2f78d7328e792a6b2207d60b1ba77ab4d29bf02f31c73a1825aa1",
+      "status": "stable native game controls and admission faults qualified"
+    },
+    "build-native-sjuni/audio-media-factory/start-gate-llvm-v1/receipt.json": {
+      "sha256": "93fa26bbd64b54cd2b0fa69ef80c79f379287053bbdb182dcde09fe3f1b4a1b8",
+      "status": "native media factory protocol passed"
+    },
+    "build-native-sjuni/adxt-binding/start-gate-llvm-v1/receipt.json": {
+      "sha256": "4e0164a7ed0544451fc682a15e2ef61f2fd3725d4aa4353320cbb01659f1fd78",
+      "status": "native game handle ownership and source retirement qualified"
+    },
+    "build-native-sjuni/audio-media-factory/start-gate-actual130-llvm-v1/receipt.json": {
+      "sha256": "4180b46b57932bec0a605d314a4b708ce22746832cb2334d43794282df616406",
+      "status": "passed"
+    },
+    "build-native-sjuni/adxt-start-gate/native-gcc-v1/receipt.json": {
+      "sha256": "57788c062a97170f3ef77b450e8b165aab9c61271f44141bae5e139d6c717dd9",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-game-control/start-gate-gcc-v1/receipt.json": {
+      "sha256": "7c95e23a952a9ed2a0add7a8eaba7c0037ebbc0e483706c78f3208b98e58c613",
+      "status": "stable native game controls and admission faults qualified"
+    },
+    "build-native-sjuni/audio-media-factory/start-gate-gcc-v1/receipt.json": {
+      "sha256": "ca07cfad74c0404255cb9cdc74d888f141b31aa0b8d2dcd9034b78199e1b8c9e",
+      "status": "native media factory protocol passed"
+    },
+    "build-native-sjuni/adxt-binding/start-gate-gcc-v1/receipt.json": {
+      "sha256": "bf68ce12a52f71b304daf1348cc7781375ce59283d111d340201aeb04a467910",
+      "status": "native game handle ownership and source retirement qualified"
+    },
+    "build-native-sjuni/audio-media-factory/start-gate-actual130-gcc-v1/receipt.json": {
+      "sha256": "e3cd7ccbf622e467a5a385ea0788a0c3ae9ca4c5b0237b278fc367707c08950b",
+      "status": "passed"
+    }
+  },
+  "native_suites": 75,
+  "factory_scenarios_per_compiler": 12,
+  "game_handle_workflows_per_compiler": 3,
+  "existing_control_faults_detected_per_compiler": 3,
+  "existing_handle_faults_detected_per_compiler": 3,
+  "actual_sdk_objects_per_compiler": 1,
+  "contract_sha256": "809e2fed5c392a4d4932b9f7988ce4da8c901931dd2fd697741826d0896a50c4",
+  "results_sha256": "dec38c4bec01690e47211e8d389fb92b229e86612d35b6cd0a393a516f0f7003",
+  "guest_hook_installed": false,
+  "actual_runtime_acquisition": false,
+  "game_run": false,
+  "actual_audio_device_test": false,
+  "in_v16_preflight_kit": false
+}

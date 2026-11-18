@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "status": "qualified native/original complete audio and transfer dispatch envelopes",
+  "stage3_complete": false,
+  "production_selected": false,
+  "game_run": false,
+  "device_opened": false,
+  "whole_child_pipeline_qualified": false,
+  "cases": 128,
+  "original_instructions": 82740,
+  "manifest_sha256": "cae3e1dd19deeedc0763230987081beb6efc2ee9954b95f2360ad4c37cde633a",
+  "prior_manifest_sha256": "96c6c6bffbc3f3f71a3a803bdb1c2480093c780bc1939df0cabdb1c3a50843db",
+  "changed_files": [
+    "game/native/adxt_transfer_groups/transfer_groups_tests.cpp"
+  ],
+  "receipts": {
+    "build-native-sjuni/adxt-transfer-groups/original-v1/receipt.json": "bd8db6700f9beb87d7f803ad2163278433da56436883942d0a471fcd1b404c6a",
+    "build-native-sjuni/adxt-transfer-groups/qualified-gcc-v2/receipt.json": "e8435e66f38c505415ca01a450cc12bda758242c25ec8bd3320dcea3d7617eb4",
+    "build-native-sjuni/adxt-transfer-groups/qualified-llvm-v1/receipt.json": "8df053e28ace32f21a92eb4f585ca91823c9d070ffa3a3dafe093f6b2ee3b757",
+    "build-native-sjuni/adxt-transfer-groups/parent-gcc-v1/receipt.json": "e4cfd63432e1ca7b332da7d86580dd57382d819848f571537878bffad39a2f16",
+    "build-native-sjuni/adxt-transfer-groups/parent-llvm-v1/receipt.json": "bf9eed1888bec3ea1c8c9229c66f836d42ff580864ebf0579782c04b72471e81"
+  },
+  "additional_sources": {
+    "game/native/adxt_transfer_groups/README.md": "3634ba839a561d622d48c229747f2a232055d43c5b763ab8c9031576388c9557",
+    "docs/native-media/ADXT_TRANSFER_GROUPS_IMPLEMENTATION.md": "4671141f499fa3a2ee0fa40a1c9aa63f0b1d8e9872f8b7a48caa81d0636de0b5",
+    "game/native/CMakeLists.txt": "8d689b60b35c9fc76fa072ce72f60dc3d0801005fb18c75be37d7a22cf7a72d0",
+    "docs/NATIVE_RECONSTRUCTION_PLAN.md": "82cebff693323c9b935e658ed2d63f48d0b29c10b7a86848174fa5bce589c1f9"
+  }
+}

@@ -1,0 +1,195 @@
+{
+  "schema": 1,
+  "status": "ordinary V39 gameplay/options/resumed movement passed; all nine hook entries have actual completed calls across eight passing cases",
+  "stage4_complete": false,
+  "native_world_installed": false,
+  "temporary_gameplay_save_resume_proven": false,
+  "executable_sha256": "bbf7d5915bac85dda9305b88db44d9103912a1b242acb2aeba2825e4bbff6b44",
+  "helper_sha256": "051052e70f1ce6ee1f34f280c86f09105db0a93e6dc10d79983db7c91efe38e9",
+  "game_code_changed": false,
+  "helper_changed": false,
+  "guest_writes": false,
+  "threads_suspended": false,
+  "focus_requested": false,
+  "window_writes": false,
+  "global_keyboard_input": false,
+  "desktop_capture": false,
+  "player_card_selected": false,
+  "analysis": {
+    "path": "build-native-sjuni/native-gameplay/v39-gameplay-options-analysis-v1.json",
+    "sha256": "e9a7a03cc5749902c62b37fb80aabeb37f6c9bf54846e7dfa4361aa0aaaee499"
+  },
+  "passing_case": "v39-gameplay-options-v2",
+  "session": "20261109-120218-392",
+  "failed_case": "v39-gameplay-options-v1",
+  "actual_hook_entries_completed": 9,
+  "actual_hook_entries_total": 9,
+  "completed_entry_aggregate_across_eight_passes": {
+    "0x1c5410": 3,
+    "0x1c55c0": 4,
+    "0x1c5630": 2,
+    "0x1aec50": 7,
+    "0x1aec80": 28058,
+    "0x1aed60": 7,
+    "0x1aedb0": 248,
+    "0x1aee40": 14,
+    "0x1badf0": 1
+  },
+  "observed_rows_current_case": 2098,
+  "observed_rows_eight_passes": 8357,
+  "foreground_rows": 0,
+  "gameplay_metrics": {
+    "stable_rows": 1712,
+    "ready_rows": 1396,
+    "options_rows": 84,
+    "options_snapshot_matching_rows": 84
+  },
+  "native_totals": {
+    "0x1c5410": {
+      "accepted": 0,
+      "completed": 0,
+      "failed": 0,
+      "rejected": 0
+    },
+    "0x1c55c0": {
+      "accepted": 0,
+      "completed": 0,
+      "failed": 0,
+      "rejected": 0
+    },
+    "0x1c5630": {
+      "accepted": 0,
+      "completed": 0,
+      "failed": 0,
+      "rejected": 0
+    },
+    "0x1aec50": {
+      "accepted": 1,
+      "completed": 1,
+      "failed": 0,
+      "rejected": 0
+    },
+    "0x1aec80": {
+      "accepted": 27999,
+      "completed": 27999,
+      "failed": 0,
+      "rejected": 0
+    },
+    "0x1aed60": {
+      "accepted": 1,
+      "completed": 1,
+      "failed": 0,
+      "rejected": 0
+    },
+    "0x1aedb0": {
+      "accepted": 248,
+      "completed": 248,
+      "failed": 0,
+      "rejected": 0
+    },
+    "0x1aee40": {
+      "accepted": 2,
+      "completed": 2,
+      "failed": 0,
+      "rejected": 0
+    },
+    "0x1badf0": {
+      "accepted": 0,
+      "completed": 0,
+      "failed": 0,
+      "rejected": 0
+    }
+  },
+  "native_join": {
+    "schema": 1,
+    "binding": 1,
+    "joined": 1,
+    "installed": 1,
+    "restore_ok": 0,
+    "restore_error": 0,
+    "trace_rows": 128,
+    "trace_overwritten": 378,
+    "rng_rows": 0
+  },
+  "native_audio": {
+    "owner_joined": "1",
+    "output_started": "1",
+    "frames": "10471680",
+    "signal_frames": "8228230",
+    "underrun_frames": "0",
+    "hard_failures": "0",
+    "queue_rejections": "0",
+    "native_sources": "1",
+    "source_joined": "1",
+    "submix_calls": "21816",
+    "submix_failures": "0"
+  },
+  "movement": [
+    {
+      "stage": "before-movement",
+      "distance": 44.657122604141335,
+      "scenario_room": [
+        1,
+        1
+      ],
+      "local_slot": 0
+    },
+    {
+      "stage": "after-movement",
+      "distance": 50.99938752236692,
+      "scenario_room": [
+        1,
+        1
+      ],
+      "local_slot": 0
+    }
+  ],
+  "brightness_before": 128,
+  "brightness_after": 129,
+  "retained_saved_option_tail_eight_bytes": true,
+  "private_card_before_after_empty": true,
+  "frozen_harness": {
+    "tools/native_reconstruction/gameplay_save_live/drive.py": {
+      "path": "build-native-sjuni/native-gameplay/live-harness-gameplay-options-v2/tools/native_reconstruction/gameplay_save_live/drive.py",
+      "sha256": "bb149cea3da5d43e70e4558eda9addb552afc537e63a2c4db36391e680c39deb"
+    },
+    "tools/native_reconstruction/gameplay_save_live/run.py": {
+      "path": "build-native-sjuni/native-gameplay/live-harness-gameplay-options-v2/tools/native_reconstruction/gameplay_save_live/run.py",
+      "sha256": "3d46b4deebaac13f6a54824d9800919a6d156bbbab95e81533784b67056f2e47"
+    },
+    "tools/native_reconstruction/gameplay_save_live/inventory.py": {
+      "path": "build-native-sjuni/native-gameplay/live-harness-gameplay-options-v2/tools/native_reconstruction/gameplay_save_live/inventory.py",
+      "sha256": "0f78874c456da71ddae798a868ef8609fe857e4a20adda36dab13261d48f2d7f"
+    },
+    "tools/native_reconstruction/gameplay_save_live/summarize.py": {
+      "path": "build-native-sjuni/native-gameplay/live-harness-gameplay-options-v2/tools/native_reconstruction/gameplay_save_live/summarize.py",
+      "sha256": "33d4660d7bf22efbe6aab87fff2a6c2e5ce7f0b8fc4831dd9c2602af2b01aa17"
+    },
+    "tools/native_reconstruction/gameplay_save_live/gameplay_source.py": {
+      "path": "build-native-sjuni/native-gameplay/live-harness-gameplay-options-v2/tools/native_reconstruction/gameplay_save_live/gameplay_source.py",
+      "sha256": "b881c85273eb93810d66b292d6856c85f457e4825f632f1bcb8b3bb8929606ac"
+    },
+    "tools/native_reconstruction/gameplay_save_live/default_route_source.py": {
+      "path": "build-native-sjuni/native-gameplay/live-harness-gameplay-options-v2/tools/native_reconstruction/gameplay_save_live/default_route_source.py",
+      "sha256": "a425927f6fffc376e41f583f8e4635c252ef11e8d88500c2d750add55a49a1ea"
+    },
+    "tools/native_reconstruction/native_gameplay_save_live_preparation_qualification.json": {
+      "path": "build-native-sjuni/native-gameplay/live-harness-gameplay-options-v2/tools/native_reconstruction/native_gameplay_save_live_preparation_qualification.json",
+      "sha256": "bfbf095f432a037f3bea39f45fa74b5811a71a9d9e5266c8b51b8b767e53fc35"
+    }
+  },
+  "evidence_sha256": {
+    "docs/native-gameplay/SAVE_SESSION_V39_GAMEPLAY_OPTIONS.md": "25594fb3729ac87926f7bcb1eb051638b3c9da54c5e30a7ed875c37cba8c471c",
+    "tools/native_reconstruction/native_gameplay_save_v39_live_qualification_v1.json": "a89a21f59a8258dfd723c4fbaa47366e6215506aa26cffb069228d83ff0b8a49",
+    "build-native-sjuni/native-gameplay/gameplay-options-source-v1.json": "1f13286ed291a6034506fffec931b7a1d8cc0ddbdbf7ef532a97625fce5909c1",
+    "build-native-sjuni/native-gameplay/gameplay-default-route-source-v1.json": "b1993b0eb1dd1da7fb81bc3595c3c47b4142516f02aa58a51fbf045864beea67",
+    "build-native-sjuni/native-gameplay/live/v39-gameplay-options-v2/preparation-at-launch.json": "bfbf095f432a037f3bea39f45fa74b5811a71a9d9e5266c8b51b8b767e53fc35"
+  },
+  "limits": [
+    "Actual complete invocation coverage refers to nine leaf hooks over eight cases, not every UI branch, nineteen caller sites or a fully native world.",
+    "The bounded native trace overwrote378 rows exactly; final full counters are complete, early checkpoints are not reconstructed.",
+    "This uses ordinary private pad and passive owned-process reads; observations are not atomic instruction traces.",
+    "The source route fallback did not unlock chapters or alter cursor/state; it admitted only default unlocked cursor0/count1 after explicit optional-selector refusal.",
+    "Native output counters do not prove physical speaker output or globally stutter-free rendering."
+  ]
+}

@@ -356,6 +356,8 @@ public:
 	static TexRect compute_effective_texture_rect(const TextureDescriptor &desc);
 
 	FlushStats consume_flush_stats();
+	// Device VRAM buffer (presentation warp depth snapshot).
+	const Vulkan::Buffer *resident_vram_buffer() const { return buffers.gpu.get(); }
 
 	double get_accumulated_timestamps(TimestampType type) const;
 	void set_enable_timestamps(bool enable);

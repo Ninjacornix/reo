@@ -1,0 +1,820 @@
+{
+  "schema": 1,
+  "status": "V33 gallery, V34 background room transition and seventeen-cue regressions consolidated",
+  "analysis_only": true,
+  "game_launched_by_this_analysis": false,
+  "existing_evidence_modified": false,
+  "step3_complete": false,
+  "evidence_sha256": {
+    "build-native-sjuni/candidate-work-v33/candidate-build-result.json": "db6243a478d331ce9292d8f543526b554bed971d7275940b1bbb5eecce581cc5",
+    "build-native-sjuni/native-media-game-v33/native-media-package-receipt.json": "e7be25b210971ce5cb2602df184dd607ee2d3307a76204ff56cb35662165e79d",
+    "build-native-sjuni/candidate-inputs-v33/build-kit.json": "d626a17959f443fa2023c1c22313c4b2c85687b1b1a1d1d84027a7ed08224d3e",
+    "build-native-sjuni/candidate-work-v34/candidate-build-result.json": "d8c90baff7bfeae8073af17973320b55be45587087cf630c4d4ca9610572144b",
+    "build-native-sjuni/native-media-game-v34/native-media-package-receipt.json": "5d5fbdead840825d128370fac0e87956cff31181660906bcfbc4b2b230b2f410",
+    "build-native-sjuni/candidate-inputs-v34/build-kit.json": "93b1d6b25dce2c7f9a75c8b9ac359d23d3e111f3f96251001904fcde85afd9b2",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-020831-679/native-game-session-running.json": "250ec5417eb4b5f4644c9920d313751dee4503bec550689f0860da8371c87405",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-020831-679/native-game-session-check.json": "2fb97b890c0d3e6b8889f20aefcfd77e3218e15c24a324b6e8e0f67923e76646",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-020831-679/exit.json": "bc61ba6b56b68759a0e0f0cad043645e60111e78121910fc4d1793af5b252a7b",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-020831-679/launch.json": "8eaf74c868016e05dcfad013131c04d90c38dafa7c1302a0af5839aedb66de17",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-020831-679/stderr.log": "64ab6c7fef093fe18d503c769a56f3aa96f3e34a48af7be5cb0ff1b1b36e0e15",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-020831-679/stdout.log": "d356380793d3892c995ae89d44002589f69c9a89ffd993dc472ff32c38c41597",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-020831-679/background-state-v3.jsonl": "ae46fdb3347ed328ce4932bf9f74e84568d66efb9ced8ee1043554351e19d2c0",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-020831-679/background-state-v3-receipt.json": "2c0ba1bfff8d85a4aac15764e2c489e1b457addfd67617bcc47affb86713f252",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-020831-679/native-audio-control.csv": "23c7ea33017a4a6e9a90fca79623a67c228f08d1770deccb374ec12480b4f367",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-020831-679/native-movie-producer.csv": "3dd7fc081ba9659487467f95dc4290c3de0110778888576b4f4441c0a313b6bb",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-020831-679/native-movie-consumer.csv": "2fe71e60a3d6c3ed80f0944d95b955c0736d26f35b58eee62754cbecd8d5d48d",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-020831-679/background-native-media-analysis.json": "ce856d19bdcafbac19cb052adb2c09a4a3bc9b9dcd77b54e7bf1c24a46a6e34c",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/native-game-session-running.json": "82a2e29d0ebac391c65397abd0cc64c79bcfe7e47eaedb277395ae62a803c38d",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/native-game-session-check.json": "0f2a319d3893f0f30f8ecc30bd77e162b1317d54588f1114ebe0aea992d0636f",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/exit.json": "28476fd67a39a5cbad346ebd97e7d366a03cd3c4bc7218d56eb323ac010f6e45",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/launch.json": "fa7f692caf01bde82e37db156e0e0caba03430da953a489889d746dfe4343db2",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/stderr.log": "4957153f4d8fec0e79ad17e55d0459cf8d26e42f5141341364c3d5e08336d47b",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/stdout.log": "80c409c7caa3dc3083098830e3406b5872735c401092b531bb011a92e08be42b",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/background-state-v3.jsonl": "8667f1a20db83ba369136a30a8fc772e369f4dca9ae26c5aa2368b8df3a8f7a8",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/background-state-v3-receipt.json": "119fef4a95fb3ce5be551319dab42696c7c764671b84b5d02f8fb89c66b3eab5",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/native-audio-control.csv": "1431e8553e13b06740744a2e81a3a4e3118d6ea277390dde32d136508275c998",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/native-movie-producer.csv": "aad5853f258eab7cbbb9333b2961e6f801f2836a3086d51d48dfe69b427413ec",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/native-movie-consumer.csv": "a9000d3706f8da08ba3e458260954fb46f3ad57ee02f9eac765faeb2c9595755",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/background-native-media-analysis.json": "c0b904db401e30f0fdf17c810a6bfcbd161f4d18ea12935f8c6ddd81e6b06a50",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/native-audio-control-analysis.json": "0a060685420fc19f06f96466ec491d5876a10755b59dcd7b4d228b99dd53a3ba",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/ui-gallery-e3-complete.json": "ca36c80a56682db9766dad73538a1b3805fca2d0207653fd9155d2becc9cb181",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/ui-gallery-e3-skip.json": "3b8b36f10e2835039d0667ceaefcb860c0bdeb547e3d4561ea1388dd31d6436c",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/ui-gallery-play-scenario-clip.json": "cfe870b41bdc03426968241bada4d8d98f5dad84cd4988f9f094e97334439857",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/pad-gallery-e3-replay.json": "e075762a478d40d8f3b577657c41dd55613ec7bb182b71cb7a131311014565d1",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/pad-gallery-e3-skip.json": "81539efa21e7192a11ae65b5158abafd2188b96daa6609f2ea009ac9cffc508a",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/pad-gallery-play-scenario-clip.json": "792b2fb459bf53f7e5d4f34bdf3dffb07bc26614641f975d7e7a68201fa9c360",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/target-window-classes.json": "9026c58bf783fb902e1446bc4b9b348e89b572b00e3066286d8d276731c62a24",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/launcher-process-audio-result.json": "7e6983e916491bcbecfeb7da361cae6c1f5c88b6477aee1c9ecb70bd5b00a581",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/launcher-process-audio.wav.packets.csv": "636b8364ac554914a61b40b218074e47de2aa3b91e30c3978e2a6db4020840de",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-030626-335/native-game-session-running.json": "10cb300c860945988b4c60c576741fb72a70edacb89fc8a0a51d8bc9a550eda0",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-030626-335/native-game-session-check.json": "0fb460828f7a33095af2a56aba55c349b36a5f8402f7b397614095bf50ff2d8e",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-030626-335/exit.json": "4adfce400ff2a1482f41ae75c8dadabe28393cea7fc26193754a0619f172f7b4",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-030626-335/launch.json": "1b6024c7128adbf4db23c6c94b46cecef1f507707a9d194d9aec9717773d0656",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-030626-335/stderr.log": "bedd5419f7b33a21d9f1a5efe85be156e55760e8296a4457e7308eb8c7aff5cc",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-030626-335/stdout.log": "a9460243d25d2d27f4f936fa0125acc2583dd2fde1388f0255a2602bfc3216ed",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-030626-335/background-state-v3.jsonl": "7defd92494b9345c415712664dbd933d660d5ce36c978a22d461c4701f9f182d",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-030626-335/background-state-v3-receipt.json": "f242aad65c3524f3c31962e23ffe051fc03c132529fe5f74bfa73a5e1aa7498e",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-030626-335/native-audio-control.csv": "abeddc0959fb8f6ee961af5386338e374903d47996504f68272b835a972d9e6e",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-030626-335/native-movie-producer.csv": "714b10c1781c0f2b5df1637a45a7af6175563e7ac4f34307758087925184bbc8",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-030626-335/native-movie-consumer.csv": "70185269bd2dbc530554ec21d6d64fdceac08f50837db42622feaba3f1c49da5",
+    "build-native-sjuni/candidate-inputs-v34/source/recomp/overrides/reo_hw_bridge.cpp": "bc89559586915089579a4f6dc562217c41b9f12bf885132b3944ff6c81c30343",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-030626-335/clock.csv": "198121a807b8913c235935e8779c81dcf3b0259972788dd4ca4d509b22d3dfea",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-032345-794/native-game-session-running.json": "c25489492f5b556cb56141a6ca14b3ed455feeabad0a4fc49466ff6027e527d9",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-032345-794/native-game-session-check.json": "508dfa1d5bf1e00ca5c14d1c1011e34a31a030afbb39afe59007b9f77dbb3d7f",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-032345-794/exit.json": "b2e072574b7abbdf153761e0a91afd4ce23794b30be74d1b7a07c474b6615ab8",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-032345-794/launch.json": "b7c678f53fcbe63471ac1b39010409216350ac465ae8e3d63c28d7f762e69df5",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-032345-794/stderr.log": "9349bd3b3efce2703120ea9ebd6e10539ffcbad2b0425f0f8140f047a95574c6",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-032345-794/stdout.log": "81986bc453db8ce2705b1390b93b0ab0d9bcd23cd821c9e0cce2fc6b987d7c0f",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-032345-794/background-state-v3.jsonl": "6be61c318510348ae9252316c00ff1034523151fbe654bbd26471b21eb9f038e",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-032345-794/background-state-v3-receipt.json": "92cc3befda5b09354828a1a83f08f7acf5efe74e6a4eab9ceee41580d966c7e4",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-032345-794/native-audio-control.csv": "342e8ffcc5aa9d92521ff8a46fa936a43429736113849f8b8715aa7b6cbf732b",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-032345-794/native-movie-producer.csv": "5f36ba507e77ec583cc576f55054f9478f048fb590a995b149db3ec24113ba46",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-032345-794/native-movie-consumer.csv": "fb5b43f68af99ac141641e8608fb03f20ea01640b7d09e1628f694717a1dfd97",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-032345-794/room-transition-driver-v1.json": "936c21a73472508e00b25179775d2be17136f72908ad529a8e323e6b7d75c31b",
+    "build-native-sjuni/drive_room_transition_v1.py": "15fecbfcfddc351bee9f2ec3d40b5fefcb4cfece68c8f3ca35028a0da8a61bd9",
+    "build-native-sjuni/media-cue-capacity-results-llvm-v2/receipt.json": "49b1cff4e0e2cf6d15402286fbe885f9c5d7d564d93059d35c5e9ebb67ae41e4",
+    "build-native-sjuni/adxt-binding/ordinary-cue-capacity-regression-llvm-v1/receipt.json": "0973e8d5ab8157323cec16ba7e19f521d07450916fef4305d478fa0b6b35d626",
+    "build-native-sjuni/media-cue-capacity-results-gcc-v2/receipt.json": "a33122e31778c83aca255721ca5affa82d643dc30181645f0e682e926017ad36",
+    "build-native-sjuni/adxt-binding/ordinary-cue-capacity-regression-gcc-v1/receipt.json": "e56cb0b09f5c67e15add196f86d405c9d53d7691e331a10a59c6d8c8756a82ad",
+    "tools/native_reconstruction/native_cue_capacity_manifest_v2.json": "6cd0fcaeddaf4972131a6f5f35716e3747fca380ada3cf63feea15815af5d187",
+    "tools/native_reconstruction/native_cue_capacity_qualification_v1.json": "35d9e149a57d1d211e783c74fcd91192514ceacb2f5bb82a0c3a4e60f640e2bd",
+    "build-native-sjuni/gallery-e3-digital-clock-v1/correlation.json": "f558874a6629dde83574c682ce12a3c3cd5cb2256cf61cf57994e403e387296a",
+    "build-native-sjuni/correlate_gallery_e3_audio_v1.py": "efdea0aed787900ed7e11ea854874359e69e68cd7adf8e37eb4429c4484284fd",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-022331-902/launcher-process-audio.wav": "87a30cf9c857bd304b0da5556d2cdb4845927c00e6f8f4cdcf9ebcee6e1e4e46",
+    "build-native-sjuni/gallery-e3-digital-clock-v1/decode.json": "93c60df0838775d30b41d8e9365db9bcb38ca1f54b9bf6cd32484333695fa70f",
+    "build-native-sjuni/gallery-e3-digital-clock-v1/expected.pcm": "625c18e02d2409b6548a57dbb9fff50e404e6b8298292dda7cfa47ae02b8bb21"
+  },
+  "cases": [
+    {
+      "session": "20261109-020831-679",
+      "candidate": 33,
+      "source_revision": "fdfeacf9635977d82ff02f67d512247b894fdc7e",
+      "identity": {
+        "pid": 317460,
+        "creationFileTime": 134386601218967835,
+        "image": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\game-cache\\55db7ade66acb3bd254807de6c1d644dcee638872eaff1b43335485ebbaf8644\\reo_launcher_game.exe",
+        "executable_sha256": "e8e23c8910fc4fd0a3d87017e3180c0f4febb29db9bfdb179c6e3911b44eecd2"
+      },
+      "result": {
+        "status": "native GameSession launch and retirement passed",
+        "selected": true,
+        "audio_selected": true,
+        "resource_selected": true,
+        "native_error": false,
+        "duration_completed": true,
+        "cue_owner_joined": true,
+        "media_error": false,
+        "forced_cleanup": false,
+        "exit_code": 0,
+        "movie_status": "Movies: native MP4",
+        "logs": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\sessions\\20261109-020831-679",
+        "elapsed_seconds": 603.5480381,
+        "game_launched": true,
+        "ui_window_constructed": false,
+        "route": "main-menu",
+        "background": true,
+        "subjective_av_confirmation": false,
+        "step3_complete": false
+      },
+      "observer": {
+        "samples": 526,
+        "foreground_samples": 4,
+        "minimized_samples": 522,
+        "scenario_rooms": [
+          [
+            65535,
+            0
+          ]
+        ]
+      },
+      "media_analysis": {
+        "trace_retention": {
+          "native-movie-producer.csv": "# dropped=0",
+          "native-movie-consumer.csv": "# dropped=0"
+        },
+        "native_audio": {
+          "status": "retired",
+          "installations": [
+            {
+              "line": 261,
+              "pcm_bytes": 391680000
+            }
+          ],
+          "audio_reports": [
+            {
+              "line": 5303,
+              "owner_joined": 1,
+              "output_started": 1,
+              "frames": 27624480,
+              "signal_frames": 19364945,
+              "underrun_frames": 0,
+              "hard_failures": 0,
+              "queue_rejections": 0
+            }
+          ],
+          "ram_reports": [
+            {
+              "line": 5304,
+              "retired": 1,
+              "active_slots": 0,
+              "active_operations": 0,
+              "diagnostic_reports": 17,
+              "first_refusal_or_diagnostic": 1540,
+              "operations": {
+                "begin": {
+                  "attempts": 28,
+                  "refused": 0
+                },
+                "end": {
+                  "attempts": 28,
+                  "refused": 0
+                },
+                "read": {
+                  "attempts": 150,
+                  "refused": 0
+                },
+                "control": {
+                  "attempts": 75,
+                  "refused": 0
+                },
+                "forward": {
+                  "attempts": 0,
+                  "refused": 0
+                },
+                "snapshot": {
+                  "attempts": 17,
+                  "refused": 0
+                },
+                "log": {
+                  "attempts": 17,
+                  "refused": 17
+                },
+                "packet": {
+                  "attempts": 17,
+                  "refused": 0
+                },
+                "bank": {
+                  "attempts": 0,
+                  "refused": 0
+                },
+                "pcm": {
+                  "attempts": 0,
+                  "refused": 0
+                },
+                "retire": {
+                  "attempts": 1,
+                  "refused": 0
+                }
+              }
+            }
+          ],
+          "errors": [],
+          "limitations": [
+            "Final totals have no per-window timestamps; cannot attribute an underrun to a movie gap.",
+            "Diagnostic reports and optional packet-log refusals are separate from audio failures; neither may be silently cleared.",
+            "Aggregate first diagnostic lacks RPC/request identity; unrecorded diagnostic details remain unknown.",
+            "Installation and joined output are not waveform, all-bank, every-room, clock or performance-equivalence proof."
+          ]
+        },
+        "cue_reports": [
+          {
+            "joined": 1,
+            "accepted": 0,
+            "finished": 0,
+            "records": 0,
+            "failures": 0
+          }
+        ],
+        "process_audio": {
+          "scope": "owned-process-tree-only",
+          "pid": 317460,
+          "creation_filetime": 134386601218967835,
+          "frames": 25688640,
+          "nonzero_pcm_frames": 21044429,
+          "peak_pcm16": 22528,
+          "rms_pcm16": 1512.618567,
+          "discontinuous_packets": 0,
+          "timestamp_errors": 0,
+          "process_exited": false,
+          "elapsed_seconds": 540.017934
+        },
+        "original_player_slot_nonzero_samples": 0,
+        "active_audio_modes": {
+          "0": 758,
+          "1": 820
+        },
+        "runtime_thread_diagnostics": [
+          "[ERROR]: Thread does not exist in thread manager or is not the main thread.",
+          "[ERROR]: Thread does not exist in thread manager or is not the main thread."
+        ]
+      }
+    },
+    {
+      "session": "20261109-022331-902",
+      "candidate": 33,
+      "source_revision": "fdfeacf9635977d82ff02f67d512247b894fdc7e",
+      "identity": {
+        "pid": 323028,
+        "creationFileTime": 134386610152267056,
+        "image": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\game-cache\\55db7ade66acb3bd254807de6c1d644dcee638872eaff1b43335485ebbaf8644\\reo_launcher_game.exe",
+        "executable_sha256": "e8e23c8910fc4fd0a3d87017e3180c0f4febb29db9bfdb179c6e3911b44eecd2"
+      },
+      "result": {
+        "status": "native GameSession launch and retirement passed",
+        "selected": true,
+        "audio_selected": true,
+        "resource_selected": true,
+        "native_error": false,
+        "duration_completed": true,
+        "cue_owner_joined": true,
+        "media_error": false,
+        "forced_cleanup": false,
+        "exit_code": 0,
+        "movie_status": "Movies: native MP4",
+        "logs": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\sessions\\20261109-022331-902",
+        "elapsed_seconds": 603.772965,
+        "game_launched": true,
+        "ui_window_constructed": false,
+        "route": "main-menu",
+        "background": true,
+        "fixture_progression_unlocks": true,
+        "card": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\gallery-cards\\7c26159a7579498991916b2a9bf919bf",
+        "subjective_av_confirmation": false,
+        "step3_complete": false
+      },
+      "observer": {
+        "samples": 559,
+        "foreground_samples": 0,
+        "minimized_samples": 559,
+        "scenario_rooms": [
+          [
+            1,
+            0
+          ],
+          [
+            65535,
+            0
+          ]
+        ]
+      },
+      "media_analysis": {
+        "trace_retention": {
+          "native-movie-producer.csv": "# dropped=0",
+          "native-movie-consumer.csv": "# dropped=0"
+        },
+        "native_audio": {
+          "status": "retired",
+          "installations": [
+            {
+              "line": 261,
+              "pcm_bytes": 391680000
+            }
+          ],
+          "audio_reports": [
+            {
+              "line": 5317,
+              "owner_joined": 1,
+              "output_started": 1,
+              "frames": 27800640,
+              "signal_frames": 21596143,
+              "underrun_frames": 0,
+              "hard_failures": 0,
+              "queue_rejections": 0
+            }
+          ],
+          "ram_reports": [
+            {
+              "line": 5318,
+              "retired": 1,
+              "active_slots": 0,
+              "active_operations": 0,
+              "diagnostic_reports": 23,
+              "first_refusal_or_diagnostic": 1540,
+              "operations": {
+                "begin": {
+                  "attempts": 34,
+                  "refused": 0
+                },
+                "end": {
+                  "attempts": 34,
+                  "refused": 0
+                },
+                "read": {
+                  "attempts": 180,
+                  "refused": 0
+                },
+                "control": {
+                  "attempts": 87,
+                  "refused": 0
+                },
+                "forward": {
+                  "attempts": 0,
+                  "refused": 0
+                },
+                "snapshot": {
+                  "attempts": 23,
+                  "refused": 0
+                },
+                "log": {
+                  "attempts": 23,
+                  "refused": 23
+                },
+                "packet": {
+                  "attempts": 23,
+                  "refused": 0
+                },
+                "bank": {
+                  "attempts": 0,
+                  "refused": 0
+                },
+                "pcm": {
+                  "attempts": 0,
+                  "refused": 0
+                },
+                "retire": {
+                  "attempts": 1,
+                  "refused": 0
+                }
+              }
+            }
+          ],
+          "errors": [],
+          "limitations": [
+            "Final totals have no per-window timestamps; cannot attribute an underrun to a movie gap.",
+            "Diagnostic reports and optional packet-log refusals are separate from audio failures; neither may be silently cleared.",
+            "Aggregate first diagnostic lacks RPC/request identity; unrecorded diagnostic details remain unknown.",
+            "Installation and joined output are not waveform, all-bank, every-room, clock or performance-equivalence proof."
+          ]
+        },
+        "cue_reports": [
+          {
+            "joined": 1,
+            "accepted": 3,
+            "finished": 3,
+            "records": 0,
+            "failures": 0
+          }
+        ],
+        "process_audio": {
+          "scope": "owned-process-tree-only",
+          "pid": 323028,
+          "creation_filetime": 134386610152267056,
+          "frames": 25833600,
+          "nonzero_pcm_frames": 22831404,
+          "peak_pcm16": 20549,
+          "rms_pcm16": 2113.765846,
+          "discontinuous_packets": 0,
+          "timestamp_errors": 0,
+          "process_exited": false,
+          "elapsed_seconds": 540.007937
+        },
+        "original_player_slot_nonzero_samples": 0,
+        "active_audio_modes": {
+          "0": 697,
+          "1": 548,
+          "4": 432
+        },
+        "runtime_thread_diagnostics": [
+          "[ERROR]: Thread does not exist in thread manager or is not the main thread.",
+          "[ERROR]: Thread does not exist in thread manager or is not the main thread."
+        ]
+      },
+      "gallery": {
+        "full_e3": {
+          "generation": 4,
+          "clip": 0,
+          "publications": 6144,
+          "unique_ordinals": 6144,
+          "first_ordinal": 0,
+          "last_ordinal": 6143,
+          "first_line": 3697,
+          "last_line": 9840,
+          "first_publication_ns": 282554873407400,
+          "last_publication_ns": 282759838622800,
+          "max_publication_gap_ms": 41.8765,
+          "max_backpressure": 0
+        },
+        "replay_before_skip": {
+          "generation": 6,
+          "clip": 0,
+          "publications": 3224,
+          "unique_ordinals": 3224,
+          "first_ordinal": 0,
+          "last_ordinal": 3223,
+          "first_line": 10252,
+          "last_line": 13475,
+          "first_publication_ns": 282774739624900,
+          "last_publication_ns": 282882274729400,
+          "max_publication_gap_ms": 52.0827,
+          "max_backpressure": 0
+        },
+        "scenario_before_close": [
+          {
+            "generation": 8,
+            "clip": 0,
+            "publications": 451,
+            "unique_ordinals": 451,
+            "first_ordinal": 0,
+            "last_ordinal": 450,
+            "first_line": 15845,
+            "last_line": 16295,
+            "first_publication_ns": 282962612763500,
+            "last_publication_ns": 282977620280000,
+            "max_publication_gap_ms": 35.4663,
+            "max_backpressure": 0
+          },
+          {
+            "generation": 8,
+            "clip": 1,
+            "publications": 90,
+            "unique_ordinals": 90,
+            "first_ordinal": 451,
+            "last_ordinal": 540,
+            "first_line": 16296,
+            "last_line": 16385,
+            "first_publication_ns": 282977667360100,
+            "last_publication_ns": 282980640813300,
+            "max_publication_gap_ms": 35.7679,
+            "max_backpressure": 0
+          },
+          {
+            "generation": 8,
+            "clip": 2,
+            "publications": 96,
+            "unique_ordinals": 96,
+            "first_ordinal": 541,
+            "last_ordinal": 636,
+            "first_line": 16386,
+            "last_line": 16481,
+            "first_publication_ns": 282980677473200,
+            "last_publication_ns": 282983849716400,
+            "max_publication_gap_ms": 36.9817,
+            "max_backpressure": 0
+          }
+        ],
+        "menu_loop_max_gap_ms": 65.4891
+      },
+      "audio_control": {
+        "schema": 1,
+        "status": "limited observations",
+        "file": "build-native-sjuni\\launcher-native-prep-v1\\sessions\\20261109-022331-902\\native-audio-control.csv",
+        "retention": "# dropped=2002; owner_joined=1; control_snapshots=2",
+        "trace_version": 2,
+        "dropped_snapshots": 2002,
+        "invalid_rows": [],
+        "counter_or_time_resets": [],
+        "snapshots": 32768,
+        "first_observation": {
+          "begin_ns": 282404372673500,
+          "output_frames": 0,
+          "underrun_frames": 0
+        },
+        "last_observation": {
+          "end_ns": 282950496511000,
+          "output_frames": 26198400,
+          "underrun_frames": 0
+        },
+        "shortage_windows": 0,
+        "measured_underrun_increase": 0,
+        "largest_shortage_windows": [],
+        "largest_service_gaps": [],
+        "limitations": [
+          "A counter increase is bounded by two control observations, not an individual audio-callback timestamp.",
+          "Late/skipped counters identify observed stream shortages; they do not prove their upstream cause.",
+          "Replacement or counter rebasing can hide per-stream increments; aggregate counts must not be summed across streams.",
+          "A service observation gap includes host scheduling and unobserved work.",
+          "Muted/gain state at an endpoint does not establish audibility during the whole interval.",
+          "Dropped/invalid records and activity after the last snapshot limit coverage; compare final native totals.",
+          "This analysis is neither an A/V synchronization check nor a controlled fix/retest.",
+          "CSV headers alone do not prove common process identity; the containing bundle must bind correlation inputs."
+        ],
+        "correlation_inputs_sha256": {
+          "build-native-sjuni\\launcher-native-prep-v1\\sessions\\20261109-022331-902\\native-movie-producer.csv": "aad5853f258eab7cbbb9333b2961e6f801f2836a3086d51d48dfe69b427413ec",
+          "build-native-sjuni\\launcher-native-prep-v1\\sessions\\20261109-022331-902\\native-movie-consumer.csv": "a9000d3706f8da08ba3e458260954fb46f3ad57ee02f9eac765faeb2c9595755"
+        },
+        "trace_sha256": "1431e8553e13b06740744a2e81a3a4e3118d6ea277390dde32d136508275c998",
+        "analyzer_sha256": "874becefd4b2eb77c4011ab5993fe461123967a283974038f7b932f7bb3ea3da"
+      }
+    },
+    {
+      "session": "20261109-030626-335",
+      "candidate": 34,
+      "source_revision": "cd7edfda1b371bfa5ec7576b45a7ee96a18fbf5c",
+      "identity": {
+        "pid": 295916,
+        "creationFileTime": 134386635952962632,
+        "image": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\game-cache\\359031817189d1030aae570a5e748209149c3156f46ead2b62b39714bdae1f45\\reo_launcher_game.exe",
+        "executable_sha256": "eb97579809a18870e85af067862c7b088e80bd3c91f10ab321217594d08e55a4"
+      },
+      "result": {
+        "status": "native GameSession launch and retirement passed",
+        "selected": true,
+        "audio_selected": true,
+        "resource_selected": true,
+        "native_error": false,
+        "duration_completed": true,
+        "cue_owner_joined": true,
+        "media_error": false,
+        "forced_cleanup": false,
+        "exit_code": 0,
+        "movie_status": "Movies: native MP4",
+        "logs": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\sessions\\20261109-030626-335",
+        "elapsed_seconds": 481.8689357,
+        "game_launched": true,
+        "ui_window_constructed": false,
+        "route": "gameplay",
+        "background": true,
+        "fixture_progression_unlocks": true,
+        "fixture_scenario": 0,
+        "card": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\gallery-cards\\85385e2b19c04702886e493cc35565cd",
+        "subjective_av_confirmation": false,
+        "step3_complete": false
+      },
+      "observer": {
+        "samples": 464,
+        "foreground_samples": 0,
+        "minimized_samples": 464,
+        "scenario_rooms": [
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            4
+          ],
+          [
+            65535,
+            0
+          ]
+        ]
+      },
+      "room_transition": {
+        "from_scenario_room": [
+          1,
+          1
+        ],
+        "to_scenario_room": [
+          1,
+          4
+        ],
+        "first_destination_sample_seconds": 405.59399999998277,
+        "first_destination_sample_phase": 3,
+        "first_destination_phase2_seconds": 407.59399999998277,
+        "last_destination_phase2_seconds": 463.6720000000205,
+        "destination_samples": 59,
+        "destination_phase2_unpaused_no_modal_samples": 57,
+        "first_native_soak_room4_log_line": 6114,
+        "first_native_soak_room4_t": 424.668,
+        "latest_native_soak_room4_t": 480.239,
+        "native_resource_logged_successes_at_least": 256,
+        "final_audio_underrun_frames": 0,
+        "final_native_audio_owner_joined": true,
+        "final_native_source_joined": true,
+        "final_submix_failures": 0,
+        "old_mwsfd_nonzero_observations": 0,
+        "input_only_soak": true,
+        "teleport": false,
+        "fresh_destination_pixels_captured": false,
+        "clock_window_covers_transition": false,
+        "sealed_soak_body_text_sha256": "87532c68bf6311183dc9fa71652efcabc390812820f31d7c9969ab26c1c861e1",
+        "sealed_soak_read_review": "bankRead and three copyBytesForBank calls read state; mutations are returned pad/buttons and local static test state, with no guest state replacement.",
+        "clock_retention": "# from_secs=0.000000000 duration_secs=300.000000000 started=1 closed=1 reserved=20471 dropped=4087 invalid_clock=0 capacity=16384"
+      }
+    },
+    {
+      "session": "20261109-032345-794",
+      "candidate": 34,
+      "source_revision": "cd7edfda1b371bfa5ec7576b45a7ee96a18fbf5c",
+      "identity": {
+        "pid": 291320,
+        "creationFileTime": 134386646386472416,
+        "image": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\game-cache\\359031817189d1030aae570a5e748209149c3156f46ead2b62b39714bdae1f45\\reo_launcher_game.exe",
+        "executable_sha256": "eb97579809a18870e85af067862c7b088e80bd3c91f10ab321217594d08e55a4"
+      },
+      "result": {
+        "status": "native GameSession launch and retirement passed",
+        "selected": true,
+        "audio_selected": true,
+        "resource_selected": true,
+        "native_error": false,
+        "duration_completed": true,
+        "cue_owner_joined": true,
+        "background_window_handshake": true,
+        "media_error": false,
+        "forced_cleanup": false,
+        "exit_code": 0,
+        "movie_status": "Movies: native MP4",
+        "logs": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\sessions\\20261109-032345-794",
+        "elapsed_seconds": 424.7690681,
+        "game_launched": true,
+        "ui_window_constructed": false,
+        "route": "gameplay-manual",
+        "background": true,
+        "background_capture": false,
+        "fixture_progression_unlocks": true,
+        "fixture_scenario": 0,
+        "card": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\gallery-cards\\2e19abfb3b1a466583490e340973eccb",
+        "subjective_av_confirmation": false,
+        "step3_complete": false
+      },
+      "observer": {
+        "samples": 403,
+        "foreground_samples": 0,
+        "minimized_samples": 403,
+        "scenario_rooms": [
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            65535,
+            0
+          ]
+        ]
+      },
+      "manual_driver": {
+        "status": "failed",
+        "samples": 158,
+        "actions": 0,
+        "last_seconds": 15.96899999998277,
+        "error": "",
+        "retained_request_values": [
+          3
+        ],
+        "retained_ready_values": [
+          false
+        ],
+        "door_transition_established": false,
+        "termination_exception_type": "not recorded"
+      }
+    }
+  ],
+  "compiler_regressions": {
+    "llvm": {
+      "native_status": "native media pipeline standalone build and tests passed",
+      "native_suites": 80,
+      "native_manifest_sha256": "6cd0fcaeddaf4972131a6f5f35716e3747fca380ada3cf63feea15815af5d187",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "adapter_status": "ordinary game ABI declared-port checks passed",
+      "adapter_scenarios": 34,
+      "detected_faults": [
+        "drop-child-retirement",
+        "fallback-unsupported-producer",
+        "ignore-child-replacement",
+        "omit-native-discard",
+        "require-unused-mono-pan",
+        "ignore-active-stereo-pan",
+        "require-raw-order-for-two",
+        "ignore-three-source-order",
+        "omit-muted-metadata-refresh",
+        "ignore-muted-metadata-refusal"
+      ],
+      "adapter_native_receipt_sha256": "49b1cff4e0e2cf6d15402286fbe885f9c5d7d564d93059d35c5e9ebb67ae41e4",
+      "source_stats_unchanged": true,
+      "import_manifest_unchanged": true
+    },
+    "gcc": {
+      "native_status": "native media pipeline standalone build and tests passed",
+      "native_suites": 80,
+      "native_manifest_sha256": "6cd0fcaeddaf4972131a6f5f35716e3747fca380ada3cf63feea15815af5d187",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "adapter_status": "ordinary game ABI declared-port checks passed",
+      "adapter_scenarios": 34,
+      "detected_faults": [
+        "drop-child-retirement",
+        "fallback-unsupported-producer",
+        "ignore-child-replacement",
+        "omit-native-discard",
+        "require-unused-mono-pan",
+        "ignore-active-stereo-pan",
+        "require-raw-order-for-two",
+        "ignore-three-source-order",
+        "omit-muted-metadata-refresh",
+        "ignore-muted-metadata-refusal"
+      ],
+      "adapter_native_receipt_sha256": "a33122e31778c83aca255721ca5affa82d643dc30181645f0e682e926017ad36",
+      "source_stats_unchanged": true,
+      "import_manifest_unchanged": true
+    }
+  },
+  "digital_e3_timing": {
+    "status": "owned source PCM matched to process loopback at five native movie anchors",
+    "anchor_ordinals": [
+      300,
+      1200,
+      2400,
+      4200,
+      5700
+    ],
+    "anchor_source_seconds": [
+      10.01,
+      40.04,
+      80.08,
+      140.14,
+      190.19
+    ],
+    "captured_minus_source_sample_offsets": [
+      7102625,
+      7102625,
+      7102625,
+      7102625,
+      7102625
+    ],
+    "minimum_channel_correlation": 0.9993552760213045,
+    "audio_after_publication_ms": [
+      97.921566625,
+      95.845066625,
+      98.822766625,
+      97.888266625,
+      98.312766625
+    ],
+    "audio_after_handoff_ms": [
+      83.440366625,
+      80.057166625,
+      85.522766625,
+      77.881666625,
+      93.563166625
+    ],
+    "subjective_av_confirmation": false,
+    "physical_audio_display_latency_measured": false,
+    "actual_compositor_pixels_measured": false,
+    "limitations": [
+      "Process-loopback QPC is digital audio timing; no physical headphone/speaker latency is measured.",
+      "Video timestamp is native frame publication/game handoff, not display scanout.",
+      "The explicit E3 asset and generation association comes from the retained game cue and original setup, not filename similarity.",
+      "Correlation checks one-second source regions at five anchors; it is not an exhaustive bit-exact PCM comparison.",
+      "No deliberate phase correction is justified solely from these digital ports without accounting for final presentation."
+    ]
+  },
+  "limitations": [
+    "Observer samples are asynchronous one-Hz reads, not continuous focus history, display pacing or atomic snapshots.",
+    "Menu case has four foreground samples; the activating actor is unknown.",
+    "V33 gallery has queued commands with capacity16; V34 installs capacity17 and proves a room transition, but accepts no queued commands. Coherent17-cue gallery retest remains open.",
+    "V33 audio control ring drops2002 snapshots; final zero-underrun totals cover retirement, not timing or historical incident cause.",
+    "V33 gallery process audio bounded540seconds ends before603.773second game; process_exited=false belongs to recorder, while game exit is separatelynormal.",
+    "Two legacy thread-manager error messages percase remain retained and unattributed; native media retirement succeeds.",
+    "First full E3 completed before compiler workloads; later gallery portions overlapped regression compilation. This is not an isolated performance benchmark.",
+    "Room4 is established by original-input soak, phase2 samples and continuing actor movement; no fresh destination pixels or exact per-request resource mapping was retained.",
+    "Clock recording300seconds and dropped4087 records do not cover the late transition. Actor callbacks are not global updates.",
+    "Manual driver fails before any input action, with request3 andfalse readiness; blankerror does not identify exceptiontype.",
+    "No controlled fix/retest proves historical stutter rootcause. Digital PCM timing is not perceptualA/V, compositorpixels, physicalspeaker latency or scanout.",
+    "Stage3 remains incomplete pending remaining consumer, presentation and coherentcandidate gates."
+  ]
+}

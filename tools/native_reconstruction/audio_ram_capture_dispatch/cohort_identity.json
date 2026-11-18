@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "cohort": "native-sound-ram-dispatch-v2",
+  "supersedes": "6b03e642deef568a0eba054c09cbeaa237a55cbf52061da8805fd6bd785ab4a3",
+  "preserved_prior": "build-native-sjuni/audio-ram-capture-dispatch/preserved-cohort-v4",
+  "status": "source frozen before final tests; expectations already seen; two reviewed source-order fixes and stricter borrow contract",
+  "base_revision": "c46d1c7d8ab00fbfa18d2c1f764c559e4e5dc78f",
+  "prior_receipt_sha256": "3019662f2fd62dbe4a9b3c7b99528bd631338424597ad78d2a4a04bcebeb3d6a",
+  "reapply_receipt_sha256": "2de11297c268e453888341b7f3ed44012ae51bdd10c9baa39a168e5cade97ec0",
+  "patch_sha256": "d7c6fad418f00d3d4c3f2e2bfa336307590f96b8933251b1e35595fc0978ff42",
+  "authored_sha256": {
+    "CriAudioRamCapture.h": "12b92d8de5cf970bafd7ea394bc2628101fdf0bda6060a9f24bcf466bc644ad0",
+    "harness.cpp": "1efa3b1d95e3b7aa0c362b1447f9468ffe4d994ea75d73910b7d76158fd65ca1",
+    "prepare_patch.py": "27ef3a8701204f121c7a1f0d113fe845a95efb14556a9e770dffbc2006d20ba6",
+    "ram_call.inc": "45edb11d517ea092624a3e06a8cb784c5da17e239de9c87ce0449ac5e8bc35da",
+    "rpc_capture.inc": "bfdfbee7b59d8266e0c7ba8b6dfb0bcbe930213f33e501fb51b8a3408ab898bb",
+    "rpc_outer.inc": "c66625948acc05b9323a8c807a1b496a7a26acd4e7fe0c96aa316d6b34332f3f",
+    "sif_capture.inc": "20f4aa7abdd76b60295c8017ec9001eb28d2cfa1d4f83949a3db672a3d1a3fe5",
+    "status_capture.inc": "b34e47a156c6757ccc9b049600e10b8f6ef2a49b75a9a65225f5dc5d201682ee",
+    "verify.py": "af00707be8b8fdf6a16da1122fd235bfb877b946b0a8aff85c4edbd76b8b31da"
+  }
+}

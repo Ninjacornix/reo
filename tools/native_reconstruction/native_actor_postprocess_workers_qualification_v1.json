@@ -1,0 +1,71 @@
+{
+  "schema": 1,
+  "status": "passed canonical Update owner/stage adoption",
+  "whole_stage4_complete": false,
+  "game_run": false,
+  "native_adoption_domain_sha256": {
+    "game/native/gameplay_update/actor_postprocess_workers.cpp": "aef1ee1f6ffb5d586f8f06a3fd6bd86560e81697de334c085a8b77488a5e9840",
+    "game/native/gameplay_update/actor_postprocess_workers.hpp": "2d741571aaf6da346b2548ddf262d5ac5afced611c05e818e8b9d94ac9b74744",
+    "game/native/gameplay_update/actor_postprocess_workers_tests.cpp": "000966a0cdba955662d30c175b3251311e306712e0fe245bfb0e60616df6a09c",
+    "tools/native_reconstruction/animation/verify_actor_postprocess_workers.py": "129cdc3587b1029ab64da4bfdd38d64c2c5f8e028b2f59b1c08cd0f1afa13334",
+    "game/native/gameplay_update/update.cpp": "27fe808336c5040389366ace27ff899f16ab26d2aa03f32b9137f7f248a05e83",
+    "game/native/gameplay_update/update.hpp": "f25562ff9b6f2940c6d0139194aff44e2b18b7442cf7f2c2a5969d0e1ea26ee8",
+    "game/native/gameplay_world/primary_actor_postprocess.cpp": "98b76395363b86c3689ee677d63a160ef8eaf3deb16fa4f12683ac106ee32f1f",
+    "game/native/gameplay_world/primary_actor_postprocess.hpp": "1909e4440217355f14c9d0158ea9cc9d8ed876db3101b1df15ce344cec3fd75e",
+    "game/native/gameplay_world/world.cpp": "aa55825b7d83669cd41aa2a35158be5234d65303ff2eae4585e107a6796fdbb8",
+    "game/native/gameplay_world/world.hpp": "3deeb101ca24053701585eaffe9a9af233e3c2a31526aad434ba5f4a8236352c",
+    "game/native/gameplay_events/statistics.hpp": "320d2e6b7eeb60c54075f82df87e45794b4ce4839e73fb9cae89bec4d37f377a"
+  },
+  "cohorts": {
+    "gcc": {
+      "receipt": "build-native-sjuni/actor-postprocess-workers-gcc-v4/receipt.json",
+      "receipt_sha256": "1d4e5ded4d880e09c95a30e620bbca798625e9249957dad883c775f3ad62cc7d",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 977,
+        "canonical_owner_frames": 32,
+        "declared_remaining_phase_surroundings": true,
+        "game_run": false
+      },
+      "immutable_snapshot_unchanged": true,
+      "native_adoption_domain_current_unchanged": true,
+      "source_files": 2893,
+      "live_source_drift": [
+        "game/native/gameplay_scenario/stream_channels.cpp",
+        "game/native/gameplay_update/actor_model_workers.cpp",
+        "game/native/gameplay_update/actor_model_workers.hpp"
+      ],
+      "test_binary_sha256": "6fc441453cafb615a675be89a8461ec9ed6a1b970678d3d1f3924263cebdc6be",
+      "cmake_source_sha256": "47a562a532d9ce25ea82a8fef9fba7df14cd3c5638ca0c550e6c54536e621638"
+    },
+    "llvm": {
+      "receipt": "build-native-sjuni/actor-postprocess-workers-llvm-v4/receipt.json",
+      "receipt_sha256": "36c5633dafd6cc8aee7b1977824c6e86b870af41538a625c4342f87372e490ee",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 977,
+        "canonical_owner_frames": 32,
+        "declared_remaining_phase_surroundings": true,
+        "game_run": false
+      },
+      "immutable_snapshot_unchanged": true,
+      "native_adoption_domain_current_unchanged": true,
+      "source_files": 2893,
+      "live_source_drift": [
+        "game/native/gameplay_scenario/stream_channels.cpp",
+        "game/native/gameplay_update/actor_model_workers.cpp",
+        "game/native/gameplay_update/actor_model_workers.hpp"
+      ],
+      "test_binary_sha256": "3e76de2b29d35561c038c6701b98fa034b44ca77ca66b6da9fac21e6809885d2",
+      "cmake_source_sha256": "47a562a532d9ce25ea82a8fef9fba7df14cd3c5638ca0c550e6c54536e621638"
+    }
+  },
+  "outer_qualification": "tools/native_reconstruction/native_primary_actor_postprocess_qualification_v1.json",
+  "outer_qualification_sha256": "901417af9bcf98ac1eeed3bfe59f314ec8d242cf9e6f3e8fb06a6c64dd2b1811",
+  "limits": [
+    "Actual32 Owner::run_workers traversals with canonical World/flags/statistics. Other phases are explicit declared test surroundings.",
+    "Finite session-one head fast return and unchanged secondary selection; complete outer-body and nontrivial pose qualifications remain separate.",
+    "Reached nonzero weapon work still needs a concrete bound owner.",
+    "Immutable snapshots retain exact complete source manifests; unrelated live drift is recorded, requiring the combined current parent cohort for settled overall integration."
+  ]
+}

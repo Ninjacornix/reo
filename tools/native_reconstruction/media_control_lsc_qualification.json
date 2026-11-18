@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "status": "bounded LSC observation fields pass13 isolated tests; live observation pending",
+  "source_sha256": {
+    "tools/native_reconstruction/capture_media_control.py": "9e3d978d423c753067941bb4bc7a2e3d85730010fc4c722b738f26a39e8ad05b",
+    "tools/native_reconstruction/test_capture_media_control.py": "93b3a6fbb8b136332beaf69e292736ae1fa8058faea751c6df7e0383f3e32dde",
+    "docs/native-media/MEDIA_CONTROL_OBSERVATION.md": "47b4eda706503cb8287c68db9966b110891344708dc6f555ebfcdf6d5c444ac7"
+  },
+  "lifecycle_qualification_sha256": "28c9f1fddad84a185016579fa9b8f1e2ab44097f045f97b7d2d5e9df5fab8cde",
+  "tests": 13,
+  "game_run": false,
+  "guest_writes": false,
+  "threads_suspended": false,
+  "atomic": false,
+  "native_source_admission": false
+}

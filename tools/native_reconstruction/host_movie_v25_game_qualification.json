@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "status": "native game route and joined shutdown measured; stutter and underruns unresolved",
+  "source_revision": "648637729c43b466f4e994e592230c8188a7ce7d",
+  "executable_sha256": "739d349c442e9d32fb1ed3123982ec0e4f07d50a0eeaf3f806c0eb806afb47b3",
+  "evidence_sha256": {
+    "build-native-sjuni/candidate-work-v25/candidate-build-result.json": "0d36c4240fcb7fd3af462e3a834257ba7aedd3e0407904f98a1d5ba988b794ec",
+    "build-native-sjuni/candidate-work-v25/seeded-object-cache.json": "47cd6a9c6fd48329362476980c9fab30e3511a360deecea341591dc60ddef872",
+    "build-native-sjuni/candidate-inputs-v25/notices/native-candidate-source-delta.json": "47955bcd39e4c720cb741f750e78788ccf121f222250f7e9547a07f53d6cc85d",
+    "build-native-sjuni/playtests/native-mp4-v25/native-movie-analysis.json": "fa1081fab6a1aebee13150f69f5bfe1ec6f97aa578854acf46c71fd4168ae7e4",
+    "build-native-sjuni/playtests/native-mp4-v25/native-audio-v1-receipt.json": "b878e27b3b941dff5993d36a38caf31b5c78a24b190d14e2760da6b7fea6db60"
+  },
+  "step3_complete": false,
+  "subjective_av_confirmation": false
+}

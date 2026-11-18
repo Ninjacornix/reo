@@ -1,0 +1,395 @@
+{
+  "schema": "reo.native.scene_record_eligibility.qualification.v1",
+  "status": "passed",
+  "source_sha256": {
+    "game/native/gameplay_scenario/scene_record_eligibility.hpp": "8b18e95889895066887081f556750ea267400c61f47ff86246018acd56fbe70b",
+    "game/native/gameplay_scenario/flags.hpp": "265400e86eda349b82fc710a8dcd91b9a82d16e3c71796a94c29c541ec1ecd6b",
+    "game/native/gameplay_scenario/flags.cpp": "62055c3df6665eeedca38e207c1654992f8a8cf8e423357e600361730a113d97",
+    "game/native/gameplay_scenario/interpreter.hpp": "99a6017f25b244a8d59868cf7cfc59ddf46d21f326684ee0a72606d26d9431a9",
+    "game/native/gameplay_scenario/interpreter.cpp": "0d511ff1a5d359ba839160da38e4b512a8891aa285733d4484d055414b08eca3",
+    "tools/native_reconstruction/gameplay_scenario/scene_record_eligibility_vm_tests.inc": "d7bf74c8578bbfae7133af389f32a80ba212ca973ac86bd07cb79638fa04a544",
+    "tools/native_reconstruction/gameplay_scenario/scene_record_eligibility_admission.cpp": "67f5223c8cd86d654466bacc891f2d90f1ac9883cc2dcb6074ad1357192f939e",
+    "tools/native_reconstruction/gameplay_scenario/verify_scene_record_eligibility_admission.py": "15ad80a0af4546f1f5372e831c3025a61281cae0591cc9f36c71676289b1b3db",
+    "tools/native_reconstruction/gameplay_scenario/tests.cpp": "930da916c1fd5c14e7eb4281d93df1a876d617180deea3e16b3f0d49ede50e1d",
+    "tools/native_reconstruction/gameplay_scenario/verify.py": "178a6dafa436c72e72975807382749f9c385e9faed60801806f8261cbe9675cf",
+    "docs/native-gameplay/SCENE_RECORD_ELIGIBILITY.md": "402fbd60790571ba47ecef8a92353d849babd33af4054e52b7b435b7f3ffda3b",
+    "docs/native-gameplay/STAGE4_INTEGRATION_AUDIT.md": "d8e4d6881d9bbc95eb6b289fd4e72297c8528df26114d13b94a07c40016c3df0"
+  },
+  "cohorts": [
+    {
+      "compiler": "llvm",
+      "vm_receipt": {
+        "path": "build-native-sjuni/scene-record-eligibility-llvm-v1/receipt.json",
+        "sha256": "617ba21a6245c1e19d68dd8875517abefe84d08f625b6a25e7eb7d3f20092dbc"
+      },
+      "admission_receipt": {
+        "path": "build-native-sjuni/scene-record-eligibility-admission-llvm-v4/receipt.json",
+        "sha256": "ef8de076dceed457f07b37fb509b1a3b9b0446b51c2d34c45531bbeab9028522"
+      },
+      "checks": 433999075,
+      "handlers": 16384,
+      "dispatches": 5376,
+      "admitted": {
+        "before": [
+          28,
+          23
+        ],
+        "after": [
+          28,
+          23
+        ]
+      },
+      "evbs": [
+        {
+          "name": "r001.evb",
+          "before": [
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 3148,
+              "opcode": 356
+            },
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 3148,
+              "opcode": 356
+            }
+          ],
+          "after": [
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 3244,
+              "opcode": 358
+            },
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 3244,
+              "opcode": 358
+            }
+          ]
+        },
+        {
+          "name": "r002.evb",
+          "before": [
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 3248,
+              "opcode": 356
+            },
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 3248,
+              "opcode": 356
+            }
+          ],
+          "after": [
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 3336,
+              "opcode": 358
+            },
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 3336,
+              "opcode": 358
+            }
+          ]
+        },
+        {
+          "name": "r028.evb",
+          "before": [
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 1960,
+              "opcode": 356
+            },
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 1960,
+              "opcode": 356
+            }
+          ],
+          "after": [
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 2040,
+              "opcode": 358
+            },
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 2040,
+              "opcode": 358
+            }
+          ]
+        },
+        {
+          "name": "r035.evb",
+          "before": [
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 2612,
+              "opcode": 356
+            },
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 2612,
+              "opcode": 356
+            }
+          ],
+          "after": [
+            {
+              "status": 2,
+              "block": 2,
+              "offset": 156,
+              "opcode": 336
+            },
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 2620,
+              "opcode": 417
+            }
+          ]
+        },
+        {
+          "name": "r041.evb",
+          "before": [
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 4844,
+              "opcode": 342
+            },
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 4844,
+              "opcode": 342
+            }
+          ],
+          "after": [
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 4844,
+              "opcode": 342
+            },
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 4844,
+              "opcode": 342
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "compiler": "gcc",
+      "vm_receipt": {
+        "path": "build-native-sjuni/scene-record-eligibility-gcc-v1/receipt.json",
+        "sha256": "4d756285a62cc82f5a4ee1f3eaf5675aa686202f984970b4663d833fcda771ad"
+      },
+      "admission_receipt": {
+        "path": "build-native-sjuni/scene-record-eligibility-admission-gcc-v3/receipt.json",
+        "sha256": "1902ab25df166de92be9c84ebc85d10453e98fde5fffba5b69a9a14f421f07fb"
+      },
+      "checks": 433999075,
+      "handlers": 16384,
+      "dispatches": 5376,
+      "admitted": {
+        "before": [
+          28,
+          23
+        ],
+        "after": [
+          28,
+          23
+        ]
+      },
+      "evbs": [
+        {
+          "name": "r001.evb",
+          "before": [
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 3148,
+              "opcode": 356
+            },
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 3148,
+              "opcode": 356
+            }
+          ],
+          "after": [
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 3244,
+              "opcode": 358
+            },
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 3244,
+              "opcode": 358
+            }
+          ]
+        },
+        {
+          "name": "r002.evb",
+          "before": [
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 3248,
+              "opcode": 356
+            },
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 3248,
+              "opcode": 356
+            }
+          ],
+          "after": [
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 3336,
+              "opcode": 358
+            },
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 3336,
+              "opcode": 358
+            }
+          ]
+        },
+        {
+          "name": "r028.evb",
+          "before": [
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 1960,
+              "opcode": 356
+            },
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 1960,
+              "opcode": 356
+            }
+          ],
+          "after": [
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 2040,
+              "opcode": 358
+            },
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 2040,
+              "opcode": 358
+            }
+          ]
+        },
+        {
+          "name": "r035.evb",
+          "before": [
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 2612,
+              "opcode": 356
+            },
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 2612,
+              "opcode": 356
+            }
+          ],
+          "after": [
+            {
+              "status": 2,
+              "block": 2,
+              "offset": 156,
+              "opcode": 336
+            },
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 2620,
+              "opcode": 417
+            }
+          ]
+        },
+        {
+          "name": "r041.evb",
+          "before": [
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 4844,
+              "opcode": 342
+            },
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 4844,
+              "opcode": 342
+            }
+          ],
+          "after": [
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 4844,
+              "opcode": 342
+            },
+            {
+              "status": 2,
+              "block": 1,
+              "offset": 4844,
+              "opcode": 342
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "parent_checks": {
+    "path": "build-native-sjuni/stage4-integration-audit/parents-result.json",
+    "sha256": "af97aec36316ad0d9283b27a5794a25307461078ac7605b361d717107989f46f",
+    "tests_per_compiler": 6
+  },
+  "stage4_complete": false,
+  "game_launched": false,
+  "installed_in_game": false,
+  "limitations": [
+    "Only164 is admitted;165 and downstream scene eligibility consumers still require integration.",
+    "All five EVBs remain refused;four first-frontiers advance.",
+    "Semantic native save/resume and game/session callers remain required."
+  ]
+}

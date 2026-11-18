@@ -1,0 +1,493 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "scope": "Complete cinematic light constructor/reset/tracks/interpolation over canonical Lighting and retained RoomResources, sole-controller adoption, and reached default-catalogue/physical-sector descriptor-loader correction.",
+  "game_run": false,
+  "device_opened": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_scenario/cutscene_light_curves.hpp": "ab75f704da9b77db9a8ac32cf891d355de6cf5375dcdc1b8c4f7197ae3c261ce",
+    "game/native/gameplay_scenario/cutscene_light_curves.cpp": "e21578047223dde0b63cb6b0b4add8d198bedf37c6cc43cfa4e6e9b738d3a225",
+    "game/native/gameplay_scenario/cutscene_lights.hpp": "c464c292ae72d4619bbea3851dd3edba0ab59ac79af275fc006129c68459c16c",
+    "game/native/gameplay_scenario/cutscene_lights.cpp": "e9da09ee2949c49d1cbfa06aeec2fab037f6d9a9430c09c61ccf21fdf526308e",
+    "game/native/gameplay_scenario/lighting.hpp": "7028f186057604844337c5d6c64301cf1093183319b9e02fa7f4c78a8da1c1c9",
+    "game/native/gameplay_scenario/lighting.cpp": "bf8e077058caf77a13d452ebddb000e179c3bc8217f3b8b8103bfd83baeaaf5c",
+    "game/native/gameplay_scenario/cutscene_playback.hpp": "78034aa12f2cd1b665d9a4ba11a6530f42941c7bfee96e0711cb83fe91321c10",
+    "game/native/gameplay_scenario/cutscene_playback.cpp": "9f3d246cfd7e26569867466c178b687bccf2941834747236e5ad8d7baa318af8",
+    "game/native/gameplay_scenario/cutscene_descriptor_loader.hpp": "f6aeca602231e0c96efc146f9864a33a18c58958c539ee643810235db4ecd335",
+    "game/native/gameplay_scenario/cutscene_descriptor_loader.cpp": "eaf748c4d3974672a0922d673d42ae4d66d3f4199be3c2e2c6fd1d35d2b1e28f",
+    "game/native/gameplay_scenario/scenario_archive.hpp": "76a60be0a4da6ea0a25e9954806e72ea00d4c1297211cd21696f8b90674ee62b",
+    "game/native/gameplay_scenario/scenario_archive.cpp": "d0ca35cd23bf410cf5f6e783758a8066442737f853aa97609711c6ae4c5cda9b",
+    "docs/native-gameplay/CUTSCENE_LIGHTS.md": "fb85bad10a85800565aaefe23b449060e391e960f788f6561a173e0cc9119535",
+    "docs/native-gameplay/CUTSCENE_VIEW_CONTROLS.md": "9ed73a2d933aa70b85f8958558a18f998b713c7971553b09e05e6e322db5cc18",
+    "tools/native_reconstruction/cutscene_light_curves_tests.cpp": "91d4ad4eceeab34af16b86f1fb81e4e4930910ed46002a81147929f17e9e22ca",
+    "tools/native_reconstruction/cutscene_lights_tests.cpp": "771cda9b9430c7aaf956703230a8bace70ada4e5e30f35251418d4331db3ec59",
+    "tools/native_reconstruction/cutscene_lights_assets_tests.cpp": "6b245d926d501e3880e484217f27e6f3a886c541df367ae02f599abb648e10f4",
+    "tools/native_reconstruction/cutscene_light_controller_tests.inc": "4146f4bf5c42634d11c7770e42fbc85c6866a9d8f8ee2fbc58bda8b3f4ba8634",
+    "tools/native_reconstruction/cutscene_playback_tests.cpp": "9b5d9f3f7973ec200a54143bbbe8b9a181e91d9f52b77ed1907a24735ed3af5a",
+    "tools/native_reconstruction/cutscene_descriptor_loader_tests.cpp": "47ed90bc781c863c8e6d7fba924bf9d9f54a7713cbfef2414c06f54a71d127e0",
+    "tools/native_reconstruction/verify_cutscene_light_curves.py": "fef4fb7e027b61ecabae054a07a141e8625cc961b041ef962c1d8e9dae95014d",
+    "tools/native_reconstruction/verify_cutscene_lights.py": "a346a70ec5d42dc94033663956cb945a22961442d28333650435c0f60f616f2f",
+    "tools/native_reconstruction/verify_cutscene_playback.py": "7381d13b67bcc85edad9edfb3c0f4857fee361f55247ec0ef2ed9d70caa209a0",
+    "tools/native_reconstruction/verify_cutscene_descriptor_loader.py": "e3fd48183b942799d2cf65e689be6ef615dcf7f8128adf76ac6b1f43049d64c9",
+    "tools/native_reconstruction/verify_descriptor_workspace.py": "e0b51c527b5fb7e3bb4d358b65b09bdbeac134364d3c3806fdb2514a15f40321",
+    "tools/native_reconstruction/qualify_cutscene_lights_v1.py": "682733fb174ed5deb9c0cbb24cf45f1554d273f0383ee3328ea5540368a0f4e7"
+  },
+  "matching_qualified_snapshots": {
+    "game/native/gameplay_scenario/cutscene_light_curves.hpp": [
+      "policy_llvm",
+      "policy_gcc",
+      "owner_llvm",
+      "owner_gcc",
+      "controller_llvm",
+      "controller_gcc",
+      "corrective_loader_llvm",
+      "corrective_loader_gcc",
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "game/native/gameplay_scenario/cutscene_light_curves.cpp": [
+      "policy_llvm",
+      "policy_gcc",
+      "owner_llvm",
+      "owner_gcc",
+      "controller_llvm",
+      "controller_gcc",
+      "corrective_loader_llvm",
+      "corrective_loader_gcc",
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "game/native/gameplay_scenario/cutscene_lights.hpp": [
+      "owner_llvm",
+      "owner_gcc",
+      "controller_llvm",
+      "controller_gcc",
+      "corrective_loader_llvm",
+      "corrective_loader_gcc",
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "game/native/gameplay_scenario/cutscene_lights.cpp": [
+      "owner_llvm",
+      "owner_gcc",
+      "controller_llvm",
+      "controller_gcc",
+      "corrective_loader_llvm",
+      "corrective_loader_gcc",
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "game/native/gameplay_scenario/lighting.hpp": [
+      "owner_llvm",
+      "owner_gcc",
+      "controller_llvm",
+      "controller_gcc",
+      "corrective_loader_llvm",
+      "corrective_loader_gcc",
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "game/native/gameplay_scenario/lighting.cpp": [
+      "owner_llvm",
+      "owner_gcc",
+      "controller_llvm",
+      "controller_gcc",
+      "corrective_loader_llvm",
+      "corrective_loader_gcc",
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "game/native/gameplay_scenario/cutscene_playback.hpp": [
+      "controller_llvm",
+      "controller_gcc",
+      "corrective_loader_llvm",
+      "corrective_loader_gcc",
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "game/native/gameplay_scenario/cutscene_playback.cpp": [
+      "controller_llvm",
+      "controller_gcc",
+      "corrective_loader_llvm",
+      "corrective_loader_gcc",
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "game/native/gameplay_scenario/cutscene_descriptor_loader.hpp": [
+      "corrective_loader_llvm",
+      "corrective_loader_gcc",
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "game/native/gameplay_scenario/cutscene_descriptor_loader.cpp": [
+      "corrective_loader_llvm",
+      "corrective_loader_gcc",
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "game/native/gameplay_scenario/scenario_archive.hpp": [
+      "corrective_loader_llvm",
+      "corrective_loader_gcc",
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "game/native/gameplay_scenario/scenario_archive.cpp": [
+      "corrective_loader_llvm",
+      "corrective_loader_gcc",
+      "current_assets_llvm",
+      "current_assets_gcc",
+      "current_parents_llvm",
+      "current_parents_gcc"
+    ],
+    "tools/native_reconstruction/cutscene_light_curves_tests.cpp": [
+      "policy_llvm",
+      "policy_gcc"
+    ],
+    "tools/native_reconstruction/cutscene_lights_tests.cpp": [
+      "owner_llvm",
+      "owner_gcc"
+    ],
+    "tools/native_reconstruction/cutscene_lights_assets_tests.cpp": [
+      "current_assets_llvm",
+      "current_assets_gcc"
+    ],
+    "tools/native_reconstruction/cutscene_light_controller_tests.inc": [
+      "controller_llvm",
+      "controller_gcc"
+    ],
+    "tools/native_reconstruction/cutscene_playback_tests.cpp": [
+      "controller_llvm",
+      "controller_gcc"
+    ],
+    "tools/native_reconstruction/cutscene_descriptor_loader_tests.cpp": [
+      "corrective_loader_llvm",
+      "corrective_loader_gcc"
+    ],
+    "tools/native_reconstruction/verify_cutscene_light_curves.py": [
+      "policy_llvm",
+      "policy_gcc"
+    ],
+    "tools/native_reconstruction/verify_cutscene_lights.py": [
+      "owner_llvm",
+      "owner_gcc"
+    ],
+    "tools/native_reconstruction/verify_cutscene_playback.py": [
+      "controller_llvm",
+      "controller_gcc"
+    ],
+    "tools/native_reconstruction/verify_cutscene_descriptor_loader.py": [
+      "corrective_loader_llvm",
+      "corrective_loader_gcc"
+    ],
+    "tools/native_reconstruction/verify_descriptor_workspace.py": [
+      "sector_workspace_llvm",
+      "sector_workspace_gcc"
+    ]
+  },
+  "receipts": {
+    "policy_llvm": {
+      "path": "build-native-sjuni/cutscene-light-curves-llvm-v3/receipt.json",
+      "sha256": "dccf63f1f9ef49883dd4b5ed6d4bd09e1d82c71cba776c4f4aafe1aeef517bab",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 7863780,
+        "cases": 131072,
+        "samples": 524288,
+        "auxiliary_mirrors": 261604,
+        "floor_calls": 655360,
+        "original_calls": 4718052,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "policy_gcc": {
+      "path": "build-native-sjuni/cutscene-light-curves-gcc-v3/receipt.json",
+      "sha256": "e5aa061c15728773824521d9099af6e3b5831892ba5501409ba036245a38229f",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 7863780,
+        "cases": 131072,
+        "samples": 524288,
+        "auxiliary_mirrors": 261604,
+        "floor_calls": 655360,
+        "original_calls": 4718052,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "owner_llvm": {
+      "path": "build-native-sjuni/cutscene-lights-llvm-v7/receipt.json",
+      "sha256": "f9f2ecd1997dd2d4602c5fb15e0fa6b404bc2bf8e81a3396a4bdaf0ad85596b0",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 62179928,
+        "assets": 548,
+        "frames": 496687,
+        "bindings": 3429,
+        "samples": 820556,
+        "callback_guards": 822498,
+        "refusals": 1,
+        "floor_queries": 822497,
+        "floor_hits": 76425,
+        "original_calls": 3668763,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_unchanged": null,
+      "source_drift": {}
+    },
+    "owner_gcc": {
+      "path": "build-native-sjuni/cutscene-lights-gcc-v7/receipt.json",
+      "sha256": "5cb2aac9e387c19fccd88d89bc1a1d59e7a45a1db729c267bb689966b8059c96",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 62179928,
+        "assets": 548,
+        "frames": 496687,
+        "bindings": 3429,
+        "samples": 820556,
+        "callback_guards": 822498,
+        "refusals": 1,
+        "floor_queries": 822497,
+        "floor_hits": 76425,
+        "original_calls": 3668763,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_unchanged": null,
+      "source_drift": {}
+    },
+    "controller_llvm": {
+      "path": "build-native-sjuni/cutscene-playback-llvm-v23/receipt.json",
+      "sha256": "6e59012978247e48b8366db4924da3ab460d9f075593fa7bb661fccf703def6c",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "light_ticks": 512,
+        "light_guards": 32201,
+        "light_floor_guards": 608,
+        "view_ticks": 2048,
+        "view_guards": 32201,
+        "display_ticks": 32,
+        "display_guards": 32201,
+        "display_publications": 65,
+        "camera_ticks": 256,
+        "camera_guards": 32201,
+        "camera_publications": 257,
+        "close_refusals": 153032,
+        "checks": 2874128,
+        "controller_cases": 56173,
+        "advance_cases": 9363,
+        "acknowledgements": 9984,
+        "native_worker_calls": 96139,
+        "refusals": 17,
+        "original_calls": 529908,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "controller_gcc": {
+      "path": "build-native-sjuni/cutscene-playback-gcc-v23/receipt.json",
+      "sha256": "690bdd077076cd39104d0f71d66f777c833b685462c2986542e22b8f98a3974b",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "light_ticks": 512,
+        "light_guards": 32201,
+        "light_floor_guards": 608,
+        "view_ticks": 2048,
+        "view_guards": 32201,
+        "display_ticks": 32,
+        "display_guards": 32201,
+        "display_publications": 65,
+        "camera_ticks": 256,
+        "camera_guards": 32201,
+        "camera_publications": 257,
+        "close_refusals": 153032,
+        "checks": 2874128,
+        "controller_cases": 56173,
+        "advance_cases": 9363,
+        "acknowledgements": 9984,
+        "native_worker_calls": 96139,
+        "refusals": 17,
+        "original_calls": 529908,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "sector_workspace_llvm": {
+      "path": "build-native-sjuni/descriptor-workspace-llvm-v4/receipt.json",
+      "sha256": "9f935c11339eccbabfa67bd1d0dbe66a9bd8242a0708673944366f827948ff7c",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "owned_scenes": 1097,
+        "owned_color_keys": 4058,
+        "owned_samples": 12174,
+        "checks": 714870,
+        "cases": 8192,
+        "consumed_frames": 1171,
+        "retained_tail_records": 158369,
+        "stale_refusals": 8191,
+        "original_calls": 81464,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "sector_workspace_gcc": {
+      "path": "build-native-sjuni/descriptor-workspace-gcc-v4/receipt.json",
+      "sha256": "41deab842b13b7fd77c7a6490ee3a0b60c3a2e51b5a84fc052f55a967fe493f8",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "owned_scenes": 1097,
+        "owned_color_keys": 4058,
+        "owned_samples": 12174,
+        "checks": 714870,
+        "cases": 8192,
+        "consumed_frames": 1171,
+        "retained_tail_records": 158369,
+        "stale_refusals": 8191,
+        "original_calls": 81464,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "corrective_loader_llvm": {
+      "path": "build-native-sjuni/cutscene-descriptor-loader-llvm-v9/receipt.json",
+      "sha256": "57818132b72203410f27fecadcdeb001efa72276631d82eecb24511dd276d577",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 14591013,
+        "loads": 1096,
+        "reparses": 1096,
+        "default_archive_misses": 548,
+        "missing_reads": 3,
+        "sections": 97784,
+        "retained_tail_checks": 14364176,
+        "original_calls": 1509179,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "corrective_loader_gcc": {
+      "path": "build-native-sjuni/cutscene-descriptor-loader-gcc-v9/receipt.json",
+      "sha256": "9d0f96c4707b86507cd4025f2ab71e3b1b00fdb8382a78c52391f0bb45b5c0e3",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 14591013,
+        "loads": 1096,
+        "reparses": 1096,
+        "default_archive_misses": 548,
+        "missing_reads": 3,
+        "sections": 97784,
+        "retained_tail_checks": 14364176,
+        "original_calls": 1509179,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "current_assets_llvm": {
+      "path": "build-native-sjuni/scenario-events-lights-assets-llvm-v3/receipt.json",
+      "sha256": "498f313946951dded97a856cd3b166b4dd461aa0568762c9e500ea8a8a89cfba",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 3544261,
+        "assets": 548,
+        "frames": 493298,
+        "bindings": 3426,
+        "samples": 809810,
+        "callback_guards": 811748,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_unchanged": null,
+      "source_drift": {}
+    },
+    "current_assets_gcc": {
+      "path": "build-native-sjuni/scenario-events-lights-assets-gcc-v3/receipt.json",
+      "sha256": "5520ac91b3479b9747693f5f47a848d7c5216bad0f8e46adc315bb5529f1cdb1",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 3544261,
+        "assets": 548,
+        "frames": 493298,
+        "bindings": 3426,
+        "samples": 809810,
+        "callback_guards": 811748,
+        "game_run": false
+      },
+      "parent_tests": null,
+      "source_unchanged": null,
+      "source_drift": {}
+    },
+    "current_parents_llvm": {
+      "path": "build-native-sjuni/scenario-events-parents-llvm-v1/receipt.json",
+      "sha256": "e0bebf89ab7e578012af9e415c399e2eb26f84649e6d59f1d1b6e51d0049a409",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": null,
+      "parent_tests": 28,
+      "source_unchanged": null,
+      "source_drift": {}
+    },
+    "current_parents_gcc": {
+      "path": "build-native-sjuni/scenario-events-parents-gcc-v1/receipt.json",
+      "sha256": "7f7a2622d0e10b3aaecd18b260de54ba2920b8532f8b9893011d647c912e9737",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": null,
+      "parent_tests": 28,
+      "source_unchanged": null,
+      "source_drift": {}
+    }
+  },
+  "current_integration_cmake_sha256": "30318913501c4587099563e4c0af09bb39ceeeb483e7fc355c9b40269c593e50",
+  "cmake_scope": "Working integration hash includes independently owned pending registrations. This checkpoint stages only the light units and light-assets test stanza; each receipt preserves its complete actual CMake closure.",
+  "corrections": {
+    "superseded_commit": "5e262487081cbebaad9357db869f27620e22c9ae",
+    "superseded_seal": "tools/native_reconstruction/native_cutscene_view_controls_qualification_v1.json",
+    "mode0": "The older controlled-read fixture wrongly treated flags1 default lookup as a successful scenario read. All1342 owned default compiled keys now execute through original normalization; no DM name matches. Native mode0 preserves prior workspace and snapshot on the genuine missing read.",
+    "storage": "The older fixture returned logical member bytes. Original1A9F20/129C08/130E40 return whole sectors. Native reads actual archive padding and places its marker after that storage extent; no manufactured padding. Workspace v4 and loader v9 supersede the physical-boundary claim. Pure logical descriptor import remains separate valid component evidence."
+  },
+  "limits": [
+    "Policy617000 is a numeric material seam; owner/controller617000 is the independently qualified actual native Grid seam. Complete616F60 and child value helpers execute. No original grid body is claimed by these cohorts.",
+    "Owner proof uses exact copied SessionRooms v6 archives and matching headers, complete current Lighting.cpp, and new light units. Controller v23 compiles its current native source. Current-assets v3 and parent28 v1 establish the current D1/ScenarioArchive/trail registration ABI and link closure.",
+    "Corrective loader executes11 complete original source bodies and all1342 encoded default keys. SDK task allocation/actual-sector transfer/completion/close and bounded standard string/format primitives remain explicit fixtures; independent AFS range proof supplies sector metadata.",
+    "Finite FP32 nearest-rounding profile; exceptional physical PS2 numeric equivalence, SDK disk scheduling, complete scene/movie lifecycle, remaining frame workers, renderer/session/game installation and fullStep4 are not established."
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "stage4_complete": false,
+  "game_run": false,
+  "actual_gameplay_callers_migrated": false,
+  "cohorts": {
+    "llvm": {
+      "path": "build-native-sjuni/gameplay-actor-input-llvm-v3/receipt.json",
+      "sha256": "4d37baf3e8b21b65ced70428d4e8ceba94ff642d9f87b00aee43938b9619d395",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "cases": 196608,
+        "updated": 36453,
+        "skipped": 29083,
+        "invalid_cases": 4,
+        "original_bodies_executed": 3,
+        "game_run": false
+      }
+    },
+    "gcc": {
+      "path": "build-native-sjuni/gameplay-actor-input-gcc-v2/receipt.json",
+      "sha256": "6079670f1d9087485abf141abb91538b82645da9cf0687795bf7685e024e4dfc",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "cases": 196608,
+        "updated": 36453,
+        "skipped": 29083,
+        "invalid_cases": 4,
+        "original_bodies_executed": 3,
+        "game_run": false
+      }
+    }
+  },
+  "evidence_sha256": {
+    "build-native-sjuni/gameplay-actor-input-llvm-v3/receipt.json": "4d37baf3e8b21b65ced70428d4e8ceba94ff642d9f87b00aee43938b9619d395",
+    "recomp/config/output/sub_001B0980_0x1b0980.cpp": "c336140c0c55d390ca071fb4236ebb209c74f1dec8014f79082d98298bc5bdda",
+    "recomp/config/output/sub_001B0B80_0x1b0b80.cpp": "e20c4c4332f320df1fcb20ed29fbfe3f90fa0a6b7290b2482f8b1ae279000656",
+    "recomp/config/output/sub_001B0DB0_0x1b0db0.cpp": "3ccab4fc4529cad9788fb5c4acb0022c7d09ce4610807a5ce382b47841a89207",
+    "game/native/gameplay_actors/input.hpp": "e939cc757fc206245960659be0cab87f415cd9547199df2e2cbfb42192dd6b22",
+    "game/native/gameplay_actors/input.cpp": "7a7dd57b2e105a79b2ffea7b5505ee7dad6fe696ff0d2732a8ee4b796347a497",
+    "tools/native_reconstruction/gameplay_actor_oracle/runtime.hpp": "1db4b8e775d2c128c1b4d860af00e03deea60fd295ab73d60a8ecf190e76ea3f",
+    "tools/native_reconstruction/gameplay_actor_oracle/input_tests.cpp": "619534b8e846b75b150c5f15ae40db8d2435ddc3b1fd03de1815d700e7d5ea7c",
+    "tools/native_reconstruction/verify_gameplay_actor_input.py": "41ebfa5a256e32283d9b2f9ee2ff4035d4cfe1abe9d07e13c99bd6fc64072bd1",
+    "build-native-sjuni/gameplay-actor-input-llvm-v3/actor-input.exe": "acb0d1202cab2a93ceb460c6391a38a28cea045784bd36e72ca952b35b78b7d2",
+    "build-native-sjuni/gameplay-actor-input-llvm-v3/compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/gameplay-actor-input-llvm-v3/functions.h": "ab8da207af3dcf5db10a7851ca509aba6425ada6d53a7d3a801f606baff54158",
+    "build-native-sjuni/gameplay-actor-input-llvm-v3/original_input.cpp": "61880f81be19e4a9d0c02a5c556b2e242d0c5c46d726e628b6d91e95b7c3ac3d",
+    "build-native-sjuni/gameplay-actor-input-llvm-v3/owned_remaps.hpp": "3e93f674087089b5d8af11691c4e4a9bf10a25056a6f9b87831f7ef73db9cc9e",
+    "build-native-sjuni/gameplay-actor-input-llvm-v3/ps2_recompiled_functions.h": "35fa666ba8bc7ae736e807d664683da196e98647ce39577e0a6c408fed3dea80",
+    "build-native-sjuni/gameplay-actor-input-llvm-v3/ps2_recompiled_stubs.h": "b3adf106d95b8934f690943f2921308b90be5b766c4c8ba250c792de56400201",
+    "build-native-sjuni/gameplay-actor-input-llvm-v3/ps2_runtime.h": "bde7b7973395ce95ee07199dc5d91ad8f9b2f9a927e79e895f38243744d001e3",
+    "build-native-sjuni/gameplay-actor-input-llvm-v3/ps2_runtime_macros.h": "bde7b7973395ce95ee07199dc5d91ad8f9b2f9a927e79e895f38243744d001e3",
+    "build-native-sjuni/gameplay-actor-input-llvm-v3/ps2_stubs.h": "b3adf106d95b8934f690943f2921308b90be5b766c4c8ba250c792de56400201",
+    "build-native-sjuni/gameplay-actor-input-llvm-v3/ps2_syscalls.h": "b3adf106d95b8934f690943f2921308b90be5b766c4c8ba250c792de56400201",
+    "build-native-sjuni/gameplay-actor-input-llvm-v3/run.txt": "2df890b36d31e4860992c160a12973dfd3989b4f8ac4370e0cedd04d82957db9",
+    "build-native-sjuni/gameplay-actor-input-llvm-v3/runtime.hpp": "1db4b8e775d2c128c1b4d860af00e03deea60fd295ab73d60a8ecf190e76ea3f",
+    "build-native-sjuni/gameplay-actor-input-llvm-v3/tests.cpp": "619534b8e846b75b150c5f15ae40db8d2435ddc3b1fd03de1815d700e7d5ea7c",
+    "build-native-sjuni/gameplay-actor-input-llvm-v3/source/game/native/gameplay_actors/input.cpp": "7a7dd57b2e105a79b2ffea7b5505ee7dad6fe696ff0d2732a8ee4b796347a497",
+    "build-native-sjuni/gameplay-actor-input-llvm-v3/source/game/native/gameplay_actors/input.hpp": "e939cc757fc206245960659be0cab87f415cd9547199df2e2cbfb42192dd6b22",
+    "build-native-sjuni/gameplay-actor-input-gcc-v2/receipt.json": "6079670f1d9087485abf141abb91538b82645da9cf0687795bf7685e024e4dfc",
+    "build-native-sjuni/gameplay-actor-input-gcc-v2/actor-input.exe": "a455e50243de25497ced3d57ef94df096df6ae0db2e182b6b49d2c7ac43a57f1",
+    "build-native-sjuni/gameplay-actor-input-gcc-v2/compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/gameplay-actor-input-gcc-v2/functions.h": "ab8da207af3dcf5db10a7851ca509aba6425ada6d53a7d3a801f606baff54158",
+    "build-native-sjuni/gameplay-actor-input-gcc-v2/original_input.cpp": "61880f81be19e4a9d0c02a5c556b2e242d0c5c46d726e628b6d91e95b7c3ac3d",
+    "build-native-sjuni/gameplay-actor-input-gcc-v2/owned_remaps.hpp": "3e93f674087089b5d8af11691c4e4a9bf10a25056a6f9b87831f7ef73db9cc9e",
+    "build-native-sjuni/gameplay-actor-input-gcc-v2/ps2_recompiled_functions.h": "35fa666ba8bc7ae736e807d664683da196e98647ce39577e0a6c408fed3dea80",
+    "build-native-sjuni/gameplay-actor-input-gcc-v2/ps2_recompiled_stubs.h": "b3adf106d95b8934f690943f2921308b90be5b766c4c8ba250c792de56400201",
+    "build-native-sjuni/gameplay-actor-input-gcc-v2/ps2_runtime.h": "bde7b7973395ce95ee07199dc5d91ad8f9b2f9a927e79e895f38243744d001e3",
+    "build-native-sjuni/gameplay-actor-input-gcc-v2/ps2_runtime_macros.h": "bde7b7973395ce95ee07199dc5d91ad8f9b2f9a927e79e895f38243744d001e3",
+    "build-native-sjuni/gameplay-actor-input-gcc-v2/ps2_stubs.h": "b3adf106d95b8934f690943f2921308b90be5b766c4c8ba250c792de56400201",
+    "build-native-sjuni/gameplay-actor-input-gcc-v2/ps2_syscalls.h": "b3adf106d95b8934f690943f2921308b90be5b766c4c8ba250c792de56400201",
+    "build-native-sjuni/gameplay-actor-input-gcc-v2/run.txt": "2df890b36d31e4860992c160a12973dfd3989b4f8ac4370e0cedd04d82957db9",
+    "build-native-sjuni/gameplay-actor-input-gcc-v2/runtime.hpp": "1db4b8e775d2c128c1b4d860af00e03deea60fd295ab73d60a8ecf190e76ea3f",
+    "build-native-sjuni/gameplay-actor-input-gcc-v2/tests.cpp": "619534b8e846b75b150c5f15ae40db8d2435ddc3b1fd03de1815d700e7d5ea7c",
+    "build-native-sjuni/gameplay-actor-input-gcc-v2/source/game/native/gameplay_actors/input.cpp": "7a7dd57b2e105a79b2ffea7b5505ee7dad6fe696ff0d2732a8ee4b796347a497",
+    "build-native-sjuni/gameplay-actor-input-gcc-v2/source/game/native/gameplay_actors/input.hpp": "e939cc757fc206245960659be0cab87f415cd9547199df2e2cbfb42192dd6b22"
+  },
+  "status": "native actor/menu input and repeat match three complete original bodies",
+  "limits": [
+    "Native normalized controller inputs are provided; original platform packet polling/deadzones remain outside this boundary.",
+    "No actual game consumers replaced; native platform sampling and actual actor/menu consumers remain separate migration work."
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "scope": "Native outer/worker ordering preserves raw signed pause values; real ordinary and offline stream callers require and forward the native audio tick.",
+  "cohorts": {
+    "llvm": {
+      "path": "build-native-sjuni/gameplay-update-audio-tick-llvm-v3/receipt.json",
+      "sha256": "3e33d2fb3db2d308afd5cf3ff0d326d2bc74040bf1e7dadb55ec592d6a094c1f",
+      "result": {
+        "status": "passed",
+        "cases": 2048,
+        "trace_words": 97354,
+        "paused_after": 1574,
+        "limit_paths": 568,
+        "native_owner_checks": 22,
+        "phase_cases": 4096,
+        "phase_trace_words": 287578,
+        "committed_updates": 686,
+        "audio_tick_cases": 12
+      },
+      "scenario_source_commit": "7d304de95a1472231652aa1aa1df52f6aad61645",
+      "source_snapshot": "build-native-sjuni/gameplay-update-audio-tick-llvm-v3/source"
+    },
+    "gcc": {
+      "path": "build-native-sjuni/gameplay-update-audio-tick-gcc-v3/receipt.json",
+      "sha256": "66e96b9b6828945da0938d71890e18efffbb1556ab633d17f4aaacad515bccb8",
+      "result": {
+        "status": "passed",
+        "cases": 2048,
+        "trace_words": 97354,
+        "paused_after": 1574,
+        "limit_paths": 568,
+        "native_owner_checks": 22,
+        "phase_cases": 4096,
+        "phase_trace_words": 287578,
+        "committed_updates": 686,
+        "audio_tick_cases": 12
+      },
+      "scenario_source_commit": "7d304de95a1472231652aa1aa1df52f6aad61645",
+      "source_snapshot": "build-native-sjuni/gameplay-update-audio-tick-gcc-v3/source"
+    }
+  },
+  "stage4_complete": false,
+  "installed_in_game": false,
+  "game_run": false,
+  "remaining": [
+    "Required action, worker and UI/scene effect owners",
+    "Native whole-game installation and acceptance"
+  ]
+}

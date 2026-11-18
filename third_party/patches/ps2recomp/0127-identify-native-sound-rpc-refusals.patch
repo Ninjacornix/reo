@@ -1,0 +1,54 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+@@ -1,3 +1,5 @@
++#include <atomic>
++#include <cstdio>
+ #include <chrono>
+ #include "../../cri_pcm_retire.h"
+ #include "../../vblank_music_diag.h"
+@@ -686,6 +688,14 @@
+             RamCall capture(audio,runtime,rdram,sid==IOP_SID_SNDDRV_COMMAND?ps2_cri_audio::NativeSoundRamUseV1::command:ps2_cri_audio::NativeSoundRamUseV1::query);
+             if(!audio||!capture)return true;
+             if(!ps2_cri_audio::coversSoundRpcV2(sid,rpcNum)){
++                {
++                    // Bounded failure identity only; no extra guest read or completion.
++                    static std::atomic<unsigned> reports{0};
++                    auto count=reports.load(std::memory_order_relaxed);
++                    while(count<8 && !reports.compare_exchange_weak(count,count+1,std::memory_order_relaxed)){}
++                    if(count<8)std::fprintf(stderr,"[NATIVE-SOUND-RPC-REFUSAL] reason=direct_uncovered_rpc sid=%08x rpc=%08x client=%08x send=%08x mode=%08x\n",
++                        unsigned(sid),unsigned(rpcNum),unsigned(0),unsigned(sendBuf),unsigned(0));
++                }
+                 capture.reject(ps2_cri_audio::NativeSoundRamStageV1::read,ps2_cri_audio::BankStatusV2::unsupported);return true;}
+             return handleSoundDriverRpcCaptured(rdram,runtime,sid,rpcNum,sendBuf,sendSize,recvBuf,recvSize,resultPtr,signalNowaitCompletion,audio,capture);
+         }
+@@ -1772,6 +1782,14 @@
+         const auto early=[&]{setReturnS32(ctx,-1);return true;};
+         if(!audio||!cap)return early(); // No client reads or guessed completion.
+         if(!ps2_cri_audio::coversSoundRpcV2(sid,rpc)){
++            {
++                // Bounded failure identity only; no extra guest read or completion.
++                static std::atomic<unsigned> reports{0};
++                auto count=reports.load(std::memory_order_relaxed);
++                while(count<8 && !reports.compare_exchange_weak(count,count+1,std::memory_order_relaxed)){}
++                if(count<8)std::fprintf(stderr,"[NATIVE-SOUND-RPC-REFUSAL] reason=uncovered_rpc sid=%08x rpc=%08x client=%08x send=%08x mode=%08x\n",
++                    unsigned(sid),unsigned(rpc),unsigned(cp),unsigned(send),unsigned(mode));
++            }
+             cap.reject(ps2_cri_audio::NativeSoundRamStageV1::read,ps2_cri_audio::BankStatusV2::unsupported);return early();}
+         uint32_t stack[6]{};const uint32_t sp=getRegU32(ctx,29);
+         ps2_cri_audio::NativeSoundRamReadV1 reads[6]{};
+@@ -1798,6 +1816,14 @@
+         const bool transportMetadata=serverPtr&&sd.buf&&send&&n&&
+             (overlap(dest,copyBytes,c,sizeof(client))||overlap(dest,copyBytes,s,sizeof(sd)));
+         if((serverPtr&&sd.func)||(serverPtr&&c<s+sizeof(sd)&&s<c+sizeof(client))||transportMetadata){
++            {
++                // Bounded failure identity only; no extra guest read or completion.
++                static std::atomic<unsigned> reports{0};
++                auto count=reports.load(std::memory_order_relaxed);
++                while(count<8 && !reports.compare_exchange_weak(count,count+1,std::memory_order_relaxed)){}
++                if(count<8)std::fprintf(stderr,"[NATIVE-SOUND-RPC-REFUSAL] reason=server_or_metadata sid=%08x rpc=%08x client=%08x send=%08x mode=%08x\n",
++                    unsigned(sid),unsigned(rpc),unsigned(cp),unsigned(send),unsigned(mode));
++            }
+             cap.reject(ps2_cri_audio::NativeSoundRamStageV1::read,ps2_cri_audio::BankStatusV2::unsupported);return early();}
+         uint32_t sema=static_cast<uint32_t>(client.hdr.sema_id);bool semaKnown=true;
+         const auto completionId=[&]{return sema==0xffffffffu||!sema?param:sema;};

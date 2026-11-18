@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "movies": 201,
+  "pictures": 216998,
+  "inputs": {
+    "build-native-sjuni/movie-routes/file1-v1/members.json": "a5564bca8c19efa018b8acedeb19f400c698c630dd03678702329bdd10473d93",
+    "build-native-sjuni/movie-matrix/catalog-counts-v1/counts.json": "c255a4c59bd5fd6e9f6fbadf0092a41b38d4afc22d079287a3755ecfaa6d11bd",
+    "build-native-sjuni/audio-asset-inventory/file1-v1/members.json": "276264fd0f5d14e8e0ef1e17f008560d611c6ca30c2ad811259a004b7a54fbc2"
+  },
+  "generator_sha256": "65f7a7a66e8d5da8837cb6324eabd0591ae0ee77d9c6b5f52031371caf5ceba7",
+  "catalogue_sha256": "21a4d69cd29ca13f79b0921c2e9d6918ce67a01341aef193c1de55a2a54736aa",
+  "import_metadata_only": true,
+  "game_payloads_included": false
+}

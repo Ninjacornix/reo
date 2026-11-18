@@ -1,0 +1,108 @@
+{
+  "schema": 1,
+  "status": "native primary actor frame matches complete original with declared callee ports on both compilers",
+  "stage4_complete": false,
+  "game_run": false,
+  "actual_callees_migrated": false,
+  "cohorts": {
+    "llvm": {
+      "receipt": "build-native-sjuni/gameplay-actor-frame-llvm-v5/receipt.json",
+      "sha256": "f9d7b951831b1c969cb211e5d6b03216d89d44e88c48a0ae5bd769d284f3b690",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "cases": 4096,
+        "ordered_calls": 182072,
+        "original_body_executed": true,
+        "game_run": false
+      },
+      "detected_faults": [
+        "freeze-paused-actors",
+        "omit-remote-input-clear",
+        "retain-missing-grid-flag"
+      ]
+    },
+    "gcc": {
+      "receipt": "build-native-sjuni/gameplay-actor-frame-gcc-v4/receipt.json",
+      "sha256": "8e375216728c316313a01d52c1f029c6ee3f9cf9edadc37a89eba1f8d4515053",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "cases": 4096,
+        "ordered_calls": 182072,
+        "original_body_executed": true,
+        "game_run": false
+      },
+      "detected_faults": [
+        "freeze-paused-actors",
+        "omit-remote-input-clear",
+        "retain-missing-grid-flag"
+      ]
+    }
+  },
+  "evidence_sha256": {
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/receipt.json": "f9d7b951831b1c969cb211e5d6b03216d89d44e88c48a0ae5bd769d284f3b690",
+    "game/native/gameplay_actors/frame.hpp": "9135d54b3cdc2c57db67208519b9bcb905bd1ff82a139b7f73a3df15dd2fbd1c",
+    "game/native/gameplay_actors/frame.cpp": "cfbede1779a2ab9bae7f6aab4d314b9c4ee7d649ea9e30782e0fbeca793cf65d",
+    "tools/native_reconstruction/gameplay_actor_oracle/runtime.hpp": "1db4b8e775d2c128c1b4d860af00e03deea60fd295ab73d60a8ecf190e76ea3f",
+    "tools/native_reconstruction/gameplay_actor_oracle/tests.cpp": "cb9441ffcc4d43db4b9e0dec4794ce5254f67a23bda52706cdb9101aa28169f7",
+    "recomp/config/output_ovl/o2/o2_00669F30_0x669f30.cpp": "4682116f450825f1b1c763b34a8e0d236fa6d84cf97c6e592cb9b9b57e111790",
+    "tools/native_reconstruction/verify_gameplay_actor_frame.py": "5ee72d1a8697101f2a2a37524e22633cbbca2ebafe626eb0a53108c8b26e3f3c",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/actor-frame.exe": "60834319aa01303cca95eb530c9f08ba9d3ef5dbacede0c8bde6e34035976341",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/freeze-paused-actors-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/freeze-paused-actors-run.txt": "82d12812efdb4a2a819667d42d241559aaf0b6a3850974f8962c38070a9b00a4",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/freeze-paused-actors.exe": "320900ad8b527c4ba96fa783259412ddbcee0a82559fa853001d15bddfddbe04",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/o2_functions.h": "52713dae66a21c2fde20b1635979ead26f3ca5867838c340fa691d058dd480b1",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/omit-remote-input-clear-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/omit-remote-input-clear-run.txt": "d0b5a1d288ea68039588bf25097925114b6f587ee76bf065843a57b707fed2d7",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/omit-remote-input-clear.exe": "d204b38a8ea12f603ac159c036efd31166165a3bd200a17d491d6d4146da4ab4",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/original_actor.cpp": "4682116f450825f1b1c763b34a8e0d236fa6d84cf97c6e592cb9b9b57e111790",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/ps2_recompiled_stubs.h": "b3adf106d95b8934f690943f2921308b90be5b766c4c8ba250c792de56400201",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/ps2_runtime.h": "bde7b7973395ce95ee07199dc5d91ad8f9b2f9a927e79e895f38243744d001e3",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/ps2_runtime_macros.h": "bde7b7973395ce95ee07199dc5d91ad8f9b2f9a927e79e895f38243744d001e3",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/ps2_stubs.h": "b3adf106d95b8934f690943f2921308b90be5b766c4c8ba250c792de56400201",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/ps2_syscalls.h": "b3adf106d95b8934f690943f2921308b90be5b766c4c8ba250c792de56400201",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/retain-missing-grid-flag-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/retain-missing-grid-flag-run.txt": "f24924c01ec7c26d70b778df0950305585ac96be5199441f032001129b5bf3e5",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/retain-missing-grid-flag.exe": "df4c8c585ccb5779c1605682c885ef24e336dfdda0a4fcb0cf84dcd825e81e1b",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/run.txt": "7622f77ec28aee7bb45bfcd2e69213c14f4b40489982c867e6be130acd57209a",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/runtime.hpp": "1db4b8e775d2c128c1b4d860af00e03deea60fd295ab73d60a8ecf190e76ea3f",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/tests.cpp": "cb9441ffcc4d43db4b9e0dec4794ce5254f67a23bda52706cdb9101aa28169f7",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/source/game/native/gameplay_actors/frame.cpp": "cfbede1779a2ab9bae7f6aab4d314b9c4ee7d649ea9e30782e0fbeca793cf65d",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/source/game/native/gameplay_actors/frame.hpp": "9135d54b3cdc2c57db67208519b9bcb905bd1ff82a139b7f73a3df15dd2fbd1c",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/source/game/native/gameplay_actors/freeze-paused-actors.cpp": "d3a85f8c2a53f0463b4a6f1b81c3922e71539c2a80238aa616a209774d861f2e",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/source/game/native/gameplay_actors/omit-remote-input-clear.cpp": "96bab1dba285911a09b40951d3d21de060923f791510a179b07364ee95769ad2",
+    "build-native-sjuni/gameplay-actor-frame-llvm-v5/source/game/native/gameplay_actors/retain-missing-grid-flag.cpp": "9362adf4d95ce72166abf38d266988a10ccda0cdb95d09f718cbd81ef5565ca6",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/receipt.json": "8e375216728c316313a01d52c1f029c6ee3f9cf9edadc37a89eba1f8d4515053",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/actor-frame.exe": "6309ae7a5848ae4a5d366ad6bca047afc959542a150c11f83bd4ca720fe0dc6c",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/freeze-paused-actors-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/freeze-paused-actors-run.txt": "82d12812efdb4a2a819667d42d241559aaf0b6a3850974f8962c38070a9b00a4",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/freeze-paused-actors.exe": "b893bbb8a0f98efe48747a9966f88802a01c948b44407d5b6d35803940824e86",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/o2_functions.h": "52713dae66a21c2fde20b1635979ead26f3ca5867838c340fa691d058dd480b1",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/omit-remote-input-clear-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/omit-remote-input-clear-run.txt": "d0b5a1d288ea68039588bf25097925114b6f587ee76bf065843a57b707fed2d7",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/omit-remote-input-clear.exe": "527d394fa304ae811876bdd52ed6770a7209071ce363d460dc9553f0cc876713",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/original_actor.cpp": "4682116f450825f1b1c763b34a8e0d236fa6d84cf97c6e592cb9b9b57e111790",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/ps2_recompiled_stubs.h": "b3adf106d95b8934f690943f2921308b90be5b766c4c8ba250c792de56400201",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/ps2_runtime.h": "bde7b7973395ce95ee07199dc5d91ad8f9b2f9a927e79e895f38243744d001e3",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/ps2_runtime_macros.h": "bde7b7973395ce95ee07199dc5d91ad8f9b2f9a927e79e895f38243744d001e3",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/ps2_stubs.h": "b3adf106d95b8934f690943f2921308b90be5b766c4c8ba250c792de56400201",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/ps2_syscalls.h": "b3adf106d95b8934f690943f2921308b90be5b766c4c8ba250c792de56400201",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/retain-missing-grid-flag-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/retain-missing-grid-flag-run.txt": "f24924c01ec7c26d70b778df0950305585ac96be5199441f032001129b5bf3e5",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/retain-missing-grid-flag.exe": "f19720faeada2fd41ee1ace4ead3194ac13e316164d873f687539d9fe5afbe80",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/run.txt": "7622f77ec28aee7bb45bfcd2e69213c14f4b40489982c867e6be130acd57209a",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/runtime.hpp": "1db4b8e775d2c128c1b4d860af00e03deea60fd295ab73d60a8ecf190e76ea3f",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/tests.cpp": "cb9441ffcc4d43db4b9e0dec4794ce5254f67a23bda52706cdb9101aa28169f7",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/source/game/native/gameplay_actors/frame.cpp": "cfbede1779a2ab9bae7f6aab4d314b9c4ee7d649ea9e30782e0fbeca793cf65d",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/source/game/native/gameplay_actors/frame.hpp": "9135d54b3cdc2c57db67208519b9bcb905bd1ff82a139b7f73a3df15dd2fbd1c",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/source/game/native/gameplay_actors/freeze-paused-actors.cpp": "d3a85f8c2a53f0463b4a6f1b81c3922e71539c2a80238aa616a209774d861f2e",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/source/game/native/gameplay_actors/omit-remote-input-clear.cpp": "96bab1dba285911a09b40951d3d21de060923f791510a179b07364ee95769ad2",
+    "build-native-sjuni/gameplay-actor-frame-gcc-v4/source/game/native/gameplay_actors/retain-missing-grid-flag.cpp": "9362adf4d95ce72166abf38d266988a10ccda0cdb95d09f718cbd81ef5565ca6",
+    "docs/native-gameplay/ACTOR_FRAME.md": "0e4802eae56370b3f4ed0189b4cbf45b4beb2abba4a4358722d39c63711cd140"
+  },
+  "limits": [
+    "Only primary eight-slot669F30orchestration; full actor families and actual game ownership remain.",
+    "Synchronous callee ports and finite exact-addition corpus; no guest-preemption or exceptional FPU claim."
+  ]
+}

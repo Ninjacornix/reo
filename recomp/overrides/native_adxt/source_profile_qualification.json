@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "status": "ordinary immutable source preparation qualified; runtime binding absent",
+  "authored_sha256": {
+    "recomp/overrides/native_adxt/source_profile.h": "7cb45a68ebe5042e97a4a0358d42755abe1e5c6008d2bc832bbb18edfa8e5c32",
+    "recomp/overrides/native_adxt/source_profile.cpp": "9860708cc2d787e03516f94b54d114eac590f973cd59ace0994bf9a98f9136fe",
+    "recomp/overrides/native_adxt/source_profile_tests.cpp": "37e0938bff46de10a77bbffbfb146e14570c6c2d18b7bd85b2f8afff0d5bc1db",
+    "tools/native_reconstruction/verify_adxt_file_source.py": "f14fdfbc823f90a74a235ef732557ded6610fe67e438e580bde9343c55476da7"
+  },
+  "evidence": {
+    "build-native-sjuni/adxt-binding/file-source-llvm-v2/receipt.json": {
+      "sha256": "edad10d7cdeae431784c3d7975b1515dc858beda4b8a2a82b9b87a4ae6ea7450",
+      "status": "actual immutable file source subranges and retained lifetime qualified"
+    },
+    "build-native-sjuni/adxt-binding/file-source-gcc-v2/receipt.json": {
+      "sha256": "e4567bd36a57fd539de3d3b45ccadf19ed4c128b8f504c34ecbf7a2a6b8ab660",
+      "status": "actual immutable file source subranges and retained lifetime qualified"
+    }
+  },
+  "checks_per_compiler": 44,
+  "detected_faults_per_compiler": 1,
+  "actual_import": true,
+  "actual_runtime": false,
+  "game_run": false,
+  "device_opened": false,
+  "in_v17_kit": false,
+  "documentation_sha256": "4e3f997cf422c33e7731322eeb601990a79b4bb37db4d87584ef107cca60d036"
+}

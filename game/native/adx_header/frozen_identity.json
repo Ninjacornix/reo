@@ -1,0 +1,24 @@
+{
+  "files": {
+    "game/native/adx_header/adx_header.cpp": "124147ce7fed57c895c080ece20aae8c8231c67eae07816b481895d4d34f38d4",
+    "game/native/adx_header/adx_header.hpp": "3a882ddf1e7dd979529c53c9824dcc362d544c3de39304d1d42e0bec44ebfb49",
+    "game/native/adx_header/key_table.inc": "eef27ed9cf01b8e7e916efff2344a110a437b740d38b01c7794fb1eec73c8b7d",
+    "game/native/adxt_refill/adxt_refill.cpp": "a1c1a8d92c3c3e3f458ea1d46f6ead4ca96f7ada0bdf58f9a7ca6c04f9537a04",
+    "game/native/adxt_refill/adxt_refill.hpp": "36f0cfa764f94309f172f2adee5da8a3e60352c42416338597b7d4a5be14d00c",
+    "game/native/resource_io/async_read_owner.cpp": "09235718523d8fa684bbdd96957376a89482a46c906236a8e233086083b1226a",
+    "game/native/resource_io/async_read_owner.hpp": "255ecda439a4f3e7f81bf6ae25335ace563251e400cd413b4f77d774c3262b57",
+    "game/native/resources/byte_view.hpp": "967f3ef9fab63390f05a95991a46dabbb6a7c0540130c16c35ee67eb498ffddb",
+    "game/native/resources/resource_session.cpp": "40da8f56bca191c39d6bb4dc81e3a0cd82e1d09c1c83c7c702e524cc511ab0fd",
+    "game/native/resources/resource_session.hpp": "0ac5e50af8c08141fabf66b9277bf187a76f7af6bcae065f2ae2b876ce1586ad",
+    "game/native/sjrb/sjrb.cpp": "29a888b091cf7284876cabcab0aa78062632e6192d98782edc0b065d926d25a2",
+    "game/native/sjrb/sjrb.hpp": "95263a5391293bd7f4a5d9607cabb57a3ae565ae9eee0d3f38d290f5cc45a37b",
+    "game/native/tasks/serial_worker.cpp": "72911c36d42bbdfdf7ceb4f6e288caa0c8736e57f4dec91bf6465329bfa24e42",
+    "game/native/tasks/serial_worker.hpp": "72f165f722689b134f4e97d149e16f215c143dff8873108cce816c06c80c7de4"
+  },
+  "key_table_packed_sha256": "eb7433da1be18cc81b0523fafbf76266e10b915311bff270bba75090103a3740",
+  "original_gcc_fixture_sha256": "7ffa76de4fe5aa56e4825c1a4a25ed591d5dfefe0331807848498974707a7158",
+  "original_inputs_sha256": "ab304db5087b8c476b3e818c60d35da2fbaa9915161b71f6d0615391de0fc843",
+  "original_llvm_fixture_sha256": "0e2b3fd61fdcad1fe4f6f7fb479165dc6fe706bf12427e5533787371ed8d0d8f",
+  "provenance": "Native typed parser/header-source owner authored after original math/header48case evidence exposure. Frozen after GCC+LLVM66 ownership/parser/FP/admission assertions and BEFORE native comparator development; no blind-authoring claim. No game/runtime integration.",
+  "schema": 1
+}

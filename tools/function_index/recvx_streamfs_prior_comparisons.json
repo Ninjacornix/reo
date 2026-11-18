@@ -1,0 +1,530 @@
+{
+  "reference_commit": "657b0c0c9489943116c71f151804ad7304fca975",
+  "baseline_review_sha256": "7917fccf0c72d74b9b7412ecf4eea49007b385cba7c15c650e11055e80390def",
+  "purpose": "Immutable prior comparison baseline for reproducible stream/fs source-coverage accounting; not shared annotation data.",
+  "groups": [
+    {
+      "id": "cvfs",
+      "notebook": "SYMBOLS_CRI.md",
+      "cvx_file": "src/cri/mwlib/ee/lib/libadxe/cri_cvfs.c",
+      "rows": [
+        [
+          "135930",
+          "cvFsOpen",
+          "supported-role",
+          "Both split device/path and use a two-word interface/backend handle. CVX also has 40 wrappers and 32 registered devices; Outbreak adds path-resolution/rewrite behavior. This supports the API role, not all failure-path equivalence."
+        ],
+        [
+          "135C80",
+          "cvFsClose",
+          "supported-role",
+          "Both release the wrapper only after a callable Close returns; missing Close diagnoses and retains it."
+        ],
+        [
+          "135CF8",
+          "cvFsTell",
+          "supported-role",
+          "Both dispatch through method +0x1C on the backend handle, with zero fallback."
+        ],
+        [
+          "135D60",
+          "cvFsSeek",
+          "supported-role",
+          "Both use method +0x18 for handle/offset/origin. This is the virtual filesystem layer, not a host seek syscall."
+        ],
+        [
+          "135DC8",
+          "cvFsReqRd",
+          "supported-role",
+          "Method +0x20 forwards a read request; neither API name establishes synchronous completion."
+        ],
+        [
+          "135E30",
+          "cvFsReqWr",
+          "supported-role",
+          "Method +0x24 forwards a write request with zero fallback."
+        ],
+        [
+          "135E98",
+          "cvFsStopTr",
+          "supported-role",
+          "Method +0x28 stops transfer without releasing the wrapper."
+        ],
+        [
+          "135F50",
+          "cvFsGetStat",
+          "supported-role",
+          "Method +0x2C and invalid-handle fallback 3 agree with CVE_FS_ST_ERR=3 in the CVX header."
+        ],
+        [
+          "1362E8",
+          "cvFsGetSctLen",
+          "supported-role",
+          "Method +0x30 is the sector-length query, distinct from byte size and transfer progress."
+        ],
+        [
+          "1363A8",
+          "cvFsGetNumTr",
+          "supported-role",
+          "Same +0x38 dispatch. Both owned Outbreak providers return bytes from completed sectors only in state1; CVX concrete providers instead expose their seek/Tell cursor times2048 without a state guard."
+        ],
+        [
+          "136688",
+          "cvFsLoadDirInfo",
+          "name-candidate",
+          "Full split/default/three original arguments/+0x48/duplicated IsExistFile diagnostic supports qualified alias; Outbreak additionally rewrites scratch path, but still forwards original arguments."
+        ],
+        [
+          "136AA8",
+          "cvFsOptFn1",
+          "related-different",
+          "Both use method +0x60, but CVX source invokes it with only the backend object while Outbreak preserves optional arguments. CVX's old-style function-pointer declarations cannot establish Outbreak's complete callback ABI."
+        ],
+        [
+          "136B10",
+          "cvFsOptFn2",
+          "related-different",
+          "Both use method +0x64; same optional-argument/old-style prototype limitation as OptFn1. Do not copy the apparent one-argument call."
+        ],
+        [
+          "136350",
+          "cvFsSetSctLen",
+          "related-different",
+          "Outbreak leaves a1 and other argument registers unchanged when replacing a0 with the backend object. CVX source passes only the object despite its public two-argument prototype. Do not drop the Outbreak length argument."
+        ],
+        [
+          "136578",
+          "getNumFiles",
+          "name-candidate",
+          "Private CVX helper matches full strlen/input-length-prefix/32-device scan/first-callable/default0 legacy route and no explicit callback arguments. Outbreak adds capability selector64 and optional selector4; no NULL aggregation, provider implementation or extension-result unit is proved."
+        ],
+        [
+          "135FB8",
+          "cvFsGetFileSize",
+          "related-different",
+          "Same resolved-path +8 size query, but Outbreak adds rewrite/default fallback; its NULL-interface diagnostic can return into a NULL +8 load, unlike CVX explicit return."
+        ],
+        [
+          "136078",
+          "cvFsGetFileSizeEx",
+          "related-different",
+          "Same resolved-path +0x5C plus original second argument. Outbreak adds resolver behavior and may continue to NULL +0x5C load after its returning diagnostic."
+        ]
+      ]
+    },
+    {
+      "id": "cvfs-server",
+      "notebook": "SYMBOLS.md",
+      "cvx_file": "src/cri/mwlib/ee/lib/libadxe/cri_cvfs.c",
+      "rows": [
+        [
+          "135EF0",
+          "cvFsExecServer",
+          "name-candidate",
+          "Complete 32-slot registry scan and nonnull interface/method0 guards agree; candidate alias now recorded on the existing authoritative row."
+        ]
+      ]
+    },
+    {
+      "id": "sjuni",
+      "notebook": "SYMBOLS_CRI_SJUNI_LINKED_CHUNK_POOLS.md",
+      "cvx_file": "src/cri/mwlib/ee/lib/libadxe/sj_uni.c",
+      "rows": [
+        [
+          "140000",
+          "SJUNI_Error",
+          "related-different",
+          "CVX's default handler spins forever; Outbreak forwards SJUNI Error to its diagnostic path. An identical error-handler name does not establish noreturn behavior."
+        ],
+        [
+          "1400C0",
+          "SJUNI_Create",
+          "supported-role",
+          "Both have 64 objects, caller-supplied 16-byte nodes, four queue heads and split/merge mode. CVX casts work size to unsigned before division; the Outbreak notebook records signed truncation. Invalid inputs need separate treatment."
+        ],
+        [
+          "1401A8",
+          "SJUNI_Destroy",
+          "supported-role",
+          "Clear the object, retaining caller ownership of nodes/payload storage; no freeing of borrowed buffers."
+        ],
+        [
+          "1401F8",
+          "SJUNI_Reset",
+          "supported-role",
+          "Both relink the external node free list and clear four heads. Both initialize a final node even when no valid positive node count has been established."
+        ],
+        [
+          "140288",
+          "SJUNI_GetNumData",
+          "supported-role",
+          "Sum payload lengths for a selected queue; this returns bytes, not node count."
+        ],
+        [
+          "140300",
+          "SJUNI_GetChunk",
+          "supported-role",
+          "Whole-front-span removal returns its node to the free list; a smaller request only splits in mode 1. Payload bytes are borrowed, not copied."
+        ],
+        [
+          "140438",
+          "SJUNI_PutChunk",
+          "supported-role",
+          "Append or merge a physically adjacent tail in mode 1; exhausted node pool reports an error. This is queue publication, not a payload copy."
+        ],
+        [
+          "140590",
+          "SJUNI_UngetChunk",
+          "supported-role",
+          "Prepend or merge adjacent head in mode 1, using an external free node when needed. No proof the span is the last reservation."
+        ],
+        [
+          "1406D8",
+          "SJUNI_IsGetChunk",
+          "supported-role",
+          "Returns the entire first-span length through output; mode 1 allows length>=request, other modes require equality. Different from the ring's min(request,available) output."
+        ],
+        [
+          "140768",
+          "SJUNI_GetNumChunk",
+          "supported-role",
+          "Count selected queue nodes, without the bounds checking of GetNumData."
+        ],
+        [
+          "1407A8",
+          "SJUNI_GetNumChainPool",
+          "supported-role",
+          "Count nodes remaining in the free list; not free payload bytes."
+        ],
+        [
+          "140020",
+          "SJUNI_Init",
+          "supported-role",
+          "Both first-reference initializers clear64 records of48 bytes (0x30) and increment a module count. No payload allocation or new per-object initialization is established."
+        ],
+        [
+          "140070",
+          "SJUNI_Finish",
+          "supported-role",
+          "Both decrement without an initial zero guard and clear the fixed object pool only on exact new zero; neither frees caller-owned node or payload arrays."
+        ],
+        [
+          "1401E0",
+          "SJUNI_GetUuid",
+          "supported-role",
+          "Both return the constructor-installed UUID pointer. The sixteen owned bytes23DA78 equal the pinned source UUID serialized as PS2 little-endian <IHH8B; this does not establish universal object/ABI equivalence."
+        ],
+        [
+          "1401E8",
+          "SJUNI_EntryErrFunc",
+          "supported-role",
+          "Both install callback/context at object offsets28/2C without invoking them. Shared fields and exact UUID support the interface role; callback lifetime/reentry remain caller contracts."
+        ]
+      ]
+    },
+    {
+      "id": "sjchunk",
+      "notebook": "SYMBOLS_CRI_SJUNI_LINKED_CHUNK_POOLS.md",
+      "cvx_file": "src/cri/mwlib/ee/lib/libadxe/sj_utl.c",
+      "rows": [
+        [
+          "1407E0",
+          "SJ_SplitChunk",
+          "supported-role",
+          "Both split a pointer/length descriptor with signed min, make an empty remainder pointer null, and support the observed input/prefix alias ordering. No byte copy or negative-size validation is established."
+        ]
+      ]
+    },
+    {
+      "id": "sjrb",
+      "notebook": "SYMBOLS_CRI_SJRB_POOL_AND_CHUNK_OWNERSHIP.md",
+      "cvx_file": "src/cri/mwlib/ee/lib/libadxe/sj_rbf.c",
+      "rows": [
+        [
+          "13F7D8",
+          "SJRBF_Error",
+          "related-different",
+          "CVX spins forever; Outbreak reports its owned SJRB Error through a diagnostic helper."
+        ],
+        [
+          "13F8A8",
+          "SJRBF_Create",
+          "related-different",
+          "Same borrowed-buffer/capacity/wrap-extension concept, but CVX has 64 objects of 0x30 bytes; Outbreak has 256 objects of 0x40 bytes, four added transfer counters and shifted callback fields."
+        ],
+        [
+          "13F9F0",
+          "SJRBF_Reset",
+          "related-different",
+          "Both reset positions, readable=0 and free=capacity. Outbreak additionally clears four transfer totals."
+        ],
+        [
+          "13FA38",
+          "SJRBF_GetNumData",
+          "supported-role",
+          "Selector 0 reports free bytes, selector 1 readable bytes; invalid selector reports error and returns zero."
+        ],
+        [
+          "13FA88",
+          "SJRBF_GetChunk",
+          "related-different",
+          "Same bounded grant and modulo position advance. Outbreak also updates acquisition totals and uses its own tagged guard."
+        ],
+        [
+          "13FBF8",
+          "SJRBF_PutChunk",
+          "related-different",
+          "Both publish/return capacity and maintain wrap-extension mirror copies; Outbreak adds per-pool return totals."
+        ],
+        [
+          "13FD58",
+          "SJRBF_UngetChunk",
+          "related-different",
+          "Both verify the modulo previous position before restoring capacity. Outbreak also subtracts acquisition totals after a returning diagnostic, including a mismatch path."
+        ],
+        [
+          "13FEF0",
+          "SJRBF_IsGetChunk",
+          "supported-role",
+          "Peek contiguous grant, report whether request fits and avoid moving positions. Preserve invalid-selector and zero-request edge behavior."
+        ],
+        [
+          "13FFC0",
+          "SJRBF_GetBufSize",
+          "supported-role",
+          "Returns configured capacity, not readable/free count or extension allocation size."
+        ],
+        [
+          "13FFC8",
+          "SJRBF_GetXtrSize",
+          "supported-role",
+          "Returns caller-provided wrap-extension length. This API requires separately allocated backing extent."
+        ],
+        [
+          "13F7F8",
+          "SJRBF_Init",
+          "related-different",
+          "Both clear on first module reference, then increment. Outbreak adds the shared tag1 guard and has256 records of64 bytes (0x40); CVX has64 records of48 bytes (0x30)."
+        ],
+        [
+          "13F858",
+          "SJRBF_Finish",
+          "related-different",
+          "Both decrement and clear on exact zero; Outbreak has an added tag1 guard and a larger pool. Neither walks live buffers or frees borrowed payload storage."
+        ],
+        [
+          "13F998",
+          "SJRBF_Destroy",
+          "related-different",
+          "Both guard, zero a nonnull object and mark it unused, retaining caller ownership of the buffer. Outbreak clears64 bytes (0x40), while the CVX32-bit source layout is48 bytes (0x30); no cross-version struct cast is justified."
+        ],
+        [
+          "13F9D8",
+          "SJRBF_GetUuid",
+          "supported-role",
+          "Both return the installed UUID. All16 owned bytes23DA58 exactly match the pinned source UUID; Outbreak still differs in record size, pool size, counters and error callback offsets."
+        ],
+        [
+          "13F9E0",
+          "SJRBF_EntryErrFunc",
+          "related-different",
+          "Both set callback/context, but Outbreak fields are38/3C and CVX fields28/2C. The latter positions hold Outbreak transfer counters."
+        ],
+        [
+          "13FFB8",
+          "SJRBF_GetBufPtr",
+          "supported-role",
+          "Both return the borrowed backing-buffer pointer at1C. No allocation, length validation or ownership transfer occurs."
+        ]
+      ]
+    },
+    {
+      "id": "dtx",
+      "notebook": "SYMBOLS_CRI_DTX_TRANSFER_CONTEXT_AND_ACKNOWLEDGEMENT.md",
+      "cvx_file": "src/cri/mwlib/ee/lib/libadxe/dtx.c",
+      "rows": [
+        [
+          "138F30",
+          "DTX_Open",
+          "supported-role",
+          "Unsigned id<8 selects a fixed context slot; returning it does not establish active state."
+        ],
+        [
+          "138DE8",
+          "dtx_create_rmt",
+          "supported-role",
+          "RPC function 2 sends four 32-bit words and receives one remote handle. Transport status is not independently validated."
+        ],
+        [
+          "138E58",
+          "dtx_destroy_rmt",
+          "supported-role",
+          "RPC function 3 sends the remote handle with no returned payload; local state clearing is separate."
+        ],
+        [
+          "138F78",
+          "DTX_Create",
+          "related-different",
+          "Both enforce EE64/IOP32 alignment, 64-byte length multiples, eight slots and a 64-byte footer. Outbreak explicitly sets an enabled flag consumed by its service gate; CVX Create does not set that flag."
+        ],
+        [
+          "139178",
+          "DTX_SetRcvCbf",
+          "supported-role",
+          "Store completion callback/context at +0x20/+0x24; completion occurs when a newer footer sequence is observed."
+        ],
+        [
+          "139188",
+          "DTX_SetSndCbf",
+          "supported-role",
+          "Store fill callback/context at +0x28/+0x2C, invoked before cache synchronization and DMA submission."
+        ],
+        [
+          "139198",
+          "DTX_ExecHndl",
+          "related-different",
+          "Both acknowledge a newer signed footer sequence before refill and submission. Outbreak additionally requires enabled and global initialization gates; its teardown depends on these gates."
+        ],
+        [
+          "139110",
+          "DTX_Destroy",
+          "related-different",
+          "CVX immediately requests remote destruction and clears the object. Outbreak first disables submission and pumps ALL contexts until its in-flight flag clears, without a timeout."
+        ],
+        [
+          "139568",
+          "DTX_ExecServer",
+          "supported-role",
+          "Scan eight active records under the shared stream critical section. Each record can invoke callbacks and submit DMA, so loop count is not a duration bound."
+        ],
+        [
+          "138F60",
+          "DTX_Close",
+          "supported-role",
+          "Both clear callback/context pairs20/24 and28/2C. This operation neither waits for inflight work nor destroys/deactivates the context; full destruction is a separate operation."
+        ]
+      ]
+    },
+    {
+      "id": "dtx-default-ack",
+      "notebook": "SYMBOLS_RESIDUAL_CRI_SERVICE_BOOKKEEPING_AND_INTERFACE_DEFAULTS.md",
+      "cvx_file": "src/cri/mwlib/ee/lib/libadxe/dtx.c",
+      "rows": [
+        [
+          "138EA8",
+          "dtx_def_rcvcbf",
+          "supported-role",
+          "Both default receive callbacks increment an otherwise unqueried local static counter. Outbreak constructor/indirect dispatch binds this to newer-sequence acknowledgement completion, not every DMA submission or a user callback."
+        ]
+      ]
+    },
+    {
+      "id": "dtx-default-fill",
+      "notebook": "SYMBOLS_CVFS_SRD_DTR_DTX_RESIDUAL_SERVICE.md",
+      "cvx_file": "src/cri/mwlib/ee/lib/libadxe/dtx.c",
+      "rows": [
+        [
+          "138EC0",
+          "dtx_def_sndcbf",
+          "supported-role",
+          "Both default fill callbacks write0xAA, format Hello from EE (%d) into the payload using a separate local counter and then increment it. Formatting is not size-bounded locally; actual application callbacks can differ."
+        ]
+      ]
+    },
+    {
+      "id": "fs-second-14",
+      "notebook": "SYMBOLS_CVFS_64BIT_FILE_SIZE_QUERY_ROUTES.md",
+      "cvx_file": "src/cri/mwlib/ee/lib/libadxe/cri_cvfs.c",
+      "rows": [
+        [
+          "137138",
+          "cvFsGetFileSize",
+          "related-different",
+          "Related filename-size purpose only: Outbreak uses two optional CA/CB halves with original name plus resolved-path argument, and lacks a NULL resolver guard; CVX calls ordinary +8 once and has no such 64-bit API here."
+        ],
+        [
+          "1371F0",
+          "cvFsGetFileSizeEx",
+          "related-different",
+          "Related size-with-parameter purpose only: Outbreak performs uninitialized stack device lookup before splitting, then CC/CD half queries. CVX explicit initialization/validation cannot be substituted as proof of intended admission."
+        ]
+      ]
+    },
+    {
+      "id": "fs-second-15",
+      "notebook": "SYMBOLS_CRI_BACKENDS.md",
+      "cvx_file": "src/cri/mwlib/ee/lib/libadxe/dvci.c",
+      "rows": [
+        [
+          "139FE8",
+          "dvCiGetNumTr",
+          "related-different",
+          "Both return byte quantities, but Outbreak uses completed-count+0x14 only in state1. CVX returns req_nsct*2048 without state guard; that same field is modified by Seek and returned by Tell."
+        ]
+      ]
+    },
+    {
+      "id": "fs-second-16",
+      "notebook": "SYMBOLS_CRI_BACKENDS.md",
+      "cvx_file": "src/cri/mwlib/ee/lib/libadxe/htci.c",
+      "rows": [
+        [
+          "13BBE8",
+          "htCiGetNumTr",
+          "related-different",
+          "Outbreak returns completed-count+0x28 shifted11 only in state1; CVX returns Seek/Tell req_nsct*2048 regardless of state. Neither getter alone proves completion of arbitrary pending I/O."
+        ],
+        [
+          "13B308",
+          "htCiGetFileSize",
+          "related-different",
+          "Owned interface +8 is a signed-low32 adapter around wider13B330. CVX exposes a Sint32 cached/open/seek-end/close query directly and has no CA..CD optional methods."
+        ]
+      ]
+    },
+    {
+      "id": "fs-second-17",
+      "notebook": "SYMBOLS_CRI.md",
+      "cvx_file": "src/cri/mwlib/ee/lib/libadxe/adx_fs.c",
+      "rows": [
+        [
+          "129168",
+          "adxf_SetAfsFileInfo",
+          "related-different",
+          "Shared partition/member resolution and sector-byte sizing. CVX opens a new stream; Outbreak reconfigures existing stream+4 with richer parent/path bounds and rejects status4."
+        ],
+        [
+          "129240",
+          "ADXF_OpenAfs",
+          "supported-role",
+          "Both log operation2, create a record, delegate partition/member setup, close on negative setup and return NULL on failure. Child stream contracts and guards differ."
+        ],
+        [
+          "129C08",
+          "ADXF_GetFsizeSct",
+          "related-different",
+          "CVX is a field getter. Outbreak conditionally refreshes oversized cached metadata, always queries stream bytes on remaining valid paths, divides signed toward zero by2048 and can return-5."
+        ],
+        [
+          "129CA8",
+          "ADXF_GetFsizeByte",
+          "related-different",
+          "CVX returns fsize and preserves NULL -3. Outbreak shifts the result of129C08 by11, including errors (-3 becomes -6144), so this is sector-derived bytes rather than an exact unpadded byte field."
+        ]
+      ]
+    },
+    {
+      "id": "fs-second-18",
+      "notebook": "SYMBOLS_ADXF_RESIDUAL_PARTITION_AND_PROGRESS_CONTROLS.md",
+      "cvx_file": "src/cri/mwlib/ee/lib/libadxe/adx_fs.c",
+      "rows": [
+        [
+          "129E18",
+          "ADXF_GetFnameRangeEx",
+          "related-different",
+          "Shared validated path/parent/range output and cumulative16-bit member lengths; Outbreak additionally selects32-bit lengths by descriptor+F, adds descriptor+114 base, and does not walk CVX linked additive partitions."
+        ]
+      ]
+    }
+  ]
+}

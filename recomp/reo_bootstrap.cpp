@@ -43,6 +43,45 @@
 #include "overrides/reo_performance.h"
 #include "overrides/reo_cri_server_observer.h"
 #include "overrides/reo_cd_async.h"
+#if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_GAMEPLAY_SAVE) && REO_BUILD_NATIVE_GAMEPLAY_SAVE
+#include "overrides/native_gameplay/save_session.hpp"
+#endif
+#if defined(REO_BUILD_NATIVE_ROOM_CAMERA) && REO_BUILD_NATIVE_ROOM_CAMERA
+#include "overrides/native_camera/room_camera_adapter.hpp"
+#include "overrides/native_gameplay/analog_control_adapter.hpp"
+#endif
+#if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_HOST_MOVIE) && REO_BUILD_NATIVE_HOST_MOVIE
+#include "overrides/native_host_movie/runtime_adapter.h"
+#endif
+#if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_MOVIE_POSITION) && REO_BUILD_NATIVE_MOVIE_POSITION
+#include "overrides/native_movie_position/runtime_adapter.h"
+#endif
+#if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_RESOURCE_READS)
+#include "overrides/native_resource_reads/runtime_adapter.h"
+#endif
+#if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_ADX_BLOCK)
+#include "overrides/native_adx_block/runtime_adapter.h"
+#endif
+#if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_ADX_STEREO) && REO_BUILD_NATIVE_ADX_STEREO
+#include "overrides/native_adx_stereo/runtime_adapter.h"
+#endif
+#if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_PCM) && REO_BUILD_NATIVE_PCM
+#include "ps2_syscalls.h"
+#include "overrides/native_pcm/runtime_adapter.h"
+#if !defined(PS2_RUNTIME_HAS_DTX_LAYOUT_SNAPSHOT) || !PS2_RUNTIME_HAS_DTX_LAYOUT_SNAPSHOT
+#error Native PCM requires the matching observed-layout dependency snapshot
+#endif
+#endif
+#if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_AUDIO) && REO_BUILD_NATIVE_AUDIO
+#include "overrides/native_sound_ram/composite_backend.h"
+#include "overrides/native_sound_ram/build_identity.h"
+#if !defined(REO_BUILD_NATIVE_RESOURCE_OWNER) || !REO_BUILD_NATIVE_RESOURCE_OWNER || !defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) || REO_BUILD_NATIVE_SOUND_RAM_CAPTURE < 2
+#error Complete native audio requires the coordinated writer and native CD configuration cohort
+#endif
+#if defined(REO_BUILD_NATIVE_PCM) && REO_BUILD_NATIVE_PCM
+#error Choose one complete native audio backend candidate
+#endif
+#endif
 #include "overrides/reo_display_probe.h"
 #include "overrides/reo_display_sync.h"
 
@@ -937,6 +976,7 @@ static void reoWriteBmp(const char* path, const std::vector<uint8_t>& rgba, uint
 }
 
 int main(int argc, char* argv[]) {
+    reo::slowdown::configure("reo-slowdown-v1 " __DATE__ " " __TIME__);
 
 #ifdef _WIN32
 
@@ -985,6 +1025,10 @@ int main(int argc, char* argv[]) {
 
             game_data = argv[++i];
 
+        } else if (strcmp(argv[i], "--check-vu-defaults") == 0) {
+            // Registration checks only: no PS2Runtime, window, audio device,
+            // guest execution, or input. Safe for unattended build verification.
+            return reoRegisterVuSpecializedPrograms() ? 0 : 1;
         } else if (strcmp(argv[i], "--help") == 0) {
 
             printf("Usage: reo_recomp [--game file1|file2] [--elf <path>] [--data <path>]\n");
@@ -994,6 +1038,7 @@ int main(int argc, char* argv[]) {
             printf("  --elf    Path to game ELF (default: auto from game selection)\n");
 
             printf("  --data   Path to extracted game data (default: auto from game selection)\n");
+            printf("  --check-vu-defaults   Check compiled VU registration without starting the game\n");
 
             return 0;
         }
@@ -1204,6 +1249,23 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 #endif
+#if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_HOST_MOVIE) && REO_BUILD_NATIVE_HOST_MOVIE
+    const char* nativeMovieRequest = std::getenv("REO_NATIVE_HOST_MOVIE");
+    const bool nativeMediaWindow = nativeMovieRequest && !std::strcmp(nativeMovieRequest, "1");
+    const char* backgroundRequest = std::getenv("REO_NATIVE_MEDIA_BACKGROUND_TEST");
+    const bool backgroundMediaTest = nativeMediaWindow && backgroundRequest &&
+        (!std::strcmp(backgroundRequest, "1") || !std::strcmp(backgroundRequest, "2")) &&
+        !std::getenv("REO_HEADLESS");
+    const bool captureBackgroundMediaTest = backgroundMediaTest && !std::strcmp(backgroundRequest, "2");
+    if (nativeMediaWindow) {
+        // raylib otherwise waits inside PollInputEvents while minimized, before
+        // copying GLFW's close flag. Keep the existing vblank pacing in run().
+        SetConfigFlags(FLAG_WINDOW_ALWAYS_RUN);
+        // Explicit developer fixture only: never activate a test on the user's
+        // desktop. Create hidden, then show without activation below.
+        if (backgroundMediaTest) SetConfigFlags(FLAG_WINDOW_HIDDEN);
+    }
+#endif
 #if !defined(__APPLE__) && !defined(PLATFORM_VITA)
     if (!std::getenv("REO_HEADLESS") && !reo_display_probe::openGl33Available()) {
         fprintf(stderr, "[BOOT] OpenGL 3.3 is unavailable; not opening the game window. %s\n",
@@ -1222,6 +1284,24 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+#if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_HOST_MOVIE) && REO_BUILD_NATIVE_HOST_MOVIE
+    if (nativeMediaWindow && IsWindowReady()) {
+        if (backgroundMediaTest) {
+            if (captureBackgroundMediaTest) {
+                // Window-only compositor capture needs a non-minimized surface.
+                // Keep its original geometry and place it behind other windows.
+                if (!SetWindowPos(static_cast<HWND>(GetWindowHandle()), HWND_BOTTOM, 0, 0, 0, 0,
+                                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW)) {
+                    fprintf(stderr, "[NATIVE-HOST-MOVIE-ERROR] background capture window setup failed\n");
+                    return 1;
+                }
+                fprintf(stderr, "[NATIVE-MEDIA-WINDOW] capability=REO_NATIVE_MEDIA_BACKGROUND_CAPTURE_V1\n");
+            } else ShowWindow(static_cast<HWND>(GetWindowHandle()), SW_SHOWMINNOACTIVE);
+        }
+        fprintf(stderr, "[NATIVE-MEDIA-WINDOW] minimized_event_pump=enabled background_test=%d capability=REO_NATIVE_MEDIA_BACKGROUND_TEST_V1\n",
+                backgroundMediaTest ? (captureBackgroundMediaTest ? 2 : 1) : 0);
+    }
+#endif
     if (!std::getenv("REO_HEADLESS") && !reo_gpu_present::requested())
         reo::display_sync::configureOpenGl();
 
@@ -1312,7 +1392,17 @@ int main(int argc, char* argv[]) {
     reo_game_clock::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
     reo_performance::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
     reo_cri_server::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
+#if defined(REO_BUILD_NATIVE_RESOURCE_OWNER)
+#if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_AUDIO) && REO_BUILD_NATIVE_AUDIO
+    const auto cdConfiguration = reo_cd_async::configureWithReceipt(
+        g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE, runtime);
+#else
+    reo_cd_async::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE, runtime);
+#endif
+    reo_cd_async::Lifetime cdReadLifetime(runtime);
+#else
     reo_cd_async::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
+#endif
 
     reo_actor_origin::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
     reo_ground_origin::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE);
@@ -1328,6 +1418,53 @@ int main(int argc, char* argv[]) {
     printf("[BOOT] Applying game overrides (post-registration)...\n");
 
     ps2_game_overrides::applyMatching(runtime, elf_path, g.entry_point);
+#if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_ADX_BLOCK)
+    if (const auto* requested = std::getenv("REO_NATIVE_ADX_BLOCK"); requested && !std::strcmp(requested, "1")) {
+        if (!reo_native_adx_block::install(runtime))
+            std::fprintf(stderr, "[NATIVE-ADX-BLOCK] installation unavailable; original methods retained\n");
+    }
+#endif
+#if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_ADX_STEREO) && REO_BUILD_NATIVE_ADX_STEREO
+    if (const auto* requested = std::getenv("REO_NATIVE_ADX_STEREO"); requested && !std::strcmp(requested, "1")) {
+        if (!reo_native_adx_stereo::install(runtime))
+            std::fprintf(stderr, "[NATIVE-ADX-STEREO] installation unavailable; original methods retained\n");
+    }
+#endif
+#if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_RESOURCE_READS)
+    reo_native_resource_reads::configure(g.serial, runtime.memory().getRDRAM(), PS2_RAM_SIZE,
+                                         runtime, PS2Runtime::getIoPaths().cdRoot);
+#endif
+#if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_PCM) && REO_BUILD_NATIVE_PCM
+    if (const auto* requested = std::getenv("REO_NATIVE_PCM"); requested && !std::strcmp(requested, "1")) {
+        bool installed = false;
+        if (!std::strcmp(g.serial, "SLUS-20765") && g.entry_point == 0x00100008u) {
+            const auto layout = ps2_syscalls::dtxCompatLayoutSnapshot();
+            const auto proof = reo_native_pcm::ProfileProof::from_observed_file1(
+                layout.rpcSid, layout.urpcObjBase, layout.urpcObjLimit, layout.urpcObjStride,
+                layout.urpcFnTableBase, layout.urpcObjTableBase, layout.dispatcherFuncAddr);
+            if (proof)
+                installed = reo_native_pcm::install(runtime, *proof);
+        }
+        if (!installed)
+            std::fprintf(stderr, "[NATIVE-PCM] installation unavailable; inspect selection diagnostics\n");
+    }
+#endif
+#if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_AUDIO) && REO_BUILD_NATIVE_AUDIO
+    if (const auto* requested = std::getenv("REO_NATIVE_AUDIO"); requested && !std::strcmp(requested, "1")) {
+        reo::native::sound_ram::InstallResult selected;
+        if (!std::strcmp(g.serial, "SLUS-20765") && g.entry_point == 0x00100008u) {
+            const auto identity = reo::native::sound_ram::observe_build_identity(
+                std::filesystem::path(std::u8string(elf_path.begin(), elf_path.end())));
+            if (identity.status == reo::native::sound_ram::IdentityStatus::observed_metadata)
+                selected = reo::native::sound_ram::install(runtime, cdConfiguration.receipt, identity.identity);
+            else
+                std::fprintf(stderr, "[NATIVE-AUDIO-ERROR] build_identity=%u\n", unsigned(identity.status));
+        }
+        if (selected.status != reo::native::sound_ram::InstallStatus::installed)
+            std::fprintf(stderr, "[NATIVE-AUDIO-ERROR] installation=%u dispatch=%u; complete candidate unavailable\n",
+                         unsigned(selected.status), unsigned(selected.dispatch_status));
+    }
+#endif
 #if defined(REO_GAME_FILE2)
     if (std::strcmp(g.serial, "SLUS-20984") == 0)
         reo::mc2::install(runtime, reo::mc2::File2Workers);
@@ -1353,7 +1490,13 @@ int main(int argc, char* argv[]) {
 #if defined(_WIN32) && defined(REO_HAVE_PARALLEL_GS) && (defined(REO_GAME_FILE1) || defined(REO_GAME_FILE2))
     if (std::strcmp(g.serial, REO_MOVIE_SERIAL) == 0) {
         const char* gpuMovie = std::getenv("REO_GPU_MOVIE");
-        if (gpuMovie && std::atoi(gpuMovie) != 0 && !reo_gpu_movie::installNativeMovieGame(runtime))
+        const char* hostMovie = std::getenv("REO_NATIVE_HOST_MOVIE");
+        const bool useHostMovie = hostMovie && !std::strcmp(hostMovie, "1");
+#if !defined(REO_GAME_FILE1) || !defined(REO_BUILD_NATIVE_HOST_MOVIE) || !REO_BUILD_NATIVE_HOST_MOVIE
+        if (useHostMovie)
+            throw std::runtime_error("This game build does not include the native MP4 owner");
+#endif
+        if (!useHostMovie && gpuMovie && std::atoi(gpuMovie) != 0 && !reo_gpu_movie::installNativeMovieGame(runtime))
             throw std::runtime_error(
                 "Native GPU movie installation refused its original GAME identities");
 #if defined(REO_GAME_FILE1)
@@ -1415,6 +1558,124 @@ int main(int argc, char* argv[]) {
     }
 #endif
 
+#if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_MOVIE_POSITION) && REO_BUILD_NATIVE_MOVIE_POSITION
+    // Install after other registration so admission checks the final registry.
+    const auto* hostMovieSelection = std::getenv("REO_NATIVE_HOST_MOVIE");
+    if (const auto* requested = std::getenv("REO_NATIVE_MOVIE_POSITION"); requested && !std::strcmp(requested, "1") &&
+        !(hostMovieSelection && !std::strcmp(hostMovieSelection, "1"))) {
+        if (std::strcmp(g.serial, "SLUS-20765") || g.entry_point != 0x00100008u ||
+            !reo_native_movie_position::install(runtime))
+            std::fprintf(stderr, "[NATIVE-MOVIE-POSITION] installation unavailable; original publisher retained\n");
+    }
+#endif
+
+#if defined(_WIN32) && defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_HOST_MOVIE) && REO_BUILD_NATIVE_HOST_MOVIE
+    if (const auto* requested = std::getenv("REO_NATIVE_HOST_MOVIE"); requested && !std::strcmp(requested, "1")) {
+        const auto* cache = std::getenv("REO_NATIVE_HOST_MOVIE_CACHE");
+        if (std::strcmp(g.serial, "SLUS-20765") || g.entry_point != 0x00100008u || !cache || !*cache ||
+            !reo::native::host_movie_binding::install_before_run(runtime, std::filesystem::u8path(cache)))
+            throw std::runtime_error("Selected native MP4 movie owner unavailable; inspect cache and build identity");
+    }
+#endif
+
+#if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_GAMEPLAY_SAVE) && REO_BUILD_NATIVE_GAMEPLAY_SAVE
+    // REO_NATIVE_GAMEPLAY_SAVE=1 runs the native entries; =shadow keeps the originals
+    // authoritative and compares native results (see HYBRID_INTEGRATION_PLAN.md).
+    if (const auto* requested = std::getenv("REO_NATIVE_GAMEPLAY_SAVE");
+        requested && (!std::strcmp(requested, "1") || !std::strcmp(requested, "shadow"))) {
+        using namespace reo::native::native_gameplay;
+        const bool shadow = !std::strcmp(requested, "shadow");
+        if (std::strcmp(g.serial, "SLUS-20765") || g.entry_point != 0x00100008u ||
+            install_save_session_before_run(runtime, true, shadow).status != InstallStatus::installed)
+            throw std::runtime_error("Selected native gameplay save/session owner unavailable; inspect build identity");
+        std::fprintf(stdout, shadow ? "[NATIVE-GAMEPLAY-SAVE] nine save/session entries installed in shadow mode\n"
+                                    : "[NATIVE-GAMEPLAY-SAVE] nine native save/session entries installed\n");
+    }
+#endif
+#if defined(REO_BUILD_NATIVE_ROOM_CAMERA) && REO_BUILD_NATIVE_ROOM_CAMERA
+    // REO_NATIVE_ROOM_CAMERA=1 | shadow | shadow-writes (docs/MODERN_CAMERA.md,
+    // docs/native-gameplay/HYBRID_INTEGRATION_PLAN.md). Both File #1 and File #2.
+    if (const auto* requested = std::getenv("REO_NATIVE_ROOM_CAMERA"); requested && *requested) {
+        using reo::native::room_camera_adapter::Mode;
+        const Mode mode = !std::strcmp(requested, "1") ? Mode::native
+                        : !std::strcmp(requested, "shadow") ? Mode::shadow
+                        : !std::strcmp(requested, "shadow-writes") ? Mode::shadow_writes
+                        : throw std::runtime_error("REO_NATIVE_ROOM_CAMERA must be 1, shadow or shadow-writes");
+#if defined(REO_GAME_FILE2)
+        const char* cameraSerial = "SLUS-20984";
+#else
+        const char* cameraSerial = "SLUS-20765";
+#endif
+        if (std::strcmp(g.serial, cameraSerial) ||
+            !reo::native::room_camera_adapter::install_before_run(runtime, mode))
+            throw std::runtime_error("Selected native room camera unavailable; inspect build identity");
+        std::fprintf(stdout, "[NATIVE-ROOM-CAMERA] installed mode=%s\n", requested);
+    }
+#endif
+#if defined(REO_BUILD_NATIVE_ROOM_CAMERA) && REO_BUILD_NATIVE_ROOM_CAMERA && !defined(REO_GAME_FILE2)
+    // REO_NATIVE_ANALOG=1 | shadow: player analog control 0x6621F0 (File #1),
+    // docs/native-gameplay/HYBRID_INTEGRATION_PLAN.md step 3.
+    if (const auto* requested = std::getenv("REO_NATIVE_ANALOG"); requested && *requested) {
+        using reo::native::analog_control_adapter::Mode;
+        const Mode mode = !std::strcmp(requested, "1") ? Mode::native
+                        : !std::strcmp(requested, "shadow") ? Mode::shadow
+                        : throw std::runtime_error("REO_NATIVE_ANALOG must be 1 or shadow");
+        if (std::strcmp(g.serial, "SLUS-20765") ||
+            !reo::native::analog_control_adapter::install_before_run(runtime, mode))
+            throw std::runtime_error("Selected native analog control unavailable; inspect build identity");
+    }
+#endif
+    // No PS2 hard drive on PC, so no HDD INSTALL in the main menu: the original HDD
+    // initialisation (File #1 1BCF60, File #2 148B50) loads the DEV9/ATAD/HDD/PFS drivers and
+    // stores the drive status (devctl hdd0: 0x4807). Its "not connected" outcome is kept:
+    // status 3 at File #1 0x235008 / File #2 0x2185E8 and the flag at 0x3244E0 / 0x300A70
+    // cleared, exactly what the original writes before probing; no drivers are loaded.
+    {
+        static constexpr bool file2 =
+#if defined(REO_GAME_FILE2)
+            true;
+#else
+            false;
+#endif
+        runtime.registerFunction(file2 ? 0x148B50u : 0x1BCF60u, [](uint8_t* ram, R5900Context* ctx, PS2Runtime*) {
+            const uint32_t none = 3, zero = 0;
+            std::memcpy(ram + (file2 ? 0x300A70u : 0x3244E0u), &zero, 4);
+            std::memcpy(ram + (file2 ? 0x2185E8u : 0x235008u), &none, 4);
+            ctx->pc = static_cast<uint32_t>(ctx->r[31][0]);
+        });
+    }
+    // Start at the main menu (REO_SKIP_INTRO=1): the boot scene handler (File #1 1BC8F0,
+    // File #2 1483C0) is a step machine (task byte +9, jump table File #1 0x2502C0 / File #2
+    // 0x254F00). Steps 0-6 run as original: startup
+    // checks, the memory card / system data load and the front-end data load. Steps 7-11 are
+    // the timed logo and notice screens (Sofdec, ACCESS, SN@P, ESRB, content warning); the
+    // handler goes from step 7 straight to step 12, its original exit to the front end, so
+    // those screens are never created. The title prompt is answered by reo_hw_bridge.cpp.
+    if (const char* skip = std::getenv("REO_SKIP_INTRO"); skip && !std::strcmp(skip, "1")) {
+#if defined(REO_GAME_FILE2)
+        void sub_001483C0_0x1483c0(uint8_t*, R5900Context*, PS2Runtime*);
+        static constexpr auto bootScene = &sub_001483C0_0x1483c0;
+        static constexpr uint32_t bootSceneAddress = 0x1483C0u;
+#else
+        void sub_001BC8F0_0x1bc8f0(uint8_t*, R5900Context*, PS2Runtime*);
+        static constexpr auto bootScene = &sub_001BC8F0_0x1bc8f0;
+        static constexpr uint32_t bootSceneAddress = 0x1BC8F0u;
+#endif
+        runtime.registerFunction(bootSceneAddress, [](uint8_t* ram, R5900Context* ctx, PS2Runtime* rt) {
+            const uint32_t task = static_cast<uint32_t>(ctx->r[4][0]) & 0x1FFFFFFu;
+            uint8_t step = 0;
+            std::memcpy(&step, ram + task + 9, 1);
+            if (step >= 7 && step <= 11) {
+                const uint8_t exit = 12, timer = 0;
+                std::memcpy(ram + task + 9, &exit, 1);
+                std::memcpy(ram + task + 10, &timer, 1);
+                static bool reported = false;
+                if (!reported) { reported = true; std::fprintf(stderr, "[SKIP-INTRO] boot logos skipped (step %u -> 12)\n", unsigned(step)); }
+            }
+            bootScene(ram, ctx, rt);
+        });
+    }
+
     // Begin execution
 
     printf("[BOOT] Starting execution at entry point 0x%08X...\n", g.entry_point);
@@ -1464,6 +1725,10 @@ int main(int argc, char* argv[]) {
         });
 #endif
     runtime.run();
+
+#if defined(REO_BUILD_NATIVE_RESOURCE_OWNER)
+    reo_cd_async::finish(runtime);
+#endif
 
     if (const char* stats = std::getenv("REO_GS_TRI_BATCH_STATS"); stats && std::atoi(stats) != 0) {
 

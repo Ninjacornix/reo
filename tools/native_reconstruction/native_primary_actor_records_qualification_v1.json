@@ -1,0 +1,2687 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "game_run": false,
+  "whole_stage4_complete": false,
+  "limits": [
+    "Complete66A730 plus complete107C68 fixed aligned zero clear;64 full raw clear executions and canonical bootstrap projections.",
+    "Bootstrap-only empty ordinary primary storage; eight actor.slot values remain zero. Existing/busy/closed storage and entity-capacity failures refuse.",
+    "Complete5EAEB0 is word-audited for calling-position evidence only; its unrelated startup consumers are not executed or ported by this helper."
+  ],
+  "cohorts": {
+    "gcc": {
+      "receipt": "build-native-sjuni/primary-actor-records-gcc-v2/receipt.json",
+      "receipt_sha256": "212f3afe1e01b304a62f0bc200315a7bb66e01ea9fc1a6eb62dc3312050714d2",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 2230107,
+        "complete_source_clears": 64,
+        "canonical_bootstraps": 64,
+        "capacity_refusals": 8,
+        "busy_proofs": 1,
+        "lifetimes": 512,
+        "game_run": false
+      },
+      "source_sha256": {
+        "game/native/animation/constraint_math.cpp": "b75f1f46c2081d3c0f565b754cbca0f49ebe1f6f52b3ba169857cb13d5a9857e",
+        "game/native/animation/constraint_math.hpp": "070e67f8de1eae0564c0cde549f583661aff13cf6fb313752fcdfb194198b3c8",
+        "game/native/animation/constraints.cpp": "1cd88351890ed882b3fc2d2c4f7f08d999173e6cc8143c0af6b782e5518715c0",
+        "game/native/animation/constraints.hpp": "f7180287a293bf8ba4ce0b24015980afc3e7a6ef51a9b301ecea664f510b0d69",
+        "game/native/animation/curves.cpp": "87d158d5c913e1ccf1854785e49a5b38bba046f85378f1042017921fb232249d",
+        "game/native/animation/curves.hpp": "c337a6c8946f21d7d14b7c50f06d1d3b906e2bd3f284646d82fc0b3fdded07c2",
+        "game/native/animation/model.cpp": "84b1353257863373153fa330725009dea9b07d1986b3a2131d89806e684fdb7f",
+        "game/native/animation/model.hpp": "58200b4892a92e4f343664d1a5e3e10ac6e686c82c5127dafd5af65945c36edd",
+        "game/native/animation/model_blend.cpp": "65e40c532bb16fafb43636ff0602ddd5a8ababb368c50c39df5c4c15d5ca2ef3",
+        "game/native/animation/model_blend.hpp": "6d12a543261a52eb5e2c4690bf020d0be8c1ad6e24bb6cedd6e275728b5bb617",
+        "game/native/animation/model_math.cpp": "36210e266aafd88deabee8602f8220c408c77372b17c77f28be743282d266ebe",
+        "game/native/animation/model_math.hpp": "45b07adb6599a2f332214c58470399ef338196894e375b309cae3e63596349cb",
+        "game/native/animation/motion_bank.cpp": "d77ec70e97ed9a71018e3bf9112f4b5085e22410b0bfc6283a4ae506184e0f8d",
+        "game/native/animation/motion_bank.hpp": "2ef113fbc196de6ede1218a92d5785ebda61b309b2b510e8abb212d3f6319cc9",
+        "game/native/animation/playback.cpp": "f35201743ed5dc0a3342abea47a41bc75a1f66a105b70d731604546c3e7ff3a5",
+        "game/native/animation/playback.hpp": "5d7b90e637b9785925fa6c52ffcf844c3ffa7368f1a6c787ff6da1d4dcc10448",
+        "game/native/animation/scalar_playback.cpp": "b07d0fe602c82ee4ec6e2bc17b2e76c19db9d2c200d070fff5c4ecc626e1c172",
+        "game/native/animation/scalar_playback.hpp": "f3f28a96d27ddd186bc4a50d5c95d88d3b5e8fc11e988dfa4615b44652397913",
+        "game/native/animation/secondary_pose_math.cpp": "fb9fffaa8accaeb2a8f8c1e46ea601cfc0615cb92e2bd5e66d65abfddeee26c9",
+        "game/native/animation/secondary_pose_math.hpp": "0d8c608f4dc494e3cea1a7f6cd368908b74806ed49e3342e35b55f8617dc372c",
+        "game/native/gameplay_actors/entity.cpp": "ade589a09f0065b946c61d48f4fc976146731d83190e5ce727196829e19b9982",
+        "game/native/gameplay_actors/entity.hpp": "21189b7febb8685ce68db664960c7567704f4f6d3b602dfc817d663bef2d5268",
+        "game/native/gameplay_actors/health.cpp": "45ebd2a8a49e024b33c8527be7b624423e3899cd504a650d972edb09c48f1cb7",
+        "game/native/gameplay_actors/health.hpp": "1555ff5b97a8320726b67bc6c5a61b9bd3ef334ddb56a9babd9268b4c1cd486e",
+        "game/native/gameplay_actors/hit.hpp": "96f4ac9d045bed5361ac50aabe3fa76351cd6a1561bd7314100410016a514f17",
+        "game/native/gameplay_actors/input.cpp": "7a7dd57b2e105a79b2ffea7b5505ee7dad6fe696ff0d2732a8ee4b796347a497",
+        "game/native/gameplay_actors/input.hpp": "e939cc757fc206245960659be0cab87f415cd9547199df2e2cbfb42192dd6b22",
+        "game/native/gameplay_actors/reference.hpp": "def7dcc9e92168124bc9dcb47d53eadb6571cad791157855e1a9f7a9867cd91c",
+        "game/native/gameplay_actors/status.hpp": "e1eff59ea75cb0dab466533189644cdea8999f29b9fc7d77fa1f02bb7667e64b",
+        "game/native/gameplay_ai/control_requests.hpp": "4e7347c13bc9b15826f5a47357fe9b878dc76a9f53a889b52386f6a83b25cc15",
+        "game/native/gameplay_ai/execution.hpp": "583aa5382c6e901f6040d3e3991fa1cc10a68f2589f894aedffe981793bd8a12",
+        "game/native/gameplay_collision/actor_views.cpp": "80a54e075da6b10c9586d084a93ff9f651e7e0ff8b04569a2ec0f55bd7f90fa3",
+        "game/native/gameplay_collision/actor_views.hpp": "c79a6f6afca089408fbdd2fedf6dc99338021fc1e03a25948e40baa0200f45cd",
+        "game/native/gameplay_collision/actors.cpp": "b25e36df67b93898f74883a9badb9b7d58c1bfe43f4dc29b966f0ea6ded9025c",
+        "game/native/gameplay_collision/actors.hpp": "1cd3018e15ddf32fe4e5facf124d28bcfc7243bda4f788728318f8e934483f78",
+        "game/native/gameplay_collision/collision.cpp": "84f32cd3e551a8da284e97d75ff34d4b229616e8c72b31b1adaaa9096bed129f",
+        "game/native/gameplay_collision/collision.hpp": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da",
+        "game/native/gameplay_collision/contact_component.hpp": "10c088f8695296e2bce347a1b13b30f3f337642e594bca19288f5a424495d27c",
+        "game/native/gameplay_collision/footprint.hpp": "7a0ca201a87cffb6b20f847a773cdea4e840dc9de4acb72c911c649cbe5c5a3c",
+        "game/native/gameplay_collision/hit_regions.hpp": "6549e791d8c22db70cf78fcd3cf5eecf10615e1fc910bd54ceec5c4d90476ed0",
+        "game/native/gameplay_collision/object_interactions.hpp": "f887304538249c6ffa0d4cc40d64891d7faff20bea06703671e39a1461f21ac8",
+        "game/native/gameplay_collision/object_lifetime.hpp": "18b49cc6be21fcee894287ee9769074069a98ff8b657801dc86f2f3e9174633e",
+        "game/native/gameplay_collision/ownership.hpp": "5958fb126cb878e3cd849d1583d9b95e19d9b940b444702f8e78f3ee3e2080d6",
+        "game/native/gameplay_collision/postmove.hpp": "9547fa2cc1f2c59c8f399b0fddda752b617f7b10847a3836c76698e8894de6b6",
+        "game/native/gameplay_collision/postmove_view.hpp": "60a61ac4e6c1c0b54b4aae7067055528327b657399c70a85d0b80d5a019c6316",
+        "game/native/gameplay_collision/regions.hpp": "7de95d63c00dbbdadb9c739c42fc81b5f7a6fd05ef817eb7a86acbd7a8cdf8e1",
+        "game/native/gameplay_collision/response.cpp": "2fb4d52dcb9b51899a05def4a3734f85559e8c2a2a5327203f6e9c5e44aa698c",
+        "game/native/gameplay_collision/response.hpp": "22a85d653f51fd86e9666de1a748060b141fe02c3ead9ff0bc2022a7298f9f6d",
+        "game/native/gameplay_collision/room_damage.hpp": "63edc03a2a489247971cc566e1990c0f94f1c092fc3fda24158c531d62497c2d",
+        "game/native/gameplay_collision/room_geometry.hpp": "0ab8279213fbd3b1f9e5c2b378066464bb930fe38441dfe2258a63affa25e0c9",
+        "game/native/gameplay_collision/room_objects.hpp": "09f60fee4f49ac6958d6b68d314ee7de5a1a1d5bf272182d13bd6bafe2ed5f6a",
+        "game/native/gameplay_collision/spatial.hpp": "92d543fa718a384b4887be0e6b2ee264515070f3f5a51be6cc9ae67312dee258",
+        "game/native/gameplay_collision/sweep.hpp": "56b60e42b5fde050a93d563c2c459b258dab0f805f0125c44bd4e7107532ab39",
+        "game/native/gameplay_collision/trace.cpp": "0eb2d9ca196dc42f9f8c560ecdd3e56ffe92b9eff354a5d029e5382c467a4035",
+        "game/native/gameplay_collision/trace.hpp": "9c4cf9f5b6002f17a9ab2e291896da4956d8dde2fcb4a3cc0b8ec9d49a1c0efd",
+        "game/native/gameplay_navigation/actor_routes.hpp": "4ea4d8a494375608331cd3a4360cfb85823dba1b007b36c42d45c8e8bd7248a2",
+        "game/native/gameplay_navigation/bank.cpp": "f4b1ce7d7c7ec039398e75e1c25bc19142c192cf056adaf370a806af9089032b",
+        "game/native/gameplay_navigation/bank.hpp": "61ceed3edcf19c9bf781b9426021862aa8ad1389d22dbcc57940f541f5dbb356",
+        "game/native/gameplay_navigation/conditions.hpp": "ee7f917863ff47fa4e54daca54513692863520729e76207d99853092e1ddd55a",
+        "game/native/gameplay_navigation/cost_routes.hpp": "b5a85b54bd3ed9959304b3ff270cc48c41fdef272182caba7ae33e9429493646",
+        "game/native/gameplay_navigation/cross_room.hpp": "dfd7ca37374a3a8c96d6a90ca1a1b880e633dc47bbd3fb1ac430d87150d8dde4",
+        "game/native/gameplay_navigation/edges.hpp": "346d7fd81e4f539177dba4168b202c98d410df57da17bf40cf0206adf31dd003",
+        "game/native/gameplay_navigation/link_collection.hpp": "41ab6ea600c4c135548933f3da73deecb8fa5b9a2088053f0b3586ac9e817bdb",
+        "game/native/gameplay_navigation/local_routes.hpp": "21de12dfc09696697a9a9e6343b6f030d3b0dda1a5aa136d6b96173e95a95fd2",
+        "game/native/gameplay_navigation/navigation.hpp": "30811ae56a05e952018d8e5e2996cc73229ba952f9913c10daf20c0972deef80",
+        "game/native/gameplay_navigation/routes.hpp": "f8f4c0748510680a5519902f91b4c07cfc2a730bbf63fd6344301dd4af875ce3",
+        "game/native/gameplay_scenario/action_choices.hpp": "c315448949c2871f01ac954c1c991c026a01e0183717dfca6fe86377230de9be",
+        "game/native/gameplay_scenario/auxiliary_room_rows.hpp": "01644097b61fbdd9f254eee930e21bdc97b910936f0dcc07ae19b3a718b62745",
+        "game/native/gameplay_scenario/content.cpp": "c125d881a21482c170c32c09a2458d76d3ec5f6e8208bd205a6b577333172329",
+        "game/native/gameplay_scenario/content.hpp": "fa70bf3bb8b05f2b12beb7df1b738412cfd4bdf63ae9b5970517ce7eab419576",
+        "game/native/gameplay_scenario/cutscene_actor_commands.hpp": "65456342727ada2c02c6a22035d970d397aa28e20ec8fda8538a00ae1b13c1b9",
+        "game/native/gameplay_scenario/cutscene_actor_tracks.hpp": "6125fb585dc32221681676f6567c0611ea5b417a24b02c4ad66b86c6a74b253f",
+        "game/native/gameplay_scenario/cutscene_cues.hpp": "858b55316b5e8ad91584a60d191044ac757d9a32e7fa915684affc794f521658",
+        "game/native/gameplay_scenario/cutscene_descriptor.hpp": "03233684743e02393c3ce5b14c3e67c32898bd0f064aafc5592d6187c372f69a",
+        "game/native/gameplay_scenario/cutscene_object_tracks.hpp": "d082654f97c2aae6e1630875640a2b23781501b02fb85efc6a42c9e24c812c1c",
+        "game/native/gameplay_scenario/cutscene_playback.hpp": "18ca45dc7906b80e56a1f97ca736734590b6f29406a04d1c79a9c9c5db469ce1",
+        "game/native/gameplay_scenario/cutscene_requests.hpp": "0e2bb1616a57af8001f0c009618209cafe31a815cbeaa1b78d9687efb5df9c3d",
+        "game/native/gameplay_scenario/enemy_descriptors.hpp": "71dc3da9373d22d33cfcda65daf638bdcc055dec9cbd55187410dff6f00198ec",
+        "game/native/gameplay_scenario/enemy_routes.hpp": "a3343d7721b7105ac620509bc71d4e2377f46c45aa40fddaeba23b465d9ce67c",
+        "game/native/gameplay_scenario/flags.cpp": "62055c3df6665eeedca38e207c1654992f8a8cf8e423357e600361730a113d97",
+        "game/native/gameplay_scenario/flags.hpp": "265400e86eda349b82fc710a8dcd91b9a82d16e3c71796a94c29c541ec1ecd6b",
+        "game/native/gameplay_scenario/interpreter.hpp": "b5c65ae64c926e01ab919f0fef912e77fc37ddb9fff0afa8f2d47a10c66c5c34",
+        "game/native/gameplay_scenario/model_reference.hpp": "4b512afd9574ead2cca36bc490f5938a557073f043d2b6021c9c51325b18f907",
+        "game/native/gameplay_scenario/model_transform_presets.inc": "1d4049b22be0920234b3efd915fc1b4ddc447a037baf8e76b98e1104a4deab31",
+        "game/native/gameplay_scenario/npc_descriptors.hpp": "807b910faab217184814a15a9059f67fe43037ea0a33bd5d3fa9196edb3ac5fb",
+        "game/native/gameplay_scenario/room_actor_assets.hpp": "68a0fffbe445dfbcd2bc6a9a65f4193f85991f739a691c69279a079d37156b84",
+        "game/native/gameplay_scenario/scene_control_types.hpp": "3527cc02c44ec72e420e8d6a900ba1e41e1ccd81903042604df50eb777314841",
+        "game/native/gameplay_scenario/scene_controls.cpp": "c1fe39d72c305b280bda44c25d0f5bbf6d4a73bf9461b483725691615023a6ad",
+        "game/native/gameplay_scenario/scene_controls.hpp": "d006f22268a33e3e60c2b37be1e71e965d4960bf65433a8fe401ffc656416ec6",
+        "game/native/gameplay_scenario/scene_matrix_program_tables.inc": "870d43b3ff76a817e8778f8c76e823c1b1a347b251807787e587869dda105556",
+        "game/native/gameplay_scenario/scene_matrix_programs.cpp": "52e625c80ce9e450143f987cccd7d8baa400c814ec9dd3287efdc1075957e547",
+        "game/native/gameplay_scenario/scene_matrix_programs.hpp": "ba23330053bfd18a137b1ebacdabc3ffbd88dd87352215be2547f359d225db52",
+        "game/native/gameplay_scenario/scene_matrix_tables.cpp": "fc8db8b27924c06462a35f4099205fb3844cbb5eb7530064b943f7c5d49a3033",
+        "game/native/gameplay_scenario/scene_matrix_tables.hpp": "d7447ead8323ad9737004d6823ef33da4adfab22619d4d35a1f3d0a2870a25b1",
+        "game/native/gameplay_scenario/scene_model_bindings.cpp": "8209a18bde72c3a9b71d698d5746ac491ecc406f03b42f353441807165c3a942",
+        "game/native/gameplay_scenario/scene_model_bindings.hpp": "c5ca218f5645af66f166099021ff586671100c5fc824ae205fa6d5c735fd605e",
+        "game/native/gameplay_scenario/scene_models.cpp": "97552b2d937541a1d50befd02c54969c3e5bca5ef2c01b7c14085d01f040bcad",
+        "game/native/gameplay_scenario/scene_models.hpp": "bc649bb75fd935cc42c693070c97b7b1c2d78745f5833f5a72f6e7ddc9c129c8",
+        "game/native/gameplay_scenario/scene_record_eligibility.hpp": "8b18e95889895066887081f556750ea267400c61f47ff86246018acd56fbe70b",
+        "game/native/gameplay_scenario/stream_channels.hpp": "2d42ba1955ec54c86b1d9e85f19354fe623d6c26182fd5bc48285cec61beddc1",
+        "game/native/gameplay_scene/record_pool.hpp": "80547b7a98e4f8d311985882c31e8ea6e7692c35d160670e47a3a29fefd6593e",
+        "game/native/gameplay_scene/records.hpp": "2ec908791b6fb1b1dc2c3e068980f4adafa8071f9b6d9154ad13753f8444c8a6",
+        "game/native/gameplay_session/activity.hpp": "604410c6d76106740995ad507bb0c6a5ffa57ff443e08a4ab100207fc2308d8e",
+        "game/native/gameplay_session/room_variants.hpp": "34d44fe610ab2111356f445954bc84971a021778faedfa1f159bd2d27c6b342c",
+        "game/native/gameplay_session/session.cpp": "8f3f77da4ee0c08be63bd41687a330afa469bf33e0cad871951215a14ddc7a87",
+        "game/native/gameplay_session/session.hpp": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd",
+        "game/native/gameplay_tasks/tasks.hpp": "24e5e79aa30c4120389b964814914d2257c4ae28a545c1034c6265f49744f2f6",
+        "game/native/gameplay_world/actor_initial_state.hpp": "4312ae0da0ded489141d4a5bc25923facf2ca92cb3ae20a0b927d694ded6eb23",
+        "game/native/gameplay_world/actor_placements.hpp": "ac1362c4b4bea419f47cd94edf0aa778da02c2796d64480f734eb282a61bca5c",
+        "game/native/gameplay_world/auxiliary_actors.cpp": "b73bebfbfb34309577a23649eef434f752e94134c792371ef6eb4efc1c82bc59",
+        "game/native/gameplay_world/auxiliary_actors.hpp": "8cf9ad3964feb9ec42cf1b31a15956a8d0510f2ffec5502fda8f51da6c18105b",
+        "game/native/gameplay_world/bodies.cpp": "9cb9bd0d5f7e18e14aeccdd481acc609ea2d2d6d886b08072ce4fcb48d8afeb0",
+        "game/native/gameplay_world/bodies.hpp": "8bb53c9bbf2f2ed1124d7d45cf11ab337d2bcf486e0be37037783399010edeff",
+        "game/native/gameplay_world/cinematic_object_attachment.hpp": "c4726ebbbb5948984c1939d22790914f8bc95d2122764f556cf5d7e74655df8e",
+        "game/native/gameplay_world/cinematic_objects.cpp": "479b89b59ee21a2c7324afc57027bfb25ce796351979ea0a27e65f8517a18d8b",
+        "game/native/gameplay_world/cinematic_objects.hpp": "a72b5571744981561656c16036c079bb618889026708ec007b57e00b9992eb56",
+        "game/native/gameplay_world/cutscene_model_definitions.inc": "f7a592fd30a6361fdc3e76cdc66e8e239b0da19c035ea29e95a77d046d94129b",
+        "game/native/gameplay_world/enemy_state.hpp": "3ed6793dd1834cb233a32ec0a400d0bb48cc8c8aad798184a643b6e649db6c75",
+        "game/native/gameplay_world/head_reaction_state.hpp": "3b89f85434dec15a8a53db1bcf52822052d3641b78ecccfc4f22a1c9ebec50e4",
+        "game/native/gameplay_world/humanoid_motion_bindings.hpp": "56b9a220ab0205a21e0fdf9b74ebbfa584184e9d45770e912d968e91cc748988",
+        "game/native/gameplay_world/inventory_state.hpp": "3986199afba104514c696a6adc7e48f6f0c3beeebc1fc4021f5926c096f4068c",
+        "game/native/gameplay_world/linked_model_definitions.inc": "17cbf5e74459b52a6869eb073a83d3972c18e1069c9ddf822497c5545f65444e",
+        "game/native/gameplay_world/linked_model_profile.inc": "4a400a1f8b270d1a0e3702b1d9cfedbf6d07e8f6761d7afb0541138cbf2c7a25",
+        "game/native/gameplay_world/linked_models.cpp": "ee901b89cd41764334596534087573a4fe3bc68760019f032257919c7edc4902",
+        "game/native/gameplay_world/linked_models.hpp": "3721863cc16d088b733850f678cd3b74ede24aa2894b1b6e327bc3b3e1049077",
+        "game/native/gameplay_world/linked_update_state.hpp": "93ecb03425d45d31b481c44c6694021caa2bcd4c03bbde86fd2feb9d3f226d62",
+        "game/native/gameplay_world/material_uv.hpp": "61264daaf4ed066276d9dac616820111a4af078136e8036b8b52be5b88c6eb9d",
+        "game/native/gameplay_world/model_constraints.cpp": "7a2dad002ac8d3202fc0ba9a5f88d840d63780c7d71043768d2b52b9f840789c",
+        "game/native/gameplay_world/model_constraints.hpp": "07d2699fd3c68b2da1ae71e4f7673be321f7013954c5bdb66f7eb5aab972fe91",
+        "game/native/gameplay_world/model_poses.cpp": "0eaada1bd7fef51df85c0dc29771dcfcec67d26893f052358c20438aae999434",
+        "game/native/gameplay_world/model_poses.hpp": "599b5703bd5222c701595df886b38004dbc655f4a4fb560be2296580ac2cba0d",
+        "game/native/gameplay_world/model_scale_profile.inc": "d6fb8c85d30ea0c224af120e2bda75a25f6ed117085e221e41fb9ac50a78e701",
+        "game/native/gameplay_world/motion.cpp": "c60e43fecbfebbc9c0560afba072cef87dc196cd75b2c616944c2ea83878d4af",
+        "game/native/gameplay_world/motion.hpp": "ab2035e7ba54bea2269404dd2946f11f5c9c28f762b310d2aab878165c5515fa",
+        "game/native/gameplay_world/npc_actor_state.hpp": "63479bf5feb2a73c767273ce60565fce686ae38ab2fabdff7f0c59468d8755f9",
+        "game/native/gameplay_world/primary_actor_records.cpp": "e3195e5d2e594c664200eb928133347d8948758356947572883a09b9a4899b82",
+        "game/native/gameplay_world/primary_actor_records.hpp": "be486fc58eb17e54e67015375c6a22e55be8c8db6b2e994384db951d094e83cb",
+        "game/native/gameplay_world/primary_actor_state.hpp": "d6909c0463c58854f56c4fe56b4eb0cf9f28a00282523663ec37b46183ab68cb",
+        "game/native/gameplay_world/primary_saved_state.hpp": "2e35cc393731a5109df515c81651347d73dc12bd85d25f131ff07c587064c4f6",
+        "game/native/gameplay_world/scene_primary_actors.cpp": "dff4747d602cbe766a562be6dff338b9ca89a419ae4e8dc50cd8a9543b5185d5",
+        "game/native/gameplay_world/scene_primary_actors.hpp": "3a3518d33cd41eba934b3ce13df2116b72ec80e5b23496ad70229d59ef3f1abc",
+        "game/native/gameplay_world/scripted_actor.hpp": "004289e2fbb18431376da80271ed78b03999df87a18a6931876e363d7c5e2cd7",
+        "game/native/gameplay_world/secondary_pose_contacts.cpp": "b530c161e647a4847290614c53e7e87a0994c929240eb2dad73dd4672cac1038",
+        "game/native/gameplay_world/secondary_pose_contacts.hpp": "f17de982c72be0edecab96f4ccdbe9d98d34498e4584560ce283da827c111780",
+        "game/native/gameplay_world/secondary_pose_dynamics.cpp": "b5d63b306744ee3e2538f5c31c873ea2d30941aa2aa2662234740c2b7fa07964",
+        "game/native/gameplay_world/secondary_pose_dynamics.hpp": "b7846b926bfff0f67f512e52025162df561fe92a004448129bd68ab7a5afa4ee",
+        "game/native/gameplay_world/secondary_pose_link_profiles.inc": "c9a7835c08720be86a51bb390e408e9ac2faccf68ebbacd6f5636042bf6d561d",
+        "game/native/gameplay_world/secondary_pose_state.hpp": "39f8907947c16838382c344b4e94e8a90356f191484d1db9ee92a5ac42b69eff",
+        "game/native/gameplay_world/speech_state.hpp": "00c5fd992974ae0e49ee1585950f54e59e9ebac8e7452ce4906ac45ecc554cb9",
+        "game/native/gameplay_world/target_metrics.cpp": "eaa82f5ab32717495293311d38836ded484fa84681d139ee55a8b542c9e9bef2",
+        "game/native/gameplay_world/target_metrics.hpp": "0209d0daf42c2ce4f71de607ad3b3d23a9cfc776d1c95cf2d6e6d683bd9d361b",
+        "game/native/gameplay_world/world.cpp": "aa55825b7d83669cd41aa2a35158be5234d65303ff2eae4585e107a6796fdbb8",
+        "game/native/gameplay_world/world.hpp": "e551ef34a9707f91b19268f5b7c774cdd8a5f5c3445ce04b93f2b640522bd9f1",
+        "game/native/transform_math/heading.cpp": "082d5ef9b70d86bb75e7ec84653b8dbe29290d0e59b1a4706174efc30a83f5eb",
+        "game/native/transform_math/heading.hpp": "468f1bfdff28cbf68339dbf47dfe1b3ef026939024d6f7efb43d0750cee823f0",
+        "game/native/transform_math/heading_profile.inc": "f4f6712a9dc9a797603d9856eab6558c1afa5152c6656cc7d9c735ef1dc6105b",
+        "game/native/transform_math/transform_math.cpp": "f94e5bbcc634498e980a907d5277a8b7abd027459bc3ff7e761fc7b240eac717",
+        "game/native/transform_math/transform_math.hpp": "1fef4b665b1bcb4a04df1704d12d44724f9a2a11cfa8e159cf3353b0ca408b1b",
+        "game/native/gameplay_world/primary_actor_records_tests.cpp": "48699df4115d466b67033d87ce7310fc8f6bf26dae91e98dd34e94fd3e451149",
+        "tools/native_reconstruction/animation/verify_primary_actor_records.py": "17cff00cb66fb7b7117ebe5f7b74551505350915f643f0711d0dece63b0a5bb4",
+        "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f",
+        "third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
+        "recomp/config/output/sub_00107C68_0x107c68.cpp": "8a15a069852a969aa5cb812b3cface0b91ca126f2036dd2ae1c9eba5e844b99e",
+        "recomp/config/output_ovl/o2/o2_0066A730_0x66a730.cpp": "d7bd7b6b88a38e47ffff7506583ec4edfdec7888cb1b8b5cb8061049b4fd836f",
+        "recomp/config/output_ovl/o2/o2_005EAEB0_0x5eaeb0.cpp": "8ac2b83f26e53e1a45f89348c8a40bee33caa817accaecef0e543cecaa850685"
+      },
+      "source_unchanged": true,
+      "original_owned_bodies": [
+        {
+          "role": "complete ordinary actor postprocess or reached helper body",
+          "path": "recomp/config/output/sub_00107C68_0x107c68.cpp",
+          "sha256": "8a15a069852a969aa5cb812b3cface0b91ca126f2036dd2ae1c9eba5e844b99e",
+          "start": "0x107c68",
+          "end_exclusive": "0x107d28",
+          "matched_comments": 46,
+          "omitted_zero_words": 2,
+          "conflicts": 0,
+          "comparisons": [
+            {
+              "pc": "0x00107c68",
+              "owned_word": "0x2cc20008",
+              "comment_word": "0x2cc20008",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c6c",
+              "owned_word": "0x1440001e",
+              "comment_word": "0x1440001e",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c70",
+              "owned_word": "0x0080182d",
+              "comment_word": "0x0080182d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c74",
+              "owned_word": "0x3082000f",
+              "comment_word": "0x3082000f",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c78",
+              "owned_word": "0x1440001b",
+              "comment_word": "0x1440001b",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c7c",
+              "owned_word": "0x0080382d",
+              "comment_word": "0x0080382d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c80",
+              "owned_word": "0x30a900ff",
+              "comment_word": "0x30a900ff",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c84",
+              "owned_word": "0x2cca0020",
+              "comment_word": "0x2cca0020",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c88",
+              "owned_word": "0x0120402d",
+              "comment_word": "0x0120402d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c8c",
+              "owned_word": "0x00081a38",
+              "comment_word": "0x00081a38",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c90",
+              "owned_word": "0x00694025",
+              "comment_word": "0x00694025",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c94",
+              "owned_word": "0x70081ee9",
+              "comment_word": "0x70081ee9",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c98",
+              "owned_word": "0x1540000e",
+              "comment_word": "0x1540000e",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c9c",
+              "owned_word": "0x2cc20008",
+              "comment_word": "0x2cc20008",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107ca0",
+              "owned_word": "0x70634389",
+              "comment_word": "0x70634389",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107ca4",
+              "owned_word": "0x7ce80000",
+              "comment_word": "0x7ce80000",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107ca8",
+              "owned_word": "0x24c6ffe0",
+              "comment_word": "0x24c6ffe0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cac",
+              "owned_word": "0x24e70010",
+              "comment_word": "0x24e70010",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cb0",
+              "owned_word": "0x2cc20020",
+              "comment_word": "0x2cc20020",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cb4",
+              "owned_word": "0x7ce80000",
+              "comment_word": "0x7ce80000",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cb8",
+              "owned_word": "0x1040fffa",
+              "comment_word": "0x1040fffa",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cbc",
+              "owned_word": "0x24e70010",
+              "comment_word": "0x24e70010",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cc0",
+              "owned_word": "0x10000004",
+              "comment_word": "0x10000004",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cc4",
+              "owned_word": "0x2cc20008",
+              "comment_word": "0x2cc20008",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cc8",
+              "owned_word": "0x24c6fff8",
+              "comment_word": "0x24c6fff8",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107ccc",
+              "owned_word": "0x24e70008",
+              "comment_word": "0x24e70008",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cd0",
+              "owned_word": "0x2cc20008",
+              "comment_word": "0x2cc20008",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cd4",
+              "owned_word": "0x00000000",
+              "comment_word": "0x00000000",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cd8",
+              "owned_word": "0x00000000",
+              "comment_word": "0x00000000",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cdc",
+              "owned_word": "0x5040fffa",
+              "comment_word": "0x5040fffa",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107ce0",
+              "owned_word": "0xfce30000",
+              "comment_word": "0xfce30000",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107ce4",
+              "owned_word": "0x00e0182d",
+              "comment_word": "0x00e0182d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107ce8",
+              "owned_word": "0x3c02ffff",
+              "comment_word": "0x3c02ffff",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cec",
+              "owned_word": "0x24c6ffff",
+              "comment_word": "0x24c6ffff",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cf0",
+              "owned_word": "0x3442ffff",
+              "comment_word": "0x3442ffff",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cf4",
+              "owned_word": "0x10c2000a",
+              "comment_word": "0x10c2000a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cf8",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x00107cfc",
+              "owned_word": "0x3c02ffff",
+              "comment_word": "0x3c02ffff",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107d00",
+              "owned_word": "0x3442ffff",
+              "comment_word": "0x3442ffff",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107d04",
+              "owned_word": "0xa0650000",
+              "comment_word": "0xa0650000",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107d08",
+              "owned_word": "0x24c6ffff",
+              "comment_word": "0x24c6ffff",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107d0c",
+              "owned_word": "0x24630001",
+              "comment_word": "0x24630001",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107d10",
+              "owned_word": "0x00000000",
+              "comment_word": "0x00000000",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107d14",
+              "owned_word": "0x00000000",
+              "comment_word": "0x00000000",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107d18",
+              "owned_word": "0x14c2fffa",
+              "comment_word": "0x14c2fffa",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107d1c",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x00107d20",
+              "owned_word": "0x03e00008",
+              "comment_word": "0x03e00008",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107d24",
+              "owned_word": "0x0080102d",
+              "comment_word": "0x0080102d",
+              "status": "matched"
+            }
+          ]
+        },
+        {
+          "role": "complete ordinary actor postprocess or reached helper body",
+          "path": "recomp/config/output_ovl/o2/o2_0066A730_0x66a730.cpp",
+          "sha256": "d7bd7b6b88a38e47ffff7506583ec4edfdec7888cb1b8b5cb8061049b4fd836f",
+          "start": "0x66a730",
+          "end_exclusive": "0x66a744",
+          "matched_comments": 5,
+          "omitted_zero_words": 0,
+          "conflicts": 0,
+          "comparisons": [
+            {
+              "pc": "0x0066a730",
+              "owned_word": "0x3c04004a",
+              "comment_word": "0x3c04004a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x0066a734",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x0066a738",
+              "owned_word": "0x24845c30",
+              "comment_word": "0x24845c30",
+              "status": "matched"
+            },
+            {
+              "pc": "0x0066a73c",
+              "owned_word": "0x08041f1a",
+              "comment_word": "0x08041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x0066a740",
+              "owned_word": "0x34068700",
+              "comment_word": "0x34068700",
+              "status": "matched"
+            }
+          ]
+        },
+        {
+          "role": "complete ordinary actor postprocess or reached helper body",
+          "path": "recomp/config/output_ovl/o2/o2_005EAEB0_0x5eaeb0.cpp",
+          "sha256": "8ac2b83f26e53e1a45f89348c8a40bee33caa817accaecef0e543cecaa850685",
+          "start": "0x5eaeb0",
+          "end_exclusive": "0x5eb0c4",
+          "matched_comments": 109,
+          "omitted_zero_words": 24,
+          "conflicts": 0,
+          "comparisons": [
+            {
+              "pc": "0x005eaeb0",
+              "owned_word": "0x27bdfff0",
+              "comment_word": "0x27bdfff0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaeb4",
+              "owned_word": "0x3c04004b",
+              "comment_word": "0x3c04004b",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaeb8",
+              "owned_word": "0xffbf0000",
+              "comment_word": "0xffbf0000",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaebc",
+              "owned_word": "0x3c010057",
+              "comment_word": "0x3c010057",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaec0",
+              "owned_word": "0xa02097c1",
+              "comment_word": "0xa02097c1",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaec4",
+              "owned_word": "0x2484e330",
+              "comment_word": "0x2484e330",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaec8",
+              "owned_word": "0x3c010057",
+              "comment_word": "0x3c010057",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaecc",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaed0",
+              "owned_word": "0xa02097c0",
+              "comment_word": "0xa02097c0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaed4",
+              "owned_word": "0x3406a340",
+              "comment_word": "0x3406a340",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaed8",
+              "owned_word": "0x3c010057",
+              "comment_word": "0x3c010057",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaedc",
+              "owned_word": "0xa02097b1",
+              "comment_word": "0xa02097b1",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaee0",
+              "owned_word": "0x3c010057",
+              "comment_word": "0x3c010057",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaee4",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaee8",
+              "owned_word": "0xa02097b0",
+              "comment_word": "0xa02097b0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaeec",
+              "owned_word": "0x3c040042",
+              "comment_word": "0x3c040042",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaef0",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaef4",
+              "owned_word": "0x24841ef0",
+              "comment_word": "0x24841ef0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaef8",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaefc",
+              "owned_word": "0x3406cc10",
+              "comment_word": "0x3406cc10",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf00",
+              "owned_word": "0x3c040046",
+              "comment_word": "0x3c040046",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf04",
+              "owned_word": "0x3c020003",
+              "comment_word": "0x3c020003",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf08",
+              "owned_word": "0x24849120",
+              "comment_word": "0x24849120",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf0c",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf10",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf14",
+              "owned_word": "0x3446fc50",
+              "comment_word": "0x3446fc50",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf18",
+              "owned_word": "0x3c04004a",
+              "comment_word": "0x3c04004a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf1c",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf20",
+              "owned_word": "0x24848d70",
+              "comment_word": "0x24848d70",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf24",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf28",
+              "owned_word": "0x24066180",
+              "comment_word": "0x24066180",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf2c",
+              "owned_word": "0x3c04003c",
+              "comment_word": "0x3c04003c",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf30",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf34",
+              "owned_word": "0x248485b0",
+              "comment_word": "0x248485b0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf38",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf3c",
+              "owned_word": "0x3406a048",
+              "comment_word": "0x3406a048",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf40",
+              "owned_word": "0x3c04003d",
+              "comment_word": "0x3c04003d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf44",
+              "owned_word": "0x3c020001",
+              "comment_word": "0x3c020001",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf48",
+              "owned_word": "0x24849230",
+              "comment_word": "0x24849230",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf4c",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf50",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf54",
+              "owned_word": "0x344629b0",
+              "comment_word": "0x344629b0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf58",
+              "owned_word": "0x3c04004f",
+              "comment_word": "0x3c04004f",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf5c",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf60",
+              "owned_word": "0x2484c8b0",
+              "comment_word": "0x2484c8b0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf64",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf68",
+              "owned_word": "0x24060060",
+              "comment_word": "0x24060060",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf6c",
+              "owned_word": "0x3c04004f",
+              "comment_word": "0x3c04004f",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf70",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf74",
+              "owned_word": "0x2484c810",
+              "comment_word": "0x2484c810",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf78",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf7c",
+              "owned_word": "0x240600a0",
+              "comment_word": "0x240600a0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf80",
+              "owned_word": "0x3c04004a",
+              "comment_word": "0x3c04004a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf84",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf88",
+              "owned_word": "0x2484eef0",
+              "comment_word": "0x2484eef0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf8c",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf90",
+              "owned_word": "0x24066d40",
+              "comment_word": "0x24066d40",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf94",
+              "owned_word": "0x3c04003f",
+              "comment_word": "0x3c04003f",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf98",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf9c",
+              "owned_word": "0x2484a380",
+              "comment_word": "0x2484a380",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafa0",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafa4",
+              "owned_word": "0x24062090",
+              "comment_word": "0x24062090",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafa8",
+              "owned_word": "0x3c04003f",
+              "comment_word": "0x3c04003f",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafac",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafb0",
+              "owned_word": "0x248482f0",
+              "comment_word": "0x248482f0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafb4",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafb8",
+              "owned_word": "0x24062090",
+              "comment_word": "0x24062090",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafbc",
+              "owned_word": "0x0c19a9cc",
+              "comment_word": "0x0c19a9cc",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafc0",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eafc4",
+              "owned_word": "0x0c1a0b18",
+              "comment_word": "0x0c1a0b18",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafc8",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eafcc",
+              "owned_word": "0x0c1ae898",
+              "comment_word": "0x0c1ae898",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafd0",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eafd4",
+              "owned_word": "0x0c1642f8",
+              "comment_word": "0x0c1642f8",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafd8",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eafdc",
+              "owned_word": "0x0c1607d4",
+              "comment_word": "0x0c1607d4",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafe0",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eafe4",
+              "owned_word": "0x0c176810",
+              "comment_word": "0x0c176810",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafe8",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eafec",
+              "owned_word": "0x0c170448",
+              "comment_word": "0x0c170448",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaff0",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eaff4",
+              "owned_word": "0x0c175f58",
+              "comment_word": "0x0c175f58",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaff8",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eaffc",
+              "owned_word": "0x0c1b7b20",
+              "comment_word": "0x0c1b7b20",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb000",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb004",
+              "owned_word": "0x0c194614",
+              "comment_word": "0x0c194614",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb008",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb00c",
+              "owned_word": "0x0c15cd68",
+              "comment_word": "0x0c15cd68",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb010",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb014",
+              "owned_word": "0x0c16e400",
+              "comment_word": "0x0c16e400",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb018",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb01c",
+              "owned_word": "0x0c15cf44",
+              "comment_word": "0x0c15cf44",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb020",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb024",
+              "owned_word": "0x0c1ac428",
+              "comment_word": "0x0c1ac428",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb028",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb02c",
+              "owned_word": "0x0c18cd60",
+              "comment_word": "0x0c18cd60",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb030",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb034",
+              "owned_word": "0x0c15cf64",
+              "comment_word": "0x0c15cf64",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb038",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb03c",
+              "owned_word": "0x0c1ab608",
+              "comment_word": "0x0c1ab608",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb040",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb044",
+              "owned_word": "0x0c1a5470",
+              "comment_word": "0x0c1a5470",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb048",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb04c",
+              "owned_word": "0x0c06c0b4",
+              "comment_word": "0x0c06c0b4",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb050",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb054",
+              "owned_word": "0x24030001",
+              "comment_word": "0x24030001",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb058",
+              "owned_word": "0x14430003",
+              "comment_word": "0x14430003",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb05c",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb060",
+              "owned_word": "0x0c20578c",
+              "comment_word": "0x0c20578c",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb064",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb068",
+              "owned_word": "0x0c1a0ea4",
+              "comment_word": "0x0c1a0ea4",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb06c",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb070",
+              "owned_word": "0x0c1a0eac",
+              "comment_word": "0x0c1a0eac",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb074",
+              "owned_word": "0x240400ff",
+              "comment_word": "0x240400ff",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb078",
+              "owned_word": "0x3c040074",
+              "comment_word": "0x3c040074",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb07c",
+              "owned_word": "0x240500ff",
+              "comment_word": "0x240500ff",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb080",
+              "owned_word": "0x248434b0",
+              "comment_word": "0x248434b0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb084",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb088",
+              "owned_word": "0x24060014",
+              "comment_word": "0x24060014",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb08c",
+              "owned_word": "0x0c17b2a4",
+              "comment_word": "0x0c17b2a4",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb090",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb094",
+              "owned_word": "0x0c06e654",
+              "comment_word": "0x0c06e654",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb098",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb09c",
+              "owned_word": "0x2403ffff",
+              "comment_word": "0x2403ffff",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb0a0",
+              "owned_word": "0x3c01004c",
+              "comment_word": "0x3c01004c",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb0a4",
+              "owned_word": "0xac23ae2c",
+              "comment_word": "0xac23ae2c",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb0a8",
+              "owned_word": "0x3c01004c",
+              "comment_word": "0x3c01004c",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb0ac",
+              "owned_word": "0xac23ae28",
+              "comment_word": "0xac23ae28",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb0b0",
+              "owned_word": "0x3c01004c",
+              "comment_word": "0x3c01004c",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb0b4",
+              "owned_word": "0xac23ae24",
+              "comment_word": "0xac23ae24",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb0b8",
+              "owned_word": "0xdfbf0000",
+              "comment_word": "0xdfbf0000",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb0bc",
+              "owned_word": "0x03e00008",
+              "comment_word": "0x03e00008",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb0c0",
+              "owned_word": "0x27bd0010",
+              "comment_word": "0x27bd0010",
+              "status": "matched"
+            }
+          ]
+        }
+      ],
+      "test_binary_sha256": "19b544edbaa1b065827d1e9afd9f213bf2d0a595c4a4ef0ac7da981a93d0617d"
+    },
+    "llvm": {
+      "receipt": "build-native-sjuni/primary-actor-records-llvm-v2/receipt.json",
+      "receipt_sha256": "b1ae45463222e4e6d12feb2a04f16096ffbd643b88b948dd228ad4a500f42a60",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 2230107,
+        "complete_source_clears": 64,
+        "canonical_bootstraps": 64,
+        "capacity_refusals": 8,
+        "busy_proofs": 1,
+        "lifetimes": 512,
+        "game_run": false
+      },
+      "source_sha256": {
+        "game/native/animation/constraint_math.cpp": "b75f1f46c2081d3c0f565b754cbca0f49ebe1f6f52b3ba169857cb13d5a9857e",
+        "game/native/animation/constraint_math.hpp": "070e67f8de1eae0564c0cde549f583661aff13cf6fb313752fcdfb194198b3c8",
+        "game/native/animation/constraints.cpp": "1cd88351890ed882b3fc2d2c4f7f08d999173e6cc8143c0af6b782e5518715c0",
+        "game/native/animation/constraints.hpp": "f7180287a293bf8ba4ce0b24015980afc3e7a6ef51a9b301ecea664f510b0d69",
+        "game/native/animation/curves.cpp": "87d158d5c913e1ccf1854785e49a5b38bba046f85378f1042017921fb232249d",
+        "game/native/animation/curves.hpp": "c337a6c8946f21d7d14b7c50f06d1d3b906e2bd3f284646d82fc0b3fdded07c2",
+        "game/native/animation/model.cpp": "84b1353257863373153fa330725009dea9b07d1986b3a2131d89806e684fdb7f",
+        "game/native/animation/model.hpp": "58200b4892a92e4f343664d1a5e3e10ac6e686c82c5127dafd5af65945c36edd",
+        "game/native/animation/model_blend.cpp": "65e40c532bb16fafb43636ff0602ddd5a8ababb368c50c39df5c4c15d5ca2ef3",
+        "game/native/animation/model_blend.hpp": "6d12a543261a52eb5e2c4690bf020d0be8c1ad6e24bb6cedd6e275728b5bb617",
+        "game/native/animation/model_math.cpp": "36210e266aafd88deabee8602f8220c408c77372b17c77f28be743282d266ebe",
+        "game/native/animation/model_math.hpp": "45b07adb6599a2f332214c58470399ef338196894e375b309cae3e63596349cb",
+        "game/native/animation/motion_bank.cpp": "d77ec70e97ed9a71018e3bf9112f4b5085e22410b0bfc6283a4ae506184e0f8d",
+        "game/native/animation/motion_bank.hpp": "2ef113fbc196de6ede1218a92d5785ebda61b309b2b510e8abb212d3f6319cc9",
+        "game/native/animation/playback.cpp": "f35201743ed5dc0a3342abea47a41bc75a1f66a105b70d731604546c3e7ff3a5",
+        "game/native/animation/playback.hpp": "5d7b90e637b9785925fa6c52ffcf844c3ffa7368f1a6c787ff6da1d4dcc10448",
+        "game/native/animation/scalar_playback.cpp": "b07d0fe602c82ee4ec6e2bc17b2e76c19db9d2c200d070fff5c4ecc626e1c172",
+        "game/native/animation/scalar_playback.hpp": "f3f28a96d27ddd186bc4a50d5c95d88d3b5e8fc11e988dfa4615b44652397913",
+        "game/native/animation/secondary_pose_math.cpp": "fb9fffaa8accaeb2a8f8c1e46ea601cfc0615cb92e2bd5e66d65abfddeee26c9",
+        "game/native/animation/secondary_pose_math.hpp": "0d8c608f4dc494e3cea1a7f6cd368908b74806ed49e3342e35b55f8617dc372c",
+        "game/native/gameplay_actors/entity.cpp": "ade589a09f0065b946c61d48f4fc976146731d83190e5ce727196829e19b9982",
+        "game/native/gameplay_actors/entity.hpp": "21189b7febb8685ce68db664960c7567704f4f6d3b602dfc817d663bef2d5268",
+        "game/native/gameplay_actors/health.cpp": "45ebd2a8a49e024b33c8527be7b624423e3899cd504a650d972edb09c48f1cb7",
+        "game/native/gameplay_actors/health.hpp": "1555ff5b97a8320726b67bc6c5a61b9bd3ef334ddb56a9babd9268b4c1cd486e",
+        "game/native/gameplay_actors/hit.hpp": "96f4ac9d045bed5361ac50aabe3fa76351cd6a1561bd7314100410016a514f17",
+        "game/native/gameplay_actors/input.cpp": "7a7dd57b2e105a79b2ffea7b5505ee7dad6fe696ff0d2732a8ee4b796347a497",
+        "game/native/gameplay_actors/input.hpp": "e939cc757fc206245960659be0cab87f415cd9547199df2e2cbfb42192dd6b22",
+        "game/native/gameplay_actors/reference.hpp": "def7dcc9e92168124bc9dcb47d53eadb6571cad791157855e1a9f7a9867cd91c",
+        "game/native/gameplay_actors/status.hpp": "e1eff59ea75cb0dab466533189644cdea8999f29b9fc7d77fa1f02bb7667e64b",
+        "game/native/gameplay_ai/control_requests.hpp": "4e7347c13bc9b15826f5a47357fe9b878dc76a9f53a889b52386f6a83b25cc15",
+        "game/native/gameplay_ai/execution.hpp": "583aa5382c6e901f6040d3e3991fa1cc10a68f2589f894aedffe981793bd8a12",
+        "game/native/gameplay_collision/actor_views.cpp": "80a54e075da6b10c9586d084a93ff9f651e7e0ff8b04569a2ec0f55bd7f90fa3",
+        "game/native/gameplay_collision/actor_views.hpp": "c79a6f6afca089408fbdd2fedf6dc99338021fc1e03a25948e40baa0200f45cd",
+        "game/native/gameplay_collision/actors.cpp": "b25e36df67b93898f74883a9badb9b7d58c1bfe43f4dc29b966f0ea6ded9025c",
+        "game/native/gameplay_collision/actors.hpp": "1cd3018e15ddf32fe4e5facf124d28bcfc7243bda4f788728318f8e934483f78",
+        "game/native/gameplay_collision/collision.cpp": "84f32cd3e551a8da284e97d75ff34d4b229616e8c72b31b1adaaa9096bed129f",
+        "game/native/gameplay_collision/collision.hpp": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da",
+        "game/native/gameplay_collision/contact_component.hpp": "10c088f8695296e2bce347a1b13b30f3f337642e594bca19288f5a424495d27c",
+        "game/native/gameplay_collision/footprint.hpp": "7a0ca201a87cffb6b20f847a773cdea4e840dc9de4acb72c911c649cbe5c5a3c",
+        "game/native/gameplay_collision/hit_regions.hpp": "6549e791d8c22db70cf78fcd3cf5eecf10615e1fc910bd54ceec5c4d90476ed0",
+        "game/native/gameplay_collision/object_interactions.hpp": "f887304538249c6ffa0d4cc40d64891d7faff20bea06703671e39a1461f21ac8",
+        "game/native/gameplay_collision/object_lifetime.hpp": "18b49cc6be21fcee894287ee9769074069a98ff8b657801dc86f2f3e9174633e",
+        "game/native/gameplay_collision/ownership.hpp": "5958fb126cb878e3cd849d1583d9b95e19d9b940b444702f8e78f3ee3e2080d6",
+        "game/native/gameplay_collision/postmove.hpp": "9547fa2cc1f2c59c8f399b0fddda752b617f7b10847a3836c76698e8894de6b6",
+        "game/native/gameplay_collision/postmove_view.hpp": "60a61ac4e6c1c0b54b4aae7067055528327b657399c70a85d0b80d5a019c6316",
+        "game/native/gameplay_collision/regions.hpp": "7de95d63c00dbbdadb9c739c42fc81b5f7a6fd05ef817eb7a86acbd7a8cdf8e1",
+        "game/native/gameplay_collision/response.cpp": "2fb4d52dcb9b51899a05def4a3734f85559e8c2a2a5327203f6e9c5e44aa698c",
+        "game/native/gameplay_collision/response.hpp": "22a85d653f51fd86e9666de1a748060b141fe02c3ead9ff0bc2022a7298f9f6d",
+        "game/native/gameplay_collision/room_damage.hpp": "63edc03a2a489247971cc566e1990c0f94f1c092fc3fda24158c531d62497c2d",
+        "game/native/gameplay_collision/room_geometry.hpp": "0ab8279213fbd3b1f9e5c2b378066464bb930fe38441dfe2258a63affa25e0c9",
+        "game/native/gameplay_collision/room_objects.hpp": "09f60fee4f49ac6958d6b68d314ee7de5a1a1d5bf272182d13bd6bafe2ed5f6a",
+        "game/native/gameplay_collision/spatial.hpp": "92d543fa718a384b4887be0e6b2ee264515070f3f5a51be6cc9ae67312dee258",
+        "game/native/gameplay_collision/sweep.hpp": "56b60e42b5fde050a93d563c2c459b258dab0f805f0125c44bd4e7107532ab39",
+        "game/native/gameplay_collision/trace.cpp": "0eb2d9ca196dc42f9f8c560ecdd3e56ffe92b9eff354a5d029e5382c467a4035",
+        "game/native/gameplay_collision/trace.hpp": "9c4cf9f5b6002f17a9ab2e291896da4956d8dde2fcb4a3cc0b8ec9d49a1c0efd",
+        "game/native/gameplay_navigation/actor_routes.hpp": "4ea4d8a494375608331cd3a4360cfb85823dba1b007b36c42d45c8e8bd7248a2",
+        "game/native/gameplay_navigation/bank.cpp": "f4b1ce7d7c7ec039398e75e1c25bc19142c192cf056adaf370a806af9089032b",
+        "game/native/gameplay_navigation/bank.hpp": "61ceed3edcf19c9bf781b9426021862aa8ad1389d22dbcc57940f541f5dbb356",
+        "game/native/gameplay_navigation/conditions.hpp": "ee7f917863ff47fa4e54daca54513692863520729e76207d99853092e1ddd55a",
+        "game/native/gameplay_navigation/cost_routes.hpp": "b5a85b54bd3ed9959304b3ff270cc48c41fdef272182caba7ae33e9429493646",
+        "game/native/gameplay_navigation/cross_room.hpp": "dfd7ca37374a3a8c96d6a90ca1a1b880e633dc47bbd3fb1ac430d87150d8dde4",
+        "game/native/gameplay_navigation/edges.hpp": "346d7fd81e4f539177dba4168b202c98d410df57da17bf40cf0206adf31dd003",
+        "game/native/gameplay_navigation/link_collection.hpp": "41ab6ea600c4c135548933f3da73deecb8fa5b9a2088053f0b3586ac9e817bdb",
+        "game/native/gameplay_navigation/local_routes.hpp": "21de12dfc09696697a9a9e6343b6f030d3b0dda1a5aa136d6b96173e95a95fd2",
+        "game/native/gameplay_navigation/navigation.hpp": "30811ae56a05e952018d8e5e2996cc73229ba952f9913c10daf20c0972deef80",
+        "game/native/gameplay_navigation/routes.hpp": "f8f4c0748510680a5519902f91b4c07cfc2a730bbf63fd6344301dd4af875ce3",
+        "game/native/gameplay_scenario/action_choices.hpp": "c315448949c2871f01ac954c1c991c026a01e0183717dfca6fe86377230de9be",
+        "game/native/gameplay_scenario/auxiliary_room_rows.hpp": "01644097b61fbdd9f254eee930e21bdc97b910936f0dcc07ae19b3a718b62745",
+        "game/native/gameplay_scenario/content.cpp": "c125d881a21482c170c32c09a2458d76d3ec5f6e8208bd205a6b577333172329",
+        "game/native/gameplay_scenario/content.hpp": "fa70bf3bb8b05f2b12beb7df1b738412cfd4bdf63ae9b5970517ce7eab419576",
+        "game/native/gameplay_scenario/cutscene_actor_commands.hpp": "65456342727ada2c02c6a22035d970d397aa28e20ec8fda8538a00ae1b13c1b9",
+        "game/native/gameplay_scenario/cutscene_actor_tracks.hpp": "6125fb585dc32221681676f6567c0611ea5b417a24b02c4ad66b86c6a74b253f",
+        "game/native/gameplay_scenario/cutscene_cues.hpp": "858b55316b5e8ad91584a60d191044ac757d9a32e7fa915684affc794f521658",
+        "game/native/gameplay_scenario/cutscene_descriptor.hpp": "03233684743e02393c3ce5b14c3e67c32898bd0f064aafc5592d6187c372f69a",
+        "game/native/gameplay_scenario/cutscene_object_tracks.hpp": "d082654f97c2aae6e1630875640a2b23781501b02fb85efc6a42c9e24c812c1c",
+        "game/native/gameplay_scenario/cutscene_playback.hpp": "18ca45dc7906b80e56a1f97ca736734590b6f29406a04d1c79a9c9c5db469ce1",
+        "game/native/gameplay_scenario/cutscene_requests.hpp": "0e2bb1616a57af8001f0c009618209cafe31a815cbeaa1b78d9687efb5df9c3d",
+        "game/native/gameplay_scenario/enemy_descriptors.hpp": "71dc3da9373d22d33cfcda65daf638bdcc055dec9cbd55187410dff6f00198ec",
+        "game/native/gameplay_scenario/enemy_routes.hpp": "a3343d7721b7105ac620509bc71d4e2377f46c45aa40fddaeba23b465d9ce67c",
+        "game/native/gameplay_scenario/flags.cpp": "62055c3df6665eeedca38e207c1654992f8a8cf8e423357e600361730a113d97",
+        "game/native/gameplay_scenario/flags.hpp": "265400e86eda349b82fc710a8dcd91b9a82d16e3c71796a94c29c541ec1ecd6b",
+        "game/native/gameplay_scenario/interpreter.hpp": "b5c65ae64c926e01ab919f0fef912e77fc37ddb9fff0afa8f2d47a10c66c5c34",
+        "game/native/gameplay_scenario/model_reference.hpp": "4b512afd9574ead2cca36bc490f5938a557073f043d2b6021c9c51325b18f907",
+        "game/native/gameplay_scenario/model_transform_presets.inc": "1d4049b22be0920234b3efd915fc1b4ddc447a037baf8e76b98e1104a4deab31",
+        "game/native/gameplay_scenario/npc_descriptors.hpp": "807b910faab217184814a15a9059f67fe43037ea0a33bd5d3fa9196edb3ac5fb",
+        "game/native/gameplay_scenario/room_actor_assets.hpp": "68a0fffbe445dfbcd2bc6a9a65f4193f85991f739a691c69279a079d37156b84",
+        "game/native/gameplay_scenario/scene_control_types.hpp": "3527cc02c44ec72e420e8d6a900ba1e41e1ccd81903042604df50eb777314841",
+        "game/native/gameplay_scenario/scene_controls.cpp": "c1fe39d72c305b280bda44c25d0f5bbf6d4a73bf9461b483725691615023a6ad",
+        "game/native/gameplay_scenario/scene_controls.hpp": "d006f22268a33e3e60c2b37be1e71e965d4960bf65433a8fe401ffc656416ec6",
+        "game/native/gameplay_scenario/scene_matrix_program_tables.inc": "870d43b3ff76a817e8778f8c76e823c1b1a347b251807787e587869dda105556",
+        "game/native/gameplay_scenario/scene_matrix_programs.cpp": "52e625c80ce9e450143f987cccd7d8baa400c814ec9dd3287efdc1075957e547",
+        "game/native/gameplay_scenario/scene_matrix_programs.hpp": "ba23330053bfd18a137b1ebacdabc3ffbd88dd87352215be2547f359d225db52",
+        "game/native/gameplay_scenario/scene_matrix_tables.cpp": "fc8db8b27924c06462a35f4099205fb3844cbb5eb7530064b943f7c5d49a3033",
+        "game/native/gameplay_scenario/scene_matrix_tables.hpp": "d7447ead8323ad9737004d6823ef33da4adfab22619d4d35a1f3d0a2870a25b1",
+        "game/native/gameplay_scenario/scene_model_bindings.cpp": "8209a18bde72c3a9b71d698d5746ac491ecc406f03b42f353441807165c3a942",
+        "game/native/gameplay_scenario/scene_model_bindings.hpp": "c5ca218f5645af66f166099021ff586671100c5fc824ae205fa6d5c735fd605e",
+        "game/native/gameplay_scenario/scene_models.cpp": "97552b2d937541a1d50befd02c54969c3e5bca5ef2c01b7c14085d01f040bcad",
+        "game/native/gameplay_scenario/scene_models.hpp": "bc649bb75fd935cc42c693070c97b7b1c2d78745f5833f5a72f6e7ddc9c129c8",
+        "game/native/gameplay_scenario/scene_record_eligibility.hpp": "8b18e95889895066887081f556750ea267400c61f47ff86246018acd56fbe70b",
+        "game/native/gameplay_scenario/stream_channels.hpp": "2d42ba1955ec54c86b1d9e85f19354fe623d6c26182fd5bc48285cec61beddc1",
+        "game/native/gameplay_scene/record_pool.hpp": "80547b7a98e4f8d311985882c31e8ea6e7692c35d160670e47a3a29fefd6593e",
+        "game/native/gameplay_scene/records.hpp": "2ec908791b6fb1b1dc2c3e068980f4adafa8071f9b6d9154ad13753f8444c8a6",
+        "game/native/gameplay_session/activity.hpp": "604410c6d76106740995ad507bb0c6a5ffa57ff443e08a4ab100207fc2308d8e",
+        "game/native/gameplay_session/room_variants.hpp": "34d44fe610ab2111356f445954bc84971a021778faedfa1f159bd2d27c6b342c",
+        "game/native/gameplay_session/session.cpp": "8f3f77da4ee0c08be63bd41687a330afa469bf33e0cad871951215a14ddc7a87",
+        "game/native/gameplay_session/session.hpp": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd",
+        "game/native/gameplay_tasks/tasks.hpp": "24e5e79aa30c4120389b964814914d2257c4ae28a545c1034c6265f49744f2f6",
+        "game/native/gameplay_world/actor_initial_state.hpp": "4312ae0da0ded489141d4a5bc25923facf2ca92cb3ae20a0b927d694ded6eb23",
+        "game/native/gameplay_world/actor_placements.hpp": "ac1362c4b4bea419f47cd94edf0aa778da02c2796d64480f734eb282a61bca5c",
+        "game/native/gameplay_world/auxiliary_actors.cpp": "b73bebfbfb34309577a23649eef434f752e94134c792371ef6eb4efc1c82bc59",
+        "game/native/gameplay_world/auxiliary_actors.hpp": "8cf9ad3964feb9ec42cf1b31a15956a8d0510f2ffec5502fda8f51da6c18105b",
+        "game/native/gameplay_world/bodies.cpp": "9cb9bd0d5f7e18e14aeccdd481acc609ea2d2d6d886b08072ce4fcb48d8afeb0",
+        "game/native/gameplay_world/bodies.hpp": "8bb53c9bbf2f2ed1124d7d45cf11ab337d2bcf486e0be37037783399010edeff",
+        "game/native/gameplay_world/cinematic_object_attachment.hpp": "c4726ebbbb5948984c1939d22790914f8bc95d2122764f556cf5d7e74655df8e",
+        "game/native/gameplay_world/cinematic_objects.cpp": "479b89b59ee21a2c7324afc57027bfb25ce796351979ea0a27e65f8517a18d8b",
+        "game/native/gameplay_world/cinematic_objects.hpp": "a72b5571744981561656c16036c079bb618889026708ec007b57e00b9992eb56",
+        "game/native/gameplay_world/cutscene_model_definitions.inc": "f7a592fd30a6361fdc3e76cdc66e8e239b0da19c035ea29e95a77d046d94129b",
+        "game/native/gameplay_world/enemy_state.hpp": "3ed6793dd1834cb233a32ec0a400d0bb48cc8c8aad798184a643b6e649db6c75",
+        "game/native/gameplay_world/head_reaction_state.hpp": "3b89f85434dec15a8a53db1bcf52822052d3641b78ecccfc4f22a1c9ebec50e4",
+        "game/native/gameplay_world/humanoid_motion_bindings.hpp": "56b9a220ab0205a21e0fdf9b74ebbfa584184e9d45770e912d968e91cc748988",
+        "game/native/gameplay_world/inventory_state.hpp": "3986199afba104514c696a6adc7e48f6f0c3beeebc1fc4021f5926c096f4068c",
+        "game/native/gameplay_world/linked_model_definitions.inc": "17cbf5e74459b52a6869eb073a83d3972c18e1069c9ddf822497c5545f65444e",
+        "game/native/gameplay_world/linked_model_profile.inc": "4a400a1f8b270d1a0e3702b1d9cfedbf6d07e8f6761d7afb0541138cbf2c7a25",
+        "game/native/gameplay_world/linked_models.cpp": "ee901b89cd41764334596534087573a4fe3bc68760019f032257919c7edc4902",
+        "game/native/gameplay_world/linked_models.hpp": "3721863cc16d088b733850f678cd3b74ede24aa2894b1b6e327bc3b3e1049077",
+        "game/native/gameplay_world/linked_update_state.hpp": "93ecb03425d45d31b481c44c6694021caa2bcd4c03bbde86fd2feb9d3f226d62",
+        "game/native/gameplay_world/material_uv.hpp": "61264daaf4ed066276d9dac616820111a4af078136e8036b8b52be5b88c6eb9d",
+        "game/native/gameplay_world/model_constraints.cpp": "7a2dad002ac8d3202fc0ba9a5f88d840d63780c7d71043768d2b52b9f840789c",
+        "game/native/gameplay_world/model_constraints.hpp": "07d2699fd3c68b2da1ae71e4f7673be321f7013954c5bdb66f7eb5aab972fe91",
+        "game/native/gameplay_world/model_poses.cpp": "0eaada1bd7fef51df85c0dc29771dcfcec67d26893f052358c20438aae999434",
+        "game/native/gameplay_world/model_poses.hpp": "599b5703bd5222c701595df886b38004dbc655f4a4fb560be2296580ac2cba0d",
+        "game/native/gameplay_world/model_scale_profile.inc": "d6fb8c85d30ea0c224af120e2bda75a25f6ed117085e221e41fb9ac50a78e701",
+        "game/native/gameplay_world/motion.cpp": "c60e43fecbfebbc9c0560afba072cef87dc196cd75b2c616944c2ea83878d4af",
+        "game/native/gameplay_world/motion.hpp": "ab2035e7ba54bea2269404dd2946f11f5c9c28f762b310d2aab878165c5515fa",
+        "game/native/gameplay_world/npc_actor_state.hpp": "63479bf5feb2a73c767273ce60565fce686ae38ab2fabdff7f0c59468d8755f9",
+        "game/native/gameplay_world/primary_actor_records.cpp": "e3195e5d2e594c664200eb928133347d8948758356947572883a09b9a4899b82",
+        "game/native/gameplay_world/primary_actor_records.hpp": "be486fc58eb17e54e67015375c6a22e55be8c8db6b2e994384db951d094e83cb",
+        "game/native/gameplay_world/primary_actor_state.hpp": "d6909c0463c58854f56c4fe56b4eb0cf9f28a00282523663ec37b46183ab68cb",
+        "game/native/gameplay_world/primary_saved_state.hpp": "2e35cc393731a5109df515c81651347d73dc12bd85d25f131ff07c587064c4f6",
+        "game/native/gameplay_world/scene_primary_actors.cpp": "dff4747d602cbe766a562be6dff338b9ca89a419ae4e8dc50cd8a9543b5185d5",
+        "game/native/gameplay_world/scene_primary_actors.hpp": "3a3518d33cd41eba934b3ce13df2116b72ec80e5b23496ad70229d59ef3f1abc",
+        "game/native/gameplay_world/scripted_actor.hpp": "004289e2fbb18431376da80271ed78b03999df87a18a6931876e363d7c5e2cd7",
+        "game/native/gameplay_world/secondary_pose_contacts.cpp": "b530c161e647a4847290614c53e7e87a0994c929240eb2dad73dd4672cac1038",
+        "game/native/gameplay_world/secondary_pose_contacts.hpp": "f17de982c72be0edecab96f4ccdbe9d98d34498e4584560ce283da827c111780",
+        "game/native/gameplay_world/secondary_pose_dynamics.cpp": "b5d63b306744ee3e2538f5c31c873ea2d30941aa2aa2662234740c2b7fa07964",
+        "game/native/gameplay_world/secondary_pose_dynamics.hpp": "b7846b926bfff0f67f512e52025162df561fe92a004448129bd68ab7a5afa4ee",
+        "game/native/gameplay_world/secondary_pose_link_profiles.inc": "c9a7835c08720be86a51bb390e408e9ac2faccf68ebbacd6f5636042bf6d561d",
+        "game/native/gameplay_world/secondary_pose_state.hpp": "39f8907947c16838382c344b4e94e8a90356f191484d1db9ee92a5ac42b69eff",
+        "game/native/gameplay_world/speech_state.hpp": "00c5fd992974ae0e49ee1585950f54e59e9ebac8e7452ce4906ac45ecc554cb9",
+        "game/native/gameplay_world/target_metrics.cpp": "eaa82f5ab32717495293311d38836ded484fa84681d139ee55a8b542c9e9bef2",
+        "game/native/gameplay_world/target_metrics.hpp": "0209d0daf42c2ce4f71de607ad3b3d23a9cfc776d1c95cf2d6e6d683bd9d361b",
+        "game/native/gameplay_world/world.cpp": "aa55825b7d83669cd41aa2a35158be5234d65303ff2eae4585e107a6796fdbb8",
+        "game/native/gameplay_world/world.hpp": "e551ef34a9707f91b19268f5b7c774cdd8a5f5c3445ce04b93f2b640522bd9f1",
+        "game/native/transform_math/heading.cpp": "082d5ef9b70d86bb75e7ec84653b8dbe29290d0e59b1a4706174efc30a83f5eb",
+        "game/native/transform_math/heading.hpp": "468f1bfdff28cbf68339dbf47dfe1b3ef026939024d6f7efb43d0750cee823f0",
+        "game/native/transform_math/heading_profile.inc": "f4f6712a9dc9a797603d9856eab6558c1afa5152c6656cc7d9c735ef1dc6105b",
+        "game/native/transform_math/transform_math.cpp": "f94e5bbcc634498e980a907d5277a8b7abd027459bc3ff7e761fc7b240eac717",
+        "game/native/transform_math/transform_math.hpp": "1fef4b665b1bcb4a04df1704d12d44724f9a2a11cfa8e159cf3353b0ca408b1b",
+        "game/native/gameplay_world/primary_actor_records_tests.cpp": "48699df4115d466b67033d87ce7310fc8f6bf26dae91e98dd34e94fd3e451149",
+        "tools/native_reconstruction/animation/verify_primary_actor_records.py": "17cff00cb66fb7b7117ebe5f7b74551505350915f643f0711d0dece63b0a5bb4",
+        "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f",
+        "third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
+        "recomp/config/output/sub_00107C68_0x107c68.cpp": "8a15a069852a969aa5cb812b3cface0b91ca126f2036dd2ae1c9eba5e844b99e",
+        "recomp/config/output_ovl/o2/o2_0066A730_0x66a730.cpp": "d7bd7b6b88a38e47ffff7506583ec4edfdec7888cb1b8b5cb8061049b4fd836f",
+        "recomp/config/output_ovl/o2/o2_005EAEB0_0x5eaeb0.cpp": "8ac2b83f26e53e1a45f89348c8a40bee33caa817accaecef0e543cecaa850685"
+      },
+      "source_unchanged": true,
+      "original_owned_bodies": [
+        {
+          "role": "complete ordinary actor postprocess or reached helper body",
+          "path": "recomp/config/output/sub_00107C68_0x107c68.cpp",
+          "sha256": "8a15a069852a969aa5cb812b3cface0b91ca126f2036dd2ae1c9eba5e844b99e",
+          "start": "0x107c68",
+          "end_exclusive": "0x107d28",
+          "matched_comments": 46,
+          "omitted_zero_words": 2,
+          "conflicts": 0,
+          "comparisons": [
+            {
+              "pc": "0x00107c68",
+              "owned_word": "0x2cc20008",
+              "comment_word": "0x2cc20008",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c6c",
+              "owned_word": "0x1440001e",
+              "comment_word": "0x1440001e",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c70",
+              "owned_word": "0x0080182d",
+              "comment_word": "0x0080182d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c74",
+              "owned_word": "0x3082000f",
+              "comment_word": "0x3082000f",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c78",
+              "owned_word": "0x1440001b",
+              "comment_word": "0x1440001b",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c7c",
+              "owned_word": "0x0080382d",
+              "comment_word": "0x0080382d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c80",
+              "owned_word": "0x30a900ff",
+              "comment_word": "0x30a900ff",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c84",
+              "owned_word": "0x2cca0020",
+              "comment_word": "0x2cca0020",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c88",
+              "owned_word": "0x0120402d",
+              "comment_word": "0x0120402d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c8c",
+              "owned_word": "0x00081a38",
+              "comment_word": "0x00081a38",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c90",
+              "owned_word": "0x00694025",
+              "comment_word": "0x00694025",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c94",
+              "owned_word": "0x70081ee9",
+              "comment_word": "0x70081ee9",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c98",
+              "owned_word": "0x1540000e",
+              "comment_word": "0x1540000e",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107c9c",
+              "owned_word": "0x2cc20008",
+              "comment_word": "0x2cc20008",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107ca0",
+              "owned_word": "0x70634389",
+              "comment_word": "0x70634389",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107ca4",
+              "owned_word": "0x7ce80000",
+              "comment_word": "0x7ce80000",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107ca8",
+              "owned_word": "0x24c6ffe0",
+              "comment_word": "0x24c6ffe0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cac",
+              "owned_word": "0x24e70010",
+              "comment_word": "0x24e70010",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cb0",
+              "owned_word": "0x2cc20020",
+              "comment_word": "0x2cc20020",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cb4",
+              "owned_word": "0x7ce80000",
+              "comment_word": "0x7ce80000",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cb8",
+              "owned_word": "0x1040fffa",
+              "comment_word": "0x1040fffa",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cbc",
+              "owned_word": "0x24e70010",
+              "comment_word": "0x24e70010",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cc0",
+              "owned_word": "0x10000004",
+              "comment_word": "0x10000004",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cc4",
+              "owned_word": "0x2cc20008",
+              "comment_word": "0x2cc20008",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cc8",
+              "owned_word": "0x24c6fff8",
+              "comment_word": "0x24c6fff8",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107ccc",
+              "owned_word": "0x24e70008",
+              "comment_word": "0x24e70008",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cd0",
+              "owned_word": "0x2cc20008",
+              "comment_word": "0x2cc20008",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cd4",
+              "owned_word": "0x00000000",
+              "comment_word": "0x00000000",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cd8",
+              "owned_word": "0x00000000",
+              "comment_word": "0x00000000",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cdc",
+              "owned_word": "0x5040fffa",
+              "comment_word": "0x5040fffa",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107ce0",
+              "owned_word": "0xfce30000",
+              "comment_word": "0xfce30000",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107ce4",
+              "owned_word": "0x00e0182d",
+              "comment_word": "0x00e0182d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107ce8",
+              "owned_word": "0x3c02ffff",
+              "comment_word": "0x3c02ffff",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cec",
+              "owned_word": "0x24c6ffff",
+              "comment_word": "0x24c6ffff",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cf0",
+              "owned_word": "0x3442ffff",
+              "comment_word": "0x3442ffff",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cf4",
+              "owned_word": "0x10c2000a",
+              "comment_word": "0x10c2000a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107cf8",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x00107cfc",
+              "owned_word": "0x3c02ffff",
+              "comment_word": "0x3c02ffff",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107d00",
+              "owned_word": "0x3442ffff",
+              "comment_word": "0x3442ffff",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107d04",
+              "owned_word": "0xa0650000",
+              "comment_word": "0xa0650000",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107d08",
+              "owned_word": "0x24c6ffff",
+              "comment_word": "0x24c6ffff",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107d0c",
+              "owned_word": "0x24630001",
+              "comment_word": "0x24630001",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107d10",
+              "owned_word": "0x00000000",
+              "comment_word": "0x00000000",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107d14",
+              "owned_word": "0x00000000",
+              "comment_word": "0x00000000",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107d18",
+              "owned_word": "0x14c2fffa",
+              "comment_word": "0x14c2fffa",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107d1c",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x00107d20",
+              "owned_word": "0x03e00008",
+              "comment_word": "0x03e00008",
+              "status": "matched"
+            },
+            {
+              "pc": "0x00107d24",
+              "owned_word": "0x0080102d",
+              "comment_word": "0x0080102d",
+              "status": "matched"
+            }
+          ]
+        },
+        {
+          "role": "complete ordinary actor postprocess or reached helper body",
+          "path": "recomp/config/output_ovl/o2/o2_0066A730_0x66a730.cpp",
+          "sha256": "d7bd7b6b88a38e47ffff7506583ec4edfdec7888cb1b8b5cb8061049b4fd836f",
+          "start": "0x66a730",
+          "end_exclusive": "0x66a744",
+          "matched_comments": 5,
+          "omitted_zero_words": 0,
+          "conflicts": 0,
+          "comparisons": [
+            {
+              "pc": "0x0066a730",
+              "owned_word": "0x3c04004a",
+              "comment_word": "0x3c04004a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x0066a734",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x0066a738",
+              "owned_word": "0x24845c30",
+              "comment_word": "0x24845c30",
+              "status": "matched"
+            },
+            {
+              "pc": "0x0066a73c",
+              "owned_word": "0x08041f1a",
+              "comment_word": "0x08041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x0066a740",
+              "owned_word": "0x34068700",
+              "comment_word": "0x34068700",
+              "status": "matched"
+            }
+          ]
+        },
+        {
+          "role": "complete ordinary actor postprocess or reached helper body",
+          "path": "recomp/config/output_ovl/o2/o2_005EAEB0_0x5eaeb0.cpp",
+          "sha256": "8ac2b83f26e53e1a45f89348c8a40bee33caa817accaecef0e543cecaa850685",
+          "start": "0x5eaeb0",
+          "end_exclusive": "0x5eb0c4",
+          "matched_comments": 109,
+          "omitted_zero_words": 24,
+          "conflicts": 0,
+          "comparisons": [
+            {
+              "pc": "0x005eaeb0",
+              "owned_word": "0x27bdfff0",
+              "comment_word": "0x27bdfff0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaeb4",
+              "owned_word": "0x3c04004b",
+              "comment_word": "0x3c04004b",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaeb8",
+              "owned_word": "0xffbf0000",
+              "comment_word": "0xffbf0000",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaebc",
+              "owned_word": "0x3c010057",
+              "comment_word": "0x3c010057",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaec0",
+              "owned_word": "0xa02097c1",
+              "comment_word": "0xa02097c1",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaec4",
+              "owned_word": "0x2484e330",
+              "comment_word": "0x2484e330",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaec8",
+              "owned_word": "0x3c010057",
+              "comment_word": "0x3c010057",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaecc",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaed0",
+              "owned_word": "0xa02097c0",
+              "comment_word": "0xa02097c0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaed4",
+              "owned_word": "0x3406a340",
+              "comment_word": "0x3406a340",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaed8",
+              "owned_word": "0x3c010057",
+              "comment_word": "0x3c010057",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaedc",
+              "owned_word": "0xa02097b1",
+              "comment_word": "0xa02097b1",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaee0",
+              "owned_word": "0x3c010057",
+              "comment_word": "0x3c010057",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaee4",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaee8",
+              "owned_word": "0xa02097b0",
+              "comment_word": "0xa02097b0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaeec",
+              "owned_word": "0x3c040042",
+              "comment_word": "0x3c040042",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaef0",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaef4",
+              "owned_word": "0x24841ef0",
+              "comment_word": "0x24841ef0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaef8",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaefc",
+              "owned_word": "0x3406cc10",
+              "comment_word": "0x3406cc10",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf00",
+              "owned_word": "0x3c040046",
+              "comment_word": "0x3c040046",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf04",
+              "owned_word": "0x3c020003",
+              "comment_word": "0x3c020003",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf08",
+              "owned_word": "0x24849120",
+              "comment_word": "0x24849120",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf0c",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf10",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf14",
+              "owned_word": "0x3446fc50",
+              "comment_word": "0x3446fc50",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf18",
+              "owned_word": "0x3c04004a",
+              "comment_word": "0x3c04004a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf1c",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf20",
+              "owned_word": "0x24848d70",
+              "comment_word": "0x24848d70",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf24",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf28",
+              "owned_word": "0x24066180",
+              "comment_word": "0x24066180",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf2c",
+              "owned_word": "0x3c04003c",
+              "comment_word": "0x3c04003c",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf30",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf34",
+              "owned_word": "0x248485b0",
+              "comment_word": "0x248485b0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf38",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf3c",
+              "owned_word": "0x3406a048",
+              "comment_word": "0x3406a048",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf40",
+              "owned_word": "0x3c04003d",
+              "comment_word": "0x3c04003d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf44",
+              "owned_word": "0x3c020001",
+              "comment_word": "0x3c020001",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf48",
+              "owned_word": "0x24849230",
+              "comment_word": "0x24849230",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf4c",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf50",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf54",
+              "owned_word": "0x344629b0",
+              "comment_word": "0x344629b0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf58",
+              "owned_word": "0x3c04004f",
+              "comment_word": "0x3c04004f",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf5c",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf60",
+              "owned_word": "0x2484c8b0",
+              "comment_word": "0x2484c8b0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf64",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf68",
+              "owned_word": "0x24060060",
+              "comment_word": "0x24060060",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf6c",
+              "owned_word": "0x3c04004f",
+              "comment_word": "0x3c04004f",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf70",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf74",
+              "owned_word": "0x2484c810",
+              "comment_word": "0x2484c810",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf78",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf7c",
+              "owned_word": "0x240600a0",
+              "comment_word": "0x240600a0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf80",
+              "owned_word": "0x3c04004a",
+              "comment_word": "0x3c04004a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf84",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf88",
+              "owned_word": "0x2484eef0",
+              "comment_word": "0x2484eef0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf8c",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf90",
+              "owned_word": "0x24066d40",
+              "comment_word": "0x24066d40",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf94",
+              "owned_word": "0x3c04003f",
+              "comment_word": "0x3c04003f",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf98",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaf9c",
+              "owned_word": "0x2484a380",
+              "comment_word": "0x2484a380",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafa0",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafa4",
+              "owned_word": "0x24062090",
+              "comment_word": "0x24062090",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafa8",
+              "owned_word": "0x3c04003f",
+              "comment_word": "0x3c04003f",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafac",
+              "owned_word": "0x0000282d",
+              "comment_word": "0x0000282d",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafb0",
+              "owned_word": "0x248482f0",
+              "comment_word": "0x248482f0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafb4",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafb8",
+              "owned_word": "0x24062090",
+              "comment_word": "0x24062090",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafbc",
+              "owned_word": "0x0c19a9cc",
+              "comment_word": "0x0c19a9cc",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafc0",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eafc4",
+              "owned_word": "0x0c1a0b18",
+              "comment_word": "0x0c1a0b18",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafc8",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eafcc",
+              "owned_word": "0x0c1ae898",
+              "comment_word": "0x0c1ae898",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafd0",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eafd4",
+              "owned_word": "0x0c1642f8",
+              "comment_word": "0x0c1642f8",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafd8",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eafdc",
+              "owned_word": "0x0c1607d4",
+              "comment_word": "0x0c1607d4",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafe0",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eafe4",
+              "owned_word": "0x0c176810",
+              "comment_word": "0x0c176810",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eafe8",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eafec",
+              "owned_word": "0x0c170448",
+              "comment_word": "0x0c170448",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaff0",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eaff4",
+              "owned_word": "0x0c175f58",
+              "comment_word": "0x0c175f58",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eaff8",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eaffc",
+              "owned_word": "0x0c1b7b20",
+              "comment_word": "0x0c1b7b20",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb000",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb004",
+              "owned_word": "0x0c194614",
+              "comment_word": "0x0c194614",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb008",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb00c",
+              "owned_word": "0x0c15cd68",
+              "comment_word": "0x0c15cd68",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb010",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb014",
+              "owned_word": "0x0c16e400",
+              "comment_word": "0x0c16e400",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb018",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb01c",
+              "owned_word": "0x0c15cf44",
+              "comment_word": "0x0c15cf44",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb020",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb024",
+              "owned_word": "0x0c1ac428",
+              "comment_word": "0x0c1ac428",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb028",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb02c",
+              "owned_word": "0x0c18cd60",
+              "comment_word": "0x0c18cd60",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb030",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb034",
+              "owned_word": "0x0c15cf64",
+              "comment_word": "0x0c15cf64",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb038",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb03c",
+              "owned_word": "0x0c1ab608",
+              "comment_word": "0x0c1ab608",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb040",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb044",
+              "owned_word": "0x0c1a5470",
+              "comment_word": "0x0c1a5470",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb048",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb04c",
+              "owned_word": "0x0c06c0b4",
+              "comment_word": "0x0c06c0b4",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb050",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb054",
+              "owned_word": "0x24030001",
+              "comment_word": "0x24030001",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb058",
+              "owned_word": "0x14430003",
+              "comment_word": "0x14430003",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb05c",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb060",
+              "owned_word": "0x0c20578c",
+              "comment_word": "0x0c20578c",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb064",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb068",
+              "owned_word": "0x0c1a0ea4",
+              "comment_word": "0x0c1a0ea4",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb06c",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb070",
+              "owned_word": "0x0c1a0eac",
+              "comment_word": "0x0c1a0eac",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb074",
+              "owned_word": "0x240400ff",
+              "comment_word": "0x240400ff",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb078",
+              "owned_word": "0x3c040074",
+              "comment_word": "0x3c040074",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb07c",
+              "owned_word": "0x240500ff",
+              "comment_word": "0x240500ff",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb080",
+              "owned_word": "0x248434b0",
+              "comment_word": "0x248434b0",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb084",
+              "owned_word": "0x0c041f1a",
+              "comment_word": "0x0c041f1a",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb088",
+              "owned_word": "0x24060014",
+              "comment_word": "0x24060014",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb08c",
+              "owned_word": "0x0c17b2a4",
+              "comment_word": "0x0c17b2a4",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb090",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb094",
+              "owned_word": "0x0c06e654",
+              "comment_word": "0x0c06e654",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb098",
+              "owned_word": "0x00000000",
+              "comment_word": null,
+              "status": "omitted_zero"
+            },
+            {
+              "pc": "0x005eb09c",
+              "owned_word": "0x2403ffff",
+              "comment_word": "0x2403ffff",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb0a0",
+              "owned_word": "0x3c01004c",
+              "comment_word": "0x3c01004c",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb0a4",
+              "owned_word": "0xac23ae2c",
+              "comment_word": "0xac23ae2c",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb0a8",
+              "owned_word": "0x3c01004c",
+              "comment_word": "0x3c01004c",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb0ac",
+              "owned_word": "0xac23ae28",
+              "comment_word": "0xac23ae28",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb0b0",
+              "owned_word": "0x3c01004c",
+              "comment_word": "0x3c01004c",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb0b4",
+              "owned_word": "0xac23ae24",
+              "comment_word": "0xac23ae24",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb0b8",
+              "owned_word": "0xdfbf0000",
+              "comment_word": "0xdfbf0000",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb0bc",
+              "owned_word": "0x03e00008",
+              "comment_word": "0x03e00008",
+              "status": "matched"
+            },
+            {
+              "pc": "0x005eb0c0",
+              "owned_word": "0x27bd0010",
+              "comment_word": "0x27bd0010",
+              "status": "matched"
+            }
+          ]
+        }
+      ],
+      "test_binary_sha256": "5d6a93ef0c16e5ebb11f7a73aaf1304a9c9fabba1c4f797347078aef6ed35411"
+    }
+  }
+}

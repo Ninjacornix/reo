@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "status": "two logical frame slots and real offscreen priming qualified; game binding pending",
+  "manifest_sha256": "9586edb4c98834326c1622d824e73199b31470b7566c731da624465324ed5200",
+  "logical_slots": 2,
+  "physical_export_slots": 3,
+  "catalogue_members": 201,
+  "decoded_and_presented": 216998,
+  "game_integration": false,
+  "paced_playback_validated": false,
+  "audio_synchronization_validated": false,
+  "evidence": {
+    "movie-priming/clean-build-two-slot-llvm-v1/receipt.json": "d0c8a44bb8905dcb9a2065dc55da54bbcb35a97a3700cf57b0c1802ada7ca16f",
+    "movie-priming/clean-build-two-slot-gcc-v1/receipt.json": "09e4b98b3bb31e320ba69cc31c181e7d6f4048b4dd6acbc0acd2d348f890abcc",
+    "movie-priming/title-two-slot-v1/receipt.json": "67c0a1789e1f5f94ab8ea0f4b61bb3816d4dd71d4c81292277850b8516ad66ab",
+    "movie-matrix/catalog-two-slot-v1/receipt.json": "b162cae0e82f14a4ea18f6c2065324a89362afb316c1def94ba587fc306f63a0",
+    "movie-matrix/catalog-two-slot-counts-v1/receipt.json": "01eff36b04db4515141db2b2bd85cdb06de92faa378742be3e02247cf9dc6bdd"
+  }
+}

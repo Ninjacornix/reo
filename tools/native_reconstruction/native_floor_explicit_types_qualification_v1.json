@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "status": "explicit floor type request correction qualified on both compilers",
+  "stage4_complete": false,
+  "game_run": false,
+  "installed_in_game": false,
+  "cohorts": {
+    "llvm": {
+      "receipt": "build-native-sjuni/gameplay-collision-response-llvm-v8/receipt.json",
+      "receipt_sha256": "17c92e8858260c0823ec24a2824bc635cb8cb9c3b9a835ae5c68a80efcb27e94",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "results": {
+        "checks": 270963,
+        "owned_grid_assets": 366,
+        "maximum_contact_error": 0,
+        "game_launched": false,
+        "declared_numeric_ports": true
+      },
+      "source_sha256": {
+        "game/native/gameplay_collision/response.hpp": "22a85d653f51fd86e9666de1a748060b141fe02c3ead9ff0bc2022a7298f9f6d",
+        "game/native/gameplay_collision/response.cpp": "2fb4d52dcb9b51899a05def4a3734f85559e8c2a2a5327203f6e9c5e44aa698c",
+        "game/native/gameplay_collision/response_tests.cpp": "f1bb8e4ae39398c61f9cb72c642e7895266b35036578f79da0a66f097e80ed40",
+        "tools/native_reconstruction/gameplay_collision_oracle/response_reference.hpp": "674e6224558fe924ac0b14dfdaed30c1144bc4eb45cf5405fe5c9925f04bac24",
+        "tools/native_reconstruction/gameplay_collision_oracle/reference.hpp": "62e1f086a6a1c709ffd01f3e8cd3e674f6148406f560346934c9d7344b530203",
+        "third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
+        "tools/native_reconstruction/verify_gameplay_collision_response.py": "906a5ecbdf5e636dcba82d06119d2ac5d5fdfa8b71e71c7f28f5fdd3b7ebcd78",
+        "recomp/config/output_ovl/o2/o2_006F00D0_0x6f00d0.cpp": "180cf574898ca6024c234395b42d0496d91de3127f9e71be3f43b667ff24e3f8",
+        "recomp/config/output_ovl/o2/o2_006F0310_0x6f0310.cpp": "5dac2b2a65df0368bf32f82c2211cf04c04908e8c465362a58b40e1da17ccaff",
+        "recomp/config/output_ovl/o2/o2_006F0E00_0x6f0e00.cpp": "54b20421061c33465b4cc3a6cfe80f4729adc25016396d9e19668dd6d055c675",
+        "recomp/config/output_ovl/o2/o2_006F0E60_0x6f0e60.cpp": "0ba4611f4b6c868966fa6a4de78e7f04bd8e61527c233c7d3dfc6f2d2cacb094",
+        "recomp/config/output_ovl/o0/o0_00370AC0_0x370ac0.cpp": "7c9d1c7c9cad3b5561937836e3349f51bea3ef4e0b3aa9217c464f7f816af78d",
+        "recomp/config/output_ovl/o0/o0_00370B00_0x370b00.cpp": "dd7cba008760e6304771406c18422c4130e07a380bd01def85b0bdbb8045d6ef",
+        "recomp/config/output_ovl/o0/o0_00370C70_0x370c70.cpp": "ca717e41fe8dff11338600c8ee2939fbc9c9faf9f97f90d86abb8ef5e0ea89ef",
+        "recomp/config/output_ovl/o2/o2_00617000_0x617000.cpp": "500e8781325897594f493879a93ebd8adc7d51e330c7cb5efa4b43ac948159c8",
+        "recomp/config/output_ovl/o2/o2_00617430_0x617430.cpp": "1153241a8017e08c70b9110b91246a2974e01b506426dbd42fe2d75aa23ba598",
+        "recomp/config/output_ovl/o2/o2_006161E0_0x6161e0.cpp": "a769f12e9f810b407ae9c0ce31c2bef63094ed638016668483d9cd5502f8bad0",
+        "recomp/config/output_ovl/o2/o2_00616310_0x616310.cpp": "150b8fe11586566dac0ffd224f2c9c0105a7f2f0cd3e64eac3ad3c38ead4859f",
+        "recomp/config/output_ovl/o2/o2_00619A50_0x619a50.cpp": "9933b66ae02576a256f61e06fa7df7aff7fd96b249094cf78250465fdd0141ca",
+        "game/native/gameplay_collision/collision.hpp": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da",
+        "recomp/config/output_ovl/o2/o2_functions.h": "c2c9e3a21bd6693ec7e6e65e53d31b98d2b4e48f6831575de682bb986c575360",
+        "recomp/config/output_ovl/o2/ps2_recompiled_stubs.h": "57b7f2b6a58aee9c60d56dcd17065fb2062786d5707026b14825db6c66829a14",
+        "recomp/config/output_ovl/o0/o0_functions.h": "5824ea1af467c3b1d38ecdf1873f403ab9c179f303988d7d9eac63452b466162",
+        "recomp/config/output_ovl/o0/ps2_recompiled_stubs.h": "57b7f2b6a58aee9c60d56dcd17065fb2062786d5707026b14825db6c66829a14"
+      }
+    },
+    "gcc": {
+      "receipt": "build-native-sjuni/gameplay-collision-response-gcc-v8/receipt.json",
+      "receipt_sha256": "7990753a733cfc26f232d63f9cf41cc88ec886ac1b1af66e623e7c020e3efc5a",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "results": {
+        "checks": 270963,
+        "owned_grid_assets": 366,
+        "maximum_contact_error": 0,
+        "game_launched": false,
+        "declared_numeric_ports": true
+      },
+      "source_sha256": {
+        "game/native/gameplay_collision/response.hpp": "22a85d653f51fd86e9666de1a748060b141fe02c3ead9ff0bc2022a7298f9f6d",
+        "game/native/gameplay_collision/response.cpp": "2fb4d52dcb9b51899a05def4a3734f85559e8c2a2a5327203f6e9c5e44aa698c",
+        "game/native/gameplay_collision/response_tests.cpp": "f1bb8e4ae39398c61f9cb72c642e7895266b35036578f79da0a66f097e80ed40",
+        "tools/native_reconstruction/gameplay_collision_oracle/response_reference.hpp": "674e6224558fe924ac0b14dfdaed30c1144bc4eb45cf5405fe5c9925f04bac24",
+        "tools/native_reconstruction/gameplay_collision_oracle/reference.hpp": "62e1f086a6a1c709ffd01f3e8cd3e674f6148406f560346934c9d7344b530203",
+        "third_party/PS2Recomp/ps2xRuntime/include/ps2_fpu_convert.h": "db9db81090400ac42fd7e391c0998887c4e922a1cb7c0d77516f47d3d8a9c8f3",
+        "tools/native_reconstruction/verify_gameplay_collision_response.py": "906a5ecbdf5e636dcba82d06119d2ac5d5fdfa8b71e71c7f28f5fdd3b7ebcd78",
+        "recomp/config/output_ovl/o2/o2_006F00D0_0x6f00d0.cpp": "180cf574898ca6024c234395b42d0496d91de3127f9e71be3f43b667ff24e3f8",
+        "recomp/config/output_ovl/o2/o2_006F0310_0x6f0310.cpp": "5dac2b2a65df0368bf32f82c2211cf04c04908e8c465362a58b40e1da17ccaff",
+        "recomp/config/output_ovl/o2/o2_006F0E00_0x6f0e00.cpp": "54b20421061c33465b4cc3a6cfe80f4729adc25016396d9e19668dd6d055c675",
+        "recomp/config/output_ovl/o2/o2_006F0E60_0x6f0e60.cpp": "0ba4611f4b6c868966fa6a4de78e7f04bd8e61527c233c7d3dfc6f2d2cacb094",
+        "recomp/config/output_ovl/o0/o0_00370AC0_0x370ac0.cpp": "7c9d1c7c9cad3b5561937836e3349f51bea3ef4e0b3aa9217c464f7f816af78d",
+        "recomp/config/output_ovl/o0/o0_00370B00_0x370b00.cpp": "dd7cba008760e6304771406c18422c4130e07a380bd01def85b0bdbb8045d6ef",
+        "recomp/config/output_ovl/o0/o0_00370C70_0x370c70.cpp": "ca717e41fe8dff11338600c8ee2939fbc9c9faf9f97f90d86abb8ef5e0ea89ef",
+        "recomp/config/output_ovl/o2/o2_00617000_0x617000.cpp": "500e8781325897594f493879a93ebd8adc7d51e330c7cb5efa4b43ac948159c8",
+        "recomp/config/output_ovl/o2/o2_00617430_0x617430.cpp": "1153241a8017e08c70b9110b91246a2974e01b506426dbd42fe2d75aa23ba598",
+        "recomp/config/output_ovl/o2/o2_006161E0_0x6161e0.cpp": "a769f12e9f810b407ae9c0ce31c2bef63094ed638016668483d9cd5502f8bad0",
+        "recomp/config/output_ovl/o2/o2_00616310_0x616310.cpp": "150b8fe11586566dac0ffd224f2c9c0105a7f2f0cd3e64eac3ad3c38ead4859f",
+        "recomp/config/output_ovl/o2/o2_00619A50_0x619a50.cpp": "9933b66ae02576a256f61e06fa7df7aff7fd96b249094cf78250465fdd0141ca",
+        "game/native/gameplay_collision/collision.hpp": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da",
+        "recomp/config/output_ovl/o2/o2_functions.h": "c2c9e3a21bd6693ec7e6e65e53d31b98d2b4e48f6831575de682bb986c575360",
+        "recomp/config/output_ovl/o2/ps2_recompiled_stubs.h": "57b7f2b6a58aee9c60d56dcd17065fb2062786d5707026b14825db6c66829a14",
+        "recomp/config/output_ovl/o0/o0_functions.h": "5824ea1af467c3b1d38ecdf1873f403ab9c179f303988d7d9eac63452b466162",
+        "recomp/config/output_ovl/o0/ps2_recompiled_stubs.h": "57b7f2b6a58aee9c60d56dcd17065fb2062786d5707026b14825db6c66829a14"
+      }
+    }
+  },
+  "limits": [
+    "Original617000 and point-in-triangle bodies checked; scalar vector helpers and cell lookup are declared oracle seams.",
+    "No game installation or performance claim."
+  ]
+}

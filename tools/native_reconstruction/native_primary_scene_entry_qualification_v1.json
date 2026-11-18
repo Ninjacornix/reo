@@ -1,0 +1,198 @@
+{
+  "schema": 1,
+  "status": "qualified_partial_native_primary_scene_entry_cpu_teardown",
+  "source_sha256": {
+    "game/native/gameplay_world/primary_actor_models.hpp": "728563a179a3bc1f42f961266ceba0ce9a905998bb66fa3037ad36ccbcf10f31",
+    "game/native/gameplay_world/primary_actor_models.cpp": "15d4dd6e64de894299ecbe23dd4b53d3efa36da77c2754eba1875e716d88979b",
+    "game/native/gameplay_world/primary_actor_models_tests.cpp": "8ed1eb074c8497a4916e4bb8ed9bc9b0eea0f81656e3959ef7695587721a9a6b",
+    "game/native/gameplay_world/primary_scene_entry_tests.inc": "0f05b1692bb220913b1179bb453364ee920e7761bd22b0f372cb5ae29f9a87c1",
+    "tools/native_reconstruction/primary_models_reference.inc": "8654596ae879dfe3e9069ab226570ad8e83c710c563de35f1b68253904576992",
+    "tools/native_reconstruction/verify_primary_actor_models.py": "fc1d56f4274eb99c62e645e041b271442d127b9536c83b9f4d5218fe527fb5bc",
+    "docs/native-gameplay/PRIMARY_SCENE_ENTRY.md": "045e234e076ae37a0fb4ec52838bac76b552f209c23f0dcf77bfed1e0f5e4139",
+    "docs/native-gameplay/PRIMARY_TEMPORARY_ACTOR_OWNERSHIP.md": "3d165150de70459e9bf3d839e309656f3a7c441082aa40c36f7304a5ae597891",
+    "docs/native-gameplay/STAGE4_PLAN.md": "7e7f3c252b2b6aeb4bf3917eb3b9cc68a72e107f5e9fb6649d89f643dfcdc14c"
+  },
+  "cohorts": {
+    "llvm": {
+      "entry": {
+        "receipt": "build-native-sjuni/primary-scene-entry-llvm-v2/receipt.json",
+        "sha256": "d7dc47e2795de9b6f2acc1c6ac0b64b9fad7fc6f76d9e082024393fc483c0417",
+        "observed": {
+          "direct_guard_checks": 256,
+          "entry_cases": 385,
+          "entry_retirements": 384,
+          "entry_original_cases": 385,
+          "entry_guard_checks": 192,
+          "entry_refusals": 128,
+          "retirements": 256,
+          "retirement_noops": 257,
+          "reloads": 256,
+          "detached_refusals": 256,
+          "retirement_original_cases": 513,
+          "generation_handoffs": 1,
+          "checks": 106065,
+          "loads": 256,
+          "reuses": 256,
+          "replacements": 512,
+          "shared_releases": 512,
+          "refusals": 1025,
+          "original_cases": 1280,
+          "original_calls": 19919,
+          "scene_cases": 1196,
+          "scene_parameters": 52,
+          "scene_original_cases": 1196,
+          "game_run": false
+        }
+      },
+      "initializer": {
+        "receipt": "build-native-sjuni/scene-entry-initialization-llvm-v1/receipt.json",
+        "sha256": "2697d67b4f1d9d9d96628e2b3bc09e9b021ebe0d2db70019d9aee3afbccd52b0",
+        "observed": {
+          "checks": 39664817,
+          "initializations": 32768,
+          "custom_initializations": 4384,
+          "custom_missing_models": 24,
+          "restores": 4096,
+          "setters": 65536,
+          "constraints": 128,
+          "bank_publications": 1,
+          "refusals": 5,
+          "saved_decodes": 65538,
+          "saved_initializations": 65536,
+          "saved_query_cases": 65792,
+          "saved_refusals": 9,
+          "selector_cases": 65536,
+          "selector_restores": 255,
+          "original_calls": 947325,
+          "game_run": false
+        }
+      },
+      "banks": {
+        "receipt": "build-native-sjuni/scene-entry-shared-banks-llvm-v1/receipt.json",
+        "sha256": "d8e9f07814253e72e6f6ee7aa0aed9f4f2f15af7e55b50f928eba666af9cb22a",
+        "observed": {
+          "base_releases": 2,
+          "native_checks": 317927,
+          "original_checks": 13661821,
+          "original_bank_cases": 948,
+          "original_calls": 431695,
+          "common_loads": 90,
+          "character_loads": 720,
+          "snapshot_cases": 94,
+          "npc_bindings_cases": 2,
+          "loader_name_cases": 66048,
+          "character_releases": 8,
+          "released_queries": 50000,
+          "game_run": false
+        },
+        "publication": {
+          "checks": 35,
+          "publications": 7,
+          "rebindings": 55,
+          "refusals": 8,
+          "scripted_bindings": 2,
+          "busy_checks": 1,
+          "retirements": 1,
+          "game_run": false
+        }
+      }
+    },
+    "gcc": {
+      "entry": {
+        "receipt": "build-native-sjuni/primary-scene-entry-gcc-v2/receipt.json",
+        "sha256": "d2ac43ad1dc0f2ccf3df49c736455197d2e235147a0653925a11b53e9f4b656f",
+        "observed": {
+          "direct_guard_checks": 256,
+          "entry_cases": 385,
+          "entry_retirements": 384,
+          "entry_original_cases": 385,
+          "entry_guard_checks": 192,
+          "entry_refusals": 128,
+          "retirements": 256,
+          "retirement_noops": 257,
+          "reloads": 256,
+          "detached_refusals": 256,
+          "retirement_original_cases": 513,
+          "generation_handoffs": 1,
+          "checks": 106065,
+          "loads": 256,
+          "reuses": 256,
+          "replacements": 512,
+          "shared_releases": 512,
+          "refusals": 1025,
+          "original_cases": 1280,
+          "original_calls": 19919,
+          "scene_cases": 1196,
+          "scene_parameters": 52,
+          "scene_original_cases": 1196,
+          "game_run": false
+        }
+      },
+      "initializer": {
+        "receipt": "build-native-sjuni/scene-entry-initialization-gcc-v1/receipt.json",
+        "sha256": "86d2f7ee32bcd8934ecf22daf2dc2abb04a648ebf7346f6215438f843f977e61",
+        "observed": {
+          "checks": 39664817,
+          "initializations": 32768,
+          "custom_initializations": 4384,
+          "custom_missing_models": 24,
+          "restores": 4096,
+          "setters": 65536,
+          "constraints": 128,
+          "bank_publications": 1,
+          "refusals": 5,
+          "saved_decodes": 65538,
+          "saved_initializations": 65536,
+          "saved_query_cases": 65792,
+          "saved_refusals": 9,
+          "selector_cases": 65536,
+          "selector_restores": 255,
+          "original_calls": 947325,
+          "game_run": false
+        }
+      },
+      "banks": {
+        "receipt": "build-native-sjuni/scene-entry-shared-banks-gcc-v1/receipt.json",
+        "sha256": "82df1e56f97ddc960c795087075c5c3b7c2c96063f95641c447193de92437c8c",
+        "observed": {
+          "base_releases": 2,
+          "native_checks": 317927,
+          "original_checks": 13661821,
+          "original_bank_cases": 948,
+          "original_calls": 431695,
+          "common_loads": 90,
+          "character_loads": 720,
+          "snapshot_cases": 94,
+          "npc_bindings_cases": 2,
+          "loader_name_cases": 66048,
+          "character_releases": 8,
+          "released_queries": 50000,
+          "game_run": false
+        },
+        "publication": {
+          "checks": 35,
+          "publications": 7,
+          "rebindings": 55,
+          "refusals": 8,
+          "scripted_bindings": 2,
+          "busy_checks": 1,
+          "retirements": 1,
+          "game_run": false
+        }
+      }
+    }
+  },
+  "temporary_ownership_audit": {
+    "path": "build-native-sjuni/cutscene-primary-lifetime-audit-v2/receipt.json",
+    "sha256": "8d4ea5662b86b1aef3693d8063986ef38c373b189fa5022fad17185cbc979d9c",
+    "status": "static_source_words_verified"
+  },
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "limitations": [
+    "Actor assignment/cloning uses a separate temporary actor pool; current model bindings admit canonical roster identities.",
+    "Focused entry fixture observes1B1DF0; actual shared cleanup has current independent complete-body bank comparisons.",
+    "Rendering ownership, full cinematic phase and installed gameplay acceptance remain open."
+  ]
+}

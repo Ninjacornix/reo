@@ -22,8 +22,10 @@ class ResidentSmaa {
         uint32_t fps = 0, frameMs = 0, ups = 0;
     };
 
+    // pushSize/storage: the blend pass uses the presenter's push constants and binds
+    // the presentation warp depth buffer after its textures.
     Vulkan::Program* load(const char* name, const std::vector<uint32_t>& vertex,
-                          unsigned textures) {
+                          unsigned textures, uint32_t pushSize = sizeof(Extent), bool storage = false) {
 #if defined(_WIN32)
         wchar_t executable[32768];
         DWORD length = GetModuleFileNameW(nullptr, executable, 32768);
@@ -61,8 +63,12 @@ class ResidentSmaa {
         fs.sets[0].fp_mask = fs.sets[0].sampled_image_mask;
         for (unsigned i = 0; i < textures; ++i)
             fs.sets[0].meta[i].array_size = 1;
+        if (storage) {
+            fs.sets[0].storage_buffer_mask = 1u << textures;
+            fs.sets[0].meta[textures].array_size = 1;
+        }
         fs.output_mask = 1;
-        fs.push_constant_size = sizeof(Extent);
+        fs.push_constant_size = pushSize;
         auto* program = device_.request_program(vertex.data(), vertex.size() * 4, fragment.data(),
                                                 fragment.size() * 4, &vs, &fs);
         if (!program)
@@ -107,10 +113,10 @@ class ResidentSmaa {
     }
 
   public:
-    ResidentSmaa(Vulkan::Device& device, const std::vector<uint32_t>& vertex) : device_(device) {
+    ResidentSmaa(Vulkan::Device& device, const std::vector<uint32_t>& vertex, uint32_t presentPushSize) : device_(device) {
         edgesProgram_ = load("present_smaa_edge.frag.spv", vertex, 1);
         weightsProgram_ = load("present_smaa_weights.frag.spv", vertex, 3);
-        blendProgram_ = load("present_smaa_blend.frag.spv", vertex, 2);
+        blendProgram_ = load("present_smaa_blend.frag.spv", vertex, 2, presentPushSize, true);
         const Vulkan::ImageInitialData areaData{areaTexBytes, 0, 0},
             searchData{searchTexBytes, 0, 0};
         area_ = device_.create_image(Vulkan::ImageCreateInfo::immutable_2d_image(

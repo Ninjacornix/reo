@@ -47,7 +47,38 @@ internal static class HeadlessChecks {
         Check(InputMapping.Keyboard(window.settings.Keyboard,k=>k==38)==new Pad(1),
               "Keyboard movement must send only the digital D-pad after remapping.");
         Control<Button>("ResetBindingsButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        // Controls > Modern camera: tab, switch, sliders reach settings and the game environment.
+        Control<Button>("ModernCameraTab").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+        Check(Control<StackPanel>("ModernCameraPanel").IsVisible && !Control<StackPanel>("InputBindingsPanel").IsVisible,
+              "Modern camera tab does not show its panel.");
+        Check(!window.settings.ModernCamera.Enabled && !Control<Slider>("ModernCameraDistance").IsEnabled,
+              "Modern camera must start off with its options disabled.");
+        Control<CheckBox>("ModernCameraSwitch").IsChecked=true;
+        Dispatcher.UIThread.RunJobs();
+        Control<Slider>("ModernCameraDistance").Value=420;
+        Control<Slider>("ModernCameraShoulder").Value=50;
+        Control<ComboBox>("ModernCameraSide").SelectedIndex=1;
+        Control<CheckBox>("ModernCameraInvert").IsChecked=true;
+        Dispatcher.UIThread.RunJobs();
+        var camera=window.settings.ModernCamera;
+        Check(camera.Enabled && camera.Distance==420 && camera.Shoulder==50 && camera.ShoulderSide=="left" && camera.InvertY &&
+              Control<Slider>("ModernCameraDistance").IsEnabled,
+              "Modern camera controls do not reach saved settings.");
+        Check(ModernCamera.Environment(camera)["REO_CAMERA_TPS"].StartsWith("distance=420,side=-50,") &&
+              Control<TextBlock>("ModernCameraDistanceLabel").Text=="Distance: 420",
+              "Modern camera settings do not reach the game environment or labels.");
+        Control<Button>("ModernCameraResetButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+        Check(window.settings.ModernCamera is {Enabled:true,Distance:170,Shoulder:45,InvertY:false},
+              "Resetting camera settings must keep the switch and restore defaults.");
+        Control<CheckBox>("ModernCameraSwitch").IsChecked=false;
+        Control<Button>("BindingsTab").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+        Check(!Control<StackPanel>("ModernCameraPanel").IsVisible && Control<StackPanel>("InputBindingsPanel").IsVisible,
+              "Returning to Button map must hide the modern camera panel.");
         window.ShowPage("Graphics");Dispatcher.UIThread.RunJobs();
+        window.CheckMovieDecoderSettings(Check);
         var sync = Control<ComboBox>("VSync");
         Check(sync.SelectedIndex == 0, "Existing settings must default VSync to On.");
         foreach (var (index, mode) in new[] { (1, "off"), (2, "adaptive"), (0, "on") }) {
@@ -81,6 +112,17 @@ internal static class HeadlessChecks {
         Check(Control<Control>("PageSetup").IsVisible&&!Control<Control>("PagePlay").IsVisible,"RC1 navigation command is not connected.");
         window.settings.Save();
         Check(Settings.Load(window.root).MusicVolume==100,"Settings cannot round-trip on this OS.");
+        window.ShowPage("Developer");Dispatcher.UIThread.RunJobs();
+        var slowdowns=Control<CheckBox>("DevSlowdowns");
+        Check(!window.settings.Developer.RecordSlowdowns,"Slowdown recording must be off by default.");
+        slowdowns.IsChecked=true;Dispatcher.UIThread.RunJobs();
+        Check(window.settings.Developer.RecordSlowdowns&&Settings.Load(window.root).Developer.RecordSlowdowns,"Slowdown recording toggle must reach persisted settings.");
+        var sensitive=Control<CheckBox>("DevStrictSlowdowns");
+        Check(sensitive.IsEnabled&&!window.settings.Developer.StrictSlowdowns,"Sensitive detection must be opt-in and available when recording is enabled.");
+        sensitive.IsChecked=true;Dispatcher.UIThread.RunJobs();
+        Check(window.settings.Developer.StrictSlowdowns&&Settings.Load(window.root).Developer.StrictSlowdowns,"Sensitive detection must persist for the next launch.");
+        Check(!Control<Button>("MarkPerformanceProblem").IsEnabled&&Control<TextBlock>("PerformanceRecordingStatus").Text!.Contains("Not recording"),"A saved option must not claim an active recorder or enable manual capture before launch.");
+        sensitive.IsChecked=false;slowdowns.IsChecked=false;Dispatcher.UIThread.RunJobs();
         string fixture=Path.Combine(Settings.Home,"sessions","20000101-000000-fixture");Directory.CreateDirectory(fixture);
         File.WriteAllText(Path.Combine(fixture,"stderr.log"),"Shared launcher log fixture.\n");File.WriteAllText(Path.Combine(fixture,"stdout.log"),"Shared launcher output fixture.\n");
         window.ShowPage("Logs");Dispatcher.UIThread.RunJobs();
@@ -111,6 +153,7 @@ internal static class HeadlessChecks {
         window.CheckActivityOverlay(Check, output);
         bool mediaChecked=false;
         string? ffmpeg=null;try{ffmpeg=PlatformServices.Ffmpeg();}catch(IOException){}
+        Check(!args.Contains("--require-media") || ffmpeg!=null,"This regression run requires a real FFmpeg decoder; video checks must not be skipped.");
         if(ffmpeg!=null) {
             string clip=Path.Combine(Path.GetFullPath(output),"decoder-fixture.avi");
             var start=new ProcessStartInfo(ffmpeg){UseShellExecute=false,RedirectStandardError=true};
@@ -124,7 +167,24 @@ internal static class HeadlessChecks {
             Check(surface.Position.TotalSeconds==held,"Paused background video kept advancing.");
             bool ended=false;surface.MediaEnded+=(_,_)=>ended=true;surface.Play();timer.Restart();while(!ended&&timer.Elapsed.TotalSeconds<10){Dispatcher.UIThread.RunJobs();Thread.Sleep(10);}
             Check(ended&&surface.Position.TotalSeconds>.8,"Background video did not reach its end.");
-            surface.Close();Check(!surface.HasVideo,"Stopped video retained its frame.");mediaChecked=true;
+            Check(surface.DecodeCompletion.IsCompleted&&!surface.HasDecoder,"Completed video retained a disposed decoder handle.");
+            surface.Close();Check(!surface.HasVideo,"Stopped video retained its frame.");
+            // Exercise teardown while the worker is starting, rendering, seeking,
+            // and exiting. Wait for every run so faults cannot hide in discarded tasks.
+            var decoding=new List<Task>();
+            for(int i=0;i<30;i++) {
+                surface.Open(clip);surface.Play();decoding.Add(surface.DecodeCompletion);
+                if(i%3==0) {
+                    var until=Stopwatch.StartNew();
+                    while(!surface.HasVideo&&until.Elapsed.TotalSeconds<3){Dispatcher.UIThread.RunJobs();Thread.Sleep(2);}
+                    surface.Position=TimeSpan.FromSeconds(.8);decoding.Add(surface.DecodeCompletion);
+                }
+                surface.Close();Dispatcher.UIThread.RunJobs();
+            }
+            timer.Restart();while(decoding.Any(t=>!t.IsCompleted)&&timer.Elapsed.TotalSeconds<10){Dispatcher.UIThread.RunJobs();Thread.Sleep(2);}
+            Check(decoding.All(t=>t.IsCompletedSuccessfully)&&!surface.HasDecoder,"Cancelled/seeking video left a decoder running or faulted during close.");
+            window.CheckBackgroundVideoNavigation(clip,Check);
+            mediaChecked=true;
         }
         File.WriteAllText(Path.Combine(output,"visual-brushes.txt"),string.Join("\n",window.GetVisualDescendants().OfType<Avalonia.Controls.Control>().Select(c=>$"{c.GetType().Name} {c.Name} {c.Bounds} bg={c.GetValue(TemplatedControl.BackgroundProperty)}")));
         if(OperatingSystem.IsWindows()&&Environment.GetEnvironmentVariable("GITHUB_ACTIONS")=="true")
@@ -136,6 +196,32 @@ internal static class HeadlessChecks {
 }
 
 public partial class MainWindow {
+    internal void CheckBackgroundVideoNavigation(string clip,Action<bool,string> check) {
+        // The normal refresh suppresses movies for static captures. Pause only
+        // that refresh while this check explicitly supplies an asset-free clip.
+        bool ticking=timer.IsEnabled, available=NavDeveloper.IsEnabled;
+        timer.Stop();NavDeveloper.IsEnabled=true;
+        try {
+            for(int i=0;i<6;i++) {
+                ShowPage("Play");
+                backgroundPlayer!.SetPlaylist("navigation-fixture",[clip]);
+                backgroundPlayer.Suspend(false);
+                var wait=Stopwatch.StartNew();
+                while(!backgroundPlayer.HasVideo&&wait.Elapsed.TotalSeconds<4){Dispatcher.UIThread.RunJobs();Thread.Sleep(2);}
+                check(backgroundPlayer.HasVideo,"Synthetic background movie did not start before navigating to Developer: "+backgroundPlayer.LastError);
+                // Follow the routed click -> ShowPage -> Suspend -> Close path
+                // reported by Windows' unhandled-exception event.
+                NavDeveloper.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                Dispatcher.UIThread.RunJobs();
+                check(currentPage=="Developer"&&!backgroundPlayer.HasVideo,"Developer navigation failed to release active background video.");
+            }
+        } finally {
+            backgroundPlayer!.Suspend(true);
+            backgroundPlayer.SetPlaylist(settings.Game.Id,[]);
+            NavDeveloper.IsEnabled=available;
+            if(ticking)timer.Start();
+        }
+    }
     internal void CheckHostingSummary(Action<bool, string> check) {
         var previousMode = settings.CoopMode;
         string previousHost = settings.CoopHost, previousUsername = settings.AccountUsername;

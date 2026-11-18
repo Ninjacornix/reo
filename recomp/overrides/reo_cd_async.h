@@ -1,4 +1,7 @@
 #pragma once
+#if defined(REO_BUILD_NATIVE_RESOURCE_OWNER)
+#include "native_cd_owner/runtime_adapter.h"
+#else
 // File #1: complete sceCdRead (0x101788) asynchronously, as the IOP's CD DMA does on
 // hardware. sceCdRead sets its busy word 0x207934 and status 0x207958, then issues the
 // no-wait cdvdfsv N-command read (client 0x208AD0, rpc 1, send 0x207A00 {lsn, count,
@@ -132,3 +135,4 @@ inline void sifCallRpc(uint8_t* rdram, R5900Context* context, PS2Runtime* runtim
     SET_GPR_S32(context, 2, 0);
 }
 } // namespace reo_cd_async
+#endif

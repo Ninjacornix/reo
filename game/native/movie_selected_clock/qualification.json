@@ -1,0 +1,102 @@
+{
+  "schema": 1,
+  "status": "qualified isolated selected movie clock/cache/external history owner",
+  "manifest_sha256": "d3f9d9bd931c4d033c729c6a6b3c59b4d1b9f93beed4d112e87c2271ec78d504",
+  "cases": 546,
+  "original_instructions": 70201,
+  "owned_body_count": 22,
+  "native_boundary_checks": 13,
+  "detected_counterfactuals": 7,
+  "receipts": {
+    "build-native-sjuni/movie-selected-clock/qualified-gcc-v4/receipt.json": "5c6bda66b8d66edf74c9de8398f80c2cf2b710f9462d2c3c1712a2a80683adab",
+    "build-native-sjuni/movie-selected-clock/qualified-llvm-v4/receipt.json": "5e8ffed30d25a37d9c7a2e0bcf75c5cc6bbc9b7aa8b7ab5a52e9bb65794ee1b5"
+  },
+  "complete_native_transcripts_equal": true,
+  "parent_suites": 65,
+  "parent_checks": {
+    "gcc": {
+      "build": "a0cf26abab6c5216cc863f52416261e099c44d794082dcdbe2a523dbb12ec977",
+      "tests": "9849f77372a96fc127715c7a0ebdb3043aca942f9c0364efab4836e365201bb6"
+    },
+    "llvm": {
+      "build": "012272a9afdb058394f4fe9c101034364c58db0f395d20a375e16574936a6105",
+      "tests": "0c06f83f5d1332f2665bae21959950e7468b396de720ee1da31e7f0bfd9c1c9d"
+    }
+  },
+  "pre_native_freezes": {
+    "build-native-sjuni\\movie-selected-clock\\original-freeze-v1\\receipt.json": "4ac39f7fb1bdbb3f503012181ff267b23800fecbaf8fa6dfe877c23b20fb29fa",
+    "build-native-sjuni\\movie-selected-clock\\original-freeze-v2\\receipt.json": "fbaa8b3d40e5b56689d9c1f1b031dbfa6a2b650eab6c5db1edd4600d267af89a"
+  },
+  "post_candidate_scratch_observation_freeze": {
+    "build-native-sjuni\\movie-selected-clock\\original-freeze-v3\\receipt.json": "2222c67232104f85caf3a025f2bb2cf20ca6d1b9733b313f9052e4bfb0511f7d"
+  },
+  "pre_native_results_unchanged_beyond_added_read_only_scratch_observation": true,
+  "failed_receipts": {
+    "build-native-sjuni\\movie-selected-clock\\qualified-gcc-v1\\receipt.json": "734d6e06cd2e2ec3eb91126dfdec1859d0283a3e4686e47676a7b70763b886f4",
+    "build-native-sjuni\\movie-selected-clock\\qualified-llvm-v1\\receipt.json": "b947d23b1027c49572788a9734693626b50cf665a7c7832abac9421a229b2abb",
+    "build-native-sjuni\\movie-selected-clock\\qualified-gcc-v2\\receipt.json": "33d8c8be7ee1d86fd6ce7ba4bcb19378dc73247f2b39cea185856b1a188fffdc",
+    "build-native-sjuni\\movie-selected-clock\\qualified-llvm-v2\\receipt.json": "c07c0ffa5f17f8b7ab797c1da31d058aa4f4932e64a4f81e6ab146fb5856fd9e"
+  },
+  "guard_profile": "isolated initial depth/tag; paired pure serialized hook ports; not shared CRI/global priority authority",
+  "stage3_complete": false,
+  "production_selected": false,
+  "game_run": false,
+  "device_opened": false,
+  "original_whole_movie_parity": false,
+  "additional_sources": {
+    "game\\native\\movie_selected_clock\\README.md": "42f5a654adf192a9bd6a252ec41ebccae97929d44284c642561962b93443c738",
+    "docs\\native-media\\MOVIE_SELECTED_CLOCK_IMPLEMENTATION.md": "84e0a71e3d91c4a1e2b5641978173fb9c5b180461172695acb5c0af6f3ad8820",
+    "game\\native\\CMakeLists.txt": "a54959fe6e3fa01d9f32e2e1202af71d79a09b65c869f4ada647ad6c931df7dd",
+    "game/native/CMakeLists.txt": "2c232619e7c156ffdf80b2d5c18959e2c93909b050835fca02a06dd40496251e"
+  },
+  "limitations": [
+    "Declared external sample/hook ports do not qualify a real clock source, runtime capture or thread priority.",
+    "Point-of-use scratch is opaque input; old frame bits are not a valid timestamp claim.",
+    "Shared guard ownership, ADXT filter, movie construction/reset/pause/buffering/due/skip/frame-source lifetimes and game transitions remain.",
+    "Gameplay, graphics/platform migration and runtime removal remain stages4-6."
+  ],
+  "audio_filter_standalone_build_extension": {
+    "qualification_sha256": "0f7993c582bb50637b5e90c545ac1817170750adee2756c5169eb7a912959599",
+    "ancestor_path": "build-native-sjuni\\movie-audio-filter\\ancestor-v1\\game\\native\\movie_selected_clock\\qualification.json",
+    "ancestor_sha256": "8c7870d9d6ab60b90031e6725e0d343de62e5bd53f2ed98536cba437e9813615",
+    "existing_runtime_sources_unchanged": true
+  },
+  "audio_clock_standalone_build_extension": {
+    "qualification_sha256": "42782469cb4dd5298784b32485a7226e832fdd149ed0212c520e5a1664e8959c",
+    "ancestor_path": "build-native-sjuni\\movie-audio-clock\\ancestor-v1\\game\\native\\movie_selected_clock\\qualification.json",
+    "ancestor_sha256": "dae23354b429d938936a0c058a91f377c8ca797dd3a23a86abf22d25d2a3986a",
+    "existing_runtime_sources_unchanged": true
+  },
+  "pause_standalone_build_extension": {
+    "qualification_sha256": "2ef86f5e3e5802d5205daeeec71a61f06cca266d5b73af1744814da8942faa93",
+    "ancestor_path": "build-native-sjuni\\movie-pause\\ancestor-v1\\game\\native\\movie_selected_clock\\qualification.json",
+    "ancestor_sha256": "72405491f18ff22c4220bd963715fc19f360aabaa66a4b4658ef2172ef29dd8c",
+    "existing_runtime_sources_unchanged": true
+  },
+  "clock_initialization_standalone_build_extension": {
+    "qualification_sha256": "6bdacf99de035e7dfad857cf5f7d5f05feed75ae0f8b2307e084cd28be831e3b",
+    "ancestor_path": "build-native-sjuni\\movie-clock-initialize\\ancestor-v1\\game\\native\\movie_selected_clock\\qualification.json",
+    "ancestor_sha256": "8280b6b5d0e5ffdf1dc1b34a4e830a84a7ef941e4761fdd121de1f27eda07dbe",
+    "existing_runtime_sources_unchanged": true
+  },
+  "admission_standalone_build_extension": {
+    "qualification_sha256": "263aa421114346b1ccc78cec7db28303860c51c45ebdf7bd0985fefb45065f2b",
+    "ancestor_path": "build-native-sjuni\\movie-admission\\ancestor-v1\\game\\native\\movie_selected_clock\\qualification.json",
+    "ancestor_sha256": "9ca68d1e5fb4260c8073e05ec6f2287e9ec6593e130ec241282cff135b1fe22f",
+    "existing_runtime_sources_unchanged": true
+  },
+  "timing_context_extension": {
+    "qualification_sha256": "63e9afdcc67a49e3286f83c60c6d76c137fd70a8a7dfbb95e8f9c551107d990c",
+    "ancestor_path": "build-native-sjuni\\movie-timing-context\\ancestor-pre-control-v1\\game\\native\\movie_selected_clock\\qualification.json",
+    "ancestor_sha256": "ecc1ce44cf7b43297d86e1100ae116b77feef4c39cb356c8b3ec3e1345bdcd4f",
+    "source_files_changed": [
+      "game/native/movie_selected_clock/clock.cpp",
+      "game/native/movie_selected_clock/clock.hpp"
+    ],
+    "existing_runtime_sources_unchanged": false,
+    "requalified_original_profiles": {
+      "build-native-sjuni/movie-selected-clock/qualified-gcc-context-v1/receipt.json": "02d8bbd19c2baf4253fd3e64d3e584ae6da6341e940bbea2eff146a3d9644660",
+      "build-native-sjuni/movie-selected-clock/qualified-llvm-context-v1/receipt.json": "280c42f5ef2acf1f7f7dd3a3b0fec6dc62b7940b2f2a78a8078dd156aa3b0877"
+    }
+  }
+}

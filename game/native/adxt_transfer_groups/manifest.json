@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "files": {
+    "game/native/adxt_service_group/CMakeLists.txt": "e2828daac141f48e9915255b35ce522ddf65d3a1c02d133329c4e20a367570e3",
+    "game/native/adxt_service_group/fixture_runner.cpp": "bfc3e06ed53d2176182df78fc995cb6fb8bdb03b05274b3923b2317aa96970f5",
+    "game/native/adxt_service_group/service_group.cpp": "e377b77ba3724e072b08b0ce43e44972aac1e99f8aab77f2e034bd1535587ce0",
+    "game/native/adxt_service_group/service_group.hpp": "be771665aea500320892033812db861391f80b50c6f0aef53e6f6cc66ec594f2",
+    "game/native/adxt_service_group/service_group_tests.cpp": "d8fcc7bbf7cc6c6bab2b115c8d0fd2b1eeb38edb4f2d8b8b672a911473752c4d",
+    "game/native/adxt_service_group/verify.py": "5945ef34f6a827b07dd8a1364af998593a032ccf621400218871aaf196a5084a",
+    "docs/native-media/ADXT_SERVICE_GROUP_CONTRACT.md": "72eb3386cb88b93078efd9d01bc3da1af3443b746b0ba0f697aedaa9288b47d9",
+    "tools/native_reconstruction/adxt_service_group_oracle.py": "af714f98dee8f532128a09bb99044e786df1be877d41647b95cb029368589cae",
+    "game/native/adxt_estimated_clock/estimated_clock.hpp": "4da48744e9dac493e77d57fb8130e2638bd5a8a40dcc7965652a00663cbfb66b",
+    "game/native/adxt_integer_clock/integer_clock.hpp": "dfffa9ba5a3866a1f0f936a4db0f979802422e5951b00772476b205b21f6c99b",
+    "game/native/adxt_transfer_groups/CMakeLists.txt": "1502674b3c5c0c189c2c0c34a03de5653a4e59831dc721b281d56c14c9409496",
+    "game/native/adxt_transfer_groups/fixture_runner.cpp": "1afc86c4fdf30aa444adbb6d97aa25ccd406d62e362e86b87d45f3698d570948",
+    "game/native/adxt_transfer_groups/transfer_groups.cpp": "ce3b7e2ea9509d0de6d10937fca878093d7203fb16a6a36a7fc17d0762e9d822",
+    "game/native/adxt_transfer_groups/transfer_groups.hpp": "002a7300454c154f0e16c07b788c3ddd163b892b511b98438aa3cca1405b4638",
+    "game/native/adxt_transfer_groups/transfer_groups_tests.cpp": "7305d972d25248f7f851c55b705775914f1fc614021c1ab129f383a974de4f6e",
+    "game/native/adxt_transfer_groups/verify.py": "e9321e74348f75c4214f2d7f7c738855beab72a4c4738e4253e0912e58252a34",
+    "docs/native-media/ADXT_TRANSFER_GROUPS_CONTRACT.md": "b2fa977c1e064d99702aa5aac0e17de0b8b9bf383a45e89a7be7f7e8fef82234",
+    "tools/native_reconstruction/adxt_transfer_groups_oracle.py": "cdf7275496216e0dc7009cf2be240a3169286d0c462eee7b4ceffa67aeea1776"
+  },
+  "original_freeze": "build-native-sjuni/adxt-transfer-groups/original-freeze-v1",
+  "original_run": "build-native-sjuni/adxt-transfer-groups/original-v1",
+  "original_freeze_sha256": "e4dde2f412d41d50a325b2f547b5616e6a420d68f636738329bcba1da0280a71",
+  "original_receipt_sha256": "bd8db6700f9beb87d7f803ad2163278433da56436883942d0a471fcd1b404c6a"
+}

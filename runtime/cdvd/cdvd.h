@@ -4,6 +4,7 @@
 #include <string>
 #include <filesystem>
 #include <mutex>
+#include <span>
 #include <unordered_map>
 #include <vector>
 
@@ -39,6 +40,16 @@ class CDVD {
     bool has_image() const {
         return m_image != nullptr || m_gamePak;
     }
+    struct PakRoute {
+        uint32_t lba;
+        uint64_t bytes;
+        std::filesystem::path path;
+        std::string key;
+    };
+    // Frozen at construction. Exposes actual admitted facade mode/layout for a
+    // migration boundary; the caller must retain this CDVD while using the span.
+    bool is_game_pak() const noexcept { return m_gamePak; }
+    std::span<const PakRoute> pak_routes() const noexcept { return m_pakFiles; }
 
     // Check if a file exists on the virtual disc
     bool file_exists(const std::string& ps2_path) const;
@@ -59,8 +70,7 @@ class CDVD {
     bool m_imageIsVolume = false;
     uint64_t m_imageSize = 0;
     bool m_gamePak = false;
-    struct PakFile { uint32_t lba; uint64_t bytes; std::filesystem::path path; };
-    std::vector<PakFile> m_pakFiles;
+    std::vector<PakRoute> m_pakFiles;
 
     void build_file_map();
     void open_image();

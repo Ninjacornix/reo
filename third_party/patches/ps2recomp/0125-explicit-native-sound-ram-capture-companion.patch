@@ -1,0 +1,600 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Stubs/SIF.cpp b/ps2xRuntime/src/lib/Kernel/Stubs/SIF.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Stubs/SIF.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Stubs/SIF.cpp
+@@ -2,6 +2,7 @@
+ #include "SIF.h"
+ #include "../Syscalls/RPC.h"
+ #include "../Syscalls/Helpers/CriAudioBackend.h"
++#include "../Syscalls/Helpers/CriAudioRamCapture.h"
+ 
+ #include <map>
+ 
+@@ -440,6 +441,24 @@
+             }
+             setReturnS32(ctx, -1);
+             return;
++        }
++
++        if(audio.native()&&ps2_cri_audio::nativeSoundRamSelectedV1()){
++            bool valid=false;
++            if(ps2_syscalls::describeSoundDriverIopTransfer(runtime,srcAddr,size,valid)){
++                using namespace ps2_cri_audio;
++                NativeSoundRamCallV1 capture(audio,runtime,rdram,NativeSoundRamUseV1::status_transfer);
++                if(!valid){capture.reject(NativeSoundRamStageV1::read,BankStatusV2::invalid_input);setReturnS32(ctx,-1);return;}
++                if(!capture||!ps2_syscalls::prepareSoundDriverStatusTransferCaptured(srcAddr,size,runtime,capture)||
++                    capture.forward(NativeSoundRamSpaceV1::iop,srcAddr,NativeSoundRamSpaceV1::ee,dstAddr,size)!=BankStatusV2::ok){setReturnS32(ctx,-1);return;}
++                const NativeSoundRamWriteV1 writes[]{
++                    {NativeSoundRamSpaceV1::ee,rdAddr+0x10u,{reinterpret_cast<const uint8_t*>(&srcAddr),4}},
++                    {NativeSoundRamSpaceV1::ee,rdAddr+0x14u,{reinterpret_cast<const uint8_t*>(&dstAddr),4}},
++                    {NativeSoundRamSpaceV1::ee,rdAddr+0x18u,{reinterpret_cast<const uint8_t*>(&size),4}}};
++                if(capture.write(writes,NativeSoundRamControlV1::receive_descriptor)!=BankStatusV2::ok){setReturnS32(ctx,-1);return;}
++                ps2_syscalls::finalizeSoundDriverStatusTransfer(rdram,srcAddr,dstAddr,size);
++                setReturnS32(ctx,0);return;
++            }
+         }
+ 
+         ps2_syscalls::prepareSoundDriverStatusTransfer(rdram, srcAddr, size,runtime,audio);
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp
+@@ -22,6 +22,67 @@
+ float reoAudioStreamGain(uint32_t handle);
+ 
+ namespace ps2_cri_audio {
++bool nativeSoundRamSelectedV1() noexcept {
++    return backend_detail::registry.ram_capture.load(std::memory_order_acquire);
++}
++NativeSoundRamCallV1::NativeSoundRamCallV1(const SoundCall& call,PS2Runtime* runtime,std::uint8_t* ram,NativeSoundRamUseV1 use)noexcept
++    :call_(&call),binding_(call.binding_),selected_(binding_&&binding_->ram_capture.abi_version!=0) {
++    if(!selected_){status_=call.status()==BankStatusV2::ok?BankStatusV2::unsupported:call.status();return;}
++    if(!call.admitted_||call.status()!=BankStatusV2::ok||!runtime||binding_->runtime!=runtime||ram!=runtime->memory().getRDRAM()){
++        status_=BankStatusV2::foreign_runtime;return;
++    }
++    begun_=true;SoundCallScope scope(call);
++    auto& api=binding_->ram_capture;
++    finish(NativeSoundRamStageV1::begin,api.begin(binding_->registration.owner.get(),call,runtime,ram,use,token_));
++}
++NativeSoundRamCallV1::~NativeSoundRamCallV1(){
++    if(begun_){SoundCallScope scope(*call_);binding_->ram_capture.end(binding_->registration.owner.get(),*call_,token_);}
++}
++BankStatusV2 NativeSoundRamCallV1::finish(NativeSoundRamStageV1 stage,BankStatusV2 result)noexcept {
++    status_=result;
++    if(result!=BankStatusV2::ok&&begun_){SoundCallScope scope(*call_);binding_->ram_capture.report(binding_->registration.owner.get(),*call_,token_,{stage,result});}
++    return result;
++}
++BankStatusV2 NativeSoundRamCallV1::read(std::span<const NativeSoundRamReadV1> reads)noexcept {
++    if(status_!=BankStatusV2::ok)return status_;SoundCallScope scope(*call_);
++    return finish(NativeSoundRamStageV1::read,binding_->ram_capture.read_batch(binding_->registration.owner.get(),*call_,token_,reads));
++}
++BankStatusV2 NativeSoundRamCallV1::control(std::span<const NativeSoundRamControlOpV1> ops,NativeSoundRamControlV1 kind)noexcept {
++    if(status_!=BankStatusV2::ok)return status_;SoundCallScope scope(*call_);
++    return finish(NativeSoundRamStageV1::control,binding_->ram_capture.control_batch(binding_->registration.owner.get(),*call_,token_,kind,ops));
++}
++BankStatusV2 NativeSoundRamCallV1::write(std::span<const NativeSoundRamWriteV1> writes,NativeSoundRamControlV1 kind)noexcept {
++    if(writes.size()>16)return finish(NativeSoundRamStageV1::control,BankStatusV2::capacity);
++    NativeSoundRamControlOpV1 ops[16]{};std::size_t n=0;
++    for(const auto& w:writes)ops[n++]={NativeSoundRamControlKindV1::write,w.space,w.address,w.source,w.source.size()};
++    return control({ops,n},kind);
++}
++BankStatusV2 NativeSoundRamCallV1::zero(NativeSoundRamSpaceV1 space,std::uint32_t at,std::size_t n,NativeSoundRamControlV1 kind)noexcept {
++    NativeSoundRamControlOpV1 op{NativeSoundRamControlKindV1::zero,space,at,{},n};return control({&op,1},kind);
++}
++BankStatusV2 NativeSoundRamCallV1::forward(NativeSoundRamSpaceV1 srcSpace,std::uint32_t src,NativeSoundRamSpaceV1 dstSpace,std::uint32_t dst,std::size_t n)noexcept {
++    if(status_!=BankStatusV2::ok)return status_;SoundCallScope scope(*call_);
++    // Call sites preserve their own source limits: RPC clamps to1MiB, while
++    // qualified IOP status transfers retain their original full transfer size.
++    return finish(NativeSoundRamStageV1::transport,binding_->ram_capture.copy_forward(binding_->registration.owner.get(),*call_,token_,srcSpace,src,dstSpace,dst,n));
++}
++BankStatusV2 NativeSoundRamCallV1::snapshot(std::uint32_t at,std::size_t n,NativeSoundRamPacketV1& out)noexcept {
++    if(status_!=BankStatusV2::ok)return status_;
++    if(n>binding_->ram_capture.max_packet_bytes)return finish(NativeSoundRamStageV1::snapshot,BankStatusV2::capacity);
++    SoundCallScope scope(*call_);NativeSoundRamPacketV1 staged;
++    auto status=binding_->ram_capture.snapshot_packet(binding_->registration.owner.get(),*call_,token_,at,n,staged);
++    if(status==BankStatusV2::ok&&(staged.bytes!=n||(n&&!staged.data)))status=BankStatusV2::invalid_input;
++    if(status==BankStatusV2::ok)out=staged;return finish(NativeSoundRamStageV1::snapshot,status);
++}
++BankStatusV2 NativeSoundRamCallV1::log(NativeSoundRamPacketV1 packet)noexcept {
++    if(status_!=BankStatusV2::ok)return status_;SoundCallScope scope(*call_);
++    auto result=binding_->ram_capture.log_owned_packet(binding_->registration.owner.get(),*call_,token_,packet);
++    // Diagnostic failure never turns a captured valid packet into gameplay
++    // failure. Report it explicitly, without claiming an export was saved.
++    if(result!=BankStatusV2::ok)binding_->ram_capture.report(binding_->registration.owner.get(),*call_,token_,{NativeSoundRamStageV1::log,result});
++    return result;
++}
++
+ namespace {void resetLegacyState();}
+ SoundCall::SoundCall(SoundCall&& other) noexcept
+     :binding_(std::move(other.binding_)),status_(other.status_),legacy_(other.legacy_),admitted_(std::exchange(other.admitted_,false)),setup_(std::exchange(other.setup_,false)),control_(std::exchange(other.control_,false)) {
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioBackend.h b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioBackend.h
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioBackend.h
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioBackend.h
+@@ -99,6 +99,7 @@
+     friend SoundCall acquireSoundControlCall(PS2Runtime*) noexcept;
+     friend bool withAudioSetupBeforeRun(PS2Runtime&,AudioSetupOperationV2,void*) noexcept;
+     friend class SoundCallScope;
++    friend class NativeSoundRamCallV1;
+     friend void render(float*,unsigned);
+     void release() noexcept;
+     std::shared_ptr<backend_detail::Binding> binding_;
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioDispatch.h b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioDispatch.h
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioDispatch.h
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioDispatch.h
+@@ -1,6 +1,8 @@
+ #pragma once
+ // Private implementation: included once by CriAudio.cpp, never by a backend.
+ #include "CriAudioBackend.h"
++#include "CriAudioRamCapture.h"
++#include <atomic>
+ #include "ps2_runtime.h"
+ #include <condition_variable>
+ #include <mutex>
+@@ -25,11 +27,12 @@
+     PS2Runtime* runtime{};
+     BankApiV2 banks;
+     AdmittedRenderV2 render_admitted{};
++    NativeSoundRamApiV1 ram_capture;
+     std::mutex mutex;std::condition_variable changed;
+     std::uint64_t calls{};
+     bool published=false,accepting=true,stop_called=false,stop_inflight=false,shutdown_started=false,shutdown_done=false,joining=false,joined=false;
+-    explicit Binding(BackendRegistrationV1 value,PS2Runtime& identity,const BankApiV2& bank_api,AdmittedRenderV2 admitted_render)
+-        :registration(std::move(value)),runtime(&identity),banks(bank_api),render_admitted(admitted_render){}
++    explicit Binding(BackendRegistrationV1 value,PS2Runtime& identity,const BankApiV2& bank_api,AdmittedRenderV2 admitted_render,const NativeSoundRamApiV1& capture)
++        :registration(std::move(value)),runtime(&identity),banks(bank_api),render_admitted(admitted_render),ram_capture(capture){}
+     bool acquire() noexcept {
+         std::lock_guard<std::mutex> lock(mutex);
+         if(!accepting)return false;
+@@ -87,7 +90,7 @@
+     }
+ };
+ enum class Mode { unselected, legacy, native };
+-struct Registry {std::mutex mutex;std::condition_variable changed;Mode mode=Mode::unselected;bool installing=false,boot_resetting=false,joint_banks=false;std::uint64_t controls{};std::weak_ptr<Binding> binding;};
++struct Registry {std::mutex mutex;std::condition_variable changed;Mode mode=Mode::unselected;bool installing=false,boot_resetting=false,joint_banks=false;std::atomic<bool> ram_capture{};std::uint64_t controls{};std::weak_ptr<Binding> binding;};
+ inline Registry registry;
+ struct Worker final:PS2Runtime::ExternalWorker {
+     std::shared_ptr<Binding> binding;
+@@ -151,7 +154,7 @@
+ } // namespace backend_detail
+ 
+ namespace backend_detail {
+-inline BackendInstallStatusV1 install(PS2Runtime& runtime,BackendRegistrationV1 registration,const BankApiV2& banks={},AdmittedRenderV2 render_admitted=nullptr) noexcept {
++inline BackendInstallStatusV1 install(PS2Runtime& runtime,BackendRegistrationV1 registration,const BankApiV2& banks={},AdmittedRenderV2 render_admitted=nullptr,const NativeSoundRamApiV1& capture={}) noexcept {
+     using namespace backend_detail;
+     if(!complete(registration.api))return BackendInstallStatusV1::invalid_api;
+     if(!registration.owner)return BackendInstallStatusV1::invalid_owner;
+@@ -163,13 +166,13 @@
+     }
+     Reservation reservation;
+     try {
+-        auto binding=std::make_shared<Binding>(std::move(registration),runtime,banks,render_admitted);
++        auto binding=std::make_shared<Binding>(std::move(registration),runtime,banks,render_admitted,capture);
+         auto worker=std::make_shared<Worker>(binding);
+         if(!runtime.registerExternalWorker(worker))return BackendInstallStatusV1::runtime_rejected;
+         {std::lock_guard<std::mutex> lock(registry.mutex);
+             if(registry.mode!=Mode::unselected)return BackendInstallStatusV1::publication_lost;
+             if(!binding->publish())return BackendInstallStatusV1::runtime_rejected;
+-            registry.binding=binding;registry.joint_banks=render_admitted!=nullptr;registry.mode=Mode::native;
++            registry.binding=binding;registry.joint_banks=render_admitted!=nullptr;registry.mode=Mode::native;registry.ram_capture.store(capture.abi_version!=0,std::memory_order_release);
+         }
+         return BackendInstallStatusV1::installed;
+     }catch(...){return BackendInstallStatusV1::allocation_failed;}
+@@ -184,6 +187,22 @@
+        !backend_detail::complete(a.pcm)||!a.render_admitted||!b.submit_bank||!b.submit_packet||!b.mix||!b.reset||
+        !b.pending_loads||!b.port_state||!b.se_state||!b.report_audio_paths)return BackendInstallStatusV1::invalid_api;
+     return backend_detail::install(runtime,{a.pcm,std::move(registration.owner)},b,a.render_admitted);
++}
++BackendInstallStatusV1 installBackendWithNativeSoundRamBeforeRunV1(PS2Runtime& runtime,BackendRegistrationV2 registration,NativeSoundRamApiV1 capture) noexcept {
++    auto& a=registration.api;auto& b=a.banks;
++    if(a.abi_version!=backendAbiVersionV2||a.structure_bytes!=sizeof(a)||a.capabilities!=backendRequiredCapabilitiesV2||
++       !backend_detail::complete(a.pcm)||!a.render_admitted||!b.submit_bank||!b.submit_packet||!b.mix||!b.reset||
++       !b.pending_loads||!b.port_state||!b.se_state||!b.report_audio_paths||
++       capture.abi_version!=nativeSoundRamAbiVersionV1||capture.structure_bytes!=sizeof(capture)||
++       capture.capabilities!=nativeSoundRamCapabilitiesV1||!capture.max_packet_bytes||capture.max_packet_bytes>(1u<<20)||
++       !capture.begin||!capture.end||!capture.read_batch||!capture.control_batch||!capture.copy_forward||
++       !capture.snapshot_packet||!capture.log_owned_packet||!capture.report)return BackendInstallStatusV1::invalid_api;
++    // This NEW companion alone requires phase ownership through registration
++    // AND publication. Actual beginRun waits the allocation-free lease, so no
++    // guest RPC can observe old false selection then the new binding. Old V1/V2
++    // admission and the no-companion legacy path are deliberately unchanged.
++    auto setup=runtime.acquirePreRunSetup();if(!setup)return BackendInstallStatusV1::runtime_rejected;
++    return backend_detail::install(runtime,{a.pcm,std::move(registration.owner)},b,a.render_admitted,capture);
+ }
+ BackendStatusV1 backendStatusV1() noexcept {
+     using namespace backend_detail;
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioRamCapture.h b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioRamCapture.h
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioRamCapture.h
+@@ -0,0 +1,86 @@
++#pragma once
++#include "CriAudioBackend.h"
++#include <cstddef>
++#include <cstdint>
++#include <span>
++
++#define PS2_RUNTIME_HAS_NATIVE_SOUND_RAM_CAPTURE 1
++namespace ps2_cri_audio {
++enum class NativeSoundRamSpaceV1:std::uint8_t { ee,iop };
++enum class NativeSoundRamUseV1:std::uint8_t { command,query,status_transfer };
++enum class NativeSoundRamControlV1:std::uint8_t { query_reply,status_arena,receive_descriptor,rpc_metadata };
++struct NativeSoundRamReadV1 {NativeSoundRamSpaceV1 space;std::uint32_t address;std::span<std::uint8_t> destination;};
++struct NativeSoundRamWriteV1 {NativeSoundRamSpaceV1 space;std::uint32_t address;std::span<const std::uint8_t> source;};
++enum class NativeSoundRamControlKindV1:std::uint8_t { write,zero };
++struct NativeSoundRamControlOpV1 {NativeSoundRamControlKindV1 kind;NativeSoundRamSpaceV1 space;std::uint32_t address;std::span<const std::uint8_t> source;std::size_t bytes;};
++enum class NativeSoundRamStageV1:std::uint8_t { begin,read,control,transport,snapshot,log };
++struct NativeSoundRamDiagnosticV1 {NativeSoundRamStageV1 stage;BankStatusV2 status;};
++struct NativeSoundRamTokenV1 {std::uintptr_t opaque[4]{};};
++struct NativeSoundRamPacketV1 {const std::uint8_t* data{};std::size_t bytes{};};
++// Independent versioned COMPANION, never appended to published V2 layouts.
++// Same registration owner, complete callbacks and explicit accepted SoundCall.
++// There is no built-in RAM reader. Begin may return unsupported/unavailable;
++// that does not qualify a production profile or permit identity-based memcpy.
++// begin/end retain only bounded caller context and storage. They MUST NOT hold
++// graphics/source/guest range locks across the entire RPC or a guest callback.
++// Each read/control/forward/snapshot obtains the actual necessary protocol
++// reservation, validates every extent BEFORE effects, copies bounded bytes,
++// then releases it. A refused batch/transport must have no partial writes.
++// EE canonical aliases and IOP addresses have distinct provenance. Unsupported
++// scratch/MMIO/wrapping extents must be refused, never guessed from identity.
++// Callbacks are synchronous, noexcept and must not retain SoundCall/reenter a
++// public audio facade. Provider lifecycle is the same registration owner.
++struct NativeSoundRamApiV1 {
++    std::uint32_t abi_version{},structure_bytes{};
++    std::uint64_t capabilities{};
++    std::size_t max_packet_bytes{};
++    BankStatusV2 (*begin)(void*,const SoundCall&,PS2Runtime*,std::uint8_t*,NativeSoundRamUseV1,NativeSoundRamTokenV1&) noexcept{};
++    void (*end)(void*,const SoundCall&,NativeSoundRamTokenV1&) noexcept{};
++    BankStatusV2 (*read_batch)(void*,const SoundCall&,NativeSoundRamTokenV1&,std::span<const NativeSoundRamReadV1>) noexcept{};
++    BankStatusV2 (*control_batch)(void*,const SoundCall&,NativeSoundRamTokenV1&,NativeSoundRamControlV1,std::span<const NativeSoundRamControlOpV1>) noexcept{};
++    // Exact bytewise FORWARD evolving-source semantics; both ranges reserved
++    // through operation. Failures must refuse BEFORE any mutation.
++    BankStatusV2 (*copy_forward)(void*,const SoundCall&,NativeSoundRamTokenV1&,NativeSoundRamSpaceV1,std::uint32_t,NativeSoundRamSpaceV1,std::uint32_t,std::size_t) noexcept{};
++    // Return a loan from finite pre-budgeted owner storage, valid until end.
++    // No SDK allocation, borrowed guest pointer, or raw-RAM logging is allowed.
++    BankStatusV2 (*snapshot_packet)(void*,const SoundCall&,NativeSoundRamTokenV1&,std::uint32_t,std::size_t,NativeSoundRamPacketV1&) noexcept{};
++    BankStatusV2 (*log_owned_packet)(void*,const SoundCall&,NativeSoundRamTokenV1&,NativeSoundRamPacketV1) noexcept{};
++    void (*report)(void*,const SoundCall&,NativeSoundRamTokenV1&,NativeSoundRamDiagnosticV1) noexcept{};
++};
++inline constexpr std::uint32_t nativeSoundRamAbiVersionV1=1;
++inline constexpr std::uint64_t nativeSoundRamCapabilitiesV1=(1ull<<8)-1;
++BackendInstallStatusV1 installBackendWithNativeSoundRamBeforeRunV1(PS2Runtime&,BackendRegistrationV2,NativeSoundRamApiV1) noexcept;
++// Sticky selection inspection only; never chooses legacy or admits a call.
++bool nativeSoundRamSelectedV1() noexcept;
++class NativeSoundRamCallV1 final {
++public:
++    // The accepted SoundCall MUST outlive this scope and remain accepted,
++    // unmoved and unreleased until this scope's destruction. End and operations
++    // reuse that admission even after stop; no gate is reacquired. End is called
++    // after every invoked begin, including refused begin, for bounded cleanup.
++    NativeSoundRamCallV1(const SoundCall&,PS2Runtime*,std::uint8_t*,NativeSoundRamUseV1) noexcept;
++    NativeSoundRamCallV1(SoundCall&&,PS2Runtime*,std::uint8_t*,NativeSoundRamUseV1)=delete;
++    NativeSoundRamCallV1(const SoundCall&&,PS2Runtime*,std::uint8_t*,NativeSoundRamUseV1)=delete;
++    ~NativeSoundRamCallV1();
++    NativeSoundRamCallV1(const NativeSoundRamCallV1&)=delete;
++    NativeSoundRamCallV1& operator=(const NativeSoundRamCallV1&)=delete;
++    bool selected()const noexcept{return selected_;}
++    BankStatusV2 status()const noexcept{return status_;}
++    explicit operator bool()const noexcept{return status_==BankStatusV2::ok;}
++    BankStatusV2 read(std::span<const NativeSoundRamReadV1>) noexcept;
++    BankStatusV2 write(std::span<const NativeSoundRamWriteV1>,NativeSoundRamControlV1) noexcept;
++    BankStatusV2 control(std::span<const NativeSoundRamControlOpV1>,NativeSoundRamControlV1) noexcept;
++    BankStatusV2 zero(NativeSoundRamSpaceV1,std::uint32_t,std::size_t,NativeSoundRamControlV1) noexcept;
++    BankStatusV2 forward(NativeSoundRamSpaceV1,std::uint32_t,NativeSoundRamSpaceV1,std::uint32_t,std::size_t) noexcept;
++    BankStatusV2 snapshot(std::uint32_t,std::size_t,NativeSoundRamPacketV1&) noexcept;
++    BankStatusV2 log(NativeSoundRamPacketV1) noexcept;
++    BankStatusV2 reject(NativeSoundRamStageV1 stage,BankStatusV2 status)noexcept{return finish(stage,status);}
++private:
++    const SoundCall* call_{};
++    std::shared_ptr<backend_detail::Binding> binding_;
++    NativeSoundRamTokenV1 token_;
++    BankStatusV2 status_{BankStatusV2::unsupported};
++    bool selected_{},begun_{};
++    BankStatusV2 finish(NativeSoundRamStageV1,BankStatusV2) noexcept;
++};
++} // namespace ps2_cri_audio
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp
+@@ -5,6 +5,7 @@
+ #include "RPC.h"
+ #include "Helpers/CriAudio.h"
+ #include "Helpers/CriAudioBackend.h"
++#include "Helpers/CriAudioRamCapture.h"
+ #include "Helpers/ReoSoundBanks.h"
+ #include <deque>
+ #include <unordered_set>
+@@ -567,6 +568,109 @@
+             return false;
+         }
+ 
++
++        using RamCall=ps2_cri_audio::NativeSoundRamCallV1;
++        using RamSpace=ps2_cri_audio::NativeSoundRamSpaceV1;
++        using RamControl=ps2_cri_audio::NativeSoundRamControlV1;
++        using RamOp=ps2_cri_audio::NativeSoundRamControlOpV1;
++        using RamKind=ps2_cri_audio::NativeSoundRamControlKindV1;
++        template<class T>bool capturedRead(RamCall& cap,RamSpace space,uint32_t at,T& value){
++            ps2_cri_audio::NativeSoundRamReadV1 read{space,at,{reinterpret_cast<uint8_t*>(&value),sizeof(T)}};
++            return cap.read({&read,1})==ps2_cri_audio::BankStatusV2::ok;
++        }
++        template<class T>RamOp capturedWrite(RamSpace space,uint32_t at,const T& value){
++            return {RamKind::write,space,at,{reinterpret_cast<const uint8_t*>(&value),sizeof(T)},sizeof(T)};
++        }
++        bool checkSoundDriverMemoryCaptured(uint8_t* rdram,PS2Runtime* runtime,ps2_cri_audio::SoundCall& audio,RamCall& cap){
++            if(!rdram||!runtime||!adoptSoundDriverRuntimeUnlocked(runtime,audio))return false;
++            g_soundDriverIopRam=runtime->memory().getIOPRAM();if(!g_soundDriverIopRam)return false;
++            if(!g_soundDriverRpcState.statusAddr){
++                const uint32_t status=alignUp(kSoundDriverGuestPoolBase,kSoundDriverStatusAlignment);
++                const uint32_t table=alignUp(status+kSoundDriverStatusSize,kSoundDriverAddrTableAlignment);
++                const uint32_t hd=alignUp(table+kSoundDriverAddrTableEntries*sizeof(uint32_t),kSoundDriverStorageAlignment);
++                const uint32_t sq=alignUp(hd+kSoundDriverHdRegionSize,kSoundDriverStorageAlignment);
++                const uint32_t data=alignUp(sq+kSoundDriverSqRegionSize,kSoundDriverStorageAlignment);
++                if(data+kSoundDriverDataRegionSize>kSoundDriverGuestPoolLimit)return false;
++                g_soundDriverRpcState.statusAddr=status;g_soundDriverRpcState.addrTableAddr=table;
++                g_soundDriverRpcState.hdBaseAddr=hd;g_soundDriverRpcState.sqBaseAddr=sq;g_soundDriverRpcState.dataBaseAddr=data;
++                g_soundDriverRpcState.storageBaseAddr=hd;g_soundDriverRpcState.storageSize=data+kSoundDriverDataRegionSize-hd;
++            }
++            if(!g_soundDriverRpcState.initialized){
++                const uint32_t addresses[]{g_soundDriverRpcState.hdBaseAddr,g_soundDriverRpcState.sqBaseAddr,g_soundDriverRpcState.dataBaseAddr};
++                const RamOp ops[]{
++                    {RamKind::zero,RamSpace::iop,g_soundDriverRpcState.statusAddr,{},kSoundDriverStatusSize},
++                    {RamKind::zero,RamSpace::iop,g_soundDriverRpcState.addrTableAddr,{},kSoundDriverAddrTableEntries*sizeof(uint32_t)},
++                    {RamKind::zero,RamSpace::iop,g_soundDriverRpcState.storageBaseAddr,{},g_soundDriverRpcState.storageSize},
++                    capturedWrite(RamSpace::iop,g_soundDriverRpcState.addrTableAddr,addresses[0]),
++                    capturedWrite(RamSpace::iop,g_soundDriverRpcState.addrTableAddr+4,addresses[1]),
++                    capturedWrite(RamSpace::iop,g_soundDriverRpcState.addrTableAddr+8,addresses[2])};
++                if(cap.control(ops,RamControl::status_arena)!=ps2_cri_audio::BankStatusV2::ok)return false;
++                g_soundDriverRpcState.initialized=true;
++            }
++            return true;
++        }
++        bool backfillSoundDriverStatusCaptured(RamCall& cap){
++            if(!g_soundDriverRpcState.statusAddr||!g_soundDriverCompatLayout.hasChecksumTables())return true;
++            std::array<int16_t,5> se{};std::array<int16_t,4> midi{};
++            auto readChecks=[&](uint32_t sa,uint32_t ma){const ps2_cri_audio::NativeSoundRamReadV1 reads[]{
++                {RamSpace::ee,sa,{reinterpret_cast<uint8_t*>(se.data()),sizeof(se)}},
++                {RamSpace::ee,ma,{reinterpret_cast<uint8_t*>(midi.data()),sizeof(midi)}}};
++                return cap.read(reads)==ps2_cri_audio::BankStatusV2::ok;};
++            const auto& layout=g_soundDriverCompatLayout;
++            if(!readChecks(layout.primarySeCheckAddr,layout.primaryMidiCheckAddr))return false;
++            const auto nonzero=[](const auto& values){return std::any_of(values.begin(),values.end(),[](auto x){return x!=0;});};
++            if(!nonzero(se)&&!nonzero(midi)){
++                const auto primarySe=se;const auto primaryMidi=midi;
++                if(!readChecks(layout.fallbackSeCheckAddr,layout.fallbackMidiCheckAddr))return false;
++                if(!nonzero(se)&&!nonzero(midi)){se=primarySe;midi=primaryMidi;}
++            }
++            std::array<int16_t,5> liveSe{};std::array<int16_t,4> liveMidi{};
++            const ps2_cri_audio::NativeSoundRamReadV1 reads[]{
++                {RamSpace::iop,g_soundDriverRpcState.statusAddr+kSoundDriverSeSumOffset,{reinterpret_cast<uint8_t*>(liveSe.data()),sizeof(liveSe)}},
++                {RamSpace::iop,g_soundDriverRpcState.statusAddr+kSoundDriverMidiSumOffset,{reinterpret_cast<uint8_t*>(liveMidi.data()),sizeof(liveMidi)}}};
++            if(cap.read(reads)!=ps2_cri_audio::BankStatusV2::ok)return false;
++            std::array<RamOp,9> writes{};std::size_t n=0;
++            for(unsigned i=0;i<se.size();++i)if(!liveSe[i]&&se[i])writes[n++]=capturedWrite(RamSpace::iop,g_soundDriverRpcState.statusAddr+kSoundDriverSeSumOffset+i*2,se[i]);
++            for(unsigned i=0;i<midi.size();++i)if(!liveMidi[i]&&midi[i])writes[n++]=capturedWrite(RamSpace::iop,g_soundDriverRpcState.statusAddr+kSoundDriverMidiSumOffset+i*2,midi[i]);
++            return !n||cap.control({writes.data(),n},RamControl::status_arena)==ps2_cri_audio::BankStatusV2::ok;
++        }
++        bool handleSoundDriverRpcCaptured(uint8_t* rdram,PS2Runtime* runtime,uint32_t sid,uint32_t rpcNum,
++            uint32_t sendBuf,uint32_t sendSize,uint32_t recvBuf,uint32_t recvSize,uint32_t& resultPtr,
++            bool& signalNowaitCompletion,ps2_cri_audio::SoundCall& audio,RamCall& cap){
++            resultPtr=0;signalNowaitCompletion=false;if(!cap)return true;
++            if(sid==IOP_SID_SNDDRV_COMMAND&&rpcNum==IOP_RPC_SNDDRV_SUBMIT){
++                if(!sendBuf||!sendSize)return true;
++                std::lock_guard<std::mutex> lock(g_rpc_mutex);
++                if(!checkSoundDriverMemoryCaptured(rdram,runtime,audio,cap))return true;
++                ps2_cri_audio::NativeSoundRamPacketV1 packet;
++                if(cap.snapshot(sendBuf,sendSize,packet)!=ps2_cri_audio::BankStatusV2::ok)return true;
++                (void)cap.log(packet); // Owned bytes only; log failure does not block game.
++                if(audio.ensure_output()!=ps2_cri_audio::BankStatusV2::ok)return true;
++                (void)audio.submit_packet(rdram,32u*1024u*1024u,packet.data,packet.bytes);
++                return true; // Source deliberately ignores the parser bool/status.
++            }
++            const uint32_t query=rpcNum&255;
++            if(sid==IOP_SID_SNDDRV_STATE&&(query==4||query==6||query==12)){
++                uint32_t input=0,words[2]{};
++                if(sendBuf&&sendSize>=4&&!capturedRead(cap,RamSpace::ee,sendBuf,input))return true;
++                ps2_cri_audio::BankQueryV2 reply;
++                if(query==12)reply=audio.pending_loads();else if(query==6)reply=audio.port_state(input,words[1]);
++                else reply=audio.se_state((input>>16)&127,(input>>8)&127,input&127);
++                if(reply.status!=ps2_cri_audio::BankStatusV2::ok){signalNowaitCompletion=true;return true;}words[0]=reply.value;
++                if(recvBuf&&recvSize>=4){RamOp writes[]{capturedWrite(RamSpace::ee,recvBuf,words[0]),capturedWrite(RamSpace::ee,recvBuf+4,words[1])};
++                    if(cap.control({writes,recvSize>=8?2u:1u},RamControl::query_reply)!=ps2_cri_audio::BankStatusV2::ok)return true;resultPtr=recvBuf;}
++                signalNowaitCompletion=true;return true;
++            }
++            if(sid==IOP_SID_SNDDRV_STATE&&(rpcNum==IOP_RPC_SNDDRV_GET_STATUS_ADDR||rpcNum==IOP_RPC_SNDDRV_GET_ADDR_TABLE)){
++                uint32_t word{};{std::lock_guard<std::mutex> lock(g_rpc_mutex);if(!checkSoundDriverMemoryCaptured(rdram,runtime,audio,cap)){signalNowaitCompletion=true;return true;}
++                    word=rpcNum==IOP_RPC_SNDDRV_GET_STATUS_ADDR?g_soundDriverRpcState.statusAddr:g_soundDriverRpcState.addrTableAddr;}
++                if(recvBuf&&recvSize>=4){RamOp writes[]{capturedWrite(RamSpace::ee,recvBuf,word),{RamKind::zero,RamSpace::ee,recvBuf+4,{},recvSize-4}};
++                    if(cap.control({writes,recvSize>4?2u:1u},RamControl::query_reply)!=ps2_cri_audio::BankStatusV2::ok)return true;resultPtr=recvBuf;}
++                signalNowaitCompletion=true;return true;
++            }
++            return false;
++        }
++
+     } // namespace
+ 
+     bool handleSoundDriverRpcService(uint8_t *rdram, PS2Runtime *runtime,
+@@ -577,6 +681,14 @@
+                                      bool &signalNowaitCompletion)
+     {
+         resultPtr=0;signalNowaitCompletion=false;
++        if(ps2_cri_audio::nativeSoundRamSelectedV1()&&(sid==IOP_SID_SNDDRV_COMMAND||sid==IOP_SID_SNDDRV_STATE)){
++            auto audio=ps2_cri_audio::acquireSoundCall(runtime);ps2_cri_audio::SoundCallScope audioScope(audio);
++            RamCall capture(audio,runtime,rdram,sid==IOP_SID_SNDDRV_COMMAND?ps2_cri_audio::NativeSoundRamUseV1::command:ps2_cri_audio::NativeSoundRamUseV1::query);
++            if(!audio||!capture)return true;
++            if(!ps2_cri_audio::coversSoundRpcV2(sid,rpcNum)){
++                capture.reject(ps2_cri_audio::NativeSoundRamStageV1::read,ps2_cri_audio::BankStatusV2::unsupported);return true;}
++            return handleSoundDriverRpcCaptured(rdram,runtime,sid,rpcNum,sendBuf,sendSize,recvBuf,recvSize,resultPtr,signalNowaitCompletion,audio,capture);
++        }
+         if(!ps2_cri_audio::coversSoundRpcV2(sid,rpcNum))return false;
+         auto audio=ps2_cri_audio::acquireSoundCall(runtime);
+         ps2_cri_audio::SoundCallScope audioScope(audio);
+@@ -1383,6 +1495,25 @@
+         ps2_cri_audio::SoundCallScope scope(audio);operation(nullptr,audio);
+     }
+ 
++    // Pure host-side classification; never exports an IOP pointer. An overlap
++    // that is not wholly inside the owned arena remains a sound transfer and
++    // is refused, rather than falling back to EE memory.
++    bool describeSoundDriverIopTransfer(PS2Runtime* runtime,uint32_t addr,uint32_t bytes,bool& valid)
++    {
++        valid=false;std::lock_guard<std::mutex> lock(g_rpc_mutex);
++        if(!runtime||!g_soundDriverRpcState.statusAddr||g_soundDriverRpcState.ownerRuntime!=reinterpret_cast<uintptr_t>(runtime))return false;
++        const uint64_t begin=g_soundDriverRpcState.statusAddr,end=uint64_t(g_soundDriverRpcState.storageBaseAddr)+g_soundDriverRpcState.storageSize;
++        const uint64_t transferEnd=uint64_t(addr)+bytes;
++        if(addr>=end||transferEnd<=begin)return false;
++        valid=addr>=begin&&transferEnd<=end&&g_soundDriverIopRam;return true;
++    }
++    bool prepareSoundDriverStatusTransferCaptured(uint32_t src,uint32_t bytes,PS2Runtime* runtime,ps2_cri_audio::NativeSoundRamCallV1& cap)
++    {
++        std::lock_guard<std::mutex> lock(g_rpc_mutex);
++        if(!runtime||g_soundDriverRpcState.ownerRuntime!=reinterpret_cast<uintptr_t>(runtime))return false;
++        return src!=g_soundDriverRpcState.statusAddr||bytes!=kSoundDriverStatusSize||backfillSoundDriverStatusCaptured(cap);
++    }
++
+     bool resolveSoundDriverIopTransfer(PS2Runtime *runtime, uint32_t addr, uint32_t size, uint8_t *&ptr)
+     {
+         ptr = nullptr;
+@@ -1625,9 +1756,123 @@
+         setReturnS32(ctx, 0);
+     }
+ 
++    // Companion-only builtin sound transport. The legacy SifCallRpc body below
++    // remains the default when this separately versioned companion is absent.
++    bool tryNativeSoundRamRpc(uint8_t* rdram,R5900Context* ctx,PS2Runtime* runtime)
++    {
++        if(!ps2_cri_audio::nativeSoundRamSelectedV1())return false;
++        const uint32_t cp=getRegU32(ctx,4),rpc=getRegU32(ctx,5),mode=getRegU32(ctx,6),send=getRegU32(ctx,7);
++        uint32_t sid{},mapped{};
++        {std::lock_guard<std::mutex> lock(g_rpc_mutex);auto it=g_rpc_clients.find(cp);
++            if(it==g_rpc_clients.end()||(it->second.sid!=IOP_SID_SNDDRV_COMMAND&&it->second.sid!=IOP_SID_SNDDRV_STATE))return false;
++            sid=it->second.sid;auto server=g_rpc_servers.find(sid);
++            if(sid&&server!=g_rpc_servers.end())mapped=server->second.sd_ptr;}
++        auto audio=ps2_cri_audio::acquireSoundCall(runtime);ps2_cri_audio::SoundCallScope scope(audio);
++        RamCall cap(audio,runtime,rdram,sid==IOP_SID_SNDDRV_COMMAND?ps2_cri_audio::NativeSoundRamUseV1::command:ps2_cri_audio::NativeSoundRamUseV1::query);
++        const auto early=[&]{setReturnS32(ctx,-1);return true;};
++        if(!audio||!cap)return early(); // No client reads or guessed completion.
++        if(!ps2_cri_audio::coversSoundRpcV2(sid,rpc)){
++            cap.reject(ps2_cri_audio::NativeSoundRamStageV1::read,ps2_cri_audio::BankStatusV2::unsupported);return early();}
++        uint32_t stack[6]{};const uint32_t sp=getRegU32(ctx,29);
++        ps2_cri_audio::NativeSoundRamReadV1 reads[6]{};
++        const uint32_t offsets[]{0,0x10,0x14,0x18,0x1c,0x20};
++        for(unsigned i=0;i<6;++i)reads[i]={RamSpace::ee,sp+offsets[i],{reinterpret_cast<uint8_t*>(&stack[i]),4}};
++        if(cap.read(reads)!=ps2_cri_audio::BankStatusV2::ok)return early();
++        const auto pointer=[](uint32_t v){const auto n=v&0x1fffffffu;return !v||(n>=0x10000u&&n<PS2_RAM_SIZE);};
++        const auto plausible=[&](uint32_t n,uint32_t b,uint32_t m,uint32_t f){return n<=0x2000000u&&pointer(b)&&m<=0x2000000u&&pointer(f);};
++        const uint32_t nr=getRegU32(ctx,8),br=getRegU32(ctx,9),mr=getRegU32(ctx,10),fr=getRegU32(ctx,11);
++        const bool reg=plausible(nr,br,mr,fr),stk=plausible(stack[1],stack[2],stack[3],stack[4]);
++        const bool useReg=reg||!stk||((fr&&pointer(fr))&&!(stack[4]&&pointer(stack[4])));
++        const uint32_t n=useReg?nr:stack[1],recv=useReg?br:stack[2],rn=useReg?mr:stack[3];
++        const uint32_t end=useReg?fr:stack[4],param=useReg?stack[0]:stack[5];
++        t_SifRpcClientData client{};if(!capturedRead(cap,RamSpace::ee,cp,client))return early();
++        const uint32_t serverPtr=mapped?mapped:client.server;
++        t_SifRpcServerData sd{};
++        if(serverPtr&&!capturedRead(cap,RamSpace::ee,serverPtr,sd))return early();
++        // A builtin service with an EE server callback is outside this profile.
++        // Descriptor overlap would make original sequential pointer reads
++        // self-mutating; refuse before metadata/transport/core effects.
++        const uint64_t c=cp&0x1fffffffu,s=serverPtr&0x1fffffffu;
++        const uint64_t dest=sd.buf&0x1fffffffu,copyBytes=std::min<std::size_t>(n,1u<<20);
++        const auto overlap=[](uint64_t a,uint64_t n1,uint64_t b,uint64_t n2){return n1&&n2&&a<b+n2&&b<a+n1;};
++        const bool transportMetadata=serverPtr&&sd.buf&&send&&n&&
++            (overlap(dest,copyBytes,c,sizeof(client))||overlap(dest,copyBytes,s,sizeof(sd)));
++        if((serverPtr&&sd.func)||(serverPtr&&c<s+sizeof(sd)&&s<c+sizeof(client))||transportMetadata){
++            cap.reject(ps2_cri_audio::NativeSoundRamStageV1::read,ps2_cri_audio::BankStatusV2::unsupported);return early();}
++        uint32_t sema=static_cast<uint32_t>(client.hdr.sema_id);bool semaKnown=true;
++        const auto completionId=[&]{return sema==0xffffffffu||!sema?param:sema;};
++        const auto refreshSema=[&]{semaKnown=capturedRead(cap,RamSpace::ee,cp+offsetof(t_SifRpcClientData,hdr)+offsetof(t_SifRpcHeader,sema_id),sema);return semaKnown;};
++        bool effected=false;
++        const auto finish=[&](bool ok){
++            if(effected){std::lock_guard<std::mutex> lock(g_rpc_mutex);g_rpc_clients[cp].busy=false;}
++            if(!ok&&effected&&semaKnown)(void)signalRpcCompletionSema(completionId());
++            setReturnS32(ctx,ok?0:-1);return true;
++        };
++        const auto put=[&](uint32_t at,const auto& value){const auto op=capturedWrite(RamSpace::ee,at,value);return cap.control({&op,1},RamControl::rpc_metadata)==ps2_cri_audio::BankStatusV2::ok;};
++        const RamOp metadata[]{
++            capturedWrite(RamSpace::ee,cp+offsetof(t_SifRpcClientData,command),rpc),
++            capturedWrite(RamSpace::ee,cp+offsetof(t_SifRpcClientData,end_function),end),
++            capturedWrite(RamSpace::ee,cp+offsetof(t_SifRpcClientData,end_param),param),
++            capturedWrite(RamSpace::ee,cp+offsetof(t_SifRpcClientData,hdr)+offsetof(t_SifRpcHeader,mode),mode)};
++        if(cap.control(metadata,RamControl::rpc_metadata)!=ps2_cri_audio::BankStatusV2::ok)return early();
++        effected=true;
++        {std::lock_guard<std::mutex> lock(g_rpc_mutex);g_rpc_clients[cp].busy=true;g_rpc_clients[cp].last_rpc=rpc;}
++        if(mapped&&client.server!=mapped&&!put(cp+offsetof(t_SifRpcClientData,server),mapped))return finish(false);
++        if(serverPtr){
++            // No metadata struct overlap admitted; pkt_addr was unchanged by
++            // the four original client field writes above.
++            const uint32_t rmode=((mode&kSifRpcModeNowait)&&!end)?0:1,zero=0;
++            const RamOp writes[]{
++                capturedWrite(RamSpace::ee,serverPtr+offsetof(t_SifRpcServerData,client),cp),
++                capturedWrite(RamSpace::ee,serverPtr+offsetof(t_SifRpcServerData,pkt_addr),client.hdr.pkt_addr),
++                capturedWrite(RamSpace::ee,serverPtr+offsetof(t_SifRpcServerData,rpc_number),rpc),
++                capturedWrite(RamSpace::ee,serverPtr+offsetof(t_SifRpcServerData,size),n),
++                capturedWrite(RamSpace::ee,serverPtr+offsetof(t_SifRpcServerData,recvbuf),recv),
++                capturedWrite(RamSpace::ee,serverPtr+offsetof(t_SifRpcServerData,rsize),rn),
++                capturedWrite(RamSpace::ee,serverPtr+offsetof(t_SifRpcServerData,rmode),rmode),
++                capturedWrite(RamSpace::ee,serverPtr+offsetof(t_SifRpcServerData,rid),zero)};
++            if(cap.control(writes,RamControl::rpc_metadata)!=ps2_cri_audio::BankStatusV2::ok)return finish(false);
++            // The original reads buf after its metadata writes. Distinct fields
++            // make the value unchanged under the admitted descriptor domain.
++            if(sd.buf&&send&&n){
++                if(cap.forward(RamSpace::ee,send,RamSpace::ee,sd.buf,std::min<std::size_t>(n,1u<<20))!=ps2_cri_audio::BankStatusV2::ok)return finish(false);
++                semaKnown=false; // Only a successful copy can change metadata.
++                if(!refreshSema())return finish(false);
++            }
++        }
++        runtime->iop().init(rdram);
++        uint32_t result{};bool signal=false;
++        const bool handled=handleSoundDriverRpcCaptured(rdram,runtime,sid,rpc,send,n,recv,rn,result,signal,audio,cap);
++        if(!handled||!cap)return finish(false);
++        // Query replies can alias client metadata; observe completion only
++        // after those writes, through the same read capability.
++        if(!refreshSema())return finish(false);
++        if(signal&&(mode&kSifRpcModeNowait))(void)signalRpcCompletionSema(completionId());
++        if(end){
++            bool invoked=rpcInvokeFunction(rdram,ctx,runtime,end,param,0,0,0,nullptr);
++            if(!invoked&&end>=0x10000u&&runtime->hasFunction(end-0x10000u))invoked=rpcInvokeFunction(rdram,ctx,runtime,end-0x10000u,param,0,0,0,nullptr);
++            PS2SoundDriverCompatLayout compat{};{std::lock_guard<std::mutex> lock(g_rpc_mutex);compat=g_soundDriverCompatLayout;}
++            if(!refreshSema())return finish(false);
++            if(compat.matchesCompletionCallback(end)){
++                (void)signalRpcCompletionSema(completionId());
++                if(compat.busyFlagAddr&&compat.matchesClearBusyCallback(end)){
++                    const uint32_t zero=0;if(!put(compat.busyFlagAddr,zero))return finish(false);
++                }
++            }
++            if(!invoked){
++                // The compat busy word can alias client.hdr.sema_id. Original
++                // fallback observes it again AFTER that write.
++                if(!refreshSema())return finish(false);
++                (void)signalRpcCompletionSema(completionId());
++            }
++        }
++        return finish(true);
++    }
++
+     void SifCallRpc(uint8_t *rdram, R5900Context *ctx, PS2Runtime *runtime)
+     {
+         std::lock_guard<std::recursive_mutex> rpcCallLock(g_sif_call_rpc_mutex);
++        if(tryNativeSoundRamRpc(rdram,ctx,runtime))return;
+ 
+         uint32_t clientPtr = getRegU32(ctx, 4);
+         uint32_t rpcNum = getRegU32(ctx, 5);
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.h b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.h
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.h
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/RPC.h
+@@ -1,7 +1,7 @@
+ #pragma once
+ 
+ #include "ps2_syscalls.h"
+-namespace ps2_cri_audio {class SoundCall;}
++namespace ps2_cri_audio {class SoundCall;class NativeSoundRamCallV1;}
+ 
+ namespace ps2_syscalls
+ {
+@@ -24,6 +24,8 @@
+                                      uint32_t &resultPtr,
+                                      bool &signalNowaitCompletion);
+     // True means the address overlaps the sound IOP arena; null ptr means invalid bounds.
++    bool describeSoundDriverIopTransfer(PS2Runtime*,uint32_t,uint32_t,bool&);
++    bool prepareSoundDriverStatusTransferCaptured(uint32_t,uint32_t,PS2Runtime*,ps2_cri_audio::NativeSoundRamCallV1&);
+     bool resolveSoundDriverIopTransfer(PS2Runtime *runtime, uint32_t addr, uint32_t size, uint8_t *&ptr);
+     void prepareSoundDriverStatusTransfer(uint8_t *rdram, uint32_t srcAddr, uint32_t size);
+     void prepareSoundDriverStatusTransfer(uint8_t *rdram, uint32_t srcAddr, uint32_t size,PS2Runtime* runtime);

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <array>
+#include <optional>
 
 namespace reo {
 
@@ -56,6 +58,19 @@ struct DualShock2State {
     }
 };
 
+// One host poll, consumed by a single native simulation frame. Physical
+// connection and the keyboard-backed first port are separate facts; focus
+// suppresses sampled controls without pretending that a device disconnected.
+struct NativePadSample {
+    DualShock2State pad;
+    bool physical_connected{};
+    bool keyboard_available{};
+};
+struct NativeInputSnapshot {
+    std::array<NativePadSample, 2> ports;
+    bool focused{};
+};
+
 class Input {
   public:
     Input() = default;
@@ -66,6 +81,14 @@ class Input {
     // Poll all input devices and update state
     void update();
     void update_controllers_only();
+
+    // Windows native-gameplay host boundary. The window owner supplies focus;
+    // a missing initialization or unsupported platform refuses the poll.
+    // The Input owner and poll are confined to the host's input thread.
+    std::optional<NativeInputSnapshot> poll_native(bool focused);
+    // The supplied handle must be a live window owned by this process. Focus
+    // is read from the actual foreground/minimized state for every poll.
+    std::optional<NativeInputSnapshot> poll_native_window(void* window);
 
     // Get the current DualShock2-compatible state
     const DualShock2State& get_pad(int port = 0) const {
@@ -81,6 +104,7 @@ class Input {
 
     DualShock2State m_pads[2] = {};
     bool m_xinput_connected[2] = {};
+    bool m_initialized = false;
 };
 
 } // namespace reo

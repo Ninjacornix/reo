@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "cohort": "native-audio-aggregate-2-grouped-packet3",
+  "purpose": "Mechanical namespace/packet3 contract derivation; existing original observations known before implementation",
+  "candidate_sha256": {
+    "aggregate.h": "0db1359408f489830e05d30bd98ad2867e858d3d1b32d1a82a1fc16082b37ec9",
+    "aggregate.cpp": "45b6a0d977f21f1306da9a47df87e93c9fb077fef4de0df64eca3a9b77c85d59",
+    "tests.cpp": "7741f63d6882679bb80aa17a336fef1de51a5658dfa6948454acf86062145718",
+    "verify.py": "acbe46154fbfc397c6443e296bf554ef27edf7f9b5cf7a988570a64e7a0ef8ee",
+    "derive.py": "6dea3c04bf9de4bd68d64e44fd2ebe59417e82d823a414426928bb3fb212995a",
+    "oracle_transport.hpp": "0d796a0f7e983fd92215a8cb632ceda0eed0d8cbd33faa32e5736d6838661482"
+  },
+  "parent_identity_sha256": "bc33ed692ea0be697dcd0b8d3950e534c8dca3226dc62b119b8dfd3d1523a8db",
+  "packet3_identity_sha256": "2850d8d7a2dfc8b8f91cdcd65434be434878e25793f75531d856a7df661aeb66",
+  "bank_v2_identity_sha256": "77b6c1bc20f6c1ea261ea19df9bcde3a5fa516c94e7b2c7d8d6503ca0f7aefca",
+  "actual126_receipt_sha256": "2de11297c268e453888341b7f3ed44012ae51bdd10c9baa39a168e5cade97ec0",
+  "actual126_companion_header_sha256": "2505ea1838df71edd5bf6c87f88934cf303d2c533e8bd3e24dee3a2c7fea3147",
+  "unit_receipts": {
+    "gcc-v1": "84ff80ba74adfacc2e14e4039180fb85c560e98db9f8a254719ab62a961f91eb",
+    "llvm-v1": "256c75673e0d28d34d4c6ce1504e3a914190da2f0581c1aff2329f872e17fb46"
+  },
+  "existing_joint_expectations_previously_known": true,
+  "new_joint_comparison_run_before_freeze": false,
+  "runtime_capture_factory_implemented": false,
+  "bootstrap_installed": false,
+  "game_run": false,
+  "device_opened": false
+}

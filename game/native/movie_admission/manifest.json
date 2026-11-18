@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "files": {
+    "docs/native-media/MOVIE_ADMISSION_ARITHMETIC_CONTRACT.md": "4b93dd3837681b808bd88b02405ef46c92b876e9a2098cef26dc4eea4105ce08",
+    "game/native/CMakeLists.txt": "2c232619e7c156ffdf80b2d5c18959e2c93909b050835fca02a06dd40496251e",
+    "game/native/movie_admission/admission.cpp": "2ef6eb91785c435b819178aaf769ddc630b2992384654844bc00ee15390da303",
+    "game/native/movie_admission/admission.hpp": "321b61c9c908168a0a8dae25587b8d6faef118dc24bf4b91e4b8af23f973bbca",
+    "game/native/movie_admission/admission_tests.cpp": "95c6820334641d1894b6ab93c2c8659210f8c6401b822d3748ce022fbc04578e",
+    "game/native/movie_admission/CMakeLists.txt": "0ca5929fed77a8e1d487a9f920005d383200d57e3cccf2029c17ba69e6faeb1a",
+    "game/native/movie_admission/fixture.cpp": "794a5d3441d7747ecfbaef41b2e42823870bd936f3b48a77e724ff8115332ddc",
+    "game/native/movie_admission/verify.py": "804f09c1f4cef6d8dab3508f453a0f9ce7f746532b7b31bd59edb6a0210ce2f8",
+    "game/native/movie_counter_clock/clock.hpp": "5724b55787792f161cb92e226b46a798d25bf7d175e7a1cb503f52a960e975ef",
+    "tools/native_reconstruction/adx_header_math_oracle.py": "f4e60e135c0f2c0f16b7b2160a7dda26fec1334fbcf77abf997654e878d2623d",
+    "tools/native_reconstruction/adx_header_oracle.py": "087863d5c65a809baad4fb77de6d499b2ca0a1ecf6899a8cfb748dc5f6aa7f4a",
+    "tools/native_reconstruction/adx_stereo_oracle.py": "f66047d0ee59114cdf80d5d1e1bb4833aa566b35c9a7dea7e9d24930ad428c17",
+    "tools/native_reconstruction/adx_window_oracle.py": "43396670b83eb676ebc1a73d4f75ceee339fa003e45751ed7f419df2272a16fc",
+    "tools/native_reconstruction/ee_mac_oracle.py": "0466ee2828bcc268deafbb9ed93d8e7096cd0b89fa0ed489af28cae0120128cd",
+    "tools/native_reconstruction/movie_admission_oracle.py": "4d0e3bfd3c703785273dd9d6f5b6fcf35188c8493c5fc02eae026c582e941dd3",
+    "tools/native_reconstruction/movie_position_oracle.py": "d89897b841f07056c15f8e18d978b7f4c9bfe208531f1570157276df65a9b5b0",
+    "tools/native_reconstruction/sjrb_oracle.py": "22e611cd51989d63d2674daa14e9f584733eb9d88a1f326e74138a27ebe430bc",
+    "tools/native_reconstruction/sjuni_oracle.py": "9d71114ffb0d8b2826012517c8d381d5ba2cdb5dd602c1f48e12450d99697d95",
+    "game/native/movie_admission/README.md": "5059cb8977bb8375153c77a0b6cd988516488cb3de383a5d00ede25ba8cf6d03"
+  }
+}

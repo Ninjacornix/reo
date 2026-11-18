@@ -1,0 +1,22 @@
+# Scenario sequence-command state: interpreter v5
+
+Status, 2026-11-09: complete10..17 script command algorithms and their two small setter helpers are qualified offline. The canonical command-state owner is native; actual sequence playback, animation/camera consumers, stock import admission and game callers remain uninstalled. This does not claim that in-engine cinematics have become native or close Stage4.
+
+The [owned content inventory](SCENARIO_CONTENT_IMPORT.md) found012 as the first ordinary unsupported handler in159 of171 named RDT/EVB banks. That made this family a concrete next migration. [SequenceControl](../../game/native/gameplay_scenario/sequence_control.hpp) owns active-byte state, signed count, selected/condition IDs, phase, selection, two halfword parameters and percentage state. It is one typed provider shared across channels, independent from script PCs, RNG, timers and the linked scene-control owner.
+
+The operations preserve10/11 indexed activation,12 activation of the positive signed-count prefix,13 selection/phase4 plus selected-record activation,15 matching-selection cancellation,16 phase5/parameter/percentage state and14/17 conditions. The native indexed profile is0..255; larger constant10/11 indices refuse whole Program construction before execution. No original unbounded alias or stock-use absence is assumed. Count-negative/zero cases leave all record bytes unchanged, and raw high-bit active bytes outside the touched range remain intact.
+
+Original16 converts unsigned32 to binary32 through a signed-safe high-bit path: halve with low-bit rounding, convert and double when needed, then divide by100. Native code preserves that operation sequence. Tests exercise65,536 values, including odd numbers and neighborhoods of80000000hex andFFFFFFFFhex, against the complete original16 body and5BF1B0 helper. The isolated fixture declares the same finite conversion/addition policy as the checked runtime macros. This establishes parity for the positive finite percentage input domain under the tested host environment, not general exceptional PS2 floating-point behavior.
+
+Two mapping corrections are now confirmed by complete original dispatcher comparisons:
+
+- In [SYMBOLS_SCRIPT_VM.md](../SYMBOLS_SCRIPT_VM.md), the68D450/opcode14 row must specify **nonzero desired means phase differs from4; zero means phase equals4**. At68D47C zero branches to68D4A8; the nonzero path68D490 branches past the failure helper when phase differs. The zero path68D4B4 branches to the successful return when equal. Reversing that sense changes script control flow.
+- The68D550/opcode17 row's claim that selectors outside0/1 bypass failure is incorrect. Equality passes only with selector1; inequality passes only with selector0. Other selector values fail. Branches68D58C/68D594 handle equality/selector1;68D59C/68D5A4 send the other cases to failure helper68D5B4.
+
+Earlier0C/47/04 and592960 corrections remain documented in the frozen [v1](SCENARIO_VM.md) and [resource v2](SCENARIO_RESOURCE_LIFECYCLE.md) findings. Their shared research-table wording must follow the checked source branches, not a family-name assumption.
+
+Both LLVM/GCC cohorts (`gameplay-scenario-llvm-v10`, `gameplay-scenario-gcc-v8`) pass **554,513 assertions and1,437 original dispatcher invocations each**, plus the separate65,536 complete numeric-handler comparisons. **2,825 owned instruction comments** are checked against original o2. New full dispatcher cases cover signed count extremes, all256 active bytes, selected byte255, matching/nonmatching cancellation, truncated payload values, phase0..7, equal/unequal condition IDs, desired0/1/2/FFFFFFFFhex and offline category filtering. Every prior ordinary/offline flag, counter and resource test remains included.
+
+Current native algorithm masks are **279/432 ordinary** and **263/432 offline actor**, including original no-op bindings. Ordinary153/offline169 bindings remain unsupported. Exact masks, compiler/source/receipt hashes and limitations are in [gameplay_scenario_qualification_v5.json](../../tools/native_reconstruction/gameplay_scenario_qualification_v5.json). The separate linked-control owner is still not admitted into the VM; its different offline handlers remain explicit future work.
+
+No game, window, live process, capture or full game build was used. These comparisons do not establish original-hardware audio/video timing, a speed improvement, closed stock-script admission or a fix for historical stutters.

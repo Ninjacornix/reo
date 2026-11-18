@@ -355,6 +355,7 @@ public:
     // Command/material metadata accessor: ST/RGBA/internal_q are explicitly
     // represented by the GPU overlay while the lease is active.
     const RegisterState &resident_command_register_state() const { return registers; }
+    const Vulkan::Buffer *resident_vram_buffer() const { return renderer.resident_vram_buffer(); }
     std::vector<uint8_t> resident_transfer_readback() const;
 
 	bool prepare_resident_material(uint32_t capacity, ResidentMaterial &material);

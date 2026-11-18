@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "status": "qualified native target metrics worker adoption",
+  "game_launched": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_update/collision_workers.cpp": "1bee42e747e41ee6094361c46b304c997226988ceb4d48ad289f84cd0f8a0f9a",
+    "game/native/gameplay_update/collision_workers.hpp": "5f2596a4e3b6d1b5402a82902591b9ce887856074bb814bf4e7fd40d89917504",
+    "game/native/gameplay_update/collision_workers_tests.cpp": "668b5657ebfaf5a6ae8b12539492d96fce6014d44ab7db12d91120ad8bf9767e",
+    "game/native/gameplay_update/update.cpp": "9e71d1f19f251debe1f4e46b3c9e14557017453bfae146c4fded509e6bf45b7b",
+    "game/native/gameplay_update/CMakeLists.txt": "bbb5d1b8f9ee5591e90a04d4c4f9aecd3b580210a17c44a836f50f42a625f752",
+    "game/native/gameplay_world/target_metrics.hpp": "0209d0daf42c2ce4f71de607ad3b3d23a9cfc776d1c95cf2d6e6d683bd9d361b",
+    "game/native/gameplay_world/target_metrics.cpp": "2ea0def87a34d6986cd44dbe13652e9000fa524159e3cc5e84ce65e257fe104d",
+    "tools/native_reconstruction/qualify_target_metrics_worker_v1.py": "089772680bf268e385095ad44d01ea9517efe4e7aecbee37eeaf2855c04f50f3"
+  },
+  "results": {
+    "build-native-sjuni/target-metrics-worker-parent-llvm-v1.log": "39c1df0d6cebe07ed8b558ba57bc07e369913502a07764865edc59148242b175",
+    "build-native-sjuni/target-metrics-worker-tests-llvm-v1.log": "9dd337f4d423eb0ec023e47db5237f7d25b3630a7606bf3bb8f0291184f52348",
+    "build-native-sjuni/gameplay-native-llvm-v1/gameplay_update/gameplay_collision_workers_tests.exe": "b18e6c26d13e5a9447ecfe56119aed5ac831e4d62b510a3f8d6e208a64f6e165",
+    "build-native-sjuni/gameplay-native-llvm-v1/gameplay_update/CMakeFiles/reo_native_gameplay_update.dir/collision_workers.cpp.obj": "519c258bf8e039b63e97aafd1ec013af267897542931e838d021a5d889a871c0",
+    "build-native-sjuni/gameplay-native-llvm-v1/gameplay_world/CMakeFiles/reo_native_gameplay_world.dir/target_metrics.cpp.obj": "a7580d3bed11f235aa2e7f68351b0ce38748f001bb0bcb49b45f482748cf650b",
+    "build-native-sjuni/target-metrics-worker-parent-gcc-v1.log": "2c3b36f98ddc3018256ec9d5a0c2cfafb71c5116326a410893d1bb2346819036",
+    "build-native-sjuni/target-metrics-worker-tests-gcc-v1.log": "68b5c62e48e07bb776346dafbba4a177f2dbd8ac52ce0deb337d7fc3eaca514e",
+    "build-native-sjuni/gameplay-native-gcc-v1/gameplay_update/gameplay_collision_workers_tests.exe": "c9109ce017762c1f5e71233746536198cfe047a67d95fb6c371cc689ab61798f",
+    "build-native-sjuni/gameplay-native-gcc-v1/gameplay_update/CMakeFiles/reo_native_gameplay_update.dir/collision_workers.cpp.obj": "368a4fc6b64155569ab8066e3f093efe30f77aca900be9c9c2b1598755d93802",
+    "build-native-sjuni/gameplay-native-gcc-v1/gameplay_world/CMakeFiles/reo_native_gameplay_world.dir/target_metrics.cpp.obj": "e1f68af49bc9917c9e151b8770b400254d8cbe8e21a2274c784f674d8499b9c5"
+  },
+  "prior": {
+    "path": "tools/native_reconstruction/native_target_metrics_qualification_v1.json",
+    "sha256": "e3a969b1009419983e8e94e472fc104eeb62045d3972b82c1df15529270bd3fd"
+  },
+  "limitations": [
+    "Actual CollisionWorkers intercepts the existing target_caches stage after the established pause gate and before World primary updates. It obtains the current canonical room and publishes through the existing World TargetMetricCache. Its algorithm source and room/trace dependencies retain their prior qualified hashes.",
+    "Actual frame test builds two primary metrics to a canonical linked target with native models and real Grid consumers. The cache is built before actor motion, the paused frame does not acquire the room, and acquisition failure invalidates the prior published view and stops before later workers. Existing body/height failure and recovery checks remain.",
+    "Thirteen current parent tests pass on both compilers. This is native worker composition with remaining game effects declared, not an installed game caller. Real room/model/targeting construction, full observations/actions, VM/network/save integration and game acceptance remain open. V39 is unchanged."
+  ]
+}

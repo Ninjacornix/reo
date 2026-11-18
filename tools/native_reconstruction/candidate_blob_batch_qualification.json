@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "status": "immutable batch tests and sealed V21 header byte comparison passed",
+  "source_manifest": "tools/native_reconstruction/candidate_blob_batch_manifest_v1.json",
+  "source_manifest_sha256": "91f60114802b9e3aa6d8cd388dbb16bc841d640bc2dbd828245180b386ba8626",
+  "receipt": "build-native-sjuni/blob-batch-qualification-v1/receipt.json",
+  "receipt_sha256": "a9658d1931fce9ecaff10d10ce5a7346bdc98b71b9b7ef9a06e821db4fda12f0",
+  "tests": 8,
+  "matched_headers": 443,
+  "game_run": false
+}

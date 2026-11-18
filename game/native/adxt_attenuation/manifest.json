@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "files": {
+    "game/native/adxt_attenuation/attenuation.cpp": "f6d32681f93f53ec5ae53c056dc92ab261d6f789cf146250109126a8e5bdc6b0",
+    "game/native/adxt_attenuation/attenuation.hpp": "9a234ea0344886434be2f9c303721c0ffc6ee33f71af5eca31e0d2e2f7ff4eda",
+    "game/native/adxt_attenuation/attenuation_tests.cpp": "b8ea572a7df6dbc1abfadb65471de00c6c9075efce90c3f37caf37ca2d0bca93",
+    "game/native/adxt_attenuation/CMakeLists.txt": "4ef06d0edc8846e02bbb322f21dbd1e39ddf4f6fd25ca1e8ee8d35548cb1c6d5",
+    "game/native/adxt_attenuation/fixture_runner.cpp": "0b9a8dd5e86e1b9c8400e8d3966213660e430fda638570e08749fbdf6de741b5",
+    "game/native/adxt_attenuation/README.md": "678ead3527433212cd39f636460b6dc6a6dac1d5b46b570e7353cc81224cbcc1",
+    "game/native/adxt_attenuation/verify.py": "d3489843a96b65b405607d315a6753e7cd19b1a2da8da732ea89b8a24df0bdbb",
+    "docs/native-media/ADXT_ATTENUATION_CONTRACT.md": "b06cf506ec1148a8064509171f23082d2d50ff696d5353e759e2634bee2b63bd",
+    "tools/native_reconstruction/adxt_attenuation_oracle.py": "171c9f2aa66e5c278bd7392bdc96d1a26dcd70d7e1c5c66c1cd521f40d7f8bb2"
+  },
+  "original_reference": {
+    "path": "build-native-sjuni/adxt-attenuation/original-v3/receipt.json",
+    "sha256": "a1ef871ac397eed47e5eb903ea2dad4f38c90947ec1a6b0df192d1c9edafeb67"
+  }
+}

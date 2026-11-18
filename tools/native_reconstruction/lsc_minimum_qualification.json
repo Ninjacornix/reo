@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "status": "bounded8192-byte live source minimum controls pass78 suites on both compilers; larger game capacities unadmitted",
+  "source_manifest": "tools/native_reconstruction/native_lsc_minimum_manifest_v2.json",
+  "source_manifest_sha256": "ae0760442b0b50689110e848aeeb70ea25e15953b6015f42333bd73c2a2c593a",
+  "prior_failed_manifest_sha256": "f90930e69b7f5254a87f1a627920c8bfcef6fd0138e340dd3b6569325ea139f2",
+  "receipts": {
+    "build-native-sjuni/lsc-minimum/native-gcc-v1/receipt.json": "28b37078c9242be63a83234b7955186c9bdd6c183f691e7d16535228437ffc88",
+    "build-native-sjuni/lsc-minimum/native-gcc-v2/receipt.json": "2beb360da2fdf8831ce243902ba100efbeecbdb8d1200cc859922516a94aa8b2",
+    "build-native-sjuni/lsc-minimum/native-llvm-v1/receipt.json": "5ff58b15c6c45ae3361d22d457bd8630124407a730f664d9ee87079c3606b6fb",
+    "build-native-sjuni/lsc-minimum/native-llvm-v2/receipt.json": "cdfb6eb330e54441abd10490251c655c1b19c443551084eeb18b3a30b010052d"
+  },
+  "source_sha256": {
+    "tools/native_reconstruction/recheck_lsc_minimum.py": "a0b645271feeaee66b74ce8cd23913321c10093540e373ef355d29f90714e0a6",
+    "docs/native-media/LSC_MINIMUM_CONTROLS.md": "abd79b2f75147b8ea67a09b88d9f74da3849e3fcaff4a7939b5d5ed6dae2c5bd",
+    "game/native/adxt_lsc_input/README.md": "e4ca2af9a12a708dbaf2d8cbe3940a3aae27ea348ff43901ee9b992dbdfcf3ef",
+    "docs/native-media/ADXT_DYNAMIC_LSC_SOURCE_CONTRACT.md": "6d55f8928bbb112d3890e8612044251521292a262340cf7754501ee92cf93b14"
+  },
+  "retained_failed_source_sha256": {
+    "build-native-sjuni/lsc-minimum/failed-source-v1/game/native/adxt_lsc_input/input.cpp": "f49c7af34ca335a6bbcb57026e9bb5d836b17c33a7201448d5e9aa2c9500bc21",
+    "build-native-sjuni/lsc-minimum/failed-source-v1/game/native/adxt_lsc_input/input.hpp": "11acb34939171baf68a715a71dad880efcadb733e98a37972aea251d07e86a43",
+    "build-native-sjuni/lsc-minimum/failed-source-v1/game/native/adxt_lsc_input/owner_tests.cpp": "7805bb89ca37c7c3f93aa3964aa0ee452e167926bd3648d0cbdc2cb82d5ac16d"
+  },
+  "early_game_observation": {
+    "file": "build-native-sjuni/playtests/adxt-ordinary-v22/lsc-first-observation.json",
+    "sha256": "c07a5e747874d2246920a896d2d5ea78bffac04ddba24517ff4ef5ed46ddbb10",
+    "source_file": "media-controls-v1.jsonl",
+    "line": 1,
+    "partial_run": true,
+    "atomic": false
+  },
+  "native_game_capacity_supported": false,
+  "game_lsc_binding": false,
+  "stage3_complete": false
+}

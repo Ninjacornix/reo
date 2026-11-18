@@ -1,0 +1,469 @@
+diff --git a/ps2xRuntime/src/lib/gs_backend_route.cpp b/ps2xRuntime/src/lib/gs_backend_route.cpp
+--- a/ps2xRuntime/src/lib/gs_backend_route.cpp
++++ b/ps2xRuntime/src/lib/gs_backend_route.cpp
+@@ -1,4 +1,5 @@
+ #include "gs_backend_route.h"
++#include "gs_sound_ram_profile.h"
+ #include <stdexcept>
+ #include <limits>
+ #include <utility>
+@@ -6,8 +7,14 @@
+ namespace gs_backend_bridge {
+ namespace {
+ thread_local uint8_t path = 3;
+-std::mutex factoryMutex;
+-Factory factory;
++// Process-lifetime fixed metadata storage: the global GS Route can be
++// destroyed after this translation unit's ordinary static objects.
++std::mutex& factoryMutex() noexcept {
++    alignas(std::mutex) static unsigned char storage[sizeof(std::mutex)];
++    static std::mutex* value=::new(static_cast<void*>(storage))std::mutex;
++    return *value;
++}
++
+ }
+ uint8_t currentPath() { return path; }
+ PathScope::PathScope(uint8_t value) : previous_(path) {
+@@ -15,37 +22,173 @@
+     path = value;
+ }
+ PathScope::~PathScope() { path = previous_; }
+-void registerFactory(Factory value) { std::lock_guard<std::mutex> l(factoryMutex); factory = std::move(value); }
+-Factory registeredFactory() { std::lock_guard<std::mutex> l(factoryMutex); return factory; }
+-bool Route::start(Choice choice, const Init& init, Factory make, std::string& reason) {
+-    stop();
+-    std::lock_guard<std::mutex> lock(mutex_);
+-    error_.clear(); vramSize_ = init.vramSize; state_ = State::Software;
+-    reason.clear();
+-    if (choice == Choice::Software) return false;
+-    std::unique_ptr<Backend> candidate;
+-    try {
+-        if (!init.vram || init.vramSize != 4u * 1024u * 1024u)
+-            throw std::invalid_argument("GS backend requires 4 MiB initial VRAM");
+-        if (!make) throw std::runtime_error("paraLLEl backend factory is not registered");
+-        candidate = make();
+-        if (!candidate) throw std::runtime_error("GS backend factory returned null");
+-        if (!candidate->init(init, reason)) {
+-            if (reason.empty()) reason = "GS backend initialization returned false";
+-            candidate->close(); return false;
+-        }
+-        reason.clear();
+-        backend_ = std::move(candidate); state_ = State::Accelerated;
+-        return true;
+-    } catch (const std::exception& e) { reason = e.what(); }
+-    catch (...) { reason = "GS backend initialization failed"; }
+-    if (candidate) candidate->close();
++struct FactoryEntryV1 {Factory factory;SoundRamProfileProbeV1 probe{};};
++namespace {
++struct ProfiledFactoryV1 {
++    Factory factory;SoundRamProfileProbeV1 probe;
++    std::unique_ptr<Backend> operator()()const{return factory();}
++};
++std::uint64_t factoryGenerationV1=1,factoryPinsV1{},controlsV1{};
++std::thread::id globalControlThreadV1;
++std::uint32_t globalControlDepthV1{};
++std::uint64_t globalControlGenerationV1{};
++std::shared_ptr<const FactoryEntryV1> factoryEntryV1;
++struct RuntimeProfileSealV1 {const PS2Runtime* runtime{};std::uint64_t count{};};
++std::array<RuntimeProfileSealV1,16> runtimeSealsV1{};
++}
++Factory withSoundRamProfileProbeV1(Factory value,SoundRamProfileProbeV1 probe){
++    if(!value||!probe)throw std::invalid_argument("Complete concrete GS factory/probe required");
++    return ProfiledFactoryV1{std::move(value),probe};
++}
++SoundRamProfileStatusV1 tryRegisterFactoryV1(Factory value){
++    {std::lock_guard lock(factoryMutex());if(factoryPinsV1)return SoundRamProfileStatusV1::leased;}
++    auto next=std::make_shared<FactoryEntryV1>();
++    if(auto* body=value.target<ProfiledFactoryV1>())next->probe=body->probe;
++    next->factory=std::move(value);std::shared_ptr<const FactoryEntryV1> previous;
++    {std::lock_guard lock(factoryMutex());
++        if(factoryPinsV1)return SoundRamProfileStatusV1::leased;
++        if(factoryGenerationV1==UINT64_MAX)return SoundRamProfileStatusV1::capacity;
++        previous=std::move(factoryEntryV1);factoryEntryV1=std::move(next);++factoryGenerationV1;}
++    return SoundRamProfileStatusV1::ok; // Previous captures die outside metadata lock.
++}
++FactorySnapshotV1 registeredFactoryV1(){
++    std::lock_guard lock(factoryMutex());FactorySnapshotV1 result;
++    result.entry_=factoryEntryV1;result.generation_=factoryGenerationV1;return result;
++}
++bool soundRamProfileHeldForRuntimeV1(const PS2Runtime* runtime) noexcept {
++    std::lock_guard lock(factoryMutex());
++    for(const auto& seal:runtimeSealsV1)if(runtime&&seal.runtime==runtime&&seal.count)return true;
+     return false;
+ }
++bool soundRamSelectionHeldV1() noexcept {std::lock_guard lock(factoryMutex());return factoryPinsV1!=0;}
++GlobalGsControlV1::GlobalGsControlV1(GlobalGsControlV1&& other) noexcept {*this=std::move(other);}
++GlobalGsControlV1& GlobalGsControlV1::operator=(GlobalGsControlV1&& other) noexcept {
++    if(this!=&other){release();active_=std::exchange(other.active_,false);thread_=other.thread_;outer_=other.outer_;generation_=other.generation_;}return *this;
++}
++GlobalGsControlV1::~GlobalGsControlV1(){release();}
++void GlobalGsControlV1::release() noexcept {
++    if(!std::exchange(active_,false))return;
++    std::lock_guard lock(factoryMutex());
++    if(thread_!=std::this_thread::get_id()||globalControlThreadV1!=thread_||!globalControlDepthV1||!controlsV1)std::terminate();
++    if(!--globalControlDepthV1){globalControlThreadV1={};--controlsV1;}
++}
++std::uint64_t GlobalGsControlV1::profilePermitV1()const noexcept {
++    std::lock_guard lock(factoryMutex());
++    return active_&&outer_&&thread_==std::this_thread::get_id()&&globalControlThreadV1==thread_&&
++        globalControlDepthV1==1&&controlsV1==1&&globalControlGenerationV1==generation_?generation_:0;
++}
++GlobalGsControlResultV1 acquireGlobalGsControlV1() noexcept {
++    std::lock_guard lock(factoryMutex());const auto thread=std::this_thread::get_id();
++    if(factoryPinsV1)return {SoundRamProfileStatusV1::leased,{}};
++    if(globalControlDepthV1){
++        if(globalControlThreadV1!=thread)return {SoundRamProfileStatusV1::busy,{}};
++        if(globalControlDepthV1==UINT32_MAX)return {SoundRamProfileStatusV1::capacity,{}};
++        ++globalControlDepthV1;
++    }else{
++        if(controlsV1)return {SoundRamProfileStatusV1::busy,{}};
++        if(globalControlGenerationV1==UINT64_MAX)return {SoundRamProfileStatusV1::capacity,{}};
++        globalControlThreadV1=thread;globalControlDepthV1=1;++controlsV1;
++        ++globalControlGenerationV1;
++    }
++    GlobalGsControlV1 result;result.active_=true;result.thread_=thread;result.outer_=globalControlDepthV1==1;result.generation_=globalControlGenerationV1;
++    return {SoundRamProfileStatusV1::ok,std::move(result)};
++}
++SoundRamSelectionLeaseV1::SoundRamSelectionLeaseV1(SoundRamSelectionLeaseV1&& other) noexcept {*this=std::move(other);}
++SoundRamSelectionLeaseV1& SoundRamSelectionLeaseV1::operator=(SoundRamSelectionLeaseV1&& other) noexcept {
++    if(this!=&other){release();route_=std::exchange(other.route_,nullptr);identity_=other.identity_;
++        incarnation_=other.incarnation_;factory_generation_=other.factory_generation_;runtime_slot_=other.runtime_slot_;}return *this;
++}
++SoundRamSelectionLeaseV1::~SoundRamSelectionLeaseV1(){release();}
++bool SoundRamSelectionLeaseV1::matches(const PS2Runtime& runtime,const void* ee,const void* iop)const noexcept {
++    return route_&&identity_.runtime==&runtime&&identity_.ee==ee&&identity_.iop==iop;
++}
++void SoundRamSelectionLeaseV1::release() noexcept {
++    auto* route=std::exchange(route_,nullptr);if(!route)return;
++    std::lock_guard lock(factoryMutex());auto& seal=runtimeSealsV1[runtime_slot_];
++    if(!route->profilePinsV1_||!factoryPinsV1||!seal.count||seal.runtime!=identity_.runtime||route->profileIncarnationV1_!=incarnation_)std::terminate();
++    --route->profilePinsV1_;--factoryPinsV1;if(!--seal.count)seal.runtime=nullptr;
++}
++SoundRamProfileStatusV1 Route::reserveProfileControlV1(bool starting,std::uint64_t generation){
++    std::lock_guard lock(factoryMutex());
++    if(profilePinsV1_||(starting&&factoryPinsV1))return SoundRamProfileStatusV1::leased;
++    if(globalControlDepthV1&&globalControlThreadV1!=std::this_thread::get_id())return SoundRamProfileStatusV1::busy;
++    if(profileTransitionV1_)return SoundRamProfileStatusV1::busy;
++    if(generation&&generation!=factoryGenerationV1)return SoundRamProfileStatusV1::unavailable;
++    if(controlsV1==UINT64_MAX||profileIncarnationV1_==UINT64_MAX)return SoundRamProfileStatusV1::capacity;
++    profileTransitionV1_=true;++controlsV1;return SoundRamProfileStatusV1::ok;
++}
++void Route::finishProfileControlV1(std::uint64_t factoryGeneration,SoundRamProfileProbeV1 probe) noexcept {
++    std::lock_guard lock(factoryMutex());if(!profileTransitionV1_||!controlsV1)std::terminate();
++    ++profileIncarnationV1_;profileFactoryGenerationV1_=factoryGeneration;profileProbeV1_=probe;
++    profileTransitionV1_=false;--controlsV1;
++}
++SoundRamProfileResultV1 Route::acquireProfileV1(SoundRamProfileIdentityV1 identity,std::uint64_t permit) noexcept {
++    SoundRamSelectionLeaseV1 lease;
++    {
++        std::lock_guard lock(factoryMutex());
++        const bool ownMint=permit&&permit==globalControlGenerationV1&&globalControlDepthV1==1&&controlsV1==1;
++        if(profileTransitionV1_||(controlsV1&&!ownMint))return {SoundRamProfileStatusV1::busy,{}};
++        if(!identity.runtime||!identity.ee||!identity.iop||!identity.vram||!identity.gs)return {SoundRamProfileStatusV1::foreign_runtime,{}};
++        if(!profileProbeV1_||!profileFactoryGenerationV1_||profileFactoryGenerationV1_!=factoryGenerationV1||state_!=State::Accelerated)return {SoundRamProfileStatusV1::unsupported,{}};
++        if(profilePinsV1_==UINT64_MAX||factoryPinsV1==UINT64_MAX)return {SoundRamProfileStatusV1::capacity,{}};
++        std::size_t slot=runtimeSealsV1.size();
++        for(std::size_t n=0;n<runtimeSealsV1.size();++n)if(runtimeSealsV1[n].runtime==identity.runtime){slot=n;break;}
++        if(slot==runtimeSealsV1.size())for(std::size_t n=0;n<runtimeSealsV1.size();++n)if(!runtimeSealsV1[n].count){slot=n;break;}
++        if(slot==runtimeSealsV1.size()||runtimeSealsV1[slot].count==UINT64_MAX)return {SoundRamProfileStatusV1::capacity,{}};
++        ++profilePinsV1_;++factoryPinsV1;runtimeSealsV1[slot].runtime=identity.runtime;++runtimeSealsV1[slot].count;
++        lease.route_=this;lease.identity_=identity;lease.incarnation_=profileIncarnationV1_;lease.factory_generation_=profileFactoryGenerationV1_;lease.runtime_slot_=slot;
++    }
++    // Pin prevents rebind/close. Never wait behind a GPU execution from another
++    // thread, and never hold factory/selection metadata across the app probe.
++    std::unique_lock lock(mutex_,std::try_to_lock);
++    if(!lock.owns_lock())return {SoundRamProfileStatusV1::busy,{}};
++    if(state_!=State::Accelerated||!backend_||!profileProbeV1_(*backend_))return {SoundRamProfileStatusV1::unsupported,{}};
++    return {SoundRamProfileStatusV1::ok,std::move(lease)};
++}
++SoundRamProfileStatusV1 Route::tryStopV1() noexcept {
++    const auto status=reserveProfileControlV1(false,0);if(status!=SoundRamProfileStatusV1::ok)return status;
++    std::unique_ptr<Backend> old;
++    {std::lock_guard lock(mutex_);old=std::move(backend_);state_=State::Stopped;}
++    if(old)old->close();old.reset(); // No selection/execution lock across close.
++    finishProfileControlV1(0,nullptr);return SoundRamProfileStatusV1::ok;
++}
++bool Route::startRegisteredV1(Choice choice,const Init& init,FactorySnapshotV1 snapshot,std::string& reason){
++    return startProfileV1(choice,init,snapshot.entry_?snapshot.entry_->factory:Factory{},snapshot.generation_,snapshot.entry_?snapshot.entry_->probe:nullptr,reason);
++}
++bool Route::start(Choice choice,const Init& init,Factory make,std::string& reason){
++    return startProfileV1(choice,init,std::move(make),0,nullptr,reason);
++}
++bool Route::startProfileV1(Choice choice,const Init& init,Factory make,std::uint64_t generation,SoundRamProfileProbeV1 probe,std::string& reason){
++    const auto reserved=reserveProfileControlV1(true,generation);
++    if(reserved!=SoundRamProfileStatusV1::ok){reason=reserved==SoundRamProfileStatusV1::leased?"GS selection leased by native sound":"GS selection transition unavailable";return false;}
++    struct Finish final {Route& route;std::uint64_t generation{};SoundRamProfileProbeV1 probe{};
++        ~Finish(){route.finishProfileControlV1(generation,probe);}} finish{*this};
++    // Reservation blocks new pins. Old working backend is untouched until the
++    // pre-effect lease check above. Factory/init/close run outside all locks.
++    std::unique_ptr<Backend> old,candidate;
++    {std::lock_guard lock(mutex_);old=std::move(backend_);error_.clear();vramSize_=init.vramSize;state_=State::Software;}
++    if(old)old->close();old.reset();reason.clear();bool selected=false;
++    if(choice!=Choice::Software){try{
++        if(!init.vram||init.vramSize!=4u*1024u*1024u)throw std::runtime_error("GS backend requires 4 MiB initial VRAM");
++        if(!make)throw std::runtime_error("paraLLEl backend factory is not registered");
++        candidate=make();if(!candidate)throw std::runtime_error("GS backend factory returned null");
++        if(candidate->init(init,reason))selected=true;
++        else if(reason.empty())reason="GS backend initialization returned false";
++    }catch(const std::exception& e){reason=e.what();}catch(...){reason="GS backend initialization failed";}}
++    if(!selected&&candidate){candidate->close();candidate.reset();}
++    {std::lock_guard lock(mutex_);if(selected){backend_=std::move(candidate);state_=State::Accelerated;reason.clear();}}
++    finish.generation=selected?generation:0;finish.probe=selected?probe:nullptr;return selected;
++}
++
++void registerFactory(Factory value){
++    const auto status=tryRegisterFactoryV1(std::move(value));
++    if(status!=SoundRamProfileStatusV1::ok)throw std::logic_error("GS factory registration refused by retained sound selection");
++}
++Factory registeredFactory(){auto snapshot=registeredFactoryV1();return snapshot.entry_?snapshot.entry_->factory:Factory{};}
+ void Route::stop() noexcept {
+-    std::lock_guard<std::mutex> lock(mutex_);
+-    if (backend_) { backend_->close(); backend_.reset(); }
+-    state_ = State::Stopped;
++    // Legacy void stop cannot report a recoverable refusal. Continuing into
++    // backing destruction would be unsafe; supported control uses tryStopV1.
++    if(tryStopV1()!=SoundRamProfileStatusV1::ok)std::terminate();
+ }
+ State Route::state() const { return state_.load(std::memory_order_acquire); }
+ std::string Route::failure() const { std::lock_guard<std::mutex> l(mutex_); return error_; }
+diff --git a/ps2xRuntime/src/lib/gs_backend_route.h b/ps2xRuntime/src/lib/gs_backend_route.h
+--- a/ps2xRuntime/src/lib/gs_backend_route.h
++++ b/ps2xRuntime/src/lib/gs_backend_route.h
+@@ -15,6 +15,8 @@
+ #include <vector>
+ 
+ struct GSRegisters;
++class PS2Runtime;class GS;
++#define PS2_RUNTIME_HAS_GS_SOUND_RAM_PROFILE 1
+ 
+ namespace gs_backend_bridge {
+ enum class Choice { Software, Parallel };
+@@ -98,11 +100,18 @@
+     virtual size_t heldGifCount() const noexcept { return 0u; }
+ };
+ using Factory = std::function<std::unique_ptr<Backend>()>;
++enum class SoundRamProfileStatusV1:std::uint8_t;
++using SoundRamProfileProbeV1=bool (*)(Backend&) noexcept;
++class FactorySnapshotV1;class SoundRamSelectionLeaseV1;
++struct SoundRamProfileIdentityV1;struct SoundRamProfileResultV1;
+ class Route {
+ public:
+     ~Route() { stop(); }
+     bool start(Choice choice, const Init&, Factory factory, std::string& reason);
+     void stop() noexcept;
++    // Explicit recoverable control, before any selected backend effect.
++    SoundRamProfileStatusV1 tryStopV1() noexcept;
++    bool startRegisteredV1(Choice,const Init&,FactorySnapshotV1,std::string&);
+     State state() const;
+     bool accelerated() const { return state() == State::Accelerated; }
+     std::string failure() const;
+@@ -132,6 +141,15 @@
+     // non-accelerated backend; a failed backend's regular contract applies.
+     void heldReport(size_t& bytes, size_t& items);
+ private:
++    friend class SoundRamSelectionLeaseV1;
++    friend SoundRamProfileResultV1 acquireSoundRamProfileBeforeRunV1(PS2Runtime&) noexcept;
++    SoundRamProfileResultV1 acquireProfileV1(SoundRamProfileIdentityV1,std::uint64_t=0) noexcept;
++    SoundRamProfileStatusV1 reserveProfileControlV1(bool,std::uint64_t);
++    void finishProfileControlV1(std::uint64_t,SoundRamProfileProbeV1) noexcept;
++    bool startProfileV1(Choice,const Init&,Factory,std::uint64_t,SoundRamProfileProbeV1,std::string&);
++    // Protected by short factory registry metadata lock, never held over GPU.
++    std::uint64_t profilePinsV1_{},profileIncarnationV1_{},profileFactoryGenerationV1_{};
++    bool profileTransitionV1_{};SoundRamProfileProbeV1 profileProbeV1_{};
+     template<class F> bool execute(F&& fn) {
+         std::lock_guard<std::mutex> lock(mutex_);
+         if (state_ == State::Failed) throw std::runtime_error(error_);
+diff --git a/ps2xRuntime/src/lib/gs_sound_ram_profile.h b/ps2xRuntime/src/lib/gs_sound_ram_profile.h
+new file mode 100644
+--- /dev/null
++++ b/ps2xRuntime/src/lib/gs_sound_ram_profile.h
+@@ -0,0 +1,71 @@
++#pragma once
++#include "gs_backend_route.h"
++#include <thread>
++class PS2Runtime;
++class GS;
++namespace gs_backend_bridge {
++enum class SoundRamProfileStatusV1:std::uint8_t {ok,unavailable,busy,leased,foreign_runtime,unsupported,capacity,allocation_failed};
++struct FactoryEntryV1;
++// Pure concrete-backend metadata probe, attached to its actual factory. No
++// provider/GPU/guest work, allocation, Route/factory reentry or logging.
++Factory withSoundRamProfileProbeV1(Factory,SoundRamProfileProbeV1);
++SoundRamProfileStatusV1 tryRegisterFactoryV1(Factory);
++class FactorySnapshotV1 final {
++public:FactorySnapshotV1()=default;
++private:
++    std::shared_ptr<const FactoryEntryV1> entry_;std::uint64_t generation_{};
++    friend FactorySnapshotV1 registeredFactoryV1();friend Factory registeredFactory();friend class Route;
++};
++FactorySnapshotV1 registeredFactoryV1();
++struct GlobalGsControlResultV1;
++class GlobalGsControlV1 final {
++public:
++    GlobalGsControlV1()=default;
++    GlobalGsControlV1(GlobalGsControlV1&&) noexcept;
++    GlobalGsControlV1& operator=(GlobalGsControlV1&&) noexcept;
++    ~GlobalGsControlV1();
++    GlobalGsControlV1(const GlobalGsControlV1&)=delete;
++    GlobalGsControlV1& operator=(const GlobalGsControlV1&)=delete;
++    explicit operator bool()const noexcept{return active_;}
++private:
++    bool active_{},outer_{};std::thread::id thread_;std::uint64_t generation_{};
++    void release() noexcept;
++    std::uint64_t profilePermitV1()const noexcept;
++    friend struct GlobalGsControlResultV1;
++    friend GlobalGsControlResultV1 acquireGlobalGsControlV1() noexcept;
++    friend SoundRamProfileResultV1 acquireSoundRamProfileBeforeRunV1(PS2Runtime&) noexcept;
++};
++struct GlobalGsControlResultV1 {SoundRamProfileStatusV1 status;GlobalGsControlV1 control;};
++// Same-thread nested control lifetime. No mutex retained across initialization,
++// worker join, factory/device calls. Blocks lease mint across ALL global effects.
++GlobalGsControlResultV1 acquireGlobalGsControlV1() noexcept;
++struct SoundRamProfileIdentityV1 {
++    PS2Runtime* runtime{};const void* ee{};const void* iop{};const void* vram{};const GS* gs{};
++};
++class SoundRamSelectionLeaseV1 final {
++public:
++    SoundRamSelectionLeaseV1()=default;
++    SoundRamSelectionLeaseV1(SoundRamSelectionLeaseV1&&) noexcept;
++    SoundRamSelectionLeaseV1& operator=(SoundRamSelectionLeaseV1&&) noexcept;
++    ~SoundRamSelectionLeaseV1();
++    SoundRamSelectionLeaseV1(const SoundRamSelectionLeaseV1&)=delete;
++    SoundRamSelectionLeaseV1& operator=(const SoundRamSelectionLeaseV1&)=delete;
++    explicit operator bool()const noexcept{return route_!=nullptr;}
++    bool matches(const PS2Runtime&,const void* ee,const void* iop)const noexcept;
++    std::uint64_t incarnation()const noexcept{return incarnation_;}
++    std::uint64_t factory_generation()const noexcept{return factory_generation_;}
++    // CONTROL ONLY after audio outer drain + device fence, outside guest/RPC/
++    // PCM/bank/provider/GS-owner locks. Does not stop a device or join a worker.
++    void release() noexcept;
++private:
++    Route* route_{};SoundRamProfileIdentityV1 identity_{};
++    std::uint64_t incarnation_{},factory_generation_{};std::size_t runtime_slot_{};
++    friend class Route;
++};
++struct SoundRamProfileResultV1 {SoundRamProfileStatusV1 status{SoundRamProfileStatusV1::unavailable};SoundRamSelectionLeaseV1 lease;};
++// Actual SDK gateway: real pre-run setup + actual GS owner control/FIFO. This
++// proves selection/config exclusion only, NOT guest/CD/Pad/RAM read authority.
++SoundRamProfileResultV1 acquireSoundRamProfileBeforeRunV1(PS2Runtime&) noexcept;
++bool soundRamProfileHeldForRuntimeV1(const PS2Runtime*) noexcept;
++bool soundRamSelectionHeldV1() noexcept;
++} // namespace gs_backend_bridge
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -12,6 +12,8 @@
+ bool ps2VifKickVuProfileActive() noexcept;
+ void ps2VifKickStageRecord(unsigned,uint64_t,uint64_t,uint64_t) noexcept;
+ #include "gs_backend_route.h"
++#include "gs_sound_ram_profile.h"
++#include "ps2_runtime.h"
+ #include "gpu_display_transport.h"
+ #include "gs_priv_atomic.h"
+ #include "runtime/ps2_gs_gpu.h"
+@@ -1576,6 +1578,10 @@
+ 
+ void ps2GsJoinWorker()
+ {
++    // Audio external-worker drain must release its selection before GS join.
++    // Never stop a working owner and then discover a retained backing lease.
++    auto profileControl=gs_backend_bridge::acquireGlobalGsControlV1();
++    if(profileControl.status!=gs_backend_bridge::SoundRamProfileStatusV1::ok)std::terminate();
+     ps2GsRequestWorkerStop();
+     if (t_isGsWorker) return; // Joining is owned by the host shutdown coordinator.
+     std::lock_guard<std::mutex> joinLock(g_gsJoinMutex);
+@@ -1588,7 +1594,7 @@
+     // Publication is metadata-only in native mode, but clear it before closing
+     // the backend owner so no stale epoch/source survives device teardown.
+     { std::lock_guard<std::mutex> publishedLock(g_publishedDisplayMutex); g_publishedDisplay.reset(); }
+-    g_backendRoute.stop();
++    if(g_backendRoute.tryStopV1()!=gs_backend_bridge::SoundRamProfileStatusV1::ok)std::terminate();
+     {
+         std::lock_guard<std::mutex> lock(g_gsAsync.m);
+         g_gsInstance = nullptr;
+@@ -1626,6 +1632,8 @@
+ 
+ void GS::init(uint8_t *vram, uint32_t vramSize, GSRegisters *privRegs)
+ {
++    auto profileControl=gs_backend_bridge::acquireGlobalGsControlV1();
++    if(profileControl.status!=gs_backend_bridge::SoundRamProfileStatusV1::ok)throw std::logic_error("GS init refused by retained sound selection/control");
+     // A new session cannot reuse a detached worker still bound to old RAM.
+     ps2GsJoinWorker();
+     ps2GsSetDispatchTestGate(false);
+@@ -1668,8 +1676,8 @@
+     const char* legacy = std::getenv("REO_GFX");
+     const bool bridgeSelected = legacy && std::string(legacy) == "bridge";
+     std::string reason;
+-    g_backendRoute.start(gpuRequested && gsThreadEnabled() && !bridgeSelected ? gs_backend_bridge::Choice::Parallel : gs_backend_bridge::Choice::Software,
+-                         initial, gs_backend_bridge::registeredFactory(), reason);
++    g_backendRoute.startRegisteredV1(gpuRequested && gsThreadEnabled() && !bridgeSelected ? gs_backend_bridge::Choice::Parallel : gs_backend_bridge::Choice::Software,
++                         initial, gs_backend_bridge::registeredFactoryV1(), reason);
+     if (gpuRequested && !gsThreadEnabled()) reason = "GPU routing requires REO_GS_THREAD=1";
+     if (gpuRequested && bridgeSelected) reason = "GPU routing cannot coexist with REO_GFX=bridge";
+     std::fprintf(stderr, "[GS-BACKEND] requested=%s selected=%s reason=%s\n",
+@@ -3959,6 +3967,43 @@
+ }
+ }
+ namespace gs_backend_bridge {
++SoundRamProfileResultV1 acquireSoundRamProfileBeforeRunV1(PS2Runtime& runtime) noexcept {
++    try {
++        auto setup=runtime.acquirePreRunSetup();
++        if(!setup||ps2ActualGuestExecutionDepth(&runtime)!=0u||ps2IoRegLockDepth()!=0u)
++            return {SoundRamProfileStatusV1::unavailable,{}};
++        auto control=acquireGlobalGsControlV1();
++        if(control.status!=SoundRamProfileStatusV1::ok)return {control.status,{}};
++        const auto permit=control.control.profilePermitV1();
++        if(!permit)return {SoundRamProfileStatusV1::busy,{}};
++        const auto identity=SoundRamProfileIdentityV1{&runtime,runtime.memory().getRDRAM(),runtime.memory().getIOPRAM(),runtime.memory().getGSVRAM(),&runtime.gs()};
++        if(!identity.ee||!identity.iop||!identity.vram||ps2RamBackingBytes!=PS2_RAM_SIZE||g_gsInstance!=identity.gs)
++            return {SoundRamProfileStatusV1::foreign_runtime,{}};
++        struct Reply {std::mutex mutex;bool cancelled{};SoundRamProfileResultV1 result;};
++        auto result=std::make_shared<Reply>();
++        // Owned result survives a cancelled waiter. No raw Runtime access on
++        // the queued owner; a late cancelled reply releases its temporary pin
++        // before actual GS worker join, never after caller storage destruction.
++        bool complete=false;
++        try{complete=gsBackendControl([result,identity,permit]{
++            // Cancellation handshake is metadata-only. The probe is pure,
++            // bounded, allocation-free, and Route uses try_lock, never GPU work.
++            std::lock_guard lock(result->mutex);if(result->cancelled)return;
++            if(g_gsInstance!=identity.gs||ps2GsWorkerStopRequested())return;
++            result->result=g_backendRoute.acquireProfileV1(identity,permit);
++        });}catch(...){complete=false;}
++        if(!complete){
++            SoundRamSelectionLeaseV1 abandoned;
++            {std::lock_guard lock(result->mutex);result->cancelled=true;abandoned=std::move(result->result.lease);}
++            return {SoundRamProfileStatusV1::unavailable,{}};
++        }
++        return std::move(result->result);
++    }catch(const std::bad_alloc&){return {SoundRamProfileStatusV1::allocation_failed,{}};}
++    catch(...){return {SoundRamProfileStatusV1::unavailable,{}};}
++}
++} // namespace gs_backend_bridge
++
++namespace gs_backend_bridge {
+ uint64_t debugControlQueuedCount()
+ {
+     return g_backendControlQueuedCount.load(std::memory_order_acquire);
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -15,6 +15,7 @@
+ #include "gs_priv_atomic.h"
+ #include "gpu_display_transport.h"
+ #include "ps2_runtime.h"
++#include "gs_sound_ram_profile.h"
+ #include "ps2_debug_panel.h"
+ #include "Kernel/Syscalls/Interrupt.h"
+ #include "Kernel/Syscalls/Helpers/CriAudio.h"
+@@ -1323,6 +1324,10 @@
+ 
+ bool PS2Runtime::initialize(const char *title, size_t ramBackingBytes)
+ {
++    // The SDK has one process GS/backing geometry. A foreign initializer must
++    // not replace global RAM geometry before it reaches GS::init's guard.
++    auto profileControl=gs_backend_bridge::acquireGlobalGsControlV1();
++    if(profileControl.status!=gs_backend_bridge::SoundRamProfileStatusV1::ok)return false;
+     if (!externalWorkerResetAllowed()) return false;
+     try
+     {

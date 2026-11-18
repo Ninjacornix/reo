@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "status": "both native frame paths complete opening/scenario and joined gameplay shutdown with zero source underruns; earlier large stall not reproduced and cause unknown",
+  "source_revision": "c5556a5b054be19f404ac964c52e1024ae814f7c",
+  "executable_sha256": "d0c4005b7627efae1b8cc11e4fd879b3870e542cdef2794fed0057b61bcd70a1",
+  "analyzer_sha256": {
+    "tools/native_reconstruction/analyze_host_movie_playtest.py": "39ae42dd1815d925f8179a4e318840d05283f36fd80c31dffaf572d192070f90",
+    "tools/native_reconstruction/test_host_movie_analysis.py": "c296cbe2ba36f4fa474f57ebc76f1efaee32d9946096d2adf546da5faa5540ce"
+  },
+  "evidence_sha256": {
+    "build-native-sjuni/candidate-work-v27/candidate-build-result.json": "acabd4a1e4d670f84a5c55b45538fac4f302a1d2635cd7f33cd5a7db9f76b6ff",
+    "build-native-sjuni/candidate-work-v27/seeded-object-cache.json": "c0c0a41ece001cf85162585b273a939a352c1ddd06e65110bd21764724b56af7",
+    "build-native-sjuni/candidate-inputs-v27/notices/native-candidate-source-delta.json": "ef0a27e51840cce608a432691f91b3bc0dfc37e477f3dc82918e322dade98b24",
+    "build-native-sjuni/owned_movie_route_v1.py": "56a554642cd097061e56cbbf992552e5cd027ee744d2bb83f9053fb9f7727831",
+    "build-native-sjuni/playtests/native-mp4-v27/native-movie-analysis-v3.json": "d1fc3a255732c7b90befdf185881ecae4fb05c7aef435196baba1a43db059c5f",
+    "build-native-sjuni/playtests/native-mp4-v27/audio-candidate-analysis.json": "00ac2ae1addd9c4c255ab07da9a0f79219735c60a12687619093de2fc9b121ab",
+    "build-native-sjuni/playtests/native-mp4-v27/native-audio-v1-receipt.json": "270f4262804cd8a7abf76c5ada53a49dbd7a844457ead689774eec6ed3dd01ed",
+    "build-native-sjuni/playtests/native-mp4-v27/controlled-route.jsonl": "76916b9d190d19fc6ee06b4037c540639a563fd65fdfdc699f7e3d9526f54b32",
+    "build-native-sjuni/playtests/native-mp4-v27/run.json": "ff33cd3450ac82756c34dfa051eb7fbbe08ead68819b4c66d5fe945504ee3544",
+    "build-native-sjuni/playtests/native-mp4-v27/producer.csv": "aa4405af11ee20c914355d51e1e27f911d3126ccb795c1a1b65528d8bc0f7e59",
+    "build-native-sjuni/playtests/native-mp4-v27/consumer.csv": "bda6ff03265bd5621f69b9301288136c99bb970fe657d2c0a14142b3de931a29",
+    "build-native-sjuni/playtests/native-mp4-v27-dxgi/native-movie-analysis-v2.json": "8e1c2ed2c8a07a0224a071befc5b15ad8ff6617083be9297b10f71d187f35bfa",
+    "build-native-sjuni/playtests/native-mp4-v27-dxgi/audio-candidate-analysis.json": "e3cd1fcaf8240bc8220c8ede04e9761a138bded0be78cdef07ac81c8ffc8c499",
+    "build-native-sjuni/playtests/native-mp4-v27-dxgi/native-audio-v1-receipt.json": "a81956b6ee1b754b235af362be0af35e7260267ba960b297de8f3dd1c7c439ad",
+    "build-native-sjuni/playtests/native-mp4-v27-dxgi/controlled-route.jsonl": "f5ec3d238be5b518bdae0983b391c7b1d5ece4f8237ba1b4027b223ba5f0e75e",
+    "build-native-sjuni/playtests/native-mp4-v27-dxgi/run.json": "988541a78ef7853f9f389e8ebb121c189d41e2f78795b65e5bf9596774efd523",
+    "build-native-sjuni/playtests/native-mp4-v27-dxgi/producer.csv": "c1143f43d4002874f996a37a19d91da1160421bd966e586de48358649a6e6d88",
+    "build-native-sjuni/playtests/native-mp4-v27-dxgi/consumer.csv": "4c56e58346f64e2ef3522da6a3b3e1f12be4818288c0842db3cd9c388ed20a24"
+  },
+  "step3_complete": false,
+  "subjective_av_confirmation": false,
+  "default_frame_path_changed": false
+}

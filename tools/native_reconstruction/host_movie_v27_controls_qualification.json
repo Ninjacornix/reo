@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "status": "actual opening/scenario skips and offline gameplay Pause/Exit pass with joined native owners and zero source underruns",
+  "executable_sha256": "d0c4005b7627efae1b8cc11e4fd879b3870e542cdef2794fed0057b61bcd70a1",
+  "source_revision": "c5556a5b054be19f404ac964c52e1024ae814f7c",
+  "evidence_sha256": {
+    "build-native-sjuni/playtests/native-mp4-v27-controls/run.json": "160d23f88dccadba3bef854214a844a72549bb3956d614a05b4bc95768c3379f",
+    "build-native-sjuni/playtests/native-mp4-v27-controls/native-movie-analysis.json": "184d051d1cc34624c022212eb66e075b51fd1ef44298d8b1b55aa6414ec41f99",
+    "build-native-sjuni/playtests/native-mp4-v27-controls/audio-candidate-analysis.json": "87d033ff933229507db3aa874db366564c38a2e07b8ae6076349442d9771e023",
+    "build-native-sjuni/playtests/native-mp4-v27-controls/native-audio-v1-receipt.json": "dd9c52b807ca7e79d0008374168a8cd5e92245a17831f24263ce97e765fdcbd5",
+    "build-native-sjuni/playtests/native-mp4-v27-controls/actors-paused-a.json": "0fe04f3e65b3b5a8bea7a6e6c7abebcc4a23f387d4f3b9a1bd07060b7f1d3c64",
+    "build-native-sjuni/playtests/native-mp4-v27-controls/actors-paused-b.json": "59363654b48ed89693486b7f669ac07420f0592035431612053557902126ca87",
+    "build-native-sjuni/playtests/native-mp4-v27-controls/actors-resumed.json": "f61e2b94ec702606129e7d3bd8da42761e0510cd8de67e59aa1c93c9e57ff99e",
+    "build-native-sjuni/playtests/native-mp4-v27-controls/actors-after-exit.json": "27237094c0810ddc317cb9909a069f6abe6533b953d606ee9cffe947241a1109",
+    "build-native-sjuni/playtests/native-mp4-v27-controls/actors-after-movement.json": "549c40ebd089964f466548fcbbd786540c2e98eae6cad2c3e26555923cf9a5d1",
+    "build-native-sjuni/playtests/native-mp4-v27-controls/captures/after-opening-start.json": "efeec1428e8d838cfde97c30ca753be70352679e8b1e40e78a9a658a7900e449",
+    "build-native-sjuni/playtests/native-mp4-v27-controls/captures/after-scenario-start.json": "e65b404a187a483c3b28205c444558bde4749f7c905f62fda099a0372119aad5",
+    "build-native-sjuni/playtests/native-mp4-v27-controls/captures/game-start.json": "4a4d4028d3937786ca37b3744b064603c895bbf10005c3ac69894723d85cd73c",
+    "build-native-sjuni/playtests/native-mp4-v27-controls/captures/game-select.json": "f03ab57e458d4627081f99b2667a35c71d8d599adada1608483371b3f302e80b",
+    "build-native-sjuni/playtests/native-mp4-v27-controls/captures/after-exit.json": "c243dfa03244b83772f9bb28f344b26c798ce77585ec7a160ff3c054df991f69"
+  },
+  "step3_complete": false,
+  "active_movie_pause_tested_in_game": false,
+  "subjective_av_confirmation": false
+}

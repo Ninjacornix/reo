@@ -104,6 +104,7 @@ class IsolationTests(unittest.TestCase):
         os.environ["REO_UNINTENDED_TEST_ENV"] = "should-not-propagate"
         try:
             env = harness.environment(record, player, {"REO_COOP_TEST_PORT": "1234"})
+            self.assertEqual(env["REO_COOP_TEST_INPUT"], "1")
             self.assertNotIn("REO_UNINTENDED_TEST_ENV", env)
             self.assertEqual(env["REO_COOP_TEST_PORT"], "1234")
             self.assertEqual(env["REO_MC0_ROOT"], "private")

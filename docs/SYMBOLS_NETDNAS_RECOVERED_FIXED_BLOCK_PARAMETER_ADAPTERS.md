@@ -1,0 +1,21 @@
+# Recovered keyed DNAS fixed-parameter block-session adapters
+
+Static File #1 US owned o4/netdnas.bin,2026-11-05,base6E0000,SHA-256 `8f090617fa1ef420ad73ae2d1c960998c55259d372677804d2a1e07e1a182e16`. Two complete logicalownersjoinedfromclearentrancethroughrecoveredspan/restore/epilogue.No guestinstructions executed,no blockproviderinvoked,no game/build/network/attachmentorinputmutation. Hexadecimaladdresses.
+
+| Guest entry / original source | Proposed label | Confidence | Evidence and remaining uncertainty |
+| --- | --- | --- | --- |
+| [o4 0x747C68](../recomp/config/output_ovl/o4/o4_00747C68_0x747c68.cpp) | `run_fixed_parameter_eight_byte_block_session_for_caller_span_candidate` | Confirmed complete local argument/result binding; provider algorithm/plaintext unknown | Clearentrancecapturesinputa0->S2,outputa1->S0,blockcounta2->S1;copies8ownedbytes780EB0tostackthroughLDL/LDRandSDL/SDRpairs. Recovered6wordsinvoke74BCE0(input,stackparameter,output,blockcount),retainresultS0. Clearforwardrestore/epiloguethrough747D84returnsprovider0/-1.74BB40scalesblockcount<<3andrequiresexactoutputlength;thisowneraddsnoNULL/capacity/lengthvalidation. |
+| [o4 0x747D88](../recomp/config/output_ovl/o4/o4_00747D88_0x747d88.cpp) | `transform_fixed_twenty_four_byte_blob_into_caller_output_candidate` | Confirmed complete local argument/result binding; provider algorithm/plaintext unknown | Clearentrancecapturesoutputa0->S0;copies24ownedbytes780EB8tostackusingthree8Bload/storepairs. Recovered5wordsinvoke747C68(stackblob,originaloutput,3),retainresultS0;balancedforwardrestore/returnthrough747EA8. Count3is24bytesatthe8-byteblockupdateboundary. Thisownerdoesnotcheckglobal767A80andhasnoprovedoutputcapacity. Plaintext/stringidentityisnotrecoveredbywordtransformationofthiswrapper. |
+
+| Logical owner, half-open | Recovered payload | Words | Reconstructed SHA-256 | Joined original SHA-256 |
+| --- | --- | ---: | --- | --- |
+| 747C68..747D84 | 747D00..747D18 | 6 | `9bbe8e9183529835abcca04225d2a93be646e317822641c8be5acd40d9059cf1` | `41be59b8cafcbaa82b81c9457eb7fc6354c1b06c17adde5c24c13f043196a7c4` |
+| 747D88..747EA8 | 747E30..747E44 | 5 | `a47d6019e880719464f569c2d252c720dd522090c9ffaee8513b080dada5ede8` | `256d6cda26bb0706f8cf32637439b56de3816128549076aed1b56d6292bdd40a` |
+
+Owned780EB0[8]hex`bca64ca7c44063cd`,SHA-256 `6e9aa3a37bb8838381af21f753ce8dd8675b6b8f37e0a389b121682e137c7905`. Owned780EB8[24]hex`76c30af00bcb528d553e3805c77edd4aff3bce15c624c541`,SHA-256 `9d0ff5e225bda986c826ac49dc4139e2fedc1b9eea2d6334381edd0bd938c933`. Theseareopaqueoriginaldata,nottheencodedinstructionpayload. Thisreviewdoesnotdecodeoridentifytheresultingplaintext,establishcryptographicalgorithmname,orassertresourceauthentication.
+
+[Block-sessionlifecycleandexactcountadaptation](SYMBOLS_NETDNAS_OPAQUE_BLOCK_SESSIONS.md) establishes74BCE0construct/update/finishwithcount<<3. Earlyprovidererrorscanleavecleanupincompleteinsidetheexistingcallee;thesetwoadapterspropagateonlyitsnormalizedresult. Callerinspectionconnects747D88tofile-derivedmetadatahelpers,butafilenamecannotbeinventedfromthatusagealone.
+
+The [independentlycheckedkeyedrecoveryprotocol](SYMBOLS_NETDNAS_RECOVERED_KEYED_INITIALIZATION_AND_TEARDOWN.md) and [fullword-fieldreceipt](../build-function-index/proxy-dnas-first14-review.json) preservealloriginalclearandreconstructedwords,bothactualdirections,metadataexceptionsandrestoredigests. Originalgeneratedsource/graphremainunchanged;catalogue747CD4/747E04fragmentsareinsidejumpoverdata,notadditionalfunctions. Output/sourceoverlapandaliasestocodeorheadersareunprovedcallercontracts. No runtimeblocktransformorfileaccesswasperformed.
+
+Reproduce the complete joined original/candidate word evidence with the repository [first-owner-group checker](../tools/function_index/review_dnas_proxy_first_owner_groups.py): python tools/function_index/review_dnas_proxy_first_owner_groups.py. It reads the fixed owned-image hash and embedded owner bounds, independently rereads exception metadata and both descriptors, verifies actual entry/restore argument setups, reconstructs every candidate and exact original-byte restore, and regenerates both linked private receipts without requiring either old receipt. Direct branches and delay slots are checked against the admitted connected instruction regions. No guest instruction is executed.

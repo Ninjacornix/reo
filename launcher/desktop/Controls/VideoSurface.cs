@@ -20,6 +20,9 @@ public sealed partial class VideoSurface : Control, IDisposable {
     WriteableBitmap? bitmap;
     CancellationTokenSource? decode;
     Process? process;
+    readonly object processGate = new();
+    internal Task DecodeCompletion { get; private set; } = Task.CompletedTask;
+    internal bool HasDecoder { get { lock (processGate) return process != null; } }
     bool opened, playing;
     int generation;
     readonly Stopwatch clock = new();
@@ -66,16 +69,39 @@ public sealed partial class VideoSurface : Control, IDisposable {
     }
     public void Dispose() => Close();
     void Kill() {
-        try { if (process is { } child && !child.HasExited) child.Kill(true); }
-        catch (Exception error) when (error is InvalidOperationException or System.ComponentModel.Win32Exception) { }
-        process = null;
+        // The decoder worker owns disposal. Navigation may terminate it, but must
+        // not query its handle concurrently with the worker disposing that handle.
+        lock (processGate) {
+            var child = process;
+            process = null;
+            if (child != null) StopDecoder(child);
+        }
+    }
+    static void StopDecoder(Process child) {
+        try { if (!child.HasExited) child.Kill(true); }
+        catch (Exception error) when (error is InvalidOperationException or
+            System.ComponentModel.Win32Exception or System.Runtime.InteropServices.COMException) { }
+    }
+    Process StartDecoder(ProcessStartInfo info, CancellationToken token) {
+        lock (processGate) {
+            // Close may have cancelled this run during asynchronous tool setup.
+            token.ThrowIfCancellationRequested();
+            return process = Process.Start(info) ?? throw new IOException("Could not start the background-video decoder.");
+        }
+    }
+    void ReleaseDecoder(Process child) {
+        lock (processGate) {
+            if (ReferenceEquals(process, child)) process = null;
+            StopDecoder(child);
+            child.Dispose();
+        }
     }
     void Restart() {
         decode?.Cancel(); decode?.Dispose();
         Kill();
         var cancel = decode = new CancellationTokenSource();
         clock.Reset(); if (playing) clock.Start();
-        _ = Decode(MediaPath!, start, ++generation, cancel.Token);
+        DecodeCompletion = Decode(MediaPath!, start, ++generation, cancel.Token);
     }
     [GeneratedRegex(@"Duration: (\d+):(\d\d):(\d\d(?:\.\d+)?)")] private static partial Regex DurationPattern();
     [GeneratedRegex(@"Video: .*?, (\d{2,5})x(\d{2,5})")] private static partial Regex SizePattern();
@@ -83,6 +109,7 @@ public sealed partial class VideoSurface : Control, IDisposable {
     async Task Decode(string clip, TimeSpan offset, int run, CancellationToken token) {
         string? failure = null;
         bool ended = false;
+        Process? child = null;
         try {
             string ffmpeg = await PlatformServices.PrepareFfmpeg(token);
             var info = new ProcessStartInfo(ffmpeg) { UseShellExecute = false, CreateNoWindow = true,
@@ -91,9 +118,8 @@ public sealed partial class VideoSurface : Control, IDisposable {
             if (offset > TimeSpan.Zero) arguments.AddRange(["-ss", offset.TotalSeconds.ToString("0.###", CultureInfo.InvariantCulture)]);
             arguments.AddRange(["-i", clip, "-an", "-sn", "-dn", "-pix_fmt", "bgra", "-f", "rawvideo", "pipe:1"]);
             foreach (string argument in arguments) info.ArgumentList.Add(argument);
-            using var child = Process.Start(info) ?? throw new IOException("Could not start the background-video decoder.");
-            process = child;
-            var header = new TaskCompletionSource<(int Width, int Height)>(TaskCreationOptions.RunContinuationsAsynchronously);
+            child = StartDecoder(info, token);
+            var header = new TaskCompletionSource<(int Width, int Height, TimeSpan? Duration, double Rate)>(TaskCreationOptions.RunContinuationsAsynchronously);
             var errors = Task.Run(async () => {
                 var log = new System.Text.StringBuilder();
                 TimeSpan? duration = null;
@@ -103,17 +129,17 @@ public sealed partial class VideoSurface : Control, IDisposable {
                         duration = TimeSpan.FromHours(int.Parse(d.Groups[1].Value)) + TimeSpan.FromMinutes(int.Parse(d.Groups[2].Value)) +
                                    TimeSpan.FromSeconds(double.Parse(d.Groups[3].Value, CultureInfo.InvariantCulture));
                     if (line.Contains("Video:") && SizePattern().Match(line) is { Success: true } s) {
+                        double rate = 30;
                         if (RatePattern().Match(line) is { Success: true } r &&
                             double.TryParse(r.Groups[1].Value, CultureInfo.InvariantCulture, out double fps) && fps > 1)
-                            frameRate = fps;
-                        Dispatcher.UIThread.Post(() => { if (run == generation) NaturalDuration = duration; });
-                        header.TrySetResult((int.Parse(s.Groups[1].Value), int.Parse(s.Groups[2].Value)));
+                            rate = fps;
+                        header.TrySetResult((int.Parse(s.Groups[1].Value), int.Parse(s.Groups[2].Value), duration, rate));
                     }
                 }
                 header.TrySetException(new IOException(log.ToString().Trim()));
                 return log.ToString();
             }, token);
-            var (width, height) = await header.Task.WaitAsync(token).ConfigureAwait(false);
+            var (width, height, clipDuration, clipRate) = await header.Task.WaitAsync(token).ConfigureAwait(false);
             byte[] frame = new byte[width * height * 4];
             var output = child.StandardOutput.BaseStream;
             long index = 0;
@@ -128,13 +154,16 @@ public sealed partial class VideoSurface : Control, IDisposable {
                 // Pause holds the shown frame; the decoder blocks on its full pipe meanwhile.
                 while (true) {
                     while (!playing && !token.IsCancellationRequested) await resume.Task.WaitAsync(token).ConfigureAwait(false);
-                    double due = index / frameRate, now = clock.Elapsed.TotalSeconds;
+                    double due = index / clipRate, now = clock.Elapsed.TotalSeconds;
                     if (due > now) await Task.Delay(TimeSpan.FromSeconds(Math.Min(due - now, .05)), token).ConfigureAwait(false);
                     else if (playing) break;
                 }
                 long shown = ++index;
                 var copy = frame.ToArray();
-                await Dispatcher.UIThread.InvokeAsync(() => Present(copy, width, height, shown, run), DispatcherPriority.Render);
+                // Pause may arrive after the worker queues this frame. Hold that
+                // exact frame until resume rather than advancing the paused image.
+                while (!await Dispatcher.UIThread.InvokeAsync(() => Present(copy, width, height, shown, run, clipDuration, clipRate), DispatcherPriority.Render))
+                    await resume.Task.WaitAsync(token).ConfigureAwait(false);
             }
             if (!ended && !token.IsCancellationRequested) {
                 await child.WaitForExitAsync(token).ConfigureAwait(false);
@@ -145,14 +174,18 @@ public sealed partial class VideoSurface : Control, IDisposable {
         catch (Exception error) when (error is IOException or System.ComponentModel.Win32Exception or InvalidOperationException) {
             failure = error.Message;
         }
+        finally {
+            if (child != null) ReleaseDecoder(child);
+        }
         await Dispatcher.UIThread.InvokeAsync(() => {
             if (run != generation) return;
             if (failure != null) MediaFailed?.Invoke(this, failure);
             else if (ended) MediaEnded?.Invoke(this, EventArgs.Empty);
         });
     }
-    void Present(byte[] frame, int width, int height, long index, int run) {
-        if (run != generation) return;
+    bool Present(byte[] frame, int width, int height, long index, int run, TimeSpan? duration, double rate) {
+        if (run != generation) return true;
+        if (!playing) return false;
         if (bitmap == null || bitmap.PixelSize.Width != width || bitmap.PixelSize.Height != height) {
             bitmap?.Dispose();
             bitmap = new WriteableBitmap(new PixelSize(width, height), new Vector(96, 96),
@@ -163,7 +196,15 @@ public sealed partial class VideoSurface : Control, IDisposable {
                 System.Runtime.InteropServices.Marshal.Copy(frame, y * width * 4, pixels.Address + y * pixels.RowBytes, width * 4);
         shownFrames = index;
         InvalidateVisual();
-        if (!opened) { opened = true; MediaOpened?.Invoke(this, EventArgs.Empty); }
+        if (!opened) {
+            // Metadata must be visible before MediaOpened. A separate dispatcher
+            // post can run after the first frame and falsely reject a playable clip.
+            NaturalDuration = duration;
+            frameRate = rate;
+            opened = true;
+            MediaOpened?.Invoke(this, EventArgs.Empty);
+        }
+        return true;
     }
     public override void Render(DrawingContext context) {
         if (bitmap == null) return;

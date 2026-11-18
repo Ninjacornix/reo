@@ -1,0 +1,248 @@
+{
+  "schema": 1,
+  "date": "2026-11-05",
+  "scope": "File #1 bounded SJUNI controlled integration smoke",
+  "executable_sha256": "ce6a3768d215b8ee9e5ef83e0e5abb775476fd22e1f0a87a69b2336db36b23c1",
+  "build_receipt_sha256": "dfe259975d489237c7184962001113e89bbf78f2ff8a09c567e10d6188d6d31b",
+  "candidate_manifest_sha256": "bf5a89f4fc6a75bb2a735260f57676c9dc5396f9308593d2b29a66b76fb4e7f1",
+  "adapter_source_sha256": "fd3162c2dfdf42c14da99e1a05791587c6040b1e96b495bd87416bb12e9143dd",
+  "compiled_units": 2347,
+  "reused_units": 0,
+  "tests": [
+    {
+      "name": "original-title-v1",
+      "local_evidence_directory": "build-native-sjuni/playtests/original-title-v1",
+      "elapsed_seconds": 86.063,
+      "exit_code": 0,
+      "supervisor_termination": false,
+      "fatal_diagnostic_count": 0,
+      "audio": {
+        "report_windows": 80,
+        "frames": 3805920,
+        "signal_frames": 833600,
+        "underrun_frames": 0,
+        "host_ready_windows": 80,
+        "host_signal_windows": 18
+      },
+      "native_body_count_lower_bounds": {},
+      "evidence_sha256": {
+        "session.json": "670c9103ebc1d9f48b1b06c9f9f58c55aa301a9ccf87fc4396d076ec06ed60f4",
+        "run.json": "05cd3b0882893e7a790bf58faf300e85e71ee3d16812a87eaf1ad1c07fdca4a1",
+        "sjuni-analysis.json": "089defb0769bee686a66b33228025e1c0ec8f81537fe95779d9c6c55dcdc5c1c",
+        "window-close-request.json": "cd4f40c0c6a2c33922cdf5f63f7ed6a6e5e4375b11c98e7e569b9b6d2832a4da",
+        "player1/logs/stdout.log": "39a2082cef9013d4faf9752b8709b6709b39ffbd1e0fb5bc3fe84af0b0bca854",
+        "player1/logs/stderr.log": "1df86e215ec9ea8ad95af0b4b623d7f05d063cc1e3d06785b61bad171ea70737"
+      },
+      "captures": [
+        {
+          "path": "captures/early.png",
+          "sha256": "6d04b80b50c4288096b2c635cba740f966c493dba8a14cc720f6edc0de475617"
+        },
+        {
+          "path": "captures/later.png",
+          "sha256": "bd5c3a33a1c74133ef042c72232d660fdfd26866016aa58cd1cc8efee3a52a21"
+        },
+        {
+          "path": "captures/title-motion.png",
+          "sha256": "64668860a07a33219e9589817413cf38dcbb5a178da241eea53ba321b2942130"
+        }
+      ]
+    },
+    {
+      "name": "native-title-v1",
+      "local_evidence_directory": "build-native-sjuni/playtests/native-title-v1",
+      "elapsed_seconds": 94.704,
+      "exit_code": 0,
+      "supervisor_termination": false,
+      "fatal_diagnostic_count": 0,
+      "audio": {
+        "report_windows": 92,
+        "frames": 4384800,
+        "signal_frames": 832800,
+        "underrun_frames": 0,
+        "host_ready_windows": 92,
+        "host_signal_windows": 18
+      },
+      "native_body_count_lower_bounds": {
+        "put_guarded": 1024,
+        "get_guarded": 32768,
+        "queued_bytes_canonical": 32,
+        "unget_guarded": 16
+      },
+      "evidence_sha256": {
+        "session.json": "504984c08ddc1c78d35a3d75d4b01cb038f9f3e81c86b98b50d6cb837bc3724e",
+        "run.json": "23d7c50eb87edceedad6fb1474a86a5f02847ad8d61f4497883d31e0b87c0087",
+        "sjuni-analysis.json": "d8497da9baee4aa90cba61b30411d4d0d8654bef63b950dc3b29e4efed56aa1c",
+        "window-close-request.json": "589e917e3c2fe9290235ae5c4047eff303df7062d70228df512ce420d2f7a443",
+        "player1/logs/stdout.log": "252d23d223f468fc64cbe6ddb11b09b57f837050017d84e3605563ec461ff9a9",
+        "player1/logs/stderr.log": "3f7abfce856611df48a13d9084a9d5ff5a0f81dee16d4fd536db9d89c7fad2b9"
+      },
+      "captures": [
+        {
+          "path": "captures/early.png",
+          "sha256": "514c275b7fafa1eff814d6fd3cec69666f6e7c7243a515df965664f750612bcd"
+        },
+        {
+          "path": "captures/later.png",
+          "sha256": "7f1cf1b6032124c4a2ae99c1329b360eae6f869ef1d5133ab46c56f9f072321b"
+        }
+      ]
+    },
+    {
+      "name": "original-gameplay-v1",
+      "local_evidence_directory": "build-native-sjuni/playtests/original-gameplay-v1",
+      "elapsed_seconds": 229.797,
+      "exit_code": 0,
+      "supervisor_termination": false,
+      "fatal_diagnostic_count": 0,
+      "audio": {
+        "report_windows": 224,
+        "frames": 10720320,
+        "signal_frames": 6537924,
+        "underrun_frames": 0,
+        "host_ready_windows": 224,
+        "host_signal_windows": 139
+      },
+      "native_body_count_lower_bounds": {},
+      "evidence_sha256": {
+        "session.json": "70208e19d8a4e37c409ff3a87af9665a5614b17fd94c534d694699f2cbd33463",
+        "run.json": "e3405d3af548c0f1d2b20fcc935ae02cedc2a2b1d247b3e164a1f46218bb16ba",
+        "sjuni-analysis.json": "7916426c50bcd9c5d74512462a8cf85397f52cbc53e2fd17d983a1bfcdc8301b",
+        "window-close-request.json": "2f957641063677b517912359c902fbb3ccc86934a8159bd0cf397dd16904bc06",
+        "player1/logs/stdout.log": "7cbe399ae13255a6f2fb40209d5227bf0cf1c100eab97ffa2fe8268b9032343c",
+        "player1/logs/stderr.log": "ac3193fd0161788134edbbe7b5a5c43d64b1e8f6b10c79989da9902578784df3"
+      },
+      "captures": [
+        {
+          "path": "captures/final-menu.png",
+          "sha256": "7879d6f7c12d77bb44fd91109084efbcfcf015bde994a8e23154ee72fa89b861"
+        },
+        {
+          "path": "captures/menu.png",
+          "sha256": "bd37349be34d07f60836c84e40132801cd3e7133950544e0c4c46174ad5a525f"
+        },
+        {
+          "path": "captures/quit-confirmation.png",
+          "sha256": "07581f332c2b2a7c5153ce27583bcfb36e5710fcd94bdb3c7ea7c83268fb3a95"
+        },
+        {
+          "path": "captures/reload-menu.png",
+          "sha256": "bcc1c362cac658bd12ed492c518f2d44f1c7e7b7ec18302a87c9e8e58e9dac9e"
+        },
+        {
+          "path": "captures/reload-stage.png",
+          "sha256": "444c87570594c9d8c5db0f0e0ce210826ca83b47d4ad3b5a5d3db0bb6960de4e"
+        },
+        {
+          "path": "captures/resumed.png",
+          "sha256": "97494957fcf4a60500af5c7edef235b45754b56a753028c64748b2ae63ff7b82"
+        },
+        {
+          "path": "captures/returned-menu.png",
+          "sha256": "19345c5dcbf8243300fea4a0d197eba8f5ede1a42ba78e6afddbb42c90bd032e"
+        },
+        {
+          "path": "captures/route.png",
+          "sha256": "ee2918ffb71f00d25b361e3512935daac750afeda298607926fa8d5fcdf7fd3b"
+        },
+        {
+          "path": "captures/select-menu.png",
+          "sha256": "3b59aeca993a0f0e85819068a4cf7757cc597d3d6350c7b28b546cf8261ee138"
+        },
+        {
+          "path": "captures/unpaused.png",
+          "sha256": "e8308533aa106a2225c771312027c3e956dc6e09399229df7128d1c16a48f8eb"
+        }
+      ]
+    },
+    {
+      "name": "native-gameplay-v1",
+      "local_evidence_directory": "build-native-sjuni/playtests/native-gameplay-v1",
+      "elapsed_seconds": 280.141,
+      "exit_code": 0,
+      "supervisor_termination": false,
+      "fatal_diagnostic_count": 0,
+      "audio": {
+        "report_windows": 276,
+        "frames": 13268640,
+        "signal_frames": 8219799,
+        "underrun_frames": 0,
+        "host_ready_windows": 276,
+        "host_signal_windows": 178
+      },
+      "native_body_count_lower_bounds": {
+        "put_guarded": 8192,
+        "get_guarded": 131072,
+        "queued_bytes_canonical": 32768,
+        "unget_guarded": 128
+      },
+      "evidence_sha256": {
+        "session.json": "d82ec3f54765f3922b3f051bdefe813fdeff7dccc3054d76f9559b8dfba91ac3",
+        "run.json": "4ca883912ff955da3e479275591f4774883b5599fed3451bc0d73f0d80640fc0",
+        "sjuni-analysis.json": "4d69c5be3bee9cf537896ee5b98acef1bb7b821ea5a8cb53c325ecd81579661a",
+        "window-close-request.json": "094909157b3c0df76214cb61f635def37007efd2dc4d72b78d7fae3936a0ea66",
+        "player1/logs/stdout.log": "b4e2626e45f6e0270d036b966fc858a93b92dfd996e39e32423ef6036f271a5b",
+        "player1/logs/stderr.log": "2486f4b3e75e5c2be831baa74e2e493cd05d2f3788a02969c5194bfce32ba32f"
+      },
+      "captures": [
+        {
+          "path": "captures/menu.png",
+          "sha256": "692279b98153474f2ea8e41f7b25accc8a3738e46e4ba4336dbc3822ce7997d7"
+        },
+        {
+          "path": "captures/quit-results.png",
+          "sha256": "b56362bb452667aedfaf35b5ced2805cb3dbef7eb42a507a2fb8c65fa9edd60c"
+        },
+        {
+          "path": "captures/reload-stage.png",
+          "sha256": "adbdc9c106688e70a3b2f375cacf51826a4a8f832859bfbc7c4c3ce4fa6404ee"
+        },
+        {
+          "path": "captures/returned-menu.png",
+          "sha256": "869c571527514315f669c45aef45ed2465a8bde086d7c52aefc29f6ad5ad740d"
+        },
+        {
+          "path": "captures/route.png",
+          "sha256": "20a378cfd7088a7912d02c3335ff07303d8ad464898847cdca2fdb43a4e5e898"
+        },
+        {
+          "path": "captures/second-gameplay.png",
+          "sha256": "ad10f51d1278d4a2ffde5ba7cc545913517080781b4ac291336161621c1e0439"
+        },
+        {
+          "path": "captures/second-load-after-skip.png",
+          "sha256": "9d2033ac37e2e77ac46cd5d4ad4ac302023d556f4204a143683e33ea34a9c742"
+        },
+        {
+          "path": "captures/second-load-stage.png",
+          "sha256": "8ffeb1c4fb9e4d2d50454871f87fca14e99e2a5e77cb6a8ecea9963c63e91a2b"
+        },
+        {
+          "path": "captures/second-movie.png",
+          "sha256": "b71310c57815d9c0187e11dd318a4a616f774c9fbc3c414d3804178a387b3830"
+        },
+        {
+          "path": "captures/second-selection.png",
+          "sha256": "f1c8c11e7867a13f17a05aa447e27f3e0210cbef0d2b4ce4c7d743c4fd0ad736"
+        },
+        {
+          "path": "captures/select-menu.png",
+          "sha256": "9c5cb1e1f0ee523e356fc2b1095d2a757de080f347e2e2c0f63883a18a3a4f56"
+        },
+        {
+          "path": "captures/unpaused.png",
+          "sha256": "77e6a719a4f030aef94184b5cc8f2b101b28070f2182e7d7981ec0d6c5a600b5"
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "One Windows machine, owned File #1 US assets; different durations/routes after initial common input.",
+    "Native trace values are lower bounds after body commit, not exact totals or standalone leave proof.",
+    "Availability/queued-node/free-node queries have isolated tests but no live proof line in these runs.",
+    "Original gameplay run returned to menu; second same-process gameplay load was exercised only in native mode.",
+    "Audio counters/visual captures support smoke observations, not waveform or frame-exact equivalence.",
+    "No original-to-native performance benchmark, File #2, co-op, later scenario, save or long-session validation.",
+    "All temporary guest adapters, remote IOP/SJX/DTR and decoder/runtime dependencies remain."
+  ]
+}

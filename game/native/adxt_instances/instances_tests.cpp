@@ -1,0 +1,146 @@
+#include "instances.hpp"
+#include "../adxt_shared_player/test_sources.hpp"
+#include "../adxt_player/test_provider.hpp"
+#include <chrono>
+#include <iostream>
+#include <thread>
+namespace n=reo::native::adxt_instances;
+namespace f=reo::native::adxt_shared_player::testing;
+using S=n::Status;
+unsigned checks{};void check(bool v){++checks;if(!v)throw std::runtime_error("Instance check "+std::to_string(checks));}
+template<class F>void until(F&& done){const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(15);while(!done()){if(std::chrono::steady_clock::now()>deadline)throw std::runtime_error("Instance completion deadline");std::this_thread::yield();}}
+struct Test {
+    std::shared_ptr<reo::audio_output::CallbackSlot> slot=std::make_shared<reo::audio_output::CallbackSlot>();
+    std::shared_ptr<reo::native::adxt_player::testing::Provider> provider=std::make_shared<reo::native::adxt_player::testing::Provider>();
+    n::Instances instances;
+    explicit Test(unsigned count=4):instances({{count},{}},slot,provider){check(instances.start_output()==S::completed);}
+};
+n::Key create(Test& t,unsigned slot,unsigned channels=1){auto result=t.instances.create({channels,{slot,slot,slot,slot}});check(result.status==S::completed);return result.key;}
+n::Source source(std::shared_ptr<const reo::native::resources::ByteView> file,unsigned channels=1){n::Source s;s.input=std::move(file);s.player.decoder.channels=channels;s.player.decoder.source_config.byte_length=static_cast<std::int32_t>(s.input->size());s.player.initial_tick=41;return s;}
+void service(Test& t){const auto status=t.instances.service(42);check(status==S::completed || status==S::pending);}
+void join(Test& t){until([&]{const auto status=t.instances.join();check(status==S::completed || status==S::pending);return status==S::completed;});}
+struct Release {
+    std::shared_ptr<f::Blocked> file;
+    void run(){std::lock_guard lock(file->mutex);file->released=true;file->cv.notify_all();}
+    ~Release(){run();}
+};
+int main(){try{
+    {
+        Test t;const auto a=create(t,0),b=create(t,1,2);auto& i=t.instances;
+        check(i.snapshot().instances==2 && !i.snapshot().session.records);
+        check(i.create({1,{0,2,2,2}}).status==S::occupied);
+        check(i.gain(a,0.25f)==S::completed && i.volume(a,193)==S::completed && i.pause(a,1,40)==S::completed);
+        check(i.start(a,source(f::file(1,48000,20000)))==S::completed);
+        check(i.start(b,source(f::file(2,24000,20000),2))==S::completed);
+        until([&]{service(t);const auto x=i.inspect(a),y=i.inspect(b);return x.source && y.source && x.source->configured && y.source->configured;});
+        check(i.inspect(a).source->clock.paused==1 && i.inspect(a).source->output.voice.gain==0.25f && i.inspect(a).source->output.voice.volume==193);
+        check(i.volume(a,0)==S::completed && i.inspect(a).source->output.voice.volume==0 && i.inspect(b).source->output.voice.volume==256);
+        check(i.volume(a,UINT32_MAX)==S::completed && i.inspect(a).source->output.voice.volume==UINT32_MAX);
+        until([&]{service(t);const auto peer=i.inspect(b).source;return peer->output.voice.playing && peer->output.channel[0].samples>=512;});
+        check(i.pause(a,0,42)==S::completed);const auto before=i.inspect(b).starts;const auto consumed=i.inspect(b).source->output.channel[0].consumed_bytes;
+        const auto stopped=i.stop(a);check(stopped==S::completed || stopped==S::pending);
+        until([&]{service(t);return i.inspect(a).phase==n::Phase::idle;});
+        check(i.inspect(a).source->decoder.source.joined && i.inspect(a).completed_stops==1);
+        check(i.inspect(b).starts==before && !t.provider->unloaded && i.estimate(a,42).status==n::control::Status::pending);
+        check(t.provider->step(256) && i.inspect(b).source->output.channel[0].consumed_bytes>consumed);
+        check(i.gain(a,1)==S::completed && i.start(a,source(f::file(1,48000,5000)))==S::completed);
+        until([&]{service(t);return i.inspect(a).source->configured;});check(i.inspect(a).starts==2 && i.inspect(a).source->output.voice.volume==UINT32_MAX);
+        const auto destroyed=i.destroy(a);check(destroyed==S::completed || destroyed==S::pending);
+        until([&]{service(t);return i.inspect(a).status==S::invalid_key;});
+        const auto fresh=create(t,0);check(i.stop(a)==S::invalid_key && i.volume(a,0)==S::invalid_key && i.inspect(fresh).phase==n::Phase::idle);
+        check(i.start(fresh,source(f::file(1,48000,5000)))==S::completed);
+        until([&]{service(t);return i.inspect(fresh).source->configured;});check(i.inspect(fresh).source->output.voice.volume==256);
+        check(i.inspect(b).status==S::completed);join(t);check(t.provider->unloaded);
+    }
+    {
+        Test t;auto& i=t.instances;const auto a=create(t,0),b=create(t,1),c=create(t,2);
+        auto fa=f::file(1,48000,20000),fb=f::file(1,48000,20000),fc=f::file(1,48000,20000);
+        check(i.start(a,source(fa))==S::completed && i.start(b,source(fb))==S::completed && i.start(c,source(fc))==S::completed);
+        check(i.service(0)==S::order_required && !fa->reads && !fb->reads && !fc->reads);
+        const std::array duplicate{a,a,c};check(i.set_order(duplicate)==S::invalid_key);
+        const std::array order{c,b,a};check(i.set_order(order)==S::completed);
+        until([&]{service(t);return i.inspect(a).source->configured && i.inspect(b).source->configured && i.inspect(c).source->configured;});
+        const auto extra=create(t,3); // Invalidates old admission, then stop three.
+        for(const auto& key:order){const auto status=i.stop(key);check(status==S::completed || status==S::pending);}
+        until([&]{service(t);return !i.snapshot().retiring;});check(i.inspect(extra).phase==n::Phase::idle);join(t);
+    }
+    {
+        Test t(2);auto& i=t.instances;const auto a=create(t,0),b=create(t,1);
+        auto blocked=std::make_shared<f::Blocked>();blocked->bytes=f::file(1,48000,20000)->bytes;Release release{blocked};
+        check(i.start(a,source(blocked))==S::completed && i.start(b,source(f::file(1,48000,20000)))==S::completed);
+        until([&]{service(t);std::lock_guard lock(blocked->mutex);return blocked->entered;});
+        auto skipped=f::file(1,48000,6000),last=f::file(1,48000,7000);
+        check(i.start(a,source(skipped))==S::pending && i.start(a,source(last))==S::pending);
+        check(i.volume(a,17)==S::completed);
+        check(!skipped->reads && !last->reads && i.inspect(a).replacement_pending);
+        until([&]{service(t);const auto peer=i.inspect(b).source;return peer->output.voice.playing && peer->output.channel[0].samples>=512;});check(!t.provider->unloaded);
+        const auto consumed=i.inspect(b).source->output.channel[0].consumed_bytes;
+        check(t.provider->step(256) && i.inspect(b).source->output.channel[0].consumed_bytes>consumed);
+        release.run();until([&]{service(t);const auto x=i.inspect(a);return x.starts==2 && x.source->configured;});
+        check(!skipped->reads && last->reads>0 && i.inspect(a).completed_stops==1 && i.inspect(a).source->output.voice.volume==17);
+        check(i.inspect(b).starts==1);join(t);check(t.provider->unloaded && i.inspect(a).status==S::invalid_key);
+    }
+    {
+        std::shared_ptr<n::control::output::Submix> retained;
+        {
+            n::Instances i(n::control::Config{{2},{}});retained=i.submix();check(bool(retained));
+            const auto a=i.create({1,{0,0,0,0}}),b=i.create({2,{1,1,1,1}});
+            check(a.status==S::completed && b.status==S::completed && i.start_output()==S::completed);
+            check(i.start(a.key,source(f::file(1,48000,20000)))==S::completed && i.start(b.key,source(f::file(2,24000,20000),2))==S::completed);
+            const auto work=[&]{const auto s=i.service(42);check(s==S::completed || s==S::pending);};
+            until([&]{work();const auto x=i.inspect(a.key).source,y=i.inspect(b.key).source;return x && y && x->output.voice.playing && y->output.voice.playing && x->output.channel[0].samples>=512 && y->output.channel[0].samples>=512;});
+            const auto before=i.inspect(b.key).source->output.channel[0].consumed_bytes;
+            std::array<float,512> output{};check(retained->render_add(output.data(),256)==n::control::output::Status::completed);
+            check(i.inspect(a.key).source->output.channel[0].consumed_bytes>0 && i.inspect(b.key).source->output.channel[0].consumed_bytes>before);
+            const auto stopped=i.stop(a.key);check(stopped==S::completed || stopped==S::pending);
+            until([&]{work();return i.inspect(a.key).phase==n::Phase::idle;});
+            check(i.inspect(b.key).source->output.voice.playing && retained->render_add(output.data(),256)==n::control::output::Status::completed);
+            until([&]{const auto s=i.join();check(s==S::completed || s==S::pending);return s==S::completed;});
+            const auto snapshot=i.snapshot().session;check(snapshot.joined && snapshot.output.external_output && snapshot.output.submix_fenced && !snapshot.output.provider_joined);
+        }
+        std::array<float,64> output;output.fill(0.25f);
+        check(retained->render_add(output.data(),32)==n::control::output::Status::closed && output[0]==0.25f);
+    }
+    {
+        namespace attenuation=reo::native::adxt_attenuation;
+        std::array<std::uint32_t,attenuation::table_words> words{};
+        for(unsigned j=0;j<words.size();++j)words[j]=(999-j)*256/999;
+        const auto table=attenuation::Table::from_words(words).table;check(bool(table));
+        n::Instances i(n::control::Config{{2},{}});const auto a=i.create({1,{0,0,0,0},table}),b=i.create({1,{1,1,1,1}});
+        check(a.status==S::completed && b.status==S::completed && i.start_output()==S::completed);
+        check(i.inspect(a.key).requested_attenuation==0 && !i.inspect(b.key).requested_attenuation);
+        check(i.attenuation(b.key,0xffffff9c)==S::unsupported_profile && i.volume(a.key,193)==S::unsupported_profile);
+        const auto input=[](std::int16_t offset){auto file=f::file(1,48000,20000);
+            f::be32(file->bytes,24,0x41494e46);f::be32(file->bytes,28,1);f::be16(file->bytes,48,static_cast<std::uint16_t>(offset));
+            f::be16(file->bytes,52,0xff80);f::be16(file->bytes,54,0xff80);return file;};
+        auto file=input(-25);auto conflicting=source(file);conflicting.player.attenuation_table=attenuation::Table::from_words(words).table;
+        check(i.start(a.key,std::move(conflicting))==S::invalid_input && !file->reads && !i.snapshot().session.records);
+        check(i.attenuation(a.key,0xffffff9c)==S::completed && i.inspect(a.key).requested_attenuation==-100);
+        check(i.start(a.key,source(file))==S::completed && i.start(b.key,source(f::file(1,48000,20000)))==S::completed);
+        check(i.inspect(a.key).source->output.voice.volume==words[100] && !i.inspect(a.key).source->output.voice.playing);
+        check(i.attenuation(a.key,0xffffff38)==S::completed && i.inspect(a.key).source->output.voice.volume==words[200]);
+        const auto work=[&]{const auto s=i.service(42);check(s==S::completed || s==S::pending);};
+        until([&]{work();const auto x=i.inspect(a.key).source,y=i.inspect(b.key).source;
+            return x && y && x->output.voice.playing && y->output.voice.playing && x->output.channel[0].samples>=512 && y->output.channel[0].samples>=512;});
+        const auto ready=i.inspect(a.key).source;check(ready->attenuation && ready->attenuation->requested==-200 && ready->attenuation->clamped==-225 && ready->output.voice.volume==words[225]);
+        check(ready->output.voice.frequency==48000 && ready->decoder.ready.pitch==-25 && i.inspect(b.key).source->output.voice.volume==256);
+        check(i.attenuation(a.key,0xffff)==S::completed && i.inspect(a.key).requested_attenuation==-1 && i.inspect(a.key).source->output.voice.volume==words[26]);
+        check(i.attenuation(a.key,32768)==S::completed && i.inspect(a.key).source->output.voice.volume==0);
+        std::array<float,256> output{};check(i.submix()->render_add(output.data(),128)==n::control::output::Status::completed);
+        check(i.inspect(a.key).source->output.channel[0].consumed_bytes==256 && i.inspect(b.key).source->output.channel[0].consumed_bytes==256);
+        auto blocked=std::make_shared<f::Blocked>();blocked->bytes=input(-50)->bytes;Release release{blocked};
+        const auto replaced=i.start(a.key,source(blocked));check(replaced==S::completed || replaced==S::pending);
+        until([&]{work();std::lock_guard lock(blocked->mutex);return blocked->entered && i.inspect(a.key).starts==2;});
+        auto next=input(-100);check(i.start(a.key,source(next))==S::pending && !next->reads);
+        check(i.attenuation(a.key,0xfffffed4)==S::completed && i.inspect(a.key).requested_attenuation==-300 && !next->reads);
+        release.run();until([&]{work();const auto x=i.inspect(a.key);return x.starts==3 && x.source->configured;});
+        check(i.inspect(a.key).source->attenuation->clamped==-400 && i.inspect(a.key).source->output.voice.volume==words[400]);
+        const auto destroy=i.destroy(a.key);check(destroy==S::completed || destroy==S::pending);
+        until([&]{work();return i.inspect(a.key).status==S::invalid_key;});
+        const auto fresh=i.create({1,{0,0,0,0},table});check(fresh.status==S::completed && i.inspect(fresh.key).requested_attenuation==0 && i.attenuation(a.key,0)==S::invalid_key);
+        check(i.start(fresh.key,source(input(-25)))==S::completed && i.inspect(fresh.key).source->output.voice.volume==256);
+        until([&]{work();return i.inspect(fresh.key).source->configured;});check(i.inspect(fresh.key).source->output.voice.volume==words[25]);
+        until([&]{const auto s=i.join();check(s==S::completed || s==S::pending);return s==S::completed;});
+    }
+    std::cout<<"Native stable ADXT instance checks "<<checks<<" passed\n";return 0;
+}catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}}

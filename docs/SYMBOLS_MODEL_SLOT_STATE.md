@@ -1,0 +1,29 @@
+# Model slot binding, style and interaction state
+
+Static File #1 US research, 2026-11-04. All named original bodies reviewed in
+full, including initial loop branches and delay slots. No game, build, replay,
+attachment or live-memory inspection occurred. Addresses/offsets/IDs are hex;
+explicit loop counts decimal. These shared helpers connect the
+[scenario model children](SYMBOLS_SCENARIO_MODEL_CHILDREN.md) and
+[scenario event tasks](SYMBOLS_SCENARIO_EVENT_TASKS.md).
+
+| Guest entry / source | Proposed label | Confidence | Evidence and remaining uncertainty |
+| --- | --- | --- | --- |
+| [o2 0x5D7D60](../recomp/config/output_ovl/o2/o2_005D7D60_0x5d7d60.cpp) | `reset_model_slot_bindings_styles_and_sixteen_interaction_records_candidate` | Probable role; full body reviewed | Initializes base49EEF0 header bytes0/1/2=1/1/4 and byte1C=0; clears eight deferred actor flags4A5C25,override style49F784=-1 and three global words49F770/774/778. Clears four binding-mask words4A1B60. For128 slots clears pointer4A1B70+4*i, copies64-byte saved pose4A3C20+40*i to49FA10+40*i,style49F810+4*i=-1. Clears16 records4A3620/stride60 via107C68. Clears shared4BAC84..90,half4B9D1A,byte4BAE0A and gate4BAE8D; calls5BE980. Bounded count loops, no resource loading. |
+| [o2 0x5D7ED0](../recomp/config/output_ovl/o2/o2_005D7ED0_0x5d7ed0.cpp) | `clear_active_byte_in_sixteen_interaction_records` | Probable role; full body reviewed | Descending loop15..0 clears record4A3620+60*i byte2. Does not clear other record fields or model bindings. Count16 decimal; original branch delay performs final slot0 store before loop exits. |
+| [o2 0x5D7F00](../recomp/config/output_ovl/o2/o2_005D7F00_0x5d7f00.cpp) | `service_deferred_actor_cleanup_and_sixteen_scripted_interactions_candidate` | Probable role; full body reviewed | Session mode zero scans unsigned actor count4BAEA0, otherwise selected actor only; deferred byte4A5C25+i triggers570750(actor) and clears byte unless actor54F==32 (defer retained). Then for16 recordsR=4A3620+60*i calls6B4BA0(i), acts only R3==2. Script pointer721AB0[R7],cursorR8. If R2!=0 andR1==2: next byte!=FF with metadata7218D0[2*next].byte0==2 waits; other metadata starts6B6080(script[cursor],i),R3=1. NextFF ends with R1=previous opcode metadata.byte1,R3=0. Other path increments cursor; new byte!=FF sets R1=metadata.byte0,R3=1,calls6B6020(i); FF ends similarly. Script/range bounds and opcode meanings unresolved; no recursive or blocking wait. |
+| [o2 0x5D8160](../recomp/config/output_ovl/o2/o2_005D8160_0x5d8160.cpp) | `apply_model_style_override_and_advance_interaction_records_candidate` | Probable role; full body reviewed | Global word49F784 !=FFFFFFFF fills128 styles49F810.1B82A0(64) true plus scenario3243DA==1/room3243DC==19 calls6955A0. Visits16 R records; R+B nonzero andR3==0 calls6B5760(i) then clears R+B. Calls5D7F00, then clears24 halfwords4A35F0+2*i descending23..0. Does not reset binding mask or copy poses. |
+| [o2 0x5D8280](../recomp/config/output_ovl/o2/o2_005D8280_0x5d8280.cpp) | `bind_model_slot_to_external_pose_and_copy_current_pose` | Probable role; full body reviewed | a0 narrowed unsigned byte slot,a1 destination pose. Sets corresponding bit in4A1B60[slot>>5],stores destination pointer4A1B70+4*slot,then copies64 bytes from49FA10+40*slot to destination. Exactly eight8-byte iterations. No ownership,slot<128,null or overlapping-buffer validation. Binding does not itself tick animation. |
+| [o2 0x5D8300](../recomp/config/output_ovl/o2/o2_005D8300_0x5d8300.cpp) | `unbind_model_slot_and_clear_external_pose_pointer` | Probable role; full body reviewed | a0 narrowed unsignedbyte slot. Clears matching4A1B60 bit and4A1B70 pointer; no copyback,resource release or task free in this helper. Existing child callers separately copy/recycle when required. |
+| [o2 0x5D8350](../recomp/config/output_ovl/o2/o2_005D8350_0x5d8350.cpp) | `set_remapped_model_slot_style_word_candidate` | Probable role; full body reviewed | a0 narrowed unsignedbyte logical ID; base=*324424,remap pointer=word(base+8004),slot=remap[ID]. Writes full a1 word to49F810+4*slot. No base/remap null or slot bound. Role as style/color inferred from88888888/FFFFFFFF and interpolation callers, not recovered original field name. |
+| [o2 0x5D8390](../recomp/config/output_ovl/o2/o2_005D8390_0x5d8390.cpp) | `reset_all_128_model_slot_style_words_to_minus_one` | Probable role; full body reviewed | Descending signed loop127..0 writes FFFFFFFF at49F810+4*i. No pose or binding mask changes; distinct from5D7D60 full reset. |
+| [o2 0x5D83D0](../recomp/config/output_ovl/o2/o2_005D83D0_0x5d83d0.cpp) | `retire_two_owned_objects_over_three_countdown_steps_candidate` | Probable role; full body reviewed | a0 guest task,owned pointers28/24. Each call zeroes eight stack bytes and copies two8-byte constants70B350/358. Init phase8=0 sets halfC/E=3 then enters1 in same call. Each nonnull pointer decrements corresponding signed timer; positive calls371760 with ratio(3-timer)/3,sets object float30=stack44+constant73EB30. Timer<=0 uses6B3020(pointer28) or6B2C50(pointer24),clears ownedpointer. Bothnull increments phase8; phase2 frees task573740. Exact easing-vector/property semantics remain candidate; independently counted initial same-call decrement, no four-step assumption. |
+
+The binding mask has four words in the reset body (128 slots); binding inputs
+are narrowed to an unsigned byte without reproducing that upper bound. This is
+a caller-admission limitation, not evidence that an invalid slot occurred.
+The model-style words are data fed by original callbacks, not host renderer
+pipeline cache state. No performance cause or candidate runtime fix is asserted.
+
+Owned o2 SHA-256:45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226.
+Instruction words verified against file-backed owned o2, virtual base570000.

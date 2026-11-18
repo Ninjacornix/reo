@@ -1,0 +1,832 @@
+{
+  "schema": 1,
+  "status": "qualified_native_dialogue_response_sequence_and_worker",
+  "stage4_complete": false,
+  "game_run": false,
+  "audio_device_opened": false,
+  "source_sha256": {
+    "game/native/gameplay_world/dialogue_response_uses.hpp": "2e64e9782031219754d11caca0db3946e4a41d3459b06e6247f65c2d8e3df5fd",
+    "game/native/gameplay_world/dialogue_response_uses.cpp": "ed7434d1518b01a824635b3ca181f656cfbfa5380f78d5480f71cf8ca9c95e59",
+    "game/native/gameplay_world/dialogue_input_request.hpp": "8786ab408bcd6a9d189fc6a9a39e1182b238bf29922a92c78386dba0805e900f",
+    "game/native/gameplay_world/dialogue_input_request.cpp": "891cddd447bfb94bd87857702f8af09dd2fe684a4382c2bdd8627a742813025c",
+    "game/native/gameplay_world/dialogue_targeting.hpp": "ed8d4df865e08d76fe0440912039007c887676b37f8374cbe02de7bda6d998d6",
+    "game/native/gameplay_world/dialogue_targeting.cpp": "6faef1fb142d4b476b4c29e23c80d058b2689c6a5cd37e5a639536439bbc0610",
+    "game/native/gameplay_world/dialogue_response_choice.hpp": "30df4405be32a92f86a2e7e6bcb426b91c8e1c4facbd8d541b310923de1cfbc4",
+    "game/native/gameplay_world/dialogue_response_choice.cpp": "d15333b265c47277d17a18b5c1a3911d8f1581d8ddf6d67dbed123492b0d57fd",
+    "game/native/gameplay_world/dialogue_responses_state.hpp": "238d7b083645a6bc1a92ce3007486b747e0232f346072cd60a1d5c1848e71e82",
+    "game/native/gameplay_world/dialogue_responses_state.cpp": "94898d344409bc6e11bfe89301fa4083e2da3c049510a639480acf128c3106f8",
+    "game/native/gameplay_world/inventory_dialogue_presentation.hpp": "5427b802e8989cdd940860fa9826de79c79d9ca2a24f734f6ef594205ec79d6f",
+    "game/native/gameplay_world/inventory_dialogue_presentation.cpp": "4ab7c9d32385c781bfbed8b238d68d883e44061bea0b63b41e747f50b38d3b85",
+    "game/native/gameplay_world/dialogue_responses.hpp": "1c2099da0436fbaab5c4d93c888bde61db99f816a25732ca8120768b6794072a",
+    "game/native/gameplay_world/dialogue_pool.hpp": "4297cc5954ccc67e4d9b0c574a64f13453aeb30f941a9485e63ca74fcb540c83",
+    "game/native/gameplay_world/dialogue_pool.cpp": "6f9ca5f84a930a0907dce2a526fca0a3b6acedaab2beefd3f2a635eb9a24beb5",
+    "game/native/gameplay_world/speech_state.hpp": "091d13b2a5630bf6771aaa00b7cf555f0d81d84845b4b5dfa8307e3cc049e539",
+    "game/native/gameplay_world/actor_initial_state.hpp": "79c1cd44d6ff274b9ce916d64c7f5ae182f12f92c8d4b0d0077c61383d5135ae",
+    "game/native/gameplay_world/primary_actor_records_tests.cpp": "3acfd22e7b17d41fb36489b34f966734e31c460bde7de4bc08102ef527fb9bec",
+    "game/native/gameplay_update/dialogue_workers.hpp": "51073adfa0409978bef7effe3ff96c0a920328f9d569d3e918e8a4de58e1b50e",
+    "game/native/gameplay_update/dialogue_workers.cpp": "9754a14cbdbc615411fb54c65ac3c531a6927846208c7ae25a791b3627422455",
+    "game/native/gameplay_scenario/auxiliary_room_rows.hpp": "38b0f578af4eb274be8a1872d01c0c38b973f1111761d0d12d3f7b162c3689be",
+    "game/native/gameplay_scenario/auxiliary_room_rows.cpp": "639416a7554d79e7dbb5ddea36364dfb61ead1e964f2fbb3d7933183123b9160",
+    "game/native/gameplay_application/dialogue_workers_tests.cpp": "3e871c27f119c24468ad1489593759d3dfb9443385ff625d333d8df68ebcbc0b",
+    "tools/native_reconstruction/dialogue_response_uses_tests.cpp": "d1fcb0ffac0f2026c7463baa2840b89b44ec825e8f2ef84d3ddfb58f3780392b",
+    "tools/native_reconstruction/verify_dialogue_response_uses.py": "12ad044607b303c115ee499b260f3e243f753ac210fc3018befe460583414fc8",
+    "tools/native_reconstruction/dialogue_input_request_tests.cpp": "5a5773675d4135645ff0fadb0226a5db46490c6becb145bb94bff9bf0419f8b1",
+    "tools/native_reconstruction/verify_dialogue_input_request.py": "e0687ca33f3f64247a1538c2f9b07bc810e748c093dc42e659a7a89d2eae7087",
+    "tools/native_reconstruction/dialogue_targeting_tests.cpp": "5cba01ba1a4bd9b61c9cf97028f264695f3a6b09f651ce3f10afba064edb680c",
+    "tools/native_reconstruction/verify_dialogue_targeting.py": "b460157e77890e277638c781e079deb6c467c9fa63a1aa3b8b18a00b9e791d43",
+    "tools/native_reconstruction/dialogue_response_choice_tests.cpp": "c974d9fba853c2601b29cb092f9b0dab90fdbd26d7ac27ea0389308a9b7ddd9e",
+    "tools/native_reconstruction/verify_dialogue_response_choice.py": "5009b3e2da62e8715a8508f0e0d4b03eb12956541aa856585fe518fef1488918",
+    "tools/native_reconstruction/dialogue_responses_tests.cpp": "882730a192bba3e1aa1b7edac36bc771f5c3d39dc088aca08b5efc17261f2276",
+    "tools/native_reconstruction/verify_dialogue_responses.py": "fbf9f607d53f363864b95eb3697696d2196832c92a49262a3dd8b10b3a692ea7",
+    "tools/native_reconstruction/verify_dialogue_response_parents.py": "579bf443c3669a9186879d85e4c1a741f9efb9ca876c13a09f3d13a6bebf6f07",
+    "tools/native_reconstruction/qualify_dialogue_responses_v1.py": "0459052e6934ad2ca4b857136a7a0f5fdfc7a211d0a714c8f13a9bc68785769d",
+    "tools/native_reconstruction/dialogue_conditions_tests.cpp": "635d2395bb7cc0c7f4397339ab2f360986b529f9e497a17b288ba2e5ca701846",
+    "docs/native-gameplay/DIALOGUE_RESPONSES.md": "ee1ef20d7157f5559cf38fb8c1c3645a0979e1af4f4dc9bd8fa2660840e9fa57",
+    "recomp/config/output_ovl/o2/o2_005FED00_0x5fed00.cpp": "d0e2df8659ca429d69333551d623785952b5e244a5b9c402eef38df3e372173a"
+  },
+  "owned_cmake_fragments": {
+    "game/native/gameplay_world/CMakeLists.txt": {
+      "text": "add_library(reo_native_dialogue STATIC dialogue_records.cpp dialogue_pool.cpp cached_dialogue_presentation.cpp dialogue_conditions.cpp dialogue_inventory_traits.cpp dialogue_partner_characters.cpp dialogue_response_uses.cpp dialogue_input_request.cpp dialogue_targeting.cpp dialogue_response_choice.cpp dialogue_responses_state.cpp)\ntarget_sources(reo_native_dialogue PRIVATE inventory_dialogue_presentation.cpp ../gameplay_update/dialogue_workers.cpp)\n",
+      "sha256": "8b7d927ebd0103e2f55325f7d9cd6b494555b91f603d53dda1cd4789ad558a4c"
+    },
+    "game/native/gameplay_application/CMakeLists.txt": {
+      "text": "add_executable(dialogue_workers_tests dialogue_workers_tests.cpp)\ntarget_link_libraries(dialogue_workers_tests PRIVATE reo_native_gameplay_application reo_native_dialogue)\nadd_test(NAME native_dialogue_workers COMMAND dialogue_workers_tests)\nif(CMAKE_CXX_COMPILER_ID MATCHES \"Clang|GNU\")\n    target_compile_options(dialogue_workers_tests PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off)\nendif()\n",
+      "sha256": "eeea2f799521e665062ff3ebb03f37e802f7631bf42a43a165b3ea6968d10acc"
+    }
+  },
+  "outer_phase_original_body": {
+    "role": "complete outer ordinary worker order",
+    "path": "recomp/config/output_ovl/o2/o2_005FED00_0x5fed00.cpp",
+    "sha256": "d0e2df8659ca429d69333551d623785952b5e244a5b9c402eef38df3e372173a",
+    "start": "0x5fed00",
+    "end_exclusive": "0x5fee5c",
+    "matched_comments": 48,
+    "omitted_zero_words": 39,
+    "conflicts": 0,
+    "comparisons": [
+      {
+        "pc": "0x005fed00",
+        "owned_word": "0x27bdfff0",
+        "comment_word": "0x27bdfff0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fed04",
+        "owned_word": "0xffbf0000",
+        "comment_word": "0xffbf0000",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fed08",
+        "owned_word": "0x0c1a05bc",
+        "comment_word": "0x0c1a05bc",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fed0c",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fed10",
+        "owned_word": "0x0c0dc6a4",
+        "comment_word": "0x0c0dc6a4",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fed14",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fed18",
+        "owned_word": "0x0c1a3234",
+        "comment_word": "0x0c1a3234",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fed1c",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fed20",
+        "owned_word": "0x0c17fb98",
+        "comment_word": "0x0c17fb98",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fed24",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fed28",
+        "owned_word": "0x10400005",
+        "comment_word": "0x10400005",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fed2c",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fed30",
+        "owned_word": "0x0c0deebc",
+        "comment_word": "0x0c0deebc",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fed34",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fed38",
+        "owned_word": "0x10000046",
+        "comment_word": "0x10000046",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fed3c",
+        "owned_word": "0xdfbf0000",
+        "comment_word": "0xdfbf0000",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fed40",
+        "owned_word": "0x0c1b5890",
+        "comment_word": "0x0c1b5890",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fed44",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fed48",
+        "owned_word": "0x0c19a7cc",
+        "comment_word": "0x0c19a7cc",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fed4c",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fed50",
+        "owned_word": "0x0c1a0bf4",
+        "comment_word": "0x0c1a0bf4",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fed54",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fed58",
+        "owned_word": "0x0c1aeee8",
+        "comment_word": "0x0c1aeee8",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fed5c",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fed60",
+        "owned_word": "0x0c1bbc54",
+        "comment_word": "0x0c1bbc54",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fed64",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fed68",
+        "owned_word": "0x0c1769a0",
+        "comment_word": "0x0c1769a0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fed6c",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fed70",
+        "owned_word": "0x0c0dda7c",
+        "comment_word": "0x0c0dda7c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fed74",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fed78",
+        "owned_word": "0x0c0ddab8",
+        "comment_word": "0x0c0ddab8",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fed7c",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fed80",
+        "owned_word": "0x0c0ddae0",
+        "comment_word": "0x0c0ddae0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fed84",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fed88",
+        "owned_word": "0x0c19a8e8",
+        "comment_word": "0x0c19a8e8",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fed8c",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fed90",
+        "owned_word": "0x0c1a0cbc",
+        "comment_word": "0x0c1a0cbc",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fed94",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fed98",
+        "owned_word": "0x0c17710c",
+        "comment_word": "0x0c17710c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fed9c",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005feda0",
+        "owned_word": "0x0c17712c",
+        "comment_word": "0x0c17712c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005feda4",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005feda8",
+        "owned_word": "0x0c177140",
+        "comment_word": "0x0c177140",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fedac",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fedb0",
+        "owned_word": "0x0c16fa68",
+        "comment_word": "0x0c16fa68",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fedb4",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fedb8",
+        "owned_word": "0x0c16e46c",
+        "comment_word": "0x0c16e46c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fedbc",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fedc0",
+        "owned_word": "0x0c176058",
+        "comment_word": "0x0c176058",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fedc4",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fedc8",
+        "owned_word": "0x0c1643a8",
+        "comment_word": "0x0c1643a8",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fedcc",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fedd0",
+        "owned_word": "0x0c16087c",
+        "comment_word": "0x0c16087c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fedd4",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fedd8",
+        "owned_word": "0x0c15ce10",
+        "comment_word": "0x0c15ce10",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005feddc",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fede0",
+        "owned_word": "0x0c1947b4",
+        "comment_word": "0x0c1947b4",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fede4",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fede8",
+        "owned_word": "0x0c15cf4c",
+        "comment_word": "0x0c15cf4c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fedec",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fedf0",
+        "owned_word": "0x0c1b7ba8",
+        "comment_word": "0x0c1b7ba8",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fedf4",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fedf8",
+        "owned_word": "0x0c06e638",
+        "comment_word": "0x0c06e638",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fedfc",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fee00",
+        "owned_word": "0x0c1adf90",
+        "comment_word": "0x0c1adf90",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fee04",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fee08",
+        "owned_word": "0x3c010032",
+        "comment_word": "0x3c010032",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fee0c",
+        "owned_word": "0x842341f8",
+        "comment_word": "0x842341f8",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fee10",
+        "owned_word": "0x1460000f",
+        "comment_word": "0x1460000f",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fee14",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fee18",
+        "owned_word": "0x0c1aba7c",
+        "comment_word": "0x0c1aba7c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fee1c",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fee20",
+        "owned_word": "0x0c18cde0",
+        "comment_word": "0x0c18cde0",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fee24",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fee28",
+        "owned_word": "0x0c1769c8",
+        "comment_word": "0x0c1769c8",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fee2c",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fee30",
+        "owned_word": "0x0c1a0538",
+        "comment_word": "0x0c1a0538",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fee34",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fee38",
+        "owned_word": "0x0c1a0690",
+        "comment_word": "0x0c1a0690",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fee3c",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fee40",
+        "owned_word": "0x0c18106c",
+        "comment_word": "0x0c18106c",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fee44",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fee48",
+        "owned_word": "0x0c0deebc",
+        "comment_word": "0x0c0deebc",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fee4c",
+        "owned_word": "0x00000000",
+        "comment_word": null,
+        "status": "omitted_zero"
+      },
+      {
+        "pc": "0x005fee50",
+        "owned_word": "0xdfbf0000",
+        "comment_word": "0xdfbf0000",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fee54",
+        "owned_word": "0x03e00008",
+        "comment_word": "0x03e00008",
+        "status": "matched"
+      },
+      {
+        "pc": "0x005fee58",
+        "owned_word": "0x27bd0010",
+        "comment_word": "0x27bd0010",
+        "status": "matched"
+      }
+    ]
+  },
+  "results": {
+    "use_counts": {
+      "checks": 262144,
+      "complete_lookups": 16384,
+      "complete_choices": 16384,
+      "complete_increments": 81920,
+      "source_calls": 226863,
+      "game_run": false
+    },
+    "input": {
+      "checks": 1179654,
+      "complete_original_cases": 51547,
+      "mode_zero_loop_input_cases": 524288,
+      "undefined_direction_entry_interruptions": 13989,
+      "source_calls": 1669410,
+      "native_capability_checks": 4,
+      "game_run": false
+    },
+    "targeting": {
+      "checks": 65543,
+      "complete_original_cases": 16384,
+      "source_calls": 369260,
+      "retained_lock_profiles": 2313,
+      "nonprimary_profiles": 5462,
+      "native_capability_checks": 3,
+      "game_run": false
+    },
+    "choice_and_all_conditions": {
+      "complete_response_choices": 37632,
+      "complete_response_priorities": 37632,
+      "complete_condition_cases": 398664,
+      "condition_entry_interruptions": 3528,
+      "checks": 4680662,
+      "complete_constructors": 787,
+      "complete_pool_updates": 1176,
+      "source_calls": 1446094,
+      "record_clears": 48,
+      "native_guards": 289,
+      "retained_text_lifetimes": 2,
+      "controlled_interruptions": 0,
+      "authored_effect_writes": 560,
+      "literal_records": 1,
+      "capacity_refusals": 1,
+      "game_run": false,
+      "audio_device_opened": false
+    },
+    "full_clear": {
+      "checks": 2242399,
+      "complete_source_clears": 64,
+      "canonical_bootstraps": 64,
+      "capacity_refusals": 8,
+      "busy_proofs": 1,
+      "lifetimes": 512,
+      "game_run": false
+    },
+    "complete_sequence": {
+      "checks": 7141270,
+      "complete_original_frames": 4128,
+      "external_shared_timer_commands": 131,
+      "exact_unsupported_read_prefixes": 2,
+      "source_calls": 23585035,
+      "queued_speech_messages": 62,
+      "source_choice_calls": 213,
+      "source_reply_calls": 197,
+      "source_monitor_calls": 4129,
+      "source_direct_calls": 404,
+      "source_history_increments": 10,
+      "record_preludes": 18,
+      "native_guards": 131,
+      "retained_text_lifetimes": 40,
+      "game_run": false,
+      "audio_device_opened": false
+    },
+    "current_parents": {
+      "parent_tests": 30,
+      "owned_worker_checks": 31
+    }
+  },
+  "receipts": [
+    {
+      "domain": "use_counts",
+      "path": "build-native-sjuni/dialogue-response-uses-gcc-v1/receipt.json",
+      "sha256": "dbcdf728a8167519993b458aa477037b12be10e7ba587b7fbac082cf766f0161",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "use_counts",
+      "path": "build-native-sjuni/dialogue-response-uses-llvm-v1/receipt.json",
+      "sha256": "913f3724fe627d9a34865d59cbfc8490cd1378f73df01a7c176bbedbaf5eb202",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "input",
+      "path": "build-native-sjuni/dialogue-input-request-gcc-v2/receipt.json",
+      "sha256": "34a12d2bc5da67b8e59fa2af70462320f4aac162e81609b6e0d1e4b95cd7b121",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "input",
+      "path": "build-native-sjuni/dialogue-input-request-llvm-v2/receipt.json",
+      "sha256": "2aa3995e6b614fb4d69bcc168f35eec2820d7a8a2defc6c64a220f443ad445f8",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "targeting",
+      "path": "build-native-sjuni/dialogue-targeting-gcc-v3/receipt.json",
+      "sha256": "c0a71594b6f0da7ac84a6affa1d7f2983d017a7ce7cce8fe7359f7329edd9f72",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "targeting",
+      "path": "build-native-sjuni/dialogue-targeting-llvm-v3/receipt.json",
+      "sha256": "956f0cde4a941d69d607cb1640e6fbe0961c322ba748654f530fdfd20a6726dd",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "choice_and_all_conditions",
+      "path": "build-native-sjuni/dialogue-response-choice-gcc-v4/receipt.json",
+      "sha256": "6f613e45306168e3bb861d6f3fefe020346c4c9fd16669b7c457c196495fc08b",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "choice_and_all_conditions",
+      "path": "build-native-sjuni/dialogue-response-choice-llvm-v4/receipt.json",
+      "sha256": "b07bcb808a73fd958284aca212e7c307ce2b2090a738a23bcb7df170a85230c0",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "full_clear",
+      "path": "build-native-sjuni/dialogue-response-full-clears-gcc-v3/receipt.json",
+      "sha256": "f16ffe8e884b8d8aeabcab04e4b5b7c3b362e624adb8252f20971bd9811cfbc6",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "full_clear",
+      "path": "build-native-sjuni/dialogue-response-full-clears-llvm-v3/receipt.json",
+      "sha256": "ced01630c3a0bdd36b8c0606d825ba56dc5eeb404fbedf21ef6995ab6a7304b0",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "complete_sequence",
+      "path": "build-native-sjuni/dialogue-responses-gcc-v8/receipt.json",
+      "sha256": "f97629717aa7dff12dfb689b7244db8e1b6c9af41dc11cc83518f31138f47357",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "complete_sequence",
+      "path": "build-native-sjuni/dialogue-responses-llvm-v8/receipt.json",
+      "sha256": "94d2274699479d4e9bd71bb4e962303b5c0545a8fc1c66eef604079c160ec5be",
+      "snapshot_unchanged": true,
+      "live_source_drift": []
+    },
+    {
+      "domain": "current_parents",
+      "path": "build-native-sjuni/dialogue-response-parents-gcc-v2/receipt.json",
+      "sha256": "ea00d85dcb6552c9a4d16f11369ad5f809bbbeba3968fe38a7f24d9f201225d7",
+      "snapshot_unchanged": null,
+      "live_source_drift": []
+    },
+    {
+      "domain": "current_parents",
+      "path": "build-native-sjuni/dialogue-response-parents-llvm-v2/receipt.json",
+      "sha256": "fb459355017ecd8067ffadd84035dfe099b9a25548a0208fd2abc1ad529fcd32",
+      "snapshot_unchanged": null,
+      "live_source_drift": []
+    }
+  ],
+  "retained_failures": [
+    {
+      "path": "build-native-sjuni/dialogue-responses-gcc-v1/receipt.json",
+      "sha256": "6680812e59739b2d57d7981e0656ddbf4aa3030e8ec38cd2d3be7a6df171f605",
+      "reason": "Initial source crawler encountered a generated conditional fixture include."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-responses-gcc-v2/receipt.json",
+      "sha256": "b893122d0918c6ff4518c3c260a55ec23ef6d594dda38bad716a28bb7db06920",
+      "reason": "Fixture supplied a null completion RuleBook; fixed to the real file1 RuleBook."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-responses-llvm-v2/receipt.json",
+      "sha256": "c4b0624e775633ec37de73c0b94fae20f2f9b450653eb2143f1187c863fb2be9",
+      "reason": "Same fixture-only null RuleBook failure."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-responses-gcc-v5/receipt.json",
+      "sha256": "27a2f69fd6bfe682055f3407e04f4d8c0778cb029f0827dfb2901c16798a0443",
+      "reason": "New negative-target fixture retained nonzero variant and therefore did not reach the intended fallback choice."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-responses-llvm-v5/receipt.json",
+      "sha256": "682ffe8c86aad9696dd2e3aded7b07c63d9c1c9c0ea231e647912940a712f3f9",
+      "reason": "Same incorrectly prepared refusal fixture."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-responses-gcc-v6/receipt.json",
+      "sha256": "67e4c86af4207f15c2c364db94a84b7fa5182fb67d9ae171024cfc86a3f56026",
+      "reason": "Diagnostic fixture identified the nonzero-variant early return; corrected the actual menu-actions producer."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-response-choice-gcc-v1/receipt.json",
+      "sha256": "c06cedf264a9f98543d242c3957dc44e55b5a7a09e8c10e054dd843e1423309e",
+      "reason": "Fixture restored target-context with a promoted four-byte write; final explicit widths preserve adjacent DC8."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-response-choice-gcc-v2/receipt.json",
+      "sha256": "400479c3a71a3149b2fda1416e0b7cbdffa5097b6f83c903ff985154015fbc77",
+      "reason": "Repeated fixture width mismatch retained."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-response-choice-llvm-v2/receipt.json",
+      "sha256": "57b4e14a558d1d410895def9d91a511265cebbab4e15d0d32d68490c57e7d46b",
+      "reason": "Same fixture width mismatch retained."
+    },
+    {
+      "path": "build-native-sjuni/dialogue-targeting-gcc-v2/receipt.json",
+      "sha256": "22bce04f60303468a5860f07520af3d5a5f8f16e9c89102880035a3e10a14bb3",
+      "reason": "Draft negative locked-target branch mismatch; corrected to source fallback before final paired targeting proof."
+    }
+  ],
+  "superseded_evidence": [
+    "Earlier pool/condition snapshots retained separate flags/counters. Final production delegates to the existing Session AuxiliaryScene, the same state written by script commands120/121.",
+    "The first worker contract used gameplay_ui; complete5FED00 places6B7E40 at5FEE00, Worker::sequences. Final adapter uses the sequence prefix and the existing Update owner performs final6B80A0 once.",
+    "Full responsev3/v4/v7 remain exact immutable historical snapshots. Currentv8 plus parentv2 qualify the consolidated source and latest Actor ABI."
+  ],
+  "limits": [
+    "Complete6B7E40 and admitted reached bodies execute against actual canonical native owners. The original transport send boundary captures defined speech payload roles; native uses real Update publication and ActorMessageQueue. No network-delivery/game-frame claim is made.",
+    "Mode-zero input without fresh direction uses the actual caller physical-loop index. Other unproduced direction history and negative primary target address profiles stop at exact test-only original reads and return typed native refusal.",
+    "Positive full-sequence auxiliary profiles are passive or inactive for voice. NPC archive activation, full1D41F0 bank loading/6B7720 reset, later glyph rendering and complete application startup remain separate reached integration.",
+    "The worker borrows explicit menu input/actions. Its real InventoryUi blocked-byte producer is preserved; unknown reached state refuses. No inferred global input/default UI producer or duplicated World/flags/actor ownership is introduced."
+  ]
+}

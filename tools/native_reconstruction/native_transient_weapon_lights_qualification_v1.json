@@ -1,0 +1,134 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_lighting/transient_lights.hpp": "ed461fa2db8ff00f665b2066a0147fc8fc0194369fe4a706880345da49eb1c3e",
+    "game/native/gameplay_lighting/transient_lights.cpp": "68c13ddf3269db326998733f8304ccac612b11781ef8857cd6878417db5b144f",
+    "game/native/gameplay_lighting/transient_light_policy.cpp": "ff4dcb01241f62e0353a180477d198e9f7ca58a2dc22f6d1844ae16397efc726",
+    "game/native/gameplay_lighting/CMakeLists.txt": "51a071de8eef09eb06c28e8834c45ff82b3f7a8ce8e5009c16db7c9a4ee4681e",
+    "game/native/gameplay_world/transient_weapon_effects.hpp": "574dfc858abb4ae85395ee74d584a43bc00df68fce663d5b0579b9439bf01c09",
+    "game/native/gameplay_world/transient_weapon_effects.cpp": "3ece0d27ffdb618fef066b386bd1533608f48f5c4904f3fb052917e191458c9c",
+    "game/native/gameplay_scenario/lighting.hpp": "28b3b621e74454186f481c3cb5e28af8208487200873cb45779ee5894900f512",
+    "game/native/gameplay_scenario/lighting.cpp": "06fe7b0fcae827212f5c4fbc210134a380003e67551b236345838511875da091",
+    "tools/native_reconstruction/transient_light_policy_tests.cpp": "52aa179b6a5f6521652a71e658b6c891c19e4f55a8c8b418804f50cbc1cf9bc6",
+    "tools/native_reconstruction/auxiliary_lighting_tests.inc": "0baa0250ee916dafcf4ba7adf2f6b8e56ae2845f245af8a828c988e521859fd1",
+    "tools/native_reconstruction/transient_lights_owner_tests.inc": "775f8bc56547f016ece0f27b9f4b16129e3a844072e9fc4a158f0c4991fd3e52",
+    "tools/native_reconstruction/verify_transient_light_policy.py": "d83612d78fc1a414fd3d2dc096970b994db8d46fb309ba1f2c1591e59eae8f95",
+    "tools/native_reconstruction/qualify_transient_weapon_lights_v1.py": "a4b09fce3cfb130715d87c427caa7af57a7cfebce23b96660d02f705442888b3",
+    "docs/native-gameplay/TRANSIENT_WEAPON_LIGHTS.md": "39ec2714e570e9ecc52930d9835324bc1e6c08ff80a3ed10bd07c90dfac470b1"
+  },
+  "cohorts": {
+    "llvm": {
+      "path": "build-native-sjuni/transient-light-owner-llvm-v3/receipt.json",
+      "sha256": "66b14f2074e04499622383add18fab32e13c3fbace2a1a1e885cf0e455647a9e",
+      "observed": {
+        "checks": 7269137,
+        "cases": 1310720,
+        "releases": 131076,
+        "retirements": 262144,
+        "auxiliary_allocations": 1368,
+        "auxiliary_releases": 342,
+        "auxiliary_refusals": 20,
+        "owner_cases": 77,
+        "owner_frames": 294,
+        "owner_refusals": 7,
+        "original_calls": 3296806,
+        "game_run": false
+      },
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "subsequent_dependency_changes": {}
+    },
+    "gcc": {
+      "path": "build-native-sjuni/transient-light-owner-gcc-v3/receipt.json",
+      "sha256": "a98f63b8f3641245e6ad25911a39bd4e8ad4eea1577db2a5de2dba90d5ff8a4f",
+      "observed": {
+        "checks": 7269137,
+        "cases": 1310720,
+        "releases": 131076,
+        "retirements": 262144,
+        "auxiliary_allocations": 1368,
+        "auxiliary_releases": 342,
+        "auxiliary_refusals": 20,
+        "owner_cases": 77,
+        "owner_frames": 294,
+        "owner_refusals": 7,
+        "original_calls": 3296806,
+        "game_run": false
+      },
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "subsequent_dependency_changes": {}
+    }
+  },
+  "current_primary_light_regressions": {
+    "llvm": {
+      "path": "build-native-sjuni/dual-light-primary-regression-llvm-v1/receipt.json",
+      "sha256": "20ea5a179de8c5312383a2223c7f39a378c4873be1405b9f6b14902601e365cf",
+      "observed": {
+        "checks": 4712151,
+        "allocations": 2733,
+        "retirements": 683,
+        "resets": 32,
+        "refusals": 38,
+        "original_calls": 12590,
+        "game_run": false
+      }
+    },
+    "gcc": {
+      "path": "build-native-sjuni/dual-light-primary-regression-gcc-v1/receipt.json",
+      "sha256": "8a1d74ccb73b2bddfc3fe04d4f65668643f59ab53e5684d917c1784347762feb",
+      "observed": {
+        "checks": 4712151,
+        "allocations": 2733,
+        "retirements": 683,
+        "resets": 32,
+        "refusals": 38,
+        "original_calls": 12590,
+        "game_run": false
+      }
+    }
+  },
+  "cmake_builds": {
+    "llvm": {
+      "command": [
+        "C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe",
+        "--build",
+        "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\gameplay-native-llvm-v1",
+        "--target",
+        "reo_native_weapon_light_effects",
+        "--parallel",
+        "2"
+      ],
+      "returncode": 0,
+      "output": "ninja: no work to do.\r\n",
+      "libraries": {
+        "build-native-sjuni/gameplay-native-llvm-v1/gameplay_lighting/libreo_native_transient_lights.a": "8692e9209cca18614764abc0d655be14e556b172e034a53814d1cfbf42d4bcf9",
+        "build-native-sjuni/gameplay-native-llvm-v1/gameplay_lighting/libreo_native_weapon_light_effects.a": "2b2fcf2ea9c6411d5083cbe6769d8f5596f4494ee1bc899ad1c6140638d5e08a"
+      }
+    },
+    "gcc": {
+      "command": [
+        "C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe",
+        "--build",
+        "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\gameplay-native-gcc-v1",
+        "--target",
+        "reo_native_weapon_light_effects",
+        "--parallel",
+        "2"
+      ],
+      "returncode": 0,
+      "output": "ninja: no work to do.\r\n",
+      "libraries": {
+        "build-native-sjuni/gameplay-native-gcc-v1/gameplay_lighting/libreo_native_transient_lights.a": "5b4a9fabdf5f204b60267f4a6235e7479d481794981fa7e682ad820019c7b0a7",
+        "build-native-sjuni/gameplay-native-gcc-v1/gameplay_lighting/libreo_native_weapon_light_effects.a": "8d5cf28ac7479effa2cfcba39a16775285de917d10c11b93579f87ff5c58c780"
+      }
+    }
+  },
+  "limits": [
+    "Original task allocation/retirement are controlled ports; actual native Update tasks execute in owner cases.",
+    "Finite positions, native generation ownership and explicit stale-owner failure are admitted; undefined original pointer reuse is not reproduced.",
+    "Other reached weapon effect families, complete session adoption and installed gameplay acceptance remain open."
+  ]
+}

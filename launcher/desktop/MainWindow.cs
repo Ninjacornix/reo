@@ -58,6 +58,7 @@ public partial class MainWindow : Window {
                                                               _ => 0 };
         UpdateScreenFitHint();
         Fullscreen.IsChecked = settings.Fullscreen;
+        SkipIntro.IsChecked = settings.SkipIntro;
         PerformanceOverlay.IsChecked = settings.PerformanceOverlay;
         AsyncVif.IsChecked = settings.AsyncVif;
         GpuMovies.IsChecked = settings.GpuMoviesChoice ?? false;
@@ -196,6 +197,7 @@ public partial class MainWindow : Window {
                 .Fits[Math.Clamp(ScreenFit.SelectedIndex, 0, DisplayOptions.Fits.Length - 1)];
         UpdateScreenFitHint();
         settings.Fullscreen = Fullscreen.IsChecked == true;
+        settings.SkipIntro = SkipIntro.IsChecked == true;
         settings.PerformanceOverlay = PerformanceOverlay.IsChecked == true;
         settings.AsyncVif = AsyncVif.IsChecked == true;
         if (ReferenceEquals(sender, GpuMovies)) {
@@ -259,7 +261,6 @@ public partial class MainWindow : Window {
             LaunchButton.Content = PlayButtonLabel;
             LaunchButton.IsEnabled = true;
             controller.SessionEnabled = false;
-            hostRoomReady = false;
             UpdateSaves();
         }
         previousRunning = running;
@@ -273,6 +274,7 @@ public partial class MainWindow : Window {
         }
         if (running && !graphicsPreparing && game.NetworkStatus is { } network)
             Status.Text = network;
+        if (slowUiTick == 0) RefreshPerformanceNotification();
     }
     async Task ShowGameExitStatus(Process process, string? previousStatus) {
         string message = await game.ExitStatusAsync(process.ExitCode);
@@ -315,7 +317,6 @@ public partial class MainWindow : Window {
         try {
             var snapshot =
                 JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(settings))!;
-            LobbyAutomation.Options? lobby = null;
             if (OnlineOptions.Configured(snapshot)) {
                 Status.Text = "Checking your player name...";
                 await RefreshJoinHost();
@@ -326,14 +327,12 @@ public partial class MainWindow : Window {
                     ShowPage("Coop");
                     return;
                 }
-                lobby = LobbyOptions();
                 snapshot.JoinHostName = settings.JoinHostName;
                 snapshot.JoinSignupPort = settings.JoinSignupPort;
-                snapshot.JoinRoomName = settings.JoinRoomName;
             }
             var progress = BeginDiscImport();
             await game.Launch(root, snapshot, controller, importProgress: progress,
-                              cancel: importCancellation!.Token, lobby: lobby);
+                              cancel: importCancellation!.Token);
             if (game.Imported != null) {
                 settings.SetImport(game.Imported.Root);
                 if (game.OriginalAssets != null) settings.RememberGamePak(game.OriginalAssets);

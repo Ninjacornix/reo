@@ -26,6 +26,7 @@ class SameOwnerMovieBridge {
         Vulkan::Fence ready, consumed;
         uint64_t value = 0, released = 0, lastD3DReady = 0, serial = 0;
         bool rgbaInitialized = false;
+        bool nativeLease = false;
         OutputState state = OutputState::Free;
         MoviePictureIdentity identity{};
     };
@@ -375,11 +376,49 @@ class SameOwnerMovieBridge {
         auto& slot = match(ticket);
         return slot.ready && slot.ready->wait_timeout(0);
     }
+    // Native presentation owns this produced copy exclusively. Decoder
+    // reference surfaces remain separate from these three export slots.
+    void leaseNativeFrame(const MovieTextureTicket& ticket) {
+        assertOpen();
+        auto& slot = match(ticket);
+        if (slot.state != OutputState::Produced || slot.nativeLease || slot.consumed ||
+            (imageBatch_ && imageBatchTicket_.slot == ticket.slot &&
+             imageBatchTicket_.generation == ticket.generation &&
+             imageBatchTicket_.picture == ticket.picture &&
+             imageBatchTicket_.slotSerial == ticket.slotSerial))
+            throw std::logic_error("Movie export slot already has a consumer owner");
+        slot.nativeLease = true;
+    }
+    bool tryReleaseNativeFrame(const MovieTextureTicket& ticket) {
+        assertOpen();
+        auto& slot = match(ticket);
+        if (!slot.nativeLease || slot.state != OutputState::Produced)
+            throw std::logic_error("Native movie release lacks its retained lease");
+        if (!slot.ready || !slot.ready->wait_timeout(0) ||
+            (slot.consumed && !slot.consumed->wait_timeout(0)))
+            return false;
+        slot.consumed.reset();
+        slot.ready.reset();
+        slot.nativeLease = false;
+        slot.state = OutputState::Free;
+        return true;
+    }
+    bool bindNativePlayerTime(MovieTextureTicket& ticket, uint32_t referenceMetadata,
+                              int64_t pts, bool absent = false) {
+        assertOpen();
+        auto& slot = match(ticket);
+        if (!slot.nativeLease || slot.state != OutputState::Produced)
+            throw std::logic_error("Native movie timestamp lacks its retained lease");
+        if (!slot.ready || !slot.ready->wait_timeout(0))
+            return false;
+        bindOriginalMovieTime(slot.identity, ticket, referenceMetadata, pts, absent);
+        return true;
+    }
     void bindOriginalPlayerTime(MovieTextureTicket& ticket, uint32_t referenceMetadata,
                                 int64_t originalPts, bool absent = false) {
         assertOpen();
         auto& slot = match(ticket);
-        if (slot.state != OutputState::Produced || !slot.ready || !slot.ready->wait_timeout(0))
+        if (slot.nativeLease || slot.state != OutputState::Produced || !slot.ready || !slot.ready->wait_timeout(0))
             throw std::logic_error("Original timestamp preceded its real producer completion");
         bindOriginalMovieTime(slot.identity, ticket, referenceMetadata, originalPts, absent);
     }
@@ -406,10 +445,10 @@ class SameOwnerMovieBridge {
     // An authentic original queue release may discard a produced frame without
     // displaying it. It is not an IMAGE receipt. Keep MPEG reference surfaces;
     // these slot-local NV12/RGBA copies retire only after their real work/reads.
-    void releaseOriginalFrame(const MovieTextureTicket& ticket) {
+    void releaseOriginalFrame(const MovieTextureTicket& ticket, bool nativeOwner = false) {
         assertOpen();
         auto& slot = match(ticket);
-        if (slot.state != OutputState::Produced ||
+        if (slot.nativeLease != nativeOwner || slot.state != OutputState::Produced ||
             (imageBatch_ && imageBatchTicket_.generation == ticket.generation &&
              imageBatchTicket_.picture == ticket.picture &&
              imageBatchTicket_.slotSerial == ticket.slotSerial))
@@ -421,6 +460,7 @@ class SameOwnerMovieBridge {
             slot.consumed->wait();
         slot.consumed.reset();
         slot.ready.reset();
+        slot.nativeLease = false;
         slot.state = OutputState::Free;
     }
 
@@ -437,7 +477,7 @@ class SameOwnerMovieBridge {
                                           const MoviePictureIdentity&)>& record) {
         assertOpen();
         auto& slot = match(ticket);
-        if (slot.state != OutputState::Produced || !record || !hasMovieConsumerTime(slot.identity))
+        if (slot.nativeLease || slot.state != OutputState::Produced || !record || !hasMovieConsumerTime(slot.identity))
             throw std::logic_error("Movie texture lacks real ordered consumer/player timestamp");
         auto cmd = gs_.request_command_buffer(Vulkan::CommandBuffer::Type::Generic);
         try {
@@ -458,10 +498,12 @@ class SameOwnerMovieBridge {
     Vulkan::Fence
     consumePart(const MovieTextureTicket& ticket, bool final,
                 const std::function<void(Vulkan::CommandBuffer&, const Vulkan::ImageView&,
-                                         const MoviePictureIdentity&)>& record) {
+                                         const MoviePictureIdentity&)>& record,
+                bool nativeOwner = false) {
         assertOpen();
         auto& slot = match(ticket);
-        if (slot.state != OutputState::Produced || !record || !hasMovieConsumerTime(slot.identity))
+        if (slot.nativeLease != nativeOwner || (nativeOwner && final) ||
+            slot.state != OutputState::Produced || !record || !hasMovieConsumerTime(slot.identity))
             throw std::logic_error(
                 "Movie fragment lacks retained original resident image/player timestamp");
         auto command = gs_.request_command_buffer(Vulkan::CommandBuffer::Type::Generic);
@@ -486,7 +528,7 @@ class SameOwnerMovieBridge {
     void beginConsumerBatch(const MovieTextureTicket& ticket) {
         assertOpen();
         auto& slot = match(ticket);
-        if (imageBatch_ || slot.state != OutputState::Produced ||
+        if (imageBatch_ || slot.nativeLease || slot.state != OutputState::Produced ||
             !hasMovieConsumerTime(slot.identity) || !slot.ready || !slot.ready->wait_timeout(0))
             throw std::logic_error("Movie batch lacks a completed timestamped producer");
         imageBatch_ = gs_.request_command_buffer(Vulkan::CommandBuffer::Type::Generic);

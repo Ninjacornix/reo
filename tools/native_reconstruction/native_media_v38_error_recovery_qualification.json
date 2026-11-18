@@ -1,0 +1,1402 @@
+{
+  "schema": 1,
+  "status": "single intended native movie failure and recovery qualified; source EOF/audio retirement pass, measured renderer handoff limits retained",
+  "session": "20261109-062828-848",
+  "identity": {
+    "pid": 334268,
+    "image": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\game-cache\\eab8715b4c55b18e067ee26d5c1c7082123365a66797831b3ab102f51cff5b28\\reo_launcher_game.exe",
+    "creationFileTime": 134386757174200846,
+    "logs": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\sessions\\20261109-062828-848",
+    "controller": "Local\\REO-Pad-9f8309f9488443e3976458a782d6d7b4",
+    "executable_sha256": "1f6853aad57b6125d6ed3f20d5ed0ddd853fc67fb5a1330da7e8da5b5aa597a5",
+    "fixture_input": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\native-session-input.json",
+    "route": "main-menu",
+    "background": true,
+    "background_capture": true,
+    "expected_movie_fault": true,
+    "expected_audio_stall": false,
+    "source_service_disabled": false,
+    "fixture_progression_unlocks": true,
+    "fixture_scenario": null,
+    "card": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\gallery-cards\\89eefc2c1cc8405d9fad8b08d38f0531",
+    "window_may_play_audio": true
+  },
+  "executable_sha256": "1f6853aad57b6125d6ed3f20d5ed0ddd853fc67fb5a1330da7e8da5b5aa597a5",
+  "source_revision": "ad93542da65d327af65422031ee1c4f3d58d35b7",
+  "launcher_revision": "e860b8b612a62cfcdcaca66f619f5fdc0ea84a43",
+  "launcher_branch": "fix/launcher-progress-overlay",
+  "build_receipt_sha256": "a72f174f9e281a890618b2fae763c2cdd9779f6b13ec4eacda538b9c8e724640",
+  "native_source_sha256": {
+    "game/native/adxt_refill/adxt_refill.cpp": "5ed2a85f920b5b80011b1a4bbaab4210a70497ab7f3399aad15b29f51df9cf72",
+    "game/native/audio_clip_loader/loader.cpp": "3efbf79ec1da929f36c65637d1a6dd819e4d7ccb0b4d5d0c6129272b87886b74",
+    "game/native/host_movie/session.cpp": "7df89065b4f0f62905639f0bf4cbc206ffa1c06e0c31a316feb8f756181393de",
+    "game/native/resources/bounded_view.cpp": "c7c1b618b74f42d6cb6717a3a55fdd5ec44abf6668e6bc43e7673fbe5731de84",
+    "recomp/overrides/native_adxt/ordinary_runtime.cpp": "5096f8f723548b6a7fb614144bc1246b9c92be4ca2530aca2f3210b6e88223b7",
+    "recomp/overrides/native_adxt/source_profile.cpp": "c258a55e34d0a9d2cf0c7b56f91932888c3a70f649be7243adabf9498d22e96e",
+    "recomp/overrides/native_sound_ram/composite_backend.cpp": "8be820507fb4c41b256e1d88cdfbb0e9815d861aa251e4268e082822b1cfff97"
+  },
+  "original_generic_failed_check": {
+    "status": "native GameSession check failed",
+    "selected": true,
+    "audio_selected": true,
+    "resource_selected": true,
+    "native_error": true,
+    "duration_completed": true,
+    "cue_owner_joined": true,
+    "audio_underrun_frames": 0,
+    "audio_stall_handshake": true,
+    "native_source_service_visits": 95470,
+    "source_service_handshake": true,
+    "background_window_handshake": true,
+    "media_error": true,
+    "forced_cleanup": false,
+    "exit_code": 0,
+    "movie_status": "Movies: native media error (see session logs)",
+    "logs": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\sessions\\20261109-062828-848",
+    "elapsed_seconds": 421.7170831,
+    "game_launched": true,
+    "ui_window_constructed": false,
+    "route": "main-menu",
+    "background": true,
+    "background_capture": true,
+    "fixture_progression_unlocks": true,
+    "expected_movie_fault": true,
+    "expected_audio_stall": false,
+    "source_service_disabled": false,
+    "fixture_scenario": null,
+    "card": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\gallery-cards\\89eefc2c1cc8405d9fad8b08d38f0531",
+    "subjective_av_confirmation": false,
+    "step3_complete": false
+  },
+  "original_generic_failed_check_sha256": "b0297c85ad4496f3bd39c58e72f8531cfbfa2294ef450857132bf9cc74774bb0",
+  "generic_launcher_exit": 1,
+  "original_failed_receipt_changed": false,
+  "independent_error_audit": {
+    "native_tag_counts": {
+      "NATIVE-MEDIA-WINDOW": 2,
+      "NATIVE-DISC-STREAM": 1,
+      "NATIVE-ADX-BLOCK": 1,
+      "NATIVE-ADX-STEREO": 1,
+      "NATIVE-RESOURCE-READS": 9,
+      "NATIVE-AUDIO": 1,
+      "NATIVE-ADXT": 1,
+      "NATIVE-HOST-MOVIE": 23,
+      "NATIVE-HOST-MOVIE-CUE": 24,
+      "NATIVE-HOST-MOVIE-TEST": 1,
+      "NATIVE-HOST-MOVIE-ERROR": 1,
+      "NATIVE-AUDIO-SERVICE-REPORT": 1,
+      "NATIVE-ADXT-SOURCE-REPORT": 1,
+      "NATIVE-AUDIO-REPORT": 1,
+      "NATIVE-SOUND-RAM-REPORT": 1,
+      "NATIVE-AUDIO-CUE-REPORT": 2,
+      "NATIVE-HOST-MOVIE-REPORT": 2
+    },
+    "native_error_tags": [
+      {
+        "file": "stderr.log",
+        "line": 2604,
+        "text": "[NATIVE-HOST-MOVIE-ERROR] Injected native movie acceptance worker failure"
+      }
+    ],
+    "injection_markers": [
+      {
+        "file": "stderr.log",
+        "line": 2603,
+        "text": "[NATIVE-HOST-MOVIE-TEST] capability=REO_NATIVE_HOST_MOVIE_TEST_FAIL_V1 generation=4 key=fe761807bc7493769dd7f9720ce6d1cc969f596f76fefc9b5add5385952b153b ordinal=120 fault=one-shot-worker-failure"
+      }
+    ],
+    "native_error_like_lines": [
+      {
+        "file": "stderr.log",
+        "line": 263,
+        "text": "[NATIVE-ADXT] ordinary-file binding selected entries=22 source_owner=canonical original_pcm=refused queued_assets=finite_native sj_callbacks=unsupported"
+      },
+      {
+        "file": "stderr.log",
+        "line": 2603,
+        "text": "[NATIVE-HOST-MOVIE-TEST] capability=REO_NATIVE_HOST_MOVIE_TEST_FAIL_V1 generation=4 key=fe761807bc7493769dd7f9720ce6d1cc969f596f76fefc9b5add5385952b153b ordinal=120 fault=one-shot-worker-failure"
+      },
+      {
+        "file": "stderr.log",
+        "line": 2604,
+        "text": "[NATIVE-HOST-MOVIE-ERROR] Injected native movie acceptance worker failure"
+      },
+      {
+        "file": "stderr.log",
+        "line": 4427,
+        "text": "[NATIVE-SOUND-RAM-REPORT] retired=1 active_slots=0 active_operations=0 diagnostic_reports=24 first_refusal_or_diagnostic=1540 attempts=35,35,185,89,0,24,24,24,0,0,1 refused=0,0,0,0,0,0,24,0,0,0,0 order=begin,end,read,control,forward,snapshot,log,packet,bank,pcm,retire"
+      },
+      {
+        "file": "stderr.log",
+        "line": 4429,
+        "text": "[NATIVE-HOST-MOVIE-REPORT] joined=1 sources=11 delivered_frames=10858 error=none"
+      },
+      {
+        "file": "stderr.log",
+        "line": 4433,
+        "text": "[NATIVE-HOST-MOVIE-REPORT] joined=1 sources=11 delivered_frames=10858 error=none"
+      }
+    ],
+    "unexpected_native_error_like_lines": []
+  },
+  "source_start_associations": [
+    {
+      "generation": 1,
+      "clips": 6,
+      "loop": 0,
+      "line": 2253,
+      "text": "[NATIVE-HOST-MOVIE] source started generation=1 clips=6 loop=0",
+      "cue": {
+        "line": 2252,
+        "text": "[NATIVE-HOST-MOVIE-CUE] partition=3 member=420 container=netbio01.dat sector=515053 sectors=2249"
+      }
+    },
+    {
+      "generation": 2,
+      "clips": 1,
+      "loop": 1,
+      "line": 2273,
+      "text": "[NATIVE-HOST-MOVIE] source started generation=2 clips=1 loop=1",
+      "cue": {
+        "line": 2272,
+        "text": "[NATIVE-HOST-MOVIE-CUE] partition=3 member=420 container=netbio01.dat sector=515053 sectors=2249"
+      }
+    },
+    {
+      "generation": 3,
+      "clips": 1,
+      "loop": 1,
+      "line": 2559,
+      "text": "[NATIVE-HOST-MOVIE] source started generation=3 clips=1 loop=1",
+      "cue": {
+        "line": 2558,
+        "text": "[NATIVE-HOST-MOVIE-CUE] partition=3 member=417 container=netbio01.dat sector=507168 sectors=875"
+      }
+    },
+    {
+      "generation": 4,
+      "clips": 1,
+      "loop": 0,
+      "line": 2582,
+      "text": "[NATIVE-HOST-MOVIE] source started generation=4 clips=1 loop=0",
+      "cue": {
+        "line": 2581,
+        "text": "[NATIVE-HOST-MOVIE-CUE] partition=3 member=416 container=netbio01.dat sector=461970 sectors=45198"
+      }
+    },
+    {
+      "generation": 5,
+      "clips": 1,
+      "loop": 1,
+      "line": 2612,
+      "text": "[NATIVE-HOST-MOVIE] source started generation=5 clips=1 loop=1",
+      "cue": {
+        "line": 2611,
+        "text": "[NATIVE-HOST-MOVIE-CUE] partition=3 member=417 container=netbio01.dat sector=507168 sectors=875"
+      }
+    },
+    {
+      "generation": 6,
+      "clips": 1,
+      "loop": 0,
+      "line": 2620,
+      "text": "[NATIVE-HOST-MOVIE] source started generation=6 clips=1 loop=0",
+      "cue": {
+        "line": 2619,
+        "text": "[NATIVE-HOST-MOVIE-CUE] partition=3 member=416 container=netbio01.dat sector=461970 sectors=45198"
+      }
+    },
+    {
+      "generation": 7,
+      "clips": 1,
+      "loop": 1,
+      "line": 3653,
+      "text": "[NATIVE-HOST-MOVIE] source started generation=7 clips=1 loop=1",
+      "cue": {
+        "line": 3652,
+        "text": "[NATIVE-HOST-MOVIE-CUE] partition=3 member=417 container=netbio01.dat sector=507168 sectors=875"
+      }
+    },
+    {
+      "generation": 8,
+      "clips": 1,
+      "loop": 0,
+      "line": 3666,
+      "text": "[NATIVE-HOST-MOVIE] source started generation=8 clips=1 loop=0",
+      "cue": {
+        "line": 3665,
+        "text": "[NATIVE-HOST-MOVIE-CUE] partition=3 member=416 container=netbio01.dat sector=461970 sectors=45198"
+      }
+    },
+    {
+      "generation": 9,
+      "clips": 1,
+      "loop": 1,
+      "line": 3694,
+      "text": "[NATIVE-HOST-MOVIE] source started generation=9 clips=1 loop=1",
+      "cue": {
+        "line": 3693,
+        "text": "[NATIVE-HOST-MOVIE-CUE] partition=3 member=417 container=netbio01.dat sector=507168 sectors=875"
+      }
+    },
+    {
+      "generation": 10,
+      "clips": 9,
+      "loop": 0,
+      "line": 3726,
+      "text": "[NATIVE-HOST-MOVIE] source started generation=10 clips=9 loop=0",
+      "cue": {
+        "line": 3725,
+        "text": "[NATIVE-HOST-MOVIE-CUE] partition=2 member=39 container=netbio02.dat sector=76348 sectors=390"
+      }
+    },
+    {
+      "generation": 11,
+      "clips": 1,
+      "loop": 1,
+      "line": 3754,
+      "text": "[NATIVE-HOST-MOVIE] source started generation=11 clips=1 loop=1",
+      "cue": {
+        "line": 3753,
+        "text": "[NATIVE-HOST-MOVIE-CUE] partition=3 member=417 container=netbio01.dat sector=507168 sectors=875"
+      }
+    }
+  ],
+  "recovery_chronology": {
+    "first_e3_started": {
+      "seconds": 58.67200000002049,
+      "primary": 6,
+      "substate": 9,
+      "nested": 4,
+      "category": 2,
+      "selection": 0,
+      "handle": 9659392,
+      "status": 2,
+      "width": 512,
+      "height": 368,
+      "frame": 1,
+      "audio_mode": 4
+    },
+    "returned_after_failure": {
+      "seconds": 63.73399999999674,
+      "primary": 6,
+      "substate": 8,
+      "nested": 0,
+      "category": 2,
+      "selection": 0,
+      "handle": 12493824,
+      "status": 2,
+      "width": 256,
+      "height": 224,
+      "frame": 13,
+      "audio_mode": 4
+    },
+    "recovered_replay_action": {
+      "name": "e3-replay",
+      "button": 4096,
+      "seconds": 64.15600000001723,
+      "exit_code": 0
+    },
+    "recovered_full_eof": {
+      "seconds": 270.90600000001723,
+      "primary": 6,
+      "substate": 8,
+      "nested": 0,
+      "category": 2,
+      "selection": 0,
+      "handle": 12493824,
+      "status": 2,
+      "width": 256,
+      "height": 224,
+      "frame": 13,
+      "audio_mode": 4
+    },
+    "fresh_replay_action": {
+      "name": "e3-second-replay",
+      "button": 4096,
+      "seconds": 271.2970000000205,
+      "exit_code": 0
+    },
+    "fresh_replay_skip_action": {
+      "name": "e3-skip",
+      "button": 8192,
+      "seconds": 276.375,
+      "exit_code": 0
+    },
+    "returned_after_skip": {
+      "seconds": 277.43700000003446,
+      "primary": 6,
+      "substate": 8,
+      "nested": 0,
+      "category": 2,
+      "selection": 0,
+      "handle": 12493824,
+      "status": 2,
+      "width": 256,
+      "height": 224,
+      "frame": 14,
+      "audio_mode": 4
+    },
+    "scenario_play_action": {
+      "name": "scenario-play",
+      "button": 4096,
+      "seconds": 279.73399999999674,
+      "exit_code": 0
+    },
+    "scenario_skip_action": {
+      "name": "scenario-skip",
+      "button": 8192,
+      "seconds": 284.7970000000205,
+      "exit_code": 0
+    },
+    "returned_after_scenario_skip": {
+      "seconds": 285.85899999999674,
+      "primary": 6,
+      "substate": 8,
+      "nested": 0,
+      "category": 2,
+      "selection": 0,
+      "handle": 12493824,
+      "status": 2,
+      "width": 256,
+      "height": 224,
+      "frame": 14,
+      "audio_mode": 4
+    }
+  },
+  "driver_checks": {
+    "native_queued_e3_started": true,
+    "returned_after_injected_failure": true,
+    "full_recovered_playback_reached_eof": true,
+    "fresh_replay_exceeded_fault_point_and_skip": true,
+    "scenario_playlist_and_skip": true
+  },
+  "driver_elapsed_seconds": 285.85899999999674,
+  "fault_generation_trace": {
+    "generation": 4,
+    "retained_ordinals": [
+      0,
+      119
+    ],
+    "publication_count": 120,
+    "exceptional_ordinal": 120,
+    "limitation": "The injected throw follows preparing/publishing ordinal120 but precedes ordinary timing-row commit. Capability log and source own ordinal120; retained producer CSV ends119. Zero dropped records does not recover that exceptional iteration."
+  },
+  "recovered_generation6_source": {
+    "generation": 6,
+    "clip": 0,
+    "publications": 6144,
+    "unique_ordinals": 6144,
+    "first_ordinal": 0,
+    "last_ordinal": 6143,
+    "first_line": 496,
+    "last_line": 6639,
+    "maximum_publication_gap_ms": 45.5996,
+    "gaps_above50ms": 0,
+    "gaps_above100ms": 0,
+    "backpressure_max": 0
+  },
+  "full_trace_retention": {
+    "native-movie-producer.csv": {
+      "header": "# dropped=0",
+      "rows": 10984
+    },
+    "native-movie-consumer.csv": {
+      "header": "# dropped=0",
+      "rows": 10965
+    }
+  },
+  "all_generation_publication_gaps_above50ms": [
+    {
+      "gap_ms": 55.3512,
+      "begin_ns": 297477967703100,
+      "end_ns": 297478023054300,
+      "previous_publication": {
+        "wake_begin_ns": 297477966132300,
+        "wake_end_ns": 297477967135400,
+        "controls_end_ns": 297477967135500,
+        "state_end_ns": 297477967138800,
+        "transfer_end_ns": 297477967420700,
+        "readback_end_ns": 297477967702600,
+        "publish_end_ns": 297477967703100,
+        "end_ns": 297477967703300,
+        "generation": 11,
+        "clip": 0,
+        "serial": 3111,
+        "ordinal": 110,
+        "backpressure": 0,
+        "updated": 1,
+        "events": 471,
+        "position_seconds": 3.7372161,
+        "state": 3,
+        "line": 10148
+      },
+      "next_publication": {
+        "wake_begin_ns": 297477999719200,
+        "wake_end_ns": 297478000722600,
+        "controls_end_ns": 297478000722700,
+        "state_end_ns": 297478000725800,
+        "transfer_end_ns": 297478001255600,
+        "readback_end_ns": 297478023053000,
+        "publish_end_ns": 297478023054300,
+        "end_ns": 297478023054800,
+        "generation": 11,
+        "clip": 0,
+        "serial": 3112,
+        "ordinal": 111,
+        "backpressure": 0,
+        "updated": 1,
+        "events": 472,
+        "position_seconds": 3.7708032,
+        "state": 3,
+        "line": 10149
+      },
+      "clipped_recorded_sections_ms": {
+        "wake": 1.0034,
+        "controls": 0.0001,
+        "state": 0.0031,
+        "transfer": 0.5298,
+        "readback": 21.7974,
+        "publication": 0.0013,
+        "tail": 0.0002
+      },
+      "time_outside_recorded_iterations_ms": 32.0159,
+      "consumer_requests_in_interval": 1,
+      "consumer_fresh_frames": 1,
+      "consumer_lines": [
+        10128
+      ],
+      "interpretation": "Measured publication interval; time outside recorded iterations includes unrecorded work and scheduling, not proven idle time."
+    },
+    {
+      "gap_ms": 52.1553,
+      "begin_ns": 297417938257000,
+      "end_ns": 297417990412300,
+      "previous_publication": {
+        "wake_begin_ns": 297417936173900,
+        "wake_end_ns": 297417937178600,
+        "controls_end_ns": 297417937178600,
+        "state_end_ns": 297417937188600,
+        "transfer_end_ns": 297417937967100,
+        "readback_end_ns": 297417938256000,
+        "publish_end_ns": 297417938257000,
+        "end_ns": 297417938257300,
+        "generation": 11,
+        "clip": 0,
+        "serial": 1325,
+        "ordinal": 124,
+        "backpressure": 0,
+        "updated": 1,
+        "events": 208,
+        "position_seconds": 4.2043476,
+        "state": 3,
+        "line": 8352
+      },
+      "next_publication": {
+        "wake_begin_ns": 297417969787700,
+        "wake_end_ns": 297417970788600,
+        "controls_end_ns": 297417970788700,
+        "state_end_ns": 297417970795600,
+        "transfer_end_ns": 297417971141000,
+        "readback_end_ns": 297417990411500,
+        "publish_end_ns": 297417990412300,
+        "end_ns": 297417990412700,
+        "generation": 11,
+        "clip": 0,
+        "serial": 1326,
+        "ordinal": 125,
+        "backpressure": 0,
+        "updated": 1,
+        "events": 208,
+        "position_seconds": 4.2379572,
+        "state": 3,
+        "line": 8353
+      },
+      "clipped_recorded_sections_ms": {
+        "wake": 1.0009,
+        "controls": 0.0001,
+        "state": 0.0069,
+        "transfer": 0.3454,
+        "readback": 19.2705,
+        "publication": 0.0008,
+        "tail": 0.0003
+      },
+      "time_outside_recorded_iterations_ms": 31.5304,
+      "consumer_requests_in_interval": 1,
+      "consumer_fresh_frames": 1,
+      "consumer_lines": [
+        8327
+      ],
+      "interpretation": "Measured publication interval; time outside recorded iterations includes unrecorded work and scheduling, not proven idle time."
+    }
+  ],
+  "cold_handoff": {
+    "session": "20261109-062015-774",
+    "generation": 4,
+    "source_publications": 6144,
+    "requests": 6150,
+    "fresh_handoffs": 6102,
+    "fresh_unique_ordinals": 6102,
+    "missing_ordinals": [
+      533,
+      547,
+      551,
+      554,
+      556,
+      561,
+      564,
+      1454,
+      1457,
+      1570,
+      1576,
+      1578,
+      1584,
+      1587,
+      1594,
+      1603,
+      2578,
+      2586,
+      2590,
+      2596,
+      3585,
+      3604,
+      3612,
+      3615,
+      3619,
+      3627,
+      3633,
+      4599,
+      4602,
+      4622,
+      4624,
+      4638,
+      4641,
+      5051,
+      5627,
+      5641,
+      5651,
+      5655,
+      5660,
+      5662,
+      5669,
+      5697
+    ],
+    "missing_ordinal_ranges": [
+      [
+        533,
+        533
+      ],
+      [
+        547,
+        547
+      ],
+      [
+        551,
+        551
+      ],
+      [
+        554,
+        554
+      ],
+      [
+        556,
+        556
+      ],
+      [
+        561,
+        561
+      ],
+      [
+        564,
+        564
+      ],
+      [
+        1454,
+        1454
+      ],
+      [
+        1457,
+        1457
+      ],
+      [
+        1570,
+        1570
+      ],
+      [
+        1576,
+        1576
+      ],
+      [
+        1578,
+        1578
+      ],
+      [
+        1584,
+        1584
+      ],
+      [
+        1587,
+        1587
+      ],
+      [
+        1594,
+        1594
+      ],
+      [
+        1603,
+        1603
+      ],
+      [
+        2578,
+        2578
+      ],
+      [
+        2586,
+        2586
+      ],
+      [
+        2590,
+        2590
+      ],
+      [
+        2596,
+        2596
+      ],
+      [
+        3585,
+        3585
+      ],
+      [
+        3604,
+        3604
+      ],
+      [
+        3612,
+        3612
+      ],
+      [
+        3615,
+        3615
+      ],
+      [
+        3619,
+        3619
+      ],
+      [
+        3627,
+        3627
+      ],
+      [
+        3633,
+        3633
+      ],
+      [
+        4599,
+        4599
+      ],
+      [
+        4602,
+        4602
+      ],
+      [
+        4622,
+        4622
+      ],
+      [
+        4624,
+        4624
+      ],
+      [
+        4638,
+        4638
+      ],
+      [
+        4641,
+        4641
+      ],
+      [
+        5051,
+        5051
+      ],
+      [
+        5627,
+        5627
+      ],
+      [
+        5641,
+        5641
+      ],
+      [
+        5651,
+        5651
+      ],
+      [
+        5655,
+        5655
+      ],
+      [
+        5660,
+        5660
+      ],
+      [
+        5662,
+        5662
+      ],
+      [
+        5669,
+        5669
+      ],
+      [
+        5697,
+        5697
+      ]
+    ],
+    "maximum_request_begin_gap_ms": 35.3839,
+    "maximum_request_released_gap_ms": 38.0506,
+    "maximum_fresh_begin_gap_ms": 67.6918,
+    "maximum_fresh_released_gap_ms": 67.7405,
+    "fresh_begin_gaps_over50ms": 48,
+    "maximum_fresh_ordinal_jump": 2,
+    "missing_with_no_borrow_in_latest_window": 42,
+    "missing_intervals_overlapping_audio_capture_gap": 0,
+    "missing_intervals_overlapping_window_capture_gap": 0,
+    "missing_intervals_with_external_gap_within150ms": 0,
+    "selected_gray_records_read": 111,
+    "selected_gray_roi": "capture gray x6..121 inclusive, y18..84 inclusive; hash of concatenated ROI rows, not original full-frame or full-file hash",
+    "identical_coarse_movie_roi_capture_pairs_near_omissions": [
+      {
+        "before_index": 1121,
+        "after_index": 1122,
+        "gap_ms": 50.0406
+      },
+      {
+        "before_index": 1781,
+        "after_index": 1782,
+        "gap_ms": 50.0406
+      },
+      {
+        "before_index": 2411,
+        "after_index": 2412,
+        "gap_ms": 50.0384
+      },
+      {
+        "before_index": 2416,
+        "after_index": 2417,
+        "gap_ms": 50.0367
+      },
+      {
+        "before_index": 3062,
+        "after_index": 3063,
+        "gap_ms": 50.0407
+      },
+      {
+        "before_index": 3086,
+        "after_index": 3087,
+        "gap_ms": 50.0409
+      },
+      {
+        "before_index": 3095,
+        "after_index": 3096,
+        "gap_ms": 50.0406
+      },
+      {
+        "before_index": 3726,
+        "after_index": 3727,
+        "gap_ms": 50.0409
+      }
+    ],
+    "native_visual_hold_confirmed": false,
+    "native_visual_hold_limit": "Sparse 20Hz coarse WGC and CPU present-return stamps do not tag every presented source picture. Identical coarse ROI samples can also result from static source content; their link to each omitted ordinal is unproven."
+  },
+  "recovery_handoff": {
+    "session": "20261109-062828-848",
+    "generation": 6,
+    "source_publications": 6144,
+    "requests": 6150,
+    "fresh_handoffs": 6095,
+    "fresh_unique_ordinals": 6095,
+    "missing_ordinals": [
+      703,
+      717,
+      721,
+      725,
+      729,
+      732,
+      1740,
+      1742,
+      1755,
+      1760,
+      1767,
+      2551,
+      2709,
+      2743,
+      2755,
+      2759,
+      2763,
+      2765,
+      2767,
+      2772,
+      2777,
+      2780,
+      2789,
+      3761,
+      3776,
+      3778,
+      3781,
+      3784,
+      3790,
+      3793,
+      3795,
+      3803,
+      4772,
+      4775,
+      4798,
+      4800,
+      4802,
+      4806,
+      4812,
+      4814,
+      4816,
+      4820,
+      4826,
+      5821,
+      5825,
+      5834,
+      5839,
+      5842,
+      5849
+    ],
+    "missing_ordinal_ranges": [
+      [
+        703,
+        703
+      ],
+      [
+        717,
+        717
+      ],
+      [
+        721,
+        721
+      ],
+      [
+        725,
+        725
+      ],
+      [
+        729,
+        729
+      ],
+      [
+        732,
+        732
+      ],
+      [
+        1740,
+        1740
+      ],
+      [
+        1742,
+        1742
+      ],
+      [
+        1755,
+        1755
+      ],
+      [
+        1760,
+        1760
+      ],
+      [
+        1767,
+        1767
+      ],
+      [
+        2551,
+        2551
+      ],
+      [
+        2709,
+        2709
+      ],
+      [
+        2743,
+        2743
+      ],
+      [
+        2755,
+        2755
+      ],
+      [
+        2759,
+        2759
+      ],
+      [
+        2763,
+        2763
+      ],
+      [
+        2765,
+        2765
+      ],
+      [
+        2767,
+        2767
+      ],
+      [
+        2772,
+        2772
+      ],
+      [
+        2777,
+        2777
+      ],
+      [
+        2780,
+        2780
+      ],
+      [
+        2789,
+        2789
+      ],
+      [
+        3761,
+        3761
+      ],
+      [
+        3776,
+        3776
+      ],
+      [
+        3778,
+        3778
+      ],
+      [
+        3781,
+        3781
+      ],
+      [
+        3784,
+        3784
+      ],
+      [
+        3790,
+        3790
+      ],
+      [
+        3793,
+        3793
+      ],
+      [
+        3795,
+        3795
+      ],
+      [
+        3803,
+        3803
+      ],
+      [
+        4772,
+        4772
+      ],
+      [
+        4775,
+        4775
+      ],
+      [
+        4798,
+        4798
+      ],
+      [
+        4800,
+        4800
+      ],
+      [
+        4802,
+        4802
+      ],
+      [
+        4806,
+        4806
+      ],
+      [
+        4812,
+        4812
+      ],
+      [
+        4814,
+        4814
+      ],
+      [
+        4816,
+        4816
+      ],
+      [
+        4820,
+        4820
+      ],
+      [
+        4826,
+        4826
+      ],
+      [
+        5821,
+        5821
+      ],
+      [
+        5825,
+        5825
+      ],
+      [
+        5834,
+        5834
+      ],
+      [
+        5839,
+        5839
+      ],
+      [
+        5842,
+        5842
+      ],
+      [
+        5849,
+        5849
+      ]
+    ],
+    "maximum_request_begin_gap_ms": 34.789,
+    "maximum_request_released_gap_ms": 39.9526,
+    "maximum_fresh_begin_gap_ms": 67.1214,
+    "maximum_fresh_released_gap_ms": 67.5523,
+    "fresh_begin_gaps_over50ms": 55,
+    "maximum_fresh_ordinal_jump": 2,
+    "missing_with_no_borrow_in_latest_window": 49,
+    "missing_intervals_overlapping_audio_capture_gap": 0,
+    "missing_intervals_overlapping_window_capture_gap": 0,
+    "missing_intervals_with_external_gap_within150ms": 0,
+    "selected_gray_records_read": 117,
+    "selected_gray_roi": "capture gray x6..121 inclusive, y18..84 inclusive; hash of concatenated ROI rows, not original full-frame or full-file hash",
+    "identical_coarse_movie_roi_capture_pairs_near_omissions": [
+      {
+        "before_index": 1346,
+        "after_index": 1347,
+        "gap_ms": 50.0407
+      },
+      {
+        "before_index": 1362,
+        "after_index": 1363,
+        "gap_ms": 50.0406
+      },
+      {
+        "before_index": 2022,
+        "after_index": 2023,
+        "gap_ms": 66.7205
+      },
+      {
+        "before_index": 2030,
+        "after_index": 2031,
+        "gap_ms": 66.7202
+      },
+      {
+        "before_index": 2036,
+        "after_index": 2037,
+        "gap_ms": 50.0617
+      },
+      {
+        "before_index": 2660,
+        "after_index": 2661,
+        "gap_ms": 50.0407
+      },
+      {
+        "before_index": 2668,
+        "after_index": 2669,
+        "gap_ms": 50.0407
+      },
+      {
+        "before_index": 2676,
+        "after_index": 2677,
+        "gap_ms": 50.0407
+      },
+      {
+        "before_index": 2678,
+        "after_index": 2679,
+        "gap_ms": 50.0408
+      },
+      {
+        "before_index": 2684,
+        "after_index": 2685,
+        "gap_ms": 50.0407
+      },
+      {
+        "before_index": 3304,
+        "after_index": 3305,
+        "gap_ms": 50.0364
+      },
+      {
+        "before_index": 3314,
+        "after_index": 3315,
+        "gap_ms": 50.0366
+      },
+      {
+        "before_index": 3333,
+        "after_index": 3334,
+        "gap_ms": 50.0417
+      },
+      {
+        "before_index": 3965,
+        "after_index": 3966,
+        "gap_ms": 50.0411
+      },
+      {
+        "before_index": 3982,
+        "after_index": 3983,
+        "gap_ms": 50.0404
+      },
+      {
+        "before_index": 3987,
+        "after_index": 3988,
+        "gap_ms": 50.0408
+      },
+      {
+        "before_index": 3991,
+        "after_index": 3992,
+        "gap_ms": 50.0414
+      },
+      {
+        "before_index": 4638,
+        "after_index": 4639,
+        "gap_ms": 50.0406
+      }
+    ],
+    "native_visual_hold_confirmed": false,
+    "native_visual_hold_limit": "Sparse 20Hz coarse WGC and CPU present-return stamps do not tag every presented source picture. Identical coarse ROI samples can also result from static source content; their link to each omitted ordinal is unproven."
+  },
+  "handoff_comparison_path": "build-native-sjuni/v38-error-recovery-audit-v1/handoff-comparison-v2.json",
+  "broker_semantics": {
+    "game/native/host_movie/session.cpp": "Publisher stores only latest CPU-frame pointer; pool prevents overwrite of held frames but does not queue every unconsumed publication. Session::frame returns that latest pointer.",
+    "recomp/overrides/native_host_movie/runtime_adapter.cpp": "frame action returns available0 when no newer serial exists; otherwise copies latest pixels and original ordinal into the legacy-renderer descriptor. release records consumed serial. There is no FIFO between publisher and game."
+  },
+  "broker_finding": "These are actual missing native game handoffs, not telemetry drops. Where no borrow stamp falls between publication(n) and publication(n+1), latest-frame replacement can omit n before the next game borrow. Stable request cadence does not guarantee regular fresh-picture cadence. Exact source/display scheduling cause and physical visual effect remain unproven.",
+  "full6144_source_progression_proven": true,
+  "all6144_game_handoffs_proven": false,
+  "all6144_pictures_displayed_proven": false,
+  "audio_control": {
+    "schema": 1,
+    "status": "observations parsed",
+    "file": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\sessions\\20261109-062828-848\\native-audio-control.csv",
+    "retention": "# dropped=0; owner_joined=1; control_snapshots=2",
+    "trace_version": 2,
+    "dropped_snapshots": 0,
+    "invalid_rows": [],
+    "counter_or_time_resets": [],
+    "snapshots": 23917,
+    "first_observation": {
+      "begin_ns": 297107377275300,
+      "output_frames": 0,
+      "underrun_frames": 0
+    },
+    "last_observation": {
+      "end_ns": 297505977104900,
+      "output_frames": 19116960,
+      "underrun_frames": 0
+    },
+    "shortage_windows": 0,
+    "measured_underrun_increase": 0,
+    "largest_shortage_windows": [],
+    "largest_service_gaps": [],
+    "limitations": [
+      "A counter increase is bounded by two control observations, not an individual audio-callback timestamp.",
+      "Late/skipped counters identify observed stream shortages; they do not prove their upstream cause.",
+      "Replacement or counter rebasing can hide per-stream increments; aggregate counts must not be summed across streams.",
+      "A service observation gap includes host scheduling and unobserved work.",
+      "Muted/gain state at an endpoint does not establish audibility during the whole interval.",
+      "Dropped/invalid records and activity after the last snapshot limit coverage; compare final native totals.",
+      "This analysis is neither an A/V synchronization check nor a controlled fix/retest."
+    ]
+  },
+  "stream_late_max": 0,
+  "stream_skipped_max": 0,
+  "final_native_reports": [
+    "[NATIVE-AUDIO-SERVICE-REPORT] joined=1 visits=95470 order_deferrals=1",
+    "[NATIVE-ADXT-SOURCE-REPORT] joined=1 frames=19116960 signal_frames=10658862 underrun_frames=0",
+    "[NATIVE-AUDIO-REPORT] owner_joined=1 output_started=1 frames=19116960 signal_frames=10658862 underrun_frames=0 hard_failures=0 queue_rejections=0 native_sources=1 source_joined=1 submix_calls=39827 submix_failures=0",
+    "[NATIVE-SOUND-RAM-REPORT] retired=1 active_slots=0 active_operations=0 diagnostic_reports=24 first_refusal_or_diagnostic=1540 attempts=35,35,185,89,0,24,24,24,0,0,1 refused=0,0,0,0,0,0,24,0,0,0,0 order=begin,end,read,control,forward,snapshot,log,packet,bank,pcm,retire",
+    "[NATIVE-AUDIO-CUE-REPORT] joined=1 accepted=4 finished=4 records=0 failures=0",
+    "[NATIVE-HOST-MOVIE-REPORT] joined=1 sources=11 delivered_frames=10858 error=none"
+  ],
+  "runtime_warnings": [
+    {
+      "line": 4422,
+      "text": "Error during program execution: PS2 Thread Exit"
+    },
+    {
+      "line": 4427,
+      "text": "[NATIVE-SOUND-RAM-REPORT] retired=1 active_slots=0 active_operations=0 diagnostic_reports=24 first_refusal_or_diagnostic=1540 attempts=35,35,185,89,0,24,24,24,0,0,1 refused=0,0,0,0,0,0,24,0,0,0,0 order=begin,end,read,control,forward,snapshot,log,packet,bank,pcm,retire"
+    }
+  ],
+  "background": {
+    "records": 403,
+    "any_owned_foreground_records": 0,
+    "visible_owned_window_records": 403,
+    "original_mwsfd_nonzero_records": 0,
+    "old_slots_per_record": 8,
+    "media_atomic_records": 0,
+    "observer_errors": []
+  },
+  "window_capture": {
+    "receipt": {
+      "pid": 334268,
+      "creation_filetime": 134386757174200846,
+      "frames": 6968,
+      "gray_width": 128,
+      "gray_height": 96,
+      "foreground_samples": 0,
+      "desktop_read": false,
+      "focus_requested": false,
+      "foreground_unchanged": true
+    },
+    "coverage_gaps_over100ms": [
+      {
+        "before_index": 0,
+        "after_index": 1,
+        "gap_ms": 366.965
+      },
+      {
+        "before_index": 5,
+        "after_index": 6,
+        "gap_ms": 150.1227
+      },
+      {
+        "before_index": 2449,
+        "after_index": 2450,
+        "gap_ms": 567.1401
+      },
+      {
+        "before_index": 6194,
+        "after_index": 6195,
+        "gap_ms": 417.0064
+      }
+    ]
+  },
+  "process_audio_capture": {
+    "result": {
+      "scope": "owned-process-tree-only",
+      "pid": 334268,
+      "creation_filetime": 134386757174200846,
+      "frames": 20055360,
+      "nonzero_pcm_frames": 14673113,
+      "peak_pcm16": 20550,
+      "rms_pcm16": 1919.804676,
+      "discontinuous_packets": 0,
+      "timestamp_errors": 0,
+      "process_exited": true,
+      "elapsed_seconds": 419.058537
+    },
+    "packet_count": 41782,
+    "flagged_packets": 0,
+    "timestamp_gaps_over_two_frames": [
+      {
+        "before_packet": 81,
+        "after_packet": 82,
+        "missing_frames": 14394.1248,
+        "gap_ms": 299.8776
+      },
+      {
+        "before_packet": 14489,
+        "after_packet": 14490,
+        "missing_frames": 26400.0,
+        "gap_ms": 550.0
+      },
+      {
+        "before_packet": 34517,
+        "after_packet": 34518,
+        "missing_frames": 17760.0,
+        "gap_ms": 370.0
+      },
+      {
+        "before_packet": 41763,
+        "after_packet": 41764,
+        "missing_frames": 226.83839999999998,
+        "gap_ms": 4.7258
+      }
+    ]
+  },
+  "capture_binary_identity": "Both helper binary/source hashes match the previously verified cold-case command receipts. Exact new PID, creation and private image command identities match this session; large helper/executable/gray/WAV files were not rehashed here.",
+  "captured_wav_sha256_from_completed_capture_receipt": "1953a7e0f654510c261d1146fcdd479232c94d1055c768840033984621f6a814",
+  "no_second_av_fit_performed": true,
+  "physical_scanout_measured": false,
+  "physical_audio_latency_measured": false,
+  "subjective_av_confirmation": false,
+  "historical_root_cause_confirmed": false,
+  "stutter_free_claim": false,
+  "process_access": false,
+  "window_access": false,
+  "device_access": false,
+  "game_launched_by_audit": false,
+  "step3_complete": false,
+  "evidence_sha256": {
+    "build-native-sjuni/v38-error-recovery-audit-v1/audit.py": "710908922587483b97d52bb5bc7beea0aa553a0f2b7d694a5462d97bde66e4c5",
+    "tools/native_reconstruction/analyze_audio_control_trace.py": "874becefd4b2eb77c4011ab5993fe461123967a283974038f7b932f7bb3ea3da",
+    "tools/native_reconstruction/analyze_host_movie_playtest.py": "39ae42dd1815d925f8179a4e318840d05283f36fd80c31dffaf572d192070f90",
+    "tools/native_reconstruction/analyze_media_pacing.py": "7b8425f4e6391793ed74e3101e378033636e1022f2534cb891714da52cb29cb3",
+    "build-native-sjuni/drive_gallery_fault_case_v5.py": "4ea20eb6c28f5788e25c78876ab4a3143567f2756e13262b8c6a34128827f3d1",
+    "build-native-sjuni/observe_launcher_background_v4.py": "0ac633002ef0927963a79f40d3b88582c14f53a13c2c555b7815881a28763c83",
+    "game/native/host_movie/session.cpp": "7df89065b4f0f62905639f0bf4cbc206ffa1c06e0c31a316feb8f756181393de",
+    "build-native-sjuni/v38-game-cases-v1/error-recovery/progress.json": "2c149808b44a92d95b6e0f65d96c1013024ae33d48ce9935360eee7125ad51c5",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062828-848/window-sequence-v1/frames.csv": "567031a0e238927bdb565316fe1336c4f696fb689557d5a6c53de05cc27a63e7",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062828-848/native-game-session-running.json": "addb79befdcb00f7c15d67083d10f501eb8b2d13ba30f726a9c0d5a19631627f",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062828-848/native-game-session-check.json": "b0297c85ad4496f3bd39c58e72f8531cfbfa2294ef450857132bf9cc74774bb0",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062828-848/launch.json": "86f8ed2f22af2dca8daa27cec64a22e3ec50eec3110f164cffaf3fa06b746ca9",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062828-848/stderr.log": "6f66d964b639d1c4e1ba690fee5bf2e973889d246e74737b3a92a585484ca122",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062828-848/stdout.log": "12ba3b5a93b807efe2b6205a04994936497f7f6ed2d563e8fcdb113e036631ad",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062828-848/native-movie-producer.csv": "7f245949d050ce07b5276f20d145f9d20cc2eb470f5fa95d29609211fa6ace8f",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062828-848/native-movie-consumer.csv": "daf497b86741aa993140f0bee1fbe59e57ad58faa2d7c9f95304021c6ebad093",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062828-848/native-audio-control.csv": "e67d5a9e7e3ca429993a2bbf437a816904d1b23dd3e94e0382f2ad8788652e18",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062828-848/gallery-fault-driver-v5.json": "8fa8b19f8c73cc340236b7e2dfc776597e4fac229dfb2f7280e1e56f8b8b454d",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062828-848/collection-driver-v2.json": "2288189de40d5dff6bfd3bf091968e8a35e95fb3b365fc0c4bc89d4f385de056",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062828-848/background-state-v4-receipt.json": "8f101d811cafdb2f1d80d06806ffd52207dd20dcc97fd676e30377b451b9d2fc",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062828-848/background-state-v4.jsonl": "79df5a652446f1ff0f4a3519c470adbf6d6f6a48bef18a6ddceb771905826615",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062828-848/window-sequence-command-v1.json": "77672206a6a24211c77b0bd654f97ffe3eae0ece7d9291f5f3f5be7bb3e44e2d",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062828-848/launcher-process-audio-command.json": "599b75a8b68d07d5fe18457a636b0ac2313e7ad8f4b91a7e109e639e6316c718",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062828-848/launcher-process-audio-result.json": "b4eb8a5d15cd6c8d410443a838752b472f183109f34c3f1a2a0dbf4f30cbc975",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062828-848/launcher-process-audio.wav.packets.csv": "2d98803e5175443c23979f511a3f52685492d0dfe39ee30bf41e00d40a1a789c",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062015-774/native-movie-producer.csv": "16f87359f5b52368022df8fdf590c8b185685120751dfce05b28b85b4a3b6122",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062015-774/native-movie-consumer.csv": "d4871f8e2f9f51774bab37d319cc54d5699507c7a6b4fdcb68e31fdd15cc5126",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062015-774/frames.csv": "25532a693be3c1baddf35d8dbd4039eb2c777202d475890ee68cf9d5a0cce537",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062015-774/window-sequence-v1/frames.csv": "f4366bbc01fc708afc79b8a2e274d21fbc8298a22afd6d5b7262e463df7ccc08",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062015-774/launcher-process-audio.wav.packets.csv": "7b8c55706c0d5ee1ce8b96b4324c71af55369c268b5733c71903bbdc8fbb19a0",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-062828-848/frames.csv": "0d419ac315eaafdec2c309aea71b4602c4ffaa91313cf12d3e5ac3331ea2209f",
+    "recomp/overrides/native_host_movie/runtime_adapter.cpp": "1731faa717600ce05dc94e37d3f24a5041196a1029e70b920bf97757ad44a6a3",
+    "game/native/adxt_refill/adxt_refill.cpp": "5ed2a85f920b5b80011b1a4bbaab4210a70497ab7f3399aad15b29f51df9cf72",
+    "game/native/audio_clip_loader/loader.cpp": "3efbf79ec1da929f36c65637d1a6dd819e4d7ccb0b4d5d0c6129272b87886b74",
+    "game/native/resources/bounded_view.cpp": "c7c1b618b74f42d6cb6717a3a55fdd5ec44abf6668e6bc43e7673fbe5731de84",
+    "recomp/overrides/native_adxt/ordinary_runtime.cpp": "5096f8f723548b6a7fb614144bc1246b9c92be4ca2530aca2f3210b6e88223b7",
+    "recomp/overrides/native_adxt/source_profile.cpp": "c258a55e34d0a9d2cf0c7b56f91932888c3a70f649be7243adabf9498d22e96e",
+    "recomp/overrides/native_sound_ram/composite_backend.cpp": "8be820507fb4c41b256e1d88cdfbb0e9815d861aa251e4268e082822b1cfff97",
+    "build-native-sjuni/v38-error-recovery-audit-v1/write_qualification.py": "a31fdb0b4a66fa9bff0cec76699d2acab19b2979295b20d9864ea1afd085c8a6",
+    "build-native-sjuni/v38-error-recovery-audit-v1/analysis-v2.json": "2d0e79b71a0dda3afaef4f80bc10bcff40e262bb51dea11443fb513f6cdc181d",
+    "build-native-sjuni/v38-error-recovery-audit-v1/handoff_comparison.py": "700a7769464332fddd68a25080e03e41aac860a6d671dd3835c7218ce1bb98a7",
+    "build-native-sjuni/v38-error-recovery-audit-v1/handoff-comparison-v2.json": "c1467b174a5bbc1f6064766e2ed730afa2af9ba1ca728bb0fa76e3eb852e4bf0",
+    "tools/native_reconstruction/native_media_v38_cold_playback_qualification.json": "15e98862086131aca21982fb9cbd038a645ce2ccc6f3d40bd8aa8159fe78886b",
+    "tools/native_reconstruction/native_media_launcher_v38_qualification.json": "b964618b6c29df2cd0901932011d29edcfc59a0857d8981f4cf8e70b1acf37a7",
+    "docs/native-media/NATIVE_MEDIA_V38_ERROR_RECOVERY.md": "f32482a65445dcc29bea232fc0ba3694ee0e8034733599569b55c3200413c2c7",
+    "build-native-sjuni/start_fault_gallery_capture_v2.py": "f18b7eed5aca1b17d66e372c6122174df66451f63bd88cf7e2e251d9cee14a65",
+    "build-native-sjuni/run_v38_background_case_v1.py": "b46e344f05180dbb3dac7a2f32458797d38b2ccca3b299a9b5735c59bfe4a290",
+    "C:\\Users\\Ninjacornix\\reo-launcher-native-media\\launcher\\GameSession.cs": "59cd3acba1cea0dbb45ad18f53d70dcd0a1a950d288f0259c6addcb761e6b638"
+  },
+  "small_files_verified": 48,
+  "limitations": [
+    "Expected fault flags remain sticky in the original generic failed receipt; this qualified case does not edit or replace it.",
+    "Producer publication/handoff and sampled guest states do not measure physical scanout or speaker timing.",
+    "No second picture/audio correlation fit was performed; the independent first-cold-playback A/V case remains separate.",
+    "All6144 source publications do not establish all6144 game handoffs or displayed pictures; missing retained handoff ordinals and fresh-handoff gaps are reported explicitly.",
+    "Sampled old-player inactivity and foreground state do not establish unsampled state continuity.",
+    "Capture coverage/packet timestamp gaps remain observability limits, distinct from zero native audio underruns.",
+    "Source/cache behavior removes a qualified runtime dependency; this test does not establish every historical stutter root cause.",
+    "All omission intervals fail to overlap audio capture timestamp gaps or window coverage gaps above100ms, even within150ms; they are not classified as recorder-only gaps.",
+    "Latest-pointer broker replacement explains the unborrowed publication boundary; the underlying producer/game polling phase and exact visual effect remain unconfirmed.",
+    "Only bounded selected gray ROI records were read and individually hashed; no whole gray-file or asset rehash was performed during the next live capture.",
+    "CPU present returns and coarse20Hz captured pictures do not label every physically displayed source ordinal.",
+    "The explicit temporary renderer interface remains a scoped follow-up; this record creates no physical-all-frame or complete-native-presentation gate."
+  ]
+}

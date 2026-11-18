@@ -1,0 +1,104 @@
+{
+  "schema": "reo.native.session_difficulty.qualification.v1",
+  "status": "passed",
+  "source_sha256": {
+    "game/native/gameplay_world/world.hpp": "2f918fe5899a5f8a25de76340b7b18fe5b68076154329f46499170f369322915",
+    "game/native/gameplay_application/native_session.hpp": "7dd5fb1eda2b36f984485312fe8a83cff4134eb2560d945051bac1f8e0398f6f",
+    "game/native/gameplay_application/native_session.cpp": "3809c626aa95bcb7fdedbf16a44b0800f50edc907763fd31aef8697f0005e24f",
+    "game/native/gameplay_application/native_session_tests.cpp": "b4f8925874d18a7f4b02e64cbcc1eecd59956e310462bf8093952c0044f259c9",
+    "game/native/gameplay_scenario/interpreter.hpp": "745ff19fb796468a77d4bdad543dcf532e0ad4650de692595d72d389ece28801",
+    "game/native/gameplay_scenario/interpreter.cpp": "aacc559e7d821740f43f9740715581659fc7f3462dbc0f1c42354db1219e4cf8",
+    "game/native/gameplay_scenario/difficulty_predicate.hpp": "08441e6a76b79ebff5aaebac7693f290f39591799b82349472f13b6e03503664",
+    "tools/native_reconstruction/gameplay_scenario/tests.cpp": "a6a9c1755a832452e052856085bf84db6c7052ad0687acf4af00f325ee02ae20",
+    "tools/native_reconstruction/gameplay_scenario/verify.py": "26529f95fa7e7d1deb17505713c4e395651208803332836a21f5051b96e8e393",
+    "tools/native_reconstruction/gameplay_scenario/difficulty_vm_tests.inc": "8585b62c5297fd7a2be29065a64b12dd190df3c1fae5e5a7759fea5e4f05f73a",
+    "tools/native_reconstruction/launch_difficulty_tests.cpp": "7ea13828d8f0e923b413b1f1eb52ac23e46b08b439d71acf9f2bf0386c7233fb",
+    "tools/native_reconstruction/verify_launch_difficulty.py": "2ebf47a90d269bb0d03e9edf05d0ee5d85a1f11419088a4a6dc27db28c6b6c77",
+    "tools/native_reconstruction/qualify_session_difficulty_v1.py": "c4188762933a0c07be2c9eec5467394ee15556fdde252ead245e6da122205817",
+    "docs/native-gameplay/SESSION_DIFFICULTY.md": "c7db1ef933087189c34fd07b1ca1c66fc5ecdba6d3ff3c864baa57c09aac2aaa",
+    "docs/native-gameplay/STAGE4_INTEGRATION_AUDIT.md": "63d3d09e16f206305bcd1b5d7f496b2722f8c55df097ae855abeda78cd772a64"
+  },
+  "evidence": [
+    {
+      "path": "build-native-sjuni/launch-difficulty-llvm-v1/receipt.json",
+      "sha256": "f78066edde281b0aea79cb3c09d15688c41a29f709c2a60000a6c6637e467f25"
+    },
+    {
+      "path": "build-native-sjuni/difficulty-vm-llvm-v2/receipt.json",
+      "sha256": "cec38a87220d42e06f48c51cf63b87d3fba5bc5bf495582ebd93cc7987098e6a"
+    },
+    {
+      "path": "build-native-sjuni/difficulty-admission-llvm-v1/receipt.json",
+      "sha256": "083ca3bf1d1ca0f5ee3e60c201c1074a03b3e8b2cc25aa5cec52c347a296552c"
+    },
+    {
+      "path": "build-native-sjuni/difficulty-parents-llvm-v1/receipt.json",
+      "sha256": "7b6db86291dc48a7f18b48c19b98284a7f3aa1f8d232a728c479e982c75a419a"
+    },
+    {
+      "path": "build-native-sjuni/launch-difficulty-gcc-v1/receipt.json",
+      "sha256": "2663e44ca16df301342fdfe9cb616ad6ff4b58facea5d0f91fd8a9e4c31072b3"
+    },
+    {
+      "path": "build-native-sjuni/difficulty-vm-gcc-v2/receipt.json",
+      "sha256": "fbf152d8a3051913557c560a08bb567d351a5bb1d9f02cf750931476fe6c49f2"
+    },
+    {
+      "path": "build-native-sjuni/difficulty-admission-gcc-v1/receipt.json",
+      "sha256": "fefe45170718dcd8daa99bb7febba4c87065b1db7a38ed087413577d9b1f1048"
+    },
+    {
+      "path": "build-native-sjuni/difficulty-parents-gcc-v1/receipt.json",
+      "sha256": "340ae2d92655a778bfb19287391e48ea2c072709478813681fd414e55976ee66"
+    },
+    {
+      "path": "build-native-sjuni/difficulty-frontier-v1/receipt.json",
+      "sha256": "2a1db44c971240eb5dbad755ebe1cb1540c0e35c87b42c0ea03cc421cc82efdd"
+    }
+  ],
+  "observed": [
+    {
+      "compiler": "llvm",
+      "launch": {
+        "status": "passed",
+        "checks": 1542,
+        "source_prefixes": 256,
+        "copy_boundaries": 256,
+        "game_launched": false
+      },
+      "vm": {
+        "checks": 577009894,
+        "difficulty_dispatches": 605958,
+        "difficulty_refusals": 13
+      },
+      "parent_tests": 28
+    },
+    {
+      "compiler": "gcc",
+      "launch": {
+        "status": "passed",
+        "checks": 1542,
+        "source_prefixes": 256,
+        "copy_boundaries": 256,
+        "game_launched": false
+      },
+      "vm": {
+        "checks": 577009894,
+        "difficulty_dispatches": 605958,
+        "difficulty_refusals": 13
+      },
+      "parent_tests": 28
+    }
+  ],
+  "game_launched": false,
+  "device_opened": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "limitations": [
+    "Launch proof executes actual37F330 entry prefix through the first copy boundary, with an explicit interruption before remaining launch effects. It does not claim complete frontend/roster/room entry.",
+    "Generic sessions retain unknown difficulty; explicit application import is required before valid EE comparisons. Invalid selectors preserve source scanning without reading difficulty.",
+    "All original register/memory contexts are offline qualification fixtures, absent from native production.",
+    "All five EVBs still refuse complete admission;69 ordinary authored instructions across12 distinct opcodes remain unsupported.",
+    "Native terminal frame services, installed gameV39 replacement, input/transport/media hosts and semantic save/resume remain Stage4 gates."
+  ]
+}

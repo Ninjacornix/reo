@@ -1,0 +1,1577 @@
+{
+  "schema": 1,
+  "status": "actual owned-window movie content and bounded digital A/V timing matched at five held-out regions",
+  "session": "20261109-033631-629",
+  "identity": {
+    "pid": 323720,
+    "image": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\game-cache\\5f02b00f2dddd9de20aa891fae524153a24409669078be8b37befc84e4c254c5\\reo_launcher_game.exe",
+    "creationFileTime": 134386654113720827,
+    "logs": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\sessions\\20261109-033631-629",
+    "controller": "Local\\REO-Pad-11245afcd30f481ba0289544b272d7c3",
+    "executable_sha256": "fbe53cc5c3784ae4825be82a07b46e47ab75428f473b6ad5f324e5234bb663f8",
+    "fixture_input": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\native-session-input.json",
+    "route": "main-menu",
+    "background": true,
+    "background_capture": true,
+    "fixture_progression_unlocks": true,
+    "fixture_scenario": null,
+    "card": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\gallery-cards\\2ad575f6d79d4d4e9df9118f17f00d93",
+    "window_may_play_audio": true
+  },
+  "capture_result": {
+    "pid": 323720,
+    "creation_filetime": 134386654113720827,
+    "frames": 6946,
+    "gray_width": 128,
+    "gray_height": 96,
+    "foreground_samples": 0,
+    "desktop_read": false,
+    "focus_requested": false,
+    "foreground_unchanged": true
+  },
+  "source": {
+    "status": "independent pinnedFFmpeg reference decoded",
+    "entry": {
+      "source_key": "fe761807bc7493769dd7f9720ce6d1cc969f596f76fefc9b5add5385952b153b",
+      "source_name": "adxsnd.afs/PS2opening_Evl.sfd",
+      "file": "fe761807bc7493769dd7f9720ce6d1cc969f596f76fefc9b5add5385952b153b.mp4",
+      "sha256": "2adbed127861815df7f818ac1e0bf69c2c6f42a661b7871d5c475bdecd86a888",
+      "bytes": 25695525,
+      "frames": 6144,
+      "archive_index": 0,
+      "member_index": 416
+    },
+    "manifest_sha256": "ed9d30df807201eeafa43477e43298c14f5df8593c66fffb92e8a4e8fc942bd0",
+    "source": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\native-media\\file1\\file1-h264-cfr-crf18-v1\\fe761807bc7493769dd7f9720ce6d1cc969f596f76fefc9b5add5385952b153b.mp4",
+    "source_sha256": "2adbed127861815df7f818ac1e0bf69c2c6f42a661b7871d5c475bdecd86a888",
+    "ffmpeg_sha256": "3256173f3f8bffd7df12227c68adf68025edb1832273a9530688a7bb1ed8edec",
+    "command": [
+      "C:\\Users\\Ninjacornix\\AppData\\Local\\OutbreakRecomp\\launcher\\media-tools\\ffmpeg-9.0.2-essentials_build\\ffmpeg.exe",
+      "-hide_banner",
+      "-nostdin",
+      "-threads",
+      "1",
+      "-i",
+      "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\launcher-native-prep-v1\\native-media\\file1\\file1-h264-cfr-crf18-v1\\fe761807bc7493769dd7f9720ce6d1cc969f596f76fefc9b5add5385952b153b.mp4",
+      "-an",
+      "-vf",
+      "scale=128:92:flags=bilinear,format=gray",
+      "-threads",
+      "1",
+      "-fps_mode",
+      "passthrough",
+      "-f",
+      "rawvideo",
+      "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\wgc-e3-picture-match-v1\\reference128x92.gray"
+    ],
+    "reference_frames": 6144,
+    "reference_width": 128,
+    "reference_height": 92,
+    "reference_sha256": "8f5f964bc9c5ce105b40878b18b629c80e0a92e7db498c3e38d90d42895b1ee5"
+  },
+  "geometry": {
+    "calibration_capture_index": 2500,
+    "calibration_reference_ordinal": 2685,
+    "roi_capture_xyxy": [
+      6,
+      18,
+      122,
+      85
+    ],
+    "full_window_movie_rectangle_l_t_w_h": [
+      21.800246539132402,
+      77.5366359520794,
+      597.3427313135912,
+      367.85968452262057
+    ],
+    "correlation": 0.9529625799202188,
+    "capture_point_formula": "sx=(x*642+321)//128, sy=(y*487+243)//96",
+    "model": "bilinear sampling of independent128x92gray reference; source coordinates=(pixel-left)*referenceExtent/windowExtent-.5"
+  },
+  "matching": {
+    "reference_ordinals_searched_per_capture": 6144,
+    "roi_capture_xyxy": [
+      6,
+      18,
+      122,
+      85
+    ],
+    "roi_stride": 2,
+    "correlation": "zero-mean normalized dot product; grayscale bilinear model",
+    "temporal_search_gate": "capture timestamp within0.5sec of native publication anchor; matching then globally searches6144referencepictures",
+    "margin_0_01": "explicit sensitivity convention, not statistical confidence"
+  },
+  "findings": [
+    {
+      "audio_anchor_ordinal": 300,
+      "selected": {
+        "capture_index": 954,
+        "capture_system_ns": 286854875477100,
+        "observed_qpc_ns": 286854861668500,
+        "matched_ordinal": 291,
+        "correlation": 0.9941903352737427,
+        "best_outside_ten_ordinal": 3089,
+        "best_outside_ten_correlation": 0.7067918181419373,
+        "correlation_margin_to_second": 0.10127991437911987,
+        "ordinals_within_0_01_correlation": [
+          291
+        ],
+        "top_candidates": [
+          {
+            "ordinal": 291,
+            "correlation": 0.9941903352737427
+          },
+          {
+            "ordinal": 290,
+            "correlation": 0.8929104208946228
+          },
+          {
+            "ordinal": 292,
+            "correlation": 0.8895540237426758
+          },
+          {
+            "ordinal": 293,
+            "correlation": 0.8240625858306885
+          },
+          {
+            "ordinal": 289,
+            "correlation": 0.7714403867721558
+          },
+          {
+            "ordinal": 3089,
+            "correlation": 0.7067918181419373
+          },
+          {
+            "ordinal": 3090,
+            "correlation": 0.699573278427124
+          },
+          {
+            "ordinal": 3088,
+            "correlation": 0.6892365217208862
+          }
+        ],
+        "audio_same_source_picture_ns": 286854855820466.6,
+        "audio_minus_capture_stamp_ms": -19.656633375,
+        "publication_to_capture_stamp_ms": 102.6946
+      },
+      "highest_correlation_candidate": {
+        "capture_index": 954,
+        "capture_system_ns": 286854875477100,
+        "observed_qpc_ns": 286854861668500,
+        "matched_ordinal": 291,
+        "correlation": 0.9941903352737427,
+        "best_outside_ten_ordinal": 3089,
+        "best_outside_ten_correlation": 0.7067918181419373,
+        "correlation_margin_to_second": 0.10127991437911987,
+        "ordinals_within_0_01_correlation": [
+          291
+        ],
+        "top_candidates": [
+          {
+            "ordinal": 291,
+            "correlation": 0.9941903352737427
+          },
+          {
+            "ordinal": 290,
+            "correlation": 0.8929104208946228
+          },
+          {
+            "ordinal": 292,
+            "correlation": 0.8895540237426758
+          },
+          {
+            "ordinal": 293,
+            "correlation": 0.8240625858306885
+          },
+          {
+            "ordinal": 289,
+            "correlation": 0.7714403867721558
+          },
+          {
+            "ordinal": 3089,
+            "correlation": 0.7067918181419373
+          },
+          {
+            "ordinal": 3090,
+            "correlation": 0.699573278427124
+          },
+          {
+            "ordinal": 3088,
+            "correlation": 0.6892365217208862
+          }
+        ],
+        "audio_same_source_picture_ns": 286854855820466.6,
+        "audio_minus_capture_stamp_ms": -19.656633375,
+        "publication_to_capture_stamp_ms": 102.6946
+      },
+      "selection": "highest correlation",
+      "preceding_different_picture": {
+        "capture_index": 953,
+        "capture_system_ns": 286854808762900,
+        "observed_qpc_ns": 286854799611900,
+        "matched_ordinal": 289,
+        "correlation": 0.9940458536148071,
+        "best_outside_ten_ordinal": 3089,
+        "best_outside_ten_correlation": 0.6726500988006592,
+        "correlation_margin_to_second": 0.128156840801239,
+        "ordinals_within_0_01_correlation": [
+          289
+        ],
+        "top_candidates": [
+          {
+            "ordinal": 289,
+            "correlation": 0.9940458536148071
+          },
+          {
+            "ordinal": 290,
+            "correlation": 0.8658890128135681
+          },
+          {
+            "ordinal": 288,
+            "correlation": 0.8373958468437195
+          },
+          {
+            "ordinal": 287,
+            "correlation": 0.7901732325553894
+          },
+          {
+            "ordinal": 291,
+            "correlation": 0.7603950500488281
+          },
+          {
+            "ordinal": 3089,
+            "correlation": 0.6726500988006592
+          },
+          {
+            "ordinal": 3088,
+            "correlation": 0.6630849838256836
+          },
+          {
+            "ordinal": 3087,
+            "correlation": 0.6522066593170166
+          }
+        ],
+        "audio_same_source_picture_ns": 286854789087133.3,
+        "audio_minus_capture_stamp_ms": -19.6757666875,
+        "publication_to_capture_stamp_ms": 102.234
+      },
+      "geometry_sensitivity": [
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "best_ordinal": 291,
+          "correlation": 0.9941903352737427
+        },
+        {
+          "rectangle_delta": [
+            -0.5,
+            0,
+            0,
+            0
+          ],
+          "best_ordinal": 291,
+          "correlation": 0.9940011501312256
+        },
+        {
+          "rectangle_delta": [
+            0.5,
+            0,
+            0,
+            0
+          ],
+          "best_ordinal": 291,
+          "correlation": 0.9940255284309387
+        },
+        {
+          "rectangle_delta": [
+            0,
+            -0.5,
+            0,
+            0
+          ],
+          "best_ordinal": 291,
+          "correlation": 0.9937864542007446
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0.5,
+            0,
+            0
+          ],
+          "best_ordinal": 291,
+          "correlation": 0.9936197996139526
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            -1,
+            0
+          ],
+          "best_ordinal": 291,
+          "correlation": 0.9938766956329346
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            1,
+            0
+          ],
+          "best_ordinal": 291,
+          "correlation": 0.9939953088760376
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            0,
+            -1
+          ],
+          "best_ordinal": 291,
+          "correlation": 0.9939701557159424
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "best_ordinal": 291,
+          "correlation": 0.9937032461166382
+        }
+      ],
+      "empirical_audio_minus_first_picture_interval_ms": [
+        -19.656633375,
+        47.057566625
+      ],
+      "interval_qualification": "Conditional on content matches, monotonic playback and API compositor timestamp semantics; not certified uncertainty or physical presentation."
+    },
+    {
+      "audio_anchor_ordinal": 1200,
+      "selected": {
+        "capture_index": 1541,
+        "capture_system_ns": 286885500187900,
+        "observed_qpc_ns": 286885501601300,
+        "matched_ordinal": 1208,
+        "correlation": 0.987230122089386,
+        "best_outside_ten_ordinal": 1220,
+        "best_outside_ten_correlation": 0.9388397336006165,
+        "correlation_margin_to_second": 0.010921776294708252,
+        "ordinals_within_0_01_correlation": [
+          1208
+        ],
+        "top_candidates": [
+          {
+            "ordinal": 1208,
+            "correlation": 0.987230122089386
+          },
+          {
+            "ordinal": 1207,
+            "correlation": 0.9763083457946777
+          },
+          {
+            "ordinal": 1209,
+            "correlation": 0.9762434959411621
+          },
+          {
+            "ordinal": 1206,
+            "correlation": 0.9736070036888123
+          },
+          {
+            "ordinal": 1210,
+            "correlation": 0.9717288017272949
+          },
+          {
+            "ordinal": 1204,
+            "correlation": 0.956712007522583
+          },
+          {
+            "ordinal": 1212,
+            "correlation": 0.95359206199646
+          },
+          {
+            "ordinal": 1205,
+            "correlation": 0.9510989785194397
+          }
+        ],
+        "audio_same_source_picture_ns": 286885453053799.94,
+        "audio_minus_capture_stamp_ms": -47.1341000625,
+        "publication_to_capture_stamp_ms": 130.1328
+      },
+      "highest_correlation_candidate": {
+        "capture_index": 1537,
+        "capture_system_ns": 286885300025300,
+        "observed_qpc_ns": 286885296783100,
+        "matched_ordinal": 1202,
+        "correlation": 0.9881182909011841,
+        "best_outside_ten_ordinal": 1191,
+        "best_outside_ten_correlation": 0.941495418548584,
+        "correlation_margin_to_second": 0.0029141902923583984,
+        "ordinals_within_0_01_correlation": [
+          1200,
+          1201,
+          1202,
+          1203
+        ],
+        "top_candidates": [
+          {
+            "ordinal": 1202,
+            "correlation": 0.9881182909011841
+          },
+          {
+            "ordinal": 1203,
+            "correlation": 0.9852041006088257
+          },
+          {
+            "ordinal": 1201,
+            "correlation": 0.9829313158988953
+          },
+          {
+            "ordinal": 1200,
+            "correlation": 0.9789710640907288
+          },
+          {
+            "ordinal": 1204,
+            "correlation": 0.9778502583503723
+          },
+          {
+            "ordinal": 1198,
+            "correlation": 0.969438910484314
+          },
+          {
+            "ordinal": 1199,
+            "correlation": 0.9683046340942383
+          },
+          {
+            "ordinal": 1197,
+            "correlation": 0.9646379947662354
+          }
+        ],
+        "audio_same_source_picture_ns": 286885252853799.94,
+        "audio_minus_capture_stamp_ms": -47.1715000625,
+        "publication_to_capture_stamp_ms": 129.4372
+      },
+      "selection": "highest adjacent-picture separation among correlationsabove0.98, because highestcorrelation image hasless0.01separation",
+      "preceding_different_picture": {
+        "capture_index": 1540,
+        "capture_system_ns": 286885450147400,
+        "observed_qpc_ns": 286885439848300,
+        "matched_ordinal": 1207,
+        "correlation": 0.9862990975379944,
+        "best_outside_ten_ordinal": 1218,
+        "best_outside_ten_correlation": 0.9283782839775085,
+        "correlation_margin_to_second": 0.00967484712600708,
+        "ordinals_within_0_01_correlation": [
+          1206,
+          1207
+        ],
+        "top_candidates": [
+          {
+            "ordinal": 1207,
+            "correlation": 0.9862990975379944
+          },
+          {
+            "ordinal": 1206,
+            "correlation": 0.9766242504119873
+          },
+          {
+            "ordinal": 1208,
+            "correlation": 0.975024938583374
+          },
+          {
+            "ordinal": 1204,
+            "correlation": 0.9516456127166748
+          },
+          {
+            "ordinal": 1205,
+            "correlation": 0.9473249912261963
+          },
+          {
+            "ordinal": 1210,
+            "correlation": 0.9446742534637451
+          },
+          {
+            "ordinal": 1203,
+            "correlation": 0.9443202018737793
+          },
+          {
+            "ordinal": 1209,
+            "correlation": 0.9435603618621826
+          }
+        ],
+        "audio_same_source_picture_ns": 286885419687133.3,
+        "audio_minus_capture_stamp_ms": -30.4602666875,
+        "publication_to_capture_stamp_ms": 113.0406
+      },
+      "geometry_sensitivity": [
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "best_ordinal": 1208,
+          "correlation": 0.987230122089386
+        },
+        {
+          "rectangle_delta": [
+            -0.5,
+            0,
+            0,
+            0
+          ],
+          "best_ordinal": 1208,
+          "correlation": 0.9867038726806641
+        },
+        {
+          "rectangle_delta": [
+            0.5,
+            0,
+            0,
+            0
+          ],
+          "best_ordinal": 1208,
+          "correlation": 0.9869399070739746
+        },
+        {
+          "rectangle_delta": [
+            0,
+            -0.5,
+            0,
+            0
+          ],
+          "best_ordinal": 1208,
+          "correlation": 0.9858934879302979
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0.5,
+            0,
+            0
+          ],
+          "best_ordinal": 1208,
+          "correlation": 0.9868761301040649
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            -1,
+            0
+          ],
+          "best_ordinal": 1208,
+          "correlation": 0.9864383935928345
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            1,
+            0
+          ],
+          "best_ordinal": 1208,
+          "correlation": 0.986809253692627
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            0,
+            -1
+          ],
+          "best_ordinal": 1208,
+          "correlation": 0.9846566915512085
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "best_ordinal": 1208,
+          "correlation": 0.9860196113586426
+        }
+      ],
+      "empirical_audio_minus_first_picture_interval_ms": [
+        -47.1341000625,
+        2.9063999375
+      ],
+      "interval_qualification": "Conditional on content matches, monotonic playback and API compositor timestamp semantics; not certified uncertainty or physical presentation."
+    },
+    {
+      "audio_anchor_ordinal": 2400,
+      "selected": {
+        "capture_index": 2313,
+        "capture_system_ns": 286925365884300,
+        "observed_qpc_ns": 286925357103500,
+        "matched_ordinal": 2403,
+        "correlation": 0.9959118366241455,
+        "best_outside_ten_ordinal": 3080,
+        "best_outside_ten_correlation": 0.5882815718650818,
+        "correlation_margin_to_second": 0.11909151077270508,
+        "ordinals_within_0_01_correlation": [
+          2403
+        ],
+        "top_candidates": [
+          {
+            "ordinal": 2403,
+            "correlation": 0.9959118366241455
+          },
+          {
+            "ordinal": 2402,
+            "correlation": 0.8768203258514404
+          },
+          {
+            "ordinal": 2404,
+            "correlation": 0.8752179145812988
+          },
+          {
+            "ordinal": 2405,
+            "correlation": 0.7532045841217041
+          },
+          {
+            "ordinal": 2401,
+            "correlation": 0.7505031824111938
+          },
+          {
+            "ordinal": 2406,
+            "correlation": 0.6732351779937744
+          },
+          {
+            "ordinal": 2400,
+            "correlation": 0.6503086090087891
+          },
+          {
+            "ordinal": 2407,
+            "correlation": 0.5943902730941772
+          }
+        ],
+        "audio_same_source_picture_ns": 286925326220466.6,
+        "audio_minus_capture_stamp_ms": -39.663833375,
+        "publication_to_capture_stamp_ms": 121.0314
+      },
+      "highest_correlation_candidate": {
+        "capture_index": 2313,
+        "capture_system_ns": 286925365884300,
+        "observed_qpc_ns": 286925357103500,
+        "matched_ordinal": 2403,
+        "correlation": 0.9959118366241455,
+        "best_outside_ten_ordinal": 3080,
+        "best_outside_ten_correlation": 0.5882815718650818,
+        "correlation_margin_to_second": 0.11909151077270508,
+        "ordinals_within_0_01_correlation": [
+          2403
+        ],
+        "top_candidates": [
+          {
+            "ordinal": 2403,
+            "correlation": 0.9959118366241455
+          },
+          {
+            "ordinal": 2402,
+            "correlation": 0.8768203258514404
+          },
+          {
+            "ordinal": 2404,
+            "correlation": 0.8752179145812988
+          },
+          {
+            "ordinal": 2405,
+            "correlation": 0.7532045841217041
+          },
+          {
+            "ordinal": 2401,
+            "correlation": 0.7505031824111938
+          },
+          {
+            "ordinal": 2406,
+            "correlation": 0.6732351779937744
+          },
+          {
+            "ordinal": 2400,
+            "correlation": 0.6503086090087891
+          },
+          {
+            "ordinal": 2407,
+            "correlation": 0.5943902730941772
+          }
+        ],
+        "audio_same_source_picture_ns": 286925326220466.6,
+        "audio_minus_capture_stamp_ms": -39.663833375,
+        "publication_to_capture_stamp_ms": 121.0314
+      },
+      "selection": "highest correlation",
+      "preceding_different_picture": {
+        "capture_index": 2312,
+        "capture_system_ns": 286925315843700,
+        "observed_qpc_ns": 286925310680500,
+        "matched_ordinal": 2402,
+        "correlation": 0.9952335357666016,
+        "best_outside_ten_ordinal": 3080,
+        "best_outside_ten_correlation": 0.5523676872253418,
+        "correlation_margin_to_second": 0.11991536617279053,
+        "ordinals_within_0_01_correlation": [
+          2402
+        ],
+        "top_candidates": [
+          {
+            "ordinal": 2402,
+            "correlation": 0.9952335357666016
+          },
+          {
+            "ordinal": 2403,
+            "correlation": 0.875318169593811
+          },
+          {
+            "ordinal": 2401,
+            "correlation": 0.8736224174499512
+          },
+          {
+            "ordinal": 2404,
+            "correlation": 0.7449780702590942
+          },
+          {
+            "ordinal": 2400,
+            "correlation": 0.7410261631011963
+          },
+          {
+            "ordinal": 2405,
+            "correlation": 0.6553491353988647
+          },
+          {
+            "ordinal": 2399,
+            "correlation": 0.6221014261245728
+          },
+          {
+            "ordinal": 2406,
+            "correlation": 0.5825473070144653
+          }
+        ],
+        "audio_same_source_picture_ns": 286925292853799.94,
+        "audio_minus_capture_stamp_ms": -22.9899000625,
+        "publication_to_capture_stamp_ms": 105.4771
+      },
+      "geometry_sensitivity": [
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "best_ordinal": 2403,
+          "correlation": 0.9959118366241455
+        },
+        {
+          "rectangle_delta": [
+            -0.5,
+            0,
+            0,
+            0
+          ],
+          "best_ordinal": 2403,
+          "correlation": 0.9952775239944458
+        },
+        {
+          "rectangle_delta": [
+            0.5,
+            0,
+            0,
+            0
+          ],
+          "best_ordinal": 2403,
+          "correlation": 0.995730996131897
+        },
+        {
+          "rectangle_delta": [
+            0,
+            -0.5,
+            0,
+            0
+          ],
+          "best_ordinal": 2403,
+          "correlation": 0.9954962730407715
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0.5,
+            0,
+            0
+          ],
+          "best_ordinal": 2403,
+          "correlation": 0.9958839416503906
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            -1,
+            0
+          ],
+          "best_ordinal": 2403,
+          "correlation": 0.9948022961616516
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            1,
+            0
+          ],
+          "best_ordinal": 2403,
+          "correlation": 0.9954611659049988
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            0,
+            -1
+          ],
+          "best_ordinal": 2403,
+          "correlation": 0.9952073097229004
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "best_ordinal": 2403,
+          "correlation": 0.9956949949264526
+        }
+      ],
+      "empirical_audio_minus_first_picture_interval_ms": [
+        -39.663833375,
+        10.376766625
+      ],
+      "interval_qualification": "Conditional on content matches, monotonic playback and API compositor timestamp semantics; not certified uncertainty or physical presentation."
+    },
+    {
+      "audio_anchor_ordinal": 4200,
+      "selected": {
+        "capture_index": 3480,
+        "capture_system_ns": 286985648171500,
+        "observed_qpc_ns": 286985641028200,
+        "matched_ordinal": 4210,
+        "correlation": 0.9876856803894043,
+        "best_outside_ten_ordinal": 2426,
+        "best_outside_ten_correlation": 0.5720057487487793,
+        "correlation_margin_to_second": 0.04809129238128662,
+        "ordinals_within_0_01_correlation": [
+          4210
+        ],
+        "top_candidates": [
+          {
+            "ordinal": 4210,
+            "correlation": 0.9876856803894043
+          },
+          {
+            "ordinal": 4211,
+            "correlation": 0.9395943880081177
+          },
+          {
+            "ordinal": 4209,
+            "correlation": 0.9119056463241577
+          },
+          {
+            "ordinal": 4212,
+            "correlation": 0.9003207683563232
+          },
+          {
+            "ordinal": 4213,
+            "correlation": 0.8814019560813904
+          },
+          {
+            "ordinal": 4214,
+            "correlation": 0.8762584924697876
+          },
+          {
+            "ordinal": 4215,
+            "correlation": 0.841848611831665
+          },
+          {
+            "ordinal": 4208,
+            "correlation": 0.8278272151947021
+          }
+        ],
+        "audio_same_source_picture_ns": 286985619787133.3,
+        "audio_minus_capture_stamp_ms": -28.3843666875,
+        "publication_to_capture_stamp_ms": 111.0285
+      },
+      "highest_correlation_candidate": {
+        "capture_index": 3480,
+        "capture_system_ns": 286985648171500,
+        "observed_qpc_ns": 286985641028200,
+        "matched_ordinal": 4210,
+        "correlation": 0.9876856803894043,
+        "best_outside_ten_ordinal": 2426,
+        "best_outside_ten_correlation": 0.5720057487487793,
+        "correlation_margin_to_second": 0.04809129238128662,
+        "ordinals_within_0_01_correlation": [
+          4210
+        ],
+        "top_candidates": [
+          {
+            "ordinal": 4210,
+            "correlation": 0.9876856803894043
+          },
+          {
+            "ordinal": 4211,
+            "correlation": 0.9395943880081177
+          },
+          {
+            "ordinal": 4209,
+            "correlation": 0.9119056463241577
+          },
+          {
+            "ordinal": 4212,
+            "correlation": 0.9003207683563232
+          },
+          {
+            "ordinal": 4213,
+            "correlation": 0.8814019560813904
+          },
+          {
+            "ordinal": 4214,
+            "correlation": 0.8762584924697876
+          },
+          {
+            "ordinal": 4215,
+            "correlation": 0.841848611831665
+          },
+          {
+            "ordinal": 4208,
+            "correlation": 0.8278272151947021
+          }
+        ],
+        "audio_same_source_picture_ns": 286985619787133.3,
+        "audio_minus_capture_stamp_ms": -28.3843666875,
+        "publication_to_capture_stamp_ms": 111.0285
+      },
+      "selection": "highest correlation",
+      "preceding_different_picture": {
+        "capture_index": 3479,
+        "capture_system_ns": 286985598131000,
+        "observed_qpc_ns": 286985594294900,
+        "matched_ordinal": 4208,
+        "correlation": 0.9865580797195435,
+        "best_outside_ten_ordinal": 2426,
+        "best_outside_ten_correlation": 0.6169026494026184,
+        "correlation_margin_to_second": 0.08441251516342163,
+        "ordinals_within_0_01_correlation": [
+          4208
+        ],
+        "top_candidates": [
+          {
+            "ordinal": 4208,
+            "correlation": 0.9865580797195435
+          },
+          {
+            "ordinal": 4209,
+            "correlation": 0.9021455645561218
+          },
+          {
+            "ordinal": 4207,
+            "correlation": 0.8918507099151611
+          },
+          {
+            "ordinal": 4210,
+            "correlation": 0.8350719809532166
+          },
+          {
+            "ordinal": 4206,
+            "correlation": 0.810320258140564
+          },
+          {
+            "ordinal": 4211,
+            "correlation": 0.7969249486923218
+          },
+          {
+            "ordinal": 4212,
+            "correlation": 0.7685948610305786
+          },
+          {
+            "ordinal": 4213,
+            "correlation": 0.747671902179718
+          }
+        ],
+        "audio_same_source_picture_ns": 286985553053799.94,
+        "audio_minus_capture_stamp_ms": -45.0772000625,
+        "publication_to_capture_stamp_ms": 127.5606
+      },
+      "geometry_sensitivity": [
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "best_ordinal": 4210,
+          "correlation": 0.9876856803894043
+        },
+        {
+          "rectangle_delta": [
+            -0.5,
+            0,
+            0,
+            0
+          ],
+          "best_ordinal": 4210,
+          "correlation": 0.9871213436126709
+        },
+        {
+          "rectangle_delta": [
+            0.5,
+            0,
+            0,
+            0
+          ],
+          "best_ordinal": 4210,
+          "correlation": 0.9873515367507935
+        },
+        {
+          "rectangle_delta": [
+            0,
+            -0.5,
+            0,
+            0
+          ],
+          "best_ordinal": 4210,
+          "correlation": 0.9874449968338013
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0.5,
+            0,
+            0
+          ],
+          "best_ordinal": 4210,
+          "correlation": 0.9874876737594604
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            -1,
+            0
+          ],
+          "best_ordinal": 4210,
+          "correlation": 0.9862644672393799
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            1,
+            0
+          ],
+          "best_ordinal": 4210,
+          "correlation": 0.9866629242897034
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            0,
+            -1
+          ],
+          "best_ordinal": 4210,
+          "correlation": 0.9873037338256836
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "best_ordinal": 4210,
+          "correlation": 0.9874699115753174
+        }
+      ],
+      "empirical_audio_minus_first_picture_interval_ms": [
+        -28.3843666875,
+        21.6561333125
+      ],
+      "interval_qualification": "Conditional on content matches, monotonic playback and API compositor timestamp semantics; not certified uncertainty or physical presentation."
+    },
+    {
+      "audio_anchor_ordinal": 5700,
+      "selected": {
+        "capture_index": 4440,
+        "capture_system_ns": 287035038290200,
+        "observed_qpc_ns": 287035035534800,
+        "matched_ordinal": 5690,
+        "correlation": 0.9976240992546082,
+        "best_outside_ten_ordinal": 5715,
+        "best_outside_ten_correlation": 0.5989090204238892,
+        "correlation_margin_to_second": 0.2710076570510864,
+        "ordinals_within_0_01_correlation": [
+          5690
+        ],
+        "top_candidates": [
+          {
+            "ordinal": 5690,
+            "correlation": 0.9976240992546082
+          },
+          {
+            "ordinal": 5691,
+            "correlation": 0.7266164422035217
+          },
+          {
+            "ordinal": 5689,
+            "correlation": 0.7193713188171387
+          },
+          {
+            "ordinal": 5715,
+            "correlation": 0.5989090204238892
+          },
+          {
+            "ordinal": 4160,
+            "correlation": 0.5940432548522949
+          },
+          {
+            "ordinal": 5714,
+            "correlation": 0.586605429649353
+          },
+          {
+            "ordinal": 234,
+            "correlation": 0.5842407941818237
+          },
+          {
+            "ordinal": 5721,
+            "correlation": 0.58349609375
+          }
+        ],
+        "audio_same_source_picture_ns": 287035002453799.94,
+        "audio_minus_capture_stamp_ms": -35.8364000625,
+        "publication_to_capture_stamp_ms": 118.1375
+      },
+      "highest_correlation_candidate": {
+        "capture_index": 4440,
+        "capture_system_ns": 287035038290200,
+        "observed_qpc_ns": 287035035534800,
+        "matched_ordinal": 5690,
+        "correlation": 0.9976240992546082,
+        "best_outside_ten_ordinal": 5715,
+        "best_outside_ten_correlation": 0.5989090204238892,
+        "correlation_margin_to_second": 0.2710076570510864,
+        "ordinals_within_0_01_correlation": [
+          5690
+        ],
+        "top_candidates": [
+          {
+            "ordinal": 5690,
+            "correlation": 0.9976240992546082
+          },
+          {
+            "ordinal": 5691,
+            "correlation": 0.7266164422035217
+          },
+          {
+            "ordinal": 5689,
+            "correlation": 0.7193713188171387
+          },
+          {
+            "ordinal": 5715,
+            "correlation": 0.5989090204238892
+          },
+          {
+            "ordinal": 4160,
+            "correlation": 0.5940432548522949
+          },
+          {
+            "ordinal": 5714,
+            "correlation": 0.586605429649353
+          },
+          {
+            "ordinal": 234,
+            "correlation": 0.5842407941818237
+          },
+          {
+            "ordinal": 5721,
+            "correlation": 0.58349609375
+          }
+        ],
+        "audio_same_source_picture_ns": 287035002453799.94,
+        "audio_minus_capture_stamp_ms": -35.8364000625,
+        "publication_to_capture_stamp_ms": 118.1375
+      },
+      "selection": "highest correlation",
+      "preceding_different_picture": {
+        "capture_index": 4439,
+        "capture_system_ns": 287034988249600,
+        "observed_qpc_ns": 287034988291400,
+        "matched_ordinal": 5689,
+        "correlation": 0.997589111328125,
+        "best_outside_ten_ordinal": 5713,
+        "best_outside_ten_correlation": 0.6085208654403687,
+        "correlation_margin_to_second": 0.2788282036781311,
+        "ordinals_within_0_01_correlation": [
+          5689
+        ],
+        "top_candidates": [
+          {
+            "ordinal": 5689,
+            "correlation": 0.997589111328125
+          },
+          {
+            "ordinal": 5690,
+            "correlation": 0.7187609076499939
+          },
+          {
+            "ordinal": 5688,
+            "correlation": 0.7179791927337646
+          },
+          {
+            "ordinal": 5713,
+            "correlation": 0.6085208654403687
+          },
+          {
+            "ordinal": 3202,
+            "correlation": 0.6046143770217896
+          },
+          {
+            "ordinal": 3203,
+            "correlation": 0.597302258014679
+          },
+          {
+            "ordinal": 5714,
+            "correlation": 0.5969840288162231
+          },
+          {
+            "ordinal": 5712,
+            "correlation": 0.5935126543045044
+          }
+        ],
+        "audio_same_source_picture_ns": 287034969087133.3,
+        "audio_minus_capture_stamp_ms": -19.1624666875,
+        "publication_to_capture_stamp_ms": 101.2851
+      },
+      "geometry_sensitivity": [
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "best_ordinal": 5690,
+          "correlation": 0.9976240992546082
+        },
+        {
+          "rectangle_delta": [
+            -0.5,
+            0,
+            0,
+            0
+          ],
+          "best_ordinal": 5690,
+          "correlation": 0.9974465370178223
+        },
+        {
+          "rectangle_delta": [
+            0.5,
+            0,
+            0,
+            0
+          ],
+          "best_ordinal": 5690,
+          "correlation": 0.997338056564331
+        },
+        {
+          "rectangle_delta": [
+            0,
+            -0.5,
+            0,
+            0
+          ],
+          "best_ordinal": 5690,
+          "correlation": 0.9972695112228394
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0.5,
+            0,
+            0
+          ],
+          "best_ordinal": 5690,
+          "correlation": 0.9973007440567017
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            -1,
+            0
+          ],
+          "best_ordinal": 5690,
+          "correlation": 0.9972167015075684
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            1,
+            0
+          ],
+          "best_ordinal": 5690,
+          "correlation": 0.9972169995307922
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            0,
+            -1
+          ],
+          "best_ordinal": 5690,
+          "correlation": 0.9968970417976379
+        },
+        {
+          "rectangle_delta": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "best_ordinal": 5690,
+          "correlation": 0.996918261051178
+        }
+      ],
+      "empirical_audio_minus_first_picture_interval_ms": [
+        -35.8364000625,
+        14.2041999375
+      ],
+      "interval_qualification": "Conditional on content matches, monotonic playback and API compositor timestamp semantics; not certified uncertainty or physical presentation."
+    }
+  ],
+  "audio_captured_minus_source_frame_offsets": [
+    2276225,
+    2276225,
+    2276225,
+    2261345,
+    2261345
+  ],
+  "audio_qpc_minus_source_seconds_ns": [
+    286845146120466.6,
+    286845146120466.6,
+    286845146120466.6,
+    286845146120466.6,
+    286845146120466.6
+  ],
+  "timestamp_observations": {
+    "samples": 6946,
+    "negative_observed_minus_system_samples": 5888,
+    "observed_minus_system_ms_percentiles": {
+      "minimum": -14.7739,
+      "p1": -13.87725,
+      "median": -5.6578,
+      "p95": 1.7196250000000002,
+      "p99": 3.533895000000001,
+      "maximum": 300.8087
+    },
+    "e3_capture_samples": 3964,
+    "e3_capture_gap_ms_percentiles": {
+      "minimum": 50.035,
+      "median": 50.0406,
+      "p95": 66.7205,
+      "p99": 66.731376,
+      "maximum": 316.8931
+    },
+    "largest_e3_gap_start_index": 2995,
+    "largest_e3_gap_end_index": 2996
+  },
+  "api_reference": "https://learn.microsoft.com/en-us/uwp/api/windows.graphics.capture.direct3d11captureframe.systemrelativetime",
+  "physical_scanout_measured": false,
+  "physical_audio_latency_measured": false,
+  "subjective_av_confirmation": false,
+  "no_accumulated_drift_observed_at_checked_regions": true,
+  "stutter_free_claim": false,
+  "phase_correction_applied": false,
+  "limitations": [
+    "Capture timestamps are compositor API observations, not physical scanout or speaker timing.",
+    "Signed observedQPC minus frame timestamp is often negative; cause is not established and no correction is invented.",
+    "Twenty-Hz sparse capture can retain an already displayed picture; first appearance is bracketed using preceding different captured content.",
+    "The slow-moving region around ordinal1200 has adjacent-picture ambiguity; correlation margin and geometry sensitivity are reported explicitly.",
+    "Geometry fits one independent calibration picture; held-out source regions validate its reuse, not exact source-pixel equality.",
+    "Audio interpolation uses each separately correlated anchor QPC and source rate; stored capture sample offset changes by14880frames between anchors2400and4200. Packet timestamp mapping preserves source QPC phase; no linear continuous WAV assumption is made.",
+    "A316.8931ms capture coverage gap has300.8087ms delayedreadback on the preceding record; it does not establish a game/display freeze.",
+    "Background capture and other workloads perturb performance. Historical stutter root cause and subjective synchronization remain unconfirmed.",
+    "Five timestamp gaps totaling629.1293ms occur in the stored process-loopback packet timeline even though allreturnedflagsarezero; neither uninterrupted recording nor a physical audio drop is established.",
+    "Initial offline precondition wrongly expected one WAV sample offset across all anchors. That attempt produced no result; its source is retained. Corrected analysis checks anchor-local QPC sourcephase and explicitly retains stored-frame-offset changes.",
+    "The first sourceaudit precondition mistook the Python launch-wrapper hash for a C++ build-source hash; corrected binding distinguishes them and does not claim an independently reproduced capturehelperbuild."
+  ],
+  "evidence_sha256": {
+    "build-native-sjuni/wgc-e3-picture-match-v1/match_pictures_v1.py": "cdf798d4f0653fa92ccb65c95c0b013bd11c3b564b9637d2ab0f65e15a7fe95e",
+    "build-native-sjuni/wgc-e3-picture-match-v1/decode.json": "d7c29a649d5805eaf59b40fc0d80ee2a71490174f6433e4f9db134d50ab004d2",
+    "build-native-sjuni/wgc-e3-picture-match-v1/geometry.json": "54b79e428a04d7720ed7b4be11e001fbdceee5be45d4a7c9e4f618f8dd00e2d2",
+    "build-native-sjuni/wgc-e3-picture-match-v1/reference128x92.gray": "8f5f964bc9c5ce105b40878b18b629c80e0a92e7db498c3e38d90d42895b1ee5",
+    "build-native-sjuni/launcher-native-prep-v1/native-media/file1/file1-h264-cfr-crf18-v1/fe761807bc7493769dd7f9720ce6d1cc969f596f76fefc9b5add5385952b153b.mp4": "2adbed127861815df7f818ac1e0bf69c2c6f42a661b7871d5c475bdecd86a888",
+    "build-native-sjuni/launcher-native-prep-v1/native-media/file1/file1-h264-cfr-crf18-v1/movies.json": "ed9d30df807201eeafa43477e43298c14f5df8593c66fffb92e8a4e8fc942bd0",
+    "build-native-sjuni/gallery-e3-digital-clock-v35/correlation.json": "85ce2c06032f8b34807acbb23babfacd1d8801d38d3c029b2a5e9670e0f65058",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-033631-629/window-sequence-command-v1.json": "79bc95243bf6ce3c4da375f9a04a528746131693688d35dc08d077966e871244",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-033631-629/window-sequence-v1/frames.csv": "f3c486fe48e89bdce7a07ad4897e984d24a86289170e781ab48282b55def2b6c",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-033631-629/window-sequence-v1/gray.bin": "b89a2be003f50193129b58b3fbabda8c3fe47fbe39dc596d91672e7de6a218ff",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-033631-629/window-e3-current.bmp": "45ffdc3de091bb06565132f6ef48e2520a0b9173abb3ae1cc07b9a7614d27f7e",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-033631-629/native-game-session-running.json": "92e4c1b9882d1854da94401453b5997aa3e3f51c94cb12b82a5f37cbbab10b8c",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-033631-629/native-game-session-check.json": "166fdd3a84c9f59a10e247315f9eeebfd85175c986022b4970531a8db62c4dd8",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-033631-629/native-movie-producer.csv": "613b9df3c98c21746babb269f28093ca6c48090bc185672d1c2bf871ca3100e5",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-033631-629/native-movie-consumer.csv": "7298676b1513e8c7a32789f0bad7c0ea1752b22ffe399b9819f7765cb601b736",
+    "build-native-sjuni/capture_owned_window_sequence_v1.cpp": "0f6f35ea60a49bdf891db2b29528a547beb5cfa5633ec4fac221d8629dbfbfb4",
+    "build-native-sjuni/capture_owned_window_sequence_v1.exe": "066af8c327643ae23c5e8f356fe6f5391b7bbff27f85fad9c5eab3da79611351",
+    "build-native-sjuni/background-window-sequence-probe-v1/receipt.json": "3af2e902d6f7a840ca133d22a0b53314e0afb61cc4327512beb790824d0fe318",
+    "build-native-sjuni/wgc-e3-picture-match-v1/result.json": "ded0ee4b44f20d08f71c7d96634a34cb0df9d5b54dfd4ff48a9afe3cb0023155",
+    "build-native-sjuni/wgc-e3-picture-match-v1/audio-packet-gaps-v2.json": "31a0d31cece95919e46c6b3b9a225bbccaf3f218ec545039540a49323fa574a1",
+    "build-native-sjuni/wgc-e3-picture-match-v1/inspect_audio_packet_gaps_v2.py": "f136bc5ec7e75d96141d2ae2c69465e7b6c79d20ef1b7a8529195e84b08a3e66",
+    "build-native-sjuni/wgc-e3-picture-match-v1/highest-correlation-result.json": "6b5f355ae8116febb63b426090ef0761b0e4ff6bba0a58b614f1c2760f6b6af7",
+    "build-native-sjuni/wgc-e3-picture-match-v1/match_pictures_highest-correlation-v1.py": "69c29fc8b46c90c222067a39ad728f8abbdad7269c8bb789fdcf868c122bd66a",
+    "build-native-sjuni/wgc-e3-picture-match-v1/match_pictures_offset-precondition-failed.py": "49ab6f0e48e427e3e99a1aef6155ce02b101a1ea25fef6fef93124915c17db8b",
+    "build-native-sjuni/wgc-e3-picture-match-v1/inspect_audio_packet_gaps_source-precondition-failed.py": "20212dd84e95e1a50bd4f5754e999342c278f5ef9cb3992264d45cf289a0688b",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-033631-629/launcher-process-audio.wav.packets.csv": "7c36cd1994836391a395837e9eb631ddde8e24e99efeebe0fc530d444555ef34",
+    "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-033631-629/launcher-process-audio-command.json": "a8e9930eba5a81f157b768c1844cd52a36d5fd5b297d863e8b560edb0fe2c0e6",
+    "tools/native_reconstruction/capture_process_audio.cpp": "885bd2150402f1ce53478442a8ee18ba469a365f300089dfbda75e578b381474",
+    "build-native-sjuni/capture_launcher_audio_v2.py": "d166657bea24d251b4731360b767add8802de8318fd418cdcd5ea065feb6c906",
+    "build-native-sjuni/host-movie/capture-process-audio-llvm-v3.exe": "37af9c8f9c681656efeb43682c6f280ccb0911050698cd80bbf655195e6b8aea",
+    "tools/native_reconstruction/capture_owned_window_sequence.cpp": "0f6f35ea60a49bdf891db2b29528a547beb5cfa5633ec4fac221d8629dbfbfb4"
+  },
+  "analysis_only": true,
+  "game_launched_by_analysis": false,
+  "existing_evidence_modified": false,
+  "stage3_complete": false,
+  "packet_timestamp_continuity": {
+    "schema": 1,
+    "packet_count": 40629,
+    "sample_frames": 19501920,
+    "timestamp_gaps_over_two_frames": [
+      {
+        "before_packet": 103,
+        "after_packet": 104,
+        "before": {
+          "qpc_100ns": 2867985047663,
+          "device_frames": 0,
+          "frames": 480,
+          "flags": 0
+        },
+        "after": {
+          "qpc_100ns": 2867987347663,
+          "device_frames": 0,
+          "frames": 480,
+          "flags": 0
+        },
+        "missing_frames": 10560.0,
+        "gap_ms": 220.0,
+        "cumulative_frames_before": 49440
+      },
+      {
+        "before_packet": 4309,
+        "after_packet": 4310,
+        "before": {
+          "qpc_100ns": 2868407847663,
+          "device_frames": 0,
+          "frames": 480,
+          "flags": 0
+        },
+        "after": {
+          "qpc_100ns": 2868408247663,
+          "device_frames": 0,
+          "frames": 480,
+          "flags": 0
+        },
+        "missing_frames": 1440.0,
+        "gap_ms": 30.0,
+        "cumulative_frames_before": 2068320
+      },
+      {
+        "before_packet": 16305,
+        "after_packet": 16306,
+        "before": {
+          "qpc_100ns": 2869607747663,
+          "device_frames": 0,
+          "frames": 480,
+          "flags": 0
+        },
+        "after": {
+          "qpc_100ns": 2869610947663,
+          "device_frames": 0,
+          "frames": 480,
+          "flags": 0
+        },
+        "missing_frames": 14880.0,
+        "gap_ms": 310.0,
+        "cumulative_frames_before": 7826400
+      },
+      {
+        "before_packet": 33449,
+        "after_packet": 33450,
+        "before": {
+          "qpc_100ns": 2871325247663,
+          "device_frames": 0,
+          "frames": 480,
+          "flags": 0
+        },
+        "after": {
+          "qpc_100ns": 2871325947663,
+          "device_frames": 0,
+          "frames": 480,
+          "flags": 0
+        },
+        "missing_frames": 2880.0000000000005,
+        "gap_ms": 60.00000000000001,
+        "cumulative_frames_before": 16055520
+      },
+      {
+        "before_packet": 40605,
+        "after_packet": 40606,
+        "before": {
+          "qpc_100ns": 2872041447663,
+          "device_frames": 0,
+          "frames": 480,
+          "flags": 0
+        },
+        "after": {
+          "qpc_100ns": 2872041638956,
+          "device_frames": 0,
+          "frames": 480,
+          "flags": 0
+        },
+        "missing_frames": 438.2063999999999,
+        "gap_ms": 9.129299999999999,
+        "cumulative_frames_before": 19490400
+      }
+    ],
+    "flagged_packets": 0,
+    "unique_device_frame_positions": [
+      0
+    ],
+    "source_audit": "Current checked-in C++ reader uses GetBuffer count,flags,position,QPC; copies every returned packet, ReleaseBuffer(count), then writes PCM and CSV. No timestamp-based silence insertion or explicit packet skip. It counts discontinuities/timestamp errors only from returned flags and does not check timing gaps. This analysis binds the actual helper binary and Python launch wrapper; it does not independently reproduce the binary build from that C++ source.",
+    "attribution": "unknown: no endpoint/physical recording or OS trace distinguishes game output, process-loopback capture or host scheduling. Zero game-internal underrun count is not physical continuity proof.",
+    "wav_continuity_proven": false,
+    "physical_audio_drop_confirmed": false,
+    "evidence_sha256": {
+      "build-native-sjuni/wgc-e3-picture-match-v1/inspect_audio_packet_gaps_v2.py": "f136bc5ec7e75d96141d2ae2c69465e7b6c79d20ef1b7a8529195e84b08a3e66",
+      "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-033631-629/launcher-process-audio.wav.packets.csv": "7c36cd1994836391a395837e9eb631ddde8e24e99efeebe0fc530d444555ef34",
+      "build-native-sjuni/launcher-native-prep-v1/sessions/20261109-033631-629/launcher-process-audio-command.json": "a8e9930eba5a81f157b768c1844cd52a36d5fd5b297d863e8b560edb0fe2c0e6",
+      "tools/native_reconstruction/capture_process_audio.cpp": "885bd2150402f1ce53478442a8ee18ba469a365f300089dfbda75e578b381474",
+      "build-native-sjuni/capture_launcher_audio_v2.py": "d166657bea24d251b4731360b767add8802de8318fd418cdcd5ea065feb6c906",
+      "build-native-sjuni/host-movie/capture-process-audio-llvm-v3.exe": "37af9c8f9c681656efeb43682c6f280ccb0911050698cd80bbf655195e6b8aea"
+    }
+  },
+  "source_pcm_continuity_proven": false
+}

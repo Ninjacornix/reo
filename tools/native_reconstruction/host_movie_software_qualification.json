@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "status": "software-WIC native playback and producer heartbeat passed; game comparison pending",
+  "source_sha256": {
+    "game/native/host_movie/player.cpp": "b6aa79e3d7dee6a11bc14bd033e1e94e3ebe673698e22bc56e60232257783bcb",
+    "game/native/host_movie/session.cpp": "5b4d5b6dc4d0808cd4c98ace8d49d3ea700f0af48079f966f125e8ad8665eb70",
+    "game/native/host_movie/CMakeLists.txt": "1aa5eff80862afc931c808722919598450333a3b728e0f53d2bc598dd94c19ab",
+    "tools/native_reconstruction/verify_host_movie.py": "b823109397ba119c9f6736dfd68725248b4893dc5e60140a5bfe8f5a91ca0b9a",
+    "tools/native_reconstruction/verify_host_movie_session.py": "8e2c3c2a4ee7d448e77f9e99c4a4de856041ff4d092361aa8f1f6774a1520306"
+  },
+  "evidence_sha256": {
+    "build-native-sjuni/host-movie/session-wic-llvm-v1/receipt.json": "9a471a3b306737a3345996b553c363e985679dffa1ab50bc2922ab85938b4feb",
+    "build-native-sjuni/host-movie/session-wic-gcc-v1/receipt.json": "4f332644730cd103c9ba37daf46b829b52f164cc24ad7287e3f26b31cdad0dd8",
+    "build-native-sjuni/host-movie/wic-player-llvm-v1/receipt.json": "60256f87ed0d05eb83996d287dccb7b13f6b4b26fc60b38c3b8d1cb7aa08bf4f",
+    "build-native-sjuni/host-movie/wic-player-gcc-v1/receipt.json": "f6231d6ef819c25641ba93add6240de5491f5864edd68426ff25b2cbe18bb805",
+    "build-native-sjuni/host-movie/session-heartbeat-dxgi-llvm-v1/receipt.json": "7cce6d0ba23d633cec4b53a3a2caf88be1d37fbf2a5ebdb69d6be33db63400ee",
+    "build-native-sjuni/host-movie/session-wic-llvm-v1/pipeline.csv": "21c370e93e1e58c643aeb0bdf4f6713dc0df02b9281f2fd115169c93d9624e94",
+    "build-native-sjuni/host-movie/session-wic-gcc-v1/pipeline.csv": "3f4dc1025753144ba784d581bdc1a4a6dcde97824087162aeeebb84601306366",
+    "build-native-sjuni/host-movie/session-heartbeat-dxgi-llvm-v1/pipeline.csv": "1a265d2d23b5a58602258936614e0e6d8cbe2b1b723c78a6515f308fd35a0b1e"
+  },
+  "game_run": false,
+  "step3_complete": false,
+  "audible_sync_tested": false
+}

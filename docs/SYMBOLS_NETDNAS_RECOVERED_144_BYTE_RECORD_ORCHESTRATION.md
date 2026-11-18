@@ -1,0 +1,30 @@
+# Recovered DNAS144-byte record orchestration
+
+Static File #1 US o4 review, 2026-11-05. The complete connected owner74D248..74D75C, clear entry, all244 recovered payload words, actual restore setup and balanced integer/float epilogue were reviewed. [Bulk copied-data proof](STATIC_DNAS_UPPER_RECOVERY_INVENTORY.md) preserves all10 exception words and restores the original payload exactly. Owned o4/runtime5/base6E0000 SHA-256 `8f090617fa1ef420ad73ae2d1c960998c55259d372677804d2a1e07e1a182e16`. No guest instructions were executed or emulated; no game, runtime, build, network or live process was used.
+
+| Guest entry / source | Proposed label | Confidence | Evidence and remaining uncertainty |
+| --- | --- | --- | --- |
+| [o4 0x74D248](../recomp/config/output_ovl/o4/o4_0074D248_0x74d248.cpp) | `derive_parameters_process_record_stages_and_publish_144_byte_result_with_sixteen_byte_prefix` | Confirmed complete recovered wrapper mechanics; delegated algorithms partial | Originala0 source64KiB,a1 source256,a2 staged record,a3 output144,t0 extra output16. Sets status-1 before decode. Runs74CF78,74DB58,74C1F0,74DDC8,74CCB0 in order below; any negative skips direct publication. On all nonnegative, zeros144 output bytes, copies16 derived prefix and produced payload at+16, copies same prefix to extra output16, sets status0. Always LCG-overwrites five scratch regions before actual restore; final return reloads saved status. No local caller-output/record extent, alias, produced-count or algorithm-correctness admission. |
+
+Entry captures original arguments before protected dispatch: source a0->s3,key-material source a1->s2,record a2->s0,output a3->s1,extra output t0->s5. Frame is550hex bytes. The numeric staged record layout and following buffer extents come from this owner's actual arguments and connected callees; they are not an assigned original protocol/schema name.
+
+| Stage | Actual call and output | Failure/progress rule |
+| --- | --- | --- |
+|1|74CF78(10000hex,originala0,record,SP0),producing16 bytes. Its reviewed child74D8B0 ignores the10000 argument and uses selected slices of originala0.|Negative ->cleanup; preserve status-1.|
+|2|74DB58(originala1,SP490),producing32 bytes. Child digests256 bytes and its suffix starting+20,then combines second20 bytes and first12 bytes.|Negative ->cleanup.|
+|3|74C1F0(record+A0,SP490,SP498,SP4A0,SP4B0,SP4A8,count4). Three8-byte parameter slices,extra8-byte slice,count4 eight-byte blocks ->32 bytes atSP4B0.|Negative ->cleanup.|
+|4|74DDC8(originala0,SP4B0,SP90,&SP4D0). Connected wrapper uses64KiB source and stages up to1024 output bytes plus produced count; its nested provider/format contracts remain independent.|Negative ->cleanup.|
+|5|74CCB0(record+20,80hex,SP90,wordSP4D0,SP10,80hex,&SP4D4). Fixed128-byte input/capacity and generated parameter-data pair ->provider output atSP10/produced countSP4D4.|Negative ->cleanup.|
+|6|Clear output[0..143],copy16 bytesSP0 to output0,copy reported produced count fromSP10 to output+16,copy16 bytesSP0 to extra output0,setSP4D8=0.|Only reached after all preceding stages nonnegative.|
+
+The produced-count loop skips only exact zero. This body does not independently check produced<=128, count sign/width, output capacity144 or overlap. The delegated provider is asked for128 output capacity, but [its existing admission review](SYMBOLS_NETDNAS_UPPER_DIGEST_AND_PADDED_OPERATION.md) does not prove every returned count is bounded or transactional. Native replacement must retain explicit assumptions rather than interpreting this as an unrestricted host copy.
+
+Every earlier failure initializes the scratch pointers needed for common cleanup through branch delay slots. Cleanup overwrites exactly five regions:SP0[16],SP10[128],SP90[1024],SP490[32],SP4B0[32]. It uses the original74AA20 float scaling, low-byte conversion and repeated per-byte calls. Length wordsSP4D0/4D4 and saved statusSP4D8 are not those overwrite regions. The restored suffix at74D6FC..74D75C reloads status, restores s0..s7/fp/ra and f20/f21/f22, and deallocates frame in the return delay slot. No failure path silently publishes a partial result through the explicit caller-output loops; alias effects remain unexcluded.
+
+The independently reviewed caller747308 derives288 bytes into a local record through74C1F0(count36hex),then passes that record here. It maps negative return to-401 and requires global767A80==1 beforehand. This supplies a concrete record producer without claiming the provider's original cipher/padding identity. The record slices read here are header fields0..18hex,128-byte material at+20hex, and32-byte material at+A0hex.
+
+Payload74D2FC..74D6CC has original SHA-256 `a92d5756dbdd2e5d282e1280ff19910a8b553f35236f0e6438ce22458ad4364a`, reconstructed candidate `0d0a20a424269c441cf70b9b71248e30a549af33025a7103301d550d6da58207`,244 words including10 unchanged exceptions. Key metadata index33,relativebase49Chex,exception list and actual entry/restore schedules are retained in the bulk proof JSON and reproducible repository helper. No interior catalogue fragment is counted as another function.
+
+[Derived slice/record helper](SYMBOLS_NETDNAS_RECOVERED_SLICE_DIGEST_AND_FIXED_RECORDS.md),[block sessions](SYMBOLS_NETDNAS_OPAQUE_BLOCK_SESSIONS.md),[provider operation](SYMBOLS_NETDNAS_UPPER_DIGEST_AND_PADDED_OPERATION.md),and[earlier whole-owner byte methodology](STATIC_DNAS_O5_SINGLE_INTERVAL_ROUNDTRIP.md)retain the relevant evidence limits. Full local mechanics do not establish real authentication, security, active use, runtime performance or a tested fix.
+
+Additional verification: the repository [driver/record owner checker](../tools/function_index/review_dnas_driver_records.py) and [receipt](../build-function-index/dnas-driver-records-review.json) bind all11 reviewed owners to original/candidate whole-owner hashes. It validates995 recovered words,97 unchanged exception words and120 direct branch targets/delay-slot positions, excluding embedded strings and skipped metadata. This is a static identity/target check, not execution or a substitute for the full-body semantic review above.

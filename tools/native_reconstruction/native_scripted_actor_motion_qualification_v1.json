@@ -1,0 +1,125 @@
+{
+  "schema": 1,
+  "status": "qualified_partial_native_scripted_actor_motion_consumer",
+  "game_launched": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_world/scripted_actor.hpp": "9436162e3db7193d984430526f9f61a8e0d0b3e039fec54687c17e1ec26ffb26",
+    "game/native/gameplay_world/scripted_motion.hpp": "ebb453a2cd1a1c13a41eb35fcecb615ba1c7fcc61516e1045564f1ebd157c64d",
+    "game/native/gameplay_world/scripted_motion.cpp": "ad2bb15ad6f37a64b4ab697a0a2932f884ad973ba7488e38b2dd85e381361199",
+    "game/native/gameplay_world/CMakeLists.txt": "65370aefb1260d8637139b01999a8ffa204713fe0719e07e01c26bce63c19d60",
+    "game/native/gameplay_update/scripted_actor_construction.cpp": "7a2579c211cb2d8953e051688a49838faae5a35ca96b529e685541d2052b8b00",
+    "game/native/gameplay_world/actor_assets_tests.cpp": "529bd54e0a02229fead80b4a3629ea0b86c200f6b82cfb6284a113c8d8721beb",
+    "tools/native_reconstruction/animation/scripted_motion_tests.inc": "2b50ae4f0107931996069c9e4d074c99c797af1de2cd7298c9a2a83e4180e0f5",
+    "tools/native_reconstruction/animation/world_playback_tests.cpp": "623965bed18eb9dcc2e61b5664582d30f34166d29508a82fc6defd03e37fc722",
+    "tools/native_reconstruction/animation/verify_world_playback.py": "0e2beb5bcfcf55f3bf482df82e34698429b83d87000c98a37c5030559e23b6e7"
+  },
+  "cohorts": {
+    "llvm": {
+      "world": {
+        "receipt": "build-native-sjuni/scripted-motion-llvm-v4/receipt.json",
+        "sha256": "86584717012c1112d5209a151acc2dab115800cc8256028af62639a59ab6b69d",
+        "observed": {
+          "checks": 896630,
+          "lifetime_cases": 5,
+          "world_application_cases": 128,
+          "special_frame_cases": 64,
+          "resource_routing_cases": 40,
+          "selection_cases": 933,
+          "dual_application_cases": 74,
+          "metadata_observations": 1263,
+          "scripted_motion_cases": 768,
+          "scripted_motion_ticks": 3840,
+          "scripted_motion_refusals": 776,
+          "scripted_positive_tracks": 86,
+          "required_prelude_cases": 101,
+          "refusal_cases": 130,
+          "joint_cases": 464800,
+          "original_calls": 5341442,
+          "game_run": false
+        }
+      },
+      "owned_construction": {
+        "receipt": "build-native-sjuni/actor-scripted-motion-llvm-v1/receipt.json",
+        "sha256": "a98d12d807a6d2df31dd78814d75f5260097f82e6ffdb66fd449438d3e080f2e",
+        "observed": {
+          "checks": 5679,
+          "refusals": 18,
+          "owned_models": 406,
+          "owned_skeletons": 406,
+          "owned_absent_skeletons": 0,
+          "owned_absent_models": 3,
+          "model_bindings": 4,
+          "binding_refusals": 4,
+          "scripted_constructions": 52,
+          "owned_scripted_constructions": 330,
+          "constructor_profile_refusals": 76,
+          "owned_missing": 1
+        }
+      },
+      "parent_tests": {
+        "log": "build-native-sjuni\\scripted-motion-tests-llvm-v1.log",
+        "sha256": "b0e948eedbb4a798eee0ee8fced3383e3ca6e8909eedc57e9994f4c4d6898160",
+        "passed": 5
+      }
+    },
+    "gcc": {
+      "world": {
+        "receipt": "build-native-sjuni/scripted-motion-gcc-v4/receipt.json",
+        "sha256": "95e47a1c43a6a4db1cb2de0c47449beacaece49f99d500762b38e2eb96d7561d",
+        "observed": {
+          "checks": 896630,
+          "lifetime_cases": 5,
+          "world_application_cases": 128,
+          "special_frame_cases": 64,
+          "resource_routing_cases": 40,
+          "selection_cases": 933,
+          "dual_application_cases": 74,
+          "metadata_observations": 1263,
+          "scripted_motion_cases": 768,
+          "scripted_motion_ticks": 3840,
+          "scripted_motion_refusals": 776,
+          "scripted_positive_tracks": 86,
+          "required_prelude_cases": 101,
+          "refusal_cases": 130,
+          "joint_cases": 464800,
+          "original_calls": 5341442,
+          "game_run": false
+        }
+      },
+      "owned_construction": {
+        "receipt": "build-native-sjuni/actor-scripted-motion-gcc-v1/receipt.json",
+        "sha256": "f233802a821a66bbda14a800834425a089d68a478a3300812d18cbe54c575821",
+        "observed": {
+          "checks": 5679,
+          "refusals": 18,
+          "owned_models": 406,
+          "owned_skeletons": 406,
+          "owned_absent_skeletons": 0,
+          "owned_absent_models": 3,
+          "model_bindings": 4,
+          "binding_refusals": 4,
+          "scripted_constructions": 52,
+          "owned_scripted_constructions": 330,
+          "constructor_profile_refusals": 76,
+          "owned_missing": 1
+        }
+      },
+      "parent_tests": {
+        "log": "build-native-sjuni\\scripted-motion-tests-gcc-v1.log",
+        "sha256": "173e46157acd34e7ef00cd1b5d0a45eb1c34ee99a37480b215ccbc7ae2ea531f",
+        "passed": 5
+      }
+    }
+  },
+  "limits": [
+    "Linked-family category2 only; primary temporary track-ID wrappers are not admitted.",
+    "Scene configuration/advancement currently require strided banks; the independent track-two consumer also accepts qualified sparse banks.",
+    "The original bank token resolver remains a declared test identity port; production consumes immutable native assets.",
+    "The controlled multiple-track scene container holds actual owned PC clips; it is not a new game capture.",
+    "The constructor now explicitly establishes source-zero channel count and known null bank bindings; actual scene bank/count producer installation remains open.",
+    "Outer6BA880, linked callback scheduling, scene bank loading and game installation remain open.",
+    "No installed gameplay or slowdown fix is claimed by this component checkpoint."
+  ]
+}

@@ -1,0 +1,2607 @@
+{
+  "owned_image_sha256": "45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226",
+  "table_address": "0x717830",
+  "slots": 432,
+  "default_slots": 220,
+  "nondefault_slots": 212,
+  "distinct_targets": 213,
+  "next_word": "0x40404",
+  "native_opcodes_implemented": 0,
+  "native_mask": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+  ],
+  "warning": "Body-mapping coverage is not native opcode execution coverage. No partial native interpreter replaces this table.",
+  "handlers": [
+    {
+      "opcode": 0,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 1,
+      "original_handler": "0x68cd90",
+      "native": false
+    },
+    {
+      "opcode": 2,
+      "original_handler": "0x68cdf0",
+      "native": false
+    },
+    {
+      "opcode": 3,
+      "original_handler": "0x68ce30",
+      "native": false
+    },
+    {
+      "opcode": 4,
+      "original_handler": "0x68ce90",
+      "native": false
+    },
+    {
+      "opcode": 5,
+      "original_handler": "0x68cec0",
+      "native": false
+    },
+    {
+      "opcode": 6,
+      "original_handler": "0x68cf40",
+      "native": false
+    },
+    {
+      "opcode": 7,
+      "original_handler": "0x68cf70",
+      "native": false
+    },
+    {
+      "opcode": 8,
+      "original_handler": "0x68cfe0",
+      "native": false
+    },
+    {
+      "opcode": 9,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 10,
+      "original_handler": "0x68d0b0",
+      "native": false
+    },
+    {
+      "opcode": 11,
+      "original_handler": "0x68d0f0",
+      "native": false
+    },
+    {
+      "opcode": 12,
+      "original_handler": "0x68d1b0",
+      "native": false
+    },
+    {
+      "opcode": 13,
+      "original_handler": "0x68d2a0",
+      "native": false
+    },
+    {
+      "opcode": 14,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 15,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 16,
+      "original_handler": "0x68d310",
+      "native": false
+    },
+    {
+      "opcode": 17,
+      "original_handler": "0x68d350",
+      "native": false
+    },
+    {
+      "opcode": 18,
+      "original_handler": "0x68d380",
+      "native": false
+    },
+    {
+      "opcode": 19,
+      "original_handler": "0x68d3d0",
+      "native": false
+    },
+    {
+      "opcode": 20,
+      "original_handler": "0x68d450",
+      "native": false
+    },
+    {
+      "opcode": 21,
+      "original_handler": "0x68d400",
+      "native": false
+    },
+    {
+      "opcode": 22,
+      "original_handler": "0x68d4e0",
+      "native": false
+    },
+    {
+      "opcode": 23,
+      "original_handler": "0x68d550",
+      "native": false
+    },
+    {
+      "opcode": 24,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 25,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 26,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 27,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 28,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 29,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 30,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 31,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 32,
+      "original_handler": "0x68d5d0",
+      "native": false
+    },
+    {
+      "opcode": 33,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 34,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 35,
+      "original_handler": "0x68d5f0",
+      "native": false
+    },
+    {
+      "opcode": 36,
+      "original_handler": "0x68d610",
+      "native": false
+    },
+    {
+      "opcode": 37,
+      "original_handler": "0x68d630",
+      "native": false
+    },
+    {
+      "opcode": 38,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 39,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 40,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 41,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 42,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 43,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 44,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 45,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 46,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 47,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 48,
+      "original_handler": "0x68d670",
+      "native": false
+    },
+    {
+      "opcode": 49,
+      "original_handler": "0x68d690",
+      "native": false
+    },
+    {
+      "opcode": 50,
+      "original_handler": "0x68d6b0",
+      "native": false
+    },
+    {
+      "opcode": 51,
+      "original_handler": "0x68d6d0",
+      "native": false
+    },
+    {
+      "opcode": 52,
+      "original_handler": "0x68d6f0",
+      "native": false
+    },
+    {
+      "opcode": 53,
+      "original_handler": "0x68d760",
+      "native": false
+    },
+    {
+      "opcode": 54,
+      "original_handler": "0x68d780",
+      "native": false
+    },
+    {
+      "opcode": 55,
+      "original_handler": "0x68d8f0",
+      "native": false
+    },
+    {
+      "opcode": 56,
+      "original_handler": "0x68d920",
+      "native": false
+    },
+    {
+      "opcode": 57,
+      "original_handler": "0x68da50",
+      "native": false
+    },
+    {
+      "opcode": 58,
+      "original_handler": "0x68dba0",
+      "native": false
+    },
+    {
+      "opcode": 59,
+      "original_handler": "0x68dc70",
+      "native": false
+    },
+    {
+      "opcode": 60,
+      "original_handler": "0x68ddb0",
+      "native": false
+    },
+    {
+      "opcode": 61,
+      "original_handler": "0x68df10",
+      "native": false
+    },
+    {
+      "opcode": 62,
+      "original_handler": "0x68dfd0",
+      "native": false
+    },
+    {
+      "opcode": 63,
+      "original_handler": "0x68e070",
+      "native": false
+    },
+    {
+      "opcode": 64,
+      "original_handler": "0x68e110",
+      "native": false
+    },
+    {
+      "opcode": 65,
+      "original_handler": "0x68e140",
+      "native": false
+    },
+    {
+      "opcode": 66,
+      "original_handler": "0x68e170",
+      "native": false
+    },
+    {
+      "opcode": 67,
+      "original_handler": "0x68e1a0",
+      "native": false
+    },
+    {
+      "opcode": 68,
+      "original_handler": "0x68e1d0",
+      "native": false
+    },
+    {
+      "opcode": 69,
+      "original_handler": "0x68e1f0",
+      "native": false
+    },
+    {
+      "opcode": 70,
+      "original_handler": "0x68e250",
+      "native": false
+    },
+    {
+      "opcode": 71,
+      "original_handler": "0x68e280",
+      "native": false
+    },
+    {
+      "opcode": 72,
+      "original_handler": "0x68e310",
+      "native": false
+    },
+    {
+      "opcode": 73,
+      "original_handler": "0x68e3a0",
+      "native": false
+    },
+    {
+      "opcode": 74,
+      "original_handler": "0x68e460",
+      "native": false
+    },
+    {
+      "opcode": 75,
+      "original_handler": "0x68e500",
+      "native": false
+    },
+    {
+      "opcode": 76,
+      "original_handler": "0x68e570",
+      "native": false
+    },
+    {
+      "opcode": 77,
+      "original_handler": "0x68e590",
+      "native": false
+    },
+    {
+      "opcode": 78,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 79,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 80,
+      "original_handler": "0x68e630",
+      "native": false
+    },
+    {
+      "opcode": 81,
+      "original_handler": "0x68e6d0",
+      "native": false
+    },
+    {
+      "opcode": 82,
+      "original_handler": "0x68e730",
+      "native": false
+    },
+    {
+      "opcode": 83,
+      "original_handler": "0x68e800",
+      "native": false
+    },
+    {
+      "opcode": 84,
+      "original_handler": "0x68e8b0",
+      "native": false
+    },
+    {
+      "opcode": 85,
+      "original_handler": "0x68e920",
+      "native": false
+    },
+    {
+      "opcode": 86,
+      "original_handler": "0x68e9e0",
+      "native": false
+    },
+    {
+      "opcode": 87,
+      "original_handler": "0x68ea70",
+      "native": false
+    },
+    {
+      "opcode": 88,
+      "original_handler": "0x68eb30",
+      "native": false
+    },
+    {
+      "opcode": 89,
+      "original_handler": "0x68ebf0",
+      "native": false
+    },
+    {
+      "opcode": 90,
+      "original_handler": "0x68eca0",
+      "native": false
+    },
+    {
+      "opcode": 91,
+      "original_handler": "0x68ecc0",
+      "native": false
+    },
+    {
+      "opcode": 92,
+      "original_handler": "0x68ed30",
+      "native": false
+    },
+    {
+      "opcode": 93,
+      "original_handler": "0x68eda0",
+      "native": false
+    },
+    {
+      "opcode": 94,
+      "original_handler": "0x68ee30",
+      "native": false
+    },
+    {
+      "opcode": 95,
+      "original_handler": "0x68eec0",
+      "native": false
+    },
+    {
+      "opcode": 96,
+      "original_handler": "0x68ef50",
+      "native": false
+    },
+    {
+      "opcode": 97,
+      "original_handler": "0x68eff0",
+      "native": false
+    },
+    {
+      "opcode": 98,
+      "original_handler": "0x68f010",
+      "native": false
+    },
+    {
+      "opcode": 99,
+      "original_handler": "0x68f140",
+      "native": false
+    },
+    {
+      "opcode": 100,
+      "original_handler": "0x68f180",
+      "native": false
+    },
+    {
+      "opcode": 101,
+      "original_handler": "0x68f1d0",
+      "native": false
+    },
+    {
+      "opcode": 102,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 103,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 104,
+      "original_handler": "0x68f1f0",
+      "native": false
+    },
+    {
+      "opcode": 105,
+      "original_handler": "0x68f280",
+      "native": false
+    },
+    {
+      "opcode": 106,
+      "original_handler": "0x68f3c0",
+      "native": false
+    },
+    {
+      "opcode": 107,
+      "original_handler": "0x68f400",
+      "native": false
+    },
+    {
+      "opcode": 108,
+      "original_handler": "0x68f420",
+      "native": false
+    },
+    {
+      "opcode": 109,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 110,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 111,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 112,
+      "original_handler": "0x68f570",
+      "native": false
+    },
+    {
+      "opcode": 113,
+      "original_handler": "0x68f5a0",
+      "native": false
+    },
+    {
+      "opcode": 114,
+      "original_handler": "0x68f5c0",
+      "native": false
+    },
+    {
+      "opcode": 115,
+      "original_handler": "0x68f640",
+      "native": false
+    },
+    {
+      "opcode": 116,
+      "original_handler": "0x68f710",
+      "native": false
+    },
+    {
+      "opcode": 117,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 118,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 119,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 120,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 121,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 122,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 123,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 124,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 125,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 126,
+      "original_handler": "0x68f7f0",
+      "native": false
+    },
+    {
+      "opcode": 127,
+      "original_handler": "0x68f860",
+      "native": false
+    },
+    {
+      "opcode": 128,
+      "original_handler": "0x68f8d0",
+      "native": false
+    },
+    {
+      "opcode": 129,
+      "original_handler": "0x68f970",
+      "native": false
+    },
+    {
+      "opcode": 130,
+      "original_handler": "0x68fa00",
+      "native": false
+    },
+    {
+      "opcode": 131,
+      "original_handler": "0x68fbe0",
+      "native": false
+    },
+    {
+      "opcode": 132,
+      "original_handler": "0x68fc00",
+      "native": false
+    },
+    {
+      "opcode": 133,
+      "original_handler": "0x68fdc0",
+      "native": false
+    },
+    {
+      "opcode": 134,
+      "original_handler": "0x68fe40",
+      "native": false
+    },
+    {
+      "opcode": 135,
+      "original_handler": "0x68feb0",
+      "native": false
+    },
+    {
+      "opcode": 136,
+      "original_handler": "0x68f920",
+      "native": false
+    },
+    {
+      "opcode": 137,
+      "original_handler": "0x68fa40",
+      "native": false
+    },
+    {
+      "opcode": 138,
+      "original_handler": "0x68fac0",
+      "native": false
+    },
+    {
+      "opcode": 139,
+      "original_handler": "0x68fb20",
+      "native": false
+    },
+    {
+      "opcode": 140,
+      "original_handler": "0x68fb80",
+      "native": false
+    },
+    {
+      "opcode": 141,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 142,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 143,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 144,
+      "original_handler": "0x68ff10",
+      "native": false
+    },
+    {
+      "opcode": 145,
+      "original_handler": "0x68ff60",
+      "native": false
+    },
+    {
+      "opcode": 146,
+      "original_handler": "0x68ff80",
+      "native": false
+    },
+    {
+      "opcode": 147,
+      "original_handler": "0x68fff0",
+      "native": false
+    },
+    {
+      "opcode": 148,
+      "original_handler": "0x6900a0",
+      "native": false
+    },
+    {
+      "opcode": 149,
+      "original_handler": "0x690140",
+      "native": false
+    },
+    {
+      "opcode": 150,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 151,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 152,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 153,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 154,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 155,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 156,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 157,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 158,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 159,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 160,
+      "original_handler": "0x690340",
+      "native": false
+    },
+    {
+      "opcode": 161,
+      "original_handler": "0x690370",
+      "native": false
+    },
+    {
+      "opcode": 162,
+      "original_handler": "0x6903a0",
+      "native": false
+    },
+    {
+      "opcode": 163,
+      "original_handler": "0x6903c0",
+      "native": false
+    },
+    {
+      "opcode": 164,
+      "original_handler": "0x6903d0",
+      "native": false
+    },
+    {
+      "opcode": 165,
+      "original_handler": "0x690410",
+      "native": false
+    },
+    {
+      "opcode": 166,
+      "original_handler": "0x690450",
+      "native": false
+    },
+    {
+      "opcode": 167,
+      "original_handler": "0x690470",
+      "native": false
+    },
+    {
+      "opcode": 168,
+      "original_handler": "0x690490",
+      "native": false
+    },
+    {
+      "opcode": 169,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 170,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 171,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 172,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 173,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 174,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 175,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 176,
+      "original_handler": "0x690600",
+      "native": false
+    },
+    {
+      "opcode": 177,
+      "original_handler": "0x690640",
+      "native": false
+    },
+    {
+      "opcode": 178,
+      "original_handler": "0x690680",
+      "native": false
+    },
+    {
+      "opcode": 179,
+      "original_handler": "0x6906c0",
+      "native": false
+    },
+    {
+      "opcode": 180,
+      "original_handler": "0x690700",
+      "native": false
+    },
+    {
+      "opcode": 181,
+      "original_handler": "0x690810",
+      "native": false
+    },
+    {
+      "opcode": 182,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 183,
+      "original_handler": "0x6908e0",
+      "native": false
+    },
+    {
+      "opcode": 184,
+      "original_handler": "0x6909b0",
+      "native": false
+    },
+    {
+      "opcode": 185,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 186,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 187,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 188,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 189,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 190,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 191,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 192,
+      "original_handler": "0x690a80",
+      "native": false
+    },
+    {
+      "opcode": 193,
+      "original_handler": "0x690aa0",
+      "native": false
+    },
+    {
+      "opcode": 194,
+      "original_handler": "0x690ac0",
+      "native": false
+    },
+    {
+      "opcode": 195,
+      "original_handler": "0x690b80",
+      "native": false
+    },
+    {
+      "opcode": 196,
+      "original_handler": "0x690c40",
+      "native": false
+    },
+    {
+      "opcode": 197,
+      "original_handler": "0x690d40",
+      "native": false
+    },
+    {
+      "opcode": 198,
+      "original_handler": "0x690dd0",
+      "native": false
+    },
+    {
+      "opcode": 199,
+      "original_handler": "0x690e60",
+      "native": false
+    },
+    {
+      "opcode": 200,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 201,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 202,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 203,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 204,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 205,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 206,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 207,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 208,
+      "original_handler": "0x690ef0",
+      "native": false
+    },
+    {
+      "opcode": 209,
+      "original_handler": "0x691010",
+      "native": false
+    },
+    {
+      "opcode": 210,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 211,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 212,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 213,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 214,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 215,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 216,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 217,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 218,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 219,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 220,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 221,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 222,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 223,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 224,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 225,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 226,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 227,
+      "original_handler": "0x691170",
+      "native": false
+    },
+    {
+      "opcode": 228,
+      "original_handler": "0x691240",
+      "native": false
+    },
+    {
+      "opcode": 229,
+      "original_handler": "0x691260",
+      "native": false
+    },
+    {
+      "opcode": 230,
+      "original_handler": "0x691290",
+      "native": false
+    },
+    {
+      "opcode": 231,
+      "original_handler": "0x691360",
+      "native": false
+    },
+    {
+      "opcode": 232,
+      "original_handler": "0x6915c0",
+      "native": false
+    },
+    {
+      "opcode": 233,
+      "original_handler": "0x691630",
+      "native": false
+    },
+    {
+      "opcode": 234,
+      "original_handler": "0x691720",
+      "native": false
+    },
+    {
+      "opcode": 235,
+      "original_handler": "0x691800",
+      "native": false
+    },
+    {
+      "opcode": 236,
+      "original_handler": "0x6918c0",
+      "native": false
+    },
+    {
+      "opcode": 237,
+      "original_handler": "0x6919d0",
+      "native": false
+    },
+    {
+      "opcode": 238,
+      "original_handler": "0x691ae0",
+      "native": false
+    },
+    {
+      "opcode": 239,
+      "original_handler": "0x691c10",
+      "native": false
+    },
+    {
+      "opcode": 240,
+      "original_handler": "0x691ce0",
+      "native": false
+    },
+    {
+      "opcode": 241,
+      "original_handler": "0x691d00",
+      "native": false
+    },
+    {
+      "opcode": 242,
+      "original_handler": "0x691d20",
+      "native": false
+    },
+    {
+      "opcode": 243,
+      "original_handler": "0x691de0",
+      "native": false
+    },
+    {
+      "opcode": 244,
+      "original_handler": "0x691e70",
+      "native": false
+    },
+    {
+      "opcode": 245,
+      "original_handler": "0x691eb0",
+      "native": false
+    },
+    {
+      "opcode": 246,
+      "original_handler": "0x691f00",
+      "native": false
+    },
+    {
+      "opcode": 247,
+      "original_handler": "0x691f80",
+      "native": false
+    },
+    {
+      "opcode": 248,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 249,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 250,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 251,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 252,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 253,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 254,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 255,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 256,
+      "original_handler": "0x691fa0",
+      "native": false
+    },
+    {
+      "opcode": 257,
+      "original_handler": "0x692000",
+      "native": false
+    },
+    {
+      "opcode": 258,
+      "original_handler": "0x692070",
+      "native": false
+    },
+    {
+      "opcode": 259,
+      "original_handler": "0x6920a0",
+      "native": false
+    },
+    {
+      "opcode": 260,
+      "original_handler": "0x6920e0",
+      "native": false
+    },
+    {
+      "opcode": 261,
+      "original_handler": "0x6922b0",
+      "native": false
+    },
+    {
+      "opcode": 262,
+      "original_handler": "0x692480",
+      "native": false
+    },
+    {
+      "opcode": 263,
+      "original_handler": "0x692570",
+      "native": false
+    },
+    {
+      "opcode": 264,
+      "original_handler": "0x6925c0",
+      "native": false
+    },
+    {
+      "opcode": 265,
+      "original_handler": "0x692630",
+      "native": false
+    },
+    {
+      "opcode": 266,
+      "original_handler": "0x692690",
+      "native": false
+    },
+    {
+      "opcode": 267,
+      "original_handler": "0x6926b0",
+      "native": false
+    },
+    {
+      "opcode": 268,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 269,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 270,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 271,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 272,
+      "original_handler": "0x692710",
+      "native": false
+    },
+    {
+      "opcode": 273,
+      "original_handler": "0x692750",
+      "native": false
+    },
+    {
+      "opcode": 274,
+      "original_handler": "0x692790",
+      "native": false
+    },
+    {
+      "opcode": 275,
+      "original_handler": "0x6927d0",
+      "native": false
+    },
+    {
+      "opcode": 276,
+      "original_handler": "0x692970",
+      "native": false
+    },
+    {
+      "opcode": 277,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 278,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 279,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 280,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 281,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 282,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 283,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 284,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 285,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 286,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 287,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 288,
+      "original_handler": "0x6929a0",
+      "native": false
+    },
+    {
+      "opcode": 289,
+      "original_handler": "0x6929d0",
+      "native": false
+    },
+    {
+      "opcode": 290,
+      "original_handler": "0x692a00",
+      "native": false
+    },
+    {
+      "opcode": 291,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 292,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 293,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 294,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 295,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 296,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 297,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 298,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 299,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 300,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 301,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 302,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 303,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 304,
+      "original_handler": "0x692a40",
+      "native": false
+    },
+    {
+      "opcode": 305,
+      "original_handler": "0x692b10",
+      "native": false
+    },
+    {
+      "opcode": 306,
+      "original_handler": "0x692be0",
+      "native": false
+    },
+    {
+      "opcode": 307,
+      "original_handler": "0x692c10",
+      "native": false
+    },
+    {
+      "opcode": 308,
+      "original_handler": "0x692f40",
+      "native": false
+    },
+    {
+      "opcode": 309,
+      "original_handler": "0x693020",
+      "native": false
+    },
+    {
+      "opcode": 310,
+      "original_handler": "0x693230",
+      "native": false
+    },
+    {
+      "opcode": 311,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 312,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 313,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 314,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 315,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 316,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 317,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 318,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 319,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 320,
+      "original_handler": "0x6932d0",
+      "native": false
+    },
+    {
+      "opcode": 321,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 322,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 323,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 324,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 325,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 326,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 327,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 328,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 329,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 330,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 331,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 332,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 333,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 334,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 335,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 336,
+      "original_handler": "0x693300",
+      "native": false
+    },
+    {
+      "opcode": 337,
+      "original_handler": "0x693430",
+      "native": false
+    },
+    {
+      "opcode": 338,
+      "original_handler": "0x6935a0",
+      "native": false
+    },
+    {
+      "opcode": 339,
+      "original_handler": "0x6936b0",
+      "native": false
+    },
+    {
+      "opcode": 340,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 341,
+      "original_handler": "0x693840",
+      "native": false
+    },
+    {
+      "opcode": 342,
+      "original_handler": "0x693920",
+      "native": false
+    },
+    {
+      "opcode": 343,
+      "original_handler": "0x693c30",
+      "native": false
+    },
+    {
+      "opcode": 344,
+      "original_handler": "0x693df0",
+      "native": false
+    },
+    {
+      "opcode": 345,
+      "original_handler": "0x693ea0",
+      "native": false
+    },
+    {
+      "opcode": 346,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 347,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 348,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 349,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 350,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 351,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 352,
+      "original_handler": "0x693f30",
+      "native": false
+    },
+    {
+      "opcode": 353,
+      "original_handler": "0x6940f0",
+      "native": false
+    },
+    {
+      "opcode": 354,
+      "original_handler": "0x6941c0",
+      "native": false
+    },
+    {
+      "opcode": 355,
+      "original_handler": "0x6942a0",
+      "native": false
+    },
+    {
+      "opcode": 356,
+      "original_handler": "0x694390",
+      "native": false
+    },
+    {
+      "opcode": 357,
+      "original_handler": "0x6943d0",
+      "native": false
+    },
+    {
+      "opcode": 358,
+      "original_handler": "0x694470",
+      "native": false
+    },
+    {
+      "opcode": 359,
+      "original_handler": "0x6944a0",
+      "native": false
+    },
+    {
+      "opcode": 360,
+      "original_handler": "0x694620",
+      "native": false
+    },
+    {
+      "opcode": 361,
+      "original_handler": "0x6946b0",
+      "native": false
+    },
+    {
+      "opcode": 362,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 363,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 364,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 365,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 366,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 367,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 368,
+      "original_handler": "0x6949a0",
+      "native": false
+    },
+    {
+      "opcode": 369,
+      "original_handler": "0x694aa0",
+      "native": false
+    },
+    {
+      "opcode": 370,
+      "original_handler": "0x694ad0",
+      "native": false
+    },
+    {
+      "opcode": 371,
+      "original_handler": "0x694bc0",
+      "native": false
+    },
+    {
+      "opcode": 372,
+      "original_handler": "0x694d70",
+      "native": false
+    },
+    {
+      "opcode": 373,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 374,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 375,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 376,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 377,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 378,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 379,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 380,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 381,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 382,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 383,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 384,
+      "original_handler": "0x694da0",
+      "native": false
+    },
+    {
+      "opcode": 385,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 386,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 387,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 388,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 389,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 390,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 391,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 392,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 393,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 394,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 395,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 396,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 397,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 398,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 399,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 400,
+      "original_handler": "0x694e50",
+      "native": false
+    },
+    {
+      "opcode": 401,
+      "original_handler": "0x694e70",
+      "native": false
+    },
+    {
+      "opcode": 402,
+      "original_handler": "0x694e90",
+      "native": false
+    },
+    {
+      "opcode": 403,
+      "original_handler": "0x694ea0",
+      "native": false
+    },
+    {
+      "opcode": 404,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 405,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 406,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 407,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 408,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 409,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 410,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 411,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 412,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 413,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 414,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 415,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 416,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 417,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 418,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 419,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 420,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 421,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 422,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 423,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 424,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 425,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 426,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 427,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 428,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 429,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 430,
+      "original_handler": "0x68cd80",
+      "native": false
+    },
+    {
+      "opcode": 431,
+      "original_handler": "0x68cd80",
+      "native": false
+    }
+  ]
+}

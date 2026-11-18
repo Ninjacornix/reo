@@ -1,0 +1,19 @@
+# Route-matrix goal resolution and trace fallback
+
+Static File #1 US, 2026-11-05. Three complete original o2 bodies reviewed, including failed-nearest paths, signed/unsigned index conversions and trace ordering. Addresses, masks and offsets are hexadecimal. No execution, build, attachment, live memory, input or timing. Route-point roles follow the [mapped point/query consumers](SYMBOLS_RUNTIME_ROUTE_POINT_NEIGHBORS.md) and [loader](SYMBOLS_RUNTIME_ROUTE_POINT_LOADING.md).
+
+| Guest entry / source | Proposed label | Confidence | Evidence and remaining uncertainty |
+| --- | --- | --- | --- |
+| [o2 0x634040](../recomp/config/output_ovl/o2/o2_00634040_0x634040.cpp) | `resolve_route_relation_next_point_or_original_goal_candidate` | High mechanics; probable role | a0outXYZ,a1goalXYZ,a2fromXYZ. Finds nearest route point tofrom then goal, narrowing both signed8. Eithernegative ->copygoal/return-1. Samepoint ->copygoal/returngoalindex. Differentpoint ->relation633850(fromIndex,goalIndex);low8FF ->copygoal/-1;otherlow8 ->copythat recordXYZ/return signed8index. No trace, allocation or point mutation. |
+| [o2 0x634160](../recomp/config/output_ovl/o2/o2_00634160_0x634160.cpp) | `resolve_actor_route_goal_with_trace_fallback_five_arg_candidate` | High mechanics; probable role | a0actor,a1unused,a2outXYZ,a3goalXYZ,t0fromXYZ. Nearestpoint failures copygoal/-1. Samepoint tracesactorXYZ->goal(mask20FFFF,a3=0);zero copiesgoal,nonzero copiesnearestpointXYZ;returnsgoalindex. Differentpoint readsrelation, copies candidatepoint into stack and traces it BEFORE FF sentinel test;nonzero trace replacescandidate withfromindex,thenFF choosesgoal/-1,elsecopieschosenpoint/returns signed8. |
+| [o2 0x634310](../recomp/config/output_ovl/o2/o2_00634310_0x634310.cpp) | `resolve_actor_route_goal_with_trace_fallback_four_arg_candidate` | High mechanics; probable role | Same complete trace/matrix policy as634160 with a0actor,a1outXYZ,a2goalXYZ,a3fromXYZ; original register/ABI distinction retained. Earlynearestfailure,samepointtrace,differentpointcandidatecopybeforeFFcheck andfromindexfallback all independently reviewed. |
+
+Both traced wrappers call579980 from actor+38, not from the input fromXYZ. The nearest-node lookup uses fromXYZ separately. Trace arguments are mask20FFFF, a3=0, t0=stack output buffer; queryzero andnonzero choose the stated branches. This note does not rename the query to an unsupported general visibility predicate.
+
+For differing nearest points, relation633850 returns a signed byte, then wrappers mask it to unsigned8 and call633870 on it before checking forFF. Thus a relationFF causes a local candidate-point255 read and trace before the later sentinel handling. A nonzero trace can then replace it with the known nonnegative fromindex. This ordering is observed original control flow, not proof that a live route matrix can containFF for such admitted pairs. Source/route validation and ownership invariants remain unknown; no out-of-bounds access, crash or stall was reproduced. A future candidate change must establish actual admitted inputs before treating it as a defect.
+
+634040 instead checks the FF sentinel before copying any candidate point. Its samepoint path keeps the exact original goalXYZ and returns the nearest goalindex; a negative nearest lookup keeps the same output but returns-1. Output equality is therefore not a reliable completion/success indicator by itself.
+
+Point pool3C3D80, matrix7441B0 and count7445B0 are runtime storage outside owned file-backed o2 data. No live contents were read. All record strides and query contracts remain in the linked point-query notebook. Caller argument domains, trace hits, matrix contents, frequencies and cost remain unknown. Owned o2 base570000 SHA256`45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226`.
+
+Full owned-body audit: 273 original words verified; 9 omitted words all zero/NOP. Zero conflicts or omitted nonzero words.

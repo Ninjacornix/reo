@@ -21,6 +21,8 @@ public sealed partial class Settings {
     [System.Text.Json.Serialization.JsonIgnore]
     public string ResolvedVSync => VSync is "off" or "adaptive" ? VSync : "on";
     public bool PerformanceOverlay { get; set; }
+    // Start at the main menu: skip the boot logos and title prompt (IntroSkip.cs).
+    public bool SkipIntro { get; set; } = true;
     public string AspectRatio { get; set; } = "4:3";
     // Widen the game camera to the selected ratio instead of stretching the 4:3 view.
     public bool WidescreenCamera { get; set; }
@@ -44,7 +46,6 @@ public sealed partial class Settings {
     public string AccountUsername { get; set; } = "";
     // "offline", "host" or "join"; null in settings saved by older launchers.
     public string? CoopMode { get; set; }
-    public bool AutoLobby { get; set; } = true;
     DeveloperOptions developer = new();
     public DeveloperOptions Developer { get => developer; set => developer = value ?? new(); }
     public string JoinHostName { get; set; } = "";
@@ -86,6 +87,9 @@ public sealed partial class Settings {
     public PadProfile PlayStation { get; set; } = new();
     public PadProfile Xbox { get; set; } = new();
     public Dictionary<string, int> Keyboard { get; set; } = InputMapping.KeyboardDefaults();
+    ModernCameraOptions modernCamera = new();
+    // Third-person camera (File #1 native camera builds); see ModernCamera.cs.
+    public ModernCameraOptions ModernCamera { get => modernCamera; set => modernCamera = value ?? new(); }
     public static Settings Load(string root) {
         Settings settings;
         try {
@@ -111,6 +115,7 @@ public sealed partial class Settings {
         settings.Gamma =
             double.IsFinite(settings.Gamma) ? Math.Clamp(settings.Gamma, 0.5, 2.0) : 1.0;
         settings.DeadZone = Math.Clamp(settings.DeadZone, 0, 30);
+        settings.ModernCamera = settings.ModernCamera.Clamped();
         if (!settings.DualSense && settings.InputDeviceId.Length == 0)
             settings.InputDeviceId = "keyboard";
         settings.EnabledCheats ??= new();
@@ -118,10 +123,6 @@ public sealed partial class Settings {
         settings.EnabledAssetPaks ??= new();
         settings.CoopHost ??= "";
         settings.AccountUsername ??= "";
-        settings.RoomName ??= "";
-        settings.JoinRoomName ??= "";
-        settings.RoomMaxPlayers = Math.Clamp(settings.RoomMaxPlayers, 2, 4);
-        if (!new[] { 3, 5, 10, 15, 30 }.Contains(settings.RoomWaitMinutes)) settings.RoomWaitMinutes = 5;
         settings.JoinHostName ??= "";
         if (HostNetworking.PortError(settings.SignupPort, settings.GamePort) != null) {
             settings.SignupPort = HostNetworking.SignupPort;

@@ -1,0 +1,2401 @@
+{
+  "schema": 1,
+  "edition": "SLUS-20765",
+  "elf_sha256": "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46",
+  "confidence": "Confirmed/static narrow whole-body behavior, not original semantic identity.",
+  "provenance": "Owned raw words; admitted JR ra/delay/zero padding, single a0-relative memory instruction, or bounded direct tail to a reviewed same-image entry.",
+  "overlay_profile": "tools/function_index/overlay_identities.json",
+  "entries": [
+    {
+      "id": "main:0x00114D08",
+      "image": "main",
+      "address": "0x00114D08",
+      "end": "0x00114D10",
+      "source": "recomp/config/output/sub_00114D08_0x114d08.cpp",
+      "words": [
+        "03E00008",
+        "2402FFFF"
+      ],
+      "kind": "return_constant",
+      "value": -1,
+      "behavior": "Returns sign-extended constant -1 in v0; no memory access."
+    },
+    {
+      "id": "main:0x00114D10",
+      "image": "main",
+      "address": "0x00114D10",
+      "end": "0x00114D18",
+      "source": "recomp/config/output/sub_00114D10_0x114d10.cpp",
+      "words": [
+        "03E00008",
+        "2402FFFF"
+      ],
+      "kind": "return_constant",
+      "value": -1,
+      "behavior": "Returns sign-extended constant -1 in v0; no memory access."
+    },
+    {
+      "id": "main:0x00114D18",
+      "image": "main",
+      "address": "0x00114D18",
+      "end": "0x00114D20",
+      "source": "recomp/config/output/sub_00114D18_0x114d18.cpp",
+      "words": [
+        "03E00008",
+        "2402FFFF"
+      ],
+      "kind": "return_constant",
+      "value": -1,
+      "behavior": "Returns sign-extended constant -1 in v0; no memory access."
+    },
+    {
+      "id": "main:0x00114DD0",
+      "image": "main",
+      "address": "0x00114DD0",
+      "end": "0x00114DD8",
+      "source": "recomp/config/output/sub_00114DD0_0x114dd0.cpp",
+      "words": [
+        "03E00008",
+        "24020001"
+      ],
+      "kind": "return_constant",
+      "value": 1,
+      "behavior": "Returns sign-extended constant 1 in v0; no memory access."
+    },
+    {
+      "id": "main:0x00114DF0",
+      "image": "main",
+      "address": "0x00114DF0",
+      "end": "0x00114DF8",
+      "source": "recomp/config/output/sub_00114DF0_0x114df0.cpp",
+      "words": [
+        "03E00008",
+        "24020001"
+      ],
+      "kind": "return_constant",
+      "value": 1,
+      "behavior": "Returns sign-extended constant 1 in v0; no memory access."
+    },
+    {
+      "id": "main:0x0011DF28",
+      "image": "main",
+      "address": "0x0011DF28",
+      "end": "0x0011DF30",
+      "source": "recomp/config/output/sub_0011DF28_0x11df28.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001244C0",
+      "image": "main",
+      "address": "0x001244C0",
+      "end": "0x001244C8",
+      "source": "recomp/config/output/sub_001244C0_0x1244c0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "main:0x0012A8E8",
+      "image": "main",
+      "address": "0x0012A8E8",
+      "end": "0x0012A8F0",
+      "source": "recomp/config/output/sub_0012A8E8_0x12a8e8.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x0012C660",
+      "image": "main",
+      "address": "0x0012C660",
+      "end": "0x0012C668",
+      "source": "recomp/config/output/sub_0012C660_0x12c660.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x0012C828",
+      "image": "main",
+      "address": "0x0012C828",
+      "end": "0x0012C830",
+      "source": "recomp/config/output/sub_0012C828_0x12c828.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x0012C890",
+      "image": "main",
+      "address": "0x0012C890",
+      "end": "0x0012C898",
+      "source": "recomp/config/output/sub_0012C890_0x12c890.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "main:0x0012C8C8",
+      "image": "main",
+      "address": "0x0012C8C8",
+      "end": "0x0012C8D0",
+      "source": "recomp/config/output/sub_0012C8C8_0x12c8c8.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x0012C8D0",
+      "image": "main",
+      "address": "0x0012C8D0",
+      "end": "0x0012C8D8",
+      "source": "recomp/config/output/sub_0012C8D0_0x12c8d0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x0012C8D8",
+      "image": "main",
+      "address": "0x0012C8D8",
+      "end": "0x0012C8E0",
+      "source": "recomp/config/output/sub_0012C8D8_0x12c8d8.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x0012C8E0",
+      "image": "main",
+      "address": "0x0012C8E0",
+      "end": "0x0012C8E8",
+      "source": "recomp/config/output/sub_0012C8E0_0x12c8e0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x0012C8E8",
+      "image": "main",
+      "address": "0x0012C8E8",
+      "end": "0x0012C8F0",
+      "source": "recomp/config/output/sub_0012C8E8_0x12c8e8.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x0012C8F0",
+      "image": "main",
+      "address": "0x0012C8F0",
+      "end": "0x0012C8F8",
+      "source": "recomp/config/output/sub_0012C8F0_0x12c8f0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "main:0x0012DA68",
+      "image": "main",
+      "address": "0x0012DA68",
+      "end": "0x0012DA70",
+      "source": "recomp/config/output/sub_0012DA68_0x12da68.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "main:0x0012DD48",
+      "image": "main",
+      "address": "0x0012DD48",
+      "end": "0x0012DD50",
+      "source": "recomp/config/output/sub_0012DD48_0x12dd48.cpp",
+      "words": [
+        "03E00008",
+        "24020100"
+      ],
+      "kind": "return_constant",
+      "value": 256,
+      "behavior": "Returns sign-extended constant 256 in v0; no memory access."
+    },
+    {
+      "id": "main:0x001300F8",
+      "image": "main",
+      "address": "0x001300F8",
+      "end": "0x00130100",
+      "source": "recomp/config/output/sub_001300F8_0x1300f8.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x00130100",
+      "image": "main",
+      "address": "0x00130100",
+      "end": "0x00130108",
+      "source": "recomp/config/output/sub_00130100_0x130100.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x00130E38",
+      "image": "main",
+      "address": "0x00130E38",
+      "end": "0x00130E40",
+      "source": "recomp/config/output/sub_00130E38_0x130e38.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x00132FE0",
+      "image": "main",
+      "address": "0x00132FE0",
+      "end": "0x00132FE8",
+      "source": "recomp/config/output/sub_00132FE0_0x132fe0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x00132FE8",
+      "image": "main",
+      "address": "0x00132FE8",
+      "end": "0x00132FF0",
+      "source": "recomp/config/output/sub_00132FE8_0x132fe8.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x00133010",
+      "image": "main",
+      "address": "0x00133010",
+      "end": "0x00133018",
+      "source": "recomp/config/output/sub_00133010_0x133010.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x00133018",
+      "image": "main",
+      "address": "0x00133018",
+      "end": "0x00133020",
+      "source": "recomp/config/output/sub_00133018_0x133018.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "main:0x00133020",
+      "image": "main",
+      "address": "0x00133020",
+      "end": "0x00133028",
+      "source": "recomp/config/output/sub_00133020_0x133020.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x00133028",
+      "image": "main",
+      "address": "0x00133028",
+      "end": "0x00133030",
+      "source": "recomp/config/output/sub_00133028_0x133028.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x00133030",
+      "image": "main",
+      "address": "0x00133030",
+      "end": "0x00133038",
+      "source": "recomp/config/output/sub_00133030_0x133030.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x00133038",
+      "image": "main",
+      "address": "0x00133038",
+      "end": "0x00133040",
+      "source": "recomp/config/output/sub_00133038_0x133038.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001347F8",
+      "image": "main",
+      "address": "0x001347F8",
+      "end": "0x00134800",
+      "source": "recomp/config/output/sub_001347F8_0x1347f8.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x00134F90",
+      "image": "main",
+      "address": "0x00134F90",
+      "end": "0x00134F98",
+      "source": "recomp/config/output/sub_00134F90_0x134f90.cpp",
+      "words": [
+        "03E00008",
+        "AC850008"
+      ],
+      "kind": "write_a0_field",
+      "offset": 8,
+      "width": 32,
+      "register": "a1",
+      "behavior": "Stores low 32 bits of a1 to guest memory at a0+8; preserves v0."
+    },
+    {
+      "id": "main:0x00136C38",
+      "image": "main",
+      "address": "0x00136C38",
+      "end": "0x00136C40",
+      "source": "recomp/config/output/sub_00136C38_0x136c38.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "main:0x0013D588",
+      "image": "main",
+      "address": "0x0013D588",
+      "end": "0x0013D590",
+      "source": "recomp/config/output/sub_0013D588_0x13d588.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x0013D590",
+      "image": "main",
+      "address": "0x0013D590",
+      "end": "0x0013D598",
+      "source": "recomp/config/output/sub_0013D590_0x13d590.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x0013F150",
+      "image": "main",
+      "address": "0x0013F150",
+      "end": "0x0013F158",
+      "source": "recomp/config/output/sub_0013F150_0x13f150.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x00147CE8",
+      "image": "main",
+      "address": "0x00147CE8",
+      "end": "0x00147CF0",
+      "source": "recomp/config/output/sub_00147CE8_0x147ce8.cpp",
+      "words": [
+        "03E00008",
+        "24020001"
+      ],
+      "kind": "return_constant",
+      "value": 1,
+      "behavior": "Returns sign-extended constant 1 in v0; no memory access."
+    },
+    {
+      "id": "main:0x00149200",
+      "image": "main",
+      "address": "0x00149200",
+      "end": "0x00149208",
+      "source": "recomp/config/output/sub_00149200_0x149200.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x00149260",
+      "image": "main",
+      "address": "0x00149260",
+      "end": "0x00149268",
+      "source": "recomp/config/output/sub_00149260_0x149260.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x00149278",
+      "image": "main",
+      "address": "0x00149278",
+      "end": "0x00149280",
+      "source": "recomp/config/output/sub_00149278_0x149278.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x00149290",
+      "image": "main",
+      "address": "0x00149290",
+      "end": "0x00149298",
+      "source": "recomp/config/output/sub_00149290_0x149290.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x00149298",
+      "image": "main",
+      "address": "0x00149298",
+      "end": "0x001492A0",
+      "source": "recomp/config/output/sub_00149298_0x149298.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001492A8",
+      "image": "main",
+      "address": "0x001492A8",
+      "end": "0x001492B0",
+      "source": "recomp/config/output/sub_001492A8_0x1492a8.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001492D0",
+      "image": "main",
+      "address": "0x001492D0",
+      "end": "0x001492D8",
+      "source": "recomp/config/output/sub_001492D0_0x1492d0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x00188838",
+      "image": "main",
+      "address": "0x00188838",
+      "end": "0x00188840",
+      "source": "recomp/config/output/sub_00188838_0x188838.cpp",
+      "words": [
+        "03E00008",
+        "24020001"
+      ],
+      "kind": "return_constant",
+      "value": 1,
+      "behavior": "Returns sign-extended constant 1 in v0; no memory access."
+    },
+    {
+      "id": "main:0x001A9180",
+      "image": "main",
+      "address": "0x001A9180",
+      "end": "0x001A9188",
+      "source": "recomp/config/output/sub_001A9180_0x1a9180.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "main:0x001A91C0",
+      "image": "main",
+      "address": "0x001A91C0",
+      "end": "0x001A91C8",
+      "source": "recomp/config/output/sub_001A91C0_0x1a91c0.cpp",
+      "words": [
+        "03E00008",
+        "24020001"
+      ],
+      "kind": "return_constant",
+      "value": 1,
+      "behavior": "Returns sign-extended constant 1 in v0; no memory access."
+    },
+    {
+      "id": "main:0x001AA3D0",
+      "image": "main",
+      "address": "0x001AA3D0",
+      "end": "0x001AA3D8",
+      "source": "recomp/config/output/sub_001AA3D0_0x1aa3d0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001AC640",
+      "image": "main",
+      "address": "0x001AC640",
+      "end": "0x001AC648",
+      "source": "recomp/config/output/sub_001AC640_0x1ac640.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001AC6C0",
+      "image": "main",
+      "address": "0x001AC6C0",
+      "end": "0x001AC6C8",
+      "source": "recomp/config/output/sub_001AC6C0_0x1ac6c0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001B2CD0",
+      "image": "main",
+      "address": "0x001B2CD0",
+      "end": "0x001B2CD8",
+      "source": "recomp/config/output/sub_001B2CD0_0x1b2cd0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001B3860",
+      "image": "main",
+      "address": "0x001B3860",
+      "end": "0x001B3868",
+      "source": "recomp/config/output/sub_001B3860_0x1b3860.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001B3870",
+      "image": "main",
+      "address": "0x001B3870",
+      "end": "0x001B3878",
+      "source": "recomp/config/output/sub_001B3870_0x1b3870.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001B3880",
+      "image": "main",
+      "address": "0x001B3880",
+      "end": "0x001B3888",
+      "source": "recomp/config/output/sub_001B3880_0x1b3880.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001B3C30",
+      "image": "main",
+      "address": "0x001B3C30",
+      "end": "0x001B3C38",
+      "source": "recomp/config/output/sub_001B3C30_0x1b3c30.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001B77C0",
+      "image": "main",
+      "address": "0x001B77C0",
+      "end": "0x001B77C8",
+      "source": "recomp/config/output/sub_001B77C0_0x1b77c0.cpp",
+      "words": [
+        "03E00008",
+        "24020001"
+      ],
+      "kind": "return_constant",
+      "value": 1,
+      "behavior": "Returns sign-extended constant 1 in v0; no memory access."
+    },
+    {
+      "id": "main:0x001B77D0",
+      "image": "main",
+      "address": "0x001B77D0",
+      "end": "0x001B77D8",
+      "source": "recomp/config/output/sub_001B77D0_0x1b77d0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001B77E0",
+      "image": "main",
+      "address": "0x001B77E0",
+      "end": "0x001B77E8",
+      "source": "recomp/config/output/sub_001B77E0_0x1b77e0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001B77F0",
+      "image": "main",
+      "address": "0x001B77F0",
+      "end": "0x001B77F8",
+      "source": "recomp/config/output/sub_001B77F0_0x1b77f0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001B7800",
+      "image": "main",
+      "address": "0x001B7800",
+      "end": "0x001B7808",
+      "source": "recomp/config/output/sub_001B7800_0x1b7800.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001B7810",
+      "image": "main",
+      "address": "0x001B7810",
+      "end": "0x001B7818",
+      "source": "recomp/config/output/sub_001B7810_0x1b7810.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001B7820",
+      "image": "main",
+      "address": "0x001B7820",
+      "end": "0x001B7828",
+      "source": "recomp/config/output/sub_001B7820_0x1b7820.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001B8290",
+      "image": "main",
+      "address": "0x001B8290",
+      "end": "0x001B8298",
+      "source": "recomp/config/output/sub_001B8290_0x1b8290.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001B82B0",
+      "image": "main",
+      "address": "0x001B82B0",
+      "end": "0x001B82B8",
+      "source": "recomp/config/output/sub_001B82B0_0x1b82b0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001B82C0",
+      "image": "main",
+      "address": "0x001B82C0",
+      "end": "0x001B82C8",
+      "source": "recomp/config/output/sub_001B82C0_0x1b82c0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001B82D0",
+      "image": "main",
+      "address": "0x001B82D0",
+      "end": "0x001B82D8",
+      "source": "recomp/config/output/sub_001B82D0_0x1b82d0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001BB1C0",
+      "image": "main",
+      "address": "0x001BB1C0",
+      "end": "0x001BB1C8",
+      "source": "recomp/config/output/sub_001BB1C0_0x1bb1c0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001BB470",
+      "image": "main",
+      "address": "0x001BB470",
+      "end": "0x001BB478",
+      "source": "recomp/config/output/sub_001BB470_0x1bb470.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001BD2E0",
+      "image": "main",
+      "address": "0x001BD2E0",
+      "end": "0x001BD2E8",
+      "source": "recomp/config/output/sub_001BD2E0_0x1bd2e0.cpp",
+      "words": [
+        "08045194",
+        "00000000"
+      ],
+      "kind": "direct_tail_adapter",
+      "target": "0x00114650",
+      "argument_adjustment": null,
+      "behavior": "Jumps to guest 0x00114650 without linking ra. Preserves argument registers before transfer. Callee effects and return value are not inferred.",
+      "reviewed_target": "main:0x00114650"
+    },
+    {
+      "id": "main:0x001C0410",
+      "image": "main",
+      "address": "0x001C0410",
+      "end": "0x001C0418",
+      "source": "recomp/config/output/sub_001C0410_0x1c0410.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001C80D0",
+      "image": "main",
+      "address": "0x001C80D0",
+      "end": "0x001C80D8",
+      "source": "recomp/config/output/sub_001C80D0_0x1c80d0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "main:0x001C80E0",
+      "image": "main",
+      "address": "0x001C80E0",
+      "end": "0x001C80E8",
+      "source": "recomp/config/output/sub_001C80E0_0x1c80e0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "main:0x001C80F0",
+      "image": "main",
+      "address": "0x001C80F0",
+      "end": "0x001C80F8",
+      "source": "recomp/config/output/sub_001C80F0_0x1c80f0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "main:0x001C8100",
+      "image": "main",
+      "address": "0x001C8100",
+      "end": "0x001C8108",
+      "source": "recomp/config/output/sub_001C8100_0x1c8100.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "main:0x001C8D50",
+      "image": "main",
+      "address": "0x001C8D50",
+      "end": "0x001C8D58",
+      "source": "recomp/config/output/sub_001C8D50_0x1c8d50.cpp",
+      "words": [
+        "0807204C",
+        "00000000"
+      ],
+      "kind": "direct_tail_adapter",
+      "target": "0x001C8130",
+      "argument_adjustment": null,
+      "behavior": "Jumps to guest 0x001C8130 without linking ra. Preserves argument registers before transfer. Callee effects and return value are not inferred.",
+      "reviewed_target": "main:0x001C8130"
+    },
+    {
+      "id": "main:0x001C8F40",
+      "image": "main",
+      "address": "0x001C8F40",
+      "end": "0x001C8F48",
+      "source": "recomp/config/output/sub_001C8F40_0x1c8f40.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001CC230",
+      "image": "main",
+      "address": "0x001CC230",
+      "end": "0x001CC238",
+      "source": "recomp/config/output/sub_001CC230_0x1cc230.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001D1C40",
+      "image": "main",
+      "address": "0x001D1C40",
+      "end": "0x001D1C48",
+      "source": "recomp/config/output/sub_001D1C40_0x1d1c40.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001D1F30",
+      "image": "main",
+      "address": "0x001D1F30",
+      "end": "0x001D1F38",
+      "source": "recomp/config/output/sub_001D1F30_0x1d1f30.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001D1F40",
+      "image": "main",
+      "address": "0x001D1F40",
+      "end": "0x001D1F48",
+      "source": "recomp/config/output/sub_001D1F40_0x1d1f40.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001D97E0",
+      "image": "main",
+      "address": "0x001D97E0",
+      "end": "0x001D97E8",
+      "source": "recomp/config/output/sub_001D97E0_0x1d97e0.cpp",
+      "words": [
+        "03E00008",
+        "2402FFFF"
+      ],
+      "kind": "return_constant",
+      "value": -1,
+      "behavior": "Returns sign-extended constant -1 in v0; no memory access."
+    },
+    {
+      "id": "main:0x001DA310",
+      "image": "main",
+      "address": "0x001DA310",
+      "end": "0x001DA318",
+      "source": "recomp/config/output/sub_001DA310_0x1da310.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "main:0x001DA320",
+      "image": "main",
+      "address": "0x001DA320",
+      "end": "0x001DA328",
+      "source": "recomp/config/output/sub_001DA320_0x1da320.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "main:0x001F45B0",
+      "image": "main",
+      "address": "0x001F45B0",
+      "end": "0x001F45B8",
+      "source": "recomp/config/output/sub_001F45B0_0x1f45b0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001F45C0",
+      "image": "main",
+      "address": "0x001F45C0",
+      "end": "0x001F45C8",
+      "source": "recomp/config/output/sub_001F45C0_0x1f45c0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "main:0x001F5030",
+      "image": "main",
+      "address": "0x001F5030",
+      "end": "0x001F5038",
+      "source": "recomp/config/output/sub_001F5030_0x1f5030.cpp",
+      "words": [
+        "03E00008",
+        "24020001"
+      ],
+      "kind": "return_constant",
+      "value": 1,
+      "behavior": "Returns sign-extended constant 1 in v0; no memory access."
+    },
+    {
+      "id": "main:0x001F5040",
+      "image": "main",
+      "address": "0x001F5040",
+      "end": "0x001F5048",
+      "source": "recomp/config/output/sub_001F5040_0x1f5040.cpp",
+      "words": [
+        "03E00008",
+        "2402FFFF"
+      ],
+      "kind": "return_constant",
+      "value": -1,
+      "behavior": "Returns sign-extended constant -1 in v0; no memory access."
+    },
+    {
+      "id": "main:0x001F6FA0",
+      "image": "main",
+      "address": "0x001F6FA0",
+      "end": "0x001F6FA8",
+      "source": "recomp/config/output/sub_001F6FA0_0x1f6fa0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "main:0x001F6FB0",
+      "image": "main",
+      "address": "0x001F6FB0",
+      "end": "0x001F6FB8",
+      "source": "recomp/config/output/sub_001F6FB0_0x1f6fb0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "main:0x001F71E0",
+      "image": "main",
+      "address": "0x001F71E0",
+      "end": "0x001F71E8",
+      "source": "recomp/config/output/sub_001F71E0_0x1f71e0.cpp",
+      "words": [
+        "0806ECAC",
+        "00000000"
+      ],
+      "kind": "direct_tail_adapter",
+      "target": "0x001BB2B0",
+      "argument_adjustment": null,
+      "behavior": "Jumps to guest 0x001BB2B0 without linking ra. Preserves argument registers before transfer. Callee effects and return value are not inferred.",
+      "reviewed_target": "main:0x001BB2B0"
+    },
+    {
+      "id": "o2:0x0057EAA0",
+      "image": "o2",
+      "address": "0x0057EAA0",
+      "end": "0x0057EAA8",
+      "source": "recomp/config/output_ovl/o2/o2_0057EAA0_0x57eaa0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x0057EAB0",
+      "image": "o2",
+      "address": "0x0057EAB0",
+      "end": "0x0057EAB8",
+      "source": "recomp/config/output_ovl/o2/o2_0057EAB0_0x57eab0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x0057EAC0",
+      "image": "o2",
+      "address": "0x0057EAC0",
+      "end": "0x0057EAC8",
+      "source": "recomp/config/output_ovl/o2/o2_0057EAC0_0x57eac0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00587620",
+      "image": "o2",
+      "address": "0x00587620",
+      "end": "0x00587628",
+      "source": "recomp/config/output_ovl/o2/o2_00587620_0x587620.cpp",
+      "words": [
+        "03E00008",
+        "A0800001"
+      ],
+      "kind": "write_a0_field",
+      "offset": 1,
+      "width": 8,
+      "register": "zero",
+      "behavior": "Stores low 8 bits of zero to guest memory at a0+1; preserves v0."
+    },
+    {
+      "id": "o2:0x00588BE0",
+      "image": "o2",
+      "address": "0x00588BE0",
+      "end": "0x00588BE8",
+      "source": "recomp/config/output_ovl/o2/o2_00588BE0_0x588be0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00588D00",
+      "image": "o2",
+      "address": "0x00588D00",
+      "end": "0x00588D08",
+      "source": "recomp/config/output_ovl/o2/o2_00588D00_0x588d00.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00588D10",
+      "image": "o2",
+      "address": "0x00588D10",
+      "end": "0x00588D18",
+      "source": "recomp/config/output_ovl/o2/o2_00588D10_0x588d10.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00588EA0",
+      "image": "o2",
+      "address": "0x00588EA0",
+      "end": "0x00588EA8",
+      "source": "recomp/config/output_ovl/o2/o2_00588EA0_0x588ea0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00588EB0",
+      "image": "o2",
+      "address": "0x00588EB0",
+      "end": "0x00588EB8",
+      "source": "recomp/config/output_ovl/o2/o2_00588EB0_0x588eb0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00588EC0",
+      "image": "o2",
+      "address": "0x00588EC0",
+      "end": "0x00588EC8",
+      "source": "recomp/config/output_ovl/o2/o2_00588EC0_0x588ec0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00588ED0",
+      "image": "o2",
+      "address": "0x00588ED0",
+      "end": "0x00588ED8",
+      "source": "recomp/config/output_ovl/o2/o2_00588ED0_0x588ed0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00588FC0",
+      "image": "o2",
+      "address": "0x00588FC0",
+      "end": "0x00588FC8",
+      "source": "recomp/config/output_ovl/o2/o2_00588FC0_0x588fc0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00589110",
+      "image": "o2",
+      "address": "0x00589110",
+      "end": "0x00589118",
+      "source": "recomp/config/output_ovl/o2/o2_00589110_0x589110.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00589120",
+      "image": "o2",
+      "address": "0x00589120",
+      "end": "0x00589128",
+      "source": "recomp/config/output_ovl/o2/o2_00589120_0x589120.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x005892C0",
+      "image": "o2",
+      "address": "0x005892C0",
+      "end": "0x005892C8",
+      "source": "recomp/config/output_ovl/o2/o2_005892C0_0x5892c0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x005892D0",
+      "image": "o2",
+      "address": "0x005892D0",
+      "end": "0x005892D8",
+      "source": "recomp/config/output_ovl/o2/o2_005892D0_0x5892d0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x0058F210",
+      "image": "o2",
+      "address": "0x0058F210",
+      "end": "0x0058F218",
+      "source": "recomp/config/output_ovl/o2/o2_0058F210_0x58f210.cpp",
+      "words": [
+        "03E00008",
+        "A0800001"
+      ],
+      "kind": "write_a0_field",
+      "offset": 1,
+      "width": 8,
+      "register": "zero",
+      "behavior": "Stores low 8 bits of zero to guest memory at a0+1; preserves v0."
+    },
+    {
+      "id": "o2:0x005951A0",
+      "image": "o2",
+      "address": "0x005951A0",
+      "end": "0x005951A8",
+      "source": "recomp/config/output_ovl/o2/o2_005951A0_0x5951a0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x005D1970",
+      "image": "o2",
+      "address": "0x005D1970",
+      "end": "0x005D1978",
+      "source": "recomp/config/output_ovl/o2/o2_005D1970_0x5d1970.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x005D5BD0",
+      "image": "o2",
+      "address": "0x005D5BD0",
+      "end": "0x005D5BD8",
+      "source": "recomp/config/output_ovl/o2/o2_005D5BD0_0x5d5bd0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "o2:0x005D8620",
+      "image": "o2",
+      "address": "0x005D8620",
+      "end": "0x005D8628",
+      "source": "recomp/config/output_ovl/o2/o2_005D85E0_0x5d85e0.cpp",
+      "words": [
+        "0817618C",
+        "00000000"
+      ],
+      "kind": "direct_tail_adapter",
+      "target": "0x005D8630",
+      "argument_adjustment": null,
+      "behavior": "Jumps to guest 0x005D8630 without linking ra. Preserves argument registers before transfer. Callee effects and return value are not inferred.",
+      "reviewed_target": "o2:0x005D8630"
+    },
+    {
+      "id": "o2:0x005F1B30",
+      "image": "o2",
+      "address": "0x005F1B30",
+      "end": "0x005F1B38",
+      "source": "recomp/config/output_ovl/o2/o2_005F1B30_0x5f1b30.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "o2:0x005F30C0",
+      "image": "o2",
+      "address": "0x005F30C0",
+      "end": "0x005F30C8",
+      "source": "recomp/config/output_ovl/o2/o2_005F30C0_0x5f30c0.cpp",
+      "words": [
+        "03E00008",
+        "24020001"
+      ],
+      "kind": "return_constant",
+      "value": 1,
+      "behavior": "Returns sign-extended constant 1 in v0; no memory access."
+    },
+    {
+      "id": "o2:0x005F46B0",
+      "image": "o2",
+      "address": "0x005F46B0",
+      "end": "0x005F46B8",
+      "source": "recomp/config/output_ovl/o2/o2_005F46B0_0x5f46b0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "o2:0x005FE660",
+      "image": "o2",
+      "address": "0x005FE660",
+      "end": "0x005FE668",
+      "source": "recomp/config/output_ovl/o2/o2_005FE660_0x5fe660.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "o2:0x00606BC0",
+      "image": "o2",
+      "address": "0x00606BC0",
+      "end": "0x00606BC8",
+      "source": "recomp/config/output_ovl/o2/o2_00606BC0_0x606bc0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "o2:0x00606BD0",
+      "image": "o2",
+      "address": "0x00606BD0",
+      "end": "0x00606BD8",
+      "source": "recomp/config/output_ovl/o2/o2_00606BD0_0x606bd0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "o2:0x00613D10",
+      "image": "o2",
+      "address": "0x00613D10",
+      "end": "0x00613D18",
+      "source": "recomp/config/output_ovl/o2/o2_00613D10_0x613d10.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "o2:0x00615BD0",
+      "image": "o2",
+      "address": "0x00615BD0",
+      "end": "0x00615BD8",
+      "source": "recomp/config/output_ovl/o2/o2_00615BD0_0x615bd0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "o2:0x00626AD0",
+      "image": "o2",
+      "address": "0x00626AD0",
+      "end": "0x00626AD8",
+      "source": "recomp/config/output_ovl/o2/o2_00626AD0_0x626ad0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00626AE0",
+      "image": "o2",
+      "address": "0x00626AE0",
+      "end": "0x00626AE8",
+      "source": "recomp/config/output_ovl/o2/o2_00626AE0_0x626ae0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00626B70",
+      "image": "o2",
+      "address": "0x00626B70",
+      "end": "0x00626B78",
+      "source": "recomp/config/output_ovl/o2/o2_00626B70_0x626b70.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00626B80",
+      "image": "o2",
+      "address": "0x00626B80",
+      "end": "0x00626B88",
+      "source": "recomp/config/output_ovl/o2/o2_00626B80_0x626b80.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00626B90",
+      "image": "o2",
+      "address": "0x00626B90",
+      "end": "0x00626B98",
+      "source": "recomp/config/output_ovl/o2/o2_00626B90_0x626b90.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00626BA0",
+      "image": "o2",
+      "address": "0x00626BA0",
+      "end": "0x00626BA8",
+      "source": "recomp/config/output_ovl/o2/o2_00626BA0_0x626ba0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00626BB0",
+      "image": "o2",
+      "address": "0x00626BB0",
+      "end": "0x00626BB8",
+      "source": "recomp/config/output_ovl/o2/o2_00626BB0_0x626bb0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x006272A0",
+      "image": "o2",
+      "address": "0x006272A0",
+      "end": "0x006272A8",
+      "source": "recomp/config/output_ovl/o2/o2_006272A0_0x6272a0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x006272B0",
+      "image": "o2",
+      "address": "0x006272B0",
+      "end": "0x006272B8",
+      "source": "recomp/config/output_ovl/o2/o2_006272B0_0x6272b0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x006272C0",
+      "image": "o2",
+      "address": "0x006272C0",
+      "end": "0x006272C8",
+      "source": "recomp/config/output_ovl/o2/o2_006272C0_0x6272c0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00627310",
+      "image": "o2",
+      "address": "0x00627310",
+      "end": "0x00627318",
+      "source": "recomp/config/output_ovl/o2/o2_00627310_0x627310.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00627590",
+      "image": "o2",
+      "address": "0x00627590",
+      "end": "0x00627598",
+      "source": "recomp/config/output_ovl/o2/o2_00627590_0x627590.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x006275F0",
+      "image": "o2",
+      "address": "0x006275F0",
+      "end": "0x006275F8",
+      "source": "recomp/config/output_ovl/o2/o2_006275F0_0x6275f0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00627650",
+      "image": "o2",
+      "address": "0x00627650",
+      "end": "0x00627658",
+      "source": "recomp/config/output_ovl/o2/o2_00627650_0x627650.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00627660",
+      "image": "o2",
+      "address": "0x00627660",
+      "end": "0x00627668",
+      "source": "recomp/config/output_ovl/o2/o2_00627660_0x627660.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00627670",
+      "image": "o2",
+      "address": "0x00627670",
+      "end": "0x00627678",
+      "source": "recomp/config/output_ovl/o2/o2_00627670_0x627670.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00627760",
+      "image": "o2",
+      "address": "0x00627760",
+      "end": "0x00627768",
+      "source": "recomp/config/output_ovl/o2/o2_00627760_0x627760.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00628D20",
+      "image": "o2",
+      "address": "0x00628D20",
+      "end": "0x00628D28",
+      "source": "recomp/config/output_ovl/o2/o2_00628D20_0x628d20.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00628D30",
+      "image": "o2",
+      "address": "0x00628D30",
+      "end": "0x00628D38",
+      "source": "recomp/config/output_ovl/o2/o2_00628D30_0x628d30.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00629320",
+      "image": "o2",
+      "address": "0x00629320",
+      "end": "0x00629328",
+      "source": "recomp/config/output_ovl/o2/o2_00629320_0x629320.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x00633780",
+      "image": "o2",
+      "address": "0x00633780",
+      "end": "0x00633788",
+      "source": "recomp/config/output_ovl/o2/o2_00633780_0x633780.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "o2:0x00635630",
+      "image": "o2",
+      "address": "0x00635630",
+      "end": "0x00635638",
+      "source": "recomp/config/output_ovl/o2/o2_00635630_0x635630.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "o2:0x0063F590",
+      "image": "o2",
+      "address": "0x0063F590",
+      "end": "0x0063F598",
+      "source": "recomp/config/output_ovl/o2/o2_0063F590_0x63f590.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "o2:0x006408D0",
+      "image": "o2",
+      "address": "0x006408D0",
+      "end": "0x006408D8",
+      "source": "recomp/config/output_ovl/o2/o2_006408D0_0x6408d0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x006408E0",
+      "image": "o2",
+      "address": "0x006408E0",
+      "end": "0x006408E8",
+      "source": "recomp/config/output_ovl/o2/o2_006408E0_0x6408e0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "o2:0x006409C0",
+      "image": "o2",
+      "address": "0x006409C0",
+      "end": "0x006409C8",
+      "source": "recomp/config/output_ovl/o2/o2_006409C0_0x6409c0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "o2:0x006409D0",
+      "image": "o2",
+      "address": "0x006409D0",
+      "end": "0x006409D8",
+      "source": "recomp/config/output_ovl/o2/o2_006409D0_0x6409d0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "o2:0x00684000",
+      "image": "o2",
+      "address": "0x00684000",
+      "end": "0x00684008",
+      "source": "recomp/config/output_ovl/o2/o2_00684000_0x684000.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "o2:0x0068BFB0",
+      "image": "o2",
+      "address": "0x0068BFB0",
+      "end": "0x0068BFB8",
+      "source": "recomp/config/output_ovl/o2/o2_0068BFB0_0x68bfb0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x006A1790",
+      "image": "o2",
+      "address": "0x006A1790",
+      "end": "0x006A1798",
+      "source": "recomp/config/output_ovl/o2/o2_006A1790_0x6a1790.cpp",
+      "words": [
+        "081AA524",
+        "00000000"
+      ],
+      "kind": "direct_tail_adapter",
+      "target": "0x006A9490",
+      "argument_adjustment": null,
+      "behavior": "Jumps to guest 0x006A9490 without linking ra. Preserves argument registers before transfer. Callee effects and return value are not inferred.",
+      "reviewed_target": "o2:0x006A9490"
+    },
+    {
+      "id": "o2:0x006B4B90",
+      "image": "o2",
+      "address": "0x006B4B90",
+      "end": "0x006B4B98",
+      "source": "recomp/config/output_ovl/o2/o2_006B4B90_0x6b4b90.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "o2:0x006B60D0",
+      "image": "o2",
+      "address": "0x006B60D0",
+      "end": "0x006B60D8",
+      "source": "recomp/config/output_ovl/o2/o2_006B60D0_0x6b60d0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "o2:0x006C1BC0",
+      "image": "o2",
+      "address": "0x006C1BC0",
+      "end": "0x006C1BC8",
+      "source": "recomp/config/output_ovl/o2/o2_006C1BC0_0x6c1bc0.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    },
+    {
+      "id": "o2:0x006C2240",
+      "image": "o2",
+      "address": "0x006C2240",
+      "end": "0x006C2248",
+      "source": "recomp/config/output_ovl/o2/o2_006C2240_0x6c2240.cpp",
+      "words": [
+        "0818964C",
+        "00000000"
+      ],
+      "kind": "direct_tail_adapter",
+      "target": "0x00625930",
+      "argument_adjustment": null,
+      "behavior": "Jumps to guest 0x00625930 without linking ra. Preserves argument registers before transfer. Callee effects and return value are not inferred.",
+      "reviewed_target": "o2:0x00625930"
+    },
+    {
+      "id": "o2:0x006C2250",
+      "image": "o2",
+      "address": "0x006C2250",
+      "end": "0x006C2258",
+      "source": "recomp/config/output_ovl/o2/o2_006C2250_0x6c2250.cpp",
+      "words": [
+        "08189714",
+        "00000000"
+      ],
+      "kind": "direct_tail_adapter",
+      "target": "0x00625C50",
+      "argument_adjustment": null,
+      "behavior": "Jumps to guest 0x00625C50 without linking ra. Preserves argument registers before transfer. Callee effects and return value are not inferred.",
+      "reviewed_target": "o2:0x00625C50"
+    },
+    {
+      "id": "o2:0x006C2260",
+      "image": "o2",
+      "address": "0x006C2260",
+      "end": "0x006C2268",
+      "source": "recomp/config/output_ovl/o2/o2_006C2260_0x6c2260.cpp",
+      "words": [
+        "0818959C",
+        "00000000"
+      ],
+      "kind": "direct_tail_adapter",
+      "target": "0x00625670",
+      "argument_adjustment": null,
+      "behavior": "Jumps to guest 0x00625670 without linking ra. Preserves argument registers before transfer. Callee effects and return value are not inferred.",
+      "reviewed_target": "o2:0x00625670"
+    },
+    {
+      "id": "o2:0x006C2270",
+      "image": "o2",
+      "address": "0x006C2270",
+      "end": "0x006C2278",
+      "source": "recomp/config/output_ovl/o2/o2_006C2270_0x6c2270.cpp",
+      "words": [
+        "081895E8",
+        "248510A4"
+      ],
+      "kind": "direct_tail_adapter",
+      "target": "0x006257A0",
+      "argument_adjustment": 4260,
+      "behavior": "Jumps to guest 0x006257A0 without linking ra. Sets a1 to sign-extended 32-bit (a0+4260) in the delay slot. Callee effects and return value are not inferred.",
+      "reviewed_target": "o2:0x006257A0"
+    },
+    {
+      "id": "o2:0x006C2280",
+      "image": "o2",
+      "address": "0x006C2280",
+      "end": "0x006C2288",
+      "source": "recomp/config/output_ovl/o2/o2_006C2280_0x6c2280.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "o2:0x006C2D40",
+      "image": "o2",
+      "address": "0x006C2D40",
+      "end": "0x006C2D48",
+      "source": "recomp/config/output_ovl/o2/o2_006C2D40_0x6c2d40.cpp",
+      "words": [
+        "0818964C",
+        "00000000"
+      ],
+      "kind": "direct_tail_adapter",
+      "target": "0x00625930",
+      "argument_adjustment": null,
+      "behavior": "Jumps to guest 0x00625930 without linking ra. Preserves argument registers before transfer. Callee effects and return value are not inferred.",
+      "reviewed_target": "o2:0x00625930"
+    },
+    {
+      "id": "o2:0x006C2D50",
+      "image": "o2",
+      "address": "0x006C2D50",
+      "end": "0x006C2D58",
+      "source": "recomp/config/output_ovl/o2/o2_006C2D50_0x6c2d50.cpp",
+      "words": [
+        "08189714",
+        "00000000"
+      ],
+      "kind": "direct_tail_adapter",
+      "target": "0x00625C50",
+      "argument_adjustment": null,
+      "behavior": "Jumps to guest 0x00625C50 without linking ra. Preserves argument registers before transfer. Callee effects and return value are not inferred.",
+      "reviewed_target": "o2:0x00625C50"
+    },
+    {
+      "id": "o2:0x006C2D60",
+      "image": "o2",
+      "address": "0x006C2D60",
+      "end": "0x006C2D68",
+      "source": "recomp/config/output_ovl/o2/o2_006C2D60_0x6c2d60.cpp",
+      "words": [
+        "0818959C",
+        "00000000"
+      ],
+      "kind": "direct_tail_adapter",
+      "target": "0x00625670",
+      "argument_adjustment": null,
+      "behavior": "Jumps to guest 0x00625670 without linking ra. Preserves argument registers before transfer. Callee effects and return value are not inferred.",
+      "reviewed_target": "o2:0x00625670"
+    },
+    {
+      "id": "o2:0x006C2D70",
+      "image": "o2",
+      "address": "0x006C2D70",
+      "end": "0x006C2D78",
+      "source": "recomp/config/output_ovl/o2/o2_006C2D70_0x6c2d70.cpp",
+      "words": [
+        "081895E8",
+        "248510A4"
+      ],
+      "kind": "direct_tail_adapter",
+      "target": "0x006257A0",
+      "argument_adjustment": 4260,
+      "behavior": "Jumps to guest 0x006257A0 without linking ra. Sets a1 to sign-extended 32-bit (a0+4260) in the delay slot. Callee effects and return value are not inferred.",
+      "reviewed_target": "o2:0x006257A0"
+    },
+    {
+      "id": "o2:0x006C2D80",
+      "image": "o2",
+      "address": "0x006C2D80",
+      "end": "0x006C2D88",
+      "source": "recomp/config/output_ovl/o2/o2_006C2D80_0x6c2d80.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "o2:0x006C4760",
+      "image": "o2",
+      "address": "0x006C4760",
+      "end": "0x006C4768",
+      "source": "recomp/config/output_ovl/o2/o2_006C4760_0x6c4760.cpp",
+      "words": [
+        "0818964C",
+        "00000000"
+      ],
+      "kind": "direct_tail_adapter",
+      "target": "0x00625930",
+      "argument_adjustment": null,
+      "behavior": "Jumps to guest 0x00625930 without linking ra. Preserves argument registers before transfer. Callee effects and return value are not inferred.",
+      "reviewed_target": "o2:0x00625930"
+    },
+    {
+      "id": "o2:0x006C4770",
+      "image": "o2",
+      "address": "0x006C4770",
+      "end": "0x006C4778",
+      "source": "recomp/config/output_ovl/o2/o2_006C4770_0x6c4770.cpp",
+      "words": [
+        "08189714",
+        "00000000"
+      ],
+      "kind": "direct_tail_adapter",
+      "target": "0x00625C50",
+      "argument_adjustment": null,
+      "behavior": "Jumps to guest 0x00625C50 without linking ra. Preserves argument registers before transfer. Callee effects and return value are not inferred.",
+      "reviewed_target": "o2:0x00625C50"
+    },
+    {
+      "id": "o2:0x006C4780",
+      "image": "o2",
+      "address": "0x006C4780",
+      "end": "0x006C4788",
+      "source": "recomp/config/output_ovl/o2/o2_006C4780_0x6c4780.cpp",
+      "words": [
+        "0818959C",
+        "00000000"
+      ],
+      "kind": "direct_tail_adapter",
+      "target": "0x00625670",
+      "argument_adjustment": null,
+      "behavior": "Jumps to guest 0x00625670 without linking ra. Preserves argument registers before transfer. Callee effects and return value are not inferred.",
+      "reviewed_target": "o2:0x00625670"
+    },
+    {
+      "id": "o2:0x006C4790",
+      "image": "o2",
+      "address": "0x006C4790",
+      "end": "0x006C4798",
+      "source": "recomp/config/output_ovl/o2/o2_006C4790_0x6c4790.cpp",
+      "words": [
+        "081895E8",
+        "248510A4"
+      ],
+      "kind": "direct_tail_adapter",
+      "target": "0x006257A0",
+      "argument_adjustment": 4260,
+      "behavior": "Jumps to guest 0x006257A0 without linking ra. Sets a1 to sign-extended 32-bit (a0+4260) in the delay slot. Callee effects and return value are not inferred.",
+      "reviewed_target": "o2:0x006257A0"
+    },
+    {
+      "id": "o2:0x006C47A0",
+      "image": "o2",
+      "address": "0x006C47A0",
+      "end": "0x006C47A8",
+      "source": "recomp/config/output_ovl/o2/o2_006C47A0_0x6c47a0.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "o2:0x006C53F0",
+      "image": "o2",
+      "address": "0x006C53F0",
+      "end": "0x006C53F8",
+      "source": "recomp/config/output_ovl/o2/o2_006C53F0_0x6c53f0.cpp",
+      "words": [
+        "0818964C",
+        "00000000"
+      ],
+      "kind": "direct_tail_adapter",
+      "target": "0x00625930",
+      "argument_adjustment": null,
+      "behavior": "Jumps to guest 0x00625930 without linking ra. Preserves argument registers before transfer. Callee effects and return value are not inferred.",
+      "reviewed_target": "o2:0x00625930"
+    },
+    {
+      "id": "o2:0x006C5400",
+      "image": "o2",
+      "address": "0x006C5400",
+      "end": "0x006C5408",
+      "source": "recomp/config/output_ovl/o2/o2_006C5400_0x6c5400.cpp",
+      "words": [
+        "08189714",
+        "00000000"
+      ],
+      "kind": "direct_tail_adapter",
+      "target": "0x00625C50",
+      "argument_adjustment": null,
+      "behavior": "Jumps to guest 0x00625C50 without linking ra. Preserves argument registers before transfer. Callee effects and return value are not inferred.",
+      "reviewed_target": "o2:0x00625C50"
+    },
+    {
+      "id": "o2:0x006C5410",
+      "image": "o2",
+      "address": "0x006C5410",
+      "end": "0x006C5418",
+      "source": "recomp/config/output_ovl/o2/o2_006C5410_0x6c5410.cpp",
+      "words": [
+        "0818959C",
+        "00000000"
+      ],
+      "kind": "direct_tail_adapter",
+      "target": "0x00625670",
+      "argument_adjustment": null,
+      "behavior": "Jumps to guest 0x00625670 without linking ra. Preserves argument registers before transfer. Callee effects and return value are not inferred.",
+      "reviewed_target": "o2:0x00625670"
+    },
+    {
+      "id": "o2:0x006C5420",
+      "image": "o2",
+      "address": "0x006C5420",
+      "end": "0x006C5428",
+      "source": "recomp/config/output_ovl/o2/o2_006C5420_0x6c5420.cpp",
+      "words": [
+        "081895E8",
+        "248510A4"
+      ],
+      "kind": "direct_tail_adapter",
+      "target": "0x006257A0",
+      "argument_adjustment": 4260,
+      "behavior": "Jumps to guest 0x006257A0 without linking ra. Sets a1 to sign-extended 32-bit (a0+4260) in the delay slot. Callee effects and return value are not inferred.",
+      "reviewed_target": "o2:0x006257A0"
+    },
+    {
+      "id": "o2:0x006C5430",
+      "image": "o2",
+      "address": "0x006C5430",
+      "end": "0x006C5438",
+      "source": "recomp/config/output_ovl/o2/o2_006C5430_0x6c5430.cpp",
+      "words": [
+        "03E00008",
+        "00000000"
+      ],
+      "kind": "no_op",
+      "behavior": "Returns without modifying guest registers or memory."
+    },
+    {
+      "id": "o6:0x006FFF88",
+      "image": "o6",
+      "address": "0x006FFF88",
+      "end": "0x006FFF90",
+      "source": "recomp/config/output_ovl/o6/o6_006FFF88_0x6fff88.cpp",
+      "words": [
+        "03E00008",
+        "0000102D"
+      ],
+      "kind": "return_zero",
+      "value": 0,
+      "behavior": "Returns integer zero in v0; no memory access."
+    }
+  ]
+}

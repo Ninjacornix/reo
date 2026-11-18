@@ -1,0 +1,84 @@
+{
+  "schema": 1,
+  "status": "qualified admission arithmetic/hysteresis after explicit clock sample boundary",
+  "manifest_sha256": "194f9632b8df3db7b1041fbd0ca211e1e409d3f26dc97fcc6bbb916239398b7b",
+  "cases": 330,
+  "operations": 336,
+  "original_instructions_per_compiler": 18449,
+  "original_fp_steps_per_compiler": 4457,
+  "raw_bit_qualification_cases_per_compiler": 638,
+  "pre_native_cases": 324,
+  "post_candidate_added_margin_rounding_cases": 6,
+  "earlier_original_inputs_and_results_unchanged": true,
+  "excluded_partial_cases": 3,
+  "boundary_checks": 11,
+  "detected_counterfactuals": 12,
+  "receipts": {
+    "build-native-sjuni/movie-admission/qualified-gcc-v2/receipt.json": "18f994b78319ac49ea8f8950487c09f07131f3d3ed0a33d38c69e4b718595b00",
+    "build-native-sjuni/movie-admission/qualified-llvm-v2/receipt.json": "8fc12890c0b32b1f874465e9cdb6ebf3b2d26b5b734eb48b0ffbc3ee45e466f5"
+  },
+  "complete_native_transcripts_equal": true,
+  "original_complete_results_equal": true,
+  "parent_suites": 65,
+  "parent_checks": {
+    "gcc": {
+      "build": "a0cf26abab6c5216cc863f52416261e099c44d794082dcdbe2a523dbb12ec977",
+      "tests": "9849f77372a96fc127715c7a0ebdb3043aca942f9c0364efab4836e365201bb6"
+    },
+    "llvm": {
+      "build": "012272a9afdb058394f4fe9c101034364c58db0f395d20a375e16574936a6105",
+      "tests": "0c06f83f5d1332f2665bae21959950e7468b396de720ee1da31e7f0bfd9c1c9d"
+    }
+  },
+  "original_receipts": {
+    "build-native-sjuni\\movie-admission\\original-gcc-v2\\receipt.json": "1b23c4eb931ff71d531d8ca6d2f52b3139bd344c18ef807836013b6988743658",
+    "build-native-sjuni\\movie-admission\\original-gcc-v3\\receipt.json": "9b8ed4bd62535163ac92ca7a4ddf5a265505d85bb35f1e7cdcae836e72e884c6",
+    "build-native-sjuni\\movie-admission\\original-llvm-v2\\receipt.json": "c1203e939a7cc69276aa941f1140b27c10036d29cc4bf95381b1e8191d2e02a1",
+    "build-native-sjuni\\movie-admission\\original-llvm-v3\\receipt.json": "909618d04ab11da115ec5d4b1e10af2f1cc652a3542686faa7e56152600c01a0"
+  },
+  "failed_verification_receipts": {
+    "build-native-sjuni\\movie-admission\\qualified-gcc-v1\\receipt.json": "dc7bdcff9f2b17aa7a71e158809801901340042cfe543932626a3d3026187773",
+    "build-native-sjuni\\movie-admission\\qualified-llvm-v1\\receipt.json": "82c6ce17b54f95cedc13b22af565ccce278c06d6876c170e28985c2cf4b24fa0"
+  },
+  "failed_reason": "Native matched earlier corpus, but full-product slack fault was undetected. Six original cases were added without changing earlier expectations or native arithmetic.",
+  "ancestor_qualifications": {
+    "game/native/adx_sequence/qualification.json": "33215ffd858e8f309f5e69965681bddfa0fe72cedcf9748b6864919a3dcf89ae",
+    "game/native/adxt_phased_player/qualification.json": "2340c62a957d3a15b27877d409aba30874000c78efa4d4c73afdea21050a2275",
+    "game/native/adxt_control_session/qualification.json": "88484535fb2f45848ad8bf6bf3cb2565d8d4f3ac6f25d78152f3ff90d4a361fb",
+    "game/native/adxt_control_session/service_binding/qualification.json": "f37c6a444c627edf78e4a6e7bd7794d55dbfa506c923abd17c66d3d9c17b4c19",
+    "game/native/adxt_control_session/regular_loops/qualification.json": "f6c3e7dc3b2ce9d5b631f51ae57a5497fa0ab0641e3fa6581d9d209dec405c8c",
+    "game/native/adx_window/v2/queue_safe_r3/qualification.json": "2df118226e7c458120710756775a9e7a09972aaf7b816481f112648132e5cd68",
+    "game/native/adxt_lsc_input/qualification.json": "ae02455f710dc094236318eea1f9bb459a1985d143ce79ce7af59b057fb4e6a0",
+    "game/native/adxt_output_session/qualification.json": "413e9193531deae60e3ebd84dcf942c1c87513fbb22d9dbb38874527eb656c18",
+    "game/native/adxt_shared_player/qualification.json": "8236d295ab1bfc6fa36b8d0c2ac458b5f62826c9abd4f86ce72bcde1dd01c5db",
+    "game/native/adxt_clocked_player/qualification.json": "304f15c77c2b03cf1f32fdc1e21cc9c9104e0dc61f0053064662e224969b0926",
+    "game/native/audio_mix_tail/qualification.json": "d0756dbf5289529a69d57a99539cb8b1ad851d148bc9521ffe8c5fd36e0788a8",
+    "game/native/movie_counter_clock/qualification.json": "b71860957941dfdded8a86d128f766de2a8bdca3e795a819fc7caef528998aaa",
+    "game/native/movie_selected_clock/qualification.json": "9ca68d1e5fb4260c8073e05ec6f2287e9ec6593e130ec241282cff135b1fe22f",
+    "game/native/movie_audio_filter/qualification.json": "951a34e09a7ae08666deac917d2aadd025353fa9cc110065dd75a8b56f5ef2d0",
+    "game/native/movie_audio_clock/qualification.json": "9fa6878c8c296c52904dbcbfeecf4527a12b5b6848be5d7b517f4f10fa971903",
+    "game/native/movie_pause/qualification.json": "92eca6ab937c625dc8d4be6d9aa1919d80e4d6b4c9926436ecf7e4cf77e95e75",
+    "game/native/movie_clock_initialize/qualification.json": "6bdacf99de035e7dfad857cf5f7d5f05feed75ae0f8b2307e084cd28be831e3b"
+  },
+  "stage3_complete": false,
+  "production_selected": false,
+  "game_run": false,
+  "device_opened": false,
+  "original_whole_movie_parity": false,
+  "live_query_binding_qualified": false,
+  "limitations": [
+    "The cached-clock query is an explicit value boundary, not actual provider/lifetime proof.",
+    "Incidental original FPR/FCR effects are recorded, not a complete native guest ABI adapter.",
+    "Current-runtime FP emission compatibility is not a PS2 hardware measurement.",
+    "Public policies, skip/frame returns, one coherent movie owner, full lifecycle and game transitions remain.",
+    "Gameplay, graphics/platform migration and runtime removal remain stages 4-6."
+  ],
+  "timing_context_extension": {
+    "qualification_sha256": "63e9afdcc67a49e3286f83c60c6d76c137fd70a8a7dfbb95e8f9c551107d990c",
+    "ancestor_path": "build-native-sjuni\\movie-timing-context\\ancestor-pre-control-v1\\game\\native\\movie_admission\\qualification.json",
+    "ancestor_sha256": "263aa421114346b1ccc78cec7db28303860c51c45ebdf7bd0985fefb45065f2b",
+    "source_files_changed": [],
+    "existing_runtime_sources_unchanged": true,
+    "requalified_original_profiles": {}
+  }
+}

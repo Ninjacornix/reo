@@ -1,0 +1,26 @@
+#version 450
+// Presentation warp depth snapshot: copies the GS Z buffer of the frame that was just
+// flipped to the display into a linear buffer, one uint (Z bits) per pixel, so the
+// present shader can reproject the repeated scanout (docs/native-gameplay/FRAME_DECOUPLING.md).
+// Compile: glslangValidator -V -I<parallel-gs>/gs/shaders camera_depth.comp -o camera_depth.spv
+#extension GL_GOOGLE_include_directive : require
+#extension GL_EXT_shader_16bit_storage : require
+#extension GL_EXT_shader_8bit_storage : require
+#include "swizzle_utils.h"
+layout(local_size_x=8, local_size_y=8) in;
+layout(set=0,binding=0,std430) readonly buffer Vram { uint words[]; } vram;
+layout(set=0,binding=1,std430) writeonly buffer Depth { uint values[]; } depth;
+layout(push_constant) uniform Controls { uint base, stride, psm, width, height; } p;
+void main() {
+    uvec2 at = gl_GlobalInvocationID.xy;
+    if (at.x >= p.width || at.y >= p.height) return;
+    uint addr = swizzle_PS2(at.x & 2047u, at.y & 2047u, p.base, p.stride, p.psm, 4194303u);
+    uint value;
+    if (p.psm == PSMZ16 || p.psm == PSMZ16S || p.psm == PSMCT16 || p.psm == PSMCT16S)
+        value = (vram.words[addr >> 1u] >> ((addr & 1u) * 16u)) & 65535u;
+    else if (p.psm == PSMZ24 || p.psm == PSMCT24)
+        value = vram.words[addr] & 0xffffffu;
+    else
+        value = vram.words[addr];
+    depth.values[at.y * p.width + at.x] = value;
+}

@@ -1,0 +1,37 @@
+# Actor categories thirteen through twenty-one and alternate return route
+
+Static File #1 US research, 2026-11-04. Nine complete original bodies
+reviewed. Addresses/offsets hex unless marked decimal. Labels describe observed
+static mechanics with candidate gameplay roles; original object/scenario names
+remain unknown. No execution, attachment, build or engine changes.
+
+| Guest entry / source | Proposed label | Confidence | Evidence and remaining uncertainty |
+| --- | --- | --- | --- |
+| [o2 0x6FE8E0](../recomp/config/output_ovl/o2/o2_006FE8E0_0x6fe8e0.cpp) | `tick_actor_category_thirteen_binary_model_selection_sequence_candidate` | High mechanics; probable role | PlayerBA0bit20000 or5BA210 forcesphase6. Signedphase4 dispatch743060 elevenarms. Phase0->1,playeraction5/AD4=2,5BF0F0(2,FFFF). Phase1->3,choiceworddataC=2. Phase3->5,storesdata4=18000 (notreadlaterinthisbody),messageA1for28,blinktimer4A=20. Phase5input324210bit4/8 revealsmappedID3/2 respectively,selectsoppositechoice2/3,audioA9.4BAE90bit20->8,soundC,revealsbothIDs;bit10->6,revealsboth. OtherwiseblinkchosenIDusingunsignedtimer:decrement;postzero reset20;<=10setvisibilitybit80,elsedecrementagainand<=20clearbit80. Phase6->7,revealsboth. Phase7->A;4B9A84bit2000000ownerflag39clear/3Dset. Phase8timerpostzero->9,timer60,allocate6FA590 childmappedchosenID. Phase9timerpostzero->A;4B9C0Cbit8000000showsmessageA2andskipsflags;otherwise4B9A84bits40/80eachsignal7Aand96ifchoice!=2,bits100/200eachsignal7Aand96ifchoice==2. PhaseA5BF140,playeraction0,clearrecord. Phases2/4return. Original binary-choice meaning unknown. |
+| [o2 0x6FEEE0](../recomp/config/output_ovl/o2/o2_006FEEE0_0x6feee0.cpp) | `emit_actor_category_fourteen_two_position_actor_and_effect_bundle_candidate` | High call contract; probable role | Copies two24-byteownedpositionbanks73CB00/73CB20tostack,identitymatrix,wordtask60selects12-byteentry. Calls582A40(0,identity,firstbank[index],2),6525C0(0,secondbank[index],0,8E,-1,1A193),audioC6,6B2810(secondbank[index]),then5B93B0. OwnedbanksbothtwoXYZvectors6365/170/7902and8545/175/7835decimal. Indexrangehasnoindependentguard;names/ownershipofspawnandfinaleffectremaincallercontracts. |
+| [o2 0x6FEFD0](../recomp/config/output_ovl/o2/o2_006FEFD0_0x6fefd0.cpp) | `tick_actor_category_fifteen_timed_model_sequence_and_session_flags_candidate` | High mechanics; probable role | Signedphase4 dispatch743090 eightarms;commonAFTERphasebodychecksplayerBA0bit20000or5BA210,forcesphase7/E=FF,evenafterphase7clear. Phase0resource4FFFF,playeraction5/AD4=2,phase1;pretestedloop i=word60..3 allocates6FA7D0 children,mapsmodelIDi,child4=i;C30,54float0,E0. Phase1->2,C45,E1,audioC8. Phase2subtractsowned7430D0=0.13333334from54eachcall,decrementsC;expiry4B9D0C|100000,C90,E0,phase3. Phase3expiryclears4B9D0C40000/100000andsets80000,phase4,C20. Phase4expiryphase5,C45,E2,audioCD. Phase5addsconstantto54eachcall,expiryphase6,C20,E0. Phase6expiryphase7,EFF. Phase7clears80000,sets40000,playeraction0,5BF140;word60zeroownerflag58set,messageF1elseF0for3C;clearrecord. Alltimerexpiryusespost<=0signedhalf;sequenceunitsandobjectidentityunknown. |
+| [o2 0x6FF3D0](../recomp/config/output_ovl/o2/o2_006FF3D0_0x6ff3d0.cpp) | `signal_actor_category_sixteen_item_status_and_player_pair_admission_candidate` | High mechanics; probable role | Zeros8wordstackflags.5F70A0(selectedplayer,138)signedlowbyte result and5F7140 chooseflag40/41orplayer-scanpath. Ifsecondquery==1,result0flag40else41. Otherwisefirstresult1flag40,>=2flag41,nonzerootherjustcommoncompletion. Onlyfirstresult0scanscount4BAEA0players:BA0&5E0 orbyte0zero=>flag[B98]=0,else1. CurrentidentityB98comesfromplayer0if1B02D0==1else selectedplayer.7430B0table0..7 selectsrequiredpair(0,2),(1,4),(0,2),(3,7),(1,4),(5,6),(5,6),(3,7);bothadmittedsignals45/44/45/43/44/46/46/43,respectively,otherwise42. Allpaths5703E0(9E,1),clearrecord. Originalitem138identityandconditionnamesunknown;duplicateB98playerswouldoverwriteinoriginalscanorder. |
+| [o2 0x6FF710](../recomp/config/output_ovl/o2/o2_006FF710_0x6ff710.cpp) | `watch_actor_category_seventeen_shared_counter_and_signal_thresholds_candidate` | High mechanics; probable role | Phase0->1,clearsdata29,readsignedhalf4A1DF0+30*worddataC+2*worddata10,intodata4andrecord1A. Phase1readsagain;changeaudioCB. Value<=0->phase2,data0=A2,signalA2,audioCC,earlyreturn. Value1..80decimalwith4B9C14bit2clear->data0=A1,signalA1,audioCC;81..160withbit1clear->A0signal/audio;otherwisejustupdatesprevioushalf1A. Phase2clearsrecord. Noownedstaticcountervalueororiginaltimer/rewardmeaningasserted. |
+| [o2 0x6FF910](../recomp/config/output_ovl/o2/o2_006FF910_0x6ff910.cpp) | `emit_actor_category_eighteen_five_optional_effects_and_audio_a5_candidate` | High call contract; probable effect role | Pretestedfivewords60..70,nonzeroID->indexID-1;5DEC40(position73CB40+12*index,signedhalf73CB70[index]). ThenaudioA5andclearrecord. NoeffectspawnownershiporIDrangeguardinthisbody. |
+| [o2 0x6FF9A0](../recomp/config/output_ovl/o2/o2_006FF9A0_0x6ff9a0.cpp) | `emit_actor_category_nineteen_five_optional_parameterized_effects_candidate` | High call contract; probable effect role | PretestedfiveoptionalIDsasabove;5DECC0(position73CB78+12*index,signedhalf73CB88[index],word73CB90[index]);then5B93B0. SeparatebanksandcalleecontractfromF910/C950retained;callerIDrangeunknown. |
+| [o2 0x6FFA40](../recomp/config/output_ovl/o2/o2_006FFA40_0x6ffa40.cpp) | `wait_actor_category_twenty_scene_flag_then_audio_38_candidate` | High mechanics; probable role | Phase0waits4B9C00bit8000;setcalls1B8A10(0,38),phase1. Phase1clearsrecord5B93B0;otherphasesreturn. Audioentrydiffersfrom1B8930andnopretendedone-shotlatchoutsidephase4. |
+| [o2 0x6FFAB0](../recomp/config/output_ovl/o2/o2_006FFAB0_0x6ffab0.cpp) | `tick_alternate_actor_category_twenty_one_return_route_candidate` | High mechanics; probable role | SelectedplayerBA0bit20000forcesphase2;everycallplayerBA4|4000000. Phase0searches7 roomrows73CA00,index7usedifnomatch;phase1,savesrowC,581AF0(rowbyte2). WritesplayerAEA=3Cthenoverwrites0beforeaction1D;AC8=record68,ABC=record5C/60/64,ACC=unsignedword70float. Phase1requeriesroomrecord,5DC9B0(scene,playerXYZ)nonzero ->819690(stack,player),playeraction27,669700(player,stack),phase2. Phase2clearrecord. BA4bitsetisnotclearedhere;originalexternalownershipunknown. Thisalternatedispatchusesreturncoordinatesdifferentfromordinarycategory1destinationcancelpath. |
+
+Owned phase table743060 contains6FE97C,6FE9F4,6FEEBC,6FEA08,6FEEBC,
+6FEA30,6FEC18,6FEC6C,6FECB4,6FED00,6FEE7C. Table743090 contains
+6FF010,6FF0D4,6FF100,6FF160,6FF1E0,6FF228,6FF270,6FF2A0.
+Owned pair dispatch7430B0 contains6FF5D0,6FF618,6FF5D0,6FF6A8,
+6FF618,6FF660,6FF660,6FF6A8. Armaddressesarenotcountedasfunctions.
+
+The selected player flag address4A67D0 is offsetBA0 from4A5C30; it is
+distinctfromtheC94fieldusedinotheractorupdates. Original mode/flag
+admissionremainsunknown. Inparticular,recordclearingandthelatercommon
+phasewriteinthecategory15bodyarepreservedintheiroriginalorder.
+
+Related[category dispatch](SYMBOLS_ACTOR_AUDIO_CATEGORY_DISPATCH.md),
+[bound model curves](SYMBOLS_BOUND_MODEL_CURVE_TASKS.md),
+and[category0..3](SYMBOLS_ACTOR_CATEGORY_ZERO_TO_THREE.md).
+Ordinarycategory21alreadydispatchesto5B93B0;alternatecategory21hasits
+own6FFAB0body. All22observedordinarytabletargetsandthealternate
+nontrivialtargetarenowreviewedacrossthesescopednotes. Thisdoesnotprove
+originalenumlabels,hosttimingcostoracapturedslowdowncause.

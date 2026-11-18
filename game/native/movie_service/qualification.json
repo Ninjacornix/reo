@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "status": "prepared native pending service qualified; complete File1 movie catalogue validated offscreen",
+  "manifest_sha256": "356cfbc9c07f28b20e44f61916d776ffd6f9eb3da9961871c09e849fc70d3daa",
+  "cases": 515,
+  "operations": 518,
+  "original_instructions_per_compiler": 1523025,
+  "ordered_state_event_rows": 3481,
+  "detected_faults": 5,
+  "parent_suites": 71,
+  "receipts": {
+    "build-native-sjuni/movie-service/original-llvm-v2/receipt.json": "e0baefa615e2078fb38fb76f2114b2ace1e8caf164647c49ed8fa4ad69b3e9ca",
+    "build-native-sjuni/movie-service/original-gcc-v2/receipt.json": "810896fdde954b25fc9b1a1b56249b07bccae79d6cfb11b3999b4cf83fd9ebc5",
+    "build-native-sjuni/movie-service/qualified-llvm-v1/receipt.json": "01c9931b3ade5a058a9939db70b1122c880726c8422d247223a8fca404d57abb",
+    "build-native-sjuni/movie-service/qualified-gcc-v1/receipt.json": "095ed8ccbcc855a95ca9b893afada52472c1c3ba3edf34fc3b74b5b01dfa564e",
+    "build-native-sjuni/movie-service/clean-build-llvm-v1/receipt.json": "18dca1b0cc312949173b6c92de26255292e9144f562053c46e7f6d9c3c28ef4f",
+    "build-native-sjuni/movie-service/clean-build-gcc-v1/receipt.json": "1991dc2c4cc8d495aff9e78f19861c15bb150675d806cd03c3c687f22157ee1e",
+    "build-native-sjuni/movie-matrix/title-v3/receipt.json": "1faad1a5a10bd2d49f0d82a675d8053e01305ad3bd428d6f9f1acb62b5203311",
+    "build-native-sjuni/movie-matrix/catalog-v1/receipt.json": "1b34ca947a08bb58761e779fbe04119418db086768d18cbb4379e91071a2a3ab",
+    "build-native-sjuni/movie-matrix/catalog-counts-v1/receipt.json": "cc1822c87fa1e85c956930301a4af90fe0b723a3f5cb33288b5ab59616c9e2e8",
+    "build-native-sjuni/movie-matrix/title-original-timecodes-v1/receipt.json": "6a75040f2f80ce7db0896317a48188381c16b7d23f084017a06c9bee6f4f0e32"
+  },
+  "catalogue": {
+    "members": 201,
+    "pictures": 216998,
+    "I": 12471,
+    "P": 60729,
+    "B": 143798,
+    "geometries": 6,
+    "full_stream_reference_pixels": false
+  },
+  "game_consumer_integrated": false,
+  "stage3_complete": false,
+  "game_run": false,
+  "audio_device_opened": false
+}

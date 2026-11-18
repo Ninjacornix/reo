@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "status": "qualified phased PCM storage with pure reservation-sizing extension",
+  "ancestor_qualification_sha256": "e224003ebd62d7d57914257497f3f32b0db0b181e0892ace3e4d7d42ba079d74",
+  "ancestor_snapshot": "build-native-sjuni/adxt-regular-loop-player/queue-safe-ancestor-v1/game/native/adx_pcm_store/v2/qualification.json",
+  "source_manifest_sha256": "b616d4cb167db79f7bdd48587f2954db8d0e1e8fded61dad8d30e238e862f08a",
+  "unit_checks_per_compiler": 3618,
+  "original_storage_clients": 90,
+  "intermediate_original_captures": 30,
+  "storage_transcript_sha256": "969cb210cff02786e6103a9a8bd24fd2ca300d7cec685539be7acd4ed0566aa9",
+  "receipts": {
+    "build-native-sjuni/adxt-regular-loop-player/parent-gcc-v3/receipt.json": "382bd24ff25726462694df6b3c1459cd1438016f14150066ac5ddd89b2a137be",
+    "build-native-sjuni/adxt-regular-loop-player/parent-llvm-v3/receipt.json": "68957bfeebb214df24daa4c03204da90fb3ae7b0893c80e309d86b409be67e7e",
+    "build-native-sjuni/adx-queue-safe-window/qualified-gcc-v1/receipt.json": "2fc6111f9683b6ef4a40e34b49df2b662f521f7db95ce2ec2307d7aea15da34f",
+    "build-native-sjuni/adx-queue-safe-window/qualified-llvm-v1/receipt.json": "e912d83eccfaf9a33b62135678a6eee53491c842175953bb92c4c98077d5e599",
+    "build-native-sjuni/imported-adxt-loop-player/full-gcc-v3/receipt.json": "b8289f1b0a494ef403beb047104c472339f928e9ab4f357da27c980b326b6328",
+    "build-native-sjuni/imported-adxt-loop-player/full-llvm-v3/receipt.json": "39a9219ca6e1047a3837fed83c1fbad7345693330be23cbf7a781750e3028224",
+    "build-native-sjuni/imported-adxt-loop-player/comparison-v3/receipt.json": "4dbc5057f09b9d95da401c5942debf316615b5a2c4100099f40598f71deeae00",
+    "build-native-sjuni/adxt-control-session/qualified-gcc-v3/receipt.json": "87f6530edc3744a555b781f1caa9c29c355eef03fbdff5c36a429e861046c8fe",
+    "build-native-sjuni/adxt-control-session/qualified-llvm-v3/receipt.json": "61ea5ac4b90f62f51ce532d78a93d297fd3228358ca9b9d8e297bbe9f1d5b8fc",
+    "build-native-sjuni/adxt-phased-player/qualified-gcc-v6/receipt.json": "68287a9dfb277562759d8be181abc200f3eb773accfa774269f71966d738fb10",
+    "build-native-sjuni/adxt-phased-player/qualified-llvm-v6/receipt.json": "d418df5056b6adb8a66262d4367cf80047359c5f3b445393c31954a66b40cbdc",
+    "build-native-sjuni/adxt-service-binding/qualified-gcc-v2/receipt.json": "5fb568b3c754df508ab287d410be864c51b4b703672e6ac8c40003ac0c88df40",
+    "build-native-sjuni/adxt-service-binding/qualified-llvm-v2/receipt.json": "96adf48d35508d84ad1054ad6cf9a4405f3e73f88b528ecc49e0170ffc6b586b",
+    "build-native-sjuni/imported-adxt-control/full-gcc-v3/receipt.json": "8297867c16cea89860fdb8671601865b363c2d1debd1672c3f2c80092f04fa0f",
+    "build-native-sjuni/imported-adxt-control/full-llvm-v3/receipt.json": "b51d292a588fc152161b87558817b127fd9aa339ac4d26be7b5230b0405484d5",
+    "build-native-sjuni/imported-adxt-control/comparison-v3/receipt.json": "e100e33e96034156ad60f3c7b5d1ab9892fd5f8e0c14c180f5d7bddd51595126"
+  },
+  "game_run": false,
+  "device_opened": false,
+  "whole_window2_parity": false,
+  "codec_parity": false
+}

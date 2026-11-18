@@ -47,12 +47,18 @@
 #include "network/native/automatic_account.h"
 #include "network/native/game_addresses.h"
 #include "reo_trace_logger.h"
+#include "reo_pad_tap.h"
+#include "runtime/gs/performance.h"
 #include "runtime/gs/gs_renderer.h"
 #include "runtime/vu/vu_interpreter.h"
 #include "runtime/input/input.h"
 #include "runtime/input/pad2_rumble.h"
 #include "runtime/memory_card/card_rpc.h"
 #include "runtime/cdvd/cdvd.h"
+#if defined(_WIN32) && defined(REO_BUILD_NATIVE_RESOURCE_READS)
+#include "native_resource_reads/runtime_adapter.h"
+#include "game/native/resources_windows/facade_layout.hpp"
+#endif
 #include <cstdio>
 #include <cmath>
 #include <cstring>
@@ -60,12 +66,20 @@
 #include <algorithm>
 #include <chrono>
 #include <atomic>
+// ps2xRuntime Interrupt.cpp: vblank fast-forward set at runtime (network connecting screen).
+extern std::atomic<int> g_reoTurboFactor;
 #include <mutex>
 #include <thread>
 #include <vector>
 #include <map>
 #include <string>
+#include <array>
 #include "source_instruction_access.hpp"
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) && REO_BUILD_NATIVE_SOUND_RAM_CAPTURE >= 2
+#include "game/native/ram_capture/v2/cpu_authority_gate.hpp"
+#include <stdexcept>
+#include <utility>
+#endif
 #ifdef _WIN32
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -100,6 +114,9 @@ bool ReoHwBridge::init(PS2Runtime& runtime) {
         return true;
     }
 
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) && REO_BUILD_NATIVE_SOUND_RAM_CAPTURE >= 2
+    m_nativeRamWriterBacking = nullptr;
+#endif
     m_runtime = &runtime;
     s_instance = this;
 
@@ -194,10 +211,27 @@ bool ReoHwBridge::init(PS2Runtime& runtime) {
     // Initialize trace logger (only active if REO_TRACE=1)
     ReoTraceLogger::instance().init();
 
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) && REO_BUILD_NATIVE_SOUND_RAM_CAPTURE >= 2
+    m_nativeRamWriterBacking = runtime.memory().getRDRAM();
+#endif
     return true;
 }
 
+reo::native::ram_capture::v2::Coordinator* ReoHwBridge::nativeSoundRamWriterCoordinator(PS2Runtime& runtime) const noexcept {
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) && REO_BUILD_NATIVE_SOUND_RAM_CAPTURE >= 2
+    if(this==s_instance&&m_runtime==&runtime&&m_nativeRamWriterBacking&&
+       runtime.memory().getRDRAM()==m_nativeRamWriterBacking)
+        return &reo::native::ram_capture::v2::process_coordinator();
+#else
+    (void)runtime;
+#endif
+    return nullptr;
+}
+
 void ReoHwBridge::shutdown() {
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) && REO_BUILD_NATIVE_SOUND_RAM_CAPTURE >= 2
+    m_nativeRamWriterBacking = nullptr;
+#endif
     reoPad2Stop();
     ReoTraceLogger::instance().shutdown();
     m_network.reset();
@@ -988,6 +1022,233 @@ uint16_t pad2AutomaticAccount(uint8_t* rd, double now) {
         case account::Button::Down: return pad2ButtonBit("DOWN");
         default: return 0;
     }
+}
+
+// Start at the main menu (REO_SKIP_INTRO=1, runtime/gs/performance.h): presses Start at
+// the original title prompt (and File #2's opening movie) until the main menu is shown.
+// Only ordinary pad input is produced; the boot logo screens are skipped in the boot
+// scene handler (reo_bootstrap.cpp).
+uint16_t pad2SkipIntro(uint8_t* rd, double now) {
+    if (!reo::performance::skip_intro() || reo::performance::intro_finished.load() || !rd)
+        return 0;
+    static double nextPress = 0;
+    auto finish = [&](const char* why) {
+        std::fprintf(stderr, "[SKIP-INTRO] %s t=%.3f\n", why, now);
+        reo::performance::intro_finished.store(true);
+        return uint16_t(0);
+    };
+    static const double started = now;
+    if (now - started > 60.0)
+        return finish("time limit");
+    auto word = [rd](uint32_t a) {
+        uint32_t value = 0;
+        reo_source_instrumentation::copyBytesForBank(rd, &value, rd + a, sizeof(value));
+        return value;
+    };
+    const uint32_t front = word(reo_network::game::frontMenu);
+    if (front < 0x100000u || front >= ps2RamBackingBytes - 0x74u)
+        return 0;
+    const uint32_t state = word(front) & 0x00FFFFFFu;
+    if ((state & 0xFFFFu) == 0x0501u)
+        return finish("main menu reached");
+#if defined(REO_GAME_FILE2)
+    const bool prompt = state == 0x030100u || state == 0x020000u;
+#else
+    // 0x0000xx/0x0100xx/0x0200xx: CAPCOM opening; 0x030200: title prompt.
+    const bool prompt = state == 0x030200u || state == 0x010000u || state == 0x020000u;
+#endif
+    // Short Start pulses: pressed 0.1 s, then released 0.3 s.
+    if (!prompt) return 0;
+    if (now < nextPress) return now > nextPress - 0.3 ? 0 : pad2ButtonBit("START");
+    nextPress = now + 0.4;
+    return pad2ButtonBit("START");
+}
+
+// Network Game straight to SERVER SELECT (runtime/gs/performance.h, network_veil). Once
+// the automatic account provider is armed (the original network module runs after
+// Network is chosen in the main menu), the screen stays black until the original server
+// list (File #2 with one server: its area list) is shown; the provider answers the prompts
+// and signs in meanwhile. Observation
+// only: no input is produced here. Server list: lobby overlay active, main mode 7,
+// server controller 3, server widget 2/0 (tools/coop_playtest/lobby_driver.py).
+uint16_t pad2NetworkVeil(uint8_t* rd, double now) {
+    namespace account = reo_network::automatic_account;
+    static const bool on = [] {
+        const char* v = std::getenv("REO_COOP_FAST_NETWORK");
+        return v && std::strcmp(v, "1") == 0;
+    }();
+    static double started = -1;
+    static bool finished = false;
+    if (!on || !rd || finished || !account::enabled())
+        return 0;
+    auto byte = [rd](uint32_t a) {
+        uint8_t value = 0;
+        reo_source_instrumentation::copyBytesForBank(rd, &value, rd + a, 1);
+        return value;
+    };
+    auto word = [rd](uint32_t a) {
+        uint32_t value = 0;
+        reo_source_instrumentation::copyBytesForBank(rd, &value, rd + a, sizeof(value));
+        return value;
+    };
+    auto finish = [&](const char* why) {
+        g_reoTurboFactor.store(0);
+        reo::performance::network_veil.store(false);
+        finished = true;
+        std::fprintf(stderr, "[NETWORK-FAST] %s t=%.3f\n", why, now);
+        return uint16_t(0);
+    };
+    if (started < 0) {
+        if (!account::armed.load()) return 0;
+        started = now;
+        reo::performance::network_veil.store(true);
+        std::fprintf(stderr, "[NETWORK-FAST] connecting behind the veil t=%.3f\n", now);
+    }
+#if defined(REO_GAME_FILE2)
+    const bool overlay = word(0x58D000) == 0x336F574Du && word(0x58D004) == 4u;
+    // With one server File #2 skips SERVER SELECT and opens AREA SELECT (lobby main mode 1).
+    const bool servers = overlay && (byte(0x6E32EA) == 1 ||
+                                     (byte(0x6E32EA) == 7 && byte(0x6A9848) == 3 && byte(0x6A9849) == 0 &&
+                                      byte(0x6E37D0) == 2 && byte(0x6E37D1) == 0));
+#else
+    const bool overlay = word(0x570000) == 0x336F574Du && word(0x570004) == 4u;
+    // Server list shown or fading in (widget 1 appearing, 2 shown).
+    const bool servers = overlay && byte(0x6DF150) == 37 && byte(0x6DF151) == 7 && byte(0x6D91CA) == 7 &&
+                         byte(0x6995A0) == 3 && (byte(0x6D9688) == 1 || byte(0x6D9688) == 2);
+#endif
+    if (servers) return finish("server or area select reached");
+    // Per-edition addresses of the original network module (File #1 o3 / File #2 network
+    // overlay) and the main ELF connection state machine (File #1 1C9870, File #2 1F5DD0).
+#if defined(REO_GAME_FILE2)
+    constexpr uint32_t netStep = 0x6E9490, connection = 0x36F250;
+    auto cardPhase = [](uint8_t step, uint8_t sub) {
+        return (step == 2 && (sub == 1 || sub == 7)) || (step == 31 && sub == 5) || (step == 48 && sub == 5);
+    };
+    auto stageFor = [](uint8_t step) {
+        return step == 7 ? 2 : step == 49 ? 4 : step >= 50 ? 5 : step >= 8 ? 3 : 1;
+    };
+    static constexpr const char* defaultFastSteps = "1,2,6,31,44,46,48,50";
+#else
+    constexpr uint32_t netStep = 0x6DF150, connection = 0x33C6E0;
+    auto cardPhase = [](uint8_t step, uint8_t sub) {
+        return (step == 2 && sub == 7) || (step == 31 && sub == 5) || (step == 45 && sub == 5);
+    };
+    auto stageFor = [](uint8_t step) {
+        if (step == 7) return 2;                                          // connecting to the network
+        if (step == 31 || step == 33 || step == 44 || step == 45 || step == 48 || step == 50) return 3;
+        if (step == 46 || step == 49) return 4;                           // signing in
+        if (step == 37) return 5;                                         // joining the lobby
+        return 1;                                                         // network settings
+    };
+    static constexpr const char* defaultFastSteps = "1,2,6,31,33,44,45,48,50";
+#endif
+    const uint8_t step = overlay ? byte(netStep) : 0, sub = overlay ? byte(netStep + 1) : 0;
+    // Status text under the spinner (performance.h network_stage): 1 network settings,
+    // 2 connecting to the network, 3 preparing your account, 4 signing in, 5 joining the lobby.
+    reo::performance::network_stage.store(stageFor(step), std::memory_order_relaxed);
+    // Behind the connecting screen the original network module spends ~19 s showing memory
+    // card messages: the NET file check and the two NET file saves run the card state
+    // machine (File #1 o3 5FC2D0, state byte at step block +2) through states 2-6, each
+    // waiting 20-60 frames on the countdown at step block +4 while the emulated card has
+    // already completed. In those phases a countdown above 1 is set to 1: the game takes its
+    // own next step on the following frame, in the original order (it counts these timers
+    // past zero itself, so 1 is always a value it produces). Sign-in and connection are
+    // untouched.
+    {
+        const uint8_t card = overlay ? byte(netStep + 2) : 0;
+        if (cardPhase(step, sub) && card >= 2 && card <= 6) {
+            int16_t timer = 0;
+            reo_source_instrumentation::copyBytesForBank(rd, &timer, rd + netStep + 4, sizeof(timer));
+            if (timer > 1) {
+                reo_source_instrumentation::bankCell(rd, rd + netStep + 4) = 1;
+                reo_source_instrumentation::bankCell(rd, rd + netStep + 5) = 0;
+                static uint32_t shortened = 0;
+                if (++shortened <= 24)
+                    std::fprintf(stderr, "[NETWORK-FAST] card message %u/%u state %u: %d frames skipped t=%.3f\n",
+                                 unsigned(step), unsigned(sub), unsigned(card), int(timer) - 1, now);
+            }
+        }
+    }
+    // "Initializing connection" (step 7): the connection state machine (File #1 1C9870,
+    // state at block +1, substate +2) waits 150 frames (5 s) in substate 13 before its
+    // connect call (counter +4, nothing else checked; File #1 1CA3F0 case 13), then in
+    // substate 31 until the progress bar (shown +0xD, rising one per frame toward +0xC)
+    // reaches 100. The countdown is set to 1 and the shown value to its target; the connect
+    // call and its result handling are unchanged.
+    if (overlay && step == 7 && byte(connection + 1) == 1) {
+        const uint8_t substate = byte(connection + 2);
+        int16_t countdown = 0;
+        reo_source_instrumentation::copyBytesForBank(rd, &countdown, rd + connection + 4, sizeof(countdown));
+        if (substate == 13 && countdown > 1) {
+            reo_source_instrumentation::bankCell(rd, rd + connection + 4) = 1;
+            reo_source_instrumentation::bankCell(rd, rd + connection + 5) = 0;
+            std::fprintf(stderr, "[NETWORK-FAST] connection wait: %d frames skipped t=%.3f\n", int(countdown) - 1, now);
+        }
+        const uint8_t shown = byte(connection + 0xD), target = byte(connection + 0xC);
+        if (shown < target) reo_source_instrumentation::bankCell(rd, rd + connection + 0xD) = target;
+    }
+    // Step skips (experiments): REO_NETWORK_JUMP="FROM>TO,..." moves the network module from
+    // step FROM (the first time it is seen) straight to step TO, substep 0, card state 0.
+    {
+        static const auto jumps = [] {
+            std::array<int16_t, 64> to{};
+            to.fill(-1);
+            if (const char* v = std::getenv("REO_NETWORK_JUMP")) {
+                std::string list = v;
+                for (size_t at = 0; at < list.size();) {
+                    const size_t end = list.find(',', at);
+                    const std::string item = list.substr(at, end == std::string::npos ? std::string::npos : end - at);
+                    const size_t arrow = item.find('>');
+                    if (arrow != std::string::npos) {
+                        const int a = std::atoi(item.substr(0, arrow).c_str()), b = std::atoi(item.substr(arrow + 1).c_str());
+                        if (a >= 0 && a < 64 && b >= 0 && b < 64) to[size_t(a)] = int16_t(b);
+                    }
+                    if (end == std::string::npos) break;
+                    at = end + 1;
+                }
+            }
+            return to;
+        }();
+        static int lastStep = -1;
+        const bool entered = overlay && int(step) != lastStep;
+        lastStep = overlay ? int(step) : -1;
+        if (entered && step < 64 && jumps[step] >= 0) {
+            lastStep = jumps[step];
+            reo_source_instrumentation::bankCell(rd, rd + netStep) = uint8_t(jumps[step]);
+            reo_source_instrumentation::bankCell(rd, rd + netStep + 1) = 0;
+            reo_source_instrumentation::bankCell(rd, rd + netStep + 2) = 0;
+            std::fprintf(stderr, "[NETWORK-FAST] step %u skipped to %d t=%.3f\n", unsigned(step), int(jumps[step]), now);
+        }
+    }
+    // Fast-forward of whole menu steps (fades, account menu, NET file saves). File #1:
+    // fast-forwarding "Initializing connection" (7) breaks the connection and step 4 waits
+    // on real time. REO_NETWORK_FAST_STEPS overrides the list, REO_NETWORK_FAST_FACTOR
+    // (default 8) the speed.
+    {
+        static const auto fast = [] {
+            std::array<bool, 64> set{};
+            const char* v = std::getenv("REO_NETWORK_FAST_STEPS");
+            std::string list = v ? v : defaultFastSteps;
+            for (size_t at = 0; at < list.size();) {
+                const size_t end = list.find(',', at);
+                const int n = std::atoi(list.substr(at, end - at).c_str());
+                if (n > 0 && n < 64) set[size_t(n)] = true;
+                if (end == std::string::npos) break;
+                at = end + 1;
+            }
+            return set;
+        }();
+        static const int factor = [] {
+            const char* v = std::getenv("REO_NETWORK_FAST_FACTOR");
+            return std::clamp(v ? std::atoi(v) : 8, 1, 16);
+        }();
+        const bool timed = overlay && step < 64 && fast[step];
+        const int want = timed ? factor : 0;
+        if (g_reoTurboFactor.exchange(want) != want)
+            std::fprintf(stderr, "[NETWORK-FAST] step %u: %s t=%.3f\n", unsigned(step), timed ? "fast" : "normal speed", now);
+    }
+    if (now - started > 90.0) return finish("time limit; showing the game");
+    return 0;
 }
 
 // Test-only route through original guest handlers. These reads observe menu state;
@@ -2302,6 +2563,33 @@ bool pad2TestInteractQuit(uint8_t* rd, double now, reo::DualShock2State& pad, ui
     return true;
 }
 
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) && REO_BUILD_NATIVE_SOUND_RAM_CAPTURE >= 2
+reo::native::ram_capture::v2::CpuWriter pad2BeginRamWrite(uint8_t* ram,std::size_t socketCount) {
+    namespace capture=reo::native::ram_capture::v2;
+    auto& coordinator=capture::process_coordinator();
+    const auto withdraw=[&]() -> capture::CpuWriter {
+        // Preserve working input. No new reader may enter once withdrawal is
+        // announced, and every admitted bounded copy retires before writing.
+        // This is capture withdrawal, not uncoordinated fallback reads.
+        if(coordinator.withdraw_cpu_capture()!=capture::Status::ok)
+            throw std::logic_error("Pad capture withdrawal would wait on its own copy");
+        static std::atomic_flag reported=ATOMIC_FLAG_INIT;
+        if(!reported.test_and_set(std::memory_order_relaxed))
+            std::fprintf(stderr,"[NATIVE-SOUND-RAM] capture unavailable: Pad writer capacity exceeded; input continues after copy drain\n");
+        return {};
+    };
+    // New capture profile bound, not a source/game input limit. One copied
+    // batch touches at most one4B work word and64 records of at most128B.
+    // Overflow retains EVERY original input write after withdrawing capture.
+    if(socketCount>64)return withdraw();
+    auto writer=coordinator.begin_cpu_writer(ram);
+    if(writer.status==capture::Status::ok)return std::move(writer.value);
+    if(writer.status==capture::Status::capacity)return withdraw();
+    // A feeder cannot own a CPU-copy pin: bounded copies never enter input,
+    // guest functions or providers. Self-wait is a programming contract error.
+    throw std::logic_error("Pad RAM writer lacks a valid independent backing/pin");
+}
+#endif
 void pad2FeederLoop() {
     try {
         uint32_t frame = 0;
@@ -2321,6 +2609,8 @@ void pad2FeederLoop() {
                 routeRam = g_pad2.rdram;
             }
             pressed |= pad2TestRoute(routeRam, now);
+            pressed |= pad2SkipIntro(routeRam, now);
+            pressed |= pad2NetworkVeil(routeRam, now);
             pressed |= pad2AutomaticAccount(routeRam, now);
             // Live input (runtime/input: keyboard and XInput, same bit order), only while this
             // process owns the foreground window so typing elsewhere does not press buttons.
@@ -2360,6 +2650,12 @@ void pad2FeederLoop() {
                 else
                     pressed |= pad2TestWorldTarget(routeRam, now, hostPad);
             }
+            // Mouse look (native camera mod): right button aims (R1), left button is cross.
+            if (const auto mouseButtons = reo_pad_tap::mouse_buttons_source.load(std::memory_order_relaxed)) {
+                const unsigned held = mouseButtons();
+                if (held & 2u) pressed |= reo_pad_tap::R1;
+                if (held & 1u) pressed |= reo_pad_tap::CROSS;
+            }
             g_pad2.lastPressed = pressed;
             const uint16_t data = (uint16_t)~pressed; // active-low
             // Keep digital directions independent from the analog sticks. Both
@@ -2377,6 +2673,12 @@ void pad2FeederLoop() {
             }
             if (!rd)
                 continue;
+#if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) && REO_BUILD_NATIVE_SOUND_RAM_CAPTURE >= 2
+            // Capture the dynamic addresses first, release g_pad2.m, then
+            // announce the writer. Never reacquire g_pad2.m while this token
+            // lives. It spans work and every socket through final seq publish.
+            auto ramWriter=pad2BeginRamWrite(rd,socks.size());
+#endif
             // sceDbcGetDepNumber (EE 0x188D90) requires the port's word in the work area to be 1.
             if (work && (work & ps2RamBackingMask()) + 4 <= ps2RamBackingBytes) {
                 const uint32_t connected = 1;
@@ -2414,10 +2716,15 @@ void pad2FeederLoop() {
                 const uint8_t sb0 = (uint8_t)(data & 0xFF), sb1 = (uint8_t)(data >> 8);
                 reo_source_instrumentation::bankCell(rd, rec + 0x1C) = sb0;
                 reo_source_instrumentation::bankCell(rd, rec + 0x1D) = sb1;
-                reo_source_instrumentation::bankCell(rd, rec + 0x1E) = hostPad.right_x;
-                reo_source_instrumentation::bankCell(rd, rec + 0x1F) = hostPad.right_y;
-                reo_source_instrumentation::bankCell(rd, rec + 0x20) = hostPad.left_x;
-                reo_source_instrumentation::bankCell(rd, rec + 0x21) = hostPad.left_y;
+                // Native camera mods read the host sample; while one owns the right
+                // stick, the game sees it centred (see reo_pad_tap.h).
+                reo_pad_tap::publish(hostPad.right_x, hostPad.right_y, hostPad.left_x, hostPad.left_y, pressed);
+                const bool cameraOwnsRight = reo_pad_tap::consume_right_stick.load(std::memory_order_relaxed);
+                reo_source_instrumentation::bankCell(rd, rec + 0x1E) = cameraOwnsRight ? uint8_t(0x80) : hostPad.right_x;
+                reo_source_instrumentation::bankCell(rd, rec + 0x1F) = cameraOwnsRight ? uint8_t(0x80) : hostPad.right_y;
+                const int aimLeftY = reo_pad_tap::active_aim_left();
+                reo_source_instrumentation::bankCell(rd, rec + 0x20) = aimLeftY >= 0 ? uint8_t(0x80) : hostPad.left_x;
+                reo_source_instrumentation::bankCell(rd, rec + 0x21) = aimLeftY >= 0 ? uint8_t(aimLeftY) : hostPad.left_y;
 #if defined(REO_GAME_FILE2)
                 static constexpr const char* pressureOrder[12] = {
                     "RIGHT", "LEFT", "UP", "DOWN", "TRIANGLE", "CIRCLE",
@@ -2549,6 +2856,14 @@ void reoPad2Stop() {
     if (g_pad2.thread.joinable())
         g_pad2.thread.join();
 }
+
+#if defined(_WIN32) && defined(REO_BUILD_NATIVE_RESOURCE_READS)
+bool ReoHwBridge::nativeResourceLayoutMatches(
+    const reo::native::resources::win32::MountedResources& mount) const noexcept {
+    return m_cdvd && reo::native::resources::win32::matches_plain_pak_layout(
+        *m_cdvd, mount, bool(reo::assets::active));
+}
+#endif
 
 bool ReoHwBridge::readCdSectors(uint32_t lsn, uint32_t count, uint32_t dstAddr, uint8_t* rdram) {
     const uint32_t dst = dstAddr & ps2RamBackingMask();
@@ -2976,7 +3291,14 @@ bool ReoHwBridge::onSifRpc(uint32_t sid, uint32_t rpcNum, uint32_t sendBuf, uint
                 // handler, so it must not release guest execution (deadlock observed
                 // 2026-11-03). File #1's sceCdRead is completed asynchronously before
                 // reaching this path by reo_cd_async.h.
-                const bool ok = self && self->readCdSectors(a0, a1, a2, rdram);
+                bool ok = false;
+                bool nativeHandled = false;
+#if defined(_WIN32) && defined(REO_BUILD_NATIVE_RESOURCE_READS)
+                if (self)
+                    nativeHandled = reo_native_resource_reads::tryRead(rdram, self->m_runtime,
+                        sendBuf, sendSize, recvBuf, recvSize, ok);
+#endif
+                if (!nativeHandled) ok = self && self->readCdSectors(a0, a1, a2, rdram);
                 static const bool cdLogAllN = std::getenv("REO_CD_LOG") != nullptr;
                 if (cdLogAllN || nLog++ < 60)
                     fprintf(stderr, "[HW-BRIDGE:CDN] read lsn=%u n=%u dst=0x%08X -> %s\n", a0, a1,

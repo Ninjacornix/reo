@@ -1,0 +1,146 @@
+{
+  "schema": 1,
+  "status": "qualified_partial_native_cutscene_descriptors",
+  "game_launched": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_scenario/CMakeLists.txt": "8eb9f1ecd38465486bb6f131cd086c5f0516a9f1fa6e8284194fece78146fac4",
+    "game/native/gameplay_scenario/cutscene_descriptor.hpp": "672f627d00a4f2474edc6b7eff6a7f342985d0b4f66b44e24da4b7f0640fb0ba",
+    "game/native/gameplay_scenario/cutscene_descriptor.cpp": "fdaa0f8363660026604c694d1e0a52e9904f627ecd23ed1bfb3ca2bf1611df07",
+    "game/native/gameplay_scenario/cutscene_descriptor_assets.cpp": "1b391d22ef121ba6bc1015e9286afa3e0bb0202170ebb1e14670df01418d9ec8",
+    "game/native/gameplay_scenario/cutscene_descriptor_assets_tests.cpp": "76f4d5aa3fbe21aca0a0625cb94c62adec22f0065116b3ca56a91a172b4a5b9c",
+    "tools/native_reconstruction/animation/verify_world_playback.py": "dedfee874db0a8ad8da09081b8ff6c728fb0b9a1108fda5c8670a13c2e848e1a",
+    "tools/native_reconstruction/animation/world_playback_tests.cpp": "14356e0c9044765644b86b12980ae0c44f8d543d10b301cac4066537e83000b8",
+    "tools/native_reconstruction/animation/cutscene_descriptor_tests.inc": "c6125cad4467478522f7231345b41556b88e012e5ba532030798a604b684db21",
+    "tools/native_reconstruction/verify_cutscene_descriptor_assets.py": "d62d430b5ff6922bc53c9e81744762c4ffdd8f2275f20629262537c8d65b3f38",
+    "docs/native-gameplay/CUTSCENE_DESCRIPTORS.md": "6d34c06443bf520e5b79dc20da4c3804c7c90c8976a5f359d2693c93da1a9794",
+    "docs/native-gameplay/STAGE4_PLAN.md": "06cb4694c9ded1a01af669bb18894fd8424c2b5729fc695705b3d433b918c634"
+  },
+  "cohorts": {
+    "llvm": {
+      "original_parser": {
+        "receipt": "build-native-sjuni/cutscene-descriptor-llvm-v1/receipt.json",
+        "sha256": "73e63583a39ba793f09d9c41bfdd1a9e5be06971f20530a9e7019828e0cfd7ab",
+        "observed": {
+          "checks": 2633038,
+          "lifetime_cases": 5,
+          "world_application_cases": 128,
+          "special_frame_cases": 64,
+          "resource_routing_cases": 40,
+          "selection_cases": 933,
+          "dual_application_cases": 74,
+          "metadata_observations": 1263,
+          "scripted_motion_cases": 768,
+          "scripted_motion_ticks": 3840,
+          "scripted_motion_refusals": 776,
+          "scripted_positive_tracks": 86,
+          "cutscene_actor_calls": 2304,
+          "cutscene_actor_gate_calls": 3072,
+          "cutscene_actor_refusals": 3,
+          "linked_actor_cases": 768,
+          "linked_expiry_cases": 512,
+          "linked_full_pool_cases": 8,
+          "cutscene_command_cases": 71163,
+          "cutscene_degree_cases": 65536,
+          "cutscene_speech_cases": 257,
+          "cutscene_command_refusals": 7,
+          "cutscene_command_mutations": 1,
+          "cutscene_track_cases": 257,
+          "cutscene_track_ticks": 2056,
+          "cutscene_track_original_commands": 9067,
+          "cutscene_terminal_streams": 1915,
+          "linked_update_refusals": 3,
+          "required_prelude_cases": 101,
+          "refusal_cases": 130,
+          "joint_cases": 761760,
+          "cutscene_descriptors": 550,
+          "cutscene_descriptor_sections": 24458,
+          "cutscene_descriptor_streams": 10283,
+          "cutscene_descriptor_refusals": 50,
+          "cutscene_descriptor_partial": 2,
+          "original_calls": 7556711,
+          "game_run": false
+        }
+      },
+      "archive_and_parents": {
+        "receipt": "build-native-sjuni/cutscene-descriptor-assets-llvm-v2/receipt.json",
+        "sha256": "838b8feecef283b27a863ef5599b02b01781e13eb31d3f2e647e1504867d8256",
+        "observed": {
+          "checks": 80852,
+          "loaded": 548,
+          "legacy_refused": 142,
+          "actor_groups": 1469,
+          "actor_streams": 10283,
+          "large_scenes": 17,
+          "game_run": false
+        }
+      }
+    },
+    "gcc": {
+      "original_parser": {
+        "receipt": "build-native-sjuni/cutscene-descriptor-gcc-v1/receipt.json",
+        "sha256": "7fed4b5f6228abeb5def601db9f68d2d9ece45aa92919826b23398ada51825e3",
+        "observed": {
+          "checks": 2633038,
+          "lifetime_cases": 5,
+          "world_application_cases": 128,
+          "special_frame_cases": 64,
+          "resource_routing_cases": 40,
+          "selection_cases": 933,
+          "dual_application_cases": 74,
+          "metadata_observations": 1263,
+          "scripted_motion_cases": 768,
+          "scripted_motion_ticks": 3840,
+          "scripted_motion_refusals": 776,
+          "scripted_positive_tracks": 86,
+          "cutscene_actor_calls": 2304,
+          "cutscene_actor_gate_calls": 3072,
+          "cutscene_actor_refusals": 3,
+          "linked_actor_cases": 768,
+          "linked_expiry_cases": 512,
+          "linked_full_pool_cases": 8,
+          "cutscene_command_cases": 71163,
+          "cutscene_degree_cases": 65536,
+          "cutscene_speech_cases": 257,
+          "cutscene_command_refusals": 7,
+          "cutscene_command_mutations": 1,
+          "cutscene_track_cases": 257,
+          "cutscene_track_ticks": 2056,
+          "cutscene_track_original_commands": 9067,
+          "cutscene_terminal_streams": 1915,
+          "linked_update_refusals": 3,
+          "required_prelude_cases": 101,
+          "refusal_cases": 130,
+          "joint_cases": 761760,
+          "cutscene_descriptors": 550,
+          "cutscene_descriptor_sections": 24458,
+          "cutscene_descriptor_streams": 10283,
+          "cutscene_descriptor_refusals": 50,
+          "cutscene_descriptor_partial": 2,
+          "original_calls": 7556711,
+          "game_run": false
+        }
+      },
+      "archive_and_parents": {
+        "receipt": "build-native-sjuni/cutscene-descriptor-assets-gcc-v2/receipt.json",
+        "sha256": "72eeac1a864da7172e0ad09d1b6e507d693dbe70f5316161ec46dfe9b96a88f1",
+        "observed": {
+          "checks": 80852,
+          "loaded": 548,
+          "legacy_refused": 142,
+          "actor_groups": 1469,
+          "actor_streams": 10283,
+          "large_scenes": 17,
+          "game_run": false
+        }
+      }
+    }
+  },
+  "remaining": [
+    "Actual scene construction/assignment and native lifecycle",
+    "Other cutscene consumers and legacy0930/0940 codecs",
+    "Actual speech/facial and primary/NPC motion providers",
+    "Native game installation and complete Step4 acceptance"
+  ]
+}

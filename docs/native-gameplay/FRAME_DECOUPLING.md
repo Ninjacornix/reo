@@ -1,0 +1,124 @@
+# Frame-rate decoupling (60+ fps, modern frame pacing)
+
+Goal (user, 2026-11-17): the game should not be bound to the PS2's 30 game updates
+per second for what the player sees. It should act like a modern game: frames are
+presented as fast as the display allows, motion and camera are smooth at that rate,
+and game logic keeps its own correct speed.
+
+Status: **step 0 implemented (presentation warp, first and third person); steps 1–4 are design.**
+Plan step 2 in [HYBRID_INTEGRATION_PLAN.md](HYBRID_INTEGRATION_PLAN.md).
+
+## What modern games do
+
+They separate simulation from rendering. Simulation runs at a fixed step (often 30
+or 60 Hz); rendering runs once per display frame and draws the world at
+`previous + (current - previous) * alpha`, where alpha is how far the display frame
+is between two simulation steps. Input that only changes the view (mouse look) is
+applied at render rate. Nothing about game speed depends on the display rate.
+
+## Facts about Outbreak in this port
+
+- Game logic runs at 30 updates/s (performance overlay: FPS 60, UPS 30). Timers,
+  animation frame counters, AI, physics and scripts all count those updates.
+  Running the PS2 logic faster speeds the whole game up; it must stay at 30 Hz.
+- Each game update ends in a complete PS2 frame: VU1 programs transform every
+  model with that update's matrices, and the GS backend rasterizes the result.
+  The presenter shows that image for two 60 Hz scanouts.
+- A GS frame is already-projected geometry. It cannot be re-projected or blended
+  into an in-between frame without artifacts; an in-between frame has to be
+  rendered again with in-between matrices.
+- The camera now has a native owner (`recomp/overrides/native_camera/`) that knows
+  eye/aim and the view matrix each update, and the modern camera computes them
+  from input directly - the camera is the first piece that can be evaluated at
+  render rate.
+
+## Step 0 — presentation warp (implemented 2026-11-17)
+
+The presenter already shows every 30 Hz game frame on two 60 Hz scanouts. The
+repeated scanout is now drawn rotated by half of the camera's latest per-update
+rotation, so camera turning advances on every display frame. This is rotational
+reprojection (as in VR time-warp): a pure rotation needs no depth and is exact up to
+a sliver of clamped edge pixels.
+
+- Camera: `room_camera_adapter.cpp` publishes its view direction and lens once per
+  update (`reo::performance::warp::publish`) and clears it when the game takes the
+  camera back (doors, events) or the view is third person.
+- Backend: `parallel_backend.cpp` records the scanout's display buffer
+  (`DISPFB.FBP`); the presenter treats a present of the same buffer as a repeat.
+- Presenter: `resident_dxgi_presenter1c.h` builds the 3x3 warp
+  (`warp::compute`/`warp::build` in `runtime/gs/performance.h`) and pushes it to
+  `present_native.frag` / `present_smaa_blend.frag` (`warpPicture` in
+  `present_layout.glsl`). Cuts (more than 20° per update), stale views (>100 ms),
+  menus and new frames get no warp.
+
+Conventions measured on real frames (`tools/hybrid/room_driver.py --warp-probe`,
+first person, eye fixed, `tools/hybrid/warp_validate.py`): vertical FOV = camera
+lens (fit 1.00), 4:3 picture, screen x = −(up × forward), screen y = +up.
+
+| Check | Error (mean abs, 0–255) |
+|---|---|
+| Real 8° turn: unwarped vs after-turn frame | 11.30 |
+| Real 8° turn: frame warped by measured rotation vs after-turn frame | **1.55** |
+| GPU fixed 8° yaw warp vs the same warp in Python (two views) | **0.33 / 0.37** (unwarped 8.7 / 11.0) |
+| GPU fixed 6° pitch warp vs Python | **2.1** (opposite sign 14.1; unwarped 10.3) |
+
+Scope and limits:
+
+- Rotation mode alone is exact only for first person; third person uses the depth
+  warp (step 0b). `REO_CAMERA_WARP=0` disables the warp.
+- Actors and camera translation still move at 30 Hz (steps 1–2).
+- HUD text drawn into the game frame rotates with the repeated frame for one
+  scanout during turns (the crosshair and overlays are drawn after the warp).
+- Diagnostics: `REO_CAMERA_WARP_LOG=1` (applied warps), `=2` (every present);
+  `REO_CAMERA_WARP_TEST=<yaw>,<pitch>` applies a fixed warp to every present.
+
+
+### Step 0b — depth warp for the orbiting third-person camera (2026-11-17)
+
+At each flip the GS Z buffer of the shown frame is de-swizzled into a linear buffer
+(`camera_depth.comp`, context-1 `ZBUF`, here PSMZ32 512x448). On the repeated scanout
+`present_warp.glsl` reprojects every pixel with its depth into the in-between
+camera (rotation and translation, four fixed-point iterations of a backward warp).
+
+| Measurement | Result | Tool |
+|---|---|---|
+| Depth mapping | Z = 2^24 / forward distance (ten floor fits: a ~ 0, b 16.67–16.76 M) | `tools/hybrid/depth_calibrate.py`, dumps via `REO_CAMERA_DEPTH_DUMP` |
+| Pose lag | 2 camera updates (view switches at serial 121/211/302 reached the scanout at flip 123/213/304) | `REO_CAMERA_WARP_PROBE=1` |
+| In-between frames while turning (16 repeats) | background shift median 0.50 of the real frame-to-frame shift; player region stays halfway (still when the player is still) | `REO_CAMERA_WARP_SHOT`, `tools/hybrid/warp_shots.py` |
+
+With lag 2 the next camera pose is already known when the repeat is shown, so the
+in-between frame is an exact interpolation, not an extrapolation. Defaults: depth
+mapping on, lag 2 (`REO_CAMERA_WARP_DEPTH=off` returns to rotation-only for first
+person). Disocclusions (background revealed behind the player during a turn) reuse
+the nearest rendered pixel. Actors still move at 30 Hz (step 2).
+
+
+## Plan, in order
+
+1. **Camera at display rate (first, biggest win for mouse look).** Keep the last
+   two game frames' camera poses; at each scanout between updates, rebuild the
+   view matrix from the interpolated pose plus mouse/stick input received since
+   the last update, and re-render the last frame's geometry with it. Re-rendering
+   needs the frame's VU1/GS work to be replayable with a substituted view matrix:
+   record the VIF1/GIF command lists of one game frame (the GS replay tooling in
+   `tools/gs_dump_replay` already reads such streams) and re-run the VU1 programs
+   for that list with the new matrix. Actors stay at 30 Hz in this step.
+2. **Actor transforms at display rate.** Keep previous/current root and bone
+   matrices per actor (the Stage 4 native World/animation owners have them) and
+   substitute interpolated matrices in the replay. Teleports and room changes
+   reset the history (no interpolation across them).
+3. **Present at any display rate.** Pacing then follows the display (VSync on,
+   off, adaptive, 120/144 Hz), with alpha from the steady clock, not the 60 Hz
+   scanout count.
+4. **Native rendering.** In the long run the native renderer draws from native
+   state, and the replay layer disappears together with the PS2 runtime.
+
+## Acceptance
+
+- Same game speed at 30, 60, 120 and 144 Hz display (UPS stays 30.0, game clock
+  matches PS2 timing).
+- Mouse look updates every display frame (measured: view matrix changes per
+  present, not per update).
+- No visual artifact on cuts, room changes, cutscenes and teleports (history reset).
+- Shadow comparison: the replayed frame with alpha=1 is pixel-identical to the
+  original frame.

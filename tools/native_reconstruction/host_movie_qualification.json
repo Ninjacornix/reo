@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "status": "native Windows Media Engine player controls and D3D11 texture playback pass both compilers",
+  "receipts": {
+    "build-native-sjuni/host-movie/gcc-v1/receipt.json": "89a22e5f43c9993c559f151b4383dc732616582f194982640302c34a79b9c72d",
+    "build-native-sjuni/host-movie/llvm-v1/receipt.json": "6a36b2fe3fa337ba4ef835693a4b7c3dadfffd3d90a143f3831dd3e04aeea4e7"
+  },
+  "observations": {
+    "gcc": {
+      "status": "native media-engine controls and GPU texture playback passed",
+      "full_frames": 195,
+      "full_seconds": 6.581699,
+      "duration_seconds": 6.5065,
+      "colored_readbacks": 8,
+      "pause_drift_seconds": 0.0,
+      "loop_wraps": 1,
+      "last_generation": 4,
+      "corrupt_media_error_and_recovery": true,
+      "game_run": false,
+      "screen_presentation": false,
+      "audible_sync_tested": false
+    },
+    "llvm": {
+      "status": "native media-engine controls and GPU texture playback passed",
+      "full_frames": 195,
+      "full_seconds": 6.548792,
+      "duration_seconds": 6.5065,
+      "colored_readbacks": 8,
+      "pause_drift_seconds": 0.0,
+      "loop_wraps": 1,
+      "last_generation": 4,
+      "corrupt_media_error_and_recovery": true,
+      "game_run": false,
+      "screen_presentation": true,
+      "audible_sync_tested": false
+    }
+  },
+  "source_sha256": {
+    "game/native/host_movie/player.hpp": "e779f40826751b0972720f44ba4d43117b06241c124d7bd83a703d81003919a6",
+    "game/native/host_movie/player.cpp": "6c38f0e2f3ce3e6eb0cfaa035e00ceb48ed97b6bea26295271677ee61a80b6ac",
+    "game/native/host_movie/CMakeLists.txt": "cd38fefca3c278494b3f1a54801698f11f7e8fae4a8cde176e1e5a0a581f7381",
+    "game/native/host_movie/README.md": "437fe4702669dc57b8494772df043a9c7db1c489ffce1378415388894683993a",
+    "tools/native_reconstruction/host_movie_check.cpp": "d2074b7bb0fbb3c5cd743093b31049878c1e985201016b5f0c78bb20d1b69e3d",
+    "tools/native_reconstruction/verify_host_movie.py": "c122976558d64f42db502c8af99c16b64b9f9948cd4ff06af6a293b69bdd1d72",
+    "game/native/CMakeLists.txt": "0636b80c9208afa5ce245465b21333c9a0be578ac8ce4dfe98c243fe678f384e"
+  },
+  "cmake_library": "build-native-sjuni/host-movie/cmake-llvm-v1/libreo_native_host_movie.a",
+  "cmake_library_sha256": "3557068c20fff19e3f14252b3ef6f16c7a88d64872f28b7381566898e22aca53",
+  "game_run": false,
+  "game_hooks_installed": false,
+  "audible_sync_tested": false,
+  "full_native_project_retested": false,
+  "stage3_complete": false
+}

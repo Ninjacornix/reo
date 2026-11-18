@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "status": "canonical native game handle routing and source retirement qualified; guest hooks absent",
+  "authored_sha256": {
+    "game_handles.cpp": "714cf711458e20a5850e0f964817d95530407227cd03cfa1ca736ed3e26abb5d",
+    "game_handles.h": "98c851484374c94f37a7ce92ef93332b1acd5c2413327e8e32d5de26fcacfb7c",
+    "game_handles_tests.cpp": "bfb9965b32face76a21c819bb673b32d8a7f9e0188bdd77615066835ec8528ec",
+    "handle_profile.h": "09b60bc39d12db4b175a2a750a07ca069e24ac0f8d863e5e8e732c29333af8ae",
+    "handle_profile_tests.cpp": "06ac501aaf64e9457b74294972771b757548da2e91818afe7a89a75bd532005e",
+    "verify_game_handles.py": "d9bdd38d04c456f60788ca19c144003550a919fec667d924194056c1029478d6",
+    "verify_handle_profile.py": "4426effa497fb4f275905a25b7a02b010efc0cde15d7ac983210119f8268c751"
+  },
+  "native_manifest": {
+    "path": "tools/native_reconstruction/adxt_game_control_manifest_v2.json",
+    "sha256": "aa1a03a4fd91bd7ab32c8034219ff8406dd4fb00592dfba65ce86beec84c80c9"
+  },
+  "evidence": {
+    "build-native-sjuni/adxt-binding/game-handles-llvm-v2/receipt.json": {
+      "sha256": "50d8e483536271598ee8566a8304309ee79e6b4d8f3e012e7544131fbd9b08b8",
+      "status": "native game handle ownership and source retirement qualified"
+    },
+    "build-native-sjuni/adxt-binding/game-handles-gcc-v2/receipt.json": {
+      "sha256": "139d82a7eff30ffca213ea19f2a0ffb2fcd6d3d34e54ccd2bccb0ea387aedaa9",
+      "status": "native game handle ownership and source retirement qualified"
+    }
+  },
+  "workflows_per_compiler": 3,
+  "detected_faults_per_compiler": 3,
+  "actual_native_source_workers": true,
+  "failed_v1_cohort": {
+    "snapshot": "build-native-sjuni/adxt-binding/game-handles-v1-source",
+    "reason": "Unspecified argument evaluation could read result before owner operation; observed GCC failure, LLVM pass. V2 production sequencing fixed."
+  },
+  "documentation_sha256": "b71f6433e9e7f013c407866f2fff66fe79e1f003cb0c7a9c2a74c57062a4bc8d",
+  "actual_guest_hooks_installed": false,
+  "actual_runtime_acquisition_exercised": false,
+  "actual_audio_device_test": false,
+  "game_run": false,
+  "in_v16_preflight_kit": false
+}

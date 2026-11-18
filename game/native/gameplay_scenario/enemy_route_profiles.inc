@@ -1,0 +1,36 @@
+// Owned File #1 o2 SHA256 45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226
+// Reproduce with qualify_enemy_route_profile.py.
+constexpr std::array<std::int8_t,13> path_7318c0{1,2,5,11,13,14,0,0,1,4,1,3,-1};
+constexpr std::array<std::int8_t,5> path_7318c8{1,4,1,3,-1};
+constexpr std::array<std::int8_t,9> path_7318d0{5,10,5,6,5,7,5,8,-1};
+constexpr std::array<std::int8_t,3> path_7318e0{11,12,-1};
+constexpr std::array<std::int8_t,7> path_7318e8{5,10,5,6,5,7,-1};
+constexpr std::array<std::int8_t,5> path_731910{69,70,71,70,-1};
+constexpr std::array<std::int8_t,9> path_731940{3,4,5,4,3,6,8,6,-1};
+constexpr std::array<std::int8_t,7> path_731958{9,10,9,13,15,13,-1};
+constexpr std::array<std::int8_t,2> path_731968{21,-1};
+constexpr std::array<std::int8_t,11> path_731978{24,23,24,25,24,27,28,27,30,27,-1};
+constexpr std::array<std::int8_t,9> path_731988{24,23,24,25,24,27,30,27,-1};
+constexpr std::array<std::int8_t,17> path_7319c0{80,78,80,81,82,81,83,84,85,86,91,89,88,87,88,89,-1};
+constexpr std::array<std::int8_t,17> path_7319e0{80,78,80,81,82,81,83,84,85,86,91,89,88,87,88,89,-1};
+constexpr std::array<std::int8_t,11> path_7319f8{80,78,80,81,82,81,80,83,84,85,-1};
+constexpr std::array<std::int8_t,7> path_731a08{91,89,88,87,88,89,-1};
+constexpr std::array<std::int8_t,15> path_731a10{80,81,82,81,83,84,85,86,91,89,88,87,88,89,-1};
+constexpr std::array<std::int8_t,9> path_731a20{80,81,82,81,80,83,84,85,-1};
+constexpr std::array<std::int8_t,7> path_731a30{91,89,88,87,88,89,-1};
+constexpr std::array<std::int8_t,9> path_731a58{54,56,54,58,57,58,54,55,-1};
+constexpr std::array<std::int8_t,7> path_731a68{54,58,57,58,54,55,-1};
+constexpr std::array<Path,6> group_7318f0{{Path{path_7318c0},Path{path_7318c8},Path{path_7318d0},Path{path_7318e0},Path{path_7318e8},Path{}}};
+constexpr std::array<Path,2> group_731918{{Path{path_731910},Path{}}};
+constexpr std::array<Path,2> group_731950{{Path{path_731940},Path{}}};
+constexpr std::array<Path,2> group_731960{{Path{path_731958},Path{}}};
+constexpr std::array<Path,2> group_731970{{Path{path_731968},Path{}}};
+constexpr std::array<Path,2> group_731998{{Path{path_731978},Path{path_731988}}};
+constexpr std::array<Path,2> group_7319d8{{Path{path_7319c0},Path{}}};
+constexpr std::array<Path,6> group_731a40{{Path{path_7319e0},Path{path_7319f8},Path{path_731a08},Path{path_731a10},Path{path_731a20},Path{path_731a30}}};
+constexpr std::array<Path,4> group_731a70{{Path{path_731a58},Path{path_731a68},Path{},Path{}}};
+constexpr std::array<Paths,2> scenario_1{{Paths{},Paths{group_7318f0}}};
+constexpr std::array<Paths,8> scenario_6{{Paths{},Paths{group_731918},Paths{},Paths{},Paths{},Paths{},Paths{},Paths{}}};
+constexpr std::array<Paths,8> scenario_35{{Paths{},Paths{},Paths{group_731950},Paths{group_731960},Paths{},Paths{group_731970},Paths{},Paths{group_731998}}};
+constexpr std::array<Paths,4> scenario_41{{Paths{},Paths{group_7319d8},Paths{group_731a40},Paths{group_731a70}}};
+constexpr std::array<ScenarioPaths,4> route_scenarios{{ScenarioPaths{1,scenario_1},ScenarioPaths{6,scenario_6},ScenarioPaths{35,scenario_35},ScenarioPaths{41,scenario_41}}};

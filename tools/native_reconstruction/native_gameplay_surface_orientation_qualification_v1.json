@@ -1,0 +1,580 @@
+{
+  "schema": 1,
+  "status": "complete native three-probe surface orientation and real native Grid pose provider match original bodies on both compilers",
+  "stage4_complete": false,
+  "game_run": false,
+  "installed_in_game": false,
+  "physical_ps2_exceptional_parity": false,
+  "native_actor_shadow_copy": false,
+  "native_guest_or_register_state": false,
+  "complete_transitive_original_floor_execution": false,
+  "cohorts": {
+    "llvm": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/receipt.json",
+      "sha256": "30219d81dd9cb714b417c5c9162cd05b474388808e64f64965b818aa24d595f4",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 354082,
+        "turn_cases": 65536,
+        "basis_cases": 4096,
+        "orientation_cases": 9280,
+        "not_requested": 2216,
+        "rejected": 5060,
+        "adjusted": 2004,
+        "failure_cases": 3,
+        "grid_pose_cases": 64,
+        "frame_cases": 2,
+        "original_helper_calls": 477509,
+        "native_floor_calls": 21203,
+        "game_run": false
+      },
+      "qualified_math_receipt": {
+        "path": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\transform-math-llvm-v3\\receipt.json",
+        "sha256": "be5a94358004723091525ddb4f1dd119c544def7be068fbce495afd82032b86c"
+      }
+    },
+    "gcc": {
+      "path": "build-native-sjuni/surface-orientation-gcc-v1/receipt.json",
+      "sha256": "a5a98c27eb26702e08590cb90d987a3e86fc5755ca301e847a63569855a34701",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 354082,
+        "turn_cases": 65536,
+        "basis_cases": 4096,
+        "orientation_cases": 9280,
+        "not_requested": 2216,
+        "rejected": 5060,
+        "adjusted": 2004,
+        "failure_cases": 3,
+        "grid_pose_cases": 64,
+        "frame_cases": 2,
+        "original_helper_calls": 477509,
+        "native_floor_calls": 21203,
+        "game_run": false
+      },
+      "qualified_math_receipt": {
+        "path": "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\transform-math-gcc-v2\\receipt.json",
+        "sha256": "31d56927146aa863ab8c07752cb28b89a3a3af21b35959578051bc64f67968eb"
+      }
+    }
+  },
+  "source_sha256": {
+    "game/native/gameplay_actors/entity.cpp": "0bec95182c41091cfa8682394c01d9d89d8c53921ffd383bdfe0baa739f2f369",
+    "game/native/gameplay_actors/entity.hpp": "78a907f8659a6afd3c991aacfa338a025adc6f03e13407c6925c05346ac02fd3",
+    "game/native/gameplay_actors/health.cpp": "45ebd2a8a49e024b33c8527be7b624423e3899cd504a650d972edb09c48f1cb7",
+    "game/native/gameplay_actors/health.hpp": "1555ff5b97a8320726b67bc6c5a61b9bd3ef334ddb56a9babd9268b4c1cd486e",
+    "game/native/gameplay_actors/hit.hpp": "98ffbcf41947f487d639316d4adbabce966dfda71d5903c3b2f16158d4191495",
+    "game/native/gameplay_actors/input.cpp": "7a7dd57b2e105a79b2ffea7b5505ee7dad6fe696ff0d2732a8ee4b796347a497",
+    "game/native/gameplay_actors/input.hpp": "e939cc757fc206245960659be0cab87f415cd9547199df2e2cbfb42192dd6b22",
+    "game/native/gameplay_actors/status.hpp": "06a1eb9e4a826a792e8f348976f8c4fa5f14e387b44ce53ce229b06f3b83a170",
+    "game/native/gameplay_collision/actors.hpp": "1cd3018e15ddf32fe4e5facf124d28bcfc7243bda4f788728318f8e934483f78",
+    "game/native/gameplay_collision/collision.cpp": "84f32cd3e551a8da284e97d75ff34d4b229616e8c72b31b1adaaa9096bed129f",
+    "game/native/gameplay_collision/collision.hpp": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da",
+    "game/native/gameplay_collision/contact_component.hpp": "10c088f8695296e2bce347a1b13b30f3f337642e594bca19288f5a424495d27c",
+    "game/native/gameplay_collision/hit_regions.hpp": "6549e791d8c22db70cf78fcd3cf5eecf10615e1fc910bd54ceec5c4d90476ed0",
+    "game/native/gameplay_collision/response.cpp": "f6a1a45cc02977713f68359cfe678ac4ec283c8dbf1baf8cb25dc6df0b7efddb",
+    "game/native/gameplay_collision/response.hpp": "22a85d653f51fd86e9666de1a748060b141fe02c3ead9ff0bc2022a7298f9f6d",
+    "game/native/gameplay_collision/spatial.hpp": "92d543fa718a384b4887be0e6b2ee264515070f3f5a51be6cc9ae67312dee258",
+    "game/native/gameplay_session/session.hpp": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd",
+    "game/native/gameplay_world/motion_transforms.cpp": "ef22d03bc89402ada62b8f01b55d2ba6986bb67f1d1ff0a6868e6a773508053d",
+    "game/native/gameplay_world/motion_transforms.hpp": "4192a6353e5c25dcd8862adbb38580b75df79f47d054a9a6c7199c9b94d79361",
+    "game/native/gameplay_world/surface_orientation.cpp": "0d206ec187a9861982dba613d388dde79e50bc6ba5d46d1d046b7e3aca6fa217",
+    "game/native/gameplay_world/surface_orientation.hpp": "decb36725e812bd1505f5c9303e2c0b96f6306a12cbc13cf4b804e0e92c1c7cc",
+    "game/native/gameplay_world/surface_orientation_math.cpp": "5d5e07a693e495998cf19419d527f2626e04b4680c22f909546bce0c1c0df53c",
+    "game/native/gameplay_world/surface_orientation_math.hpp": "493bd9999089b765fa4e8ccb2128e9b44fe9475dc2a47dd9729a3d16e8567d74",
+    "game/native/gameplay_world/world.cpp": "cd762f94701b343e8f884c844bc9d4502c416f82c864c97e67e540ca9c4e0e42",
+    "game/native/gameplay_world/world.hpp": "a30e79cbc4f90cb498389eac860f0bdd00ddb1553872c4ac8d97954d5c5c666f",
+    "game/native/transform_math/transform_math.cpp": "4126c772f24ee109f297bd36f3cb5e74f7483ea363fe575aef9145e1c809b449",
+    "game/native/transform_math/transform_math.hpp": "03762e50d83ba8cbd4f3215389d1c75b15453b8c02668bc731a633172b3e9f35",
+    "recomp/config/output/sub_0018F570_0x18f570.cpp": "29aee43b2a0e63c6fe9a3e5922cfd3f29cc4ca693763b2b0407e172a797ee698",
+    "recomp/config/output/sub_0018FDF0_0x18fdf0.cpp": "0430ef30ec9ff895806d903c01f0064528efd351105dc3643c04db56e6bf4d2c",
+    "recomp/config/output/sub_0018FE20_0x18fe20.cpp": "c37e8a9cb5a79f6eb9874072120f69c7704070a297e018002b111ad122d12b8d",
+    "recomp/config/output/sub_0018FE60_0x18fe60.cpp": "c71c7e224553950adabad1b7aa9e2c18fc04a3ab719b479626982e6055a9a82c",
+    "recomp/config/output/sub_001902D0_0x1902d0.cpp": "8de1b3de26bd7eafeb9b80cfeca183114429bd3e2801927b573a04f9ff9aaebd",
+    "recomp/config/output/sub_00190A10_0x190a10.cpp": "782fe96cf5c14ecf1d073accd18aa24cd7b77a8c221fc8dab7c73caf2c1a7484",
+    "recomp/config/output/sub_00191300_0x191300.cpp": "56ebd8f4077f800c909aa2a7cb3cf02513b4b47bd9c6a66f6f389334f5ee43da",
+    "recomp/config/output/sub_001919D0_0x1919d0.cpp": "7886eaa395fce554679dc341c56ce67680fb74d5d3b063c94736260a7fe72388",
+    "recomp/config/output/sub_00191F80_0x191f80.cpp": "fff926facac28b24a62fc590cc966c8983479d90374697b01cbe6eecaaf56adf",
+    "recomp/config/output_ovl/o0/o0_00370220_0x370220.cpp": "736ecbdb8448f8ccb1b14539c9fdae9bdad6e11a2d1a9dac30f7316ac5852059",
+    "recomp/config/output_ovl/o0/o0_00370320_0x370320.cpp": "03396a3da3197a3c0b8a5a02a5400837cb4b9cd71361bb30b6648e35d6c79036",
+    "recomp/config/output/sub_0018F470_0x18f470.cpp": "d75bda55b6bb1522797ef1fe8ebe116204ced8e36e1398b7761aa1c83816625f",
+    "recomp/config/output/sub_00191500_0x191500.cpp": "74d4b9a934d1e4c85136ac7745fe41df559477b6aa385748d358d9592095cbf9",
+    "recomp/config/output/sub_00191740_0x191740.cpp": "ce9a03578f14e864ac8708958122a6aa9a9527293e67d054ae01c9bec7f2a184",
+    "recomp/config/output/sub_00191900_0x191900.cpp": "a69b12b37e23122584d1ad1388679158aec7915af17a0959b1f08bd12c78faf3",
+    "recomp/config/output/sub_00191BC0_0x191bc0.cpp": "73983dd6524095e7814a142ca7f26f366def003b4bf1e8c866feff90c48c51ef",
+    "recomp/config/output/sub_00191DF0_0x191df0.cpp": "34e33ece617e951ebc4a3294b54a5407169cdfafdc8c1e90a1fc2334087737bb",
+    "recomp/config/output/sub_00191E50_0x191e50.cpp": "734ce48fb5f167c64ae909a781661dcd0d5a51ba48817c908481f944a517b9f7",
+    "recomp/config/output/sub_001920A0_0x1920a0.cpp": "2f5d202517eea83d36e863a52a70599be49b8d3e9bfeea8773652f49878889b8",
+    "recomp/config/output/sub_001921A0_0x1921a0.cpp": "e2b1d0e33413d3ccc32f8d730d3f72037289beb851114a33d806aff6fb61cb14",
+    "recomp/config/output/sub_001921B0_0x1921b0.cpp": "d01d46c69b8dddeeae960ca56e4325e2d4afc9af24da7cc8fc962759043985bc",
+    "recomp/config/output_ovl/o0/o0_00370100_0x370100.cpp": "f2b8300d0438a950e17610a883f49165bc865b1ab298416a6441492128a8f24b",
+    "recomp/config/output_ovl/o2/o2_00616F20_0x616f20.cpp": "d565c9b0069b3e4b978e5278a18853c16b9d2bfcdc59819160584288f38cacaa",
+    "recomp/config/output_ovl/o2/o2_006657B0_0x6657b0.cpp": "53ce235ef81a7753b78326b7f2088b6424eb365ac1ca7c3c5c030a4ce4ea6725",
+    "recomp/config/output_ovl/o2/o2_0065E4A0_0x65e4a0.cpp": "91030beb5b46e682dd8c1de4517bdfc2cde89d5563f6338930fc3a02e55d5942",
+    "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f",
+    "tools/native_reconstruction/gameplay_world_oracle/surface_orientation_tests.cpp": "2a690d5580d8e1d355d87c9bba1bd822a305b239046d29d3578d1f170f490142",
+    "tools/native_reconstruction/verify_surface_orientation.py": "b2ef6882fc464b9296abc73dda17ea10d4995be7e4b6351ee740f35c8d7c7501",
+    "tools/native_reconstruction/native_gameplay_collision_response_qualification_v1.json": "cbf9930856281a97d0978f408d1c1370e80ec53f94dbdf5146839a224fb90262"
+  },
+  "immutable_source_evidence": {
+    "game/native/gameplay_actors/entity.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_actors/entity.cpp",
+      "sha256": "0bec95182c41091cfa8682394c01d9d89d8c53921ffd383bdfe0baa739f2f369"
+    },
+    "game/native/gameplay_actors/entity.hpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_actors/entity.hpp",
+      "sha256": "78a907f8659a6afd3c991aacfa338a025adc6f03e13407c6925c05346ac02fd3"
+    },
+    "game/native/gameplay_actors/health.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_actors/health.cpp",
+      "sha256": "45ebd2a8a49e024b33c8527be7b624423e3899cd504a650d972edb09c48f1cb7"
+    },
+    "game/native/gameplay_actors/health.hpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_actors/health.hpp",
+      "sha256": "1555ff5b97a8320726b67bc6c5a61b9bd3ef334ddb56a9babd9268b4c1cd486e"
+    },
+    "game/native/gameplay_actors/hit.hpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_actors/hit.hpp",
+      "sha256": "98ffbcf41947f487d639316d4adbabce966dfda71d5903c3b2f16158d4191495"
+    },
+    "game/native/gameplay_actors/input.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_actors/input.cpp",
+      "sha256": "7a7dd57b2e105a79b2ffea7b5505ee7dad6fe696ff0d2732a8ee4b796347a497"
+    },
+    "game/native/gameplay_actors/input.hpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_actors/input.hpp",
+      "sha256": "e939cc757fc206245960659be0cab87f415cd9547199df2e2cbfb42192dd6b22"
+    },
+    "game/native/gameplay_actors/status.hpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_actors/status.hpp",
+      "sha256": "06a1eb9e4a826a792e8f348976f8c4fa5f14e387b44ce53ce229b06f3b83a170"
+    },
+    "game/native/gameplay_collision/actors.hpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_collision/actors.hpp",
+      "sha256": "1cd3018e15ddf32fe4e5facf124d28bcfc7243bda4f788728318f8e934483f78"
+    },
+    "game/native/gameplay_collision/collision.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_collision/collision.cpp",
+      "sha256": "84f32cd3e551a8da284e97d75ff34d4b229616e8c72b31b1adaaa9096bed129f"
+    },
+    "game/native/gameplay_collision/collision.hpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_collision/collision.hpp",
+      "sha256": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da"
+    },
+    "game/native/gameplay_collision/contact_component.hpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_collision/contact_component.hpp",
+      "sha256": "10c088f8695296e2bce347a1b13b30f3f337642e594bca19288f5a424495d27c"
+    },
+    "game/native/gameplay_collision/hit_regions.hpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_collision/hit_regions.hpp",
+      "sha256": "6549e791d8c22db70cf78fcd3cf5eecf10615e1fc910bd54ceec5c4d90476ed0"
+    },
+    "game/native/gameplay_collision/response.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_collision/response.cpp",
+      "sha256": "f6a1a45cc02977713f68359cfe678ac4ec283c8dbf1baf8cb25dc6df0b7efddb"
+    },
+    "game/native/gameplay_collision/response.hpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_collision/response.hpp",
+      "sha256": "22a85d653f51fd86e9666de1a748060b141fe02c3ead9ff0bc2022a7298f9f6d"
+    },
+    "game/native/gameplay_collision/spatial.hpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_collision/spatial.hpp",
+      "sha256": "92d543fa718a384b4887be0e6b2ee264515070f3f5a51be6cc9ae67312dee258"
+    },
+    "game/native/gameplay_session/session.hpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_session/session.hpp",
+      "sha256": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd"
+    },
+    "game/native/gameplay_world/motion_transforms.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_world/motion_transforms.cpp",
+      "sha256": "ef22d03bc89402ada62b8f01b55d2ba6986bb67f1d1ff0a6868e6a773508053d"
+    },
+    "game/native/gameplay_world/motion_transforms.hpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_world/motion_transforms.hpp",
+      "sha256": "4192a6353e5c25dcd8862adbb38580b75df79f47d054a9a6c7199c9b94d79361"
+    },
+    "game/native/gameplay_world/surface_orientation.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_world/surface_orientation.cpp",
+      "sha256": "0d206ec187a9861982dba613d388dde79e50bc6ba5d46d1d046b7e3aca6fa217"
+    },
+    "game/native/gameplay_world/surface_orientation.hpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_world/surface_orientation.hpp",
+      "sha256": "decb36725e812bd1505f5c9303e2c0b96f6306a12cbc13cf4b804e0e92c1c7cc"
+    },
+    "game/native/gameplay_world/surface_orientation_math.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_world/surface_orientation_math.cpp",
+      "sha256": "5d5e07a693e495998cf19419d527f2626e04b4680c22f909546bce0c1c0df53c"
+    },
+    "game/native/gameplay_world/surface_orientation_math.hpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_world/surface_orientation_math.hpp",
+      "sha256": "493bd9999089b765fa4e8ccb2128e9b44fe9475dc2a47dd9729a3d16e8567d74"
+    },
+    "game/native/gameplay_world/world.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_world/world.cpp",
+      "sha256": "cd762f94701b343e8f884c844bc9d4502c416f82c864c97e67e540ca9c4e0e42"
+    },
+    "game/native/gameplay_world/world.hpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/gameplay_world/world.hpp",
+      "sha256": "a30e79cbc4f90cb498389eac860f0bdd00ddb1553872c4ac8d97954d5c5c666f"
+    },
+    "game/native/transform_math/transform_math.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/transform_math/transform_math.cpp",
+      "sha256": "4126c772f24ee109f297bd36f3cb5e74f7483ea363fe575aef9145e1c809b449"
+    },
+    "game/native/transform_math/transform_math.hpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/game/native/transform_math/transform_math.hpp",
+      "sha256": "03762e50d83ba8cbd4f3215389d1c75b15453b8c02668bc731a633172b3e9f35"
+    },
+    "recomp/config/output/sub_0018F570_0x18f570.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output/sub_0018F570_0x18f570.cpp",
+      "sha256": "29aee43b2a0e63c6fe9a3e5922cfd3f29cc4ca693763b2b0407e172a797ee698"
+    },
+    "recomp/config/output/sub_0018FDF0_0x18fdf0.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output/sub_0018FDF0_0x18fdf0.cpp",
+      "sha256": "0430ef30ec9ff895806d903c01f0064528efd351105dc3643c04db56e6bf4d2c"
+    },
+    "recomp/config/output/sub_0018FE20_0x18fe20.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output/sub_0018FE20_0x18fe20.cpp",
+      "sha256": "c37e8a9cb5a79f6eb9874072120f69c7704070a297e018002b111ad122d12b8d"
+    },
+    "recomp/config/output/sub_0018FE60_0x18fe60.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output/sub_0018FE60_0x18fe60.cpp",
+      "sha256": "c71c7e224553950adabad1b7aa9e2c18fc04a3ab719b479626982e6055a9a82c"
+    },
+    "recomp/config/output/sub_001902D0_0x1902d0.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output/sub_001902D0_0x1902d0.cpp",
+      "sha256": "8de1b3de26bd7eafeb9b80cfeca183114429bd3e2801927b573a04f9ff9aaebd"
+    },
+    "recomp/config/output/sub_00190A10_0x190a10.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output/sub_00190A10_0x190a10.cpp",
+      "sha256": "782fe96cf5c14ecf1d073accd18aa24cd7b77a8c221fc8dab7c73caf2c1a7484"
+    },
+    "recomp/config/output/sub_00191300_0x191300.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output/sub_00191300_0x191300.cpp",
+      "sha256": "56ebd8f4077f800c909aa2a7cb3cf02513b4b47bd9c6a66f6f389334f5ee43da"
+    },
+    "recomp/config/output/sub_001919D0_0x1919d0.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output/sub_001919D0_0x1919d0.cpp",
+      "sha256": "7886eaa395fce554679dc341c56ce67680fb74d5d3b063c94736260a7fe72388"
+    },
+    "recomp/config/output/sub_00191F80_0x191f80.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output/sub_00191F80_0x191f80.cpp",
+      "sha256": "fff926facac28b24a62fc590cc966c8983479d90374697b01cbe6eecaaf56adf"
+    },
+    "recomp/config/output_ovl/o0/o0_00370220_0x370220.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output_ovl/o0/o0_00370220_0x370220.cpp",
+      "sha256": "736ecbdb8448f8ccb1b14539c9fdae9bdad6e11a2d1a9dac30f7316ac5852059"
+    },
+    "recomp/config/output_ovl/o0/o0_00370320_0x370320.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output_ovl/o0/o0_00370320_0x370320.cpp",
+      "sha256": "03396a3da3197a3c0b8a5a02a5400837cb4b9cd71361bb30b6648e35d6c79036"
+    },
+    "recomp/config/output/sub_0018F470_0x18f470.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output/sub_0018F470_0x18f470.cpp",
+      "sha256": "d75bda55b6bb1522797ef1fe8ebe116204ced8e36e1398b7761aa1c83816625f"
+    },
+    "recomp/config/output/sub_00191500_0x191500.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output/sub_00191500_0x191500.cpp",
+      "sha256": "74d4b9a934d1e4c85136ac7745fe41df559477b6aa385748d358d9592095cbf9"
+    },
+    "recomp/config/output/sub_00191740_0x191740.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output/sub_00191740_0x191740.cpp",
+      "sha256": "ce9a03578f14e864ac8708958122a6aa9a9527293e67d054ae01c9bec7f2a184"
+    },
+    "recomp/config/output/sub_00191900_0x191900.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output/sub_00191900_0x191900.cpp",
+      "sha256": "a69b12b37e23122584d1ad1388679158aec7915af17a0959b1f08bd12c78faf3"
+    },
+    "recomp/config/output/sub_00191BC0_0x191bc0.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output/sub_00191BC0_0x191bc0.cpp",
+      "sha256": "73983dd6524095e7814a142ca7f26f366def003b4bf1e8c866feff90c48c51ef"
+    },
+    "recomp/config/output/sub_00191DF0_0x191df0.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output/sub_00191DF0_0x191df0.cpp",
+      "sha256": "34e33ece617e951ebc4a3294b54a5407169cdfafdc8c1e90a1fc2334087737bb"
+    },
+    "recomp/config/output/sub_00191E50_0x191e50.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output/sub_00191E50_0x191e50.cpp",
+      "sha256": "734ce48fb5f167c64ae909a781661dcd0d5a51ba48817c908481f944a517b9f7"
+    },
+    "recomp/config/output/sub_001920A0_0x1920a0.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output/sub_001920A0_0x1920a0.cpp",
+      "sha256": "2f5d202517eea83d36e863a52a70599be49b8d3e9bfeea8773652f49878889b8"
+    },
+    "recomp/config/output/sub_001921A0_0x1921a0.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output/sub_001921A0_0x1921a0.cpp",
+      "sha256": "e2b1d0e33413d3ccc32f8d730d3f72037289beb851114a33d806aff6fb61cb14"
+    },
+    "recomp/config/output/sub_001921B0_0x1921b0.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output/sub_001921B0_0x1921b0.cpp",
+      "sha256": "d01d46c69b8dddeeae960ca56e4325e2d4afc9af24da7cc8fc962759043985bc"
+    },
+    "recomp/config/output_ovl/o0/o0_00370100_0x370100.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output_ovl/o0/o0_00370100_0x370100.cpp",
+      "sha256": "f2b8300d0438a950e17610a883f49165bc865b1ab298416a6441492128a8f24b"
+    },
+    "recomp/config/output_ovl/o2/o2_00616F20_0x616f20.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output_ovl/o2/o2_00616F20_0x616f20.cpp",
+      "sha256": "d565c9b0069b3e4b978e5278a18853c16b9d2bfcdc59819160584288f38cacaa"
+    },
+    "recomp/config/output_ovl/o2/o2_006657B0_0x6657b0.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output_ovl/o2/o2_006657B0_0x6657b0.cpp",
+      "sha256": "53ce235ef81a7753b78326b7f2088b6424eb365ac1ca7c3c5c030a4ce4ea6725"
+    },
+    "recomp/config/output_ovl/o2/o2_0065E4A0_0x65e4a0.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/recomp/config/output_ovl/o2/o2_0065E4A0_0x65e4a0.cpp",
+      "sha256": "91030beb5b46e682dd8c1de4517bdfc2cde89d5563f6338930fc3a02e55d5942"
+    },
+    "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp",
+      "sha256": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f"
+    },
+    "tools/native_reconstruction/gameplay_world_oracle/surface_orientation_tests.cpp": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/tools/native_reconstruction/gameplay_world_oracle/surface_orientation_tests.cpp",
+      "sha256": "2a690d5580d8e1d355d87c9bba1bd822a305b239046d29d3578d1f170f490142"
+    },
+    "tools/native_reconstruction/verify_surface_orientation.py": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/tools/native_reconstruction/verify_surface_orientation.py",
+      "sha256": "b2ef6882fc464b9296abc73dda17ea10d4995be7e4b6351ee740f35c8d7c7501"
+    },
+    "tools/native_reconstruction/native_gameplay_collision_response_qualification_v1.json": {
+      "path": "build-native-sjuni/surface-orientation-llvm-v3/source/tools/native_reconstruction/native_gameplay_collision_response_qualification_v1.json",
+      "sha256": "cbf9930856281a97d0978f408d1c1370e80ec53f94dbdf5146839a224fb90262"
+    }
+  },
+  "documentation": {
+    "path": "docs/native-gameplay/SURFACE_ORIENTATION.md",
+    "sha256": "7b451d2cb7974f087ffa85ad8288596035692d0659cbcb5fcb04af4ae0ca3a49"
+  },
+  "qualifier": {
+    "path": "tools/native_reconstruction/qualify_surface_orientation_v1.py",
+    "sha256": "d6bb8cb4a8e52cdda7c3a0e3e6200235d8782262dac12fd35a142968a7602e35"
+  },
+  "owned_inputs": {
+    "main_elf": {
+      "path": "game_data/SLUS_207.65",
+      "sha256": "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46"
+    },
+    "o0": {
+      "path": "build-function-index/owned-overlays/o0.bin",
+      "sha256": "bfac1906d63d585736e46573295cff12e308720af6b49914e1ad8695dfcf50c2"
+    },
+    "o2": {
+      "path": "build-function-index/owned-overlays/o2.bin",
+      "sha256": "45360a971e88878312576abaebd1a7b8346f7e94cc032adde9172343f14e6226"
+    }
+  },
+  "original_word_audits": [
+    {
+      "role": "surface orientation complete original body/math/wrapper",
+      "path": "recomp/config/output/sub_0018F470_0x18f470.cpp",
+      "sha256": "d75bda55b6bb1522797ef1fe8ebe116204ced8e36e1398b7761aa1c83816625f",
+      "start": "0x18f470",
+      "end_exclusive": "0x18f568",
+      "matched_comments": 60,
+      "omitted_zero_words": 2,
+      "conflicts": 0
+    },
+    {
+      "role": "surface orientation complete original body/math/wrapper",
+      "path": "recomp/config/output/sub_00191500_0x191500.cpp",
+      "sha256": "74d4b9a934d1e4c85136ac7745fe41df559477b6aa385748d358d9592095cbf9",
+      "start": "0x191500",
+      "end_exclusive": "0x191900",
+      "matched_comments": 256,
+      "omitted_zero_words": 0,
+      "conflicts": 0
+    },
+    {
+      "role": "surface orientation complete original body/math/wrapper",
+      "path": "recomp/config/output/sub_00191740_0x191740.cpp",
+      "sha256": "ce9a03578f14e864ac8708958122a6aa9a9527293e67d054ae01c9bec7f2a184",
+      "start": "0x191740",
+      "end_exclusive": "0x191818",
+      "matched_comments": 54,
+      "omitted_zero_words": 0,
+      "conflicts": 0
+    },
+    {
+      "role": "surface orientation complete original body/math/wrapper",
+      "path": "recomp/config/output/sub_00191900_0x191900.cpp",
+      "sha256": "a69b12b37e23122584d1ad1388679158aec7915af17a0959b1f08bd12c78faf3",
+      "start": "0x191900",
+      "end_exclusive": "0x1919d0",
+      "matched_comments": 52,
+      "omitted_zero_words": 0,
+      "conflicts": 0
+    },
+    {
+      "role": "surface orientation complete original body/math/wrapper",
+      "path": "recomp/config/output/sub_00191BC0_0x191bc0.cpp",
+      "sha256": "73983dd6524095e7814a142ca7f26f366def003b4bf1e8c866feff90c48c51ef",
+      "start": "0x191bc0",
+      "end_exclusive": "0x191c40",
+      "matched_comments": 32,
+      "omitted_zero_words": 0,
+      "conflicts": 0
+    },
+    {
+      "role": "surface orientation complete original body/math/wrapper",
+      "path": "recomp/config/output/sub_00191DF0_0x191df0.cpp",
+      "sha256": "34e33ece617e951ebc4a3294b54a5407169cdfafdc8c1e90a1fc2334087737bb",
+      "start": "0x191df0",
+      "end_exclusive": "0x191e50",
+      "matched_comments": 24,
+      "omitted_zero_words": 0,
+      "conflicts": 0
+    },
+    {
+      "role": "surface orientation complete original body/math/wrapper",
+      "path": "recomp/config/output/sub_00191E50_0x191e50.cpp",
+      "sha256": "734ce48fb5f167c64ae909a781661dcd0d5a51ba48817c908481f944a517b9f7",
+      "start": "0x191e50",
+      "end_exclusive": "0x191ef0",
+      "matched_comments": 40,
+      "omitted_zero_words": 0,
+      "conflicts": 0
+    },
+    {
+      "role": "surface orientation complete original body/math/wrapper",
+      "path": "recomp/config/output/sub_001920A0_0x1920a0.cpp",
+      "sha256": "2f5d202517eea83d36e863a52a70599be49b8d3e9bfeea8773652f49878889b8",
+      "start": "0x1920a0",
+      "end_exclusive": "0x192170",
+      "matched_comments": 48,
+      "omitted_zero_words": 4,
+      "conflicts": 0
+    },
+    {
+      "role": "surface orientation complete original body/math/wrapper",
+      "path": "recomp/config/output/sub_001921A0_0x1921a0.cpp",
+      "sha256": "e2b1d0e33413d3ccc32f8d730d3f72037289beb851114a33d806aff6fb61cb14",
+      "start": "0x1921a0",
+      "end_exclusive": "0x1921a8",
+      "matched_comments": 1,
+      "omitted_zero_words": 1,
+      "conflicts": 0
+    },
+    {
+      "role": "surface orientation complete original body/math/wrapper",
+      "path": "recomp/config/output/sub_001921B0_0x1921b0.cpp",
+      "sha256": "d01d46c69b8dddeeae960ca56e4325e2d4afc9af24da7cc8fc962759043985bc",
+      "start": "0x1921b0",
+      "end_exclusive": "0x1921f0",
+      "matched_comments": 16,
+      "omitted_zero_words": 0,
+      "conflicts": 0
+    },
+    {
+      "role": "surface orientation complete original body/math/wrapper",
+      "path": "recomp/config/output_ovl/o0/o0_00370100_0x370100.cpp",
+      "sha256": "f2b8300d0438a950e17610a883f49165bc865b1ab298416a6441492128a8f24b",
+      "start": "0x370100",
+      "end_exclusive": "0x370140",
+      "matched_comments": 16,
+      "omitted_zero_words": 0,
+      "conflicts": 0
+    },
+    {
+      "role": "surface orientation complete original body/math/wrapper",
+      "path": "recomp/config/output_ovl/o2/o2_00616F20_0x616f20.cpp",
+      "sha256": "d565c9b0069b3e4b978e5278a18853c16b9d2bfcdc59819160584288f38cacaa",
+      "start": "0x616f20",
+      "end_exclusive": "0x616f54",
+      "matched_comments": 13,
+      "omitted_zero_words": 0,
+      "conflicts": 0
+    },
+    {
+      "role": "surface orientation complete original body/math/wrapper",
+      "path": "recomp/config/output_ovl/o2/o2_006657B0_0x6657b0.cpp",
+      "sha256": "53ce235ef81a7753b78326b7f2088b6424eb365ac1ca7c3c5c030a4ce4ea6725",
+      "start": "0x6657b0",
+      "end_exclusive": "0x665c94",
+      "matched_comments": 303,
+      "omitted_zero_words": 10,
+      "conflicts": 0
+    },
+    {
+      "role": "surface orientation complete original body/math/wrapper",
+      "path": "recomp/config/output_ovl/o2/o2_0065E4A0_0x65e4a0.cpp",
+      "sha256": "91030beb5b46e682dd8c1de4517bdfc2cde89d5563f6338930fc3a02e55d5942",
+      "start": "0x65e4a0",
+      "end_exclusive": "0x65e5b4",
+      "matched_comments": 69,
+      "omitted_zero_words": 0,
+      "conflicts": 0
+    }
+  ],
+  "owned_orientation_data": [
+    {
+      "address": "0x712b68",
+      "hex": "0000000000000000000020c2",
+      "sha256": "f348fb462698e289f80b0110399693bc039e624e535484223dbccf7c4d2aae1c"
+    },
+    {
+      "address": "0x712b78",
+      "hex": "000000000000000000002042",
+      "sha256": "50935839eb2068f4c75216984034e4f971f4844261f272fc4bcb4ff80a426ef4"
+    },
+    {
+      "address": "0x712b88",
+      "hex": "000000000000000000002042",
+      "sha256": "50935839eb2068f4c75216984034e4f971f4844261f272fc4bcb4ff80a426ef4"
+    },
+    {
+      "address": "0x712b98",
+      "hex": "000000000000803f00000000",
+      "sha256": "3695fc5961dab4c804313662c5662248a3536224fb1dd93f8fb23304c437ff0c"
+    },
+    {
+      "address": "0x740430",
+      "hex": "cdcccc3d",
+      "sha256": "fb360f7241a770dc32cade9a1d1273c92b13bd4959b1c130931312b7fe95e63f"
+    },
+    {
+      "address": "0x740470",
+      "hex": "db0fc940",
+      "sha256": "12d85026b5109a3119231704608d5991a63d8d397d2867a9fc522305810ddb76"
+    },
+    {
+      "address": "0x38b290",
+      "hex": "db0fc938",
+      "sha256": "f53d2dff1a4694d60c41d719e2a4e27dd022930ca5f123bbb433d740870b18de"
+    }
+  ],
+  "declared_native_child_seams": [
+    "617000 floor query via unchanged independently qualified response::Grid; optional test provider effects/errors"
+  ],
+  "qualified_floor": {
+    "path": "tools/native_reconstruction/native_gameplay_collision_response_qualification_v1.json",
+    "sha256": "cbf9930856281a97d0978f408d1c1370e80ec53f94dbdf5146839a224fb90262"
+  },
+  "contract": [
+    "Original0=processed including rejected/cleared;1=no requested work.",
+    "Category0/1 status bit8 may set flags548 bit1/rate0.1. Other categories require existing request.",
+    "Blend increment/clamp precedes yaw work and all three ordered FF floor probes. All point translations precede first callback.",
+    "Returned floor heights are used regardless of class; greater-than80 differences clear flags bit1/weight0.",
+    "Stored normal dot up greater than cos(turn0x100) clears the blend; at/below threshold constructs and blends slope basis.",
+    "Normal/cross/basis/weighted orthogonalization preserves actual FP32 order. Zero/parallel vectors use SDK131 max-finite reciprocal-square-root behavior.",
+    "Canonical fields are reread after required query providers. No shadowActor/guest pointers/registers in production.",
+    "Required-provider/unsupported-numeric/profile failure is visible; no after-effects fallback. Enclosing pose becomes ready only after final current-position translation."
+  ],
+  "preserved_intermediate_runs": [
+    {
+      "path": "build-native-sjuni/surface-orientation-llvm-v1",
+      "result": "strict original generated unused-variable warning; source fixture-only diagnostic suppression"
+    },
+    {
+      "path": "build-native-sjuni/surface-orientation-llvm-v2",
+      "result": "passed pre-World/repeated-blend checkpoint"
+    }
+  ],
+  "limits": [
+    "617000 is a declared independently qualified unchanged native Grid seam; not complete transitive original floor execution.",
+    "Finite FP32 round-nearest/gradual-underflow/no-contraction profile; physicalPS2 exceptional semantics/flags/accumulatorprecision not claimed.",
+    "No installation, game launch, walltime-speedup claim or wholeStage4 completion.",
+    "Real room-content ownership/admission, animation root-motion production, remaining actor behavior/pose consumers, integration and controlled game retest remain separate gates.",
+    "Borrowed native floor/grid/provider lifetimes must cover synchronous calls."
+  ]
+}

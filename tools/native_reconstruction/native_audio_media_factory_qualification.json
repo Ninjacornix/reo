@@ -1,0 +1,75 @@
+{
+  "schema": 1,
+  "status": "explicit native source runtime factory protocol qualified; guest binding and actual runtime acquisition absent",
+  "candidate_manifest": {
+    "path": "tools/native_reconstruction/native_audio_media_factory_manifest_v4.json",
+    "sha256": "a3043d7d7d9d8e4fc2f0aced86a2a7c66023ae3635365f8a745122c91b9ceee4"
+  },
+  "native_archive_manifest": {
+    "path": "tools/native_reconstruction/native_audio_media_factory_manifest_v2.json",
+    "sha256": "85e2b7cc30175132e65a604b052e378ccc7f64a3df6a4c84d48ee10be6b4b7e2"
+  },
+  "native_archive_compatible_changes": [
+    "tools/native_reconstruction/audio_media_factory/tests.cpp",
+    "tools/native_reconstruction/audio_media_factory/verify.py"
+  ],
+  "native_suites": 74,
+  "factory_scenarios_per_compiler": 12,
+  "actual_sdk_objects_per_compiler": 1,
+  "evidence": {
+    "build-native-sjuni/audio-media-factory/native-llvm-v2/receipt.json": {
+      "sha256": "38237623774005ec1c6797894a594e652837c80993f8bd459eeb2407aeaa2b6e",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/audio-media-factory/actual130-llvm-v2/receipt.json": {
+      "sha256": "87888e113b8caf3592a53cc89e8bb67342c6554ee9e18b3f176c4cad99d7f87e",
+      "status": "passed"
+    },
+    "build-native-sjuni/audio-media-factory/protocol-llvm-v4/receipt.json": {
+      "sha256": "30bc4498a228ab8a01bf8c79b31a80453063d06a48bc0c769b220639640ce5a6",
+      "status": "native media factory protocol passed"
+    },
+    "build-native-sjuni/audio-media-factory/native-gcc-v2/receipt.json": {
+      "sha256": "14503158ba87b0c9974294d8bd9bed27980e6e66e98c2564acb58a813a4ddff2",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/audio-media-factory/actual130-gcc-v2/receipt.json": {
+      "sha256": "d58f01103aa6c0cf4407ea27c6087134c9c4f5f9828c095a0afc8435a0607a96",
+      "status": "passed"
+    },
+    "build-native-sjuni/audio-media-factory/protocol-gcc-v4/receipt.json": {
+      "sha256": "b9a0e90378dc5ef4ec9a40aed69a344939f418a117e0aee60d556e757297e8c9",
+      "status": "native media factory protocol passed"
+    }
+  },
+  "runtime_capture_factory_implemented": true,
+  "actual_runtime_acquisition_exercised": false,
+  "guest_binding": false,
+  "bootstrap_native_sources_selected": false,
+  "actual_audio_device_test": false,
+  "game_run": false,
+  "failed_factory_cohorts": {
+    "v1": {
+      "snapshot": "build-native-sjuni/audio-media-factory/v1-source",
+      "receipts": [
+        "build-native-sjuni/audio-media-factory/protocol-llvm-v1/receipt.json",
+        "build-native-sjuni/audio-media-factory/protocol-gcc-v1/receipt.json"
+      ]
+    },
+    "v2": {
+      "snapshot": "build-native-sjuni/audio-media-factory/v2-source",
+      "receipts": [
+        "build-native-sjuni/audio-media-factory/protocol-llvm-v2/receipt.json",
+        "build-native-sjuni/audio-media-factory/protocol-gcc-v2/receipt.json"
+      ]
+    },
+    "v3": {
+      "snapshot": "build-native-sjuni/audio-media-factory/v3-source",
+      "receipts": [
+        "build-native-sjuni/audio-media-factory/protocol-llvm-v3/receipt.json",
+        "build-native-sjuni/audio-media-factory/protocol-gcc-v3/receipt.json"
+      ]
+    }
+  },
+  "documentation_sha256": "5ab44b8f613e8f46a8b0d969781f1032ca0950bbcc6d8e1b4796fdaded8e68e8"
+}

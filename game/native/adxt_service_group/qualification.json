@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "status": "qualified bounded original/native audio dispatch envelopes",
+  "stage3_complete": false,
+  "production_selected": false,
+  "game_run": false,
+  "device_opened": false,
+  "whole_child_pipeline_qualified": false,
+  "cases": 81,
+  "original_instructions": 31169,
+  "manifest_sha256": "7796fc513edbc49a6b2d9d8f8abc17ba006b7d61d7f333d91a99e7103c6024a2",
+  "receipts": {
+    "build-native-sjuni/adxt-service-group/original-v2/receipt.json": "d5ca28253b16b28e1b9f67cd6a4aed25fd0ffba71279cfec7f2f51be51cbda8a",
+    "build-native-sjuni/adxt-service-group/qualified-gcc-v1/receipt.json": "9082ca27ae8748c51f516f8a1727456f58d5290b67c0a7c13b1842122c251bd3",
+    "build-native-sjuni/adxt-service-group/qualified-llvm-v1/receipt.json": "3c64d26568672af65c4bbc93eea8a29009034d1e0593749eeb3d99d98ea4d590",
+    "build-native-sjuni/adxt-service-group/parent-gcc-v1/receipt.json": "fa244f5762b14fbbb0bd2903e1c0bea3ebb6763fea7efee5e021c963078a9fe9",
+    "build-native-sjuni/adxt-service-group/parent-llvm-v1/receipt.json": "e9f14d475ebc366d8a4704d080211320165a8f2c97ae8eaadd0a9b8d452ab66e"
+  },
+  "additional_sources": {
+    "game/native/adxt_service_group/README.md": "f887f6b58c3dde8b73ddf55545e7fae5a05e063439512de5d82b9b3b28ab508e",
+    "docs/native-media/ADXT_SERVICE_GROUP_IMPLEMENTATION.md": "88a26f12f342fe7a2fa5058105939efc9df6cf3c5c7c047bfccec2efbc0ded9c",
+    "game/native/CMakeLists.txt": "2c3d8cce458e4677b834486b2068b55b872a194b4e1d8895229b8b7950fe5d31",
+    "docs/NATIVE_RECONSTRUCTION_PLAN.md": "42deb32ba96e77838aad2b705f4eb18f2c6f32c93336f717cbbac06572da5fa6"
+  }
+}

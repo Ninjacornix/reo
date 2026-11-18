@@ -1,0 +1,72 @@
+{
+  "schema": 1,
+  "status": "distinct native service divisor and canonical controls qualified; guest binding absent",
+  "manifest": {
+    "path": "tools/native_reconstruction/adxt_service_divisor_manifest_v3.json",
+    "sha256": "40fb6372508627806234753ac8ff9dc32f821ce44d8c5ff049cb1ae2dcdd2975"
+  },
+  "original_input_manifest": {
+    "path": "build-native-sjuni/adxt-ready-quantum/inputs-v2/input-manifest.json",
+    "sha256": "42c16be178913b17956fc996b159da027b58738fa055c2ca980ef3a26be269d3"
+  },
+  "evidence": {
+    "build-native-sjuni/adxt-ready-quantum/original-llvm-v1/receipt.json": {
+      "sha256": "d78b7c1746e992f2cc04811c5f5b6c7ea5b58b7f09a8a00f94a6c167af99af51",
+      "status": "complete original ready configuration replay passed"
+    },
+    "build-native-sjuni/adxt-service-divisor/native-llvm-v3/receipt.json": {
+      "sha256": "ab90c58e3608867ace9f1dd3081cd4d18d08c656536a9f3d5f1765b951c92e10",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-service-divisor/qualified-llvm-v3/receipt.json": {
+      "sha256": "7b340571fc88ee775dff32bbd11632102022678ab5ff54ba8fb1bb23f7d8aec1",
+      "status": "original ready rows and stable service divisor qualified"
+    },
+    "build-native-sjuni/audio-media-factory/service-divisor-llvm-v3/receipt.json": {
+      "sha256": "c11b381e938827bb856d2da1d102e0651f946bdc8a9fad01a5280779d91ade65",
+      "status": "native media factory protocol passed"
+    },
+    "build-native-sjuni/adxt-binding/service-divisor-llvm-v3/receipt.json": {
+      "sha256": "19503ccb6f6f0a2fbe1f8aee1fd1850caf5da4dead86393748f346e1e719a888",
+      "status": "native game handle ownership and source retirement qualified"
+    },
+    "build-native-sjuni/audio-media-factory/service-divisor-actual130-llvm-v3/receipt.json": {
+      "sha256": "5d67e1b9f46a577010e6518d10e7c21fa9f7070b440a6299eb02d24c969f6d09",
+      "status": "passed"
+    },
+    "build-native-sjuni/adxt-ready-quantum/original-gcc-v1/receipt.json": {
+      "sha256": "4f5d288ba95847655920a216c1503b73355cdd5e612d6a3c6180d046ab225d24",
+      "status": "complete original ready configuration replay passed"
+    },
+    "build-native-sjuni/adxt-service-divisor/native-gcc-v3/receipt.json": {
+      "sha256": "fa541d2917fccba10e78d533e1419c0ddc84a55cf84227bfc88c6d5506251ee2",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-service-divisor/qualified-gcc-v3/receipt.json": {
+      "sha256": "206af475c9bfd12a2aa204f83ec614c94a5286fb2a09613ba89626e434000a73",
+      "status": "original ready rows and stable service divisor qualified"
+    },
+    "build-native-sjuni/audio-media-factory/service-divisor-gcc-v3/receipt.json": {
+      "sha256": "b2de41f3d0629fa7ee6ea3b2d68a24e3794f979841b0fb2f48cbab8fb64c5da0",
+      "status": "native media factory protocol passed"
+    },
+    "build-native-sjuni/adxt-binding/service-divisor-gcc-v3/receipt.json": {
+      "sha256": "721cefaa754f7e70995af6e37ea8054f99cac80a10ebe4fc5adfc16fd8fcd203",
+      "status": "native game handle ownership and source retirement qualified"
+    },
+    "build-native-sjuni/audio-media-factory/service-divisor-actual130-gcc-v3/receipt.json": {
+      "sha256": "64f5226a953291fea18be3a6813c1bdb5f234c8e9ae693240d716d56eca4fde2",
+      "status": "passed"
+    }
+  },
+  "native_suites": 77,
+  "original_rows_per_compiler": 96,
+  "native_channel_cases_per_compiler": 192,
+  "quantum_faults_detected_per_compiler": 3,
+  "contract_sha256": "5873328c5113465b5c2b871001b26fe461e24b118fb1c57475ab0ed776ac15a4",
+  "results_sha256": "b950b0fc8fc855462967a53f40938a12d7792bee70d69728e42f44ca3178e6b0",
+  "guest_hook_installed": false,
+  "game_run": false,
+  "device_opened": false,
+  "in_v16_preflight_kit": false
+}

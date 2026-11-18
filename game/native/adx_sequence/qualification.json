@@ -1,0 +1,122 @@
+{
+  "schema": 1,
+  "status": "qualified media graph with optional shared native bank/packet output",
+  "manifest_sha256": "d0466c7c3df4abaf7d339e8f7503c61067cb384485b9c654a899626916704e69",
+  "ancestor_snapshot": "build-native-sjuni/audio-mix-tail/ancestor-v1/game/native/adx_sequence/qualification.json",
+  "ancestor_qualification_sha256": "bcbe1d0f3dacd8cb46b6d9c086951c9bb0b55dd6fe89f8096efd6fb991787173",
+  "shared_mix_qualification_sha256": "6abc3696bf7cfd7efcef872175fbccf2cfd00404d5f195ed1791a3472ba7bed0",
+  "parent_suites": 65,
+  "parent_checks": {
+    "gcc": {
+      "build": "a0cf26abab6c5216cc863f52416261e099c44d794082dcdbe2a523dbb12ec977",
+      "tests": "9849f77372a96fc127715c7a0ebdb3043aca942f9c0364efab4836e365201bb6"
+    },
+    "llvm": {
+      "build": "012272a9afdb058394f4fe9c101034364c58db0f395d20a375e16574936a6105",
+      "tests": "0c06f83f5d1332f2665bae21959950e7468b396de720ee1da31e7f0bfd9c1c9d"
+    }
+  },
+  "receipts": {
+    "build-native-sjuni/audio-mix-tail/qualified-gcc-v1/receipt.json": "c1dc806a4d4ae3390700c05b9f31a133205c78a1b8d6d28ef202dee8de8f17a8",
+    "build-native-sjuni/audio-mix-tail/qualified-llvm-v1/receipt.json": "7a6ff129007bfabeed76f11776a121c9dd72925776e82978fb3a6172126401dc",
+    "build-native-sjuni/adxt-output-session/qualified-gcc-bank-v4/receipt.json": "087536c3b21f10bee75849b2f5c183ebb280699e84154a5e92a39b958e32c9e5",
+    "build-native-sjuni/adxt-output-session/qualified-llvm-bank-v4/receipt.json": "7a831f785b615396e38e7d941b573ec98d20cfe4241aad23201a4b83434515a5",
+    "build-native-sjuni/adxt-shared-player/qualified-gcc-bank-v4/receipt.json": "886bc8528518435cff88dabdb7f505d40ea12e82cc7203a1e3d9b82c8070323b",
+    "build-native-sjuni/adxt-shared-player/qualified-llvm-bank-v4/receipt.json": "a127a2c96ec7e30d255c486ee34bc3d8b724c2ef89f438312684d256858ef250",
+    "build-native-sjuni/adxt-clocked-player/qualified-gcc-bank-v4/receipt.json": "7ab1f5a543be8e356e5ba0b35c05d00e9fb6b375e1a15c0bb28299676dba29be",
+    "build-native-sjuni/adxt-clocked-player/qualified-llvm-bank-v4/receipt.json": "657151d757628dbb0e71c1f553b1ca5e2340ad2692aab1de695e442b147d0b39",
+    "build-native-sjuni/adxt-control-session/qualified-gcc-v6/receipt.json": "962d6b27acaf1a1da32a78d250cb3ea3fd8335b846e89f640a11eb4d7237474e",
+    "build-native-sjuni/adxt-control-session/qualified-llvm-v6/receipt.json": "516b5d187240cfc0c887de64925ef4a05549e30db102cbe67a74003e7b8e6092",
+    "build-native-sjuni/adxt-phased-player/qualified-gcc-v9/receipt.json": "b75dfa4152fac84b88614510cca2aafe8f11d235c96c84db9e5e9114b0bee60e",
+    "build-native-sjuni/adxt-phased-player/qualified-llvm-v9/receipt.json": "d619376fb0d4687129879b0fdee11023042c372c6988829ef985ca2935df82f0",
+    "build-native-sjuni/adxt-service-binding/qualified-gcc-v5/receipt.json": "37ed6a09dbd37dd333669de9587bac62701f4f00dead97927270f9b2324182e7",
+    "build-native-sjuni/adxt-service-binding/qualified-llvm-v5/receipt.json": "c1e8024063d82d5669059fe59c9ee79438d9bb4d2fe787d4b12b69dd2817582c",
+    "build-native-sjuni/imported-adxt-control/full-gcc-v6/receipt.json": "bb6a5280850b269116b0ba3c0d48c6d775c7721b26d95f885e7969c23b415a6f",
+    "build-native-sjuni/imported-adxt-control/full-llvm-v6/receipt.json": "04c6e78284a9212311cbee9a3bd06641964f1487ce47c131766541e9362cca8e",
+    "build-native-sjuni/imported-adxt-control/comparison-v6/receipt.json": "a4c39f43059e4e5f66f650c33d6dc0a1cd96cc4a37267caba4923844e3ac6561",
+    "build-native-sjuni/imported-adxt-loop-player/full-gcc-v6/receipt.json": "2b3a412c5be167ad9b1682903c831fbcb849eeee1912d2f221613f24bd8ac59a",
+    "build-native-sjuni/imported-adxt-loop-player/full-llvm-v6/receipt.json": "05948f0dc70713cefab0f51de7e8d4ced664f92fa9dc5771fbf39b0ae71a8e7b",
+    "build-native-sjuni/imported-adxt-loop-player/comparison-v6/receipt.json": "f2a12f936e8316b64a393fb5ac8f988969acaeb59cb0377e927bf077ff767189",
+    "build-native-sjuni/imported-adxt-sequences/full-gcc-v3/receipt.json": "24edf8abc3df4e01b5ffc1073e2578d456ed7b263a9c4cc01659a893f523eda5",
+    "build-native-sjuni/imported-adxt-sequences/full-llvm-v3/receipt.json": "fd70e7bb06119100b693c0daa6fa64477612f4a7b5b542b71d076970f5edacd9",
+    "build-native-sjuni/imported-adxt-sequences/comparison-v3/receipt.json": "f91442f10b69fb6887fada00411915fbecfc9f1a7c3d1beac38b4db724f8fe18",
+    "build-native-sjuni/imported-adxt-lsc/full-gcc-v2/receipt.json": "ac00f7627de581517e3a1757c6a19846026282fed01d4e17668a021df3d34584",
+    "build-native-sjuni/imported-adxt-lsc/full-llvm-v2/receipt.json": "2075ba23c7c5bbb9fc458d55df226cbd5305760cde4305173d2c7ccb9367ab73",
+    "build-native-sjuni/imported-adxt-lsc/comparison-v2/receipt.json": "85bae9c33a43f1341a080e44e8ff5842a06ab1b61dba2532ce6c649467225c4a"
+  },
+  "stage3_complete": false,
+  "production_selected": false,
+  "game_run": false,
+  "device_opened": false,
+  "original_whole_game_parity": false,
+  "unique_payloads": 6706,
+  "sequences": 421,
+  "unit_assertions": 926,
+  "prior_owner_negative_controls_unchanged": true,
+  "verifier_whitespace_only": {
+    "game/native/adxt_control_session/verify.py": {
+      "before": "acdf2338ab5c7d7e6a7fd7a8fad398d0486876abc0e0de624b973fb5ba061ed0",
+      "after": "1cbfe54c687583b86a995b17bd045d702daa5d83bdbf5dcd15e8ca261e601ae8",
+      "ast_identical": true
+    },
+    "game/native/adxt_phased_player/verify.py": {
+      "before": "418928262dfcd8a08fbc139fb5bf498085f3f9ae5b4b775d8358583a6814ab2b",
+      "after": "a664234fcf8d6e9d1acec61bb804fa8ae5da96c6db3c0de84a2f8fbcf4c7beab",
+      "ast_identical": true
+    }
+  },
+  "pre_whitespace_qualification": {
+    "path": "build-native-sjuni\\audio-mix-tail\\whitespace-v1\\ancestor\\game\\native\\adx_sequence\\qualification.json",
+    "sha256": "3eea8e8876127138fefbab618f6436f7cb8b18c56f2e605a99e32179ffbb7859"
+  },
+  "movie_counter_standalone_build_extension": {
+    "qualification_sha256": "e81db24af2e25440ba0cafe7391c9f65bc699d6cf03308f04f4c9084d48ffe1c",
+    "ancestor_path": "build-native-sjuni\\movie-counter-clock\\ancestor-v1\\game\\native\\adx_sequence\\qualification.json",
+    "ancestor_sha256": "08e4dc7fb592be8befe88e9ca8e86709ff3b53966a39a1059cab6eeaa9038214",
+    "existing_runtime_sources_unchanged": true
+  },
+  "selected_clock_standalone_build_extension": {
+    "qualification_sha256": "8c7870d9d6ab60b90031e6725e0d343de62e5bd53f2ed98536cba437e9813615",
+    "ancestor_path": "build-native-sjuni\\movie-selected-clock\\ancestor-v1\\game\\native\\adx_sequence\\qualification.json",
+    "ancestor_sha256": "d786885f3a3f26ee4c7e7b93f93de7b0c9e3ddebba265d1f5ae965528188d8b2",
+    "existing_runtime_sources_unchanged": true
+  },
+  "audio_filter_standalone_build_extension": {
+    "qualification_sha256": "0f7993c582bb50637b5e90c545ac1817170750adee2756c5169eb7a912959599",
+    "ancestor_path": "build-native-sjuni\\movie-audio-filter\\ancestor-v1\\game\\native\\adx_sequence\\qualification.json",
+    "ancestor_sha256": "ee2217eff5f9703bc77c0e503be6d1181dab3690c8fe836f77b7eac4c0302ba9",
+    "existing_runtime_sources_unchanged": true
+  },
+  "audio_clock_standalone_build_extension": {
+    "qualification_sha256": "42782469cb4dd5298784b32485a7226e832fdd149ed0212c520e5a1664e8959c",
+    "ancestor_path": "build-native-sjuni\\movie-audio-clock\\ancestor-v1\\game\\native\\adx_sequence\\qualification.json",
+    "ancestor_sha256": "80323aaca1c2abcb12cfb1ca3f6f52c616e0f8d58931b0953cc74b1635a9ec8c",
+    "existing_runtime_sources_unchanged": true
+  },
+  "pause_standalone_build_extension": {
+    "qualification_sha256": "2ef86f5e3e5802d5205daeeec71a61f06cca266d5b73af1744814da8942faa93",
+    "ancestor_path": "build-native-sjuni\\movie-pause\\ancestor-v1\\game\\native\\adx_sequence\\qualification.json",
+    "ancestor_sha256": "968758566aafb1a7543f2d484de3d8f05de58e50e34334ebd1ce8830dbefbbab",
+    "existing_runtime_sources_unchanged": true
+  },
+  "clock_initialization_standalone_build_extension": {
+    "qualification_sha256": "6bdacf99de035e7dfad857cf5f7d5f05feed75ae0f8b2307e084cd28be831e3b",
+    "ancestor_path": "build-native-sjuni\\movie-clock-initialize\\ancestor-v1\\game\\native\\adx_sequence\\qualification.json",
+    "ancestor_sha256": "caa4479281b7a2db18976c038cd21f724dd8fa842cc34341ea7f0d271f92d8a6",
+    "existing_runtime_sources_unchanged": true
+  },
+  "admission_standalone_build_extension": {
+    "qualification_sha256": "263aa421114346b1ccc78cec7db28303860c51c45ebdf7bd0985fefb45065f2b",
+    "ancestor_path": "build-native-sjuni\\movie-admission\\ancestor-v1\\game\\native\\adx_sequence\\qualification.json",
+    "ancestor_sha256": "33215ffd858e8f309f5e69965681bddfa0fe72cedcf9748b6864919a3dcf89ae",
+    "existing_runtime_sources_unchanged": true
+  },
+  "timing_context_extension": {
+    "qualification_sha256": "63e9afdcc67a49e3286f83c60c6d76c137fd70a8a7dfbb95e8f9c551107d990c",
+    "ancestor_path": "build-native-sjuni\\movie-timing-context\\ancestor-pre-control-v1\\game\\native\\adx_sequence\\qualification.json",
+    "ancestor_sha256": "92e9255440be99ee9a470fca4e062c02a5d2910ec6cd12d1275c28c3a60d5a41",
+    "source_files_changed": [],
+    "existing_runtime_sources_unchanged": true,
+    "requalified_original_profiles": {}
+  }
+}

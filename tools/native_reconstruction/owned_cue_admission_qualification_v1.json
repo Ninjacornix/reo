@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "status": "all8910 structural File1 ADX extents audited by actual native preparation;8821admitted and89inline-loop assets explicitly refused",
+  "implementation_base_revision": "9e5dce40",
+  "evidence_sha256": {
+    "build-native-sjuni/queued-audio-checks/owned-assets-llvm-v1/receipt.json": "eb9cd9faea4a4a95274193bac9a24ca4378f2216c3898d903e4a25a22f88bd2d",
+    "build-native-sjuni/queued-audio-checks/owned-assets-llvm-v1/plan.tsv": "8a94f2daf27747262a96fbb77a4ef3baa8ce0898abb7465cfa273b00798aad58",
+    "build-native-sjuni/queued-audio-checks/owned-assets-llvm-v1/planned-members.json": "59b2675c1eb6f65f14504d9fbb21ac66ae3a67603f1f18c904acc2ceee0e468a",
+    "build-native-sjuni/queued-audio-checks/owned-assets-llvm-v1/results.jsonl": "5627afb2d462a1f16a101a22752e5cae00fbce7ed32cea628ea0422080926109",
+    "build-native-sjuni/queued-audio-checks/owned-assets-llvm-v1/probe-stderr.txt": "5a97ef6bfac7fc739a7669a9505c0767bac911358aa472950f98f85fdf96ce3d",
+    "build-native-sjuni/queued-audio-checks/owned-assets-llvm-v1/probe.exe": "fdebebd05cfc0b86a92466323c615a28c08b10fe8ac00536e5d37c9f6aadcf37",
+    "tools/native_reconstruction/probe_audio_cue_assets.cpp": "1def13444a3d37c7e16a78cacf98881e4cccbb6276c08b5c73c79c1341ef3c20",
+    "tools/native_reconstruction/probe_audio_cue_assets.py": "cef00afe48c3ad699dea5d9f89ce3ac4d4b8942308eb3a2896e4a63f1401b1f0",
+    "tools/native_reconstruction/queued_preparation_qualification_v1.json": "d6fd3ba83135404aade024405af2e575fb8777c6a36371f66b8c3f7bbedac51b"
+  },
+  "import_manifest_sha256": "ae3668c7e98defe0eb16ce107490078451e9c2f57cb2fb87c162f37520f2600b",
+  "native_receipt_sha256": "76ded9c613fdaeb8e475e967c74ab5455a6391bbf207763204cd8dcd1ff53b77",
+  "planned": 8910,
+  "admitted": 8821,
+  "refused": 89,
+  "ready_sample_rates": {
+    "48000": 504,
+    "24000": 8317
+  },
+  "all_refusals_have_inline_loop_metadata": true,
+  "all_native_admitted_metadata_matches_independent_inventory": true,
+  "selected_cues": [
+    {
+      "member": "NETBIO01.DAT/0/0",
+      "names": [
+        "adxsnd.afs",
+        "bgm00.adx"
+      ],
+      "result": {
+        "index": 0,
+        "status": "refused",
+        "clip_status": 3
+      }
+    },
+    {
+      "member": "NETBIO01.DAT/0/10",
+      "names": [
+        "adxsnd.afs",
+        "s010100a.adx"
+      ],
+      "result": {
+        "index": 10,
+        "status": "ready",
+        "clip_status": 0,
+        "channels": 2,
+        "frequency": 48000,
+        "samples": 4633715
+      }
+    },
+    {
+      "member": "NETBIO01.DAT/0/410",
+      "names": [
+        "adxsnd.afs",
+        "E3-Bio_Mix.adx"
+      ],
+      "result": {
+        "index": 8385,
+        "status": "ready",
+        "clip_status": 0,
+        "channels": 2,
+        "frequency": 48000,
+        "samples": 9849840
+      }
+    }
+  ],
+  "source_stats_unchanged": true,
+  "import_manifest_unchanged": true,
+  "game_run": false,
+  "audio_device_opened": false,
+  "game_cue_binding": false,
+  "step3_complete": false,
+  "limitations": [
+    "Header admission is not decoded PCM, audible sync or proof that every inventoried asset is used by a queued engine caller.",
+    "Inline-loop metadata requires explicit native cue semantics or import-time preparation where needed; deleting the guard is not a conversion or correctness proof.",
+    "The ordinary native source already has a separately qualified regular-loop path; this audit does not disable or replace it.",
+    "Opaque members and six unconfirmed ADX magic candidates are outside this structural-ADX audit."
+  ]
+}

@@ -1,0 +1,260 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_effects/contact_styles.hpp": "9d28ec351dc7b39a787969173f82c632d3084ee21ca6a344f9941dca94281609",
+    "game/native/gameplay_effects/contact_styles.cpp": "0a285a99ded2df349e4cacb9a17b24e2eade1f8d6752e60cdb9366d67dc2afa4",
+    "game/native/gameplay_effects/actor_contact_channels.hpp": "a472da47aca481b8788a9959631c1ad618a2da05cabd163b91091cf30301a0ff",
+    "game/native/gameplay_effects/actor_contact_channels.cpp": "acf9c743f131f5305902261ee230011c580505a0a20e8e18665842dafa32453b",
+    "game/native/gameplay_effects/periodic_visuals.hpp": "1efa7f8653f721259e0b8037a174b57fcd15affcbe4049adb66320ee47e8d792",
+    "game/native/gameplay_effects/periodic_visuals.cpp": "aa7665ba29f9174752513bc36d8825cb689871d184c6a65438bf8cb7efbca15d",
+    "game/native/gameplay_effects/CMakeLists.txt": "1ddf8ce0f43f1dd8492e83f7ca4a71bf8ddda322986ba44360b87368c40bc209",
+    "game/native/gameplay_world/world.hpp": "21da9ef0612684d7f5e9c53715808b9ebc864a39ddcd7616fd8014000dc71680",
+    "game/native/gameplay_world/actor_initial_state.hpp": "51cadee551da64bc921c27ed7e1c42e44a3de103b63e2300b6754736bac70332",
+    "game/native/gameplay_world/primary_actor_records_tests.cpp": "6c77e036810ecf9099667945e81d46c2a3359cc08e7cb9316eed21daa9035ffe",
+    "game/native/gameplay_world/contact_weapon_effects.hpp": "f69c0f20a2304fdcd2e145f77b8f1bc24b10e85c8d2070c6b456e960ee93bda9",
+    "game/native/gameplay_world/contact_weapon_effects.cpp": "2de0f62420e8c83a3ed4cb422fd1ab720050c75d9e3ec334e1a7c7e4abfb6038",
+    "game/native/gameplay_world/weapon_fire.cpp": "cef4f4bb0f5981952731c7c810cc098a4457e7d2844d594b269bb9b4c5d5d3f2",
+    "game/native/gameplay_world/resource_actor_contact_pose.hpp": "48125a842be66a7a026490de6c092e92a9a7f5c13c7805058f0380695f62cf47",
+    "tools/native_reconstruction/effect_work_sources.py": "d171d9c6fdc6e54c016f6df5b6d4ca0f09216ef7c900692f6d079bab72094e3b",
+    "tools/native_reconstruction/verify_periodic_visuals.py": "e10543a00b7316cb4b881f2b78b4c26bbc5acb950514d84cf465e04d0c58afec",
+    "tools/native_reconstruction/periodic_visuals_tests.cpp": "33b637d3ac5161ff0a5ac0d522aaf8e6c8d5ab8c73d66036a5e4ed8b394dae0c",
+    "tools/native_reconstruction/contact_styles_tests.inc": "d3671f44cedf552276b93c31415b4508fb52f44cb62a343c756c6e014238f461",
+    "tools/native_reconstruction/actor_contact_owner_tests.inc": "a67c59152f7078d991188b31f4e21b8fa0cfad95031d3fe7f79b764bd6c61b02",
+    "tools/native_reconstruction/verify_actor_contact_channels.py": "fabe13bf8c5aa72ba689a7151895ef6785b1c2310430b48aa703d19dd5cd3b70",
+    "tools/native_reconstruction/actor_contact_channels_tests.cpp": "ebbddf8b2b488e4bb6103695ee33bc8f4911f1cf4d7c31a9e77a977e140fc084",
+    "tools/native_reconstruction/qualify_contact_effects_v1.py": "225319eb1b2019d37e191e2f27851cb680c6784911e3a7c3f66a026aefe320c6",
+    "docs/native-gameplay/CONTACT_EFFECTS.md": "9036a1d4977ef820c2a4afa5606b8498d35d953304050d58e54fde092a4d47d9"
+  },
+  "cohorts": {
+    "llvm": {
+      "owner": {
+        "path": "build-native-sjuni/actor-contact-owner-llvm-v6/receipt.json",
+        "sha256": "fb770354e520ea7e4ffd8a373eefc8fd0901a604a1bc61d66b3476e2fcf536be",
+        "observed": {
+          "checks": 1493195,
+          "contact_cases": 234,
+          "contact_frames": 3632,
+          "contact_selectors": 65536,
+          "contact_channels": 48,
+          "contact_refusals": 4,
+          "channel_owner_cases": 384,
+          "channel_owner_frames": 8648,
+          "channel_owner_peak": 4,
+          "channel_owner_refusals": 18,
+          "original_helper_calls": 8921809,
+          "game_run": false
+        },
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "subsequent_dependency_changes": {}
+      },
+      "policy": {
+        "path": "build-native-sjuni/actor-contact-policy-llvm-v2/receipt.json",
+        "sha256": "00aedeffad2870a012c394b4eb70d0531062b4fbe65d864f769b8bc957b9724d",
+        "observed": {
+          "checks": 41988174,
+          "cases": 5242880,
+          "rebinds": 44938,
+          "clones": 44938,
+          "samples": 456876,
+          "retirements": 1048576,
+          "original_calls": 7886784,
+          "game_run": false
+        },
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "subsequent_dependency_changes": {}
+      },
+      "bootstrap": {
+        "path": "build-native-sjuni/contact-style-primary-clear-llvm-v1/receipt.json",
+        "sha256": "b962d09b6912ff3383dc467f6a1d7768e49f85c68f1e84c69445d833ee3d8fed",
+        "observed": {
+          "checks": 2234203,
+          "complete_source_clears": 64,
+          "canonical_bootstraps": 64,
+          "capacity_refusals": 8,
+          "busy_proofs": 1,
+          "lifetimes": 512,
+          "game_run": false
+        },
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "subsequent_dependency_changes": {
+          "game/native/gameplay_world/world.hpp": {
+            "qualified": "c00984b1cc219fd6dbc94b34485a3058c214945cd97127ebe53f4a7ec83bc151",
+            "current": "21da9ef0612684d7f5e9c53715808b9ebc864a39ddcd7616fd8014000dc71680"
+          }
+        }
+      },
+      "periodic": {
+        "path": "build-native-sjuni/contact-periodic-parent-llvm-v1/receipt.json",
+        "sha256": "f6f5ee6bedd052e8b2ae9c4dc94b088e085eb727c40e3e246cea529874192e61",
+        "observed": {
+          "checks": 1300872,
+          "banks": 6,
+          "updates": 7200,
+          "created": 2808,
+          "expired": 2286,
+          "piece_cases": 32532,
+          "camera_cases": 65536,
+          "signed_timer_cases": 65536,
+          "task_cases": 8688,
+          "original_helper_calls": 3758065,
+          "heap_allocations": 5058,
+          "heap_releases": 5058,
+          "concurrent_reader_pass": true,
+          "game_run": false
+        },
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "subsequent_dependency_changes": {
+          "game/native/gameplay_effects/periodic_visuals.cpp": {
+            "qualified": "54b96aa6f321fa3beae351d5111e38db7bc3460c54c85700974aaade8566143a",
+            "current": "aa7665ba29f9174752513bc36d8825cb689871d184c6a65438bf8cb7efbca15d"
+          }
+        }
+      }
+    },
+    "gcc": {
+      "owner": {
+        "path": "build-native-sjuni/actor-contact-owner-gcc-v6/receipt.json",
+        "sha256": "4aa64559f8bc7af18d4fc4c02e6ae0f984d64b31a1b7d7ee96020f453808f8e1",
+        "observed": {
+          "checks": 1493195,
+          "contact_cases": 234,
+          "contact_frames": 3632,
+          "contact_selectors": 65536,
+          "contact_channels": 48,
+          "contact_refusals": 4,
+          "channel_owner_cases": 384,
+          "channel_owner_frames": 8648,
+          "channel_owner_peak": 4,
+          "channel_owner_refusals": 18,
+          "original_helper_calls": 8921809,
+          "game_run": false
+        },
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "subsequent_dependency_changes": {}
+      },
+      "policy": {
+        "path": "build-native-sjuni/actor-contact-policy-gcc-v2/receipt.json",
+        "sha256": "6473664356cd4b9e5802d7e3b53f6a94e04b326be9eb2e2821df84676b7694ab",
+        "observed": {
+          "checks": 41988174,
+          "cases": 5242880,
+          "rebinds": 44938,
+          "clones": 44938,
+          "samples": 456876,
+          "retirements": 1048576,
+          "original_calls": 7886784,
+          "game_run": false
+        },
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "subsequent_dependency_changes": {}
+      },
+      "bootstrap": {
+        "path": "build-native-sjuni/contact-style-primary-clear-gcc-v1/receipt.json",
+        "sha256": "c61b41a7618b36adf83fee082433538e3bbfeb9b22db1b27161e77736a5648c5",
+        "observed": {
+          "checks": 2234203,
+          "complete_source_clears": 64,
+          "canonical_bootstraps": 64,
+          "capacity_refusals": 8,
+          "busy_proofs": 1,
+          "lifetimes": 512,
+          "game_run": false
+        },
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "subsequent_dependency_changes": {
+          "game/native/gameplay_world/world.hpp": {
+            "qualified": "c00984b1cc219fd6dbc94b34485a3058c214945cd97127ebe53f4a7ec83bc151",
+            "current": "21da9ef0612684d7f5e9c53715808b9ebc864a39ddcd7616fd8014000dc71680"
+          }
+        }
+      },
+      "periodic": {
+        "path": "build-native-sjuni/contact-periodic-parent-gcc-v1/receipt.json",
+        "sha256": "4f697ed760a13de88ea1187a69d01b49af78263d52f419593035b0aa0becbc51",
+        "observed": {
+          "checks": 1300872,
+          "banks": 6,
+          "updates": 7200,
+          "created": 2808,
+          "expired": 2286,
+          "piece_cases": 32532,
+          "camera_cases": 65536,
+          "signed_timer_cases": 65536,
+          "task_cases": 8688,
+          "original_helper_calls": 3758065,
+          "heap_allocations": 5058,
+          "heap_releases": 5058,
+          "concurrent_reader_pass": true,
+          "game_run": false
+        },
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "subsequent_dependency_changes": {
+          "game/native/gameplay_effects/periodic_visuals.cpp": {
+            "qualified": "54b96aa6f321fa3beae351d5111e38db7bc3460c54c85700974aaade8566143a",
+            "current": "aa7665ba29f9174752513bc36d8825cb689871d184c6a65438bf8cb7efbca15d"
+          }
+        }
+      }
+    }
+  },
+  "current_parent_tests": {
+    "llvm": {
+      "path": "build-native-sjuni/contact-effects-parents-llvm-v1/receipt.json",
+      "sha256": "6d2111a83bc1dab9f11440f55c8ec74993a4443573c53ccc01e87ea8157dca85",
+      "parent_tests": 22
+    },
+    "gcc": {
+      "path": "build-native-sjuni/contact-effects-parents-gcc-v1/receipt.json",
+      "sha256": "69b0978260230bcf39349d3e32b36674831a069cc34609221f40e7a121afcee4",
+      "parent_tests": 22
+    }
+  },
+  "cmake_builds": {
+    "llvm": {
+      "command": [
+        "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+        "--build",
+        "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\gameplay-native-llvm-v1",
+        "--target",
+        "reo_native_contact_weapon_effects",
+        "--parallel",
+        "2"
+      ],
+      "returncode": 0,
+      "libraries": {
+        "build-native-sjuni/gameplay-native-llvm-v1/gameplay_effects/libreo_native_gameplay_effects.a": "4471bc8fdbd24530e466ab05589ddc88e1b7864c73235cfe26b41822cca43697",
+        "build-native-sjuni/gameplay-native-llvm-v1/gameplay_effects/libreo_native_periodic_visuals.a": "d37e428e92506802500328860ee997592f1e42ec2a49709c476fc63406c13bd7",
+        "build-native-sjuni/gameplay-native-llvm-v1/gameplay_effects/libreo_native_contact_weapon_effects.a": "a3f0060d35ef2cc232756863ba8dc5cb66c15740ce9a06bd5cbc3a537d903d6d",
+        "build-native-sjuni/gameplay-native-llvm-v1/gameplay_world/libreo_native_weapon_actions.a": "c6eb49592e4648113bdacf1ee25aeff85d4f4b7d6b5a1b1e931fdc9dca2f396e"
+      }
+    },
+    "gcc": {
+      "command": [
+        "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+        "--build",
+        "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\gameplay-native-gcc-v1",
+        "--target",
+        "reo_native_contact_weapon_effects",
+        "--parallel",
+        "2"
+      ],
+      "returncode": 0,
+      "libraries": {
+        "build-native-sjuni/gameplay-native-gcc-v1/gameplay_effects/libreo_native_gameplay_effects.a": "5dbeaf15043889b5b1e42eeaf49dcaf6281357c6451fee1a3303a9f7ec2897c1",
+        "build-native-sjuni/gameplay-native-gcc-v1/gameplay_effects/libreo_native_periodic_visuals.a": "c81cf7307c18f9c0047a5f6c84f5ba78e267781c6c04375b11af6dbca9874e30",
+        "build-native-sjuni/gameplay-native-gcc-v1/gameplay_effects/libreo_native_contact_weapon_effects.a": "267916e272cc282acd0b50744331b8fe1ae36df98ddf643ed784974f53b011d5",
+        "build-native-sjuni/gameplay-native-gcc-v1/gameplay_world/libreo_native_weapon_actions.a": "b605100a404f574c474c7d64403c52b17a2db1b9414a4845323917a0ab8c63a0"
+      }
+    }
+  },
+  "limits": [
+    "Policy-only pose/clone/sample/release ports are superseded by complete original owner comparisons in the composed cohort.",
+    "Owned banks retain actual missing-resource outcomes; canonical weapon-model matrices are explicit fixture inputs.",
+    "Native generation refusal replaces unsafe original pointer reuse.",
+    "Pose-work family5823E0, complete host adoption, renderer integration and installed game acceptance remain open."
+  ]
+}

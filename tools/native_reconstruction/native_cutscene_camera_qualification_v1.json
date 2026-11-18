@@ -1,0 +1,208 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "scope": "Canonical cinematic camera selection, retained bound curves, full paired evaluator and view math; guarded sole playback-controller ownership and current owned descriptor composition.",
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/gameplay_scenario/camera_math.hpp": "b145067d6e8acfb209c5cb232291ec2837b246674fcc1543c2d2c7f326ee026b",
+    "game/native/gameplay_scenario/camera_math.cpp": "893968fab30050d0bcfbf16c7558b5588593c1715177adfe92a650f665c0a7be",
+    "game/native/gameplay_scenario/camera_curves.hpp": "11c6c36295612329d67cc999a717cee07b04858b898d4c2496e425f7d1b100a8",
+    "game/native/gameplay_scenario/camera_curves.cpp": "9cf0a929b542cc51a008aeb4ce1389710d74d8ba75cfb5d788b4fcc68e873288",
+    "game/native/gameplay_scenario/cutscene_camera.hpp": "2d59f4422b6a7c5f268a9acca36b0e3d8f2097170d4a69d4f104a448fb67ec95",
+    "game/native/gameplay_scenario/cutscene_camera.cpp": "c7fd9aee1e9b52f6e034ced24abdce718c818d606aaa20f986793e13bca76885",
+    "game/native/gameplay_scenario/cutscene_camera_assets.cpp": "b39b954de4344eb613716118a9d40453f01113c62fd7a4e34652a4447c489d94",
+    "game/native/transform_math/direction_basis.hpp": "560a0bfd3ecbb8a16a166a6abbee121890a720a4614f86db2f6725652301210a",
+    "game/native/transform_math/direction_basis.cpp": "149ed61a0559c3680c9d9540d1e8bba2cebc752653f0e397a0a7870d77da28b4",
+    "game/native/gameplay_scenario/cutscene_playback.hpp": "22ddc9447c82c76d134bcbb0f8f65e71c12919f3ad595cc2aa9c1e067f182ee8",
+    "game/native/gameplay_scenario/cutscene_playback.cpp": "10a6103965aa65b4396a5ee6ba74c30ea18c315969e31c438a6b6aa43caabd87",
+    "tools/native_reconstruction/camera_math_tests.cpp": "314196893e7e29d0dd192b53a77c2c6dfae262c5ef026608d52895e4dc5a9985",
+    "tools/native_reconstruction/verify_camera_math.py": "22b4fcedf0e6b4a8206eaf591ae2bbfd6b9f3c84ead249c3c9f66ca146e74f24",
+    "tools/native_reconstruction/camera_curves_tests.cpp": "018a3f75c5df6cb6a5a31774088383cbcadd62cb21556e5996c96bb5dbed82e9",
+    "tools/native_reconstruction/verify_camera_curves.py": "2cf3c79effefecf0ce7b322f2a45d759512a6a3ff5c68cd723511b03e8c79e01",
+    "tools/native_reconstruction/cutscene_camera_tests.cpp": "348d8900986448c34915742c16e8f549bf9c33e5782587c9afa60563ea83211d",
+    "tools/native_reconstruction/verify_cutscene_camera.py": "3e9823d8423861ce05ede408a335a973d0cc63e7449b1400813df3aec9fac42e",
+    "tools/native_reconstruction/cutscene_camera_assets_tests.cpp": "533f38924df2c7ef82a47da8b295f9f2b66c291609d91cdda662cab854d62650",
+    "tools/native_reconstruction/cutscene_playback_tests.cpp": "297e3b745e0a55185352b81ed00ad695f5030bddbfb1b7a5e03739e72d41a927",
+    "tools/native_reconstruction/verify_cutscene_playback.py": "f833f8e4594497fab4534f27102903b949e04d6b438a42863b520c2f3280f6a6",
+    "game/native/transform_math/CMakeLists.txt": "23fc77bc47ce6930355597b319baa5b2265294608e533077af8a8728462564a0"
+  },
+  "integration_scenario_cmake_sha256": "f43ec45b6bca940f869544beeadf0c8922fa6c3dc974506501039b5e55e8fe0a",
+  "receipts": {
+    "view_math_llvm": {
+      "path": "build-native-sjuni/camera-math-llvm-v3/receipt.json",
+      "sha256": "0914fffe00354acbb745ffbbacb9a2755d313f1e159942f5aa30aafb631ef317",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 6684672,
+        "camera_cases": 131072,
+        "basis_cases": 131072,
+        "inverse_cases": 131072,
+        "original_calls": 2490368,
+        "game_run": false
+      },
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "view_math_gcc": {
+      "path": "build-native-sjuni/camera-math-gcc-v3/receipt.json",
+      "sha256": "2f788c2c66bf39676f5327adddc272db24563396409b615847833dc6995ec7b3",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 6684672,
+        "camera_cases": 131072,
+        "basis_cases": 131072,
+        "inverse_cases": 131072,
+        "original_calls": 2490368,
+        "game_run": false
+      },
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "paired_curves_llvm": {
+      "path": "build-native-sjuni/camera-curves-llvm-v2/receipt.json",
+      "sha256": "1d2a465f3bdf8c8cf8c0043e991f690b40cc23f3698ddd7c652ade8845f371ea",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 23585303,
+        "cases": 131072,
+        "publications": 123415,
+        "original_calls": 2196607,
+        "game_run": false
+      },
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "paired_curves_gcc": {
+      "path": "build-native-sjuni/camera-curves-gcc-v2/receipt.json",
+      "sha256": "8ce2e97e65cf2f9e7a6458889b90e965e82bc1107164e53c1770cf59656d1a64",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 23585303,
+        "cases": 131072,
+        "publications": 123415,
+        "original_calls": 2196607,
+        "game_run": false
+      },
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "selection_llvm": {
+      "path": "build-native-sjuni/cutscene-camera-llvm-v3/receipt.json",
+      "sha256": "aec68129100a4e99baf699703b3c9a3757be0004893b8ac5e37773cffb5ab64d",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 3946506,
+        "fixtures": 2048,
+        "ticks": 262144,
+        "bound_visits": 490880,
+        "fog_calls": 8192,
+        "original_calls": 284691,
+        "game_run": false
+      },
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "selection_gcc": {
+      "path": "build-native-sjuni/cutscene-camera-gcc-v3/receipt.json",
+      "sha256": "3f11810ea5dbfd9faabc8c0a0fe6b0599615faf52f30a42e7a292e9681803e91",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 3946506,
+        "fixtures": 2048,
+        "ticks": 262144,
+        "bound_visits": 490880,
+        "fog_calls": 8192,
+        "original_calls": 284691,
+        "game_run": false
+      },
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "controller_llvm": {
+      "path": "build-native-sjuni/cutscene-playback-llvm-v19/receipt.json",
+      "sha256": "e6ae3a4050b9702faf51ce84122a7878a109f71576e047837dd171de243d2697",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "camera_ticks": 256,
+        "camera_guards": 3072,
+        "camera_publications": 257,
+        "close_refusals": 123898,
+        "checks": 2487321,
+        "controller_cases": 56173,
+        "advance_cases": 9363,
+        "acknowledgements": 9984,
+        "native_worker_calls": 67103,
+        "refusals": 15,
+        "original_calls": 456626,
+        "game_run": false
+      },
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "controller_gcc": {
+      "path": "build-native-sjuni/cutscene-playback-gcc-v19/receipt.json",
+      "sha256": "fbd5b37238f58bf48a65c3e42033212c4e8d3d52afeb82a1f2dc05d9adaebb03",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "camera_ticks": 256,
+        "camera_guards": 3072,
+        "camera_publications": 257,
+        "close_refusals": 123898,
+        "checks": 2487321,
+        "controller_cases": 56173,
+        "advance_cases": 9363,
+        "acknowledgements": 9984,
+        "native_worker_calls": 67103,
+        "refusals": 15,
+        "original_calls": 456626,
+        "game_run": false
+      },
+      "source_unchanged": true,
+      "source_drift": null
+    },
+    "owned_assets_current_cmake_llvm": {
+      "path": "build-native-sjuni/session-rooms-camera-assets-llvm-v1/receipt.json",
+      "sha256": "89ed69fc098e366e838acb53772c3e6de747a5cf40f73e659b3fea1545587f70",
+      "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+      "observed": {
+        "checks": 20155942,
+        "descriptors": 548,
+        "streams": 1092,
+        "keys": 2833,
+        "ticks": 1123196,
+        "samples": 1118590,
+        "retained_assets": 548,
+        "game_run": false
+      },
+      "source_unchanged": null,
+      "source_drift": {}
+    },
+    "owned_assets_current_cmake_gcc": {
+      "path": "build-native-sjuni/session-rooms-camera-assets-gcc-v1/receipt.json",
+      "sha256": "1ea57fb984f9ecb748d2e0b46ed5b4693b06cfdbb568ca4a264c7fbe42e226c5",
+      "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+      "observed": {
+        "checks": 20155942,
+        "descriptors": 548,
+        "streams": 1092,
+        "keys": 2833,
+        "ticks": 1123196,
+        "samples": 1118590,
+        "retained_assets": 548,
+        "game_run": false
+      },
+      "source_unchanged": null,
+      "source_drift": {}
+    }
+  },
+  "limits": [
+    "Selection5EE950 and binding5C0970 execute complete original bodies; Fog::select reuses canonical Fog rather than room Lighting. Active fog record copying remains the separately qualified Fog component.",
+    "Complete5C09A0 paired interpolation and its five polynomial helpers execute;375920 is an ordered explicit projection/display observation in this checkpoint, with default native publication unavailable.",
+    "Complete375A50 and its native heading/basis/inverse helper chain execute;1911D0/191220 are orthonormal inverse operations.",
+    "The owned current CMake pair imports all5480950 descriptors; older descriptor layouts remain unadmitted. There is no second media or pose clock.",
+    "Controller ownership moves only on accepted binding to its own state. Callback bind/unbind and World close refuse while active; a missing projection capability retains the sampled prefix and does not commit the frame.",
+    "New independent projection/display/fade work is excluded. Full cinematic lifecycle, renderer/device installation and fullStep4 completion are not established."
+  ]
+}

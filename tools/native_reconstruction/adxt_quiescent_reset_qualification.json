@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "status": "canonical scoped reset and distinct Aggregate4 qualified on both compilers",
+  "source_manifest_sha256": "12af28b2d98df4b89024eb2d91f03cd8f38819f68385a49f41d3e591289a9cbd",
+  "native_archive_manifest_sha256": "0ef1c6d137b649e0c7b1f5cb905f8d2bf84735cabbadd59e2037d18e9e39e59b",
+  "parent_suites": 77,
+  "aggregate_scenarios": 17,
+  "factory_scenarios": 14,
+  "detected_faults": [
+    "ignore-constructed-instance",
+    "ignore-proof-thread",
+    "foreign-proof"
+  ],
+  "evidence": {
+    "build-native-sjuni/adxt-quiescent-reset/native-llvm-v1/receipt.json": "1aa423ed52fbaa136d7336533ba8e119fd00b4c3bd9aeb300cd4c79137951889",
+    "build-native-sjuni/adxt-quiescent-reset/faults-llvm-v1/receipt.json": "990e416cfbf91da0a9d2ae38da6afb36ebd6e876cd1eb15c2df5da92832ee5b6",
+    "build-native-sjuni/native-audio-aggregate-v4/reset-llvm-v2/receipt.json": "7cd62460c7cbc359a37f6a5a1148639d221f4a878907cc020eaa2f8ef376dc4f",
+    "build-native-sjuni/audio-media-factory/empty-reset-llvm-v2/receipt.json": "cedaa3a1f5e647d8f2293beac58a937407b68d79cdc259f27cb8265e8edac688",
+    "build-native-sjuni/adxt-binding/empty-reset-actual130-llvm-v2/receipt.json": "3cd592d06553e7850b68a9197f284bf0deab5511b166295c172ed5d780088999",
+    "build-native-sjuni/adxt-quiescent-reset/native-gcc-v1/receipt.json": "ba30083a761ae150676d3fd5769c715e4d4074425ba32095cdb9a1352544029c",
+    "build-native-sjuni/adxt-quiescent-reset/faults-gcc-v1/receipt.json": "e9312999403ee0363d228cb9e2408ab60e966a19c5825882952370cb9424b9da",
+    "build-native-sjuni/native-audio-aggregate-v4/reset-gcc-v2/receipt.json": "cc6cd627167b2c14c113a6b3f1eb5418cae0917b0b3b7e949e30e2e5ecc31d58",
+    "build-native-sjuni/audio-media-factory/empty-reset-gcc-v2/receipt.json": "c5cf7182b5e662f3faa325316946f529e3e29200228752a1fc78d3d13b572369",
+    "build-native-sjuni/adxt-binding/empty-reset-actual130-gcc-v2/receipt.json": "9b0bd11e4c427ab7383c8e8bd2e30d1a94fe0db91143ad9b4e7f5dde4f176ef6"
+  },
+  "native_v1_source_snapshot": "build-native-sjuni/adxt-quiescent-reset/inputs-v1",
+  "game_run": false,
+  "device_opened": false,
+  "guest_reset_binding": false,
+  "stage3_complete": false
+}

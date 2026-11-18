@@ -44,6 +44,12 @@
 #include "actor_first_nonfinite.h"
 #include "ground_query_origin.h"
 #include "reo_dma_builder_observer.h"
+#if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_SJUNI_ADAPTER)
+#include "native_sjuni/runtime_adapter.h"
+#endif
+#if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_DISC_STREAM)
+#include "native_disc_stream/runtime_adapter.h"
+#endif
 
 #if defined(REO_GAME_FILE1)
 // Read-only observer always delegates the original generated entry exactly once.
@@ -1186,6 +1192,14 @@ static void reo_sfd_feed_end_entry(uint8_t* rdram, R5900Context* ctx, PS2Runtime
         return;
     sub_00162750_0x162750(rdram, ctx, runtime);
 }
+// Exact reviewed registry alternatives for the transitional native movie owner.
+// Arbitrary wrappers remain refused; unclaimed calls retain these original
+// continuation/timing adapters, including rollback after an incomplete install.
+bool reoNativeHostMovieReviewedEntry(std::uint32_t address, PS2Runtime::RecompiledFunction function)noexcept {
+    if(address==0x1627a8)return function==reo_sfd_feed_end_entry;
+    if(address==0x1640d8)return function==reo_cri_server::part<sub_001640D8_0x1640d8,0>;
+    return false;
+}
 void sub_0010A830_0x10a830(uint8_t*, R5900Context*, PS2Runtime*);
 void sub_001D3B90_0x1d3b90(uint8_t*, R5900Context*, PS2Runtime*);
 // Original 0x1D3BC0 selects the result asset through the common 0x1D3BE0
@@ -1788,7 +1802,7 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
         dtx.rpcSid = 0x90000200u;
         dtx.urpcObjBase = 0x001E0000u; // opaque SJ/RNA handles (IOP-like ids, never dereferenced)
         dtx.urpcObjLimit = 0x001EFF00u;
-        ps2_syscalls::setDtxCompatLayout(dtx);
+        ps2_syscalls::setDtxCompatLayout(dtx, &runtime);
     }
 
     if (std::getenv("REO_CRI_ERRLOG"))
@@ -1853,6 +1867,12 @@ static void applyOutbreakOverrides(PS2Runtime& runtime) {
         bind(runtime, 0x12A9F0, reo_cri_unlock, "CRI unlock (trace)");
     }
 
+#if defined(REO_BUILD_NATIVE_SJUNI_ADAPTER)
+    reo_native_sjuni::install(runtime);
+#endif
+#if defined(REO_GAME_FILE1) && defined(REO_BUILD_NATIVE_DISC_STREAM)
+    reo_native_disc_stream::install(runtime);
+#endif
     // Self-execution (REO_NATURAL) / REO_NO_OVERRIDES: only the libsif HLE routes above.
     // Everything below is a stub-era override that shadows real recompiled code; with
     // the regenerated output (Ghidra map, pinned codegen) bindings also intercept direct
@@ -2061,7 +2081,7 @@ static void applyFile2Overrides(PS2Runtime& runtime) {
         dtx.rpcSid = 0x90000200u;
         dtx.urpcObjBase = 0x001E0000u;
         dtx.urpcObjLimit = 0x001EFF00u;
-        ps2_syscalls::setDtxCompatLayout(dtx);
+        ps2_syscalls::setDtxCompatLayout(dtx, &runtime);
     }
 
     printf("[REO] File #2 overrides applied (libsif + CRI DTX HLE; game hooks not yet mapped).\n");

@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "scope": "Read-only owned File1 ISO/AFS audio metadata inventory",
+  "authored_sha256": {
+    "inventory.py": "80cd12c3597d3347c7fe45878ee4f8c5f402b77dbe13c425606d0573bd138ea5",
+    "test_inventory.py": "f0b02e1fe0b0eb3bf886fcaf3e863bfa6c7b62d7ae675bc3995148c9db3b3c5f"
+  },
+  "actual_source_authority": {
+    "launcher/DiscImage.cs": "a4c80d522997e0deb93594968351f55514f7c44e58d8c8dba44f1a68a5c646ec",
+    "launcher/DiscImport.cs": "10b4d1710dc6fbbce5ecb1dea1846f8c2763df104f3d51858bbfa5084b24319c",
+    "tools/assets/extract_assets.py": "a6ecfbefd9c469300b687d57976448292f163eed7c16d1350f14f96b53a96e32",
+    "game/native/adx_header/adx_header.cpp": "124147ce7fed57c895c080ece20aae8c8231c67eae07816b481895d4d34f38d4",
+    "game/native/adx_header/adx_header.hpp": "3a882ddf1e7dd979529c53c9824dcc362d544c3de39304d1d42e0bec44ebfb49",
+    "game/native/audio_banks/v2/algorithms.cpp": "4f4dafb01f3e980c958e26a3af6f78a2240860a3951ae039b3ac487507d3e93e",
+    "game/native/audio_banks/v2/session.cpp": "026fbd90c0521bf5bd4b8eab514f6174bfab465854acbd7b71d681e0f5421603",
+    "game/native/audio_banks/v2/session.hpp": "eb67b3532811549b1348c4bfd7cfdee5b4aac0f0aad4cc99ae336cbe3d798c19",
+    "recomp/overrides/native_banks/v3/packet_adapter.h": "74d60e96820978ddc5125b0bdf1db56b47abe2f62c7af76de50defcebc3e8d07",
+    "media/sofdec/sofdec_decoder.cpp": "e687b4107e24d57dc1d4841f99d1df7bff62460be36045d17a0915db5b750337"
+  },
+  "owned_iso_sha256": "69ae2c48e6f01e2605659feabb54eb9b82c63a809bdc8a78ad2d160b3c59a4a1",
+  "owned_elf_sha256": "06bd5fd7243144cd30cdd0c0023763a369738cb91b177b35e85f6a4782b4ca46",
+  "complete_player_compatibility": false,
+  "complete_bank_pairing": false,
+  "game_run": false,
+  "device_opened": false,
+  "payloads_extracted": false
+}

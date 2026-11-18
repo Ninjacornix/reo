@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <string>
 #include <vector>
+#include "../diagnostics/slowdown_recorder.h"
 
 namespace reo::performance {
 class FrameTrace {
@@ -39,13 +40,33 @@ public:
     class Span {
         FrameTrace& trace_;
         Row row_{};
+        uint64_t live_begin_ = 0, live_scanout_ = 0, live_presented_ = 0;
     public:
         Span(FrameTrace& trace, uint64_t tick) : trace_(trace) {
+            if (reo::slowdown::active()) {
+                reo::slowdown::capability(4);
+                live_begin_ = reo::slowdown::now();
+                row_.tick = tick;
+            }
             if (!trace_.path_.empty()) { row_.tick = tick; row_.begin = now(); }
         }
-        void scanout() { if (row_.begin) row_.scanout = now(); }
-        void presented() { if (row_.begin) row_.presented = now(); }
+        void scanout() {
+            if (row_.begin) row_.scanout = now();
+            if (live_begin_) live_scanout_ = reo::slowdown::now();
+        }
+        void presented() {
+            if (row_.begin) row_.presented = now();
+            if (live_begin_) live_presented_ = reo::slowdown::now();
+        }
         ~Span() {
+            if (live_begin_) {
+                const auto end = reo::slowdown::now();
+                reo::slowdown::emit(2, end - live_begin_,
+                    live_scanout_ ? live_scanout_ - live_begin_ : 0,
+                    live_presented_ && live_scanout_ ? live_presented_ - live_scanout_ : 0,
+                    live_presented_ ? end - live_presented_ : 0, row_.tick,
+                    (live_scanout_ ? 1u : 0u) | (live_presented_ ? 2u : 0u));
+            }
             if (!row_.begin) return;
             row_.end = now();
             if (trace_.rows_.size() < 32768) trace_.rows_.push_back(row_);

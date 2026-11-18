@@ -1,0 +1,145 @@
+{
+  "schema": 1,
+  "status": "qualified bounded secondary pose link restoration",
+  "game_run": false,
+  "installed_in_game": false,
+  "stage4_complete": false,
+  "source_sha256": {
+    "game/native/animation/curves.cpp": "143289127bf911e7f9726ab13e6761b893ad222f4066445c3a1f267ac56cd55b",
+    "game/native/animation/curves.hpp": "c337a6c8946f21d7d14b7c50f06d1d3b906e2bd3f284646d82fc0b3fdded07c2",
+    "game/native/animation/model.cpp": "a47d8f9598fd21612a63207e767889eba8fdd6d581fd3dae8a95ae3bed4393f9",
+    "game/native/animation/model.hpp": "ce893b5cc064c969eac36aac7e059109a65546642277b95eb6d0f9c0926645d8",
+    "game/native/animation/model_math.cpp": "36210e266aafd88deabee8602f8220c408c77372b17c77f28be743282d266ebe",
+    "game/native/animation/model_math.hpp": "45b07adb6599a2f332214c58470399ef338196894e375b309cae3e63596349cb",
+    "game/native/gameplay_actors/entity.hpp": "21189b7febb8685ce68db664960c7567704f4f6d3b602dfc817d663bef2d5268",
+    "game/native/gameplay_actors/health.hpp": "1555ff5b97a8320726b67bc6c5a61b9bd3ef334ddb56a9babd9268b4c1cd486e",
+    "game/native/gameplay_actors/hit.hpp": "96f4ac9d045bed5361ac50aabe3fa76351cd6a1561bd7314100410016a514f17",
+    "game/native/gameplay_actors/input.hpp": "e939cc757fc206245960659be0cab87f415cd9547199df2e2cbfb42192dd6b22",
+    "game/native/gameplay_actors/reference.hpp": "def7dcc9e92168124bc9dcb47d53eadb6571cad791157855e1a9f7a9867cd91c",
+    "game/native/gameplay_actors/status.hpp": "e1eff59ea75cb0dab466533189644cdea8999f29b9fc7d77fa1f02bb7667e64b",
+    "game/native/gameplay_ai/control_requests.hpp": "4e7347c13bc9b15826f5a47357fe9b878dc76a9f53a889b52386f6a83b25cc15",
+    "game/native/gameplay_ai/execution.hpp": "583aa5382c6e901f6040d3e3991fa1cc10a68f2589f894aedffe981793bd8a12",
+    "game/native/gameplay_collision/actors.hpp": "1cd3018e15ddf32fe4e5facf124d28bcfc7243bda4f788728318f8e934483f78",
+    "game/native/gameplay_collision/collision.hpp": "014b1ccc252ef069598947a44ab5082011af1a0c0184a2705a0ade6ebb8181da",
+    "game/native/gameplay_collision/contact_component.hpp": "10c088f8695296e2bce347a1b13b30f3f337642e594bca19288f5a424495d27c",
+    "game/native/gameplay_collision/hit_regions.hpp": "6549e791d8c22db70cf78fcd3cf5eecf10615e1fc910bd54ceec5c4d90476ed0",
+    "game/native/gameplay_collision/response.hpp": "22a85d653f51fd86e9666de1a748060b141fe02c3ead9ff0bc2022a7298f9f6d",
+    "game/native/gameplay_collision/room_damage.hpp": "63edc03a2a489247971cc566e1990c0f94f1c092fc3fda24158c531d62497c2d",
+    "game/native/gameplay_collision/spatial.hpp": "92d543fa718a384b4887be0e6b2ee264515070f3f5a51be6cc9ae67312dee258",
+    "game/native/gameplay_navigation/actor_routes.hpp": "4ea4d8a494375608331cd3a4360cfb85823dba1b007b36c42d45c8e8bd7248a2",
+    "game/native/gameplay_navigation/bank.hpp": "61ceed3edcf19c9bf781b9426021862aa8ad1389d22dbcc57940f541f5dbb356",
+    "game/native/gameplay_navigation/conditions.hpp": "ee7f917863ff47fa4e54daca54513692863520729e76207d99853092e1ddd55a",
+    "game/native/gameplay_navigation/cost_routes.hpp": "b5a85b54bd3ed9959304b3ff270cc48c41fdef272182caba7ae33e9429493646",
+    "game/native/gameplay_navigation/cross_room.hpp": "dfd7ca37374a3a8c96d6a90ca1a1b880e633dc47bbd3fb1ac430d87150d8dde4",
+    "game/native/gameplay_navigation/edges.hpp": "346d7fd81e4f539177dba4168b202c98d410df57da17bf40cf0206adf31dd003",
+    "game/native/gameplay_navigation/link_collection.hpp": "41ab6ea600c4c135548933f3da73deecb8fa5b9a2088053f0b3586ac9e817bdb",
+    "game/native/gameplay_navigation/local_routes.hpp": "21de12dfc09696697a9a9e6343b6f030d3b0dda1a5aa136d6b96173e95a95fd2",
+    "game/native/gameplay_navigation/navigation.hpp": "30811ae56a05e952018d8e5e2996cc73229ba952f9913c10daf20c0972deef80",
+    "game/native/gameplay_navigation/routes.hpp": "f8f4c0748510680a5519902f91b4c07cfc2a730bbf63fd6344301dd4af875ce3",
+    "game/native/gameplay_scenario/auxiliary_room_rows.hpp": "01644097b61fbdd9f254eee930e21bdc97b910936f0dcc07ae19b3a718b62745",
+    "game/native/gameplay_scenario/content.hpp": "fa70bf3bb8b05f2b12beb7df1b738412cfd4bdf63ae9b5970517ce7eab419576",
+    "game/native/gameplay_scenario/cutscene_requests.hpp": "0e2bb1616a57af8001f0c009618209cafe31a815cbeaa1b78d9687efb5df9c3d",
+    "game/native/gameplay_scenario/enemy_descriptors.hpp": "f020889d4ac16f0d5014118383d040f0bf3346114d6f7e4ab1a8df67eb2a40db",
+    "game/native/gameplay_scenario/enemy_routes.hpp": "a3343d7721b7105ac620509bc71d4e2377f46c45aa40fddaeba23b465d9ce67c",
+    "game/native/gameplay_scenario/model_reference.hpp": "4b512afd9574ead2cca36bc490f5938a557073f043d2b6021c9c51325b18f907",
+    "game/native/gameplay_scenario/npc_descriptors.hpp": "807b910faab217184814a15a9059f67fe43037ea0a33bd5d3fa9196edb3ac5fb",
+    "game/native/gameplay_scenario/room_actor_assets.hpp": "68a0fffbe445dfbcd2bc6a9a65f4193f85991f739a691c69279a079d37156b84",
+    "game/native/gameplay_session/activity.hpp": "604410c6d76106740995ad507bb0c6a5ffa57ff443e08a4ab100207fc2308d8e",
+    "game/native/gameplay_session/room_variants.hpp": "34d44fe610ab2111356f445954bc84971a021778faedfa1f159bd2d27c6b342c",
+    "game/native/gameplay_session/session.hpp": "c10418c3e61731187b918331b811983468f6edb48746522a980de2adef462ffd",
+    "game/native/gameplay_world/actor_placements.hpp": "ac1362c4b4bea419f47cd94edf0aa778da02c2796d64480f734eb282a61bca5c",
+    "game/native/gameplay_world/enemy_state.hpp": "3ed6793dd1834cb233a32ec0a400d0bb48cc8c8aad798184a643b6e649db6c75",
+    "game/native/gameplay_world/humanoid_motion_bindings.hpp": "56b9a220ab0205a21e0fdf9b74ebbfa584184e9d45770e912d968e91cc748988",
+    "game/native/gameplay_world/inventory_state.hpp": "3986199afba104514c696a6adc7e48f6f0c3beeebc1fc4021f5926c096f4068c",
+    "game/native/gameplay_world/linked_update_state.hpp": "93ecb03425d45d31b481c44c6694021caa2bcd4c03bbde86fd2feb9d3f226d62",
+    "game/native/gameplay_world/material_uv.hpp": "61264daaf4ed066276d9dac616820111a4af078136e8036b8b52be5b88c6eb9d",
+    "game/native/gameplay_world/npc_actor_state.hpp": "63479bf5feb2a73c767273ce60565fce686ae38ab2fabdff7f0c59468d8755f9",
+    "game/native/gameplay_world/primary_actor_state.hpp": "d6909c0463c58854f56c4fe56b4eb0cf9f28a00282523663ec37b46183ab68cb",
+    "game/native/gameplay_world/primary_saved_state.hpp": "2e35cc393731a5109df515c81651347d73dc12bd85d25f131ff07c587064c4f6",
+    "game/native/gameplay_world/scripted_actor.hpp": "a05857ddaa62b9b2591cafe4b72a8b86b40d0b88ef3d9bb969a77c35a25e99a4",
+    "game/native/gameplay_world/secondary_pose_link_profiles.inc": "c9a7835c08720be86a51bb390e408e9ac2faccf68ebbacd6f5636042bf6d561d",
+    "game/native/gameplay_world/secondary_pose_links.cpp": "1bdf4848b0b2ef821be61fee3455232a3caba9fc96d2eeac104cd8d134191517",
+    "game/native/gameplay_world/secondary_pose_links.hpp": "c17b96fb2aca36a9f3d41b93e0372b9076b4d076617369c8a9058137eec80b66",
+    "game/native/gameplay_world/speech_state.hpp": "00c5fd992974ae0e49ee1585950f54e59e9ebac8e7452ce4906ac45ecc554cb9",
+    "game/native/gameplay_world/world.hpp": "2f3c8d0840a6ce6e999ddb53f04ff0c5e2528019d8975dd5c80a67c98d521d96",
+    "game/native/transform_math/transform_math.cpp": "9f639f8b5003bf30ec6e9b8c35e869cc98f2026c58496c71d44d5a95700bfc16",
+    "game/native/transform_math/transform_math.hpp": "04cc24b68e06088f627ab287ab61290ed3991fb541406548790e50609356970c",
+    "tools/native_reconstruction/verify_secondary_pose_links.py": "1b0bac07e053b6adf7f021a8333371fdde292425d7d468f379123bb4765170e0",
+    "tools/native_reconstruction/secondary_pose_links_tests.cpp": "b41fa4428083e6ebc490b00c9d7d25b577a56c59ac5df741740941b577d6c391",
+    "tools/native_reconstruction/gameplay_world_oracle/transform_reference.hpp": "1fa48df945a347bb8eddc9d918fb294c3f3ff9256ef79c04ee5afa18d1829e0f",
+    "recomp/config/output_ovl/o2/o2_0061A6A0_0x61a6a0.cpp": "26781f66369c67d7383fc7025d65e6d985ded5f830a323309469926fbe020839",
+    "recomp/config/output_ovl/o2/o2_0061B1A0_0x61b1a0.cpp": "31cfbd8b6823c6c6219bb8a23b645400830fb674714e668592c18f2d20a8c434",
+    "game/native/gameplay_world/scripted_motion.cpp": "b2b4cd5e128960f1e1b671cbd432c2f6892c621776288a5a6d8d058214ae5a20",
+    "game/native/gameplay_world/scripted_motion.hpp": "069eb1ff5afbe02e32dac649727c7724c4ce674459b07318520ddc99be2d5ca6",
+    "game/native/gameplay_world/cutscene_actor.cpp": "18943de710e9e94d0b6e64cfc53a6a7a190716a01f1a602f8a1f34a12965b8fc",
+    "game/native/animation/model_blend.cpp": "65e40c532bb16fafb43636ff0602ddd5a8ababb368c50c39df5c4c15d5ca2ef3",
+    "game/native/animation/primary_motion_routing.hpp": "8afb13cb504beab839edb4f0d8f1c077ab2a2152bf56d2fd2234f1252ea969a6",
+    "game/native/animation/primary_track_layouts.inc": "aec3ac38998bbc4538993dd2db1ca6c4376a735ca330e06c1cbff68eb35727a4",
+    "game/native/gameplay_world/CMakeLists.txt": "1d0b950734474f6909d699bd45218c921ecc13e2f3279c317e798287bbd1d9cd",
+    "tools/native_reconstruction/generate_secondary_pose_link_profiles.py": "51ee9a914e10b666af7a3990b554f60bd33ece8cd3bfc42f6ac09aa8593f9133"
+  },
+  "cohorts": {
+    "links": {
+      "llvm": {
+        "receipt": "build-native-sjuni/secondary-pose-links-llvm-v3/receipt.json",
+        "receipt_sha256": "e57d8538051d50ff43ee94e3681a4c823d387fbf9b06daf92ad25e31494adca9",
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "observed": {
+          "checks": 575759,
+          "selection_cases": 260238,
+          "selection_refusals": 114,
+          "model_cases": 256,
+          "model_refusals": 1,
+          "controlled_npc_cases": 8,
+          "original_calls": 261649,
+          "game_run": false
+        }
+      },
+      "gcc": {
+        "receipt": "build-native-sjuni/secondary-pose-links-gcc-v3/receipt.json",
+        "receipt_sha256": "7a326cf15ba15964bbdeadcaff5b247214bb0e3b27faebde694f1c2dfa53bc7a",
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "observed": {
+          "checks": 575759,
+          "selection_cases": 260238,
+          "selection_refusals": 114,
+          "model_cases": 256,
+          "model_refusals": 1,
+          "controlled_npc_cases": 8,
+          "original_calls": 261649,
+          "game_run": false
+        }
+      }
+    },
+    "parents": {
+      "llvm": {
+        "receipt": "build-native-sjuni/secondary-pose-link-parents-llvm-v1/receipt.json",
+        "receipt_sha256": "abdac1b508bbd5cb316b78ca10352dfbe3fd135e093d3b2613c308fb85a9ca23",
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "observed": {
+          "parent_tests": 5
+        }
+      },
+      "gcc": {
+        "receipt": "build-native-sjuni/secondary-pose-link-parents-gcc-v1/receipt.json",
+        "receipt_sha256": "7ac3553b69ff5e3590e5bc378b3f7c8cf364ebfabac4ac7e48cbee7a67c54c46",
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "observed": {
+          "parent_tests": 5
+        }
+      }
+    }
+  },
+  "profile": {
+    "receipt": "build-native-sjuni/secondary-pose-link-profile-v1/receipt.json",
+    "receipt_sha256": "49de8551d3ebd25a23adb88d87a872e61efeff8bbd043453bfdeac4cb78046db"
+  },
+  "limitations": [
+    "Variant selector physical windows include padding; bounded table access is not proof of a stock actor/model asset assignment.",
+    "Actual P07_00/HP07/HN54/HN88 skeleton inputs are used. Initial original node arrays project the independently qualified importer; original packing is not newly executed.",
+    "Only profile2 uses controlled HP07 binding; no stock NPC assignment for that profile is established.",
+    "Selector-only61B1A0 calls are observation ports; actual model comparisons execute both full owned bodies.",
+    "61A820/61AAA0 secondary-chain ownership, actual5ECAE0 traversal and full scene/game acceptance remain open.",
+    "No game run, measured speedup or new slowdown diagnosis."
+  ]
+}

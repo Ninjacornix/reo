@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "scope": "Canonical action-transition snapshot executes native 667370 directly; full owned 66B500 and 667370 compared.",
+  "cohorts": {
+    "llvm": {
+      "path": "build-native-sjuni/gameplay-behavior-snapshot-llvm-v3/receipt.json",
+      "sha256": "1cf243630bbc66e4083af35e0dd25c099ade39179cb75c5c1591518ea97593a4",
+      "result": {
+        "status": "passed",
+        "cases": 32768,
+        "trace_words": 2562408
+      },
+      "source_snapshot": "build-native-sjuni/gameplay-behavior-snapshot-llvm-v3/source"
+    },
+    "gcc": {
+      "path": "build-native-sjuni/gameplay-behavior-snapshot-gcc-v3/receipt.json",
+      "sha256": "d70db5a439d9cd2aa81cdb37a35a974fdb52eb929459d19e160b4eb426ec24b5",
+      "result": {
+        "status": "passed",
+        "cases": 32768,
+        "trace_words": 2562408
+      },
+      "source_snapshot": "build-native-sjuni/gameplay-behavior-snapshot-gcc-v3/source"
+    }
+  },
+  "stage4_complete": false,
+  "installed_in_game": false,
+  "game_run": false,
+  "remaining": [
+    "Native pose/model import owner and complete action/effect providers",
+    "Native whole-game installation and acceptance"
+  ]
+}

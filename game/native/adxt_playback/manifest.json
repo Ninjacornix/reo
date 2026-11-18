@@ -1,0 +1,18 @@
+{
+  "schema": 2,
+  "status": "corrected inhibited-admission byte frozen before second comparison",
+  "files": {
+    "game/native/adxt_playback/playback.hpp": "464ce0042549145a7aaa46eefa2afb9ce6fa4d9a7ea42b75abbbabf202a19935",
+    "game/native/adxt_playback/fixture_runner.cpp": "d18b020f505ae15b83ec36f1db8aee402c7317b29b94e110524cce990eeb558d",
+    "game/native/adxt_playback/playback.cpp": "57ca0798c83b72763a79406b5c2d03c24682333d7d8100c9969095365e0c26fe",
+    "game/native/adxt_playback/playback_tests.cpp": "d9764e92535d774af9ef77fdb007e8a0fa980fd1be13fd19dcaba995bcbad1aa",
+    "game/native/adxt_playback/CMakeLists.txt": "bacf95b96b95fa334b096d3e7874dc2cbb17a99c10c40b276e146f8d41ef7513",
+    "game/native/adxt_playback/verify.py": "e9198f7683f5aa5921dc8dcff166876aedb7871442f5e8d25a8f63aab4a851ac",
+    "docs/native-media/ADXT_PLAYBACK_CONTROL_CONTRACT.md": "a059fef6bfeff3eee1d4f64e03915e97f997dfcb37628f4c8fae097eae556792",
+    "game/native/adx_pcm_store/v2/pcm_store.hpp": "b0f1d8adbd452415fcbfac04e19eeaa194949f4b5d120629e14b111bfd683b91",
+    "game/native/adx_pcm_store/v2/pcm_store.cpp": "71842ead21abf764e0520268eceb1e3de71e1d1f319238eb4cdf92060f35bb83",
+    "game/native/sjrb/sjrb.hpp": "95263a5391293bd7f4a5d9607cabb57a3ae565ae9eee0d3f38d290f5cc45a37b",
+    "game/native/sjrb/sjrb.cpp": "29a888b091cf7284876cabcab0aa78062632e6192d98782edc0b065d926d25a2"
+  },
+  "original_receipt_sha256": "898d1f80e1f1548a871a57e9c7b1967daa5789aeb2ab225db978ada5c5584468"
+}

@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "purpose": "Historical source-catalogue snapshot before writer/aggregate2/factory implementation; flags and blockers describe that snapshot only, not current implementation status",
+  "dependency_receipt_sha256": "2de11297c268e453888341b7f3ed44012ae51bdd10c9baa39a168e5cade97ec0",
+  "dependency_selected_source_sha256": {
+    "ps2xRuntime/include/runtime/ps2_memory.h": "c7a333c12fc5e279453c614453e4ca8bc226304d09fe1f0e9a5b95fa943b8ae0",
+    "ps2xRuntime/src/lib/ps2_memory.cpp": "8e89a7143b7037dffd6de139ba8fcc48d0200b042ce51d4716b784e26d6cd2ea",
+    "ps2xRuntime/src/lib/ps2_gs_gpu.cpp": "925ec09d233cdc665db2b874eaf5450c84a31048ced6980cfc4d2a2056aee427",
+    "ps2xRuntime/src/lib/ps2_runtime.cpp": "c800ae703c4ffb973991654593314d53330aabf4062722a5f9ef4ee4f1bf278d",
+    "ps2xRuntime/src/lib/Kernel/Stubs/GS.cpp": "9e1cac375057a7f90fb66b3cd543a7173a5da682719aa6262189a87d412d6fb0",
+    "ps2xRuntime/src/lib/Kernel/Syscalls/RPC.cpp": "0050649df52cbe65b65580ae27aca7732a6e8d95d03076f7f0f80ec294e2c9a7",
+    "ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudio.cpp": "082a52c408dbe6969b0ff9dfe8759f49a05cf1a18fe35863ae14f2c25d478d67",
+    "ps2xRuntime/src/lib/Kernel/Syscalls/Helpers/CriAudioRamCapture.h": "2505ea1838df71edd5bf6c87f88934cf303d2c533e8bd3e24dee3a2c7fea3147"
+  },
+  "authored_selected_source_sha256": {
+    "recomp/overrides/reo_hw_bridge.cpp": "cddc54d725edf9826a3338beff682ebd9a6132d5380406c6c72e0c0e3b444b7c",
+    "recomp/overrides/native_cd_owner/runtime_adapter.cpp": "ceb169ef93e6952fc73626c97f04ea06690c6f07be045420d60feb82e42ccd07",
+    "recomp/overrides/native_cd_owner/ram_configuration.h": "f8774e85e56938ff116425d13025c4647924392a5af883171bd1a58f95978649",
+    "game/native/pcm_bridge/session_bridge.cpp": "fcf284fa46a752f07a2f48a019cce8f6f2df8eae7d864aef787ca46854bc9649",
+    "tools/parallel_gs_backend/resident_geometry/parent/parent_owner_service.hpp": "3dd90057a644451a6fbeeaf9c9fabf44d1543656d762ff220c61de5453306dd2",
+    "game/native/ram_capture/cpu_authority_gate.cpp": "f338c6f1092214b1d482a971f107481d15c3879f8af268a395476783e00c35f8",
+    "game/native/ram_capture/cpu_authority_gate.hpp": "0abd7a66d9892bdd3e590ecf3ec4a4b8080ad7c6312348c87dac8afde21dbc77"
+  },
+  "runtime_factory_implemented": false,
+  "pad_writer_authority_implemented": false,
+  "aggregate2_implemented": false,
+  "body_caps_issued": false,
+  "game_run": false,
+  "device_opened": false,
+  "known_blockers": [
+    "Actual unscoped Pad2feeder dynamic destination writes need writer participation",
+    "Coordinator2 and actual Pad/Service BodyCaps qualification pending",
+    "Versioned Aggregate2 adapter3 contract not implemented"
+  ],
+  "historical_snapshot": true,
+  "current_status_document": "docs/native-media/NATIVE_SOUND_RAM_MEMORY_OWNER.md"
+}

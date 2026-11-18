@@ -1,0 +1,152 @@
+{
+  "schema": "reo.native.scenario_events.qualification.v1",
+  "status": "passed",
+  "source_sha256": {
+    "game/native/gameplay_scenario/scenario_events.hpp": "825394c741f741ea3007226ef1933f9e47bc903a2a54e355c65c31405415f1a3",
+    "game/native/gameplay_scenario/scenario_events.cpp": "54f0be0b52aeaf92b093784ee14150b691ab68782d733a3870a21485f792baaf",
+    "game/native/gameplay_scenario/timer_hud.hpp": "312e5956675e23c65cf38fdb59c93f2312b65252b1e67b2267ccbd9ecaaa14a8",
+    "game/native/gameplay_scenario/timer_hud.cpp": "b1605b8ffe43fa7e0691eae8ee0be181992510aaa5243b3294b404e0f9d5f9d6",
+    "game/native/gameplay_tasks/events.hpp": "f47183bf9ffc18b3f7f6376467284919b0aa05ebc9249bc31d5f5ee7420e7e35",
+    "game/native/gameplay_tasks/events.cpp": "f1f4ec1bf528f70a8dcac5e2a1203368581d777ee6144df7739002eaabf4fd9c",
+    "game/native/gameplay_update/update.hpp": "5b5eaef7f5e8d6d788de246f3a17e76b48e1d82c779d9c93eb17f56603c7d895",
+    "game/native/gameplay_update/update.cpp": "bf9376482b06da524ea6bc7e86f6cc4bcab089079f3a1a6702c69fa83020a274",
+    "game/native/gameplay_scenario/interpreter.hpp": "05c5ae347618497de0aee26948083299e307fc764c4105811ad819019a64951b",
+    "game/native/gameplay_scenario/interpreter.cpp": "7318e0565fa815fcbc11ff9e69a48a2ace77f293f46f90e51476c2a991d2f497",
+    "game/native/gameplay_application/native_session.cpp": "92defead2c556d97225185e4c413051651e1252ab703606a5b3283673f17114a",
+    "tools/native_reconstruction/timer_hud_tests.cpp": "5b5c6f412cc4b6757aa0aa62d7ca7e086c3346695eaedb09f87747879b02b9a1",
+    "tools/native_reconstruction/verify_timer_hud.py": "34c440a75618dee047444dfa2d8b2c778a0159c735b435cd6ef537a8d765a2f3",
+    "tools/native_reconstruction/scenario_events_tests.cpp": "6e8825d688652088500f208fdcdfc29c3ee4cb1a2c4731c2483064f76e0963b2",
+    "tools/native_reconstruction/verify_scenario_events.py": "bcc3c067fec96a1fd873594ccc44b52b7e846a694a85858511de1f117863bfde",
+    "tools/native_reconstruction/audit_scenario_opcode_frontier.py": "6d7e5d52574d3b99ac5966a723dbd9ea602506bfd541a4a3feb148e98c4d4ada",
+    "tools/native_reconstruction/qualify_scenario_events_v1.py": "9dc0a536730ed020918803f6b96b2fd784a13f9616549595566f89121b020be4",
+    "tools/native_reconstruction/gameplay_scenario/tests.cpp": "1db8012ff196bc1b74e675948c61ed9405534cf176cebb0024ef5dee3b7c3700",
+    "tools/native_reconstruction/gameplay_scenario/verify.py": "d8150f88e3959b6651ab40dcaf1ccf0172f9236b2e61a8c6dc11c000872c2050",
+    "tools/native_reconstruction/gameplay_scenario/scenario_events_vm_tests.inc": "5bf1731fc01ba791095aa623af2128c42dc0a02a70b5eeac3a00d99fd20af5d7",
+    "docs/native-gameplay/SCENARIO_EVENTS.md": "f6b449eb6285861c106b585ad66d64a3c00fe825f75447e6ed63d16759a3e3e5",
+    "docs/native-gameplay/STAGE4_INTEGRATION_AUDIT.md": "e7178ae0b5f69cd653b59fda30538cc926d45871648fb5edb2043421420ad808"
+  },
+  "evidence": [
+    {
+      "path": "build-native-sjuni/timer-hud-llvm-v1/receipt.json",
+      "sha256": "f5134ddd2480df6da73e6675c30fe14221b03dbb9e0954145db362d4e1dcff8f"
+    },
+    {
+      "path": "build-native-sjuni/scenario-events-llvm-v5/receipt.json",
+      "sha256": "bfecf600d65897c3379f9bc8c77f6395ba0f6aa0fbd5ad8db4a1b99b0d4c4c70"
+    },
+    {
+      "path": "build-native-sjuni/scenario-events-vm-llvm-v2/receipt.json",
+      "sha256": "6acb8fe148c32f38fe2711bc561a4580e25c3ee8da24d9aa30f23b3e6735e3cd"
+    },
+    {
+      "path": "build-native-sjuni/scenario-events-admission-llvm-v1/receipt.json",
+      "sha256": "0bf5a1cf26f1ff958d00f1cee3ea30ee447a9b4db4cabc13497cb2793a257cbd"
+    },
+    {
+      "path": "build-native-sjuni/scenario-events-parents-llvm-v1/receipt.json",
+      "sha256": "e0bebf89ab7e578012af9e415c399e2eb26f84649e6d59f1d1b6e51d0049a409"
+    },
+    {
+      "path": "build-native-sjuni/scenario-events-lights-assets-llvm-v3/receipt.json",
+      "sha256": "498f313946951dded97a856cd3b166b4dd461aa0568762c9e500ea8a8a89cfba"
+    },
+    {
+      "path": "build-native-sjuni/timer-hud-gcc-v1/receipt.json",
+      "sha256": "ab52b09905d8724b6b806ba66a0f070811a00ff611c7dadf50bcc7d6e667afc5"
+    },
+    {
+      "path": "build-native-sjuni/scenario-events-gcc-v5/receipt.json",
+      "sha256": "67c02325f81851890a625c5ad5abf9423dfda4165b0817de6a4efab24e351bb2"
+    },
+    {
+      "path": "build-native-sjuni/scenario-events-vm-gcc-v2/receipt.json",
+      "sha256": "fbc6120757fb1791a81511cf3796bb1446e8381cc4ac70648b6134091c6d3177"
+    },
+    {
+      "path": "build-native-sjuni/scenario-events-admission-gcc-v1/receipt.json",
+      "sha256": "2b5589083b7a2c1cc5ed626b121f68c755551cfded2badbaf5c8061eadb7c22e"
+    },
+    {
+      "path": "build-native-sjuni/scenario-events-parents-gcc-v1/receipt.json",
+      "sha256": "7f7a2622d0e10b3aaecd18b260de54ba2920b8532f8b9893011d647c912e9737"
+    },
+    {
+      "path": "build-native-sjuni/scenario-events-lights-assets-gcc-v3/receipt.json",
+      "sha256": "5520ac91b3479b9747693f5f47a848d7c5216bad0f8e46adc315bb5529f1cdb1"
+    },
+    {
+      "path": "build-native-sjuni/scenario-events-frontier-v1/receipt.json",
+      "sha256": "d59600e0e8ea6fcf24a571e9763d7bd4e9c17b1a8a95cd36700739d7e1751a33"
+    }
+  ],
+  "observed": [
+    {
+      "compiler": "llvm",
+      "hud": {
+        "status": "passed",
+        "checks": 8847393,
+        "cases": 720899,
+        "original_calls": 9043989,
+        "game_launched": false
+      },
+      "events": {
+        "status": "passed",
+        "checks": 224527,
+        "cases": 96,
+        "passes": 2592,
+        "presentations": 2784,
+        "registrations": 1960,
+        "retirements": 172,
+        "original_calls": 40028,
+        "game_launched": false
+      },
+      "vm": {
+        "checks": 569132415,
+        "scenario_event_dispatches": 144,
+        "scenario_event_refusals": 11
+      },
+      "parent_tests": 28,
+      "owned_light_assets": 548
+    },
+    {
+      "compiler": "gcc",
+      "hud": {
+        "status": "passed",
+        "checks": 8847393,
+        "cases": 720899,
+        "original_calls": 9043989,
+        "game_launched": false
+      },
+      "events": {
+        "status": "passed",
+        "checks": 224527,
+        "cases": 96,
+        "passes": 2592,
+        "presentations": 2784,
+        "registrations": 1960,
+        "retirements": 172,
+        "original_calls": 40028,
+        "game_launched": false
+      },
+      "vm": {
+        "checks": 569132415,
+        "scenario_event_dispatches": 144,
+        "scenario_event_refusals": 11
+      },
+      "parent_tests": 28,
+      "owned_light_assets": 548
+    }
+  ],
+  "installed_in_game": false,
+  "game_launched": false,
+  "device_opened": false,
+  "stage4_complete": false,
+  "limitations": [
+    "Only actual owned D1 kind6 callback family is admitted; other generic event families and scenario-specificD0 remain unsupported.",
+    "HUD rendering emits typed CPU sprite packets; Stage5 texture/submission consumers remain outside this gameplay component.",
+    "All original CPU/register/RAM code is confined to offline comparison executables; production uses canonical typed owners.",
+    "Full application light/parent receipts retain their exact historical source identity. Later independent inherited-trail owner fixes require a new combined parent capture.",
+    "All five scenario EVBs still refuse complete admission; remaining ordinary static inventory is77 instructions across13 distinct opcodes.",
+    "Native terminal frame services, platform/input/transport/media adoption, semantic saves and installed gameV39 replacement remain required."
+  ]
+}

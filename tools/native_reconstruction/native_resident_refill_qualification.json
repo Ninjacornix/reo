@@ -1,0 +1,1308 @@
+{
+  "schema": 1,
+  "status": "resident finite-audio refill focused, native80 and strict ordinary regressions passed on both compilers",
+  "game_run": false,
+  "process_access": false,
+  "device_opened": false,
+  "stage3_complete": false,
+  "actual_original_game_bodies_executed": false,
+  "actual_runtime_acquisition": false,
+  "ordinary_runtime_and_factory_ports_declared": true,
+  "actual_adaptive_refill": true,
+  "actual_resource_capability_and_async_worker": true,
+  "initial_complete_asset_load_async": true,
+  "prepared_copy_on_native_control_worker": true,
+  "arbitrary_views_still_async": true,
+  "output_callback_does_not_read": true,
+  "first_read_copies_entire_original_body": true,
+  "controlled_prepared_provider_reads_after_ready": 0,
+  "controlled_blocked_provider_milliseconds": 2500,
+  "concurrent_resident_exact_requests": 32,
+  "request_identity_one_result_pending_slot_and_shutdown_fence_preserved": true,
+  "existing_async_request_not_overtaken": true,
+  "range_budget_and_overflow_checks": true,
+  "focused_assertions_each_compiler": 133418,
+  "native_suites_each_compiler": 80,
+  "ordinary_positive_scenarios_each_compiler": 34,
+  "ordinary_detected_faults_each_compiler": 10,
+  "physically_pinned_memory": false,
+  "physical_cause_of_v37_wait_proven": false,
+  "game_fix_proven": false,
+  "cold_first_movie_audio_alignment_validated_here": false,
+  "manifest": "tools/native_reconstruction/native_resident_audio_manifest_v1.json",
+  "manifest_sha256": "594c4a700cf9936c073c8d543fc980711e33f0df8e0151947ca15bef07e4a555",
+  "cohorts": {
+    "llvm": {
+      "focused": {
+        "receipt": "build-native-sjuni/refill-resident-results-llvm-v2/receipt.json",
+        "sha256": "5565961dbeac490f08b9dd98a2752dd7336efdc57499baf5c899eb50482c583a",
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "checks": [
+          {
+            "label": "configure",
+            "exit": 0,
+            "command": [
+              "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+              "-S",
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\refill-resident-results-llvm-v2\\source-snapshot\\game\\native\\adxt_refill",
+              "-B",
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\refill-resident-llvm-v2",
+              "-G",
+              "Ninja",
+              "-DCMAKE_BUILD_TYPE=Release",
+              "-DCMAKE_CXX_COMPILER=C:\\Users\\Ninjacornix\\AppData\\Local\\OutbreakRecomp\\launcher\\toolchains\\llvm-mingw-20251216-ucrt-x86_64\\bin\\x86_64-w64-mingw32-clang++.exe",
+              "-DCMAKE_MAKE_PROGRAM=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe"
+            ]
+          },
+          {
+            "label": "build",
+            "exit": 0,
+            "command": [
+              "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+              "--build",
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\refill-resident-llvm-v2",
+              "-j",
+              "2"
+            ]
+          },
+          {
+            "label": "tests",
+            "exit": 0,
+            "command": [
+              "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\ctest.exe",
+              "--test-dir",
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\refill-resident-llvm-v2",
+              "--output-on-failure",
+              "-V"
+            ]
+          }
+        ],
+        "sealed_source_snapshot_verified": true,
+        "libraries_sha256": {
+          "build-native-sjuni/refill-resident-llvm-v2/libreo_native_adxt_refill.a": "c955de1dcd9800ebf322513f8ca7733b327307130efe3da1a1a2a6ec456efe5e",
+          "build-native-sjuni/refill-resident-llvm-v2/resource_io/libreo_native_resource_io.a": "c21580918baef237fc193e8d91988dbf7ebce7b9437e8dbb6c686c23a639f4b7",
+          "build-native-sjuni/refill-resident-llvm-v2/sjrb/libreo_native_sjrb.a": "083d5e01532af081f19aaf182cb9a28fa2047d3d8f354417a568ab79b6ea4b17",
+          "build-native-sjuni/refill-resident-llvm-v2/resource_io/resources/libreo_native_resources.a": "a6183b4d6397b4822f6ec8953945713b7240e743d141310ab9769b0d866ee1cb",
+          "build-native-sjuni/refill-resident-llvm-v2/resource_io/tasks/libreo_native_tasks.a": "d6489dad3ff4bce24fc808e68a01c1a644dd7ce649d37fd41f0827b7d4b36ef2"
+        }
+      },
+      "native_core": {
+        "receipt": "build-native-sjuni/media-resident-audio-results-llvm-v1/receipt.json",
+        "sha256": "357d62b4777a9c5828b90e5cded8be96cfa0b4f2ff74d29a233482f6502a3bb9",
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "checks": [
+          {
+            "label": "configure",
+            "exit": 0,
+            "command": [
+              "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+              "-S",
+              "C:\\Users\\Ninjacornix\\reo\\game\\native",
+              "-B",
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\media-resident-audio-llvm-v1",
+              "-G",
+              "Ninja",
+              "-DCMAKE_BUILD_TYPE=Release",
+              "-DCMAKE_CXX_COMPILER=C:\\Users\\Ninjacornix\\AppData\\Local\\OutbreakRecomp\\launcher\\toolchains\\llvm-mingw-20251216-ucrt-x86_64\\bin\\x86_64-w64-mingw32-clang++.exe",
+              "-DCMAKE_MAKE_PROGRAM=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe"
+            ]
+          },
+          {
+            "label": "build",
+            "exit": 0,
+            "command": [
+              "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+              "--build",
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\media-resident-audio-llvm-v1",
+              "-j",
+              "4"
+            ]
+          },
+          {
+            "label": "tests",
+            "exit": 0,
+            "command": [
+              "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\ctest.exe",
+              "--test-dir",
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\media-resident-audio-llvm-v1",
+              "--output-on-failure"
+            ]
+          }
+        ],
+        "libraries_sha256": {
+          "build-native-sjuni/media-resident-audio-llvm-v1/libreo_native_sjuni_bridge.a": "17eb033f077babef0f07c4f421ce85c6139f19be169d1c2e8aab2258fe78f7f8",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_clocked_player/libreo_native_adxt_clocked_player.a": "964b620e27533abb1bb9b682a340ec4afcc0744e68d45cb30240022bc3cdca6f",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_control_owner/libreo_native_adxt_control_owner.a": "468aa6dad00cb859319eb63685cca9093ece299b32f51654b96f82762c1a07d9",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_control_session/libreo_native_adxt_control_session.a": "935a31f5c1969b25c78e198f508ab0279a1155539724239cd102fac106cae444",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_estimated_clock/libreo_native_adxt_estimated_clock.a": "085236ca90242478fda5219e8acc17036117477a80b854a6b9fda3c42da3bd69",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_instances/libreo_native_adxt_instances.a": "e04987e120b459fc9c5c932538451db1e8b7ebf8928f4cb19796629cb1e106f9",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_integer_clock/libreo_adxt_integer_clock.a": "33ca9b833cdab50f737ae78613feea32f77e33ed99bc212aae52ac190326aac6",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_output_session/libreo_native_adxt_output_session.a": "7b09aa5e078aaa42d5231527b8b455da720e730a1d03bb36572d8d82bd5f47d5",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_phased_player/libreo_native_adxt_phased_player.a": "6882b33b1021bdad42a660366a94095d02331778b7118f5f3a48ed525a2463c8",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_playback/libreo_native_adxt_playback.a": "eb6228b8a803f34d739c88b862726b96904328e3b4fb5f606fd83baf9f7803c8",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_player/libreo_native_adxt_player.a": "6a8c749bbb42d58e47356b8aeb11d820c309ab4adab9757345350d18bd264ba8",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_refill/libreo_native_adxt_refill.a": "c955de1dcd9800ebf322513f8ca7733b327307130efe3da1a1a2a6ec456efe5e",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_serviced_clock/libreo_native_adxt_serviced_clock.a": "e784566bf0e1d785e7c8a380e9d551bb9c48fbd5478fd2b61f73a0f4ddfb6268",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_service_group/libreo_native_adxt_service_group.a": "438b7cb0af91cbe561cfb2f9aa1a1452bd25d45d0be0436a5d80f63ac366d2d5",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_shared_player/libreo_native_adxt_shared_player.a": "6a28ef7cedb97d943707f78a4165e4068446fe5e1fc70c1430aa0e64f40b5155",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_shared_source/libreo_native_adxt_shared_source.a": "956344c1e60a48e5bc6a3b738b3a6a983fd28b62da724713fcf54ecff174645a",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_transfer_groups/libreo_native_adxt_transfer_groups.a": "b63c84181439fd0cbe4631d11b2c98e0e6c6287ae3dc69c414488789af3fd782",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_block/libreo_native_adx_block.a": "e9dc3aa3243c177b6b3a57034cf6625d912607fff5743916bfbfc3cc48a8dd3a",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_control/libreo_native_adx_control.a": "e8cda1e9b7f01ce2e28c48abb4ccdcb7b1a1932897814affbcae3a7a2071f936",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_header/libreo_native_adx_header.a": "581e928b67e3a249cb15e1e2114ae30fdaec19e80104bfed9a1405425df77670",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_pcm_store/libreo_adx_pcm_store.a": "7bfadd22ebb1d671003c8ebaef27051e52a583bfa90728835f26edd39a8973cc",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_stereo/libreo_native_adx_stereo.a": "6b88fd0634f207a1102fa1959371079bc9d134208e0bdb3910f7b5d9029475a6",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_window/libreo_native_adx_window.a": "d07012a49bae2381f1b380958a0daaf6ca2fcb27ccab79659055de76195bac01",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_workspace/libreo_adx_workspace.a": "e251316bd454081eb0270bbb04d0dce810e402fac1351a9e8f5aa00567dbcf99",
+          "build-native-sjuni/media-resident-audio-llvm-v1/afs_hierarchy/libreo_native_afs_hierarchy.a": "b0f79359e7b4bbe75d4a90b476e5c51c12b05dfa4d4b414c9a0f7c7d457314f7",
+          "build-native-sjuni/media-resident-audio-llvm-v1/afs_source_range/libreo_native_afs_source_range.a": "58a8bc804d07905a46f102a3a132a387dda4a20c520d524f3a5331711a452c91",
+          "build-native-sjuni/media-resident-audio-llvm-v1/audio_banks/libreo_native_audio_banks.a": "509b1d6c01c32524ed9b9f045b425ddf41ab8b26e41669a849179913f99d882a",
+          "build-native-sjuni/media-resident-audio-llvm-v1/audio_cue_queue/libreo_native_audio_cue_queue.a": "64206084c675eea209987186b5fc2f9c63662f45c16dbc25f445ada80530f096",
+          "build-native-sjuni/media-resident-audio-llvm-v1/audio_output/libreo_native_audio_output.a": "d8b4eff69a6393dc1b9a410cb7d1b049789a9308d107300d2e9d2c4fc2c4a772",
+          "build-native-sjuni/media-resident-audio-llvm-v1/disc_stream/libreo_native_disc_stream.a": "63ff25f2052cffe9f00dccd09f1e82280e49509ec285f5aedb98e7185aa447ea",
+          "build-native-sjuni/media-resident-audio-llvm-v1/host_movie/libreo_native_host_movie.a": "3061ae043e1aa9c7f1fe3079f15f3307d745504fa9d3e6527f7adcb69462a07d",
+          "build-native-sjuni/media-resident-audio-llvm-v1/lsc_queue/libreo_native_lsc_queue.a": "9abb16f2880e7014e29e1e58a9e5d005eeacc979da0d7d195c8167f7c1b6ec70",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_admission/libreo_native_movie_admission.a": "b2e8a9ef175b60be015de6930d37d14d47af87d1562236dc53475ed797ccadaa",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_assets/libreo_native_movie_assets.a": "939a38ac5d6d22660a7f03527bebf89bea2e571cd0de98d62fe34bc39fb18612",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_audio_clock/libreo_native_movie_audio_clock.a": "06943829bafb13f096ce4c0074509145acdc7bf3e4d7e4c5b9ad8877c6c344de",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_audio_filter/libreo_native_movie_audio_filter.a": "916e52e7420dc9f09dbadab590eadd059666291ea7c1120541a8a904134a4996",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_clock_initialize/libreo_native_movie_clock_initialize.a": "c57018aa6f96390411e0ded63751594a8f857c67eae03cd810b82ad6810eefcb",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_counter_clock/libreo_native_movie_counter_clock.a": "b3d557c482da3c34bc13cf11ef20a17b82e9238caa5ed4d007d01f468448545a",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_instance_audio/libreo_native_movie_instance_audio.a": "6d02e0c024dafcdf20393e8468514b71eb402d961c65e5c92f2410f95730919d",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_lifecycle/libreo_native_movie_lifecycle.a": "b7ecb6d1b1aa8ad45fe5214954097436c4023324d44cd52491c18744a8de847b",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_pause/libreo_native_movie_pause.a": "7dd9a6c9b4b6beba07d2f339b48f59447cc70752a0f8a75882b6a7984d8b50fb",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_position/libreo_native_movie_position.a": "cece5e0f9e29349ba3ce1194f2c5df5258b37ccc2b71aaa64b095b905702d565",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_selected_clock/libreo_native_movie_selected_clock.a": "bad68c6e155b8b53833de33b90d94ee6f37e9c17061f15ae9e62b5265e2b2b21",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_service/libreo_native_movie_service.a": "50919d30989844432c17635b2c2ba80e0a5ec9b8a6771f1f0c2b59d37b2d8365",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_timestamp/libreo_native_movie_timestamp.a": "64d04bb12ac35b187b895cb03ad782c4740b810be77bf95baf3d0c817602cd9d",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_timing_context/libreo_native_movie_timing_context.a": "6c488a33d1786e3009a921938f8ad15bb5b26cdedd074c0382cc4d3fd19bf231",
+          "build-native-sjuni/media-resident-audio-llvm-v1/pcm/libreo_native_pcm.a": "947639e674b4f4dd33b67fe30393ade8a8fd41aedbb49e9b67972fbde9fe3e6f",
+          "build-native-sjuni/media-resident-audio-llvm-v1/pcm_bridge/libreo_native_pcm_bridge.a": "dfcd97800ac877554620ffec97e04ee6410dd4c4badcb54abcd5faf98c96bcec",
+          "build-native-sjuni/media-resident-audio-llvm-v1/ram_capture/libreo_native_ram_capture.a": "4ff250853cffb7894cca1145ca44223a3eaac5c7ca455e34b722fc3d73137220",
+          "build-native-sjuni/media-resident-audio-llvm-v1/resources/libreo_native_resources.a": "a6183b4d6397b4822f6ec8953945713b7240e743d141310ab9769b0d866ee1cb",
+          "build-native-sjuni/media-resident-audio-llvm-v1/resources_windows/libreo_native_resources_windows.a": "3fb90abd081a41fc858952a90388ea349726cb02f6f86d4a2c1e467c2af0ba50",
+          "build-native-sjuni/media-resident-audio-llvm-v1/resource_io/libreo_native_resource_io.a": "c21580918baef237fc193e8d91988dbf7ebce7b9437e8dbb6c686c23a639f4b7",
+          "build-native-sjuni/media-resident-audio-llvm-v1/sjrb/libreo_native_sjrb.a": "083d5e01532af081f19aaf182cb9a28fa2047d3d8f354417a568ab79b6ea4b17",
+          "build-native-sjuni/media-resident-audio-llvm-v1/sjuni/libreo_native_sjuni.a": "dc7cb9073c6b0f23e63dc4f532068087aa0c515d4247985d916d76d99baa03a9",
+          "build-native-sjuni/media-resident-audio-llvm-v1/tasks/libreo_native_tasks.a": "d6489dad3ff4bce24fc808e68a01c1a644dd7ce649d37fd41f0827b7d4b36ef2",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_control_session/audio_clip_loader/libreo_native_audio_clip_loader.a": "a21b7cc6894f7be0bf579b830b641e32badafdc67c6ff8510fc3c3885feb4b12",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_output_session/audio_mix_tail/libreo_native_audio_mix_tail.a": "bd27562f10f7a45a11c9285be86f79b887fce78d66ba7670cc0064d9bb882e54",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_output_session/audio_mix_tail/audio_banks_v2/libreo_native_audio_banks_v2.a": "90c7082f0483ada702270bd7a7da34df703adc00c19fae2522c8fdfc7ee4834f",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_phased_player/adxt_attenuation/libreo_native_adxt_attenuation.a": "2931e6119b7941ca79d0cbc05d82f2f3adc80c0fd0095d9f81e2abc352476f60",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_phased_player/adxt_lsc_input/libreo_native_adxt_lsc_input.a": "fb22896fb6ba0ea9c895af7c437d0957c0b8f70db2fac44fdb25863b5189e686",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_phased_player/adx_sequence/libreo_native_adx_sequence.a": "92d2a04a4d03002767e1fdd850df2b08e8e2541d1f1a70259128635ba8a1cfbc",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_phased_player/stream_window_service_r4/libreo_native_stream_window_service_r4.a": "a1807920475666142ca287cf1bb0e36e225884c477ed1eab4882d3191b737446",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_pcm_store/v2/libreo_adx_pcm_store_v2.a": "d97bb3b87f3bb3b94c7d88b279c098636d54f69ef2502619cb493ae435ee2559",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_window/v2/libreo_native_stream_window_v2.a": "6b4aa2ee5d2e4bed5c9121ee9154d34c4df8cc3a20c3a7bdfbb4f85e35fc5cec",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_window/v2/playback_r2/libreo_native_stream_window_v2_playback_r2.a": "6240f17e9fd207da98a470cd8c6c635b37de764c1ba6816d330f0f430d0ce9f1",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_window/v2/queue_safe_r3/libreo_native_stream_window_v2_queue_safe_r3.a": "67918b47a368b6ab81e2d2b0f539405858661b51959c348660297f577d46e4dc",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_window/v2/ready_flag_r1/libreo_native_stream_window_v2_ready_flag_r1.a": "20ad9a9e95ec2d8433f9c2e3e470e87eaeffac0c2fec54b7921d76eb04451da9",
+          "build-native-sjuni/media-resident-audio-llvm-v1/ram_capture/v2/libreo_native_ram_capture_v2.a": "edfea093d1742248453048b1c013a6ac0a4803b0fb867ffa27c6b88273031f09"
+        }
+      },
+      "ordinary": {
+        "receipt": "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/receipt.json",
+        "sha256": "d0deb8de334b178d40123acc65bf3616bad83ec435fbd2bcfcb1c51849364518",
+        "compiler_sha256": "f1377bd9c4e35669930d0fb2ebdc51cac1d1f4ca16638c0ed0d77c113bc195d3",
+        "checks": [
+          {
+            "label": "compile",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "ordinary",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "metadata_three",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "metadata",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "missing_one",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "missing_two",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "phase",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "image",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "entry",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "mount",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "worker",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "registry",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "factory",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "partial",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "callback",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "producer",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "changed_child",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "order",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "order_partial",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "foreign",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "guest_depth",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "query_alias",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "stereo_pan",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "mono_pan",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "trace",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "trace_bounds",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "trace_existing",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "trace_unjoined",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "trace_generation",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "queue_finite",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "queue_e3",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "queue_append",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "queue_repeat",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "queue_bad_descriptor",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "queue_bad_member",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "drop-child-retirement-compile",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "drop-child-retirement",
+            "exit": 1,
+            "negative": true
+          },
+          {
+            "label": "fallback-unsupported-producer-compile",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "fallback-unsupported-producer",
+            "exit": 1,
+            "negative": true
+          },
+          {
+            "label": "ignore-child-replacement-compile",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "ignore-child-replacement",
+            "exit": 1,
+            "negative": true
+          },
+          {
+            "label": "omit-native-discard-compile",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "omit-native-discard",
+            "exit": 1,
+            "negative": true
+          },
+          {
+            "label": "require-unused-mono-pan-compile",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "require-unused-mono-pan",
+            "exit": 1,
+            "negative": true
+          },
+          {
+            "label": "ignore-active-stereo-pan-compile",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "ignore-active-stereo-pan",
+            "exit": 1,
+            "negative": true
+          },
+          {
+            "label": "require-raw-order-for-two-compile",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "require-raw-order-for-two",
+            "exit": 1,
+            "negative": true
+          },
+          {
+            "label": "ignore-three-source-order-compile",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "ignore-three-source-order",
+            "exit": 1,
+            "negative": true
+          },
+          {
+            "label": "omit-muted-metadata-refresh-compile",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "omit-muted-metadata-refresh",
+            "exit": 1,
+            "negative": true
+          },
+          {
+            "label": "ignore-muted-metadata-refusal-compile",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "ignore-muted-metadata-refusal",
+            "exit": 1,
+            "negative": true
+          }
+        ],
+        "scenarios": 34,
+        "detected_faults": [
+          "drop-child-retirement",
+          "fallback-unsupported-producer",
+          "ignore-child-replacement",
+          "omit-native-discard",
+          "require-unused-mono-pan",
+          "ignore-active-stereo-pan",
+          "require-raw-order-for-two",
+          "ignore-three-source-order",
+          "omit-muted-metadata-refresh",
+          "ignore-muted-metadata-refusal"
+        ],
+        "excluded_libraries": [],
+        "source_drift": {},
+        "immutable_import_unchanged": true,
+        "libraries_sha256": {
+          "build-native-sjuni/media-resident-audio-llvm-v1/libreo_native_sjuni_bridge.a": "17eb033f077babef0f07c4f421ce85c6139f19be169d1c2e8aab2258fe78f7f8",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_clocked_player/libreo_native_adxt_clocked_player.a": "964b620e27533abb1bb9b682a340ec4afcc0744e68d45cb30240022bc3cdca6f",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_control_owner/libreo_native_adxt_control_owner.a": "468aa6dad00cb859319eb63685cca9093ece299b32f51654b96f82762c1a07d9",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_control_session/libreo_native_adxt_control_session.a": "935a31f5c1969b25c78e198f508ab0279a1155539724239cd102fac106cae444",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_estimated_clock/libreo_native_adxt_estimated_clock.a": "085236ca90242478fda5219e8acc17036117477a80b854a6b9fda3c42da3bd69",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_instances/libreo_native_adxt_instances.a": "e04987e120b459fc9c5c932538451db1e8b7ebf8928f4cb19796629cb1e106f9",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_integer_clock/libreo_adxt_integer_clock.a": "33ca9b833cdab50f737ae78613feea32f77e33ed99bc212aae52ac190326aac6",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_output_session/libreo_native_adxt_output_session.a": "7b09aa5e078aaa42d5231527b8b455da720e730a1d03bb36572d8d82bd5f47d5",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_phased_player/libreo_native_adxt_phased_player.a": "6882b33b1021bdad42a660366a94095d02331778b7118f5f3a48ed525a2463c8",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_playback/libreo_native_adxt_playback.a": "eb6228b8a803f34d739c88b862726b96904328e3b4fb5f606fd83baf9f7803c8",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_player/libreo_native_adxt_player.a": "6a8c749bbb42d58e47356b8aeb11d820c309ab4adab9757345350d18bd264ba8",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_refill/libreo_native_adxt_refill.a": "c955de1dcd9800ebf322513f8ca7733b327307130efe3da1a1a2a6ec456efe5e",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_serviced_clock/libreo_native_adxt_serviced_clock.a": "e784566bf0e1d785e7c8a380e9d551bb9c48fbd5478fd2b61f73a0f4ddfb6268",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_service_group/libreo_native_adxt_service_group.a": "438b7cb0af91cbe561cfb2f9aa1a1452bd25d45d0be0436a5d80f63ac366d2d5",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_shared_player/libreo_native_adxt_shared_player.a": "6a28ef7cedb97d943707f78a4165e4068446fe5e1fc70c1430aa0e64f40b5155",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_shared_source/libreo_native_adxt_shared_source.a": "956344c1e60a48e5bc6a3b738b3a6a983fd28b62da724713fcf54ecff174645a",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_transfer_groups/libreo_native_adxt_transfer_groups.a": "b63c84181439fd0cbe4631d11b2c98e0e6c6287ae3dc69c414488789af3fd782",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_block/libreo_native_adx_block.a": "e9dc3aa3243c177b6b3a57034cf6625d912607fff5743916bfbfc3cc48a8dd3a",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_control/libreo_native_adx_control.a": "e8cda1e9b7f01ce2e28c48abb4ccdcb7b1a1932897814affbcae3a7a2071f936",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_header/libreo_native_adx_header.a": "581e928b67e3a249cb15e1e2114ae30fdaec19e80104bfed9a1405425df77670",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_pcm_store/libreo_adx_pcm_store.a": "7bfadd22ebb1d671003c8ebaef27051e52a583bfa90728835f26edd39a8973cc",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_stereo/libreo_native_adx_stereo.a": "6b88fd0634f207a1102fa1959371079bc9d134208e0bdb3910f7b5d9029475a6",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_window/libreo_native_adx_window.a": "d07012a49bae2381f1b380958a0daaf6ca2fcb27ccab79659055de76195bac01",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_workspace/libreo_adx_workspace.a": "e251316bd454081eb0270bbb04d0dce810e402fac1351a9e8f5aa00567dbcf99",
+          "build-native-sjuni/media-resident-audio-llvm-v1/afs_hierarchy/libreo_native_afs_hierarchy.a": "b0f79359e7b4bbe75d4a90b476e5c51c12b05dfa4d4b414c9a0f7c7d457314f7",
+          "build-native-sjuni/media-resident-audio-llvm-v1/afs_source_range/libreo_native_afs_source_range.a": "58a8bc804d07905a46f102a3a132a387dda4a20c520d524f3a5331711a452c91",
+          "build-native-sjuni/media-resident-audio-llvm-v1/audio_banks/libreo_native_audio_banks.a": "509b1d6c01c32524ed9b9f045b425ddf41ab8b26e41669a849179913f99d882a",
+          "build-native-sjuni/media-resident-audio-llvm-v1/audio_cue_queue/libreo_native_audio_cue_queue.a": "64206084c675eea209987186b5fc2f9c63662f45c16dbc25f445ada80530f096",
+          "build-native-sjuni/media-resident-audio-llvm-v1/audio_output/libreo_native_audio_output.a": "d8b4eff69a6393dc1b9a410cb7d1b049789a9308d107300d2e9d2c4fc2c4a772",
+          "build-native-sjuni/media-resident-audio-llvm-v1/disc_stream/libreo_native_disc_stream.a": "63ff25f2052cffe9f00dccd09f1e82280e49509ec285f5aedb98e7185aa447ea",
+          "build-native-sjuni/media-resident-audio-llvm-v1/host_movie/libreo_native_host_movie.a": "3061ae043e1aa9c7f1fe3079f15f3307d745504fa9d3e6527f7adcb69462a07d",
+          "build-native-sjuni/media-resident-audio-llvm-v1/lsc_queue/libreo_native_lsc_queue.a": "9abb16f2880e7014e29e1e58a9e5d005eeacc979da0d7d195c8167f7c1b6ec70",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_admission/libreo_native_movie_admission.a": "b2e8a9ef175b60be015de6930d37d14d47af87d1562236dc53475ed797ccadaa",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_assets/libreo_native_movie_assets.a": "939a38ac5d6d22660a7f03527bebf89bea2e571cd0de98d62fe34bc39fb18612",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_audio_clock/libreo_native_movie_audio_clock.a": "06943829bafb13f096ce4c0074509145acdc7bf3e4d7e4c5b9ad8877c6c344de",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_audio_filter/libreo_native_movie_audio_filter.a": "916e52e7420dc9f09dbadab590eadd059666291ea7c1120541a8a904134a4996",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_clock_initialize/libreo_native_movie_clock_initialize.a": "c57018aa6f96390411e0ded63751594a8f857c67eae03cd810b82ad6810eefcb",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_counter_clock/libreo_native_movie_counter_clock.a": "b3d557c482da3c34bc13cf11ef20a17b82e9238caa5ed4d007d01f468448545a",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_instance_audio/libreo_native_movie_instance_audio.a": "6d02e0c024dafcdf20393e8468514b71eb402d961c65e5c92f2410f95730919d",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_lifecycle/libreo_native_movie_lifecycle.a": "b7ecb6d1b1aa8ad45fe5214954097436c4023324d44cd52491c18744a8de847b",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_pause/libreo_native_movie_pause.a": "7dd9a6c9b4b6beba07d2f339b48f59447cc70752a0f8a75882b6a7984d8b50fb",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_position/libreo_native_movie_position.a": "cece5e0f9e29349ba3ce1194f2c5df5258b37ccc2b71aaa64b095b905702d565",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_selected_clock/libreo_native_movie_selected_clock.a": "bad68c6e155b8b53833de33b90d94ee6f37e9c17061f15ae9e62b5265e2b2b21",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_service/libreo_native_movie_service.a": "50919d30989844432c17635b2c2ba80e0a5ec9b8a6771f1f0c2b59d37b2d8365",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_timestamp/libreo_native_movie_timestamp.a": "64d04bb12ac35b187b895cb03ad782c4740b810be77bf95baf3d0c817602cd9d",
+          "build-native-sjuni/media-resident-audio-llvm-v1/movie_timing_context/libreo_native_movie_timing_context.a": "6c488a33d1786e3009a921938f8ad15bb5b26cdedd074c0382cc4d3fd19bf231",
+          "build-native-sjuni/media-resident-audio-llvm-v1/pcm/libreo_native_pcm.a": "947639e674b4f4dd33b67fe30393ade8a8fd41aedbb49e9b67972fbde9fe3e6f",
+          "build-native-sjuni/media-resident-audio-llvm-v1/pcm_bridge/libreo_native_pcm_bridge.a": "dfcd97800ac877554620ffec97e04ee6410dd4c4badcb54abcd5faf98c96bcec",
+          "build-native-sjuni/media-resident-audio-llvm-v1/ram_capture/libreo_native_ram_capture.a": "4ff250853cffb7894cca1145ca44223a3eaac5c7ca455e34b722fc3d73137220",
+          "build-native-sjuni/media-resident-audio-llvm-v1/resources/libreo_native_resources.a": "a6183b4d6397b4822f6ec8953945713b7240e743d141310ab9769b0d866ee1cb",
+          "build-native-sjuni/media-resident-audio-llvm-v1/resources_windows/libreo_native_resources_windows.a": "3fb90abd081a41fc858952a90388ea349726cb02f6f86d4a2c1e467c2af0ba50",
+          "build-native-sjuni/media-resident-audio-llvm-v1/resource_io/libreo_native_resource_io.a": "c21580918baef237fc193e8d91988dbf7ebce7b9437e8dbb6c686c23a639f4b7",
+          "build-native-sjuni/media-resident-audio-llvm-v1/sjrb/libreo_native_sjrb.a": "083d5e01532af081f19aaf182cb9a28fa2047d3d8f354417a568ab79b6ea4b17",
+          "build-native-sjuni/media-resident-audio-llvm-v1/sjuni/libreo_native_sjuni.a": "dc7cb9073c6b0f23e63dc4f532068087aa0c515d4247985d916d76d99baa03a9",
+          "build-native-sjuni/media-resident-audio-llvm-v1/tasks/libreo_native_tasks.a": "d6489dad3ff4bce24fc808e68a01c1a644dd7ce649d37fd41f0827b7d4b36ef2",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_control_session/audio_clip_loader/libreo_native_audio_clip_loader.a": "a21b7cc6894f7be0bf579b830b641e32badafdc67c6ff8510fc3c3885feb4b12",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_output_session/audio_mix_tail/libreo_native_audio_mix_tail.a": "bd27562f10f7a45a11c9285be86f79b887fce78d66ba7670cc0064d9bb882e54",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_output_session/audio_mix_tail/audio_banks_v2/libreo_native_audio_banks_v2.a": "90c7082f0483ada702270bd7a7da34df703adc00c19fae2522c8fdfc7ee4834f",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_phased_player/adxt_attenuation/libreo_native_adxt_attenuation.a": "2931e6119b7941ca79d0cbc05d82f2f3adc80c0fd0095d9f81e2abc352476f60",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_phased_player/adxt_lsc_input/libreo_native_adxt_lsc_input.a": "fb22896fb6ba0ea9c895af7c437d0957c0b8f70db2fac44fdb25863b5189e686",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_phased_player/adx_sequence/libreo_native_adx_sequence.a": "92d2a04a4d03002767e1fdd850df2b08e8e2541d1f1a70259128635ba8a1cfbc",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adxt_phased_player/stream_window_service_r4/libreo_native_stream_window_service_r4.a": "a1807920475666142ca287cf1bb0e36e225884c477ed1eab4882d3191b737446",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_pcm_store/v2/libreo_adx_pcm_store_v2.a": "d97bb3b87f3bb3b94c7d88b279c098636d54f69ef2502619cb493ae435ee2559",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_window/v2/libreo_native_stream_window_v2.a": "6b4aa2ee5d2e4bed5c9121ee9154d34c4df8cc3a20c3a7bdfbb4f85e35fc5cec",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_window/v2/playback_r2/libreo_native_stream_window_v2_playback_r2.a": "6240f17e9fd207da98a470cd8c6c635b37de764c1ba6816d330f0f430d0ce9f1",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_window/v2/queue_safe_r3/libreo_native_stream_window_v2_queue_safe_r3.a": "67918b47a368b6ab81e2d2b0f539405858661b51959c348660297f577d46e4dc",
+          "build-native-sjuni/media-resident-audio-llvm-v1/adx_window/v2/ready_flag_r1/libreo_native_stream_window_v2_ready_flag_r1.a": "20ad9a9e95ec2d8433f9c2e3e470e87eaeffac0c2fec54b7921d76eb04451da9",
+          "build-native-sjuni/media-resident-audio-llvm-v1/ram_capture/v2/libreo_native_ram_capture_v2.a": "edfea093d1742248453048b1c013a6ac0a4803b0fb867ffa27c6b88273031f09"
+        }
+      }
+    },
+    "gcc": {
+      "focused": {
+        "receipt": "build-native-sjuni/refill-resident-results-gcc-v2/receipt.json",
+        "sha256": "3332a40fdbdbbf2646aafc0a80eaf1af0a87d288f60969df644231cba6a5e4ee",
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "checks": [
+          {
+            "label": "configure",
+            "exit": 0,
+            "command": [
+              "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+              "-S",
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\refill-resident-results-gcc-v2\\source-snapshot\\game\\native\\adxt_refill",
+              "-B",
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\refill-resident-gcc-v2",
+              "-G",
+              "Ninja",
+              "-DCMAKE_BUILD_TYPE=Release",
+              "-DCMAKE_CXX_COMPILER=C:\\msys64\\mingw64\\bin\\g++.exe",
+              "-DCMAKE_MAKE_PROGRAM=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe"
+            ]
+          },
+          {
+            "label": "build",
+            "exit": 0,
+            "command": [
+              "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+              "--build",
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\refill-resident-gcc-v2",
+              "-j",
+              "2"
+            ]
+          },
+          {
+            "label": "tests",
+            "exit": 0,
+            "command": [
+              "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\ctest.exe",
+              "--test-dir",
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\refill-resident-gcc-v2",
+              "--output-on-failure",
+              "-V"
+            ]
+          }
+        ],
+        "sealed_source_snapshot_verified": true,
+        "libraries_sha256": {
+          "build-native-sjuni/refill-resident-gcc-v2/libreo_native_adxt_refill.a": "c7690ae6f017ab9072b1052e300de19a9c453287003bebcec1c0ef9f4abbfad5",
+          "build-native-sjuni/refill-resident-gcc-v2/resource_io/libreo_native_resource_io.a": "91e79ea72e1d29f66869234ee09f9e2bff24d398c51c9ec9a637e41bf25b08cf",
+          "build-native-sjuni/refill-resident-gcc-v2/sjrb/libreo_native_sjrb.a": "f910c97b806bb8cb85c7ecd5845e90f414128cec948185f7b8b44b5b5879ca81",
+          "build-native-sjuni/refill-resident-gcc-v2/resource_io/resources/libreo_native_resources.a": "cb7de2233d4576877d09e3b9bfc2a4259b63de245ca17a54b58f397df1e5062b",
+          "build-native-sjuni/refill-resident-gcc-v2/resource_io/tasks/libreo_native_tasks.a": "df243833973172b39146f56d64a3110f3bdf0e75b2f442ff42101abb536637b2"
+        }
+      },
+      "native_core": {
+        "receipt": "build-native-sjuni/media-resident-audio-results-gcc-v1/receipt.json",
+        "sha256": "3786fd958948ea16302eee44d5c0b56196b1c438e731a2ae26819fa7f2c96adf",
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "checks": [
+          {
+            "label": "configure",
+            "exit": 0,
+            "command": [
+              "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+              "-S",
+              "C:\\Users\\Ninjacornix\\reo\\game\\native",
+              "-B",
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\media-resident-audio-gcc-v1",
+              "-G",
+              "Ninja",
+              "-DCMAKE_BUILD_TYPE=Release",
+              "-DCMAKE_CXX_COMPILER=C:\\msys64\\mingw64\\bin\\g++.exe",
+              "-DCMAKE_MAKE_PROGRAM=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe"
+            ]
+          },
+          {
+            "label": "build",
+            "exit": 0,
+            "command": [
+              "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+              "--build",
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\media-resident-audio-gcc-v1",
+              "-j",
+              "4"
+            ]
+          },
+          {
+            "label": "tests",
+            "exit": 0,
+            "command": [
+              "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\ctest.exe",
+              "--test-dir",
+              "C:\\Users\\Ninjacornix\\reo\\build-native-sjuni\\media-resident-audio-gcc-v1",
+              "--output-on-failure"
+            ]
+          }
+        ],
+        "libraries_sha256": {
+          "build-native-sjuni/media-resident-audio-gcc-v1/libreo_native_sjuni_bridge.a": "c16358d27908366f970b7ebdd97d80881768b7b58e8692430b5f653fef76b1a7",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_clocked_player/libreo_native_adxt_clocked_player.a": "614b213658a504662eb7ea3e13914ed6bb0c1a53a8e4dd248bca28e2447ebb3c",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_control_owner/libreo_native_adxt_control_owner.a": "8d342ed66e64f34d89fd3b2db0aae7bc7f526b58c8022cb8efa2b11ec8bde6a4",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_control_session/libreo_native_adxt_control_session.a": "4f768e6c4ce6f806c80d95effc1654bb70670c7df31d3a20487ba5075602e6ec",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_estimated_clock/libreo_native_adxt_estimated_clock.a": "92ebb53aed2d2c2fae729c9aec71246503c8fb045ef69b7d6fa5a0d5ccc278ce",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_instances/libreo_native_adxt_instances.a": "e7370eb1eb7db8869a6f2edc9363a05d4845f8834128fbe389b80e0fa77ec72d",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_integer_clock/libreo_adxt_integer_clock.a": "80fe42c3cbba635c296174e6906537a60a91f118660da1baa867eefe2220e0e1",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_output_session/libreo_native_adxt_output_session.a": "13d4754a8fd97dafea0779d323799f294066f520c80036369ac92dff427fb6af",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_phased_player/libreo_native_adxt_phased_player.a": "71a00204bfc633d9eb55db4737af52f41b71284897d155b1ec8b83621821b604",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_playback/libreo_native_adxt_playback.a": "9c3c508f22880314579ecc8a9b131b858aea3b469a2b12b659be1bf46985d595",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_player/libreo_native_adxt_player.a": "f2352bece361ee32f116e9e0ee0a35c812a66f5d022187789698b0dd6429024b",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_refill/libreo_native_adxt_refill.a": "c7690ae6f017ab9072b1052e300de19a9c453287003bebcec1c0ef9f4abbfad5",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_serviced_clock/libreo_native_adxt_serviced_clock.a": "387e2e3f5ae91ed9745a1ca89202174acdac6338d1bf60659cee7992e55a93e9",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_service_group/libreo_native_adxt_service_group.a": "a724f67dfc2f980fe1e24bcd81780b1f2aaba286562543595373b82716afe24c",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_shared_player/libreo_native_adxt_shared_player.a": "51b3b2651054c0d677422dbb6328b892256992d25c8aa146b80deecc970fd9f1",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_shared_source/libreo_native_adxt_shared_source.a": "4ed238ad7e3d93b728ed8345476303d581640168165622a6c30036bac482e4dc",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_transfer_groups/libreo_native_adxt_transfer_groups.a": "a48c3c24ac92409cad8d50f15ace794c92e74bc4c07d121b94515b2904a37e81",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_block/libreo_native_adx_block.a": "8734e9c9bdc7ab73c668df3ffef2d0abd926f79aa0f631b5dc7b3fc210bf46bc",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_control/libreo_native_adx_control.a": "d8d1b7f809dee8494932308a17b1a803b1bb0e82060f9df81eff0084c51f6623",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_header/libreo_native_adx_header.a": "37d3d2f3831093b279353dfdb6a67cb899932d01298dbf9839029b3ef89d7524",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_pcm_store/libreo_adx_pcm_store.a": "ae17876832798d31aafd69636ec82fad5a1e8c4c66dee9998d5a77575c522b57",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_stereo/libreo_native_adx_stereo.a": "c27ca3d2c77aa3233375ec57b03de4f4e3c25f6b5c60cf926b753e323ccc1ef1",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_window/libreo_native_adx_window.a": "eec7069d06f18a06791af5a602e576f484668406f9652f2bf2b0207c6925a92f",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_workspace/libreo_adx_workspace.a": "24138f90c44ea06672e383ae0eef22c419c5a90ca00b2391373c901ed7aaf431",
+          "build-native-sjuni/media-resident-audio-gcc-v1/afs_hierarchy/libreo_native_afs_hierarchy.a": "ab4b804e4c70fba98117c7d947802e789c153782255e4f4a99631d6c25558ca2",
+          "build-native-sjuni/media-resident-audio-gcc-v1/afs_source_range/libreo_native_afs_source_range.a": "1ec9dc771705af91bd6cbae9d3ae4847daf8bbcf9346bf219c732ad1b9758452",
+          "build-native-sjuni/media-resident-audio-gcc-v1/audio_banks/libreo_native_audio_banks.a": "3b8f5e18bffc34cee5d431b3e2f7b19d4f4f39e02862144fdbf6efbadfe9ad40",
+          "build-native-sjuni/media-resident-audio-gcc-v1/audio_cue_queue/libreo_native_audio_cue_queue.a": "14e908ee31334c936fe9056dd64c29e8e68c356720803b9c26cb5267ddd2b05a",
+          "build-native-sjuni/media-resident-audio-gcc-v1/audio_output/libreo_native_audio_output.a": "ae3ecc1280a647fba5af146b0c128586a340c1ab37bbf94b8b434e1aa48a8e83",
+          "build-native-sjuni/media-resident-audio-gcc-v1/disc_stream/libreo_native_disc_stream.a": "824ad3adca906612dca032f7fde13d072038fb5ec14d2c5030eccb033d42d591",
+          "build-native-sjuni/media-resident-audio-gcc-v1/host_movie/libreo_native_host_movie.a": "152126743be5e61e0b13dc1c27d6c0718447b4738ec78124bf9404391c92f47a",
+          "build-native-sjuni/media-resident-audio-gcc-v1/lsc_queue/libreo_native_lsc_queue.a": "e192a133bca21b2f717eb4253531e412c1e5b658f34bbc45e58ab45652faefbe",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_admission/libreo_native_movie_admission.a": "b68a53621b46784fe52109b8ba69efe8e68ae7619b7c32ff40a1939a43de7565",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_assets/libreo_native_movie_assets.a": "c0554b3ee8cd263a30c4edd11f6537c4d50a2ed4ae06564e349d0c0dfe0ed8b3",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_audio_clock/libreo_native_movie_audio_clock.a": "ff321cb1e7694b71cfe1b051408fa297b1235067c62486a4dfa551c54efba9d0",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_audio_filter/libreo_native_movie_audio_filter.a": "5afb48643bd4b4aa6318c0fed7db838ab9be277c4b9f5f716347ea71b1aba9e9",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_clock_initialize/libreo_native_movie_clock_initialize.a": "937ed75da0d201fddf89420ef9e0b3aefddd22ca3866dc76a6a76ba92ad9bdad",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_counter_clock/libreo_native_movie_counter_clock.a": "9b7b0b3e17216c728d13a1a582b7af9e739ff46abae2bf58a0890eb31f48b9e1",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_instance_audio/libreo_native_movie_instance_audio.a": "982e1f0a8cab0f8fbe16f40a9342cde6656d27faa4fac48af43211a60a4bd830",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_lifecycle/libreo_native_movie_lifecycle.a": "2e030be35410d60d4a2f5634d48a32e4e68d81c67974f20ba9fbedf1380338e6",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_pause/libreo_native_movie_pause.a": "f8f82759592d07a33514aad1bc17254fd77a3aecc32ec75beec970b766ef8894",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_position/libreo_native_movie_position.a": "17cf924e6c12c4f152aaed7777302d7cb1df5dfcef137f6ee359471e57fa02e9",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_selected_clock/libreo_native_movie_selected_clock.a": "744aaaa64c41fdcbd62f884a79566a65ccb315fdffb810517de91ed06fa6ab7b",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_service/libreo_native_movie_service.a": "dd6b3b1b060e700a91e340dca8f66acd84b7cb42287d07bdd683c1439bb8fc04",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_timestamp/libreo_native_movie_timestamp.a": "bf178aca505c01e25666aea14d57d688a4bf5661b911d5aca32dbd355e2e67d6",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_timing_context/libreo_native_movie_timing_context.a": "1905497085969f32db41aa0071e0ddb7ff067081565a335396a0e29b01aa43dd",
+          "build-native-sjuni/media-resident-audio-gcc-v1/pcm/libreo_native_pcm.a": "2c597c1977831451cea405ae445270396f9929a7c1d448df13c4ebbf004950c2",
+          "build-native-sjuni/media-resident-audio-gcc-v1/pcm_bridge/libreo_native_pcm_bridge.a": "bc9ba3816b129dde50ea168a5a0aac898f87e2c04a6943d619a7d3bd2877308d",
+          "build-native-sjuni/media-resident-audio-gcc-v1/ram_capture/libreo_native_ram_capture.a": "b0204581a67f6bae37cbde56cbda7f5be96118e4784715e8b01daef49cacbbe6",
+          "build-native-sjuni/media-resident-audio-gcc-v1/resources/libreo_native_resources.a": "cb7de2233d4576877d09e3b9bfc2a4259b63de245ca17a54b58f397df1e5062b",
+          "build-native-sjuni/media-resident-audio-gcc-v1/resources_windows/libreo_native_resources_windows.a": "ef79372fea6319777045da32eb7ecea12843c4f1681b68692fd521ac60a52944",
+          "build-native-sjuni/media-resident-audio-gcc-v1/resource_io/libreo_native_resource_io.a": "91e79ea72e1d29f66869234ee09f9e2bff24d398c51c9ec9a637e41bf25b08cf",
+          "build-native-sjuni/media-resident-audio-gcc-v1/sjrb/libreo_native_sjrb.a": "f910c97b806bb8cb85c7ecd5845e90f414128cec948185f7b8b44b5b5879ca81",
+          "build-native-sjuni/media-resident-audio-gcc-v1/sjuni/libreo_native_sjuni.a": "28ae4273c234daf7af3eceb4d03defd91e77bc3ee79cd58e76d3fd17c5ac691c",
+          "build-native-sjuni/media-resident-audio-gcc-v1/tasks/libreo_native_tasks.a": "df243833973172b39146f56d64a3110f3bdf0e75b2f442ff42101abb536637b2",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_control_session/audio_clip_loader/libreo_native_audio_clip_loader.a": "464209b54453d58c352ec4e8267a7d1942f80606442bf586343ba74ba32c7a36",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_output_session/audio_mix_tail/libreo_native_audio_mix_tail.a": "68569dcbdf3f99a7878b266a2c3e55223a1b8156bf99903b665507dbab85dad5",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_output_session/audio_mix_tail/audio_banks_v2/libreo_native_audio_banks_v2.a": "bd046d4c02c2f2d95d1d7807e8d43e8cf651c80d73b590a25b70407f590a0b79",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_phased_player/adxt_attenuation/libreo_native_adxt_attenuation.a": "bd68aece83b8d794b89b717d1273d2fc1523f3987c32d22e3a37a9a8905d9778",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_phased_player/adxt_lsc_input/libreo_native_adxt_lsc_input.a": "2beeb3861690b0f7c90d4307a739513e7ad505bd4205e9e0fd7de4467e6bd026",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_phased_player/adx_sequence/libreo_native_adx_sequence.a": "b9181b3ac8f062819810ac9cf7803e16bc606734a642d385dd7e35a84f415566",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_phased_player/stream_window_service_r4/libreo_native_stream_window_service_r4.a": "de4cdec7c7a3ed11ba9d9e95cfbd7c3868c6ed0889a67a093d215d6221961e0c",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_pcm_store/v2/libreo_adx_pcm_store_v2.a": "082041c5395d4e229ffc841e5c8fe79086efb39dfeba0510d8e9066ce3bcccb2",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_window/v2/libreo_native_stream_window_v2.a": "59787e281b2e4a733999c90ab12e9f2d84fb5deef3b2a42e45cd024959b51d9f",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_window/v2/playback_r2/libreo_native_stream_window_v2_playback_r2.a": "ecd2c3cb3508bb11ceeef6206623924dc58c04aec52bd50cd6c6436287b7f7d7",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_window/v2/queue_safe_r3/libreo_native_stream_window_v2_queue_safe_r3.a": "974ce5607c8ce4ddeebba60e90614a4ff28152b824aaf267b6782b94c89f442d",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_window/v2/ready_flag_r1/libreo_native_stream_window_v2_ready_flag_r1.a": "043ab22fefcb30290a4058faa8b354418ec48b60ffdeb98e26050031b6543b93",
+          "build-native-sjuni/media-resident-audio-gcc-v1/ram_capture/v2/libreo_native_ram_capture_v2.a": "d4bcecbd66595e4e1fbcc16fd6fcecf22a00d04c9a38c3989450efb64327ae3c"
+        }
+      },
+      "ordinary": {
+        "receipt": "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/receipt.json",
+        "sha256": "936d15e4e3377ce018a3e7159eaee9562925023782b9668263e513599ae20728",
+        "compiler_sha256": "51911fb398529fa19769da935279c1a8a56f1c3508b2df295624aaa3dae34aa5",
+        "checks": [
+          {
+            "label": "compile",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "ordinary",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "metadata_three",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "metadata",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "missing_one",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "missing_two",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "phase",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "image",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "entry",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "mount",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "worker",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "registry",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "factory",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "partial",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "callback",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "producer",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "changed_child",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "order",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "order_partial",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "foreign",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "guest_depth",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "query_alias",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "stereo_pan",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "mono_pan",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "trace",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "trace_bounds",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "trace_existing",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "trace_unjoined",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "trace_generation",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "queue_finite",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "queue_e3",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "queue_append",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "queue_repeat",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "queue_bad_descriptor",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "queue_bad_member",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "drop-child-retirement-compile",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "drop-child-retirement",
+            "exit": 1,
+            "negative": true
+          },
+          {
+            "label": "fallback-unsupported-producer-compile",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "fallback-unsupported-producer",
+            "exit": 1,
+            "negative": true
+          },
+          {
+            "label": "ignore-child-replacement-compile",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "ignore-child-replacement",
+            "exit": 1,
+            "negative": true
+          },
+          {
+            "label": "omit-native-discard-compile",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "omit-native-discard",
+            "exit": 1,
+            "negative": true
+          },
+          {
+            "label": "require-unused-mono-pan-compile",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "require-unused-mono-pan",
+            "exit": 1,
+            "negative": true
+          },
+          {
+            "label": "ignore-active-stereo-pan-compile",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "ignore-active-stereo-pan",
+            "exit": 1,
+            "negative": true
+          },
+          {
+            "label": "require-raw-order-for-two-compile",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "require-raw-order-for-two",
+            "exit": 1,
+            "negative": true
+          },
+          {
+            "label": "ignore-three-source-order-compile",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "ignore-three-source-order",
+            "exit": 1,
+            "negative": true
+          },
+          {
+            "label": "omit-muted-metadata-refresh-compile",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "omit-muted-metadata-refresh",
+            "exit": 1,
+            "negative": true
+          },
+          {
+            "label": "ignore-muted-metadata-refusal-compile",
+            "exit": 0,
+            "negative": false
+          },
+          {
+            "label": "ignore-muted-metadata-refusal",
+            "exit": 1,
+            "negative": true
+          }
+        ],
+        "scenarios": 34,
+        "detected_faults": [
+          "drop-child-retirement",
+          "fallback-unsupported-producer",
+          "ignore-child-replacement",
+          "omit-native-discard",
+          "require-unused-mono-pan",
+          "ignore-active-stereo-pan",
+          "require-raw-order-for-two",
+          "ignore-three-source-order",
+          "omit-muted-metadata-refresh",
+          "ignore-muted-metadata-refusal"
+        ],
+        "excluded_libraries": [],
+        "source_drift": {},
+        "immutable_import_unchanged": true,
+        "libraries_sha256": {
+          "build-native-sjuni/media-resident-audio-gcc-v1/libreo_native_sjuni_bridge.a": "c16358d27908366f970b7ebdd97d80881768b7b58e8692430b5f653fef76b1a7",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_clocked_player/libreo_native_adxt_clocked_player.a": "614b213658a504662eb7ea3e13914ed6bb0c1a53a8e4dd248bca28e2447ebb3c",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_control_owner/libreo_native_adxt_control_owner.a": "8d342ed66e64f34d89fd3b2db0aae7bc7f526b58c8022cb8efa2b11ec8bde6a4",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_control_session/libreo_native_adxt_control_session.a": "4f768e6c4ce6f806c80d95effc1654bb70670c7df31d3a20487ba5075602e6ec",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_estimated_clock/libreo_native_adxt_estimated_clock.a": "92ebb53aed2d2c2fae729c9aec71246503c8fb045ef69b7d6fa5a0d5ccc278ce",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_instances/libreo_native_adxt_instances.a": "e7370eb1eb7db8869a6f2edc9363a05d4845f8834128fbe389b80e0fa77ec72d",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_integer_clock/libreo_adxt_integer_clock.a": "80fe42c3cbba635c296174e6906537a60a91f118660da1baa867eefe2220e0e1",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_output_session/libreo_native_adxt_output_session.a": "13d4754a8fd97dafea0779d323799f294066f520c80036369ac92dff427fb6af",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_phased_player/libreo_native_adxt_phased_player.a": "71a00204bfc633d9eb55db4737af52f41b71284897d155b1ec8b83621821b604",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_playback/libreo_native_adxt_playback.a": "9c3c508f22880314579ecc8a9b131b858aea3b469a2b12b659be1bf46985d595",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_player/libreo_native_adxt_player.a": "f2352bece361ee32f116e9e0ee0a35c812a66f5d022187789698b0dd6429024b",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_refill/libreo_native_adxt_refill.a": "c7690ae6f017ab9072b1052e300de19a9c453287003bebcec1c0ef9f4abbfad5",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_serviced_clock/libreo_native_adxt_serviced_clock.a": "387e2e3f5ae91ed9745a1ca89202174acdac6338d1bf60659cee7992e55a93e9",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_service_group/libreo_native_adxt_service_group.a": "a724f67dfc2f980fe1e24bcd81780b1f2aaba286562543595373b82716afe24c",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_shared_player/libreo_native_adxt_shared_player.a": "51b3b2651054c0d677422dbb6328b892256992d25c8aa146b80deecc970fd9f1",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_shared_source/libreo_native_adxt_shared_source.a": "4ed238ad7e3d93b728ed8345476303d581640168165622a6c30036bac482e4dc",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_transfer_groups/libreo_native_adxt_transfer_groups.a": "a48c3c24ac92409cad8d50f15ace794c92e74bc4c07d121b94515b2904a37e81",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_block/libreo_native_adx_block.a": "8734e9c9bdc7ab73c668df3ffef2d0abd926f79aa0f631b5dc7b3fc210bf46bc",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_control/libreo_native_adx_control.a": "d8d1b7f809dee8494932308a17b1a803b1bb0e82060f9df81eff0084c51f6623",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_header/libreo_native_adx_header.a": "37d3d2f3831093b279353dfdb6a67cb899932d01298dbf9839029b3ef89d7524",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_pcm_store/libreo_adx_pcm_store.a": "ae17876832798d31aafd69636ec82fad5a1e8c4c66dee9998d5a77575c522b57",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_stereo/libreo_native_adx_stereo.a": "c27ca3d2c77aa3233375ec57b03de4f4e3c25f6b5c60cf926b753e323ccc1ef1",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_window/libreo_native_adx_window.a": "eec7069d06f18a06791af5a602e576f484668406f9652f2bf2b0207c6925a92f",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_workspace/libreo_adx_workspace.a": "24138f90c44ea06672e383ae0eef22c419c5a90ca00b2391373c901ed7aaf431",
+          "build-native-sjuni/media-resident-audio-gcc-v1/afs_hierarchy/libreo_native_afs_hierarchy.a": "ab4b804e4c70fba98117c7d947802e789c153782255e4f4a99631d6c25558ca2",
+          "build-native-sjuni/media-resident-audio-gcc-v1/afs_source_range/libreo_native_afs_source_range.a": "1ec9dc771705af91bd6cbae9d3ae4847daf8bbcf9346bf219c732ad1b9758452",
+          "build-native-sjuni/media-resident-audio-gcc-v1/audio_banks/libreo_native_audio_banks.a": "3b8f5e18bffc34cee5d431b3e2f7b19d4f4f39e02862144fdbf6efbadfe9ad40",
+          "build-native-sjuni/media-resident-audio-gcc-v1/audio_cue_queue/libreo_native_audio_cue_queue.a": "14e908ee31334c936fe9056dd64c29e8e68c356720803b9c26cb5267ddd2b05a",
+          "build-native-sjuni/media-resident-audio-gcc-v1/audio_output/libreo_native_audio_output.a": "ae3ecc1280a647fba5af146b0c128586a340c1ab37bbf94b8b434e1aa48a8e83",
+          "build-native-sjuni/media-resident-audio-gcc-v1/disc_stream/libreo_native_disc_stream.a": "824ad3adca906612dca032f7fde13d072038fb5ec14d2c5030eccb033d42d591",
+          "build-native-sjuni/media-resident-audio-gcc-v1/host_movie/libreo_native_host_movie.a": "152126743be5e61e0b13dc1c27d6c0718447b4738ec78124bf9404391c92f47a",
+          "build-native-sjuni/media-resident-audio-gcc-v1/lsc_queue/libreo_native_lsc_queue.a": "e192a133bca21b2f717eb4253531e412c1e5b658f34bbc45e58ab45652faefbe",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_admission/libreo_native_movie_admission.a": "b68a53621b46784fe52109b8ba69efe8e68ae7619b7c32ff40a1939a43de7565",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_assets/libreo_native_movie_assets.a": "c0554b3ee8cd263a30c4edd11f6537c4d50a2ed4ae06564e349d0c0dfe0ed8b3",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_audio_clock/libreo_native_movie_audio_clock.a": "ff321cb1e7694b71cfe1b051408fa297b1235067c62486a4dfa551c54efba9d0",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_audio_filter/libreo_native_movie_audio_filter.a": "5afb48643bd4b4aa6318c0fed7db838ab9be277c4b9f5f716347ea71b1aba9e9",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_clock_initialize/libreo_native_movie_clock_initialize.a": "937ed75da0d201fddf89420ef9e0b3aefddd22ca3866dc76a6a76ba92ad9bdad",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_counter_clock/libreo_native_movie_counter_clock.a": "9b7b0b3e17216c728d13a1a582b7af9e739ff46abae2bf58a0890eb31f48b9e1",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_instance_audio/libreo_native_movie_instance_audio.a": "982e1f0a8cab0f8fbe16f40a9342cde6656d27faa4fac48af43211a60a4bd830",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_lifecycle/libreo_native_movie_lifecycle.a": "2e030be35410d60d4a2f5634d48a32e4e68d81c67974f20ba9fbedf1380338e6",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_pause/libreo_native_movie_pause.a": "f8f82759592d07a33514aad1bc17254fd77a3aecc32ec75beec970b766ef8894",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_position/libreo_native_movie_position.a": "17cf924e6c12c4f152aaed7777302d7cb1df5dfcef137f6ee359471e57fa02e9",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_selected_clock/libreo_native_movie_selected_clock.a": "744aaaa64c41fdcbd62f884a79566a65ccb315fdffb810517de91ed06fa6ab7b",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_service/libreo_native_movie_service.a": "dd6b3b1b060e700a91e340dca8f66acd84b7cb42287d07bdd683c1439bb8fc04",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_timestamp/libreo_native_movie_timestamp.a": "bf178aca505c01e25666aea14d57d688a4bf5661b911d5aca32dbd355e2e67d6",
+          "build-native-sjuni/media-resident-audio-gcc-v1/movie_timing_context/libreo_native_movie_timing_context.a": "1905497085969f32db41aa0071e0ddb7ff067081565a335396a0e29b01aa43dd",
+          "build-native-sjuni/media-resident-audio-gcc-v1/pcm/libreo_native_pcm.a": "2c597c1977831451cea405ae445270396f9929a7c1d448df13c4ebbf004950c2",
+          "build-native-sjuni/media-resident-audio-gcc-v1/pcm_bridge/libreo_native_pcm_bridge.a": "bc9ba3816b129dde50ea168a5a0aac898f87e2c04a6943d619a7d3bd2877308d",
+          "build-native-sjuni/media-resident-audio-gcc-v1/ram_capture/libreo_native_ram_capture.a": "b0204581a67f6bae37cbde56cbda7f5be96118e4784715e8b01daef49cacbbe6",
+          "build-native-sjuni/media-resident-audio-gcc-v1/resources/libreo_native_resources.a": "cb7de2233d4576877d09e3b9bfc2a4259b63de245ca17a54b58f397df1e5062b",
+          "build-native-sjuni/media-resident-audio-gcc-v1/resources_windows/libreo_native_resources_windows.a": "ef79372fea6319777045da32eb7ecea12843c4f1681b68692fd521ac60a52944",
+          "build-native-sjuni/media-resident-audio-gcc-v1/resource_io/libreo_native_resource_io.a": "91e79ea72e1d29f66869234ee09f9e2bff24d398c51c9ec9a637e41bf25b08cf",
+          "build-native-sjuni/media-resident-audio-gcc-v1/sjrb/libreo_native_sjrb.a": "f910c97b806bb8cb85c7ecd5845e90f414128cec948185f7b8b44b5b5879ca81",
+          "build-native-sjuni/media-resident-audio-gcc-v1/sjuni/libreo_native_sjuni.a": "28ae4273c234daf7af3eceb4d03defd91e77bc3ee79cd58e76d3fd17c5ac691c",
+          "build-native-sjuni/media-resident-audio-gcc-v1/tasks/libreo_native_tasks.a": "df243833973172b39146f56d64a3110f3bdf0e75b2f442ff42101abb536637b2",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_control_session/audio_clip_loader/libreo_native_audio_clip_loader.a": "464209b54453d58c352ec4e8267a7d1942f80606442bf586343ba74ba32c7a36",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_output_session/audio_mix_tail/libreo_native_audio_mix_tail.a": "68569dcbdf3f99a7878b266a2c3e55223a1b8156bf99903b665507dbab85dad5",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_output_session/audio_mix_tail/audio_banks_v2/libreo_native_audio_banks_v2.a": "bd046d4c02c2f2d95d1d7807e8d43e8cf651c80d73b590a25b70407f590a0b79",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_phased_player/adxt_attenuation/libreo_native_adxt_attenuation.a": "bd68aece83b8d794b89b717d1273d2fc1523f3987c32d22e3a37a9a8905d9778",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_phased_player/adxt_lsc_input/libreo_native_adxt_lsc_input.a": "2beeb3861690b0f7c90d4307a739513e7ad505bd4205e9e0fd7de4467e6bd026",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_phased_player/adx_sequence/libreo_native_adx_sequence.a": "b9181b3ac8f062819810ac9cf7803e16bc606734a642d385dd7e35a84f415566",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adxt_phased_player/stream_window_service_r4/libreo_native_stream_window_service_r4.a": "de4cdec7c7a3ed11ba9d9e95cfbd7c3868c6ed0889a67a093d215d6221961e0c",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_pcm_store/v2/libreo_adx_pcm_store_v2.a": "082041c5395d4e229ffc841e5c8fe79086efb39dfeba0510d8e9066ce3bcccb2",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_window/v2/libreo_native_stream_window_v2.a": "59787e281b2e4a733999c90ab12e9f2d84fb5deef3b2a42e45cd024959b51d9f",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_window/v2/playback_r2/libreo_native_stream_window_v2_playback_r2.a": "ecd2c3cb3508bb11ceeef6206623924dc58c04aec52bd50cd6c6436287b7f7d7",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_window/v2/queue_safe_r3/libreo_native_stream_window_v2_queue_safe_r3.a": "974ce5607c8ce4ddeebba60e90614a4ff28152b824aaf267b6782b94c89f442d",
+          "build-native-sjuni/media-resident-audio-gcc-v1/adx_window/v2/ready_flag_r1/libreo_native_stream_window_v2_ready_flag_r1.a": "043ab22fefcb30290a4058faa8b354418ec48b60ffdeb98e26050031b6543b93",
+          "build-native-sjuni/media-resident-audio-gcc-v1/ram_capture/v2/libreo_native_ram_capture_v2.a": "d4bcecbd66595e4e1fbcc16fd6fcecf22a00d04c9a38c3989450efb64327ae3c"
+        }
+      }
+    }
+  },
+  "source_sha256": {
+    "game/native/adxt_refill/adxt_refill.cpp": "5ed2a85f920b5b80011b1a4bbaab4210a70497ab7f3399aad15b29f51df9cf72",
+    "game/native/adxt_refill/adxt_refill_tests.cpp": "6455980a63bab91ab31b39c8576583a9230b83bb25b95a751b2aaea490067f64",
+    "game/native/resources/bounded_view.cpp": "c7c1b618b74f42d6cb6717a3a55fdd5ec44abf6668e6bc43e7673fbe5731de84",
+    "game/native/audio_clip_loader/loader.cpp": "3efbf79ec1da929f36c65637d1a6dd819e4d7ccb0b4d5d0c6129272b87886b74",
+    "game/native/audio_clip_loader/loader_tests.cpp": "f7682cab2684c29fbd8bbeac23e6beb848791374d8337c8b86b9cc68e32de7e8",
+    "game/native/audio_cue_queue/queue_tests.cpp": "c6b4b32e251f26a00007f2cad030c80ef1b91345e442c6027ace2b64248b77a2",
+    "recomp/overrides/native_adxt/source_profile.cpp": "c258a55e34d0a9d2cf0c7b56f91932888c3a70f649be7243adabf9498d22e96e",
+    "recomp/overrides/native_adxt/ordinary_runtime.cpp": "5096f8f723548b6a7fb614144bc1246b9c92be4ca2530aca2f3210b6e88223b7",
+    "recomp/overrides/native_adxt/ordinary_tests/tests.cpp": "6ea2726ee924dfa5b2dabed44695a9a38617a9125484a3ca48af426abe45bcdd"
+  },
+  "retained_failed_v1": {
+    "reason": "new fixture omitted explicit request_close before asserting source retirement; corrected fixture only",
+    "production_refill_unchanged": true,
+    "failed_fixture_sha256": "e95a1e71e0343bc4be33528f0a3ea6e6ca87e5706035f6f282a8536f2ddb5843",
+    "mutable_resource_input_limit": "v1 resource implementation changed while compiling; exact compiler read-time source not claimed",
+    "initial_resource_sha256": "ba3dc377c1c01f624e74c1a49bc9364480ba7a127e5a7555def8ae233df715aa",
+    "final_resource_sha256": "c7c1b618b74f42d6cb6717a3a55fdd5ec44abf6668e6bc43e7673fbe5731de84",
+    "final_focused_v2_sealed_source_snapshots": true
+  },
+  "limitations": [
+    "component/core/declared-port tests do not run the production game or output device",
+    "owned immutable vector storage is not OS physical page locking; allocation/page faults/scheduling can still delay",
+    "first complete asset preparation can wait; cold-first actual movie/audio alignment needs game validation",
+    "controlled delayed provider proves removal of future provider-read waits for prepared cues, not the physical cause of historical stalls",
+    "full ordinary regression uses declared factory/runtime ports; production composite worker and actual game acquisition remain separate evidence"
+  ],
+  "evidence_sha256": {
+    "tools/native_reconstruction/native_resident_audio_manifest_v1.json": "594c4a700cf9936c073c8d543fc980711e33f0df8e0151947ca15bef07e4a555",
+    "build-native-sjuni/refill-resident-results-llvm-v2/receipt.json": "5565961dbeac490f08b9dd98a2752dd7336efdc57499baf5c899eb50482c583a",
+    "build-native-sjuni/refill-resident-results-llvm-v2/build.txt": "8957cf71844a9effef1de85c7d7e0a326b4111c5533bc667bfd290c49b6434de",
+    "build-native-sjuni/refill-resident-results-llvm-v2/configure.txt": "8d6636c9b8f6a1922fe38517fb3eb81749cf64d1de0a28c09ca7cac3dd6ae129",
+    "build-native-sjuni/refill-resident-results-llvm-v2/tests.txt": "19ef2c86a86d121997289085906ca3cf865e341ea677b8b679b480d0690ab9e0",
+    "build-native-sjuni/media-resident-audio-results-llvm-v1/receipt.json": "357d62b4777a9c5828b90e5cded8be96cfa0b4f2ff74d29a233482f6502a3bb9",
+    "build-native-sjuni/media-resident-audio-results-llvm-v1/build.txt": "8f801947a3dc63410155245718d16933e5d03aab44f7c1d742dd19eddbd582b3",
+    "build-native-sjuni/media-resident-audio-results-llvm-v1/configure.txt": "37f396bdbcfc0f2dbf05406a9493391316cf1e16e276cf088b0d61176a62f5a0",
+    "build-native-sjuni/media-resident-audio-results-llvm-v1/tests.txt": "f9f9e4a4f35d8a33c58efad80ad8f5832e362bf1c91ef856928068ca5ef79f3a",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/receipt.json": "d0deb8de334b178d40123acc65bf3616bad83ec435fbd2bcfcb1c51849364518",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/callback.txt": "64d5256ebb3fe69208f28aafbac5b175fb70a0731cadd853d2ea371c830e569a",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/changed_child.txt": "4c6b035a654d77bb63014759c2102d2531df69467bd7d6e8bf5ff80e439276ab",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/drop-child-retirement-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/drop-child-retirement.exe": "52e261e774ec325504425057cc7a34b0465348c32774e8fc6d743fbc4dd13f2a",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/drop-child-retirement.txt": "eabe5d7eaa0bf14fee26379385a6a84a5db4cc785b3fcd79ca44513e0b4609ba",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/entry.txt": "4595b4d4c23cea995ae0f0c7d028905cc57dfe24a0d44a1de048cf98324a8585",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/factory.txt": "c85a1e6fc0bb7ff3d0eae5fe7397c9e62f44a13df3f7ea0b26d519b9bfe0eef9",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/fallback-unsupported-producer-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/fallback-unsupported-producer.exe": "fa353bf35a327dbc69294a060d9867476f1b580a6681e62e3d3bfaedc31f6b7c",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/fallback-unsupported-producer.txt": "fc996708f5d3a6e7bb9dbf7b6d683af934982b7ba1574c0c4d055cfb97c10c9d",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/foreign.txt": "7d16236394355f08419a7f432851c93a338b23353839a0ad99a833a650d383b6",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/guest_depth.txt": "a01e630a6c5cac25aa2b4a15571dc9e13a703c5a93e7623115e1d0d4d2e604a2",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/handle_fixture.hpp": "963001241ca7061c7141c32644b9050e56f77b5fab36c257101f3655f2f338c7",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/ignore-active-stereo-pan-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/ignore-active-stereo-pan.exe": "d837abaab8ac52578d9bc94ed3db5fe3e28415a1145ca0eb71450811ff680e96",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/ignore-active-stereo-pan.txt": "fc996708f5d3a6e7bb9dbf7b6d683af934982b7ba1574c0c4d055cfb97c10c9d",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/ignore-child-replacement-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/ignore-child-replacement.exe": "92da282c6aeb107b56a0c0a83373ff04f2b3df11d19c74d5845d00b0f240ce21",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/ignore-child-replacement.txt": "fc996708f5d3a6e7bb9dbf7b6d683af934982b7ba1574c0c4d055cfb97c10c9d",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/ignore-muted-metadata-refusal-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/ignore-muted-metadata-refusal.exe": "3236a5e650f4254b49120a639d17c45406287503c68a2d4868d4518583122301",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/ignore-muted-metadata-refusal.txt": "fc996708f5d3a6e7bb9dbf7b6d683af934982b7ba1574c0c4d055cfb97c10c9d",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/ignore-three-source-order-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/ignore-three-source-order.exe": "b8fcf81fe3e95d9a9acebcced547b38308db656eff891454ed4e4f14df2c18be",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/ignore-three-source-order.txt": "fc996708f5d3a6e7bb9dbf7b6d683af934982b7ba1574c0c4d055cfb97c10c9d",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/image.txt": "548ea9879843799b2bb288b0e2a75bdf8b5765b26cb5cf24ed405b215607d53c",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/metadata.txt": "01f39d9f7c91aa599abb00002f3478147e941539f165f31ae2259ab56dc02f20",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/metadata_three.txt": "991068d36a1d518688e15062b021111c537a001bba2027c5ba7b5b316fec8c52",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/missing_one.txt": "394d54775f5ea123bf648597dc3f36285277e9f84283129f93553eb54dbc6df3",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/missing_two.txt": "787abedebcf58830b491d1bbfd76741a4c733e9215f9c33321a482709e67e625",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/mono_pan.txt": "615243a35ad926ad1e3c2df75e868a0011564f55c448313759be476ff7eb90f5",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/mount.txt": "da4717028da7e5ea890457d42e76c8b85b25e9d73e08fa5e76876d5790a3ef6f",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/omit-muted-metadata-refresh-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/omit-muted-metadata-refresh.exe": "6933cdba12f2aba26e4701f54b5ad2be2d9f19285abc121ae7690f81b7f9adc4",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/omit-muted-metadata-refresh.txt": "e46702f83789bdbc4830a4519e696f681577a9e58b437950cdc16d392888c62f",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/omit-native-discard-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/omit-native-discard.exe": "6e382731759c860e9a4faeaa668dce3774b83136f32923d8ceb129803ea13bf8",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/omit-native-discard.txt": "5aaee7bbdc9a96201dc8912e4d62229dae491149f55ed3bff9fa03d31d886365",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/order.txt": "1c3ff36be234707b2ef9c6f57a64930ed86150d853bec8df5a68914e22e45a25",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/order_partial.txt": "3472e9a82dd6d94976fecdc1c3cc96928b67edf51b3d16f4d1d9e4db3f79e4ea",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/ordinary.exe": "3ca41595bd77001ccb6be215561a6023a31c8572cef6fe9b7c1b289c843c300d",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/ordinary.txt": "360cabcb1d27513eeb02bf4ae5e9fb67674c1ec60de17bb4708c8f15ae8f88f0",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/partial.txt": "219eb55051d7e25681d9375b14411ef9cc29408743192df1a193aa0582685a76",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/phase.txt": "10d8b40793883b0fe024e63642e77e91c164467e41b9537a9fa4fd69406b9a2e",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/plan.txt": "6c53bb732d1040eb6c05403dc94444a85a5e116963e41c562285df6e3e1ea9a2",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/producer.txt": "3bb3c86e78b284ec77e5e21e2470822599fca12456ea681205fede8171fd2e8a",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/qualified-image.bin": "df5c697e9c5f8873135a7e23d4de1dd9bd160e7c3b0a899c4d385b3766b9c59d",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/query_alias.txt": "99a6e56837a33eb08dda482b1e68a1726a65a77bf53a3d5afb1a3dab9530ea44",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/queue_append.txt": "63b7c79ea4d33d32a572c7dd0d348185719d65f62e5a38581e6ba45a0e89b0c3",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/queue_bad_descriptor.txt": "3ba0d3b2a9fcd0b22ca83780a05defea04c6bb8334f103369be2d0df04057e1f",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/queue_bad_member.txt": "ed1c4c5d093116ff60376fbc4fae9fdb1623d1f25e19dd692e5be836f46f3e8b",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/queue_e3.txt": "d4ca3e9c7fa451587188d50c60281c013367b47576f3f21129acf26eee7fbfec",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/queue_finite.txt": "220f74cdfb52940f9ba71ee0c546d8407aed8a4f5013a2004fd9970167fbecaf",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/queue_repeat.txt": "e81bb08fb0fa04ddc2b81caf72ed0c9265f395c5e5baea09184c6f2f3ee099d8",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/registry.txt": "2f56f4230340a58c36daec7cb2c57b1fd253216899c37d7685552f550a01b5b4",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/require-raw-order-for-two-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/require-raw-order-for-two.exe": "7c3852f7aaf4c9b59786d2ea6e894fab56b1062b9d77d190bbfccffe1c02d17c",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/require-raw-order-for-two.txt": "e46702f83789bdbc4830a4519e696f681577a9e58b437950cdc16d392888c62f",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/require-unused-mono-pan-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/require-unused-mono-pan.exe": "c3870fa48703f5129ad34d39c891b0884b98f8beaa9f304e9c9ccc1e2f724cbc",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/require-unused-mono-pan.txt": "84755aa58f0f951f4a11c3b784731bd57f72e6c775dddc7644b0e874c7b8fc0f",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/stereo_pan.txt": "9b51fa65228fa2ee30db42be60b55c33435408f754515c01abe631d415e18279",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/trace.txt": "332645e4c65ae49309bc083614c5cfa1ef12f883ef884ccbf78d9032086cfd24",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/trace_bounds.txt": "197c88f127ea86621677f74610cd27e78cd68641a4ed418f17eeffafa614a46b",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/trace_existing.txt": "db68dabfed4eacf8b1b9c91da0bcb6f964841bd559ba0ee27c2555b504795400",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/trace_generation.txt": "3c2e3a016c4f5ecf593d4386ccd6659c3a379b867d88257419caaf6a15aac3e0",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/trace_unjoined.txt": "50150987835067ecd2031b35211b14aa5c8a6e4b12c4e5c360900ce9b605a42f",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-llvm-v1/worker.txt": "cf1eada1f07650e76efe44c63e03e41fd2cefa4667000fea6991519ed44e8cdb",
+    "build-native-sjuni/refill-resident-results-llvm-v1/receipt.json": "b69f4ddf65dc6931a0034103db00b078ebe00ca56dbd9d1230945097e00f300a",
+    "build-native-sjuni/refill-resident-results-llvm-v1/tests.txt": "f98a53f66c4d79195cc1f5b28503df340814a746805d62b7d5a570eae1ec46de",
+    "build-native-sjuni/refill-resident-results-llvm-v1/retained-failed-inputs.json": "bfb894afae2afff3065e149197cffce9042401b5b3fb8ed47d370b6e60ac100d",
+    "build-native-sjuni/refill-resident-results-llvm-v1/retained-input-restoration.json": "fbb72453b0fbc5a7d144dc56f3d885d19b74bcad1d5e479d6d811aa5f8618e45",
+    "build-native-sjuni/refill-resident-results-gcc-v2/receipt.json": "3332a40fdbdbbf2646aafc0a80eaf1af0a87d288f60969df644231cba6a5e4ee",
+    "build-native-sjuni/refill-resident-results-gcc-v2/build.txt": "8957cf71844a9effef1de85c7d7e0a326b4111c5533bc667bfd290c49b6434de",
+    "build-native-sjuni/refill-resident-results-gcc-v2/configure.txt": "ed428e6ba79abfa5334313f28417060e287dbf5f2e9aec322ae59eeb240ba2ad",
+    "build-native-sjuni/refill-resident-results-gcc-v2/tests.txt": "cd81afaae01a77252bb41b0187d45ce2c61699d1abab6e6a890031072925c7ce",
+    "build-native-sjuni/media-resident-audio-results-gcc-v1/receipt.json": "3786fd958948ea16302eee44d5c0b56196b1c438e731a2ae26819fa7f2c96adf",
+    "build-native-sjuni/media-resident-audio-results-gcc-v1/build.txt": "fbd64714e2922a548ea9b341ab8239f4c9dae828a5b55e4d8383fd3283b43e6c",
+    "build-native-sjuni/media-resident-audio-results-gcc-v1/configure.txt": "6341aba4fa5b11bc5bb80d02cdf433d19458fa629cc8a4a77114223993547204",
+    "build-native-sjuni/media-resident-audio-results-gcc-v1/tests.txt": "7738d68467c9b37a557c057f3148afe6f8f10cbc37741cb721aa2918d0d9e4b3",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/receipt.json": "936d15e4e3377ce018a3e7159eaee9562925023782b9668263e513599ae20728",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/callback.txt": "64d5256ebb3fe69208f28aafbac5b175fb70a0731cadd853d2ea371c830e569a",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/changed_child.txt": "4c6b035a654d77bb63014759c2102d2531df69467bd7d6e8bf5ff80e439276ab",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/drop-child-retirement-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/drop-child-retirement.exe": "d4cad518337f4fd7ae23541272425c5dd066fad2fa26e054c59e96f1dbbc5d0d",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/drop-child-retirement.txt": "e8293a548afb44192ca7cac072ac261c6b027220bf5e6b57e0a828d869f805f5",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/entry.txt": "4595b4d4c23cea995ae0f0c7d028905cc57dfe24a0d44a1de048cf98324a8585",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/factory.txt": "c85a1e6fc0bb7ff3d0eae5fe7397c9e62f44a13df3f7ea0b26d519b9bfe0eef9",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/fallback-unsupported-producer-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/fallback-unsupported-producer.exe": "e8ac03834079135b2b80e277259d022cce16f04c341b00698446ca385b9d7f1e",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/fallback-unsupported-producer.txt": "fc996708f5d3a6e7bb9dbf7b6d683af934982b7ba1574c0c4d055cfb97c10c9d",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/foreign.txt": "7d16236394355f08419a7f432851c93a338b23353839a0ad99a833a650d383b6",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/guest_depth.txt": "a01e630a6c5cac25aa2b4a15571dc9e13a703c5a93e7623115e1d0d4d2e604a2",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/handle_fixture.hpp": "963001241ca7061c7141c32644b9050e56f77b5fab36c257101f3655f2f338c7",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/ignore-active-stereo-pan-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/ignore-active-stereo-pan.exe": "385c935407dfd1b7b3155cbcd28fe8a6469c0eec0cf9d44d0ddaf6144395a618",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/ignore-active-stereo-pan.txt": "fc996708f5d3a6e7bb9dbf7b6d683af934982b7ba1574c0c4d055cfb97c10c9d",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/ignore-child-replacement-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/ignore-child-replacement.exe": "a66c07f507c100febd2973fc02c680f1fb1f5decfcdebaad88b00b7d105ec394",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/ignore-child-replacement.txt": "fc996708f5d3a6e7bb9dbf7b6d683af934982b7ba1574c0c4d055cfb97c10c9d",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/ignore-muted-metadata-refusal-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/ignore-muted-metadata-refusal.exe": "eec44fa82f832694d9f484cf8ef14761fb08954df3b73ab10043eeb93275115f",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/ignore-muted-metadata-refusal.txt": "fc996708f5d3a6e7bb9dbf7b6d683af934982b7ba1574c0c4d055cfb97c10c9d",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/ignore-three-source-order-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/ignore-three-source-order.exe": "81f454154d29c3a1f5192d1c1cfc16af2df67fd1315c65ad98ba118c70aa3adc",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/ignore-three-source-order.txt": "fc996708f5d3a6e7bb9dbf7b6d683af934982b7ba1574c0c4d055cfb97c10c9d",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/image.txt": "548ea9879843799b2bb288b0e2a75bdf8b5765b26cb5cf24ed405b215607d53c",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/metadata.txt": "01f39d9f7c91aa599abb00002f3478147e941539f165f31ae2259ab56dc02f20",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/metadata_three.txt": "b20d41f2a9376264c38bd02a34da6cefc5393a0512e14c6a2260fab8a4650595",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/missing_one.txt": "6f8ebecfd34032c9eff46a5915859a0dedf898001f55f06f72e047ee9d50f35c",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/missing_two.txt": "66143759fe98511ae4fbf2eadde26fb2f92526f508b72b65005762363d2693d6",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/mono_pan.txt": "615243a35ad926ad1e3c2df75e868a0011564f55c448313759be476ff7eb90f5",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/mount.txt": "da4717028da7e5ea890457d42e76c8b85b25e9d73e08fa5e76876d5790a3ef6f",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/omit-muted-metadata-refresh-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/omit-muted-metadata-refresh.exe": "93a6eb5ccec671b09987e6c5bdb5877000ac615d2ad0870e89eb16d4e70dfeb7",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/omit-muted-metadata-refresh.txt": "e46702f83789bdbc4830a4519e696f681577a9e58b437950cdc16d392888c62f",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/omit-native-discard-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/omit-native-discard.exe": "7c60f7c379f84ede81cd5ab06e12003df52883e0d4857b69d45b8595c9d07f4a",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/omit-native-discard.txt": "80b89d10bbcef9584fb18747721e076706c484b03c069faa6f1a82210c7d0e29",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/order.txt": "1c3ff36be234707b2ef9c6f57a64930ed86150d853bec8df5a68914e22e45a25",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/order_partial.txt": "3472e9a82dd6d94976fecdc1c3cc96928b67edf51b3d16f4d1d9e4db3f79e4ea",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/ordinary.exe": "26370b2ab5b5da30a57da902f9efbc2e0553c608735a3fa4c33ed5ca2e13cedb",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/ordinary.txt": "75d46174089a47bcc025d2953670f414a15cdb3a400e6c8e913559b5820ab91e",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/partial.txt": "219eb55051d7e25681d9375b14411ef9cc29408743192df1a193aa0582685a76",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/phase.txt": "10d8b40793883b0fe024e63642e77e91c164467e41b9537a9fa4fd69406b9a2e",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/plan.txt": "6c53bb732d1040eb6c05403dc94444a85a5e116963e41c562285df6e3e1ea9a2",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/producer.txt": "3bb3c86e78b284ec77e5e21e2470822599fca12456ea681205fede8171fd2e8a",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/qualified-image.bin": "df5c697e9c5f8873135a7e23d4de1dd9bd160e7c3b0a899c4d385b3766b9c59d",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/query_alias.txt": "35051092aabdf97b5538f0a72f2a6566979f6c5b6cdf97834027fe2d18e62761",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/queue_append.txt": "8b52221ceb40dffae178b50409a89603af08cf6b174553b777071b5d2f0394b9",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/queue_bad_descriptor.txt": "3ba0d3b2a9fcd0b22ca83780a05defea04c6bb8334f103369be2d0df04057e1f",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/queue_bad_member.txt": "ed1c4c5d093116ff60376fbc4fae9fdb1623d1f25e19dd692e5be836f46f3e8b",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/queue_e3.txt": "1de8a8051687d1f41631def15b24a71152dfa82dd6f4c00e2234ffc62a9fb4c8",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/queue_finite.txt": "6940b7179ecab040e61c92b6e4119ce1eaa07d3db352bac174c2b2bbc8ca8e89",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/queue_repeat.txt": "fe2d2efc8721b3c38ad943d5343e05984256381e0eefcc84ba6674a810ebcdd8",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/registry.txt": "2f56f4230340a58c36daec7cb2c57b1fd253216899c37d7685552f550a01b5b4",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/require-raw-order-for-two-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/require-raw-order-for-two.exe": "10878e51bb0d4046da87f78045c60a7009c3c79723587eeeb4938d6db2be0ec6",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/require-raw-order-for-two.txt": "e46702f83789bdbc4830a4519e696f681577a9e58b437950cdc16d392888c62f",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/require-unused-mono-pan-compile.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/require-unused-mono-pan.exe": "7d2733e546f7b7241811afa7ae5d7c934d2411e2afa6478859d6d311c02c5cc6",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/require-unused-mono-pan.txt": "84755aa58f0f951f4a11c3b784731bd57f72e6c775dddc7644b0e874c7b8fc0f",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/stereo_pan.txt": "9b51fa65228fa2ee30db42be60b55c33435408f754515c01abe631d415e18279",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/trace.txt": "6be6f6839b3aa18d577f61ce97b4a75b1c4c978346a5eafb154e186b5e40b5ac",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/trace_bounds.txt": "197c88f127ea86621677f74610cd27e78cd68641a4ed418f17eeffafa614a46b",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/trace_existing.txt": "db68dabfed4eacf8b1b9c91da0bcb6f964841bd559ba0ee27c2555b504795400",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/trace_generation.txt": "3c2e3a016c4f5ecf593d4386ccd6659c3a379b867d88257419caaf6a15aac3e0",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/trace_unjoined.txt": "50150987835067ecd2031b35211b14aa5c8a6e4b12c4e5c360900ce9b605a42f",
+    "build-native-sjuni/adxt-binding/ordinary-resident-audio-regression-gcc-v1/worker.txt": "cf1eada1f07650e76efe44c63e03e41fd2cefa4667000fea6991519ed44e8cdb",
+    "build-native-sjuni/refill-resident-results-gcc-v1/receipt.json": "c1b9aa9c591103373ab043c5991bb41455a06a50682097dacd498ff02829ba57",
+    "build-native-sjuni/refill-resident-results-gcc-v1/tests.txt": "4456eeebef5b56d89af8361a0a019a3e64b458a76444b4ed1c88ba393a2228e4",
+    "build-native-sjuni/refill-resident-results-gcc-v1/retained-failed-inputs.json": "bfb894afae2afff3065e149197cffce9042401b5b3fb8ed47d370b6e60ac100d",
+    "build-native-sjuni/refill-resident-results-gcc-v1/retained-input-restoration.json": "fbb72453b0fbc5a7d144dc56f3d885d19b74bcad1d5e479d6d811aa5f8618e45",
+    "docs/native-media/NATIVE_RESIDENT_REFILL.md": "216401248c6f54cf56c4b3ea7c658b85d67f587ff1db4320c2314e2a07c91a6b",
+    "tools/native_reconstruction/verify_resident_refill.py": "7ed1e2723b07d60d060c22b87a595d3eb7de8bd484a5c200550ef747b2fc2748",
+    "tools/native_reconstruction/build_media_native.py": "fc53076e580c41b1e4c68bc5107bc8c3ff33a70c42eccb90f713dac0223a5f0c",
+    "tools/native_reconstruction/verify_adxt_ordinary.py": "6d23e75d03717cb78777beabc5829f11df3632b7196496530412a6152cca2d52"
+  }
+}

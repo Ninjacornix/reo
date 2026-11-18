@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "scope": "selected movie clock/cache/external wrapper with declared callback and paired guard-hook profiles; not production selected",
+  "files": {
+    "game/native/movie_selected_clock/clock.cpp": "c128256a096a5d5c4b0241a59e478a9446d9bc826480be4031cffe8b51846ff1",
+    "game/native/movie_selected_clock/clock.hpp": "c0f1127f084294fcb61f0995c5a75a4b6b9ea3da1db8e5f94c2d410a742c0dec",
+    "game/native/movie_selected_clock/clock_tests.cpp": "2d70d3035a3eed7f1e4f4e99cee12e914a671092f21a065325ac12af4a01551e",
+    "game/native/movie_selected_clock/CMakeLists.txt": "50ad4426f6ccce9d9bc7f1066c74eac176bc05cbe4c823275d842ab95b6a55a8",
+    "game/native/movie_selected_clock/fixture.cpp": "5cb39863d472f4965c727da94597e6139a8635f66a4b08c216513d60b8213ce4",
+    "game/native/movie_selected_clock/verify.py": "18f8f50125163aa387d3bb2ff4f6c880d7c5c6ad17a4189c065a4d3effa6db72",
+    "docs/native-media/MOVIE_SELECTED_CLOCK_CONTRACT.md": "e567eb451c9cae22cb488b081a12d8e0aa9fe0b8ca8ae441f259d50421d9a08c",
+    "tools/native_reconstruction/movie_selected_clock_oracle.py": "8e76e291fc61355f1397b24e93f4bbf13223746c99c9f821ceff586e6c956486",
+    "game/native/movie_counter_clock/clock.cpp": "14bd062ff0df2bc25ea8dbc95388bc5e1f23ba19328554866c1dce887357fd77",
+    "game/native/movie_counter_clock/clock.hpp": "5724b55787792f161cb92e226b46a798d25bf7d175e7a1cb503f52a960e975ef"
+  }
+}

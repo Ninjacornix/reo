@@ -1,0 +1,16 @@
+# HTTP overlay SSL parameter and generic-key adapters
+
+Static owned o6 `nethttp.bin`, runtime ID6/base `6E0000`, SHA-256 `68dbc8f16c5d0cc8a43205beb86ddac405a12c1d6b843b5961211bbe6ec30117`. Six complete original intervals reviewed. No target execution or cryptographic tests. Numeric values are hexadecimal. This continues the [SSL key-policy adapters](SYMBOLS_HTTP_SSL_KEY_CLASSIFICATION_AND_ALERTS.md); underlying [generic key wrappers](SYMBOLS_HTTP_DSA_KEY_DECODERS_AND_PROVIDER.md) and [parameter operations](SYMBOLS_HTTP_KEY_SIZES_PARAMETERS_AND_SIGN.md) carry the nontrivial mutation and ownership contracts.
+
+| Guest entry / source | Proposed label | Confidence | Evidence and remaining uncertainty |
+| --- | --- | --- | --- |
+| [o6 0x728C10](../recomp/config/output_ovl/o6/o6_00728C10_0x728c10.cpp) | `get_or_set_dsa_parameter_encoding_flag_only_when_ssl_policy_enables_dsa` | Confirmed complete policy/delegate wrapper | Policy bit2 clear returns0; enabled invokes70B1D8(key,value), which admits rawtype74 and returns old key10, storing value only if nonnegative. No key-null guard here. |
+| [o6 0x728C60](../recomp/config/output_ovl/o6/o6_00728C60_0x728c60.cpp) | `copy_dsa_parameters_between_generic_keys_only_when_ssl_policy_enables_dsa` | Confirmed complete policy/delegate wrapper | Policy bit2 clear returns0; enabled70B208(dest,source). Matching type74 clones three parameters sequentially with partial mutation on later failure; other matching types return1 without copying. Certificate/key installers ignore wrapper result and clear errors before separate compatibility checks. |
+| [o6 0x728CF0](../recomp/config/output_ovl/o6/o6_00728CF0_0x728cf0.cpp) | `compare_dsa_parameters_between_generic_keys_or_report_disabled_minus_one` | Confirmed complete policy/result flow | Policy bit2 clear returns-1; enabled70B388(first,second) compares the three DSA parameters, returns0 equal,1different,-1wrong types. No public/private-key equality guarantee. |
+| [o6 0x728D40](../recomp/config/output_ovl/o6/o6_00728D40_0x728d40.cpp) | `allocate_ssl_generic_crypto_key_through_shared_key_constructor` | Confirmed complete wrapper | Calls70B430 with unchanged registers, returns constructor pointer/null; header initializes reference1 and empty canonical type/payload. No SSL-specific fields added. |
+| [o6 0x728D60](../recomp/config/output_ovl/o6/o6_00728D60_0x728d60.cpp) | `retain_ssl_generic_crypto_key_through_shared_reference_adapter` | Confirmed complete tail | Tail70B490(original key), which increments reference8 through classA callback. No extra null, overflow or synchronization gate. |
+| [o6 0x728D68](../recomp/config/output_ovl/o6/o6_00728D68_0x728d68.cpp) | `assign_ssl_generic_key_type_and_payload_through_shared_replacement_helper` | Confirmed complete wrapper | Calls70B4B0(key,requested type,new payload), propagates result. That helper releases prior typed payload, stores canonical/original types0/4 and new payloadC; no alias retain or rollback added here. |
+
+Policy flags determine whether these adapters delegate. A returned zero can mean disabled behavior or a delegated failure, depending on the entry; callers must preserve the distinction rather than infer successful key compatibility.
+
+Audit: 73 verified instruction words, zero conflicts, 3 omitted zero words (NOP padding), zero omitted nonzero words.

@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "status": "bounded native prototype frozen before comparator; original observations already seen",
+  "files": {
+    "game/native/afs_source_range/afs_source_range.cpp": "6f0808755ec7c82b5e0a95c403b45d462b27bbe1f1aec98f202fa081ddc9ce90",
+    "game/native/afs_source_range/afs_source_range.hpp": "c8e91b5580c89b38d6a2d35f9444c80d7aecf66e1bee4d9bc441fa361cea1c3b",
+    "game/native/afs_source_range/afs_source_range_tests.cpp": "576f7dce5acc216bb5cb08c56ece1c30e9398835473c092d5ad800e29f12f0f6",
+    "game/native/afs_source_range/CMakeLists.txt": "72185e55d396d050e5fb5f84628268077f767cadf2d1db29bff3d82aff9a2e6b",
+    "game/native/resources/bounded_view.cpp": "174d66d6d7ce7ccfd6d98d1117defdbfd49dea22b64be3f11ca50d0b582d231e",
+    "game/native/resources/bounded_view.hpp": "badad2eeb0a9d43f4dd842b1d8253b8e5f620a130e576a09598fb52801000b04",
+    "game/native/resources/byte_view.hpp": "967f3ef9fab63390f05a95991a46dabbb6a7c0540130c16c35ee67eb498ffddb",
+    "docs/native-media/AFS_SOURCE_RANGE_CONTRACT.md": "70185683ce8a6b298fcab1d3f48613fcf009559a642e4b192ceea78832407a15"
+  },
+  "prior_manifest_sha256": "c28465f31d2a46fb0b9c5c166a46f8959398dbe79cc10707a8bef5ba1f442609",
+  "revision_reason": "Exclude original 16-bit descriptor count boundary65536; add explicit refusal and compare every parsed descriptor length, not only selected member queries."
+}

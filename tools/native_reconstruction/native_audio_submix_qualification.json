@@ -1,0 +1,284 @@
+{
+  "schema": 1,
+  "status": "native external-submix ownership and model aggregate composition qualified; game binding absent",
+  "manifest_sha256": "40fb6372508627806234753ac8ff9dc32f821ce44d8c5ff049cb1ae2dcdd2975",
+  "evidence": {
+    "build-native-sjuni/submix/clean-build-llvm-v2/receipt.json": {
+      "sha256": "d6a8ed0792171015b4987fb9ba2f686f8373da4ccdcff68c4df2e07b30d802f4",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/submix/clean-build-gcc-v2/receipt.json": {
+      "sha256": "15cc42ea0b0503a045a2775cc3849e159b9f8029bbce347d559045fcea82b6da",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-instances/submix-qualified-llvm-v1/receipt.json": {
+      "sha256": "efb8b8f6ae19ec22955b7fc06229ca2e984859aa5e985d7722bebc52a68fee86",
+      "status": "stable native ADXT instance ownership qualified"
+    },
+    "build-native-sjuni/adxt-instances/submix-qualified-gcc-v1/receipt.json": {
+      "sha256": "30847cc21cae0cdaab0da8f86e9342aa46446b153588e784d2d3334c4a72a7e3",
+      "status": "stable native ADXT instance ownership qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/qualified-llvm-v2/receipt.json": {
+      "sha256": "764a7d434c5e604f3fc051b072d19b9b0b089a19eab9a39ea94aed1bea92018a",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/qualified-gcc-v2/receipt.json": {
+      "sha256": "954fcd03846b50b2eb6e93d2d291a9084f4803b5b991c64837ead09c4dfaa276",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/parent-llvm-v1/receipt.json": {
+      "sha256": "a60a2205c7ee3c7c10fec24b52e57b7f03e3a3931e93998c153462d1af631bcd",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/parent-gcc-v1/receipt.json": {
+      "sha256": "a45a8111e0bc633587b55819b4afb80b0c5375c631b23453e37c0b0f2233a55d",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/submix/clean-build-llvm-v3/receipt.json": {
+      "sha256": "cc954f332ce933b68c97998e1a363bfb896d9f3bb9bf0f4a75a0fe931c35a32e",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/submix/clean-build-gcc-v3/receipt.json": {
+      "sha256": "25c2e38f3661aa490eabef6377396b63de701bcada52184054281f82d00bdcf8",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/startup-llvm-v1/receipt.json": {
+      "sha256": "c5b234796712a46baafd21db9ffc501f630187e4609aed6236d03df0d966a93d",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/startup-gcc-v1/receipt.json": {
+      "sha256": "7fa5052ebff2420dc613e147195309bef07cb86d153d15c9b855727f019cee01",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/startup-parent-llvm-v1/receipt.json": {
+      "sha256": "2b15fe5f549259ddf3f9fc487adc513b01089ffe6a59db4ac7af430a042e044e",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/startup-parent-gcc-v1/receipt.json": {
+      "sha256": "27ee62f211fedb2b3200169c7a4f4e9a2633a3bef860c3c3236aa3fad8d73c39",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/submix/clean-build-llvm-v4/receipt.json": {
+      "sha256": "18d6e8e8809601d2957abce3a7f1f6a3fd0a41148013f6218ec533d1add22230",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-instances/gain-llvm-v1/receipt.json": {
+      "sha256": "811576051af716a5c41d4a2effad4d421cae64dc30f66764607f4bc9dbd782fa",
+      "status": "stable native ADXT instance ownership qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/gain-llvm-v1/receipt.json": {
+      "sha256": "842e9a3dd062813a9b373446520de7b44c4fa88d701cf5544d44690aab7f524a",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/gain-parent-llvm-v1/receipt.json": {
+      "sha256": "01043587652987811015ea309be3680048f1df9bd476f44cd300ae993e7ad6cb",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/submix/clean-build-gcc-v4/receipt.json": {
+      "sha256": "e098beb57bbf5b5733c85170c78f837eb4b67cf980fd07f932b900fc50a132e0",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-instances/gain-gcc-v1/receipt.json": {
+      "sha256": "7977ad709b40259a6e133d228700506a807db42dea788ede0ae0a5b1f227c1b6",
+      "status": "stable native ADXT instance ownership qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/gain-gcc-v1/receipt.json": {
+      "sha256": "b6400070956f977cc08940b028027aaeec18ab405c8d6e0685f25ab60abe21d4",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/gain-parent-gcc-v1/receipt.json": {
+      "sha256": "01cfc3b92e92153e6815336acb358e0f8a696f2742c41e8450f12fc574d77758",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/adxt-control-owner/build-llvm-v1/receipt.json": {
+      "sha256": "35e1f42ed9090fa831ae1a7f94477b0ebb800051b2210ff3f0e83ef2f9211493",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-control-owner/qualified-llvm-v1/receipt.json": {
+      "sha256": "24e86294ccecdc17b52a1cee4bfc410d5e2cb07c1599b2418134bdd484d3ddac",
+      "status": "native controller admission and actual source retirement qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/control-owner-llvm-v2/receipt.json": {
+      "sha256": "fa71c8dd2b6525c238cefed1e7e2efa574421f94674c5cd0eaeb6d4f75c53205",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/control-owner-parent-llvm-v1/receipt.json": {
+      "sha256": "1f8f61dc7bca0e3956f27b91b4f213453b30eae4ee6d4a9c8ccb627c826b0e16",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/adxt-control-owner/build-gcc-v1/receipt.json": {
+      "sha256": "3f00175945010ae6ae01dccf459d94cc2f73a64f4ab003ff4fe21721547c93ef",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-control-owner/qualified-gcc-v1/receipt.json": {
+      "sha256": "72aa760d25b3e4347693ea03fb8128457ca6f6d710f8fa1b1bd9a25f074eac40",
+      "status": "native controller admission and actual source retirement qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/control-owner-gcc-v2/receipt.json": {
+      "sha256": "a4216918c62e55e06b37003e474a1416593e4cedd4472f6b6f20382549ffe9d1",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/control-owner-parent-gcc-v1/receipt.json": {
+      "sha256": "37517055f7c6e82da84fe6f95f8eb212b46dd918d67116996cf0d62fc667a926",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/adxt-attenuation/player-build-llvm-v1/receipt.json": {
+      "sha256": "6b0d430c923d0d2b34fd285d1816cad5eaa48fea5cce0e10216a329327cdc7f5",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-instances/attenuation-llvm-v1/receipt.json": {
+      "sha256": "05a9259471fea0612c88922d7e36a9d37e09c7ce6191967bb1ef4cde3b4e550f",
+      "status": "stable native ADXT instance ownership qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-llvm-v1/receipt.json": {
+      "sha256": "38c0485488e84ab07e0d12bca53d0750110eb65bdb1546ba9b1933d54e0a6f74",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-parent-llvm-v1/receipt.json": {
+      "sha256": "9482b74c7f7a5289f97119b1a199a6c0d88cce74312d0bacb7bd47406e601e33",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/media-mount-handoff/attenuation-llvm-v1/receipt.json": {
+      "sha256": "b7ce5f45b3be8a35f64431d22c2a6c94304ba9ca7c850cb159201ca5d884cc8c",
+      "status": "actual imported native sources survive declared runtime/mount handoff and match qualified PCM baseline"
+    },
+    "build-native-sjuni/adxt-attenuation/player-build-gcc-v1/receipt.json": {
+      "sha256": "2b74ce7c13d7bcc8a75c720b5009305387a28909b2a46988036e050359b0bcb2",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-instances/attenuation-gcc-v1/receipt.json": {
+      "sha256": "2a11946b642ca466c5e03f7501d7aaf940228bae27e9b64165c8bd7f6185eba1",
+      "status": "stable native ADXT instance ownership qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-gcc-v1/receipt.json": {
+      "sha256": "fc35c449474fce23be89a80ab06259ff5a8c7a9cc3b71e5a00d82e8531f0e83b",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-parent-gcc-v1/receipt.json": {
+      "sha256": "4e5de512410d3c7a7cda3a0428b92d94131b9c1cd1bcf86872e9a23e72c24eb2",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/media-mount-handoff/attenuation-gcc-v1/receipt.json": {
+      "sha256": "7fbfde6eebd7d10921e86692260046cad9a926daca65e4629709e2c755838de4",
+      "status": "actual imported native sources survive declared runtime/mount handoff and match qualified PCM baseline"
+    },
+    "build-native-sjuni/adxt-attenuation/player-build-llvm-v3/receipt.json": {
+      "sha256": "cffcd592538db272bd245934fbb48d8879a338eb0d5c352a76f7eca190e2f93f",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-lsc-llvm-v1/receipt.json": {
+      "sha256": "ec75830700bc477a853507240722053d3ff021f7d31f61ef7535507bada3834c",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-lsc-parent-llvm-v1/receipt.json": {
+      "sha256": "68810727c7e8b592e98ed7f3304eaa901fc6113b90615990af93218e8e318066",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/adxt-attenuation/player-build-gcc-v3/receipt.json": {
+      "sha256": "1bcae64a4728d868e692d9fb67f73c74198c6aefe2e114ea0e750e82e40667a4",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-lsc-gcc-v1/receipt.json": {
+      "sha256": "ea37aca6451a3626d40cd38c940dfcc8956880e65f107a0e517c15fbea4d676b",
+      "status": "native stream-only aggregate composition qualified"
+    },
+    "build-native-sjuni/native-audio-aggregate-v3/attenuation-lsc-parent-gcc-v1/receipt.json": {
+      "sha256": "8f368575bbe31d41c2c765cb2e182af7a602c3f39c52a79a9d9bccc5ae637ef6",
+      "status": "null-stream aggregate3 observations match qualified parent"
+    },
+    "build-native-sjuni/adxt-game-control/native-llvm-v2/receipt.json": {
+      "sha256": "e8d9edba53d7bdb248d819efb76d5a0c51791b6bedfeb8b687b4ba922d2d2585",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-game-control/qualified-llvm-v1/receipt.json": {
+      "sha256": "dcd96b7e2ada2c88f309b67fa6664adfb00889dffa7ece90760dbd26151fdfe1",
+      "status": "stable native game controls and admission faults qualified"
+    },
+    "build-native-sjuni/audio-media-factory/game-controls-llvm-v1/receipt.json": {
+      "sha256": "818d672115b1f5e27bcc39679f9969632c2a9fd70326e987afded1901199fbbf",
+      "status": "native media factory protocol passed"
+    },
+    "build-native-sjuni/audio-media-factory/game-controls-actual130-llvm-v1/receipt.json": {
+      "sha256": "e6b5c4cdf99883def20ffcb80c72861e4b6f83d7f6e6d67285b4575be0de9fe1",
+      "status": "passed"
+    },
+    "build-native-sjuni/adxt-game-control/native-gcc-v2/receipt.json": {
+      "sha256": "ed69c3e525b90e12e61fe6eecde1dd9f1412ffe623f77d7cd5607d5a973b1aac",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-game-control/qualified-gcc-v1/receipt.json": {
+      "sha256": "1a41718cc1cf066381e8ee572fb89461a475cc565df4874c3605f8bf7807a9e7",
+      "status": "stable native game controls and admission faults qualified"
+    },
+    "build-native-sjuni/audio-media-factory/game-controls-gcc-v1/receipt.json": {
+      "sha256": "7555c3b50c191fed90a5e75fe5add6a937a11e0a2ceeaf52a1319b072404dfee",
+      "status": "native media factory protocol passed"
+    },
+    "build-native-sjuni/audio-media-factory/game-controls-actual130-gcc-v1/receipt.json": {
+      "sha256": "f77caa8c624199097b66ac9caf4b88a5ade2130dcc886aef6f7d574f1180c01a",
+      "status": "passed"
+    },
+    "build-native-sjuni/adxt-start-gate/native-llvm-v1/receipt.json": {
+      "sha256": "74d9c155574af9bd18ac5015e3aa1fff84f324dff144668114cd325b6118497a",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-game-control/start-gate-llvm-v1/receipt.json": {
+      "sha256": "6efbf3a3fed2f78d7328e792a6b2207d60b1ba77ab4d29bf02f31c73a1825aa1",
+      "status": "stable native game controls and admission faults qualified"
+    },
+    "build-native-sjuni/audio-media-factory/start-gate-llvm-v1/receipt.json": {
+      "sha256": "93fa26bbd64b54cd2b0fa69ef80c79f379287053bbdb182dcde09fe3f1b4a1b8",
+      "status": "native media factory protocol passed"
+    },
+    "build-native-sjuni/adxt-binding/start-gate-llvm-v1/receipt.json": {
+      "sha256": "4e0164a7ed0544451fc682a15e2ef61f2fd3725d4aa4353320cbb01659f1fd78",
+      "status": "native game handle ownership and source retirement qualified"
+    },
+    "build-native-sjuni/audio-media-factory/start-gate-actual130-llvm-v1/receipt.json": {
+      "sha256": "4180b46b57932bec0a605d314a4b708ce22746832cb2334d43794282df616406",
+      "status": "passed"
+    },
+    "build-native-sjuni/adxt-start-gate/native-gcc-v1/receipt.json": {
+      "sha256": "57788c062a97170f3ef77b450e8b165aab9c61271f44141bae5e139d6c717dd9",
+      "status": "native media pipeline standalone build and tests passed"
+    },
+    "build-native-sjuni/adxt-game-control/start-gate-gcc-v1/receipt.json": {
+      "sha256": "7c95e23a952a9ed2a0add7a8eaba7c0037ebbc0e483706c78f3208b98e58c613",
+      "status": "stable native game controls and admission faults qualified"
+    },
+    "build-native-sjuni/audio-media-factory/start-gate-gcc-v1/receipt.json": {
+      "sha256": "ca07cfad74c0404255cb9cdc74d888f141b31aa0b8d2dcd9034b78199e1b8c9e",
+      "status": "native media factory protocol passed"
+    },
+    "build-native-sjuni/adxt-binding/start-gate-gcc-v1/receipt.json": {
+      "sha256": "bf68ce12a52f71b304daf1348cc7781375ce59283d111d340201aeb04a467910",
+      "status": "native game handle ownership and source retirement qualified"
+    },
+    "build-native-sjuni/audio-media-factory/start-gate-actual130-gcc-v1/receipt.json": {
+      "sha256": "e3cd7ccbf622e467a5a385ea0788a0c3ae9ca4c5b0237b278fc367707c08950b",
+      "status": "passed"
+    }
+  },
+  "parent_suites": 75,
+  "native_instance_workflows": 5,
+  "negative_controls": 4,
+  "game_integration": false,
+  "actual_audio_device_test": false,
+  "historical_failed_cohort": "submix/clean-build-llvm-v1: fixed model-device advancement during real source-worker startup in V2; same production DSP.",
+  "prior_cohort_manifest_sha256": "aa1a03a4fd91bd7ab32c8034219ff8406dd4fb00592dfba65ce86beec84c80c9",
+  "startup_wire_reset": "Allowed before first native producer; post-source reset remains unsupported.",
+  "integer_guest_volume_and_callback_route_factors": "qualified isolated native and model aggregate controls; no live guest binding",
+  "controller_admission": {
+    "workflows": 3,
+    "detected_faults_per_compiler": 3,
+    "runtime_registration": true,
+    "actual_runtime_registration_exercised": false
+  },
+  "original_attenuation_profile": "finite, regular-loop, immutable sequence and dynamic LSC native players; sealed clip admission rejects effective nonzero AINF attenuation",
+  "runtime_factory_protocol_qualification": "tools/native_reconstruction/native_audio_media_factory_qualification.json",
+  "stable_game_controls_qualification": "tools/native_reconstruction/adxt_game_control_qualification.json",
+  "start_gate_qualification": "tools/native_reconstruction/adxt_start_gate_qualification.json",
+  "prior_service_divisor_cohort_sha256": "65209de7c8c75a3b1625169dbc5a00dbc809749b22dccf640cac7b5fe67e28ba",
+  "service_divisor_qualification": "tools/native_reconstruction/adxt_service_divisor_qualification.json"
+}

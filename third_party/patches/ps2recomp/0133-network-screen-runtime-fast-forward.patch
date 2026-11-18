@@ -1,0 +1,28 @@
+diff --git a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+index 6bea769..64ded15 100644
+--- a/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
++++ b/ps2xRuntime/src/lib/Kernel/Syscalls/Interrupt.cpp
+@@ -7,7 +7,12 @@
+ #include "ps2_log.h"
+ #include "Stubs/GS.h"
+ #include <algorithm>
++#include <atomic>
+ #include <cstdio>
++
++// Runtime fast-forward set by the game layer (reo_hw_bridge.cpp: the network connecting
++// screen runs the game's own timed waits fast). 0 or 1: normal speed.
++std::atomic<int> g_reoTurboFactor{0};
+ #include <cstdlib>
+ #include <cstring>
+ #include <stdexcept>
+@@ -665,7 +670,9 @@ namespace ps2_syscalls
+                     std::fprintf(stderr, "[turbo] guest 0x%x became nonzero: normal speed\n", s_turboUntil);
+                 }
+             }
+-            const auto period = s_turboOn ? kVblankPeriod / s_turbo : kVblankPeriod;
++            const int runtimeTurbo = std::clamp(g_reoTurboFactor.load(std::memory_order_relaxed), 1, 16);
++            const auto period = s_turboOn ? kVblankPeriod / s_turbo
++                                : runtimeTurbo > 1 ? kVblankPeriod / runtimeTurbo : kVblankPeriod;
+             const auto now = clock::now();
+             const auto diagnosticFirstDeadline=nextTick;
+             int ticksToProcess = 0;

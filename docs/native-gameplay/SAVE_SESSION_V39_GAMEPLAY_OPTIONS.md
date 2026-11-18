@@ -1,0 +1,28 @@
+# V39 ordinary gameplay options capture
+
+2026-11-09: the bounded background case `v39-gameplay-options-v2`, session `20261109-120218-392`, passes. Together with [the earlier seven-case checkpoint](SAVE_SESSION_V39_LIVE.md), actual completed invocation coverage now includes **all nine native save/session entry hooks**. This closes that live invocation gap. Stage 4, native world installation and gameplay temporary-save/resume remain open.
+
+The unchanged V39 executable is SHA-256 `bbf7d5915bac85dda9305b88db44d9103912a1b242acb2aeba2825e4bbff6b44`, source commit `77f7e59c01946fb9cffa9c984cf3a1cda06752ca`. The unchanged launcher helper-v4 is SHA-256 `051052e70f1ce6ee1f34f280c86f09105db0a93e6dc10d79983db7c91efe38e9`. Only the Python validation harness was extended. This candidate does not install the separately developed native World/actor/update owner.
+
+| Measured gate | Result |
+| --- | --- |
+| Original single-player gameplay | Scenario1/room1, one launched human, admitted local actor slot0, original phase2 and ready state |
+| Ordinary movement before menu | 44.6571 units, same scenario/room, observer seconds48.953→49.891 |
+| Original options UI | SELECT opens kind4; source-owned `742D90` table admits row5 brightness and row10 EXIT; default profile0 maps Cross to original confirm0x20 |
+| Actual option change | Brightness128→129 at observer second55.078; native saved first eight option bytes equal live options in all84 sampled stable menu rows; no convergence retry required |
+| Original return to gameplay | Ready again at second59.547 with pause/modal/UI gates clear; brightness129 and native snapshot retained |
+| Ordinary resumed movement | 50.9994 units, same scenario1/room1, seconds59.641→60.578 |
+| Native options capture `1AEDB0` | 248 accepted/completed, zero failed/rejected; original caller at `6ED6A8` is admitted against owned o2 instructions |
+| Other selected entries | Seed1, RNG27,999, defaults1 and sanitize2 accepted/completed, zero failed/rejected |
+| Shutdown | Helper/driver/game exit0; no force; actual game budget241.61725 seconds including normal retirement; native save/session, audio/service/source/cue/movie owners joined |
+| Private data and background | Fresh private card remains empty; 2,098 observations, all with a visible minimized game window, zero foreground observations; 20 nonce-bound pad commands; no guest/process writes, thread suspension, global keys, focus/window changes or desktop capture |
+
+Times above are relative to observer readiness, not benchmark intervals. Native counters count entry calls, not global game updates. The final fixed-capacity trace contains128 rows, with378 overwritten rows explicitly reported: 506 total rows generated, consisting of two rows per options-capture call plus ten startup rows. Sequence379..506 is retained. The full per-entry counters are drained and complete; early trace rows are not reconstructed. RNG has zero per-request trace rows.
+
+The native audio report has 10,471,680 output frames, 8,228,230 signal frames, zero underruns/hard failures/queue rejections/submix failures, and joined output/source owners. This is evidence at the native output pipeline, not a physical sound-device capture, a human A/V review or proof of globally stutter-free rendering. The case establishes ordinary gameplay continuing around the options interaction; it does not measure a speedup or validate every game branch.
+
+The earlier `v39-gameplay-options-v1`, session `20261109-115636-696`, remains an incomplete harness case. The helper requested optional chapter0 selection, whose existing test-only selector requires five unlocked chapters. An empty private card naturally exposed one chapter; the selector explicitly logged refusal and disabled its pad route. The original game remained in ordinary chapter selection; the driver issued zero input and recorded2,083 observations. Game/helper exit0, no force, zero audio underruns and joined owners do not convert it into a gameplay-options pass.
+
+The corrected harness waits for that exact owned refusal log, then uses ordinary private pad input at source-admitted default cursor0/count1, original character/mode/difficulty states, and cinematic START only in original phase0x0E substates4/8. It stops this frontend steering at phase2. No chapter/unlock flag, cursor, state, PC or register is written. Character/chapter +0x20 readiness gates are preserved; default mode/difficulty do not acquire an unrelated gate. Six complete original frontend/cinematic bodies and six gameplay/options/input bodies were checked instruction-by-instruction against the owned original images. The packaged `pad2TestRoute` function text matches the inspected source exactly. These sources admit interpretation; actual world entry and input effects remain separate measured evidence.
+
+New analysis `build-native-sjuni/native-gameplay/v39-gameplay-options-analysis-v1.json`, SHA-256 `e9a7a03cc5749902c62b37fb80aabeb37f6c9bf54846e7dfa4361aa0aaaee499`, binds both cases' receipts, original observations, final counters/logs, source inventories and private-card manifests. The new qualification is `tools/native_reconstruction/native_gameplay_save_v39_gameplay_options_qualification_v1.json`; exact extended sources/preparation are frozen under `build-native-sjuni/native-gameplay/live-harness-gameplay-options-v2/`. The previous seven-case qualification stays separate and resolvable through its own frozen harness. Across the eight passing cases, all nine hooks have actual completed calls and8,357 passive observations are nonforeground. The two original temporary-save UI handlers, their ordinary stock trigger/private temporary snapshot, a successful resumed world and full native gameplay ownership remain unproven.
