@@ -66,11 +66,14 @@
 #include <algorithm>
 #include <chrono>
 #include <atomic>
+// ps2xRuntime Interrupt.cpp: vblank fast-forward set at runtime (network connecting screen).
+extern std::atomic<int> g_reoTurboFactor;
 #include <mutex>
 #include <thread>
 #include <vector>
 #include <map>
 #include <string>
+#include <array>
 #include "source_instruction_access.hpp"
 #if defined(REO_BUILD_NATIVE_SOUND_RAM_CAPTURE) && REO_BUILD_NATIVE_SOUND_RAM_CAPTURE >= 2
 #include "game/native/ram_capture/v2/cpu_authority_gate.hpp"
@@ -1023,7 +1026,8 @@ uint16_t pad2AutomaticAccount(uint8_t* rd, double now) {
 
 // Start at the main menu (REO_SKIP_INTRO=1, runtime/gs/performance.h): presses Start at
 // the original title prompt (and File #2's opening movie) until the main menu is shown.
-// Only ordinary pad input is produced; the boot logos are shortened by REO_TURBO.
+// Only ordinary pad input is produced; the boot logo screens are skipped in the boot
+// scene handler (reo_bootstrap.cpp).
 uint16_t pad2SkipIntro(uint8_t* rd, double now) {
     if (!reo::performance::skip_intro() || reo::performance::intro_finished.load() || !rd)
         return 0;
@@ -1033,8 +1037,9 @@ uint16_t pad2SkipIntro(uint8_t* rd, double now) {
         reo::performance::intro_finished.store(true);
         return uint16_t(0);
     };
-    if (!reo::performance::intro_hidden())
-        return finish("time limit; showing the game");
+    static const double started = now;
+    if (now - started > 60.0)
+        return finish("time limit");
     auto word = [rd](uint32_t a) {
         uint32_t value = 0;
         reo_source_instrumentation::copyBytesForBank(rd, &value, rd + a, sizeof(value));
@@ -1049,7 +1054,8 @@ uint16_t pad2SkipIntro(uint8_t* rd, double now) {
 #if defined(REO_GAME_FILE2)
     const bool prompt = state == 0x030100u || state == 0x020000u;
 #else
-    const bool prompt = state == 0x030200u;
+    // 0x0000xx/0x0100xx/0x0200xx: CAPCOM opening; 0x030200: title prompt.
+    const bool prompt = state == 0x030200u || state == 0x010000u || state == 0x020000u;
 #endif
     // Short Start pulses: pressed 0.1 s, then released 0.3 s.
     if (!prompt) return 0;
@@ -1086,6 +1092,7 @@ uint16_t pad2NetworkVeil(uint8_t* rd, double now) {
         return value;
     };
     auto finish = [&](const char* why) {
+        g_reoTurboFactor.store(0);
         reo::performance::network_veil.store(false);
         finished = true;
         std::fprintf(stderr, "[NETWORK-FAST] %s t=%.3f\n", why, now);
@@ -1105,10 +1112,141 @@ uint16_t pad2NetworkVeil(uint8_t* rd, double now) {
                                       byte(0x6E37D0) == 2 && byte(0x6E37D1) == 0));
 #else
     const bool overlay = word(0x570000) == 0x336F574Du && word(0x570004) == 4u;
+    // Server list shown or fading in (widget 1 appearing, 2 shown).
     const bool servers = overlay && byte(0x6DF150) == 37 && byte(0x6DF151) == 7 && byte(0x6D91CA) == 7 &&
-                         byte(0x6995A0) == 3 && byte(0x6D9688) == 2 && byte(0x6D9689) == 0;
+                         byte(0x6995A0) == 3 && (byte(0x6D9688) == 1 || byte(0x6D9688) == 2);
 #endif
     if (servers) return finish("server or area select reached");
+    // Per-edition addresses of the original network module (File #1 o3 / File #2 network
+    // overlay) and the main ELF connection state machine (File #1 1C9870, File #2 1F5DD0).
+#if defined(REO_GAME_FILE2)
+    constexpr uint32_t netStep = 0x6E9490, connection = 0x36F250;
+    auto cardPhase = [](uint8_t step, uint8_t sub) {
+        return (step == 2 && (sub == 1 || sub == 7)) || (step == 31 && sub == 5) || (step == 48 && sub == 5);
+    };
+    auto stageFor = [](uint8_t step) {
+        return step == 7 ? 2 : step == 49 ? 4 : step >= 50 ? 5 : step >= 8 ? 3 : 1;
+    };
+    static constexpr const char* defaultFastSteps = "1,2,6,31,44,46,48,50";
+#else
+    constexpr uint32_t netStep = 0x6DF150, connection = 0x33C6E0;
+    auto cardPhase = [](uint8_t step, uint8_t sub) {
+        return (step == 2 && sub == 7) || (step == 31 && sub == 5) || (step == 45 && sub == 5);
+    };
+    auto stageFor = [](uint8_t step) {
+        if (step == 7) return 2;                                          // connecting to the network
+        if (step == 31 || step == 33 || step == 44 || step == 45 || step == 48 || step == 50) return 3;
+        if (step == 46 || step == 49) return 4;                           // signing in
+        if (step == 37) return 5;                                         // joining the lobby
+        return 1;                                                         // network settings
+    };
+    static constexpr const char* defaultFastSteps = "1,2,6,31,33,44,45,48,50";
+#endif
+    const uint8_t step = overlay ? byte(netStep) : 0, sub = overlay ? byte(netStep + 1) : 0;
+    // Status text under the spinner (performance.h network_stage): 1 network settings,
+    // 2 connecting to the network, 3 preparing your account, 4 signing in, 5 joining the lobby.
+    reo::performance::network_stage.store(stageFor(step), std::memory_order_relaxed);
+    // Behind the connecting screen the original network module spends ~19 s showing memory
+    // card messages: the NET file check and the two NET file saves run the card state
+    // machine (File #1 o3 5FC2D0, state byte at step block +2) through states 2-6, each
+    // waiting 20-60 frames on the countdown at step block +4 while the emulated card has
+    // already completed. In those phases a countdown above 1 is set to 1: the game takes its
+    // own next step on the following frame, in the original order (it counts these timers
+    // past zero itself, so 1 is always a value it produces). Sign-in and connection are
+    // untouched.
+    {
+        const uint8_t card = overlay ? byte(netStep + 2) : 0;
+        if (cardPhase(step, sub) && card >= 2 && card <= 6) {
+            int16_t timer = 0;
+            reo_source_instrumentation::copyBytesForBank(rd, &timer, rd + netStep + 4, sizeof(timer));
+            if (timer > 1) {
+                reo_source_instrumentation::bankCell(rd, rd + netStep + 4) = 1;
+                reo_source_instrumentation::bankCell(rd, rd + netStep + 5) = 0;
+                static uint32_t shortened = 0;
+                if (++shortened <= 24)
+                    std::fprintf(stderr, "[NETWORK-FAST] card message %u/%u state %u: %d frames skipped t=%.3f\n",
+                                 unsigned(step), unsigned(sub), unsigned(card), int(timer) - 1, now);
+            }
+        }
+    }
+    // "Initializing connection" (step 7): the connection state machine (File #1 1C9870,
+    // state at block +1, substate +2) waits 150 frames (5 s) in substate 13 before its
+    // connect call (counter +4, nothing else checked; File #1 1CA3F0 case 13), then in
+    // substate 31 until the progress bar (shown +0xD, rising one per frame toward +0xC)
+    // reaches 100. The countdown is set to 1 and the shown value to its target; the connect
+    // call and its result handling are unchanged.
+    if (overlay && step == 7 && byte(connection + 1) == 1) {
+        const uint8_t substate = byte(connection + 2);
+        int16_t countdown = 0;
+        reo_source_instrumentation::copyBytesForBank(rd, &countdown, rd + connection + 4, sizeof(countdown));
+        if (substate == 13 && countdown > 1) {
+            reo_source_instrumentation::bankCell(rd, rd + connection + 4) = 1;
+            reo_source_instrumentation::bankCell(rd, rd + connection + 5) = 0;
+            std::fprintf(stderr, "[NETWORK-FAST] connection wait: %d frames skipped t=%.3f\n", int(countdown) - 1, now);
+        }
+        const uint8_t shown = byte(connection + 0xD), target = byte(connection + 0xC);
+        if (shown < target) reo_source_instrumentation::bankCell(rd, rd + connection + 0xD) = target;
+    }
+    // Step skips (experiments): REO_NETWORK_JUMP="FROM>TO,..." moves the network module from
+    // step FROM (the first time it is seen) straight to step TO, substep 0, card state 0.
+    {
+        static const auto jumps = [] {
+            std::array<int16_t, 64> to{};
+            to.fill(-1);
+            if (const char* v = std::getenv("REO_NETWORK_JUMP")) {
+                std::string list = v;
+                for (size_t at = 0; at < list.size();) {
+                    const size_t end = list.find(',', at);
+                    const std::string item = list.substr(at, end == std::string::npos ? std::string::npos : end - at);
+                    const size_t arrow = item.find('>');
+                    if (arrow != std::string::npos) {
+                        const int a = std::atoi(item.substr(0, arrow).c_str()), b = std::atoi(item.substr(arrow + 1).c_str());
+                        if (a >= 0 && a < 64 && b >= 0 && b < 64) to[size_t(a)] = int16_t(b);
+                    }
+                    if (end == std::string::npos) break;
+                    at = end + 1;
+                }
+            }
+            return to;
+        }();
+        static int lastStep = -1;
+        const bool entered = overlay && int(step) != lastStep;
+        lastStep = overlay ? int(step) : -1;
+        if (entered && step < 64 && jumps[step] >= 0) {
+            lastStep = jumps[step];
+            reo_source_instrumentation::bankCell(rd, rd + netStep) = uint8_t(jumps[step]);
+            reo_source_instrumentation::bankCell(rd, rd + netStep + 1) = 0;
+            reo_source_instrumentation::bankCell(rd, rd + netStep + 2) = 0;
+            std::fprintf(stderr, "[NETWORK-FAST] step %u skipped to %d t=%.3f\n", unsigned(step), int(jumps[step]), now);
+        }
+    }
+    // Fast-forward of whole menu steps (fades, account menu, NET file saves). File #1:
+    // fast-forwarding "Initializing connection" (7) breaks the connection and step 4 waits
+    // on real time. REO_NETWORK_FAST_STEPS overrides the list, REO_NETWORK_FAST_FACTOR
+    // (default 8) the speed.
+    {
+        static const auto fast = [] {
+            std::array<bool, 64> set{};
+            const char* v = std::getenv("REO_NETWORK_FAST_STEPS");
+            std::string list = v ? v : defaultFastSteps;
+            for (size_t at = 0; at < list.size();) {
+                const size_t end = list.find(',', at);
+                const int n = std::atoi(list.substr(at, end - at).c_str());
+                if (n > 0 && n < 64) set[size_t(n)] = true;
+                if (end == std::string::npos) break;
+                at = end + 1;
+            }
+            return set;
+        }();
+        static const int factor = [] {
+            const char* v = std::getenv("REO_NETWORK_FAST_FACTOR");
+            return std::clamp(v ? std::atoi(v) : 8, 1, 16);
+        }();
+        const bool timed = overlay && step < 64 && fast[step];
+        const int want = timed ? factor : 0;
+        if (g_reoTurboFactor.exchange(want) != want)
+            std::fprintf(stderr, "[NETWORK-FAST] step %u: %s t=%.3f\n", unsigned(step), timed ? "fast" : "normal speed", now);
+    }
     if (now - started > 90.0) return finish("time limit; showing the game");
     return 0;
 }

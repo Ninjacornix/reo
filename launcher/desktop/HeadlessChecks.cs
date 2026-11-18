@@ -57,11 +57,12 @@ internal static class HeadlessChecks {
         Control<CheckBox>("ModernCameraSwitch").IsChecked=true;
         Dispatcher.UIThread.RunJobs();
         Control<Slider>("ModernCameraDistance").Value=420;
-        Control<Slider>("ModernCameraShoulder").Value=-50;
+        Control<Slider>("ModernCameraShoulder").Value=50;
+        Control<ComboBox>("ModernCameraSide").SelectedIndex=1;
         Control<CheckBox>("ModernCameraInvert").IsChecked=true;
         Dispatcher.UIThread.RunJobs();
         var camera=window.settings.ModernCamera;
-        Check(camera.Enabled && camera.Distance==420 && camera.Shoulder==-50 && camera.InvertY &&
+        Check(camera.Enabled && camera.Distance==420 && camera.Shoulder==50 && camera.ShoulderSide=="left" && camera.InvertY &&
               Control<Slider>("ModernCameraDistance").IsEnabled,
               "Modern camera controls do not reach saved settings.");
         Check(ModernCamera.Environment(camera)["REO_CAMERA_TPS"].StartsWith("distance=420,side=-50,") &&

@@ -29,10 +29,10 @@ inline bool crosshair_visible() {
     return at != 0 && steady_ms() - at < 100;
 }
 
-// Start at the main menu (REO_SKIP_INTRO=1). The boot logos run fast (REO_TURBO until
-// the front menu exists) and the title is confirmed automatically (reo_hw_bridge.cpp);
-// meanwhile the screen stays black and audio is muted. A 30 s limit shows the game
-// normally if the boot waits for input (e.g. a memory card prompt).
+// Start at the main menu (REO_SKIP_INTRO=1). The boot logo screens are skipped in the
+// boot scene handler (reo_bootstrap.cpp) and the CAPCOM opening and title prompt are
+// answered with Start (reo_hw_bridge.cpp). Nothing runs hidden: intro_hidden() stays
+// false; intro_finished records that the main menu was reached.
 inline bool skip_intro() {
     static const bool value = [] {
         const char* v = std::getenv("REO_SKIP_INTRO");
@@ -41,17 +41,16 @@ inline bool skip_intro() {
     return value;
 }
 inline std::atomic<bool> intro_finished{false};
-inline bool intro_hidden() {
-    if (!skip_intro() || intro_finished.load(std::memory_order_relaxed)) return false;
-    static const int64_t started = steady_ms();
-    if (steady_ms() - started > 30000) { intro_finished.store(true); return false; }
-    return true;
-}
+inline bool intro_hidden() { return false; }
 // Network Game straight to SERVER SELECT: from choosing Network in the main menu until the
 // original server list appears, the connection prompts and sign-in run automatically
 // (automatic account provider) behind a black screen with a "connecting" spinner, audio
 // muted. Set by reo_hw_bridge.cpp (pad2NetworkVeil), which also applies a time limit.
 inline std::atomic<bool> network_veil{false};
+// What the connecting screen says under the spinner (present_performance.glsl statusText):
+// 0 connecting, 1 loading network settings, 2 connecting to the network, 3 preparing your
+// account, 4 signing in, 5 joining the lobby.
+inline std::atomic<int> network_stage{0};
 inline bool screen_hidden() { return intro_hidden() || network_veil.load(std::memory_order_relaxed); }
 
 // Presentation warp (60 fps camera motion while the game updates at 30 Hz).

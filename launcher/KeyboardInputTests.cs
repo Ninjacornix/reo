@@ -61,14 +61,15 @@ internal static class KeyboardInputTests {
         var env=ModernCamera.Environment(new ModernCameraOptions{Enabled=true});
         check(env["REO_NATIVE_ROOM_CAMERA"]=="1"&&env["REO_CAMERA_MOD"]=="tps"&&env["REO_CAMERA_MOUSE"]=="1"&&env["REO_CAMERA_VIEW"]=="third","modern camera selects the native camera, TPS, third person and mouse look");
         check(ModernCamera.Environment(new ModernCameraOptions{Enabled=true,View="first"})["REO_CAMERA_VIEW"]=="first"&&ModernCamera.Environment(new ModernCameraOptions{Enabled=true,View="sideways"})["REO_CAMERA_VIEW"]=="third","modern camera view is first or third person only");
-        check(env["REO_CAMERA_TPS"]=="distance=170,side=45,mouse_sens=0.06,yaw_speed=4,pitch_speed=3,invert_y=0,crosshair=1,r3=1","modern camera default over-the-shoulder tuning, crosshair on, R3 switches shoulder");
-        var tuned=ModernCamera.Environment(new ModernCameraOptions{Enabled=true,MouseLook=false,MouseSensitivity=200,StickSpeed=50,InvertY=true,Distance=9999,Shoulder=-40,Crosshair=false,ShoulderSwitch=false});
-        check(tuned["REO_CAMERA_MOUSE"]=="0"&&tuned["REO_CAMERA_TPS"]=="distance=600,side=-40,mouse_sens=0.12,yaw_speed=2,pitch_speed=1.5,invert_y=1,crosshair=0,r3=0","modern camera tuning is clamped and uses invariant decimals");
+        check(env["REO_CAMERA_TPS"]=="distance=170,side=45,mouse_sens=0.06,yaw_speed=4,pitch_speed=3,invert_y=0,crosshair=1,r3=0","modern camera default over-the-shoulder tuning, crosshair on, R3 recentres");
+        var tuned=ModernCamera.Environment(new ModernCameraOptions{Enabled=true,MouseLook=false,MouseSensitivity=200,StickSpeed=50,InvertY=true,Distance=9999,Shoulder=-40,Crosshair=false});
+        check(tuned["REO_CAMERA_MOUSE"]=="0"&&tuned["REO_CAMERA_TPS"]=="distance=600,side=-40,mouse_sens=0.12,yaw_speed=2,pitch_speed=1.5,invert_y=1,crosshair=0,r3=0,aim_side=-50","modern camera tuning is clamped and uses invariant decimals; an old negative offset becomes the left shoulder");
+        check(ModernCamera.Environment(new ModernCameraOptions{Enabled=true,ShoulderSide="left"})["REO_CAMERA_TPS"]=="distance=170,side=-45,mouse_sens=0.06,yaw_speed=4,pitch_speed=3,invert_y=0,crosshair=1,r3=0,aim_side=-50","the left shoulder mirrors the normal and the aiming camera position");
         var saved=JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(new Settings{ModernCamera=new(){Enabled=true,Distance=420}}))!;
         check(saved.ModernCamera.Enabled&&saved.ModernCamera.Distance==420,"modern camera settings round-trip through settings.json");
         var skip=IntroSkip.Environment("file1",true);
-        check(skip["REO_SKIP_INTRO"]=="1"&&skip["REO_TURBO"]=="16"&&skip["REO_TURBO_UNTIL"]=="0x5D4898"&&IntroSkip.Environment("file2",true)["REO_TURBO_UNTIL"]=="0x5B7D00","start at the main menu fast-forwards the boot to each edition's front menu");
+        check(skip["REO_SKIP_INTRO"]=="1"&&skip.Count==1&&IntroSkip.Environment("file2",true).Count==1,"start at the main menu skips the boot screens in the game, without fast-forwarding");
         check(IntroSkip.Environment("file1",false).Count==0&&JsonSerializer.Deserialize<Settings>("{}")!.SkipIntro,"skipping the intro is on by default and off sets nothing");
-        check(JsonSerializer.Deserialize<Settings>("{}")!.ModernCamera is {Enabled:false,MouseLook:true,Crosshair:true,ShoulderSwitch:true},"older settings default to the original camera with mouse look ready");
+        check(JsonSerializer.Deserialize<Settings>("{}")!.ModernCamera is {Enabled:false,MouseLook:true,Crosshair:true,ShoulderSide:"right"},"older settings default to the original camera with mouse look ready");
     }
 }

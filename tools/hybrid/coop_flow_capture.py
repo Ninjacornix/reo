@@ -41,7 +41,13 @@ while time.monotonic() - began < seconds:
                 probe = [struct.unpack('<I', ram.read(addrs[0], 4))[0]] + [ram.read(a, 1)[0] for a in addrs[1:]]
         except Exception:
             probe = None
-        log.append({'t': round(t, 1), 'state': state, 'shot': name, 'serverProbe': probe})
+        net = None
+        try:
+            if ram is not None and record.get('game', 'file1') == 'file1':
+                net = list(ram.read(0x6DF150, 2))
+        except Exception:
+            net = None
+        log.append({'t': round(t, 1), 'state': state, 'shot': name, 'serverProbe': probe, 'netStep': net})
     time.sleep(every)
 (out / 'flow.json').write_text(json.dumps(log, indent=1))
 print('captures', len(log))

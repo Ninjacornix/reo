@@ -12,11 +12,11 @@ public partial class MainWindow {
         ModernCameraView.SelectedIndex = o.View == "first" ? 1 : 0;
         ModernCameraInvert.IsChecked = o.InvertY;
         ModernCameraCrosshair.IsChecked = o.Crosshair;
-        ModernCameraShoulderSwitch.IsChecked = o.ShoulderSwitch;
         ModernCameraMouseSensitivity.Value = o.MouseSensitivity;
         ModernCameraStickSpeed.Value = o.StickSpeed;
         ModernCameraDistance.Value = o.Distance;
         ModernCameraShoulder.Value = o.Shoulder;
+        ModernCameraSide.SelectedIndex = o.ShoulderSide == "left" ? 1 : 0;
         modernCameraUpdating = false;
         UpdateModernCameraLabels();
     }
@@ -28,8 +28,8 @@ public partial class MainWindow {
         ModernCameraShoulderLabel.Text = $"Shoulder offset: {(int)ModernCameraShoulder.Value}";
         bool enabled = ModernCameraSwitch.IsChecked == true;
         foreach (var control in new Avalonia.Controls.Control[] {
-                     ModernCameraView, ModernCameraMouse, ModernCameraInvert, ModernCameraCrosshair, ModernCameraShoulderSwitch, ModernCameraMouseSensitivity,
-                     ModernCameraStickSpeed, ModernCameraDistance, ModernCameraShoulder })
+                     ModernCameraView, ModernCameraMouse, ModernCameraInvert, ModernCameraCrosshair, ModernCameraMouseSensitivity,
+                     ModernCameraStickSpeed, ModernCameraDistance, ModernCameraShoulder, ModernCameraSide })
             control.IsEnabled = enabled;
         ModernCameraMouseSensitivity.IsEnabled = enabled && ModernCameraMouse.IsChecked == true;
         // Packaged launchers run the game from the local build cache; source layouts use Exe.
@@ -49,11 +49,11 @@ public partial class MainWindow {
             View = ModernCameraView.SelectedIndex == 1 ? "first" : "third",
             InvertY = ModernCameraInvert.IsChecked == true,
             Crosshair = ModernCameraCrosshair.IsChecked == true,
-            ShoulderSwitch = ModernCameraShoulderSwitch.IsChecked == true,
             MouseSensitivity = (int)Math.Round(ModernCameraMouseSensitivity.Value),
             StickSpeed = (int)Math.Round(ModernCameraStickSpeed.Value),
             Distance = (int)Math.Round(ModernCameraDistance.Value),
-            Shoulder = (int)Math.Round(ModernCameraShoulder.Value)
+            Shoulder = (int)Math.Round(ModernCameraShoulder.Value),
+            ShoulderSide = ModernCameraSide.SelectedIndex == 1 ? "left" : "right"
         }.Clamped();
         SaveInputPreferences();
     }

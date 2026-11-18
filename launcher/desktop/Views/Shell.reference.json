@@ -459,7 +459,6 @@
       "Picture configuration",
       "DISPLAY",
       "Borderless fullscreen",
-      "Start at the main menu",
       "{Binding Width}",
       " \u00d7 ",
       "{Binding Height}",
@@ -513,6 +512,7 @@
       "Mouse sensitivity: 100%",
       "Stick look speed: 100%",
       "Distance: 170",
+      "Camera shoulder",
       "Shoulder offset: 45"
     ],
     "PageSaves": [
@@ -566,7 +566,9 @@
       "APPEARANCE",
       "Install either game to use the Outbreak font.",
       "BACKGROUND",
-      "Background movies"
+      "Background movies",
+      "STARTUP",
+      "Start at the main menu"
     ],
     "PageDeveloper": [
       "Developer",

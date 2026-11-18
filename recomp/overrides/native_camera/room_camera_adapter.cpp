@@ -147,7 +147,7 @@ struct ThirdPerson {
     bool enabled{}, log{}, mouse{true}, first_person{};
     float mouse_sens{0.06f}, zoom_step{20.f};
     // First person: eye height above the actor's feet and how far ahead of the face.
-    float eye_height{162.f}, eye_ahead{10.f};
+    float eye_height{162.f}, eye_ahead{28.f};  // first person: just in front of the face
     // Aim height from camera pitch: above +down degrees aims low, below -up aims high.
     float aim_up{-12.f}, aim_down{16.f};
     // Moving while aiming (the original game stands still): units per second,
@@ -164,6 +164,10 @@ struct ThirdPerson {
     float turn_rate{25.f}; // degrees per frame the character turns toward the crosshair
     float yield_delay{20.f}; // frames a scripted camera selection must last before the game's camera shows
     float smoothing{0.5f}, pitch_min{-50.f}, pitch_max{60.f};
+    // Highest and lowest eye above the character's feet. The room collision has walls
+    // but no ceiling or floor, so looking down would lift the camera through the roof
+    // and looking up (zoomed out) would sink it under the floor.
+    float ceiling{240.f}, floor{25.f};
     static ThirdPerson from_environment() {
         ThirdPerson t;
         if (const char* mod = std::getenv("REO_CAMERA_MOD")) t.enabled = !std::strcmp(mod, "tps");
@@ -176,7 +180,7 @@ struct ThirdPerson {
                 {"yaw_speed", &t.yaw_speed}, {"pitch_speed", &t.pitch_speed}, {"invert_y", &t.invert_y},
                 {"turn_sign", &t.turn_sign}, {"aim_distance", &t.aim_distance}, {"aim_side", &t.aim_side},
                 {"aim_pivot", &t.aim_pivot}, {"smoothing", &t.smoothing}, {"pitch_min", &t.pitch_min},
-                {"pitch_max", &t.pitch_max}, {"mouse_sens", &t.mouse_sens}, {"zoom_step", &t.zoom_step},
+                {"pitch_max", &t.pitch_max}, {"ceiling", &t.ceiling}, {"floor", &t.floor}, {"mouse_sens", &t.mouse_sens}, {"zoom_step", &t.zoom_step},
                 {"eye_height", &t.eye_height}, {"eye_ahead", &t.eye_ahead}, {"aim_up", &t.aim_up},
                 {"aim_down", &t.aim_down}, {"strafe", &t.strafe}, {"strafe_speed", &t.strafe_speed},
                 {"gun_height", &t.gun_height}, {"crosshair", &t.crosshair}, {"r3", &t.r3}, {"face", &t.face}, {"turn_rate", &t.turn_rate}, {"yield_delay", &t.yield_delay},
@@ -203,7 +207,7 @@ struct ThirdPersonState {
     std::uint16_t previous_pressed{};
     float zoom{};  // added to the rig distance by the mouse wheel
     float shoulder{1.f}, shoulder_blend{1.f};  // target side (+1/-1) and its smoothed value
-    std::uint64_t shoulder_switches{}, face_frames{}, forward_frames{}, held_frames{}, brief_selections{};
+    std::uint64_t shoulder_switches{}, face_frames{}, forward_frames{}, free_move_frames{}, ceiling_frames{}, held_frames{}, brief_selections{};
     std::uint32_t selection_frames{};
     bool first_person{}, view_initialised{};
     std::uint64_t view_switches{}, first_person_frames{}, strafe_frames{}, strafe_blocked{};
@@ -631,10 +635,12 @@ public:
             if (std::fabs(x) < dead) return 0.f;
             return std::copysign((std::fabs(x) - dead) / (1.f - dead), x);
         };
-        tps.yaw += tp.turn_sign * axis(pad.right_x) * tp.yaw_speed * degrees;
+        // Screen right is -(cos yaw, 0, -sin yaw) (the presentation warp's basis, checked
+        // against rendered frames), so looking right lowers the yaw.
+        tps.yaw -= tp.turn_sign * axis(pad.right_x) * tp.yaw_speed * degrees;
         tps.pitch += (tp.invert_y != 0.f ? -1.f : 1.f) * axis(pad.right_y) * tp.pitch_speed * degrees;
         if (mouse_captured) {
-            tps.yaw += tp.turn_sign * float(mouse_dx) * tp.mouse_sens * degrees;
+            tps.yaw -= tp.turn_sign * float(mouse_dx) * tp.mouse_sens * degrees;
             tps.pitch += (tp.invert_y != 0.f ? -1.f : 1.f) * float(mouse_dy) * tp.mouse_sens * degrees;
             tps.zoom = std::clamp(tps.zoom - float(wheel) / 120.f * tp.zoom_step, -150.f, 250.f);
             if (mouse_dx || mouse_dy) ++tps.mouse_frames;
@@ -648,7 +654,7 @@ public:
         const float cp = std::cos(tps.pitch), sp = std::sin(tps.pitch);
         const t::Vector forward{std::sin(tps.yaw) * cp, -sp, std::cos(tps.yaw) * cp};
         const t::Vector flat{std::sin(tps.yaw), 0.f, std::cos(tps.yaw)};
-        const t::Vector right{std::cos(tps.yaw), 0.f, -std::sin(tps.yaw)};
+        const t::Vector right{-std::cos(tps.yaw), 0.f, std::sin(tps.yaw)};  // screen right
         const auto add = [](t::Vector a, t::Vector b, float k) { return t::Vector{a.x + b.x * k, a.y + b.y * k, a.z + b.z * k}; };
 
         // Rig. Only the follow position is smoothed; yaw/pitch apply immediately,
@@ -671,6 +677,16 @@ public:
             }
             const t::Vector shoulder = add(tps.pivot, right, side);
             eye = add(shoulder, forward, -distance);
+            // Between the floor and the ceiling: slide in toward the pivot along the same
+            // line of sight.
+            const float top = position.y + tp.ceiling, bottom = position.y + tp.floor;
+            const float limit = eye.y > top ? top : eye.y < bottom ? bottom : eye.y;
+            if (limit != eye.y && std::fabs(eye.y - tps.pivot.y) > 1.f) {
+                const float k = std::clamp((limit - tps.pivot.y) / (eye.y - tps.pivot.y), 0.f, 1.f);
+                eye = {tps.pivot.x + (eye.x - tps.pivot.x) * k, tps.pivot.y + (eye.y - tps.pivot.y) * k,
+                       tps.pivot.z + (eye.z - tps.pivot.z) * k};
+                ++tps.ceiling_frames;
+            }
             t::Vector hit{};
             try {
                 if (segment(ctx, g, tps.pivot, eye, hit)) {
@@ -730,26 +746,31 @@ public:
         } else if (tp.face != 0.f) {
             // Modern TPS: the character turns toward where the camera points (rate
             // limited). Forward input walks/runs with the game's own animation straight
-            // ahead (the game's analog control steers toward the camera heading);
-            // sideways/backward input moves relative to the camera while still facing it.
+            // ahead (the game's analog control steers toward the camera heading).
             free_aim_ms.store(0);
+            const float magnitude = std::min(1.f, std::sqrt(sx * sx + sy * sy));
+            const bool ahead = sy > 0.f && std::fabs(sx) <= sy * 0.6f;
+            if (magnitude > 0.f && !ahead) {
+                // Sideways/backward input: the game has no strafe or backpedal animation,
+                // so its own camera-relative analog control turns the character toward the
+                // stick direction and walks/runs with the normal animation.
+                reo_pad_tap::set_aim_left(-1);
+                ++tps.free_move_frames;
+            } else {
             float turn = face - actor_angle;
             while (turn > 3.14159265f) turn -= 6.28318531f;
             while (turn < -3.14159265f) turn += 6.28318531f;
             const float limit = std::max(1.f, tp.turn_rate) * degrees;
             const float facing = actor_angle + std::clamp(turn, -limit, limit);
             g.put<std::int16_t>(base + actor_yaw, std::int16_t(std::lround(facing / yaw_turn)));
-            const float magnitude = std::min(1.f, std::sqrt(sx * sx + sy * sy));
-            if (sy > 0.f && std::fabs(sx) <= sy * 0.6f) {
+            if (ahead) {
                 reo_pad_tap::set_aim_left(std::uint8_t(std::lround(128.f - 127.f * magnitude)));
                 ++tps.forward_frames;
-            } else if (magnitude > 0.f) {
-                reo_pad_tap::set_aim_left(0x80);
-                camera_move(sx, sy);
             } else {
                 reo_pad_tap::set_aim_left(-1);
             }
             ++tps.face_frames;
+            }
         } else { reo_pad_tap::set_aim_left(-1); free_aim_ms.store(0); }
 
         parameters.pose.eye = eye;
@@ -841,13 +862,13 @@ public:
     }
     void dump_details() {
         if (third_person.enabled)
-            std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-TPS-SUMMARY] frames=%llu yielded=%llu collisions=%llu recentres=%llu aim_frames=%llu mouse_frames=%llu first_person_frames=%llu view_switches=%llu shoulder_switches=%llu face_frames=%llu forward_frames=%llu held_frames=%llu brief_selections=%llu\n",
+            std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-TPS-SUMMARY] frames=%llu yielded=%llu collisions=%llu recentres=%llu aim_frames=%llu mouse_frames=%llu first_person_frames=%llu view_switches=%llu shoulder_switches=%llu face_frames=%llu forward_frames=%llu held_frames=%llu brief_selections=%llu free_move_frames=%llu ceiling_frames=%llu\n",
                          (unsigned long long)tps.frames, (unsigned long long)tps.yielded, (unsigned long long)tps.collisions,
                          (unsigned long long)tps.recentres, (unsigned long long)tps.aim_frames,
                          (unsigned long long)tps.mouse_frames, (unsigned long long)tps.first_person_frames,
                          (unsigned long long)tps.view_switches, (unsigned long long)tps.shoulder_switches,
                          (unsigned long long)tps.face_frames, (unsigned long long)tps.forward_frames,
-                         (unsigned long long)tps.held_frames, (unsigned long long)tps.brief_selections);
+                         (unsigned long long)tps.held_frames, (unsigned long long)tps.brief_selections, (unsigned long long)tps.free_move_frames, (unsigned long long)tps.ceiling_frames);
             std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-STRAFE] frames=%llu blocked=%llu\n",
                          (unsigned long long)tps.strafe_frames, (unsigned long long)tps.strafe_blocked);
             std::fprintf(stderr, "[NATIVE-ROOM-CAMERA-FREE-AIM] frames=%llu\n", (unsigned long long)tps.free_aim_frames);

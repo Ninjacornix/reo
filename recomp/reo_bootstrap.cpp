@@ -1644,6 +1644,37 @@ int main(int argc, char* argv[]) {
             ctx->pc = static_cast<uint32_t>(ctx->r[31][0]);
         });
     }
+    // Start at the main menu (REO_SKIP_INTRO=1): the boot scene handler (File #1 1BC8F0,
+    // File #2 1483C0) is a step machine (task byte +9, jump table File #1 0x2502C0 / File #2
+    // 0x254F00). Steps 0-6 run as original: startup
+    // checks, the memory card / system data load and the front-end data load. Steps 7-11 are
+    // the timed logo and notice screens (Sofdec, ACCESS, SN@P, ESRB, content warning); the
+    // handler goes from step 7 straight to step 12, its original exit to the front end, so
+    // those screens are never created. The title prompt is answered by reo_hw_bridge.cpp.
+    if (const char* skip = std::getenv("REO_SKIP_INTRO"); skip && !std::strcmp(skip, "1")) {
+#if defined(REO_GAME_FILE2)
+        void sub_001483C0_0x1483c0(uint8_t*, R5900Context*, PS2Runtime*);
+        static constexpr auto bootScene = &sub_001483C0_0x1483c0;
+        static constexpr uint32_t bootSceneAddress = 0x1483C0u;
+#else
+        void sub_001BC8F0_0x1bc8f0(uint8_t*, R5900Context*, PS2Runtime*);
+        static constexpr auto bootScene = &sub_001BC8F0_0x1bc8f0;
+        static constexpr uint32_t bootSceneAddress = 0x1BC8F0u;
+#endif
+        runtime.registerFunction(bootSceneAddress, [](uint8_t* ram, R5900Context* ctx, PS2Runtime* rt) {
+            const uint32_t task = static_cast<uint32_t>(ctx->r[4][0]) & 0x1FFFFFFu;
+            uint8_t step = 0;
+            std::memcpy(&step, ram + task + 9, 1);
+            if (step >= 7 && step <= 11) {
+                const uint8_t exit = 12, timer = 0;
+                std::memcpy(ram + task + 9, &exit, 1);
+                std::memcpy(ram + task + 10, &timer, 1);
+                static bool reported = false;
+                if (!reported) { reported = true; std::fprintf(stderr, "[SKIP-INTRO] boot logos skipped (step %u -> 12)\n", unsigned(step)); }
+            }
+            bootScene(ram, ctx, rt);
+        });
+    }
 
     // Begin execution
 

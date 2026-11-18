@@ -8,7 +8,7 @@ namespace Outbreak.Launcher;
 // (right stick looks, left stick walks relative to the camera) and with keyboard
 // and mouse (mouse looks, WASD walks relative to the camera, right button aims,
 // left button is cross, wheel zooms, C frees the cursor). L3 (Z) switches
-// between third and first person; R3 (X) switches shoulder (or recentres); aiming shows a crosshair and picks the game's
+// between third and first person; R3 (X) recentres the camera (the shoulder is chosen here); aiming shows a crosshair and picks the game's
 // aim height from where the camera looks.
 public sealed class ModernCameraOptions {
     public bool Enabled { get; set; }
@@ -19,13 +19,13 @@ public sealed class ModernCameraOptions {
     public int MouseSensitivity { get; set; } = 100;
     public int StickSpeed { get; set; } = 100;
     public bool InvertY { get; set; }
-    // Over-the-shoulder framing: distance behind the shoulder and sideways offset.
+    // Over-the-shoulder framing: distance behind the shoulder, sideways offset and the
+    // shoulder the camera starts on ("right" or "left"; R3 can switch during play).
     public int Distance { get; set; } = 170;
     public int Shoulder { get; set; } = 45;
+    public string ShoulderSide { get; set; } = "right";
     // Crosshair while aiming and in first person.
     public bool Crosshair { get; set; } = true;
-    // R3 (the R3 key on keyboard) switches shoulder; off: R3 recentres the camera.
-    public bool ShoulderSwitch { get; set; } = true;
 
     public ModernCameraOptions Clamped() => new() {
         Enabled = Enabled,
@@ -35,9 +35,10 @@ public sealed class ModernCameraOptions {
         StickSpeed = Math.Clamp(StickSpeed, 10, 400),
         InvertY = InvertY,
         Distance = Math.Clamp(Distance, 60, 600),
-        Shoulder = Math.Clamp(Shoulder, -120, 120),
-        Crosshair = Crosshair,
-        ShoulderSwitch = ShoulderSwitch
+        // Older settings stored the left shoulder as a negative offset.
+        Shoulder = Math.Clamp(Math.Abs(Shoulder), 0, 120),
+        ShoulderSide = ShoulderSide == "left" || Shoulder < 0 ? "left" : "right",
+        Crosshair = Crosshair
     };
 }
 
@@ -51,14 +52,17 @@ public static class ModernCamera {
         if (!o.Enabled) return new Dictionary<string, string>();
         string F(double value) => value.ToString("0.###", CultureInfo.InvariantCulture);
         double mouse = 0.06 * o.MouseSensitivity / 100.0, stick = o.StickSpeed / 100.0;
+        bool left = o.ShoulderSide == "left";
         return new Dictionary<string, string> {
             ["REO_NATIVE_ROOM_CAMERA"] = "1",
             ["REO_CAMERA_MOD"] = "tps",
             ["REO_CAMERA_MOUSE"] = o.MouseLook ? "1" : "0",
             ["REO_CAMERA_VIEW"] = o.View,
-            ["REO_CAMERA_TPS"] = $"distance={o.Distance},side={o.Shoulder},mouse_sens={F(mouse)}," +
+            ["REO_CAMERA_TPS"] = $"distance={o.Distance},side={(left ? -o.Shoulder : o.Shoulder)},mouse_sens={F(mouse)}," +
                                  $"yaw_speed={F(4 * stick)},pitch_speed={F(3 * stick)},invert_y={(o.InvertY ? 1 : 0)}," +
-                                 $"crosshair={(o.Crosshair ? 1 : 0)},r3={(o.ShoulderSwitch ? 1 : 0)}"
+                                 $"crosshair={(o.Crosshair ? 1 : 0)},r3=0" +
+                                 // The aiming position (aim_side, 50 in the game) follows the shoulder.
+                                 (left ? ",aim_side=-50" : "")
         };
     }
 

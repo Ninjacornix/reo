@@ -271,14 +271,6 @@
                       <compat:Rc1TextBlock Text="Borderless fullscreen" FontSize="14" VerticalAlignment="Center" />
                       <CheckBox x:Name="Fullscreen" IsCheckedChanged="SaveSettings" Grid.Column="1" AutomationProperties.Name="Borderless fullscreen" Classes="ToggleSwitch" ToolTip.Tip="Ctrl+Enter toggles fullscreen in game." />
                     </Grid>
-                    <Grid MinHeight="42" Margin="0,0,0,6">
-                      <Grid.ColumnDefinitions>
-                        <ColumnDefinition />
-                        <ColumnDefinition Width="Auto" />
-                      </Grid.ColumnDefinitions>
-                      <compat:Rc1TextBlock Text="Start at the main menu" FontSize="14" VerticalAlignment="Center" />
-                      <CheckBox x:Name="SkipIntro" IsCheckedChanged="SaveSettings" Grid.Column="1" AutomationProperties.Name="Start at the main menu" Classes="ToggleSwitch" ToolTip.Tip="Skips the startup logos and the title screen. Network Game goes straight to the server list." />
-                    </Grid>
                     <DockPanel MinHeight="48">
                       <ComboBox x:Name="WindowSize" SelectionChanged="SettingChanged" DockPanel.Dock="Right" AutomationProperties.Name="Window resolution" Classes="GraphicsChoice" ToolTip.Tip="Windowed output size. Borderless fullscreen uses the desktop resolution.">
                         <ComboBox.ItemTemplate>
@@ -601,8 +593,7 @@
                 </Grid>
                 <CheckBox x:Name="ModernCameraMouse" IsCheckedChanged="ModernCameraChanged" Content="Mouse look" Margin="0,0,0,6" />
                 <CheckBox x:Name="ModernCameraInvert" IsCheckedChanged="ModernCameraChanged" Content="Invert vertical look" Margin="0,0,0,6" />
-                <CheckBox x:Name="ModernCameraCrosshair" IsCheckedChanged="ModernCameraChanged" Content="Show crosshair" Margin="0,0,0,6" />
-                <CheckBox x:Name="ModernCameraShoulderSwitch" IsCheckedChanged="ModernCameraChanged" Content="R3 switches shoulder (off: R3 recentres the camera)" Margin="0,0,0,12" />
+                <CheckBox x:Name="ModernCameraCrosshair" IsCheckedChanged="ModernCameraChanged" Content="Show crosshair" Margin="0,0,0,12" />
                 <Grid Margin="0,5,0,12">
                   <compat:Rc1TextBlock x:Name="ModernCameraMouseLabel" Text="Mouse sensitivity: 100%" VerticalAlignment="Center" />
                   <Slider x:Name="ModernCameraMouseSensitivity" ValueChanged="ModernCameraSliderChanged" Minimum="10" Maximum="400" Value="100" Width="300" HorizontalAlignment="Right" AutomationProperties.Name="Mouse sensitivity" Classes="AudioSlider" />
@@ -615,9 +606,16 @@
                   <compat:Rc1TextBlock x:Name="ModernCameraDistanceLabel" Text="Distance: 170" VerticalAlignment="Center" />
                   <Slider x:Name="ModernCameraDistance" ValueChanged="ModernCameraSliderChanged" Minimum="60" Maximum="600" Value="170" Width="300" HorizontalAlignment="Right" AutomationProperties.Name="Camera distance" Classes="AudioSlider" />
                 </Grid>
+                <Grid Margin="0,0,0,10">
+                  <compat:Rc1TextBlock x:Name="ModernCameraSideLabel" Text="Camera shoulder" VerticalAlignment="Center" />
+                  <ComboBox x:Name="ModernCameraSide" SelectionChanged="ModernCameraViewChanged" Width="300" HorizontalAlignment="Right" AutomationProperties.Name="Camera shoulder" AutomationProperties.LabeledBy="{Binding ElementName=ModernCameraSideLabel}">
+                    <ComboBoxItem Content="Right" />
+                    <ComboBoxItem Content="Left" />
+                  </ComboBox>
+                </Grid>
                 <Grid Margin="0,5,0,12">
                   <compat:Rc1TextBlock x:Name="ModernCameraShoulderLabel" Text="Shoulder offset: 45" VerticalAlignment="Center" />
-                  <Slider x:Name="ModernCameraShoulder" ValueChanged="ModernCameraSliderChanged" Minimum="-120" Maximum="120" Value="45" Width="300" HorizontalAlignment="Right" AutomationProperties.Name="Shoulder offset" Classes="AudioSlider" />
+                  <Slider x:Name="ModernCameraShoulder" ValueChanged="ModernCameraSliderChanged" Minimum="0" Maximum="120" Value="45" Width="300" HorizontalAlignment="Right" AutomationProperties.Name="Shoulder offset" Classes="AudioSlider" />
                 </Grid>
                 <Button x:Name="ModernCameraResetButton" Click="ResetModernCamera" Content="Reset camera settings" HorizontalAlignment="Left" Margin="0,6,0,0" />
               </StackPanel>
@@ -932,6 +930,15 @@
                     </Grid.ColumnDefinitions>
                     <compat:Rc1TextBlock x:Name="LauncherMoviesLabel" Text="Background movies" FontSize="18" VerticalAlignment="Center" Margin="0,0,12,0" />
                     <CheckBox x:Name="LauncherBackgroundMovies" IsCheckedChanged="LauncherBackgroundMoviesChanged" Grid.Column="1" AutomationProperties.Name="Launcher background movies" AutomationProperties.LabeledBy="{Binding ElementName=LauncherMoviesLabel}" Classes="ToggleSwitch" />
+                  </Grid>
+                  <compat:Rc1TextBlock Text="STARTUP" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,26,0,18" />
+                  <Grid MinHeight="48">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <compat:Rc1TextBlock x:Name="SkipIntroLabel" Text="Start at the main menu" FontSize="18" VerticalAlignment="Center" Margin="0,0,12,0" />
+                    <CheckBox x:Name="SkipIntro" IsCheckedChanged="SaveSettings" Grid.Column="1" AutomationProperties.Name="Start at the main menu" AutomationProperties.LabeledBy="{Binding ElementName=SkipIntroLabel}" Classes="ToggleSwitch" ToolTip.Tip="Skips the startup logos and the title screen." />
                   </Grid>
                 </StackPanel>
               </Grid>
