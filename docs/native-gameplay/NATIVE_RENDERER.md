@@ -77,7 +77,8 @@ objects (second AMO, `OBJ*.NBD`); then moving this into the game as a live rende
   (`room_camera_adapter.cpp`, hook installed in shadow mode when only `REO_NATIVE_RENDER=1` is
   set) copies view `0x3240E0`, projection `0x294D80`, room part matrices `0x49FA10` and, per
   active actor (`0x4A5C30 + n·0x10E0`, active byte +0x00, character +0x30), its bone records:
-  actor +0x34 → model object, model +0x824 → first 0x190-byte bone record.
+  actor +0x34 → model object, model +0x820 → one pointer per skeleton node (skin palette index n
+  at +0x820 + 4n; reading +0x824 as node 0 shifted every bone by one and lost the head bone 35).
 - `tools/parallel_gs_backend/parallel_backend.cpp` (renderer inlined there: a header change
   would invalidate every cached object of the local build): loads `r0SSRR00.nbd` from
   `NETBIO00.DAT/r0SS.afs` and `P0n_00.nbd` from `romdata_usa.afs` through `reo::CDVD`
@@ -95,3 +96,8 @@ room and characters on screen and animated (Kevin walks between captures).
 Known gaps: some character parts missing/distorted; destination-alpha wall decals drawn as
 black; neutral character light (characters are drawn in several GS passes — lighting still to
 be decoded); no fog, room objects, effects, HUD/menus; 2D/menus keep the GS picture.
+
+**v81 (2026-11-19)**: bones are now read through the model's per-node pointer table (+0x820);
+room vertex alpha follows the source packing (255 → 1.0). Characters are complete (heads and
+arms were lost before) and the live picture renders at 2× (1024×896). Run: 850 native frames,
+clean exit (`build-ninja/hybrid/native-live4/at-6.png`, `at-14.png`).

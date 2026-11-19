@@ -61,13 +61,14 @@ inline void publish(const uint8_t* rdram) {
         if (!rdram[actor]) continue;                      // inactive slot
         const uint32_t model = read32(actor + 0x34);      // model object
         if (!model || model >= Ram) continue;
-        const uint32_t bones = read32(model + 0x824);     // bone records, 0x190 bytes each
-        if (!bones || bones >= Ram) continue;
+        // Model +0x820: one pointer per skeleton node (skin palette index n -> +0x820 + 4n);
+        // the record holds the world matrix at +0x00 and the inverse bind matrix at +0x80.
         Actor& out = next.actors[next.actor_count];
         out.character = rdram[actor + 0x30];
         out.bones = 0;
         for (uint32_t b = 0; b < MaxBones; ++b) {
-            const uint32_t record = bones + b * 0x190;
+            const uint32_t record = read32(model + 0x820 + 4 * b);
+            if (!record || record + 0xC0 > Ram) break;
             copy(out.world[b], record, 16);
             if (out.world[b][15] != 1.f || out.world[b][3] != 0.f || out.world[b][7] != 0.f || out.world[b][11] != 0.f)
                 break;  // past the last node

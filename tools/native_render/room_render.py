@@ -20,8 +20,9 @@ specular exponent (not lit here).
 Characters (P00_00.NBD etc.): same AMO parts plus 0xC0000 weights (per vertex: n, then n x
 (u32 palette index, f32 percent)) and 0x100000 palette (palette index -> skeleton node). Their
 textures are embedded (TEX section). Live bones come from a RAM snapshot
-(room_driver.py --snapshot-ram): one 0x190-byte record per node, world matrix at +0x00 and
-inverse bind matrix at +0x80 (File #1: Kevin's first record at 0x4F9140 in the opening room).
+(room_driver.py --snapshot-ram): actor +0x34 -> model object; model +0x820 holds one pointer per
+skeleton node to a record with the world matrix at +0x00 and the inverse bind matrix at +0x80
+(--character P00_00.NBD@<model object>, e.g. 0x4AE330 for Kevin in the opening room).
 Skinned vertex = sum(weight x vertex . inverse_bind[node] . world[node]).
 
 AMO layout used (chunk = kind:u32 count:u32 size:u32, size includes the header):
@@ -166,8 +167,9 @@ def character_textures(nbd):
 
 def skin(part, ram, bones):
     """World positions of a skinned part from live bone records (see module notes)."""
-    def record(node, offset):
-        return np.array(struct.unpack_from('<16f', ram, bones + node * 0x190 + offset), np.float64).reshape(4, 4)
+    def record(node, offset):  # bones = model object: +0x820 holds one record pointer per node
+        pointer = struct.unpack_from('<I', ram, bones + 0x820 + 4 * node)[0]
+        return np.array(struct.unpack_from('<16f', ram, pointer + offset), np.float64).reshape(4, 4)
     pos = np.c_[part['pos'], np.ones(len(part['pos']))]
     out = np.zeros_like(pos)
     cache = {}
@@ -235,7 +237,7 @@ def render(parts, snap, materials=None, textures=None, characters=()):
         sy = np.where(ok, p[:, 1] / np.where(ok, w, 1), np.nan)
         col = part['col'][:, :4] / 128.0 if part['col'] is not None else np.ones((len(w), 4))
         if skinning is None:
-            col = np.c_[col[:, :3] * ROOM_COLOR_SCALE, col[:, 3]]
+            col = np.c_[col[:, :3] * ROOM_COLOR_SCALE, np.where(part['col'][:, 3] >= 255, 1.0, part['col'][:, 3] / 255.0)]  # GS alpha 0x80 = 1
         else:
             col = np.c_[np.full((len(w), 3), CHARACTER_NEUTRAL_LIGHT), np.ones(len(w))]
         uv = part['uv'] if part['uv'] is not None else np.zeros((len(w), 2))
@@ -320,7 +322,7 @@ def main():
     ap.add_argument('--data', type=Path, help='Imported disc data folder (holds NETBIO00.DAT)')
     ap.add_argument('--archive', default='r035.afs', help='Scenario room archive inside NETBIO00.DAT')
     ap.add_argument('--ram', type=Path, help='Guest RAM snapshot (room_driver.py --snapshot-ram)')
-    ap.add_argument('--character', action='append', default=[], help='MODEL.NBD@0xBONES: skinned character with its first bone record')
+    ap.add_argument('--character', action='append', default=[], help='MODEL.NBD@0xMODEL: skinned character with its model object (actor +0x34)')
     a = ap.parse_args()
     nbd = a.room.read_bytes()
     parts = parse_parts(nbd)

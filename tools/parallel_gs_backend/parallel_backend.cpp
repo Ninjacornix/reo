@@ -390,7 +390,10 @@ class Renderer {
                     if (character) { v.color[0] = v.color[1] = v.color[2] = CharacterNeutralLight; v.color[3] = 1.f; }
                     else {
                         for (int c = 0; c < 3; ++c) v.color[c] = part.col[i][c] / 128.f * RoomColorScale;
-                        v.color[3] = part.col[i][3] / 128.f;
+                        // As the source packs it (model_mesh.cpp converted_color): 255 -> GS 0x80 (1.0),
+                        // otherwise a/2; GS alpha 0x80 = 1.0, so effectively a / 255.
+                        const float a = part.col[i][3];
+                        v.color[3] = a >= 255.f ? 1.f : std::max(0.f, a) / 255.f;
                     }
                     v.uv[0] = part.uv[i][0]; v.uv[1] = part.uv[i][1];
                     batch.vertices.push_back(v);
