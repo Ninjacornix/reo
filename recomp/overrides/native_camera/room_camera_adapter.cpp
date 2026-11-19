@@ -22,6 +22,7 @@
 #include "source_instruction_access.hpp"
 #include "../reo_pad_tap.h"
 #include "runtime/gs/performance.h"
+#include "runtime/gs/native_render_frame.h"
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -958,6 +959,9 @@ void import_hook(std::uint8_t* ram, R5900Context* ctx, PS2Runtime* rt) {
 }
 
 void camera_hook(std::uint8_t* ram, R5900Context* ctx, PS2Runtime* rt) {
+    // REO_NATIVE_RENDER: publish this frame's camera, room and bone state after the camera
+    // is evaluated, on every exit path.
+    struct NativeRenderPublish { const std::uint8_t* ram; ~NativeRenderPublish() { reo::native_render::publish(ram); } } native_render_publish{ram};
     auto* b = binding;
     if (!b) { run_original_camera(ram, ctx, rt); return; }
     std::unique_lock<std::recursive_mutex> lock(b->operation);

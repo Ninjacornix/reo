@@ -70,3 +70,28 @@ part chunks `0xC0000`/`0x100000`. Kevin lands on the original's pixels.
 Still open: the source of the 0.373 room factor; real per-vertex character lighting (now a
 neutral light); the partners' models; destination-alpha decals on the right wall; fog; room
 objects (second AMO, `OBJ*.NBD`); then moving this into the game as a live renderer.
+
+## Step 3 (2026-11-19): live in the game (`REO_NATIVE_RENDER=1`, off by default)
+
+- `runtime/gs/native_render_frame.h`: after each room-camera evaluation the game thread
+  (`room_camera_adapter.cpp`, hook installed in shadow mode when only `REO_NATIVE_RENDER=1` is
+  set) copies view `0x3240E0`, projection `0x294D80`, room part matrices `0x49FA10` and, per
+  active actor (`0x4A5C30 + n·0x10E0`, active byte +0x00, character +0x30), its bone records:
+  actor +0x34 → model object, model +0x824 → first 0x190-byte bone record.
+- `tools/parallel_gs_backend/parallel_backend.cpp` (renderer inlined there: a header change
+  would invalidate every cached object of the local build): loads `r0SSRR00.nbd` from
+  `NETBIO00.DAT/r0SS.afs` and `P0n_00.nbd` from `romdata_usa.afs` through `reo::CDVD`
+  (ISO or game pak), decodes textures with `game/native/gameplay_presentation/texture.cpp`,
+  skins characters on the CPU and draws with Vulkan (Granite; shaders
+  `native_render_shaders/scene.{vert,frag}` + `.spv`, explicit resource layouts because this
+  Granite build has no reflection) at 2× (`REO_NATIVE_RENDER_SCALE` 1–4). Opaque pass with
+  alpha blending, then material type 0x12 additively. The image replaces the GS scanout in
+  both present paths while a room is loaded.
+
+First live run (v80, Below Freezing Point opening, `room_driver.py --explore`): room 97 parts /
+21 textures and characters P00/P03/P05 loaded from the disc, 1,217 native frames, clean exit;
+room and characters on screen and animated (Kevin walks between captures).
+
+Known gaps: some character parts missing/distorted; destination-alpha wall decals drawn as
+black; neutral character light (characters are drawn in several GS passes — lighting still to
+be decoded); no fog, room objects, effects, HUD/menus; 2D/menus keep the GS picture.

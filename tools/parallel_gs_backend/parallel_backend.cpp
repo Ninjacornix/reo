@@ -50,6 +50,474 @@ std::filesystem::path reo_shader_location::executableDirectory() {
     return std::filesystem::path(executable).parent_path();
 }
 #endif
+// ---- Native renderer (inlined: edits here recompile only this unit; a header change would
+// invalidate every cached object of the local build) ----
+// Native renderer (REO_NATIVE_RENDER=1): draws the current room and the active characters from
+// the game's own model files with the camera, room and bone matrices the game thread publishes
+// (runtime/gs/native_render_frame.h). The result replaces the GS scanout for presentation.
+// Offline reference and format notes: tools/native_render/room_render.py,
+// docs/native-gameplay/NATIVE_RENDERER.md.
+//
+// Scope of this first live version: room geometry (part matrices) and skinned characters,
+// textured, with the measured room colour factor and a neutral character light; material type
+// 0x12 is additive. Not yet: fog, character lighting, room objects, effects, HUD/menus (the
+// GS picture is shown whenever no room is loaded).
+#include "runtime/gs/native_render_frame.h"
+#include "runtime/cdvd/cdvd.h"
+#include "../../game/native/gameplay_presentation/texture.cpp"
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstring>
+#include <filesystem>
+#include <fstream>
+#include <map>
+#include <set>
+#include <memory>
+#include <string>
+#include <vector>
+
+namespace reo_native_render {
+
+constexpr float RoomColorScale = 95.0f / 255.0f;      // measured (NATIVE_RENDER.md step 2)
+constexpr float CharacterNeutralLight = RoomColorScale;
+
+struct Vertex { float pos[3]; float color[4]; float uv[2]; };
+
+struct Part {
+    std::vector<std::array<float, 3>> pos;
+    std::vector<std::array<float, 4>> col;
+    std::vector<std::array<float, 2>> uv;
+    std::vector<uint32_t> palette;
+    std::vector<std::vector<std::pair<uint32_t, float>>> influences;
+    struct Tri { uint32_t a, b, c, material; };
+    std::vector<Tri> tris;
+};
+
+struct Model {
+    std::vector<Part> parts;
+    std::vector<std::pair<uint32_t, uint32_t>> materials;  // (type, texture slot)
+    std::vector<Vulkan::ImageHandle> textures;
+};
+
+inline uint32_t rd32(const std::vector<uint8_t>& b, size_t at) {
+    if (at + 4 > b.size()) throw std::runtime_error("NBD read out of range");
+    uint32_t v; std::memcpy(&v, b.data() + at, 4); return v;
+}
+inline float rdf(const std::vector<uint8_t>& b, size_t at) { uint32_t v = rd32(b, at); float f; std::memcpy(&f, &v, 4); return f; }
+
+struct Chunk { size_t at; uint32_t kind, count, size; };
+inline std::vector<Chunk> chunks(const std::vector<uint8_t>& b, size_t at) {
+    std::vector<Chunk> out;
+    const size_t end = at + rd32(b, at + 8);
+    size_t cur = at + 12;
+    while (cur < end) {
+        Chunk c{cur, rd32(b, cur), rd32(b, cur + 4), rd32(b, cur + 8)};
+        if (c.size < 12 || cur + c.size > end) throw std::runtime_error("Bad AMO chunk");
+        out.push_back(c);
+        cur += c.size;
+    }
+    return out;
+}
+
+// AMO model (section 2 of the NBD: tag "AMO" at 0x10, offset at 0x14). Layout as room_render.py.
+inline Model parse_model(const std::vector<uint8_t>& b) {
+    if (b.size() < 0x20 || std::memcmp(b.data() + 0x10, "AMO", 3)) throw std::runtime_error("NBD has no AMO section");
+    const auto top = chunks(b, rd32(b, 0x14));
+    Model m;
+    const Chunk* parts = nullptr; const Chunk* mats = nullptr; const Chunk* texs = nullptr;
+    for (const auto& c : top) { if (c.kind == 0x2) parts = &c; else if (c.kind == 0x9) mats = &c; else if (c.kind == 0xA) texs = &c; }
+    if (!parts || !mats || !texs) throw std::runtime_error("AMO model lists missing");
+    std::vector<uint32_t> slots;
+    for (const auto& c : chunks(b, texs->at)) slots.push_back(rd32(b, c.at + 12));
+    for (const auto& c : chunks(b, mats->at)) {
+        const uint32_t record = rd32(b, c.at + c.size - 4);
+        m.materials.push_back({c.kind >> 16, record < slots.size() ? slots[record] : 0});
+    }
+    for (const auto& pc : chunks(b, parts->at)) {
+        if (pc.kind != 0x4) continue;
+        Part part;
+        std::vector<std::vector<uint32_t>> strips;
+        std::vector<uint32_t> part_materials, strip_refs;
+        for (const auto& s : chunks(b, pc.at)) {
+            const size_t data = s.at + 12;
+            if (s.kind == 0x5) {
+                for (const auto& l : chunks(b, s.at)) {
+                    if (l.kind != 0x30000) continue;
+                    size_t cur = l.at + 12;
+                    for (uint32_t k = 0; k < l.count; ++k) {
+                        const uint32_t n = rd32(b, cur);
+                        if (n > 20000) throw std::runtime_error("Bad strip");
+                        std::vector<uint32_t> strip(n);
+                        for (uint32_t j = 0; j < n; ++j) strip[j] = rd32(b, cur + 4 + 4 * j);
+                        strips.push_back(std::move(strip));
+                        cur += 4 + 4 * n;
+                    }
+                }
+            } else if (s.kind == 0x50000) {
+                for (uint32_t k = 0; k < s.count; ++k) part_materials.push_back(rd32(b, data + 4 * k));
+            } else if (s.kind == 0x60000) {
+                for (uint32_t k = 0; k < s.count; ++k) strip_refs.push_back(rd32(b, data + 4 * k));
+            } else if (s.kind == 0x70000) {
+                for (uint32_t k = 0; k < s.count; ++k) part.pos.push_back({rdf(b, data + 12 * k), rdf(b, data + 12 * k + 4), rdf(b, data + 12 * k + 8)});
+            } else if (s.kind == 0xA0000) {
+                for (uint32_t k = 0; k < s.count; ++k) part.uv.push_back({rdf(b, data + 8 * k), rdf(b, data + 8 * k + 4)});
+            } else if (s.kind == 0xB0000) {
+                for (uint32_t k = 0; k < s.count; ++k)
+                    part.col.push_back({rdf(b, data + 16 * k), rdf(b, data + 16 * k + 4), rdf(b, data + 16 * k + 8), rdf(b, data + 16 * k + 12)});
+            } else if (s.kind == 0x100000) {
+                for (uint32_t k = 0; k < s.count; ++k) part.palette.push_back(rd32(b, data + 4 * k));
+            } else if (s.kind == 0xC0000) {
+                size_t cur = data;
+                for (uint32_t k = 0; k < s.count; ++k) {
+                    const uint32_t n = rd32(b, cur);
+                    if (n > 8) throw std::runtime_error("Bad skin record");
+                    std::vector<std::pair<uint32_t, float>> inf;
+                    for (uint32_t j = 0; j < n; ++j) inf.push_back({rd32(b, cur + 4 + 8 * j) & 255u, rdf(b, cur + 8 + 8 * j) / 100.f});
+                    part.influences.push_back(std::move(inf));
+                    cur += 4 + 8 * n;
+                }
+            }
+        }
+        const size_t vertices = part.pos.size();
+        if (part.uv.size() != vertices) part.uv.assign(vertices, {0.f, 0.f});
+        if (part.col.size() != vertices) part.col.assign(vertices, {0.f, 0.f, 0.f, 255.f});
+        for (size_t s = 0; s < strips.size(); ++s) {
+            uint32_t material = 0;
+            if (s < strip_refs.size()) material = strip_refs[s] < part_materials.size() ? part_materials[strip_refs[s]] : strip_refs[s];
+            const auto& st = strips[s];
+            for (size_t k = 0; k + 2 < st.size(); ++k) {
+                const uint32_t a = st[k], b2 = st[k + 1], c = st[k + 2];
+                if (a == b2 || b2 == c || a == c || a >= vertices || b2 >= vertices || c >= vertices) continue;
+                part.tris.push_back({a, b2, c, material});
+            }
+        }
+        m.parts.push_back(std::move(part));
+    }
+    return m;
+}
+
+// The disc: NETBIO00.DAT and its nested AFS archives, read through the runtime's CDVD.
+class Disc {
+  public:
+    Disc() {
+        const char* root = std::getenv("REO_NATIVE_RENDER_CDROOT");
+        cd_ = std::make_unique<reo::CDVD>(root ? std::filesystem::path(root) : std::filesystem::current_path());
+        uint32_t size = 0;
+        if (!cd_->search_file("cdrom0:\\NETBIO00.DAT;1", lba_, size)) throw std::runtime_error("NETBIO00.DAT not found on the disc");
+        top_ = toc(0);
+    }
+    std::vector<uint8_t> member(const std::string& archive, const std::string& name) {
+        const auto& t = nested(archive);
+        for (size_t i = 0; i < t.names.size(); ++i)
+            if (iequal(t.names[i], name)) return read(t.base + t.entries[i].first, t.entries[i].second);
+        return {};
+    }
+    std::vector<uint8_t> ordinal(const std::string& archive, uint32_t index) {
+        const auto& t = nested(archive);
+        if (index >= t.entries.size()) return {};
+        return read(t.base + t.entries[index].first, t.entries[index].second);
+    }
+
+  private:
+    struct Toc { uint64_t base = 0; std::vector<std::pair<uint32_t, uint32_t>> entries; std::vector<std::string> names; };
+    static bool iequal(const std::string& a, const std::string& b) {
+        return a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin(), [](char x, char y) { return std::tolower((unsigned char)x) == std::tolower((unsigned char)y); });
+    }
+    std::vector<uint8_t> read(uint64_t offset, uint32_t bytes) {
+        const uint64_t first = offset / 2048, last = (offset + bytes + 2047) / 2048;
+        std::vector<uint8_t> sectors(size_t(last - first) * 2048);
+        if (!cd_->read_sectors(uint32_t(lba_ + first), uint32_t(last - first), sectors.data())) throw std::runtime_error("Disc read failed");
+        return std::vector<uint8_t>(sectors.begin() + (offset - first * 2048), sectors.begin() + (offset - first * 2048) + bytes);
+    }
+    Toc toc(uint64_t base) {
+        Toc t; t.base = base;
+        auto head = read(base, 8);
+        if (std::memcmp(head.data(), "AFS", 3)) throw std::runtime_error("Not an AFS archive");
+        uint32_t count; std::memcpy(&count, head.data() + 4, 4);
+        if (count > 100000) throw std::runtime_error("AFS too large");
+        auto raw = read(base + 8, count * 8 + 8);
+        for (uint32_t i = 0; i < count; ++i) { uint32_t o, s; std::memcpy(&o, &raw[i * 8], 4); std::memcpy(&s, &raw[i * 8 + 4], 4); t.entries.push_back({o, s}); }
+        uint32_t no, ns; std::memcpy(&no, &raw[count * 8], 4); std::memcpy(&ns, &raw[count * 8 + 4], 4);
+        if (no && ns) {
+            auto names = read(base + no, ns);
+            for (uint32_t i = 0; i < count && (i + 1) * 48 <= names.size(); ++i)
+                t.names.push_back(std::string(reinterpret_cast<const char*>(&names[i * 48]), strnlen(reinterpret_cast<const char*>(&names[i * 48]), 32)));
+        }
+        return t;
+    }
+    const Toc& nested(const std::string& archive) {
+        auto it = nested_.find(archive);
+        if (it != nested_.end()) return it->second;
+        for (size_t i = 0; i < top_.names.size(); ++i)
+            if (iequal(top_.names[i], archive)) return nested_.emplace(archive, toc(top_.entries[i].first)).first->second;
+        throw std::runtime_error("Archive " + archive + " not found");
+    }
+    std::unique_ptr<reo::CDVD> cd_;
+    uint32_t lba_ = 0;
+    Toc top_;
+    std::map<std::string, Toc> nested_;
+};
+
+class Renderer {
+  public:
+    explicit Renderer(Vulkan::Device& device) : device_(device) {
+        const char* s = std::getenv("REO_NATIVE_RENDER_SCALE");
+        scale_ = s ? std::clamp(std::atoi(s), 1, 4) : 2;
+        const auto dir = std::filesystem::path(__FILE__).parent_path() / "native_render_shaders";
+        auto load = [&](const char* name) {
+            std::ifstream f(reo_shader_location::find(dir, name), std::ios::binary | std::ios::ate);
+            if (!f) throw std::runtime_error(std::string("Missing native render shader ") + name);
+            std::vector<uint32_t> code(size_t(f.tellg()) / 4); f.seekg(0); f.read(reinterpret_cast<char*>(code.data()), code.size() * 4);
+            return code;
+        };
+        const auto vs = load("scene.vert.spv"), fs = load("scene.frag.spv");
+        // This Granite build has no shader reflection: declare the layouts (as the presenter does).
+        Vulkan::ResourceLayout v{}, f{};
+        v.input_mask = 7;                      // position, color, uv
+        v.push_constant_size = 80;             // mat4 view_projection + vec4 screen
+        f.sets[0].sampled_image_mask = 1;      // set 0 binding 0: texture
+        f.sets[0].fp_mask = 1;
+        f.sets[0].meta[0].array_size = 1;
+        f.output_mask = 1;
+        program_ = device_.request_program(vs.data(), vs.size() * 4, fs.data(), fs.size() * 4, &v, &f);
+        if (!program_) throw std::runtime_error("Native render program unavailable");
+        disc_ = std::make_unique<Disc>();
+        const uint8_t white[4] = {255, 255, 255, 255};
+        white_ = upload(1, 1, white);
+    }
+
+    // Returns the native picture for the newest published frame, or empty (show the GS one).
+    Vulkan::ImageHandle render() {
+        reo::native_render::Frame frame;
+        if (!reo::native_render::snapshot(frame)) return {};
+        if (!ensure_room(frame.scenario, frame.room)) return {};
+        for (uint32_t i = 0; i < frame.actor_count; ++i) ensure_character(frame.actors[i].character);
+        return draw(frame);
+    }
+    uint64_t frames() const { return frames_; }
+
+  private:
+    Vulkan::ImageHandle upload(uint32_t w, uint32_t h, const void* rgba) {
+        auto info = Vulkan::ImageCreateInfo::immutable_2d_image(w, h, VK_FORMAT_R8G8B8A8_UNORM);
+        Vulkan::ImageInitialData initial{};
+        initial.data = rgba;
+        return device_.create_image(info, &initial);
+    }
+    Vulkan::ImageHandle decode(const std::vector<uint8_t>& compressed) {
+        using namespace reo::native::gameplay_presentation;
+        const auto expanded = decompress_texture(std::span<const std::byte>(reinterpret_cast<const std::byte*>(compressed.data()), compressed.size()));
+        const auto t = decode_texture(expanded);
+        return upload(t.width, t.height, t.rgba.data());
+    }
+    bool ensure_room(uint8_t scenario, uint8_t room) {
+        if (room_ && scenario == room_scenario_ && room == room_index_) return true;
+        if (failed_rooms_.count(scenario * 256u + room)) return false;
+        try {
+            char archive[32], name[32];
+            std::snprintf(archive, sizeof(archive), "r%03u.afs", unsigned(scenario));
+            std::snprintf(name, sizeof(name), "r%03u%02u00.nbd", unsigned(scenario), unsigned(room));
+            auto nbd = disc_->member(archive, name);
+            if (nbd.empty()) throw std::runtime_error(std::string("room model ") + name + " not found");
+            auto model = std::make_unique<Model>(parse_model(nbd));
+            if (std::memcmp(nbd.data(), "TID", 3) == 0) {
+                const uint32_t tid = rd32(nbd, 4), count = rd32(nbd, tid);
+                for (uint32_t i = 0; i < count && i < 256; ++i) {
+                    auto bytes = disc_->ordinal(archive, rd32(nbd, tid + 4 + 4 * i));
+                    model->textures.push_back(bytes.empty() ? white_ : decode(bytes));
+                }
+            }
+            room_ = std::move(model);
+            room_scenario_ = scenario; room_index_ = room;
+            std::fprintf(stderr, "[NATIVE-RENDER] room %s: %zu parts, %zu textures\n", name, room_->parts.size(), room_->textures.size());
+            return true;
+        } catch (const std::exception& e) {
+            failed_rooms_.insert(scenario * 256u + room);
+            std::fprintf(stderr, "[NATIVE-RENDER] room r%03u%02u00 unavailable: %s\n", unsigned(scenario), unsigned(room), e.what());
+            return false;
+        }
+    }
+    void ensure_character(uint8_t id) {
+        if (characters_.count(id) || id > 15) return;
+        try {
+            char name[32];
+            std::snprintf(name, sizeof(name), "P%02u_00.nbd", unsigned(id));
+            auto nbd = disc_->member("romdata_usa.afs", name);
+            if (nbd.empty()) throw std::runtime_error("model not found");
+            auto model = std::make_unique<Model>(parse_model(nbd));
+            if (std::memcmp(nbd.data(), "TEX", 3) == 0) {
+                uint32_t at = rd32(nbd, 4); const uint32_t count = rd32(nbd, 12);
+                for (uint32_t i = 0; i < count && i < 64; ++i) {
+                    const uint32_t n = rd32(nbd, at);
+                    model->textures.push_back(decode(std::vector<uint8_t>(nbd.begin() + at + 4, nbd.begin() + at + 4 + n)));
+                    at += 4 + n;
+                }
+            }
+            std::fprintf(stderr, "[NATIVE-RENDER] character %s: %zu parts, %zu textures\n", name, model->parts.size(), model->textures.size());
+            characters_[id] = std::move(model);
+        } catch (const std::exception& e) {
+            characters_[id] = nullptr;
+            std::fprintf(stderr, "[NATIVE-RENDER] character %u unavailable: %s\n", unsigned(id), e.what());
+        }
+    }
+
+    // Row-vector 4x4 helpers (the game's convention: v' = v . M).
+    static void mul(const float* a, const float* b, float* out) {
+        for (int r = 0; r < 4; ++r) for (int c = 0; c < 4; ++c) {
+            float s = 0; for (int k = 0; k < 4; ++k) s += a[r * 4 + k] * b[k * 4 + c]; out[r * 4 + c] = s;
+        }
+    }
+    static void transform(const float* v3, const float* m, float* out3) {
+        for (int c = 0; c < 3; ++c) out3[c] = v3[0] * m[c] + v3[1] * m[4 + c] + v3[2] * m[8 + c] + m[12 + c];
+    }
+
+    struct Batch { const Vulkan::ImageView* texture; bool additive; std::vector<Vertex> vertices; };
+
+    void add_model(std::map<std::pair<const void*, bool>, Batch>& batches, const Model& model,
+                   const std::vector<std::vector<std::array<float, 3>>>& world, bool character) {
+        for (size_t p = 0; p < model.parts.size(); ++p) {
+            const auto& part = model.parts[p];
+            if (world[p].empty()) continue;
+            for (const auto& t : part.tris) {
+                const auto& mat = t.material < model.materials.size() ? model.materials[t.material] : std::pair<uint32_t, uint32_t>{0x13, 0};
+                const bool additive = mat.first == 0x12;
+                const Vulkan::ImageView* view = mat.second < model.textures.size() ? &model.textures[mat.second]->get_view() : &white_->get_view();
+                auto& batch = batches[{view, additive}];
+                batch.texture = view; batch.additive = additive;
+                for (uint32_t i : {t.a, t.b, t.c}) {
+                    Vertex v{};
+                    std::memcpy(v.pos, world[p][i].data(), 12);
+                    if (character) { v.color[0] = v.color[1] = v.color[2] = CharacterNeutralLight; v.color[3] = 1.f; }
+                    else {
+                        for (int c = 0; c < 3; ++c) v.color[c] = part.col[i][c] / 128.f * RoomColorScale;
+                        v.color[3] = part.col[i][3] / 128.f;
+                    }
+                    v.uv[0] = part.uv[i][0]; v.uv[1] = part.uv[i][1];
+                    batch.vertices.push_back(v);
+                }
+            }
+        }
+    }
+
+    Vulkan::ImageHandle draw(const reo::native_render::Frame& frame) {
+        std::map<std::pair<const void*, bool>, Batch> batches;
+        // Room: part vertices through the published part matrices.
+        {
+            std::vector<std::vector<std::array<float, 3>>> world(room_->parts.size());
+            for (size_t p = 0; p < room_->parts.size() && p < reo::native_render::MaxRoomParts; ++p) {
+                const float* m = frame.room_parts[p];
+                bool any = false; for (int k = 0; k < 16; ++k) any |= m[k] != 0.f;
+                if (!any) continue;
+                world[p].resize(room_->parts[p].pos.size());
+                for (size_t i = 0; i < world[p].size(); ++i) transform(room_->parts[p].pos[i].data(), m, world[p][i].data());
+            }
+            add_model(batches, *room_, world, false);
+        }
+        // Characters: skinned on the CPU (sum of weight x v . inverse_bind . world).
+        for (uint32_t a = 0; a < frame.actor_count; ++a) {
+            const auto& actor = frame.actors[a];
+            auto it = characters_.find(actor.character);
+            if (it == characters_.end() || !it->second) continue;
+            const Model& model = *it->second;
+            std::vector<std::array<float, 16>> skin(actor.bones);
+            for (uint32_t b = 0; b < actor.bones; ++b) mul(actor.inverse_bind[b], actor.world[b], skin[b].data());
+            std::vector<std::vector<std::array<float, 3>>> world(model.parts.size());
+            for (size_t p = 0; p < model.parts.size(); ++p) {
+                const auto& part = model.parts[p];
+                if (part.influences.size() != part.pos.size()) continue;
+                world[p].assign(part.pos.size(), {0.f, 0.f, 0.f});
+                bool ok = true;
+                for (size_t i = 0; i < part.pos.size() && ok; ++i)
+                    for (const auto& [index, weight] : part.influences[i]) {
+                        if (index >= part.palette.size() || part.palette[index] >= actor.bones) { ok = false; break; }
+                        float out[3]; transform(part.pos[i].data(), skin[part.palette[index]].data(), out);
+                        for (int c = 0; c < 3; ++c) world[p][i][c] += weight * out[c];
+                    }
+                if (!ok) world[p].clear();
+            }
+            add_model(batches, model, world, true);
+        }
+
+        const uint32_t width = 512 * scale_, height = 448 * scale_;
+        if (!color_ || color_->get_width() != width) {
+            auto info = Vulkan::ImageCreateInfo::render_target(width, height, VK_FORMAT_R8G8B8A8_UNORM);
+            info.usage |= VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+            info.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+            auto dinfo = Vulkan::ImageCreateInfo::render_target(width, height, VK_FORMAT_D32_SFLOAT);
+            dinfo.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+            depth_ = device_.create_image(dinfo);
+            color_images_.clear();
+            for (int k = 0; k < 3; ++k) color_images_.push_back(device_.create_image(info));
+            color_ = color_images_[0];
+        }
+        color_ = color_images_[(++frames_) % color_images_.size()];
+
+        auto cmd = device_.request_command_buffer();
+        cmd->image_barrier(*color_, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                           VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                           VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
+        cmd->image_barrier(*depth_, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                           VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+                           VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT);
+        Vulkan::RenderPassInfo pass{};
+        pass.num_color_attachments = 1;
+        pass.color_attachments[0] = &color_->get_view();
+        pass.depth_stencil = &depth_->get_view();
+        pass.clear_attachments = 1;
+        pass.store_attachments = 1;
+        pass.op_flags = Vulkan::RENDER_PASS_OP_CLEAR_DEPTH_STENCIL_BIT;
+        pass.clear_color[0].float32[3] = 1.f;
+        pass.clear_depth_stencil.depth = 1.f;
+        cmd->begin_render_pass(pass);
+        cmd->set_program(program_);
+        cmd->set_opaque_state();
+        cmd->set_cull_mode(VK_CULL_MODE_NONE);
+        cmd->set_primitive_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+        cmd->set_vertex_attrib(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos));
+        cmd->set_vertex_attrib(1, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex, color));
+        cmd->set_vertex_attrib(2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv));
+        struct Push { float view_projection[16]; float screen[4]; } push{};
+        mul(frame.view, frame.projection, push.view_projection);  // world -> pixels x w (row vectors)
+        push.screen[0] = 1.f / 256.f; push.screen[1] = 1.f / 224.f; push.screen[2] = 1.f / 65536.f;
+        cmd->push_constants(&push, 0, sizeof(push));
+        for (int pass_index = 0; pass_index < 2; ++pass_index) {
+            const bool additive = pass_index == 1;
+            cmd->set_depth_test(true, !additive);
+            cmd->set_depth_compare(VK_COMPARE_OP_LESS_OR_EQUAL);
+            cmd->set_blend_enable(true);
+            if (additive) cmd->set_blend_factors(VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE);
+            else cmd->set_blend_factors(VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
+            for (auto& [key, batch] : batches) {
+                if (batch.additive != additive || batch.vertices.empty()) continue;
+                cmd->set_texture(0, 0, *batch.texture, Vulkan::StockSampler::LinearWrap);
+                void* data = cmd->allocate_vertex_data(0, batch.vertices.size() * sizeof(Vertex), sizeof(Vertex));
+                std::memcpy(data, batch.vertices.data(), batch.vertices.size() * sizeof(Vertex));
+                cmd->draw(uint32_t(batch.vertices.size()));
+            }
+        }
+        cmd->end_render_pass();
+        cmd->image_barrier(*color_, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+                           VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+                           VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_2_SHADER_SAMPLED_READ_BIT);
+        device_.submit(cmd);
+        return color_;
+    }
+
+    Vulkan::Device& device_;
+    int scale_ = 2;
+    Vulkan::Program* program_ = nullptr;
+    std::unique_ptr<Disc> disc_;
+    Vulkan::ImageHandle white_, color_, depth_;
+    std::vector<Vulkan::ImageHandle> color_images_;
+    std::unique_ptr<Model> room_;
+    uint8_t room_scenario_ = 0xFF, room_index_ = 0xFF;
+    std::set<uint32_t> failed_rooms_;
+    std::map<uint8_t, std::unique_ptr<Model>> characters_;
+    uint64_t frames_ = 0;
+};
+
+}  // namespace reo_native_render
+// ---- end native renderer ----
 namespace reo_parallel_backend {
 namespace {
 using namespace ParallelGS;
@@ -83,6 +551,21 @@ class ParallelBackend final : public Backend, private SignalInterface {
     // newest complete frame on a second GS instance, its vertex positions blended from the frame
     // before by the time elapsed since its flip (one frame of latency, as in RT64).
     struct ReplayItem { uint8_t path = 0, addr = 0; uint64_t value = 0; std::vector<uint64_t> words; size_t bytes = 0; };
+    // REO_NATIVE_RENDER=1: the native renderer's picture replaces the GS scanout while a room
+    // is loaded (native_render.hpp). Created on first use on the GS worker.
+    std::unique_ptr<reo_native_render::Renderer> native_;
+    bool nativeFailed_ = false;
+    Vulkan::ImageHandle nativeRender() {
+        if (!reo::native_render::enabled() || nativeFailed_) return {};
+        try {
+            if (!native_) native_ = std::make_unique<reo_native_render::Renderer>(*device_);
+            return native_->render();
+        } catch (const std::exception& e) {
+            std::fprintf(stderr, "[NATIVE-RENDER] disabled: %s\n", e.what());
+            nativeFailed_ = true; native_.reset();
+            return {};
+        }
+    }
     static constexpr uint8_t ReplayClearPath = 0xFE;  // item: clearContext(addr, value lo, value bit 32)
     struct ReplayFrame { std::vector<ReplayItem> items; size_t bytes = 0; bool overflow = false; };
     // Diagnostics: REO_FRAME_REPLAY_DEBUG=record (record only) | snapshot (snapshot only) |
@@ -911,6 +1394,8 @@ class ParallelBackend final : public Backend, private SignalInterface {
                          (unsigned long long)replayFrames_, (unsigned long long)replayPresents_, (unsigned long long)replayPairs_,
                          (unsigned long long)replayVertices_, (unsigned long long)replayKept_, (unsigned long long)replaySkipped_, int(replayFailed_));
         replayGs_.reset();
+        if (native_) std::fprintf(stderr, "[NATIVE-RENDER] frames=%llu\n", (unsigned long long)native_->frames());
+        native_.reset();
         replayRecordingStart_ = {}; replayCurrentStart_ = {};
         const bool saveCache = live_ && cacheReady_;
         live_ = false;
@@ -1231,6 +1716,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
         Vulkan::ImageHandle shown = repeatImage_;
         if (replayEnabled())
             if (auto replayed = replayRender(replayPhase())) shown = replayed;
+        if (auto native = nativeRender()) shown = native;
         auto complete = presenter_->present(shown, false, repeatLinear_);
         (void)complete;  // repeatImage_ keeps the source alive until the next scanout
         return true;
@@ -1403,6 +1889,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
                 }
                 if (replayEnabled())
                     if (auto replayed = replayRender(replayPhase())) shown = replayed;
+                if (auto native = nativeRender()) shown = native;
                 complete = presenter_->present(shown, false, target.linear);
                 repeatImage_ = shown;
                 repeatLinear_ = target.linear;

@@ -1666,7 +1666,10 @@ int main(int argc, char* argv[]) {
 #if defined(REO_BUILD_NATIVE_ROOM_CAMERA) && REO_BUILD_NATIVE_ROOM_CAMERA
     // REO_NATIVE_ROOM_CAMERA=1 | shadow | shadow-writes (docs/MODERN_CAMERA.md,
     // docs/native-gameplay/HYBRID_INTEGRATION_PLAN.md). Both File #1 and File #2.
-    if (const auto* requested = std::getenv("REO_NATIVE_ROOM_CAMERA"); requested && *requested) {
+    // REO_NATIVE_RENDER=1 needs the camera hook (it publishes the frame state the native renderer
+    // draws); without an explicit REO_NATIVE_ROOM_CAMERA it is installed in shadow mode (original camera).
+    const char* native_render_camera = [] { const char* r = std::getenv("REO_NATIVE_RENDER"); return (r && !std::strcmp(r, "1")) ? "shadow" : nullptr; }();
+    if (const auto* requested = (std::getenv("REO_NATIVE_ROOM_CAMERA") && *std::getenv("REO_NATIVE_ROOM_CAMERA")) ? std::getenv("REO_NATIVE_ROOM_CAMERA") : native_render_camera; requested && *requested) {
         using reo::native::room_camera_adapter::Mode;
         const Mode mode = !std::strcmp(requested, "1") ? Mode::native
                         : !std::strcmp(requested, "shadow") ? Mode::shadow
