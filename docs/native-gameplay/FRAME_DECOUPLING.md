@@ -274,3 +274,20 @@ Limits:
   blocked present delays the next slot.
 - Only camera motion is interpolated. Actors move at the game's update rate.
 - Needs a 120/144 Hz monitor for a real test; not offered in the launcher yet.
+
+### Why Hellfire, The Hive and Outbreak stay near 30 (2026-11-19)
+
+VU1 cost per gameplay frame with `REO_VU_WHOLE_FIRST=1` (`file1-ready-v55`, kick profile
+and `REO_VU_COST_ATTRIBUTION=1`, 60 profiled frames each):
+
+| Chapter | VU1 per frame | Main programs | vblanks per 300 updates at 60 Hz |
+|---|---|---|---|
+| Below Freezing Point | 6.6 ms | all compiled (3–7 ns per pair) | 310–316 |
+| The Hive | 14.2 ms | all compiled; `0x138` interpreted (0.25 ms) | 363–413 |
+| Hellfire | 20.6 ms | all compiled (3–5.5 ns per pair); `0x138` interpreted (1.0 ms) | 601–602 |
+
+The busy chapters are not slowed by interpreted code: their frames run several million VU1
+instruction pairs, which one host thread cannot finish within a 16.7 ms vblank. A steady
+60 there needs VU1 work split across threads (independent kicks/buffers) or the
+GPU-resident VU path (`REO_VIF1_GPU_RESIDENT`, currently missing its catalogue assets).
+Game time stays real time meanwhile: those frames take the 30 Hz step.
