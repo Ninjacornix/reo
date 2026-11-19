@@ -165,3 +165,35 @@ top of this.
 
 Next: make the graphics path (VIF1/VU1/GS on the host) finish a gameplay frame
 within one vblank, so every update takes step 0.
+
+### Graphics path: the busiest VU1 program now runs fully compiled (2026-11-19)
+
+Per-kick VU1 profiling (`REO_VIF_KICK_TIMING_AT`, `REO_VU_COST_ATTRIBUTION=1`) of
+Below Freezing Point gameplay at 60 Hz: a frame's VIF1 kick took about 10.2 ms on the
+async VIF1 worker, 9.3 ms of it VU1. Image `5273fa3e9893` (entries 0, 88, 296, 1320)
+had about 4.5 ms per frame: it is a validated default whole program in
+`local_vu_images.json`, but File #1 consulted whole programs only for images
+**without** a specialized table, and this image has one (one block at 608). So it ran
+as partial native kernels plus interpreted pairs (about 7 ns per pair). The two
+"unknown" entries `0x640`/`0xB80` already run compiled: they cost 22.4 ms per frame
+with `REO_VU_WHOLE=0` and 4.2 ms by default (cost attribution reports whole
+programs with a null key).
+
+SDK patch `0134-file1-vu-whole-program-first-switch.patch`: `REO_VU_WHOLE_FIRST=1`
+(File #1) runs a validated default whole program before the specialized blocks and
+native kernels of the same image. Without a selected whole program nothing changes.
+
+| Build `file1-ready-v49`, `REO_GAME_RATE=60` | Before | `REO_VU_WHOLE_FIRST=1` |
+|---|---|---|
+| VU1 per gameplay frame | 9.3 ms | 6.6 ms |
+| updates taking one vblank (late window) | about 85% | 95–97% |
+| vblanks per 300 updates | 345–368 | 310–316 |
+| game clock units/s | 60.00 | 59.98 |
+| movement, exit | 948 units, 0 | 977 units, 0 |
+
+Replay oracle (`tools/vu_whole_aot/run-check.bat … --default`, work-folder runtime,
+`REO_VU_WHOLE_FIRST=1`): 512 gameplay launches of `5273fa` captured with
+`REO_VU1_DUMP_CODE_IMAGE`: **PASS**, 512 of 512 selected the default whole program,
+identical 632-byte state, 16 KiB data and 820 GIF packets (865,648 bytes); replay
+26.9 ms interpreted path vs 6.1 ms compiled. Captures and generated code stay in
+ignored `build-ninja/hybrid/`.

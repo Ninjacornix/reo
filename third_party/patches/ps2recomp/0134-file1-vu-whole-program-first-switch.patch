@@ -1,0 +1,15 @@
+diff --git a/ps2xRuntime/src/lib/ps2_vu1.cpp b/ps2xRuntime/src/lib/ps2_vu1.cpp
+--- a/ps2xRuntime/src/lib/ps2_vu1.cpp
++++ b/ps2xRuntime/src/lib/ps2_vu1.cpp
+@@ -579,7 +579,10 @@
+     // interpreter and run faster than its specialized blocks. Native kernels keep priority.
+     const bool wholeFirst = !nativeProgram;
+ #else
+-    const bool wholeFirst = !specializedProgram;
++    // REO_VU_WHOLE_FIRST=1 (File #1): a validated default whole program runs before the
++    // specialized blocks and native kernels of the same image; without one, unchanged.
++    static const bool wholeFirstAll = [] { const char* v = std::getenv("REO_VU_WHOLE_FIRST"); return v && v[0] == '1' && !v[1]; }();
++    const bool wholeFirst = wholeFirstAll || !specializedProgram;
+ #endif
+     if (wholeFirst)
+     {
