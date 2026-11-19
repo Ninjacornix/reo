@@ -26,6 +26,8 @@
 #include "gs_interface.hpp"
 #include "gs_util.hpp"
 #include "resident_clear_context.hpp"
+#include "frame_replay.hpp"
+#include <chrono>
 #include <fstream>
 #include <deque>
 #include <cstddef>
@@ -75,6 +77,158 @@ class ParallelBackend final : public Backend, private SignalInterface {
     unsigned memoryLogFrames_ = 0;
     Vulkan::ImageHandle repeatImage_;  // last presented scanout (REO_DISPLAY_RATE repeats)
     bool repeatLinear_ = false;
+    // REO_FRAME_REPLAY=1: interpolated frames (docs/native-gameplay/FRAME_DECOUPLING.md). The GS
+    // input of each displayed frame (GIF packets, direct register writes) is recorded between
+    // scanout flips, with a snapshot of the GS state at its start. Every present replays the
+    // newest complete frame on a second GS instance, its vertex positions blended from the frame
+    // before by the time elapsed since its flip (one frame of latency, as in RT64).
+    struct ReplayItem { uint8_t path = 0, addr = 0; uint64_t value = 0; std::vector<uint64_t> words; size_t bytes = 0; };
+    static constexpr uint8_t ReplayClearPath = 0xFE;  // item: clearContext(addr, value lo, value bit 32)
+    struct ReplayFrame { std::vector<ReplayItem> items; size_t bytes = 0; bool overflow = false; };
+    // Diagnostics: REO_FRAME_REPLAY_DEBUG=record (record only) | snapshot (snapshot only) |
+    // exact (every 30th new frame: replay it unblended and compare with the real scanout).
+    static int replayDebug() {
+        static const int mode = [] { const char* v = std::getenv("REO_FRAME_REPLAY_DEBUG");
+            return !v ? 0 : std::strcmp(v, "record") == 0 ? 1 : std::strcmp(v, "snapshot") == 0 ? 2
+                : std::strcmp(v, "exact") == 0 ? 3 : 0; }();
+        return mode;
+    }
+    static bool replayEnabled() {
+        static const bool on = [] { const char* v = std::getenv("REO_FRAME_REPLAY"); return v && v[0] == '1' && !v[1]; }();
+        return on;
+    }
+    std::unique_ptr<GSInterface> replayGs_;
+    GSOptions replayOptions_{};
+    GSInterface::ReplaySnapshot replayRecordingStart_, replayCurrentStart_;
+    ReplayFrame replayRecording_, replayCurrent_, replayPrevious_;
+    Privileged replayRegisters_{};
+    VSyncInfo replayInfo_{};
+    bool replayCurrentValid_ = false, replayPreviousValid_ = false, replayFailed_ = false;
+    uint32_t replayLastFbp_ = 0xFFFFFFFFu;
+    std::chrono::steady_clock::time_point replayFlip_{};
+    double replayIntervalMs_ = 1000.0 / 60.0;
+    uint64_t replayFrames_ = 0, replayPresents_ = 0, replayPairs_ = 0, replayVertices_ = 0, replayKept_ = 0;
+    std::vector<uint64_t> replayScratch_;
+    uint64_t replayLoadedFrame_ = ~0ull;
+    double replayRenderMs_ = 0, replayRenderMax_ = 0;
+    uint64_t replayVerifiedFrame_ = ~0ull, replayDirectWrites_ = 0, replaySkipped_ = 0;
+
+    void replayRecordGif(uint8_t path, const uint8_t* data, size_t bytes) {
+        if (replayDebug() == 2) return;
+        auto& f = replayRecording_;
+        if (f.overflow) return;
+        if (f.bytes + bytes > (48u << 20)) { f.overflow = true; f.items.clear(); return; }
+        ReplayItem item;
+        item.path = path; item.bytes = bytes;
+        item.words.resize((bytes + 7) / 8);
+        std::memcpy(item.words.data(), data, bytes);
+        f.bytes += bytes;
+        f.items.push_back(std::move(item));
+    }
+    void replayRecordRegister(uint8_t addr, uint64_t value) {
+        if (replayDebug() == 2 || replayRecording_.overflow) return;
+        ReplayItem item; item.addr = addr; item.value = value;
+        replayRecording_.items.push_back(std::move(item));
+    }
+    // At a scanout flip to a new picture: the recorded frame becomes current, the old current
+    // becomes previous, and the GS state now is the next frame's start.
+    void replayRotate(const Capture& capture, const VSyncInfo& info) {
+        const auto now = std::chrono::steady_clock::now();
+        if (replayFlip_.time_since_epoch().count()) {
+            const double ms = std::chrono::duration<double, std::milli>(now - replayFlip_).count();
+            replayIntervalMs_ = std::clamp(ms, 8.0, 100.0);
+        }
+        replayFlip_ = now;
+        if (replayRecordingStart_.valid) {
+            replayPrevious_ = std::move(replayCurrent_);
+            replayPreviousValid_ = replayCurrentValid_;
+            replayCurrent_ = std::move(replayRecording_);
+            std::swap(replayCurrentStart_, replayRecordingStart_);
+            // Movie uploads and resident commands write VRAM outside the recorded stream.
+            replayCurrentValid_ = !replayCurrent_.overflow && gs_->direct_writes == replayDirectWrites_;
+            if (!replayCurrentValid_) ++replaySkipped_;
+            replayRegisters_ = capture.registers;
+            replayInfo_ = info;
+            ++replayFrames_;
+        }
+        static unsigned logged = 0;
+        const auto begin = std::chrono::steady_clock::now();
+        const size_t items = replayRecording_.items.size(), bytes = replayRecording_.bytes;
+        replayRecording_ = {};
+        replayDirectWrites_ = gs_->direct_writes;
+        if (replayDebug() != 1) gs_->replay_snapshot(replayRecordingStart_);
+        else replayRecordingStart_.valid = false;
+        if (logged < 12) {
+            ++logged;
+            std::fprintf(stderr, "[FRAME-REPLAY] rotate=%llu items=%zu bytes=%zu snapshot_ms=%.2f\n", (unsigned long long)replayFrames_,
+                         items, bytes, std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - begin).count());
+        }
+    }
+    // Replays the current frame with vertices blended from the previous one (k = 0: previous
+    // positions, k = 1: the current frame exactly). Empty when unavailable.
+    Vulkan::ImageHandle replayRender(float k, bool exact = false) {
+        if (replayDebug() == 1 || replayDebug() == 2 || replayFailed_ || !replayCurrentValid_ || !replayCurrentStart_.valid)
+            return {};
+        if (!replayGs_)
+            return {};
+        // VRAM is restored for every replay (frames may blend onto the existing framebuffer);
+        // cached textures are dropped only when the recorded frame changes.
+        // Nothing to blend (k = 1, a menu or cut whose stream changed shape): the real frame is
+        // shown, so replays cost nothing outside matched gameplay frames.
+        const bool pair = !exact && replayPreviousValid_ && k < 0.999f && replayPrevious_.items.size() == replayCurrent_.items.size();
+        if (!pair && !exact) return {};
+        const auto renderBegin = std::chrono::steady_clock::now();
+        replayGs_->replay_restore(replayCurrentStart_, replayLoadedFrame_ != replayFrames_);
+        replayLoadedFrame_ = replayFrames_;
+        if (pair) ++replayPairs_;
+        reo::frame_replay::BlendStats stats;
+        for (size_t i = 0; i < replayCurrent_.items.size(); ++i) {
+            const auto& item = replayCurrent_.items[i];
+            if (!item.path) { replayGs_->write_register(static_cast<RegisterAddr>(item.addr), item.value); continue; }
+            if (item.path == ReplayClearPath) {
+                runContextClear(*replayGs_, item.addr, uint32_t(item.value), (item.value >> 32) & 1);
+                continue;
+            }
+            const uint64_t* source = item.words.data();
+            if (pair) {
+                const auto& before = replayPrevious_.items[i];
+                if (before.path == item.path && before.bytes == item.bytes) {
+                    replayScratch_.resize(item.words.size());
+                    if (reo::frame_replay::blend_gif(item.words.data(), before.words.data(), replayScratch_.data(),
+                                                     item.words.size(), k, &stats))
+                        source = replayScratch_.data();
+                }
+            }
+            replayGs_->gif_transfer(item.path - 1, source, item.bytes);
+        }
+        replayVertices_ += stats.vertices; replayKept_ += stats.kept;
+        auto& priv = replayGs_->get_priv_register_state();
+        for (size_t i = 0; i < 15; ++i) {
+            const uint32_t offset = privilegedOffsets[i];
+            (offset < 0x1000 ? priv.qwords_lo[offset / 8] : priv.qwords_hi[(offset - 0x1000) / 8]) = replayRegisters_[i];
+        }
+        replayGs_->replay_flush();
+        auto scan = replayGs_->vsync(replayInfo_);
+        // Submit everything the scanout recorded: the renderer keeps command buffers open between
+        // calls, and the device cannot advance its frame (the game's own GS flush) while any
+        // command buffer requested in that frame is still unsubmitted.
+        replayGs_->replay_flush();
+        const double renderMs = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - renderBegin).count();
+        replayRenderMs_ += renderMs; replayRenderMax_ = std::max(replayRenderMax_, renderMs);
+        if (++replayPresents_ <= 3 || replayPresents_ % 600 == 0) {
+            std::fprintf(stderr, "[FRAME-REPLAY] render=%llu k=%.2f items=%zu image=%d avg_ms=%.2f max_ms=%.2f vertices=%llu kept=%llu\n",
+                         (unsigned long long)replayPresents_, k, replayCurrent_.items.size(), int(bool(scan.image)),
+                         replayRenderMs_ / double(replayPresents_), replayRenderMax_, (unsigned long long)replayVertices_,
+                         (unsigned long long)replayKept_);
+            replayRenderMax_ = 0;
+        }
+        return scan.image;
+    }
+    float replayPhase() const {
+        if (!replayFlip_.time_since_epoch().count()) return 1.f;
+        const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - replayFlip_).count();
+        return float(std::clamp(ms / replayIntervalMs_, 0.0, 1.0));
+    }
     void reportMemory() {
         const char* option = std::getenv("REO_GPU_MEMORY_LOG");
         if (!option || std::strcmp(option, "1") != 0 || memoryLogFrames_++ % 120)
@@ -674,10 +828,22 @@ class ParallelBackend final : public Backend, private SignalInterface {
         options.super_sampled_textures = false;
         std::fprintf(stderr,"[INTERNAL-RESOLUTION-1] scale=%u samples=%u\n",
                      internalResolution_,internalResolution_ * internalResolution_);
+        replayOptions_ = options;
         if (!gs_->init(device_.get(), options)) {
             error = "paraLLEl-GS initialization failed";
             close();
             return false;
+        }
+        // The frame-replay instance is created here, next to the main one: GSRenderer::init
+        // waits for the device to go idle, which on the GS worker could wait on the main
+        // instance's open command buffers.
+        if (replayEnabled()) {
+            replayGs_ = std::make_unique<GSInterface>();
+            replayGs_->set_secondary_instance();
+            if (!replayGs_->init(device_.get(), options)) {
+                std::fprintf(stderr, "[FRAME-REPLAY] second GS instance unavailable; interpolation off\n");
+                replayGs_.reset(); replayFailed_ = true;
+            }
         }
         std::memcpy(gs_->map_vram_write(0, VramSize), value.vram, VramSize);
         gs_->end_vram_write(0, VramSize);
@@ -717,6 +883,12 @@ class ParallelBackend final : public Backend, private SignalInterface {
     void close() noexcept override {
         ThreadIndexScope threadIndex;
         repeatImage_.reset();
+        if (replayEnabled())
+            std::fprintf(stderr, "[FRAME-REPLAY] frames=%llu presents=%llu blended_pairs=%llu vertices=%llu kept=%llu skipped_direct=%llu failed=%d\n",
+                         (unsigned long long)replayFrames_, (unsigned long long)replayPresents_, (unsigned long long)replayPairs_,
+                         (unsigned long long)replayVertices_, (unsigned long long)replayKept_, (unsigned long long)replaySkipped_, int(replayFailed_));
+        replayGs_.reset();
+        replayRecordingStart_ = {}; replayCurrentStart_ = {};
         const bool saveCache = live_ && cacheReady_;
         live_ = false;
         if (staleScanouts_)
@@ -811,6 +983,8 @@ class ParallelBackend final : public Backend, private SignalInterface {
         requireLive();
         if (!bytes)
             return;
+        if (replayEnabled())
+            replayRecordGif(path, data, bytes);
         // Observe exactly once per packet, even while halted: a retried suffix
         // resumes from the stored boundary list instead of advancing the
         // observer a second time.
@@ -882,6 +1056,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
         requireLive();
         if (!residentGeometry_)
             throw std::runtime_error("Resident geometry owner not configured");
+        if (replayEnabled()) { replayRecording_.overflow = true; replayRecording_.items.clear(); }
         residentGeometry_->enqueue(batch);
     }
     std::vector<reo_resident_live::Retired> residentRetire(reo_resident_live::Barrier reason,
@@ -940,6 +1115,8 @@ class ParallelBackend final : public Backend, private SignalInterface {
     void directRegister(uint8_t addr, uint64_t value) override {
         ThreadIndexScope threadIndex;
         requireLive();
+        if (replayEnabled())
+            replayRecordRegister(addr, value);
         if (gifHalted_) { // Hold the raw lane; the release replays it in arrival order.
             PendingWork work{};
             work.register_.addr = addr;
@@ -1028,7 +1205,10 @@ class ParallelBackend final : public Backend, private SignalInterface {
         const auto target = config_.presentationTarget();
         if (!target.hwnd || !target.width || !target.height)
             return false;
-        auto complete = presenter_->present(repeatImage_, false, repeatLinear_);
+        Vulkan::ImageHandle shown = repeatImage_;
+        if (replayEnabled())
+            if (auto replayed = replayRender(replayPhase())) shown = replayed;
+        auto complete = presenter_->present(shown, false, repeatLinear_);
         (void)complete;  // repeatImage_ keeps the source alive until the next scanout
         return true;
 #else
@@ -1059,6 +1239,15 @@ class ParallelBackend final : public Backend, private SignalInterface {
         info.high_resolution_scanout = reo::graphics::highResolutionScanout(
             internalResolution_, capture.registers[0], capture.registers[8], capture.registers[10]);
         gs_->flush();
+        if (replayEnabled()) {
+            const size_t circuit = (capture.registers[0] & 1u) ? 7 : 9;
+            const uint32_t fbp = uint32_t(capture.registers[circuit] & 0x1FF);
+            if (fbp != replayLastFbp_) { replayLastFbp_ = fbp; replayRotate(capture, info); }
+            // Display registers (PMODE/BGCOLOR fades, DISPLAY) change without a flip: replays
+            // scan out with the newest ones, as the real frame does.
+            replayRegisters_ = capture.registers;
+            replayInfo_ = info;
+        }
         // Presentation can fall behind the guest while the queue still owns
         // newer drawings. Retire obsolete progressive markers after submitting
         // ALL preceding GS work; never discard a guest packet, event or DMA.
@@ -1128,8 +1317,71 @@ class ParallelBackend final : public Backend, private SignalInterface {
                                                scanout.internal_width, scanout.internal_height);
 #endif
                 }
-                complete = presenter_->present(scanout.image, false, target.linear);
-                repeatImage_ = scanout.image;
+                Vulkan::ImageHandle shown = scanout.image;
+                if (replayEnabled() && replayDebug() == 3 && replayFrames_ != replayVerifiedFrame_ &&
+                    replayFrames_ % 30 == 0 && scanout.image) {
+                    replayVerifiedFrame_ = replayFrames_;
+                    // Snapshot check: the snapshot just taken (end of this frame) scanned out with no
+                    // replayed input must equal the real scanout, if the snapshot is complete.
+                    if (replayGs_ && replayRecordingStart_.valid) {
+                        replayGs_->replay_restore(replayRecordingStart_, true);
+                        replayLoadedFrame_ = ~0ull;
+                        auto& priv = replayGs_->get_priv_register_state();
+                        for (size_t i = 0; i < 15; ++i) {
+                            const uint32_t offset = privilegedOffsets[i];
+                            (offset < 0x1000 ? priv.qwords_lo[offset / 8] : priv.qwords_hi[(offset - 0x1000) / 8]) = capture.registers[i];
+                        }
+                        replayGs_->replay_flush();
+                        auto snapScan = replayGs_->vsync(info);
+                        replayGs_->replay_flush();
+                        if (snapScan.image) {
+                            Capture probe = capture; probe.forceHostReadback = true;
+                            ScanoutResult s2 = scanout; s2.image = snapScan.image;
+                            const Frame a = download(scanout, 0, probe), b = download(s2, 0, probe);
+                            size_t differ = 0;
+                            if (a.rgba.size() == b.rgba.size())
+                                for (size_t i = 0; i < a.rgba.size(); i += 4)
+                                    differ += a.rgba[i] != b.rgba[i] || a.rgba[i + 1] != b.rgba[i + 1] || a.rgba[i + 2] != b.rgba[i + 2];
+                            std::fprintf(stderr, "[FRAME-REPLAY-SNAP] frame=%llu differing_pixels=%zu\n", (unsigned long long)replayFrames_,
+                                         a.rgba.size() == b.rgba.size() ? differ : size_t(-1));
+                        }
+                    }
+                    if (auto exact = replayRender(1.f, true)) {
+                        Capture probe = capture; probe.forceHostReadback = true;
+                        ScanoutResult replayed = scanout; replayed.image = exact;
+                        const Frame a = download(scanout, 0, probe), b = download(replayed, 0, probe);
+                        size_t differ = 0; int worst = 0;
+                        if (a.rgba.size() == b.rgba.size())
+                            for (size_t i = 0; i < a.rgba.size(); i += 4) {
+                                int d = 0;
+                                for (int c = 0; c < 3; ++c) d = std::max(d, std::abs(int(a.rgba[i + c]) - int(b.rgba[i + c])));
+                                differ += d != 0; worst = std::max(worst, d);
+                            }
+                        static int dumped = 0;
+                        if (differ && replayCurrent_.items.size() > 1500 && a.rgba.size() == b.rgba.size() && a.width * a.height * 4 == a.rgba.size() && dumped < 4) {
+                            if (const char* dir = std::getenv("REO_FRAME_REPLAY_DUMP")) {
+                                ++dumped;
+                                for (int which = 0; which < 2; ++which) {
+                                    const Frame& f = which ? b : a;
+                                    char name[1024];
+                                    std::snprintf(name, sizeof(name), "%s/exact_%llu_%s.ppm", dir, (unsigned long long)replayFrames_, which ? "replay" : "real");
+                                    if (FILE* out = std::fopen(name, "wb")) {
+                                        std::fprintf(out, "P6 %u %u 255\n", f.width, f.height);
+                                        for (size_t i = 0; i < f.rgba.size(); i += 4) std::fwrite(&f.rgba[i], 1, 3, out);
+                                        std::fclose(out);
+                                    }
+                                }
+                            }
+                        }
+                        std::fprintf(stderr, "[FRAME-REPLAY-EXACT] frame=%llu size=%ux%u/%ux%u items=%zu differing_pixels=%zu max_delta=%d\n",
+                                     (unsigned long long)replayFrames_, a.width, a.height, b.width, b.height,
+                                     replayCurrent_.items.size(), a.rgba.size() == b.rgba.size() ? differ : size_t(-1), worst);
+                    }
+                }
+                if (replayEnabled())
+                    if (auto replayed = replayRender(replayPhase())) shown = replayed;
+                complete = presenter_->present(shown, false, target.linear);
+                repeatImage_ = shown;
                 repeatLinear_ = target.linear;
                 timing.presented();
             } else {
@@ -1199,7 +1451,16 @@ class ParallelBackend final : public Backend, private SignalInterface {
         if (residentGeometry_)
             residentGeometry_->guardPublishedEffects();
         completeEvents();
-        const auto& r = gs_->resident_command_register_state();
+        if (replayEnabled() && !replayRecording_.overflow) {
+            ReplayItem item; item.path = ReplayClearPath; item.addr = uint8_t(context);
+            item.value = uint64_t(rgba) | (uint64_t(active) << 32);
+            replayRecording_.items.push_back(std::move(item));
+        }
+        return runContextClear(*gs_, context, rgba, active);
+    }
+    // The context clear on either GS instance (the main one, or the frame-replay one).
+    bool runContextClear(GSInterface& gs, uint32_t context, uint32_t rgba, bool active) {
+        const auto& r = gs.resident_command_register_state();
         const auto& c = r.ctx[active ? uint32_t(r.prim.desc.CTXT) : (context ? 1 : 0)];
         const uint32_t psm = c.frame.desc.PSM;
         if (!c.frame.desc.FBW ||
@@ -1230,7 +1491,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
         }
         auto command = device_->request_command_buffer(CommandBuffer::Type::Generic);
         try {
-            if (!gs_->record_resident_context_clear(*command, *contextClear_, context, rgba,
+            if (!gs.record_resident_context_clear(*command, *contextClear_, context, rgba,
                                                     active)) {
                 device_->submit_discard(command);
                 return false;

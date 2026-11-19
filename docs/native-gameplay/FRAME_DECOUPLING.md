@@ -346,3 +346,43 @@ Open questions before implementing:
 - the replay cost: an extra VU1 pass per in-between frame (about 6–20 ms per frame by
   chapter);
 - keeping the replay's VU and GS side effects out of the emulated state.
+
+### Frame replay prototype (`REO_FRAME_REPLAY=1`, off by default, 2026-11-19)
+
+GIF-level interpolation as planned above: every GIF packet, direct register write and
+context clear between two display flips is recorded with a snapshot of the GS (whole VRAM
+buffer incl. super-sample slices, CLUT, registers) at its start. Each present replays the
+newest frame on a second paraLLEl-GS instance with vertex positions blended toward the
+previous frame (`frame_replay.hpp`, unit test `frame_replay_test.cpp`).
+
+Fixed on the way (all File #1, scenario 1 via `tools/hybrid/room_driver.py`):
+
+- **Game freeze at character select.** The replay instance's `vsync()` advanced the shared
+  Vulkan device's frame context, which waits for every requested command buffer, including
+  the main instance's still-open ones that only the game thread submits, while the game
+  thread waited on the GS worker (`gsWaitProducerPace`). Found with a thread-stack dump of
+  the hung process plus a relink of the same objects with `-Wl,-Map`. The replay instance is
+  now a *secondary* (`GSRenderer::secondary_instance`): it never advances frame contexts, is
+  created at backend init (its `init` waits for device idle), and submits after each replay.
+- **Menu clears** (`clearContext`) are recorded and replayed in order.
+- **Snapshot ordering.** `flush()` leaves work in open command buffers; the snapshot now
+  submits it first (`replay_snapshot` → `replay_flush`).
+
+Measured with v70–v77: reaches gameplay 2/2, 60 updates/s kept, ~2,700 blended presents per
+45 s run at ~3 ms average each.
+
+**Not exact yet — this is why it flickers.** `REO_FRAME_REPLAY_DEBUG=exact` compares, every
+30 frames, (a) the snapshot just taken scanned out with nothing replayed and (b) the frame
+replayed unblended (k = 1), against the real scanout:
+
+| | menus / loading (few items) | scenario select (~700–800 items) | gameplay (~1,600–1,900 items) |
+|---|---|---|---|
+| (a) snapshot | 0 differing pixels | 0 | 0 |
+| (b) replay | 0 | ~150k of 229k (old VRAM shows through) | ~50k–73k (track texture wrong, lamp glows missing) |
+
+The snapshot is complete and every GS input path of the backend is recorded, so the
+remaining divergence is GS-interface state outside `RegisterState`/`PrivRegisterState`
+that the replay instance does not share (texture/CLUT caching or transfer state are the
+suspects). Interpolated frames alternate with exact ones, which shows as flicker; the
+launcher never enables this switch. Diagnostics: `REO_FRAME_REPLAY_DEBUG=record|snapshot|exact`,
+`REO_FRAME_REPLAY_DUMP=<dir>` (PPM pairs of mismatching gameplay frames).

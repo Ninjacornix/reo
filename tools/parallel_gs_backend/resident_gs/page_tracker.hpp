@@ -165,6 +165,8 @@ public:
 	// Use UINT32_MAX to always flush.
 	// This kind of CLUT flushing is mostly relevant to avoid false invalidations inside a render pass.
 	void invalidate_texture_cache(uint32_t clut_instance_match);
+	// Frame replay: VRAM was replaced wholesale on the GPU; drop every cached texture and palette.
+	void invalidate_all_cached_textures();
 
 	void invalidate_fb_write_short_term_references();
 

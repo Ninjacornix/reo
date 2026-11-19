@@ -336,6 +336,9 @@ public:
 	void flush_readback(const uint32_t *page_indices, uint32_t num_indices);
 
 	// Submit to GPU and signal when done.
+    // Frame replay: this renderer shares the device with the main instance and must never
+    // advance its frame contexts (the main instance does at its own frame boundaries).
+    bool secondary_instance = false;
     void flush_submit(uint64_t timeline,Vulkan::Fence *producerCompletion=nullptr,
                       bool advanceFrame=true,Vulkan::Fence *renderCompletion=nullptr);
 
@@ -358,6 +361,18 @@ public:
 	FlushStats consume_flush_stats();
 	// Device VRAM buffer (presentation warp depth snapshot).
 	const Vulkan::Buffer *resident_vram_buffer() const { return buffers.gpu.get(); }
+
+	// Frame replay (REO_FRAME_REPLAY): GPU-side snapshot of VRAM (all planes: single-rate,
+	// reference, super-sampling and shadow copies) and of the CLUT ring with its indices.
+	// The caller flushes first; copies are ordered on the device queue.
+	struct ReplayGpuState
+	{
+		Vulkan::BufferHandle vram, clut;
+		uint32_t next_clut_instance = 0, base_clut_instance = 0;
+		bool last_clut_update_is_read = false;
+	};
+	void replay_save(ReplayGpuState &out);
+	void replay_load(const ReplayGpuState &in);
 
 	double get_accumulated_timestamps(TimestampType type) const;
 	void set_enable_timestamps(bool enable);

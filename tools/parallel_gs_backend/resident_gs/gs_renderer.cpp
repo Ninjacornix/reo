@@ -1367,7 +1367,10 @@ void GSRenderer::flush_submit(uint64_t value,Vulkan::Fence *producerCompletion,b
 
 	// If we have a timeline trace, we'd like it to be somewhat readable.
 	// Only do garbage collection at frame boundaries.
-	if (advanceFrame && !device->get_system_handles().timeline_trace_file)
+	// A secondary instance (frame replay) never advances: next_frame_context() waits for every
+	// command buffer requested in the frame, including the main instance's open ones, which
+	// only the game thread submits (deadlock while the game waits on the GS worker).
+	if (advanceFrame && !secondary_instance && !device->get_system_handles().timeline_trace_file)
 		device->next_frame_context();
 
 	log_timestamps();
@@ -5710,4 +5713,49 @@ bool ParallelGS::GSRenderer::restore_resident_palette_checkpoint(const ResidentP
     rewind_clut_instance(c.next);
     base_clut_instance=c.base;next_clut_instance=c.next;last_clut_update_is_read=c.lastRead;
     return true;
+}
+
+void ParallelGS::GSRenderer::replay_save(ReplayGpuState &out)
+{
+	const auto make = [&](Vulkan::BufferHandle &target, VkDeviceSize size, const char *name) {
+		if (target && target->get_create_info().size == size)
+			return;
+		Vulkan::BufferCreateInfo info = {};
+		info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		info.domain = Vulkan::BufferDomain::Device;
+		info.size = size;
+		target = device->create_buffer(info);
+		device->set_name(*target, name);
+	};
+	make(out.vram, buffers.gpu->get_create_info().size, "replay-vram");
+	make(out.clut, buffers.clut->get_create_info().size, "replay-clut");
+	auto cmd = device->request_command_buffer();
+	cmd->barrier(VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT, VK_ACCESS_2_MEMORY_WRITE_BIT,
+	             VK_PIPELINE_STAGE_2_COPY_BIT, VK_ACCESS_2_TRANSFER_READ_BIT | VK_ACCESS_2_TRANSFER_WRITE_BIT);
+	cmd->copy_buffer(*out.vram, *buffers.gpu);
+	cmd->copy_buffer(*out.clut, *buffers.clut);
+	cmd->barrier(VK_PIPELINE_STAGE_2_COPY_BIT, VK_ACCESS_2_TRANSFER_WRITE_BIT,
+	             VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT, VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_MEMORY_WRITE_BIT);
+	device->submit(cmd);
+	out.next_clut_instance = next_clut_instance;
+	out.base_clut_instance = base_clut_instance;
+	out.last_clut_update_is_read = last_clut_update_is_read;
+}
+
+void ParallelGS::GSRenderer::replay_load(const ReplayGpuState &in)
+{
+	if (!in.vram || !in.clut || in.vram->get_create_info().size != buffers.gpu->get_create_info().size ||
+	    in.clut->get_create_info().size != buffers.clut->get_create_info().size)
+		throw std::runtime_error("Frame replay snapshot does not match this GS instance");
+	auto cmd = device->request_command_buffer();
+	cmd->barrier(VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT, VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_MEMORY_WRITE_BIT,
+	             VK_PIPELINE_STAGE_2_COPY_BIT, VK_ACCESS_2_TRANSFER_READ_BIT | VK_ACCESS_2_TRANSFER_WRITE_BIT);
+	cmd->copy_buffer(*buffers.gpu, *in.vram);
+	cmd->copy_buffer(*buffers.clut, *in.clut);
+	cmd->barrier(VK_PIPELINE_STAGE_2_COPY_BIT, VK_ACCESS_2_TRANSFER_WRITE_BIT,
+	             VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT, VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_MEMORY_WRITE_BIT);
+	device->submit(cmd);
+	next_clut_instance = in.next_clut_instance;
+	base_clut_instance = in.base_clut_instance;
+	last_clut_update_is_read = in.last_clut_update_is_read;
 }

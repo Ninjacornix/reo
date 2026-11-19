@@ -4233,6 +4233,7 @@ bool GSInterface::prepare_resident_recording()
 
 void GSInterface::record_resident_command(const std::function<void(Vulkan::CommandBuffer&)> &record)
 {
+    ++direct_writes;
     renderer.record_resident_command(record);
 }
 
@@ -4306,6 +4307,7 @@ void GSInterface::record_resident_image_upload_impl(Vulkan::CommandBuffer& cmd,
     const Vulkan::ImageView& image,Vulkan::Program* program,const CopyDescriptor& original,
     const ResidentImagePayload& payload,ResidentImageBatch* batch)
 {
+    ++direct_writes;
     if(batch&&(batch->owner_!=this||(batch->command_&&batch->command_!=&cmd)))
         throw std::invalid_argument("Resident IMAGE batch owner/command differs or was sealed");
     const uint32_t width=original.trxreg.desc.RRW,height=original.trxreg.desc.RRH;
@@ -4521,6 +4523,49 @@ bool GSInterface::submit_resident_material(const ResidentMaterial &material,
     if (pass.instances[0].z_write) tracker.mark_fb_write(depth);
     else if (pass.instances[0].z_sensitive) tracker.mark_fb_read(depth);
     return renderer.flush_resident_material(pass,inputs,material.images);
+}
+
+void GSInterface::replay_snapshot(ReplaySnapshot &out)
+{
+	// flush() records the pending GS work but leaves it in open command buffers; submit it
+	// (without advancing the frame) so the snapshot copy executes after it on the queue.
+	replay_flush();
+	renderer.replay_save(out.gpu);
+	out.regs = get_register_state();
+	out.priv = get_priv_register_state();
+	out.valid = true;
+}
+
+void GSInterface::replay_flush()
+{
+	flush_pending_transfer(true);
+	uint64_t value = tracker.mark_submission_timeline();
+	renderer.flush_submit(value, nullptr, false, nullptr);
+}
+
+void GSInterface::replay_reset_registers(const ReplaySnapshot &in)
+{
+	replay_flush();
+	get_register_state() = in.regs;
+	get_priv_register_state() = in.priv;
+	reset_vertex_queue();
+	clobber_register_state();
+}
+
+void GSInterface::replay_restore(const ReplaySnapshot &in, bool invalidate_textures)
+{
+	replay_flush();
+	renderer.replay_load(in.gpu);
+	// Displayed-buffer promotions of earlier replays would be scanned out instead of VRAM.
+	for (auto &b : promoted_backbuffers)
+		b = {};
+	num_promoted_backbuffers = 0;
+	if (invalidate_textures)
+		tracker.invalidate_all_cached_textures();
+	get_register_state() = in.regs;
+	get_priv_register_state() = in.priv;
+	reset_vertex_queue();
+	clobber_register_state();
 }
 
 void GSInterface::flush()

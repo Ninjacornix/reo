@@ -932,6 +932,21 @@ void PageTracker::invalidate_texture_cache(uint32_t clut_instance)
 		cb.mark_texture_state_dirty_with_flush();
 }
 
+void PageTracker::invalidate_all_cached_textures()
+{
+	for (uint32_t index = 0; index < uint32_t(page_state.size()); index++)
+	{
+		auto &page = page_state[index];
+		if (page.cached_textures.empty())
+			continue;
+		page.texture_cache_needs_invalidate_block_mask = UINT32_MAX;
+		page.texture_cache_needs_invalidate_write_mask = UINT32_MAX;
+		register_potential_invalidated_indices(index);
+	}
+	csa_written_mask = UINT32_MAX;
+	invalidate_texture_cache(UINT32_MAX);
+}
+
 uint64_t PageTracker::mark_submission_timeline(FlushReason reason)
 {
 	++timeline;

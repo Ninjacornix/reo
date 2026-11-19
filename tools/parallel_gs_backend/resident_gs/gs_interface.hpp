@@ -356,6 +356,30 @@ public:
     // represented by the GPU overlay while the lease is active.
     const RegisterState &resident_command_register_state() const { return registers; }
     const Vulkan::Buffer *resident_vram_buffer() const { return renderer.resident_vram_buffer(); }
+    // Frame replay (REO_FRAME_REPLAY): snapshot this instance at a frame start (GPU copies of
+    // VRAM and the CLUT ring, plus register state); restore it into a second instance before
+    // replaying that frame's recorded GS input. Both flush first.
+    struct ReplaySnapshot
+    {
+        GSRenderer::ReplayGpuState gpu;
+        RegisterState regs;
+        PrivRegisterState priv;
+        bool valid = false;
+    };
+    void replay_snapshot(ReplaySnapshot &out);
+    // invalidate_textures: true when the snapshot is a different frame than the last restore;
+    // restoring the same snapshot again keeps cached textures (identical VRAM contents).
+    void replay_restore(const ReplaySnapshot &in, bool invalidate_textures = true);
+    // Submits without advancing the device's frame contexts: only the main instance may do
+    // that, at its own frame boundaries (a second advancing instance recycles in-flight work).
+    void replay_flush();
+    // Marks this instance as a frame-replay secondary (see GSRenderer::secondary_instance).
+    void set_secondary_instance() { renderer.secondary_instance = true; }
+    // Count of VRAM writes outside the GIF/register stream (resident commands, movie IMAGE
+    // uploads): frame replay cannot reproduce a frame that had any.
+    uint64_t direct_writes = 0;
+    // Registers only (VRAM and caches kept): for further replays of the same recorded frame.
+    void replay_reset_registers(const ReplaySnapshot &in);
     std::vector<uint8_t> resident_transfer_readback() const;
 
 	bool prepare_resident_material(uint32_t capacity, ResidentMaterial &material);

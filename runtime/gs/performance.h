@@ -80,7 +80,9 @@ inline const char* option() { return std::getenv("REO_CAMERA_WARP"); }
 // REO_CAMERA_WARP=0 disables the warp; =all also allows rotation-only warps of
 // orbiting (third-person) views when no depth mapping is configured.
 inline bool enabled() {
-    static const bool value = [] { const char* v = option(); return !v || std::strcmp(v, "0") != 0; }();
+    // REO_FRAME_REPLAY interpolates whole frames; the camera warp would move them a second time.
+    static const bool value = [] { const char* v = option(); const char* r = std::getenv("REO_FRAME_REPLAY");
+        return (!v || std::strcmp(v, "0") != 0) && !(r && std::strcmp(r, "1") == 0); }();
     return value;
 }
 inline bool all_views() {
