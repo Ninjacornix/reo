@@ -34,6 +34,7 @@ ap.add_argument('--burst', help='AT:SECONDS after room arrival: capture frames a
 ap.add_argument('--capture-at', action='append', type=float, default=[], help='Extra capture SECONDS after room arrival')
 ap.add_argument('--reverse-walk', action='store_true', help='With --explore --analog: alternate forward/backward stick walks (sharp reversals)')
 ap.add_argument('--warp-probe', action='store_true', help='Idle captures before/after short right-stick turns (presentation warp validation)')
+ap.add_argument('--snapshot-ram', action='store_true', help='With --snapshot: also write the whole 32 MB guest RAM (ram-at-N.bin; local analysis only, never commit)')
 ap.add_argument('--snapshot', action='store_true', help='With --capture-at: also save the camera, room node and actor memory (snap-at-N.json, read before and after the capture)')
 ap.add_argument('--aim-probe', action='store_true', help='Hold R1 with the left stick up/centre/down/up and dump the player actor record after each')
 args = ap.parse_args()
@@ -193,6 +194,7 @@ try:
                             dumped.add(('cap',at));capture('at-%g'%at)
                             if args.snapshot:
                                 after=read_snapshot(ram)
+                                if args.snapshot_ram: (args.out/('ram-at-%g.bin'%at)).write_bytes(b''.join(ram.read(a,0x100000) for a in range(0,0x2000000,0x100000)))
                                 (args.out/('snap-at-%g.json'%at)).write_text(json.dumps({'regions':SNAPSHOT_REGIONS,'before':before,'after':after,'stable':before==after},indent=1))
                     if room_elapsed>=4 and not initial_shot:
                         initial_shot=True;capture('opening')

@@ -47,3 +47,26 @@ Open differences:
 - lamp boxes and other room objects come from the second AMO in the room NBD and the
   `OBJ*.NBD` banks — not drawn yet;
 - fog, specular (`0x14`), characters (skinned; bones from the actor records).
+
+## Step 2 (2026-11-19): measured colours, Kevin skinned from live bones
+
+**Ground truth for colours**: `REO_GIF_DUMP_AT=N` (with `REO_FRAME_REPLAY=1
+REO_FRAME_REPLAY_DEBUG=record REO_FRAME_REPLAY_DUMP=<dir>`) writes the GS input of displayed
+frames N..N+2; `tools/native_render/gif_inspect.py` decodes it into drawn vertices with their
+register state. Matching those vertices to the native projection (screen offset 1792/1824):
+
+- room vertices: RGB sent = baked AMO colour × **0.373** (95/255; p10–p90 0.28–0.37, not
+  depth-dependent), ALPHA `0x44`, fog enabled. With that factor the native frame's mean
+  brightness is 23.3 vs 23.9 for the original (was 61);
+- characters: UVs are sent unchanged (s/q = AMO u, t/q = AMO v; textures repeat), colours are
+  lit per vertex by the game (AMO colours are 0; sent RGB 3–59, median 14).
+
+**Bones**: `room_driver.py --snapshot-ram` saves the 32 MB guest RAM. Each character's 35
+skeleton nodes are 0x190-byte records: world matrix at +0x00, local at +0x40, inverse bind at
++0x80. In the opening room Kevin's (actor 0) start at `0x4F9140`, the two partners' at
+`0x5001C0` and `0x507240`. Skinned position = Σ weight × v · inverse_bind · world; weights from
+part chunks `0xC0000`/`0x100000`. Kevin lands on the original's pixels.
+
+Still open: the source of the 0.373 room factor; real per-vertex character lighting (now a
+neutral light); the partners' models; destination-alpha decals on the right wall; fog; room
+objects (second AMO, `OBJ*.NBD`); then moving this into the game as a live renderer.

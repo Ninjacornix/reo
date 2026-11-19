@@ -109,7 +109,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
     double replayIntervalMs_ = 1000.0 / 60.0;
     uint64_t replayFrames_ = 0, replayPresents_ = 0, replayPairs_ = 0, replayVertices_ = 0, replayKept_ = 0;
     std::vector<uint64_t> replayScratch_;
-    uint64_t replayLoadedFrame_ = ~0ull;
+    uint64_t replayLoadedFrame_ = ~0ull, replayFlips_ = 0;
     double replayRenderMs_ = 0, replayRenderMax_ = 0;
     uint64_t replayVerifiedFrame_ = ~0ull, replayDirectWrites_ = 0, replaySkipped_ = 0;
 
@@ -132,7 +132,30 @@ class ParallelBackend final : public Backend, private SignalInterface {
     }
     // At a scanout flip to a new picture: the recorded frame becomes current, the old current
     // becomes previous, and the GS state now is the next frame's start.
+    // REO_GIF_DUMP_AT=N (with REO_FRAME_REPLAY=1, REO_FRAME_REPLAY_DUMP=<dir>): write the GS input
+    // of displayed frames N..N+2 (counted in flips) to gif_<n>.bin for offline analysis
+    // (tools/native_render). Per item: u8 path (0 = register write, 0xFE = clear), u8 addr,
+    // u16 0, u32 bytes, u64 value, then the packet bytes.
+    void replayDumpRecording() {
+        static const long long at = [] { const char* v = std::getenv("REO_GIF_DUMP_AT"); return v ? std::atoll(v) : -1ll; }();
+        const char* dir = std::getenv("REO_FRAME_REPLAY_DUMP");
+        ++replayFlips_;
+        if (at < 0 || !dir || replayFlips_ < uint64_t(at) || replayFlips_ >= uint64_t(at) + 3) return;
+        char name[1024];
+        std::snprintf(name, sizeof(name), "%s/gif_%llu.bin", dir, (unsigned long long)replayFlips_);
+        FILE* out = std::fopen(name, "wb");
+        if (!out) return;
+        for (const auto& item : replayRecording_.items) {
+            const uint8_t head[4] = {item.path, item.addr, 0, 0};
+            const uint32_t bytes = uint32_t(item.bytes);
+            std::fwrite(head, 1, 4, out); std::fwrite(&bytes, 4, 1, out); std::fwrite(&item.value, 8, 1, out);
+            if (bytes) std::fwrite(item.words.data(), 1, bytes, out);
+        }
+        std::fclose(out);
+        std::fprintf(stderr, "[GIF-DUMP] %s items=%zu overflow=%d\n", name, replayRecording_.items.size(), int(replayRecording_.overflow));
+    }
     void replayRotate(const Capture& capture, const VSyncInfo& info) {
+        replayDumpRecording();
         const auto now = std::chrono::steady_clock::now();
         if (replayFlip_.time_since_epoch().count()) {
             const double ms = std::chrono::duration<double, std::milli>(now - replayFlip_).count();

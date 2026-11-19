@@ -2,6 +2,7 @@
 
 usage: room_render.py ROOM.nbd SNAPSHOT.json OUT.png [--reference SHOT.png]
                       [--data DISC_DATA --archive r035.afs]   (textures)
+                      [--ram RAM.bin --character MODEL.NBD@BONES ...]   (skinned characters)
 
 ROOM.nbd comes from the user's own disc (r035.afs etc.; never committed). SNAPSHOT.json is
 written by tools/hybrid/room_driver.py --capture-at N --snapshot: it holds the game's view
@@ -15,6 +16,13 @@ texture (TID slot -> member ordinal of the scenario AFS; .sld = compressed TIM2)
 sampled perspective-correct and modulated by the vertex colour (GS MODULATE); material
 type 0x12 (glow cards) is drawn additively after the opaque parts; 0x14 carries a
 specular exponent (not lit here).
+
+Characters (P00_00.NBD etc.): same AMO parts plus 0xC0000 weights (per vertex: n, then n x
+(u32 palette index, f32 percent)) and 0x100000 palette (palette index -> skeleton node). Their
+textures are embedded (TEX section). Live bones come from a RAM snapshot
+(room_driver.py --snapshot-ram): one 0x190-byte record per node, world matrix at +0x00 and
+inverse bind matrix at +0x80 (File #1: Kevin's first record at 0x4F9140 in the opening room).
+Skinned vertex = sum(weight x vertex . inverse_bind[node] . world[node]).
 
 AMO layout used (chunk = kind:u32 count:u32 size:u32, size includes the header):
   model  kind 0x20000 header, kind 0x2 parts (count = parts), each part kind 0x4:
@@ -36,6 +44,13 @@ sys.path.insert(0, str(ROOT / 'tools/assets'))
 sys.path.insert(0, str(ROOT / 'tools/ps2_debug'))
 
 W, H = 512, 448
+# Measured from the original's GS input (tools/native_render/gif_inspect.py on a REO_GIF_DUMP_AT
+# frame of r0350100): room vertex RGB = baked AMO colour x 0.373 (95/255; p10..p90 0.28..0.37,
+# independent of depth). Its source (a light colour in the VU1 room program?) is not found yet.
+ROOM_COLOR_SCALE = 95.0 / 255.0
+# Characters are lit per vertex by the game (their AMO colours are 0); until that lighting is
+# connected, a neutral light at the room level stands in (as in game/native's presentation).
+CHARACTER_NEUTRAL_LIGHT = ROOM_COLOR_SCALE
 
 
 def chunks(b, at):
@@ -83,6 +98,16 @@ def parse_parts(b):
                 part['uv'] = np.frombuffer(b, '<f4', scount * 2, data).reshape(-1, 2).astype(np.float64)
             elif skind == 0xB0000:
                 part['col'] = np.frombuffer(b, '<f4', scount * 4, data).reshape(-1, 4).astype(np.float64)
+            elif skind == 0x100000:
+                part['palette'] = struct.unpack_from('<%dI' % scount, b, data)
+            elif skind == 0xC0000:
+                cur, influences = data, []
+                for _ in range(scount):
+                    n = struct.unpack_from('<I', b, cur)[0]
+                    influences.append([(struct.unpack_from('<I', b, cur + 4 + 8 * j)[0] & 255,
+                                        struct.unpack_from('<f', b, cur + 8 + 8 * j)[0] / 100.0) for j in range(n)])
+                    cur += 4 + 8 * n
+                part['influences'] = influences
         parts.append(part)
     return parts
 
@@ -127,6 +152,34 @@ def decode_tim2(data):
     return rgba
 
 
+def character_textures(nbd):
+    if nbd[:3] != b'TEX':
+        raise ValueError('character NBD has no TEX section')
+    at, size, count = struct.unpack_from('<III', nbd, 4)
+    textures = []
+    for _ in range(count):
+        n = struct.unpack_from('<I', nbd, at)[0]
+        textures.append(decode_tim2(nbd[at + 4:at + 4 + n]))
+        at += 4 + n
+    return textures
+
+
+def skin(part, ram, bones):
+    """World positions of a skinned part from live bone records (see module notes)."""
+    def record(node, offset):
+        return np.array(struct.unpack_from('<16f', ram, bones + node * 0x190 + offset), np.float64).reshape(4, 4)
+    pos = np.c_[part['pos'], np.ones(len(part['pos']))]
+    out = np.zeros_like(pos)
+    cache = {}
+    for i, influence in enumerate(part['influences']):
+        for index, weight in influence:
+            node = part['palette'][index]
+            if node not in cache:
+                cache[node] = record(node, 0x80) @ record(node, 0x00)
+            out[i] += weight * (pos[i] @ cache[node])
+    return out
+
+
 def load_textures(nbd, data_dir, archive_name):
     from afs_inspect import read_toc
     if nbd[:3] != b'TID':
@@ -151,7 +204,7 @@ def matrix(hexdata, index=0):
     return np.array(struct.unpack_from('<16f', bytes.fromhex(hexdata), index * 64), np.float64).reshape(4, 4)
 
 
-def render(parts, snap, materials=None, textures=None):
+def render(parts, snap, materials=None, textures=None, characters=()):
     view = matrix(snap['view'])
     proj = matrix(snap['composite2'])
     room = bytes.fromhex(snap['room_current'])
@@ -159,19 +212,32 @@ def render(parts, snap, materials=None, textures=None):
     depth = np.full((H, W), np.inf)
     stats = {'parts': 0, 'triangles': 0, 'drawn': 0, 'additive': 0}
     additive = []
-    for index, part in enumerate(parts):
+    jobs = [(part, index, materials, textures, None) for index, part in enumerate(parts)]
+    for c_parts, c_materials, c_textures, ram, bones in characters:
+        jobs += [(part, None, c_materials, c_textures, (ram, bones)) for part in c_parts]
+    for part, index, materials, textures, skinning in jobs:
         if part['pos'] is None or not part['strips']:
             continue
-        node = np.array(struct.unpack_from('<16f', room, index * 64), np.float64).reshape(4, 4)
-        if not node.any():
+        if skinning is None:
+            node = np.array(struct.unpack_from('<16f', room, index * 64), np.float64).reshape(4, 4)
+            if not node.any():
+                continue
+            world = np.c_[part['pos'], np.ones(len(part['pos']))] @ node
+        elif part.get('influences'):
+            world = skin(part, *skinning)
+        else:
             continue
         stats['parts'] += 1
-        p = np.c_[part['pos'], np.ones(len(part['pos']))] @ node @ view @ proj
+        p = world @ view @ proj
         w = p[:, 3]
         ok = w > 1e-3
         sx = np.where(ok, p[:, 0] / np.where(ok, w, 1), np.nan)
         sy = np.where(ok, p[:, 1] / np.where(ok, w, 1), np.nan)
         col = part['col'][:, :4] / 128.0 if part['col'] is not None else np.ones((len(w), 4))
+        if skinning is None:
+            col = np.c_[col[:, :3] * ROOM_COLOR_SCALE, col[:, 3]]
+        else:
+            col = np.c_[np.full((len(w), 3), CHARACTER_NEUTRAL_LIGHT), np.ones(len(w))]
         uv = part['uv'] if part['uv'] is not None else np.zeros((len(w), 2))
         for s, strip in enumerate(part['strips']):
             tex, kind = None, 0
@@ -253,13 +319,21 @@ def main():
     ap.add_argument('--reference', type=Path)
     ap.add_argument('--data', type=Path, help='Imported disc data folder (holds NETBIO00.DAT)')
     ap.add_argument('--archive', default='r035.afs', help='Scenario room archive inside NETBIO00.DAT')
+    ap.add_argument('--ram', type=Path, help='Guest RAM snapshot (room_driver.py --snapshot-ram)')
+    ap.add_argument('--character', action='append', default=[], help='MODEL.NBD@0xBONES: skinned character with its first bone record')
     a = ap.parse_args()
     nbd = a.room.read_bytes()
     parts = parse_parts(nbd)
     materials = parse_materials(nbd)
     textures = load_textures(nbd, a.data, a.archive) if a.data else None
     snap = json.loads(a.snapshot.read_text())['after']
-    image, stats = render(parts, snap, materials, textures)
+    characters = []
+    ram = a.ram.read_bytes() if a.ram else None
+    for spec in a.character:
+        path, bones = spec.rsplit('@', 1)
+        c = Path(path).read_bytes()
+        characters.append((parse_parts(c), parse_materials(c), character_textures(c), ram, int(bones, 0)))
+    image, stats = render(parts, snap, materials, textures, characters)
     Image.fromarray(image).save(a.out)
     print(json.dumps(stats))
     if a.reference:
