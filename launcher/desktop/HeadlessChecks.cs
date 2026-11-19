@@ -141,6 +141,12 @@ internal static class HeadlessChecks {
         Control<RadioButton>("ModeJoin").IsChecked=true;Dispatcher.UIThread.RunJobs();
         Check(window.settings.ResolvedCoopMode=="join"&&Control<Control>("JoinOptions").IsVisible&&!Control<Control>("HostOptions").IsVisible,"Join mode did not reveal its RC1 controls.");
         using(var bitmap=window.CaptureRenderedFrame())bitmap!.Save(Path.Combine(output,"Coop-join.png"));
+        Control<RadioButton>("ModeObsrv").IsChecked=true;Dispatcher.UIThread.RunJobs();
+        Check(window.settings.ResolvedCoopMode=="obsrv"&&Control<Control>("ObsrvPanel").IsVisible&&!Control<Control>("OnlinePanel").IsVisible&&!Control<Control>("HostOptions").IsVisible,"OBSRV mode did not show only its server panel.");
+        Control<TextBox>("ObsrvServer").Text="203.0.113.7";Dispatcher.UIThread.RunJobs();
+        Check(window.settings.ObsrvServer=="203.0.113.7"&&OnlineOptions.Configured(window.settings),"OBSRV server address did not reach the settings.");
+        using(var bitmap=window.CaptureRenderedFrame())bitmap!.Save(Path.Combine(output,"Coop-obsrv.png"));
+        Control<TextBox>("ObsrvServer").Text="";
         Control<RadioButton>("ModeOffline").IsChecked=true;
         window.ShowPage("Setup");var developer=Control<Expander>("DeveloperFiles");
         Check(developer.IsVisible==!AppLayout.Packaged(window.root),"Developer setup visibility does not match the installation type.");

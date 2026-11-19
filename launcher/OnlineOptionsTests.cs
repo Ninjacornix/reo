@@ -37,6 +37,36 @@ static class OnlineOptionsTests {
         check(!env.Keys.Any(k => k.Contains("PASSWORD", StringComparison.OrdinalIgnoreCase)) &&
                   !env.ContainsKey("REO_TEST_ROUTE"),
               "Online options export neither a password nor diagnostic automation");
+        // OBSRV: optional community server, the player's own account entered in the game.
+        foreach (string server in new[] { "203.0.113.7", "obsrv.example.org", " game.obsrv.example ", "a-b.example" })
+            check(OnlineOptions.ValidServerName(server), "OBSRV server address accepted: " + server);
+        foreach (string server in new[] { "", "localhost", "obsrv", "-bad.example", "bad-.example", "a..b", "1.2.3",
+                                          "http://obsrv.example.org", "obsrv.example.org:10070", "203.0.113.7/24" })
+            check(!OnlineOptions.ValidServerName(server), "OBSRV server address rejected: " + server);
+        var obsrv = new Settings { CoopMode = "obsrv", ObsrvServer = "203.000.113.007", AccountUsername = "", CoopHost = "" };
+        check(obsrv.ResolvedCoopMode == "obsrv" && OnlineOptions.Configured(obsrv) && OnlineOptions.Error(obsrv) == null,
+              "OBSRV mode needs only a server address (no launcher player name)");
+        var obsrvEnv = OnlineOptions.LaunchEnvironment(obsrv);
+        check(obsrvEnv.Count == 3 && obsrvEnv["REO_COOP_HOST"] == "203.0.113.7" &&
+                  obsrvEnv["REO_COOP_PLATFORM_AUTH"] == "native" && obsrvEnv["REO_NETCODE"] == "auto",
+              "OBSRV launch connects to the chosen server");
+        check(!obsrvEnv.ContainsKey("REO_COOP_AUTO_ACCOUNT") && !obsrvEnv.ContainsKey("REO_COOP_USERNAME") &&
+                  !obsrvEnv.ContainsKey("REO_COOP_LOCAL_SERVER") &&
+                  !obsrvEnv.Keys.Any(k => k.Contains("PASSWORD", StringComparison.OrdinalIgnoreCase)),
+              "OBSRV launch creates no account, sends no player name or password and starts no local server");
+        check(OnlineOptions.ResolveServer("obsrv.example.org", _ => new[] {
+                  System.Net.IPAddress.Parse("2001:db8::1"), System.Net.IPAddress.Parse("198.51.100.4") }) == "198.51.100.4",
+              "OBSRV host name resolves to its IPv4 address");
+        bool noIpv4 = false;
+        try { OnlineOptions.ResolveServer("obsrv.example.org", _ => new[] { System.Net.IPAddress.Parse("2001:db8::1") }); }
+        catch (IOException) { noIpv4 = true; }
+        check(noIpv4, "OBSRV host name without an IPv4 address is reported, not launched");
+        check(new Settings { CoopMode = "obsrv", ObsrvServer = "bad name" }.ResolvedCoopMode == "obsrv" &&
+                  OnlineOptions.Error(new Settings { CoopMode = "obsrv", ObsrvServer = "bad name" }) != null &&
+                  !OnlineOptions.Configured(new Settings { CoopMode = "obsrv", ObsrvServer = "bad name" }),
+              "Invalid OBSRV server address is reported and not launched");
+        check(GraphicsOptions.From(new Settings { CoopMode = "obsrv", GameRate60 = true }).Environment["REO_GAME_RATE"] == "30",
+              "OBSRV sessions keep the original 30 Hz game logic");
         var persisted = JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(online))!;
         check(persisted.CoopHost == online.CoopHost && persisted.AccountUsername == "reo01",
               "Online configuration persists with settings");

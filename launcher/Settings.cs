@@ -46,8 +46,11 @@ public sealed partial class Settings {
     public bool AutoForward { get; set; }
     public string CoopHost { get; set; } = "";
     public string AccountUsername { get; set; } = "";
-    // "offline", "host" or "join"; null in settings saved by older launchers.
+    // "offline", "host", "join" or "obsrv"; null in settings saved by older launchers.
     public string? CoopMode { get; set; }
+    // OBSRV community server address (IPv4 or host name). Players sign in in the game with
+    // their own OBSRV account; the launcher stores no OBSRV credentials.
+    public string ObsrvServer { get; set; } = "";
     DeveloperOptions developer = new();
     public DeveloperOptions Developer { get => developer; set => developer = value ?? new(); }
     public string JoinHostName { get; set; } = "";
@@ -56,7 +59,7 @@ public sealed partial class Settings {
     public int GamePort { get; set; } = HostNetworking.GamePort;
     public int JoinSignupPort { get; set; }
     [System.Text.Json.Serialization.JsonIgnore]
-    public string ResolvedCoopMode => CoopMode is "offline" or "host" or "join" ? CoopMode
+    public string ResolvedCoopMode => CoopMode is "offline" or "host" or "join" or "obsrv" ? CoopMode
                                       : HostServer                             ? "host"
                                       : !string.IsNullOrWhiteSpace(CoopHost)   ? "join"
                                                                                : "offline";

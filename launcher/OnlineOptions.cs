@@ -15,9 +15,40 @@ public static partial class OnlineOptions {
         _ => throw new ArgumentException("Unknown game edition.", nameof(game))
     };
     public static bool Configured(Settings settings) => Supported(settings.Game.Id) &&
-                                                        settings.ResolvedCoopMode != "offline" &&
-                                                        TryHost(settings.CoopHost, out _) &&
-                                                        ValidUsername(settings.AccountUsername);
+        (settings.ResolvedCoopMode == "obsrv" ? ValidServerName(settings.ObsrvServer)
+                                              : settings.ResolvedCoopMode != "offline" &&
+                                                TryHost(settings.CoopHost, out _) &&
+                                                ValidUsername(settings.AccountUsername));
+
+    // OBSRV (optional community server): an IPv4 address or a DNS host name. Account-free
+    // Host/Join stays the default; OBSRV needs the player's own OBSRV account, entered at the
+    // game's original sign-in screen. Nothing here creates, stores or bypasses that account.
+    [GeneratedRegex(@"\A(?=.{1,253}\z)([A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+\z",
+                    RegexOptions.CultureInvariant)]
+    private static partial Regex ServerNamePattern();
+    public static bool ValidServerName(string? input) {
+        string text = (input ?? "").Trim();
+        return TryHost(text, out _) || (ServerNamePattern().IsMatch(text) && !text.All(c => c is '.' or (>= '0' and <= '9')));
+    }
+    // Resolves the OBSRV server to the IPv4 address the game connects to.
+    public static string ResolveServer(string input, Func<string, System.Net.IPAddress[]>? lookup = null) {
+        string text = input.Trim();
+        if (TryHost(text, out string literal))
+            return literal;
+        if (!ValidServerName(text))
+            throw new IOException("Enter the OBSRV server address: an IPv4 address or a host name.");
+        System.Net.IPAddress[] addresses;
+        try {
+            addresses = (lookup ?? System.Net.Dns.GetHostAddresses)(text);
+        } catch (System.Net.Sockets.SocketException error) {
+            throw new IOException($"Could not find the server {text}. Check the address and your internet connection.", error);
+        }
+        foreach (var address in addresses)
+            if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork &&
+                TryHost(address.ToString(), out string host))
+                return host;
+        throw new IOException($"The server {text} has no IPv4 address.");
+    }
     public const int MinUsernameLength = 4;
     public const int MaxUsernameLength = 10;
     public const string HostProfileMarker = "REO native host profile provider v1";
@@ -52,11 +83,14 @@ public static partial class OnlineOptions {
     public static string? Error(Settings settings) {
         if (settings.ResolvedCoopMode == "offline")
             return null;
-        if (string.IsNullOrWhiteSpace(settings.CoopHost) &&
+        if (settings.ResolvedCoopMode != "obsrv" && string.IsNullOrWhiteSpace(settings.CoopHost) &&
             string.IsNullOrWhiteSpace(settings.AccountUsername))
             return null;
         if (!Supported(settings.Game.Id))
             return "Online play is unavailable for this game.";
+        if (settings.ResolvedCoopMode == "obsrv")
+            return string.IsNullOrWhiteSpace(settings.ObsrvServer) || ValidServerName(settings.ObsrvServer)
+                       ? null : "Enter the OBSRV server address: an IPv4 address or a host name.";
         if (!ValidUsername(settings.AccountUsername))
             return "Player name: use 4–10 letters, numbers or underscores. Underscores cannot " +
                    "start, end or repeat.";
@@ -70,6 +104,11 @@ public static partial class OnlineOptions {
     public static Dictionary<string, string> LaunchEnvironment(Settings settings) {
         if (!Configured(settings))
             return new();
+        if (settings.ResolvedCoopMode == "obsrv")
+            // The game signs in at its own screens with the player's OBSRV account: no automatic
+            // account, no player name from the launcher and no local server.
+            return new() { ["REO_COOP_HOST"] = ResolveServer(settings.ObsrvServer),
+                           ["REO_COOP_PLATFORM_AUTH"] = "native", ["REO_NETCODE"] = "auto" };
         TryHost(settings.CoopHost, out string host);
         var environment = new Dictionary<string, string> {
             ["REO_COOP_HOST"] = host, ["REO_COOP_PLATFORM_AUTH"] = "native",

@@ -84,7 +84,7 @@
               <compat:Rc1TextBlock Text="Save games" Foreground="{Binding $parent[Button].Foreground}" />
             </Button>
             <Button x:Name="NavCoop" Click="Navigate" Tag="Coop" HorizontalContentAlignment="Left" Margin="0,3,0,3" Classes="NavButton">
-              <compat:Rc1TextBlock Text="Co-op" Foreground="{Binding $parent[Button].Foreground}" />
+              <compat:Rc1TextBlock Text="Multiplayer" Foreground="{Binding $parent[Button].Foreground}" />
             </Button>
             <Button x:Name="NavMods" Click="Navigate" Tag="Mods" HorizontalContentAlignment="Left" Margin="0,3,0,3" Classes="NavButton">
               <compat:Rc1TextBlock Text="Mods" Foreground="{Binding $parent[Button].Foreground}" />
@@ -724,11 +724,11 @@
               </Grid>
             </StackPanel>
             <StackPanel x:Name="PageCoop" MaxWidth="940" HorizontalAlignment="Stretch" IsVisible="false">
-              <compat:Rc1TextBlock Text="Co-op" FontSize="24" Margin="0,3,0,28" />
+              <compat:Rc1TextBlock Text="Multiplayer" FontSize="24" Margin="0,3,0,28" />
               <compat:Rc1TextBlock x:Name="CoopUnavailable" Text="Online play is unavailable for this game." Margin="0,0,0,16" Classes="Hint" IsVisible="false" />
               <StackPanel x:Name="CoopControls">
                 <compat:Rc1TextBlock Text="CONNECTION MODE" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,12" />
-                <UniformGrid x:Name="CoopModeBar" Columns="3" Margin="0,0,0,30">
+                <UniformGrid x:Name="CoopModeBar" Columns="4" Margin="0,0,0,30">
                   <RadioButton x:Name="ModeOffline" IsCheckedChanged="CoopModeChanged" GroupName="CoopMode" Tag="offline" Margin="0,0,8,0" AutomationProperties.Name="Play alone" Classes="ModeChoice">
                     <StackPanel>
                       <compat:Rc1TextBlock Text="Play alone" FontSize="18" />
@@ -741,10 +741,16 @@
                       <compat:Rc1TextBlock Text="Friends join you" Foreground="{StaticResource Muted}" FontSize="13" Margin="0,6,0,0" />
                     </StackPanel>
                   </RadioButton>
-                  <RadioButton x:Name="ModeJoin" IsCheckedChanged="CoopModeChanged" GroupName="CoopMode" Tag="join" AutomationProperties.Name="Join a game" Classes="ModeChoice">
+                  <RadioButton x:Name="ModeJoin" IsCheckedChanged="CoopModeChanged" GroupName="CoopMode" Tag="join" Margin="0,0,8,0" AutomationProperties.Name="Join a game" Classes="ModeChoice">
                     <StackPanel>
                       <compat:Rc1TextBlock Text="Join a game" FontSize="18" />
                       <compat:Rc1TextBlock Text="Find your group" Foreground="{StaticResource Muted}" FontSize="13" Margin="0,6,0,0" />
+                    </StackPanel>
+                  </RadioButton>
+                  <RadioButton x:Name="ModeObsrv" IsCheckedChanged="CoopModeChanged" GroupName="CoopMode" Tag="obsrv" AutomationProperties.Name="OBSRV community server" Classes="ModeChoice">
+                    <StackPanel>
+                      <compat:Rc1TextBlock Text="OBSRV server" FontSize="18" />
+                      <compat:Rc1TextBlock Text="Community server, your account" Foreground="{StaticResource Muted}" FontSize="13" Margin="0,6,0,0" />
                     </StackPanel>
                   </RadioButton>
                 </UniformGrid>
@@ -760,6 +766,13 @@
                     <compat:Rc1TextBlock Text="Play with AI partners. No connection needed." FontSize="15" Margin="0,10,0,0" Classes="Hint" />
                   </StackPanel>
                 </Grid>
+                <StackPanel x:Name="ObsrvPanel" MaxWidth="620" HorizontalAlignment="Left">
+                  <compat:Rc1TextBlock Text="OBSRV COMMUNITY SERVER (EXPERIMENTAL)" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,18" />
+                  <compat:Rc1TextBlock Text="Play on the OBSRV community server with your own OBSRV account. Register and read the rules on the OBSRV website first. Sign in with your OBSRV name and password at the game's network sign-in screen; the launcher does not ask for or store them." TextWrapping="Wrap" FontSize="15" Classes="Hint" />
+                  <Label Content="Server address" Target="{Binding ElementName=ObsrvServer}" Padding="0" Foreground="{StaticResource Ink}" FontSize="17" Margin="0,22,0,0" />
+                  <TextBox x:Name="ObsrvServer" TextChanged="OnlineSettingChanged" MaxLength="253" Margin="0,12,0,8" AutomationProperties.Name="OBSRV server address" AutomationProperties.HelpText="The server address from OBSRV's setup instructions: an IPv4 address or a host name." />
+                  <compat:Rc1TextBlock Text="OBSRV is run by its community, not by this project, and was built for the Japanese editions; signing in with these US editions has not been verified. Host a game and Join a game need no account and stay available." TextWrapping="Wrap" FontSize="13" Classes="Hint" Margin="0,8,0,0" />
+                </StackPanel>
                 <Grid x:Name="OnlinePanel">
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition Width=".85*" MinWidth="255" />
@@ -982,7 +995,7 @@
                       <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <compat:Rc1TextBlock Text="NETWORK" Foreground="{StaticResource Muted}" FontSize="14" />
-                    <compat:Rc1TextBlock Text="Co-op only" Grid.Column="1" Foreground="{StaticResource Muted}" FontSize="12" />
+                    <compat:Rc1TextBlock Text="Multiplayer only" Grid.Column="1" Foreground="{StaticResource Muted}" FontSize="12" />
                   </Grid>
                   <Grid MinHeight="62">
                     <Grid.ColumnDefinitions>

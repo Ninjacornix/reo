@@ -23,6 +23,9 @@ public partial class MainWindow {
     async Task<bool> PrepareLauncherAccount() {
         if (!OnlineOptions.Configured(settings))
             return false;
+        // OBSRV accounts are registered on OBSRV's own site and entered in the game.
+        if (settings.ResolvedCoopMode == "obsrv")
+            return true;
         OnlineOptions.TryHost(settings.CoopHost, out string host);
         string username = settings.AccountUsername;
         string identity = settings.Game.Id + "\n" + host + "\n" + username;
@@ -118,8 +121,9 @@ public partial class MainWindow {
     void InitializeOnline() {
         string mode = settings.ResolvedCoopMode;
         settings.CoopMode = mode;
-        (mode switch { "host" => ModeHost, "join" => ModeJoin, _ => ModeOffline }).IsChecked = true;
+        (mode switch { "host" => ModeHost, "join" => ModeJoin, "obsrv" => ModeObsrv, _ => ModeOffline }).IsChecked = true;
         CoopHost.Text = mode == "join" ? settings.CoopHost : "";
+        ObsrvServer.Text = settings.ObsrvServer;
         AccountUsername.Text = settings.AccountUsername;
         AccountUsername.MaxLength = OnlineOptions.MaxUsernameLength;
         AutoForward.IsChecked = settings.AutoForward;
@@ -136,7 +140,7 @@ public partial class MainWindow {
             return;
         settings.CoopMode = mode;
         settings.HostServer = mode == "host";
-        settings.CoopHost = mode == "host" ? settings.HostAddress : (CoopHost.Text ?? "").Trim();
+        settings.CoopHost = mode == "host" ? settings.HostAddress : mode == "join" ? (CoopHost.Text ?? "").Trim() : settings.CoopHost;
         preparedAccount = null;
         AccountStatus.Text = "";
         SaveOnlineSettings();
@@ -154,6 +158,8 @@ public partial class MainWindow {
         preparedAccount = null;
         AccountStatus.Text = "";
         settings.AccountUsername = (AccountUsername.Text ?? "").Trim();
+        if (sender == ObsrvServer)
+            settings.ObsrvServer = (ObsrvServer.Text ?? "").Trim();
         bool forwardChanged = settings.AutoForward != (AutoForward.IsChecked == true);
         settings.AutoForward = AutoForward.IsChecked == true;
         if (settings.ResolvedCoopMode == "join" && sender == CoopHost) {
@@ -464,7 +470,8 @@ public partial class MainWindow {
         CoopControls.IsEnabled =
             supported && !updating && !updateRestarting && !game.Running && !launching;
         CoopUnavailable.Visibility = supported ? Visibility.Collapsed : Visibility.Visible;
-        OnlinePanel.Visibility = mode == "offline" ? Visibility.Collapsed : Visibility.Visible;
+        OnlinePanel.Visibility = mode is "offline" or "obsrv" ? Visibility.Collapsed : Visibility.Visible;
+        ObsrvPanel.Visibility = mode == "obsrv" ? Visibility.Visible : Visibility.Collapsed;
         OfflinePanel.Visibility = mode == "offline" ? Visibility.Visible : Visibility.Collapsed;
         HostOptions.Visibility = mode == "host" ? Visibility.Visible : Visibility.Collapsed;
         JoinOptions.Visibility = mode == "join" ? Visibility.Visible : Visibility.Collapsed;
