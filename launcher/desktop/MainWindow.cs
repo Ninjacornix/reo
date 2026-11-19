@@ -56,13 +56,12 @@ public partial class MainWindow : Window {
         ScreenFit.SelectedIndex = Array.IndexOf(DisplayOptions.Fits, settings.ResolvedFit);
         VSync.SelectedIndex = settings.ResolvedVSync switch { "off" => 1, "adaptive" => 2,
                                                               _ => 0 };
-        RefreshRate.SelectedIndex = Array.IndexOf(Settings.RefreshRates, settings.ResolvedRefreshRate);
+        FpsCap.SelectedIndex = Array.IndexOf(Settings.FpsCaps, settings.ResolvedFpsCap);
         UpdateScreenFitHint();
         Fullscreen.IsChecked = settings.Fullscreen;
         SkipIntro.IsChecked = settings.SkipIntro;
         PerformanceOverlay.IsChecked = settings.PerformanceOverlay;
         AsyncVif.IsChecked = settings.AsyncVif;
-        GameRate60.IsChecked = settings.GameRate60;
         GpuMovies.IsChecked = settings.GpuMoviesChoice ?? false;
         InitializeDeveloper();
         InitializeOnline();
@@ -190,8 +189,8 @@ public partial class MainWindow : Window {
             2 => "adaptive",
             _ => "on"
         };
-        settings.RefreshRate = RefreshRate.SelectedIndex >= 0 && RefreshRate.SelectedIndex < Settings.RefreshRates.Length
-            ? Settings.RefreshRates[RefreshRate.SelectedIndex] : 60;
+        if (FpsCap.SelectedIndex >= 0 && FpsCap.SelectedIndex < Settings.FpsCaps.Length)
+            settings.FpsCap = Settings.FpsCaps[FpsCap.SelectedIndex];
         var aspect = DisplayOptions.AspectChoices[
             Math.Clamp(AspectRatio.SelectedIndex, 0, DisplayOptions.AspectChoices.Length - 1)];
         settings.AspectRatio = aspect.Aspect;
@@ -204,7 +203,6 @@ public partial class MainWindow : Window {
         settings.SkipIntro = SkipIntro.IsChecked == true;
         settings.PerformanceOverlay = PerformanceOverlay.IsChecked == true;
         settings.AsyncVif = AsyncVif.IsChecked == true;
-        settings.GameRate60 = GameRate60.IsChecked == true;
         if (ReferenceEquals(sender, GpuMovies)) {
             settings.GpuMovies = GpuMovies.IsChecked == true;
             settings.GpuMoviesChoice = settings.GpuMovies;

@@ -315,14 +315,14 @@
                       <compat:Rc1TextBlock Text="Vertical sync" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
                     </DockPanel>
                     <DockPanel MinHeight="48">
-                      <ComboBox x:Name="RefreshRate" SelectionChanged="SettingChanged" DockPanel.Dock="Right" AutomationProperties.Name="Refresh rate" Classes="GraphicsChoice" ToolTip.Tip="Experimental. Above 60 Hz the game shows extra frames between updates, matched to your monitor. Camera movement is smoothed in them with the modern camera and Vertical sync On or Adaptive. Choose your monitor's refresh rate. Applies on the next launch.">
-                        <ComboBoxItem Content="60 Hz" />
-                        <ComboBoxItem Content="120 Hz" />
-                        <ComboBoxItem Content="144 Hz" />
-                        <ComboBoxItem Content="165 Hz" />
-                        <ComboBoxItem Content="240 Hz" />
+                      <ComboBox x:Name="FpsCap" SelectionChanged="SettingChanged" DockPanel.Dock="Right" AutomationProperties.Name="FPS cap" Classes="GraphicsChoice" ToolTip.Tip="30 is the original game. 60 runs the game at up to 60 updates per second at normal speed. 120, 150 and Unlimited add camera-smoothed frames between updates (modern camera). Vertical sync On also limits frames to your monitor. Online games keep 30 updates per second. Applies on the next launch.">
+                        <ComboBoxItem Content="30 FPS (original)" />
+                        <ComboBoxItem Content="60 FPS" />
+                        <ComboBoxItem Content="120 FPS" />
+                        <ComboBoxItem Content="150 FPS" />
+                        <ComboBoxItem Content="Unlimited" />
                       </ComboBox>
-                      <compat:Rc1TextBlock Text="Refresh rate" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
+                      <compat:Rc1TextBlock Text="FPS cap" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
                     </DockPanel>
                     <Border Height="1" Background="{StaticResource Line}" Margin="0,16,0,16" />
                     <compat:Rc1TextBlock Text="RENDERING" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,8" />
@@ -385,7 +385,6 @@
                       <StackPanel>
                         <CheckBox x:Name="PerformanceOverlay" IsCheckedChanged="SaveSettings" Content="FPS counter" FontSize="14" ToolTip.Tip="Shows the in-game FPS counter. Applies on the next launch." />
                         <CheckBox x:Name="AsyncVif" IsCheckedChanged="SaveSettings" Content="Parallel geometry worker" FontSize="14" />
-                        <CheckBox x:Name="GameRate60" IsCheckedChanged="SaveSettings" Content="60 FPS gameplay (experimental)" FontSize="14" ToolTip.Tip="Runs the game logic at up to 60 updates per second at normal game speed. Play alone only; online games stay at 30. Applies on the next launch." />
                         <CheckBox x:Name="GpuMovies" IsCheckedChanged="SaveSettings" Content="Decode movies on the graphics card" FontSize="14" />
                       </StackPanel>
                     </Expander>

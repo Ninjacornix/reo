@@ -20,10 +20,13 @@ public sealed partial class Settings {
     public string VSync { get; set; } = "on";
     [System.Text.Json.Serialization.JsonIgnore]
     public string ResolvedVSync => VSync is "off" or "adaptive" ? VSync : "on";
-    // Display refresh rate for presents between game updates (REO_DISPLAY_RATE, experimental).
-    public static readonly int[] RefreshRates = { 60, 120, 144, 165, 240 };
-    public int RefreshRate { get; set; } = 60;
-    public int ResolvedRefreshRate => Array.IndexOf(RefreshRates, RefreshRate) >= 0 ? RefreshRate : 60;
+    // FPS cap: 30 (original), 60, 120, 150 or 0 = unlimited. 60 and above run the game logic at
+    // up to 60 updates/s (engine frame step, offline only); above 60 the renderer adds
+    // camera-smoothed frames between updates. Null in settings from older launchers.
+    public static readonly int[] FpsCaps = { 30, 60, 120, 150, 0 };
+    public int? FpsCap { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore]
+    public int ResolvedFpsCap => FpsCap is int cap && Array.IndexOf(FpsCaps, cap) >= 0 ? cap : GameRate60 ? 60 : 30;
     public bool PerformanceOverlay { get; set; }
     // Start at the main menu: skip the boot logos and title prompt (IntroSkip.cs).
     public bool SkipIntro { get; set; } = true;
@@ -39,7 +42,7 @@ public sealed partial class Settings {
     public string ResolvedFit => ScreenFit is "stretch" or "center" or "fill" ? ScreenFit : "fit";
     public bool LinearFilter { get; set; } = true;
     public bool AsyncVif { get; set; } = true;
-    // Game logic at up to 60 updates/s (engine frame step); offline only.
+    // Earlier "60 FPS gameplay" checkbox; read only to carry its choice into FpsCap.
     public bool GameRate60 { get; set; }
     // Legacy preference: true follows the probe, false preserves CPU decoding.
     public bool GpuMovies { get; set; } = true;

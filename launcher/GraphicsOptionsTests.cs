@@ -42,26 +42,27 @@ internal static class GraphicsOptionsTests {
                 };
                 check(expected.All(p => launch.Environment.GetValueOrDefault(p.Key) == p.Value),
                       game + " saved graphics settings reach the renderer contract");
-                check(launch.Environment["REO_GAME_RATE"] == "30" && launch.Environment["REO_VU_WHOLE_FIRST"] == "1",
-                      game + " keeps the original 30 Hz game logic unless 60 FPS gameplay is chosen");
-                settings.GameRate60 = true;
-                check(GraphicsOptions.From(settings).Environment["REO_GAME_RATE"] == "60",
-                      game + " 60 FPS gameplay reaches the game when playing alone");
-                settings.CoopMode = "host";
-                check(GraphicsOptions.From(settings).Environment["REO_GAME_RATE"] == "30",
-                      game + " online sessions stay at 30 Hz so peers share one update rate");
-                settings.CoopMode = "offline"; settings.GameRate60 = false;
-                check(GraphicsOptions.From(settings).Environment["REO_DISPLAY_RATE"] == "0",
-                      game + " 60 Hz refresh adds no presents between game updates");
-                foreach (int rate in new[] { 120, 144, 165, 240 }) {
-                    settings.RefreshRate = rate;
-                    check(GraphicsOptions.From(settings).Environment["REO_DISPLAY_RATE"] == rate.ToString(),
-                          game + " refresh rate " + rate + " Hz reaches the renderer");
+                check(launch.Environment["REO_GAME_RATE"] == "30" && launch.Environment["REO_DISPLAY_RATE"] == "0" &&
+                          launch.Environment["REO_VU_WHOLE_FIRST"] == "1",
+                      game + " defaults to the original 30 FPS: 30 Hz logic, one frame per vblank");
+                foreach (var (cap, logic, display) in new[] { (30, "30", "0"), (60, "60", "0"), (120, "60", "120"),
+                                                              (150, "60", "150"), (0, "60", "360") }) {
+                    settings.FpsCap = cap;
+                    var capped = GraphicsOptions.From(settings).Environment;
+                    check(capped["REO_GAME_RATE"] == logic && capped["REO_DISPLAY_RATE"] == display,
+                          game + " FPS cap " + (cap == 0 ? "unlimited" : cap.ToString()) + " reaches the game");
                 }
-                settings.RefreshRate = 100;
-                check(settings.ResolvedRefreshRate == 60 && GraphicsOptions.From(settings).Environment["REO_DISPLAY_RATE"] == "0",
-                      game + " an unsupported saved refresh rate falls back to 60 Hz");
-                settings.RefreshRate = 60;
+                settings.CoopMode = "host"; settings.FpsCap = 150;
+                check(GraphicsOptions.From(settings).Environment["REO_GAME_RATE"] == "30" &&
+                          GraphicsOptions.From(settings).Environment["REO_DISPLAY_RATE"] == "150",
+                      game + " online sessions keep 30 Hz logic so peers share one update rate");
+                settings.CoopMode = "offline"; settings.FpsCap = 45;
+                check(settings.ResolvedFpsCap == 30, game + " an unsupported saved FPS cap falls back to 30");
+                settings.FpsCap = null; settings.GameRate60 = true;
+                check(settings.ResolvedFpsCap == 60, game + " the earlier 60 FPS gameplay choice carries over as a 60 FPS cap");
+                settings.GameRate60 = false; settings.FpsCap = null;
+                check(JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(new Settings { FpsCap = 0 }))!.ResolvedFpsCap == 0,
+                      game + " an unlimited FPS cap survives saving");
                 check(launch.Fullscreen && launch.Output == new OutputSize(3840, 2160) && !launch.GpuMovies,
                       game + " captures window and movie settings");
                 settings.Fullscreen = false;

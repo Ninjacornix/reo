@@ -14,14 +14,16 @@ internal sealed record GraphicsOptions(bool Fullscreen, OutputSize Output, bool 
             ["REO_VIF1_ASYNC"] = settings.AsyncVif ? "1" : "0",
             // Replay-validated compiled VU1 programs before partial native kernels (File #1).
             ["REO_VU_WHOLE_FIRST"] = "1",
-            // Peers must share one update rate, so online sessions stay at the original 30 Hz.
-            ["REO_GAME_RATE"] = settings.GameRate60 && settings.ResolvedCoopMode == "offline" ? "60" : "30",
+            // FPS cap 60+: game logic at up to 60 updates/s. Peers must share one update rate, so
+            // online sessions keep the original 30 Hz logic.
+            ["REO_GAME_RATE"] = settings.ResolvedFpsCap is not 30 && settings.ResolvedCoopMode == "offline" ? "60" : "30",
             ["REO_DISPLAY_ASPECT"] = settings.ResolvedAspect,
             ["REO_WIDESCREEN"] = settings.ResolvedWidescreen ? "1" : "0",
             ["REO_DISPLAY_FIT"] = settings.ResolvedFit,
             ["REO_VSYNC"] = settings.ResolvedVSync,
-            // Above 60: the renderer presents between game updates at this rate (0 = off).
-            ["REO_DISPLAY_RATE"] = settings.ResolvedRefreshRate > 60 ? Number(settings.ResolvedRefreshRate) : "0",
+            // FPS cap above 60: camera-smoothed frames between game updates up to the cap
+            // (unlimited = the renderer maximum, 360); 0 = one frame per guest vblank.
+            ["REO_DISPLAY_RATE"] = settings.ResolvedFpsCap switch { 0 => "360", > 60 and var cap => Number(cap), _ => "0" },
             ["REO_DISPLAY_FILTER"] = settings.LinearFilter ? "linear" : "nearest",
             ["REO_WINDOW_WIDTH"] = Number(size.Width),
             ["REO_WINDOW_HEIGHT"] = Number(size.Height),
