@@ -1,0 +1,59 @@
+diff --git a/ps2xRuntime/src/lib/ps2_memory.cpp b/ps2xRuntime/src/lib/ps2_memory.cpp
+--- a/ps2xRuntime/src/lib/ps2_memory.cpp
++++ b/ps2xRuntime/src/lib/ps2_memory.cpp
+@@ -95,7 +95,15 @@
+ bool enqueue(PS2Memory& memory,std::function<void()> call,size_t bytes) {
+     if(onWorker(memory))return false;const auto state=find(memory);return state&&state->append(std::move(call),bytes);
+ }
++// REO_VIF1_EARLY_PUBLISH=1 (experiment): publish the DMA completion as soon as the owned
++// transfer copy is queued instead of after the worker processed it, so the game can build
++// its next frame while VU1 still works on the current one (as PS2 DMA overlaps the EE).
++bool earlyPublication() noexcept {
++    static const bool value=[]{const char* v=std::getenv("REO_VIF1_EARLY_PUBLISH");return v&&v[0]=='1'&&!v[1];}();
++    return value;
++}
+ bool deferPublication(PS2Memory& memory,std::function<void()> call) {
++    if(earlyPublication())return false;
+     if(onWorker(memory))return false;const auto state=find(memory);return state&&state->append(std::move(call),0,true);
+ }
+ bool queueRegisterWrite(PS2Memory& memory,uint32_t address,uint32_t value) {
+diff --git a/ps2xRuntime/include/runtime/ps2_gif_arbiter.h b/ps2xRuntime/include/runtime/ps2_gif_arbiter.h
+--- a/ps2xRuntime/include/runtime/ps2_gif_arbiter.h
++++ b/ps2xRuntime/include/runtime/ps2_gif_arbiter.h
+@@ -3,6 +3,7 @@
+ 
+ #include <cstdint>
+ #include <functional>
++#include <mutex>
+ #include <vector>
+ 
+ enum class GifPathId : uint8_t
+@@ -37,6 +38,9 @@
+ private:
+     ProcessPacketFn m_processFn;
+     std::vector<GifArbiterPacket> m_queue;
++    // The async VIF1 worker drains PATH1 output while the EE thread can submit PATH2/3
++    // (movies, REO_VIF1_EARLY_PUBLISH). Recursive: processing a packet may submit again.
++    std::recursive_mutex m_mutex;
+ 
+     static bool isImagePacket(const uint8_t *data, uint32_t sizeBytes);
+     static uint8_t pathPriority(GifPathId id);
+diff --git a/ps2xRuntime/src/lib/ps2_gif_arbiter.cpp b/ps2xRuntime/src/lib/ps2_gif_arbiter.cpp
+--- a/ps2xRuntime/src/lib/ps2_gif_arbiter.cpp
++++ b/ps2xRuntime/src/lib/ps2_gif_arbiter.cpp
+@@ -51,6 +51,7 @@
+ 
+ void GifArbiter::submit(GifPathId pathId, const uint8_t *data, uint32_t sizeBytes, bool path2DirectHl)
+ {
++    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+     if (!data || sizeBytes < 16 || !m_processFn)
+         return;
+ 
+@@ -94,6 +95,7 @@
+ 
+ void GifArbiter::drain()
+ {
++    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+     if (!m_processFn)
+         return;
+     if(reo_resident_live::drainSidecar(*this,m_queue,m_processFn))return;
