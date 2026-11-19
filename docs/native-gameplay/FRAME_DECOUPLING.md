@@ -197,3 +197,35 @@ Replay oracle (`tools/vu_whole_aot/run-check.bat … --default`, work-folder run
 identical 632-byte state, 16 KiB data and 820 GIF packets (865,648 bytes); replay
 26.9 ms interpreted path vs 6.1 ms compiled. Captures and generated code stay in
 ignored `build-ninja/hybrid/`.
+
+### All File #1 chapters and File #2 (2026-11-19)
+
+`REO_GAME_RATE=60` now covers both editions (`recomp/reo_bootstrap.cpp`, per-edition
+addresses; `tools/hybrid/kit_apply_game_rate.py` copies the hook into develop-based kits).
+
+| | File #1 | File #2 |
+|---|---|---|
+| step byte | `0x3243CC` | `0x30094C` (found by its `lbu` → `sllv/srav` use; `13ADE0` stores it together with the interval) |
+| requested / live flip interval | `0x29FA08` / `0x29FA04` | `0x358958` / `0x358954` (setter `1EF2E0`) |
+| total vblank counter | `0x294170` | `0x34D0C8` |
+| per-update service, DMA wait, frame end | `19F6C0`, `18D650`, `1A90B0` | `1EDCB0`, `1DDD10`, `1EFA50` |
+
+File #1 chapter sweep (build `file1-ready-v49`, `REO_VU_WHOLE_FIRST=1`, 120 s analog
+exploration per run; all 8 runs exit 0):
+
+| Chapter | updates/s at 30 → 60 | game clock units/s (30 / 60) | movement speed per game second (30 / 60) |
+|---|---|---|---|
+| Outbreak | 24.9 → 25.4 | 49.7 / 50.7 (slow at 30 as well) | 94 / 84 |
+| Below Freezing Point (earlier run) | 30.0 → 57–58 | 60 / 60 | 951 / 977 units per run |
+| The Hive | 30.0 → 35.0 | 60.0 / 59.4 | — |
+| Hellfire | 29.9 → 29.8 | 59.9 / 59.6 | — |
+| Decisions, Decisions | 30.0 → **59.4** | 60.0 / 60.0 | — |
+
+Game time stays real time in every chapter. Where updates stay near 30, the frame
+work (graphics path) does not fit one vblank yet.
+
+File #2 (build `file2-ready-v11`, Training scenario 20 room 1, 150 s exploration):
+`[GAME-RATE-STATS]` reports 300 updates in 300 vblanks in every window (all single-vblank
+steps, i.e. 60 updates/s); movement per half second matches the 30 Hz run (47 units);
+exit 0, no crash or backend errors. (Zero positions in the 60 Hz samples occur only when
+the exploring driver switches the selected character; they are sampler artifacts.)
