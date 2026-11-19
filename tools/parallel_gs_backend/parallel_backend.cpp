@@ -73,6 +73,8 @@ class ParallelBackend final : public Backend, private SignalInterface {
     unsigned internalResolution_ = reo::graphics::internalResolution(std::getenv("REO_INTERNAL_RESOLUTION"));
     uint32_t reportedScanoutWidth_ = 0, reportedScanoutHeight_ = 0, scanoutReports_ = 0;
     unsigned memoryLogFrames_ = 0;
+    Vulkan::ImageHandle repeatImage_;  // last presented scanout (REO_DISPLAY_RATE repeats)
+    bool repeatLinear_ = false;
     void reportMemory() {
         const char* option = std::getenv("REO_GPU_MEMORY_LOG");
         if (!option || std::strcmp(option, "1") != 0 || memoryLogFrames_++ % 120)
@@ -714,6 +716,7 @@ class ParallelBackend final : public Backend, private SignalInterface {
     }
     void close() noexcept override {
         ThreadIndexScope threadIndex;
+        repeatImage_.reset();
         const bool saveCache = live_ && cacheReady_;
         live_ = false;
         if (staleScanouts_)
@@ -1014,6 +1017,25 @@ class ParallelBackend final : public Backend, private SignalInterface {
         }
         privWord(base) = mergeLane(privWord(base), lane, width, input);
     }
+    // REO_DISPLAY_RATE: show the last displayed image again between guest vblanks. The
+    // presenter sees the same display buffer, so it treats this as a repeat and applies the
+    // camera warp for the time elapsed since that frame flipped.
+    bool presentRepeat() override {
+#if defined(_WIN32)
+        ThreadIndexScope threadIndex;
+        if (!live_ || !presenter_ || !repeatImage_)
+            return false;
+        const auto target = config_.presentationTarget();
+        if (!target.hwnd || !target.width || !target.height)
+            return false;
+        auto complete = presenter_->present(repeatImage_, false, repeatLinear_);
+        (void)complete;  // repeatImage_ keeps the source alive until the next scanout
+        return true;
+#else
+        return false;
+#endif
+    }
+
     Frame capture(const Capture& capture) override {
         auto timing = frameTrace_.begin(capture.tick);
         ThreadIndexScope threadIndex;
@@ -1107,6 +1129,8 @@ class ParallelBackend final : public Backend, private SignalInterface {
 #endif
                 }
                 complete = presenter_->present(scanout.image, false, target.linear);
+                repeatImage_ = scanout.image;
+                repeatLinear_ = target.linear;
                 timing.presented();
             } else {
                 // Minimize/attach suspension is not a backend failure. Retain

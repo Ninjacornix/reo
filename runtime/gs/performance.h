@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -105,6 +106,18 @@ inline DepthMapping depth_mapping() {
 }
 // Game updates between the camera evaluation and the frame it is shown in. Measured: 2
 // (view switches reach the scanout two camera updates later; REO_CAMERA_WARP_PROBE).
+// REO_DISPLAY_RATE=N (above 60): presents between guest vblanks. Their in-between camera
+// follows elapsed time: k = time since the shown frame flipped / time between its view and
+// the next one, instead of the fixed half step of the single 30 Hz repeat.
+inline int display_rate() {
+    static const int rate = [] {
+        const char* v = std::getenv("REO_DISPLAY_RATE");
+        const int r = v ? std::atoi(v) : 0;
+        return r > 60 && r <= 360 ? r : 0;
+    }();
+    return rate;
+}
+inline std::atomic<int64_t> flip_ms{0};  // steady_ms() when the presenter first showed the frame
 inline unsigned lag() {
     static const unsigned value = [] {
         const char* v = std::getenv("REO_CAMERA_WARP_LAG");
@@ -240,6 +253,12 @@ inline bool compute(bool repeat_scanout, uint64_t flip_serial, bool depth_availa
     if (!get(shown.serial + 1, other)) {
         if (!get(shown.serial - 1, other)) return false;
         k = -0.5f;
+    } else if (display_rate()) {
+        const float span = float(other.ms - shown.ms);
+        const float elapsed = float(steady_ms() - flip_ms.load(std::memory_order_relaxed));
+        if (span < 1.f) return false;
+        k = std::clamp(elapsed / span, 0.f, 0.95f);
+        if (k <= 0.f) return false;
     }
     const float dyaw = wrap(yaw_of(other) - yaw_of(shown)), dpitch = pitch_of(other) - pitch_of(shown);
     const float dx = other.eye[0] - shown.eye[0], dy = other.eye[1] - shown.eye[1], dz = other.eye[2] - shown.eye[2];

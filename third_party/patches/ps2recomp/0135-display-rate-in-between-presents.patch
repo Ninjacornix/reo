@@ -1,0 +1,165 @@
+diff --git a/ps2xRuntime/src/lib/gs_backend_route.h b/ps2xRuntime/src/lib/gs_backend_route.h
+--- a/ps2xRuntime/src/lib/gs_backend_route.h
++++ b/ps2xRuntime/src/lib/gs_backend_route.h
+@@ -98,6 +98,10 @@
+     // cancellation or stop (never by omission of execution).
+     virtual size_t heldGifBytes() const noexcept { return 0u; }
+     virtual size_t heldGifCount() const noexcept { return 0u; }
++    // Display rate above the guest vblank (REO_DISPLAY_RATE): present the last displayed
++    // image again between vblanks. The presenter treats it as a repeat (camera warp).
++    // Returns false when nothing was presented. Serialized like every other call.
++    virtual bool presentRepeat() { return false; }
+ };
+ using Factory = std::function<std::unique_ptr<Backend>()>;
+ enum class SoundRamProfileStatusV1:std::uint8_t;
+@@ -124,6 +128,7 @@
+     bool readTransfer(uint8_t*, uint32_t maxBytes, uint32_t& count);
+     bool clear(uint32_t context, uint32_t rgba, bool active, bool& result);
+     bool flush();
++    bool presentRepeat(bool& presented);
+     bool residentFirstEntry(const std::shared_ptr<const reo_parent_natural::ColdEntry>&);
+     bool residentParentControl(const std::function<void(reo_parent_natural::ControlTarget&)>&);
+     bool residentEnqueue(const reo_resident_live::Batch&);
+diff --git a/ps2xRuntime/src/lib/gs_backend_route.cpp b/ps2xRuntime/src/lib/gs_backend_route.cpp
+--- a/ps2xRuntime/src/lib/gs_backend_route.cpp
++++ b/ps2xRuntime/src/lib/gs_backend_route.cpp
+@@ -1,3 +1,5 @@
++#include <thread>
++#include <chrono>
+ #include "gs_backend_route.h"
+ #include "gs_sound_ram_profile.h"
+ #include <stdexcept>
+@@ -244,6 +246,23 @@
+     return execute([&](Backend& b) { result = b.clearContext(c, rgba, current); });
+ }
+ bool Route::flush() { return execute([](Backend& b) { b.flush(); }); }
++// Called from the REO_DISPLAY_RATE helper thread: wait for the GS owner only briefly (the
++// route is busy with GS work most of the time; a shutdown may hold it while it waits on
++// other threads), then skip this repeat.
++bool Route::presentRepeat(bool& presented) {
++    presented = false;
++    std::unique_lock<std::mutex> lock(mutex_, std::defer_lock);
++    const auto deadline = std::chrono::steady_clock::now() + std::chrono::microseconds(3000);
++    while (!lock.try_lock()) {
++        if (std::chrono::steady_clock::now() >= deadline) return false;
++        std::this_thread::sleep_for(std::chrono::microseconds(100));
++    }
++    if (state_ != State::Accelerated) return false;
++    try { presented = backend_->presentRepeat(); }
++    catch (const std::exception& e) { error_ = e.what(); state_ = State::Failed; throw; }
++    catch (...) { error_ = "GPU backend execution failed"; state_ = State::Failed; throw; }
++    return true;
++}
+ bool Route::residentParentControl(const std::function<void(reo_parent_natural::ControlTarget&)>& call) {
+     if(!call)throw std::invalid_argument("Missing actual parent owner work");
+     return execute([&](Backend& owner){owner.residentParentControl(call);});
+diff --git a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+--- a/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
++++ b/ps2xRuntime/src/lib/ps2_gs_gpu.cpp
+@@ -609,14 +609,52 @@
+         return on;
+     }
+ 
++    // REO_DISPLAY_RATE=N (61..360): the GS worker, which owns the backend route, presents the
++    // last displayed image again between queue items on a fixed grid of display intervals.
++    // Slots within half an interval of a scanout capture are skipped, so presents total about
++    // N per second. Repeats only re-show the last image (the presenter camera-warps them).
++    std::chrono::microseconds displayRepeatInterval()
++    {
++        static const std::chrono::microseconds interval = [] {
++            const char* v = std::getenv("REO_DISPLAY_RATE");
++            const int rate = v ? std::atoi(v) : 0;
++            return std::chrono::microseconds(rate > 60 && rate <= 360 ? 1000000 / rate : 0);
++        }();
++        return interval;
++    }
++    std::chrono::steady_clock::time_point g_nextRepeat{}, g_lastCapture{};
++    std::atomic<uint64_t> g_displayRepeats{0};
++    void presentRepeatIfDue()
++    {
++        const auto interval = displayRepeatInterval();
++        if (interval.count() == 0 || !gs_backend_bridge::active()) return;
++        const auto now = std::chrono::steady_clock::now();
++        if (g_nextRepeat.time_since_epoch().count() == 0 || g_nextRepeat < now - interval) g_nextRepeat = now + interval;
++        if (now < g_nextRepeat) return;
++        g_nextRepeat += interval;
++        if (now - g_lastCapture < interval / 2) return;
++        bool presented = false;
++        try { if (g_backendRoute.presentRepeat(presented) && presented) g_displayRepeats.fetch_add(1, std::memory_order_relaxed); }
++        catch (...) {}  // a failed backend is reported by its regular path
++    }
++
+     void gsWorkerMain(GS *gs)
+     {
+         t_isGsWorker = true;
+         for (;;)
+         {
++            presentRepeatIfDue();
+             GsQueueItem item;
+             {
+                 std::unique_lock<std::mutex> lock(g_gsAsync.m);
++                if (displayRepeatInterval().count()) {
++                    // Wake for the next repeat slot even when no GS work arrives.
++                    while (!g_gsAsync.stopping && g_gsAsync.queue.empty()) {
++                        if (g_gsAsync.work.wait_until(lock, g_nextRepeat) == std::cv_status::timeout) {
++                            lock.unlock(); presentRepeatIfDue(); lock.lock();
++                        }
++                    }
++                } else
+                 g_gsAsync.work.wait(lock, [] { return g_gsAsync.stopping || !g_gsAsync.queue.empty(); });
+                 if (g_gsAsync.stopping) break;
+                 item = std::move(g_gsAsync.queue.front());
+@@ -646,6 +684,7 @@
+                         // Still retire the queue marker below; obsolete scanout never reaches GPU/front state.
+                     } else {
+                         gs_backend_bridge::Frame gpu;
++                        g_lastCapture = std::chrono::steady_clock::now();
+                         g_backendRoute.capture({item.display.registers, item.display.tick, item.epoch, g_gpuPresentDiagnostic.exchange(false,std::memory_order_acq_rel)}, gpu);
+                         // Empty captures deliberately retire a stale progressive marker.
+                         // Keep the previous immutable picture; drawing and marker
+@@ -2505,6 +2544,18 @@
+ uint64_t ps2GsCopiedFrameTick() { return t_copiedFrameTick; }
+ // Blocks until a snapshot newer than `seenSeq` exists or `timeoutMs` passes (D44); waking on
+ // a condition variable avoids the coarse Windows sleep granularity that made presents jitter.
++// REO_DISPLAY_RATE: one extra present of the last displayed image between guest vblanks.
++uint64_t ps2GsDisplayRepeats() { return g_displayRepeats.load(std::memory_order_relaxed); }
++
++bool ps2GsPresentRepeat()
++{
++    bool presented = false;
++    if (ps2GsWorkerStopRequested()) return false;
++    try { if (!g_backendRoute.presentRepeat(presented)) return false; }
++    catch (...) { return false; }  // a failed backend is reported by its regular path
++    return presented;
++}
++
+ uint64_t ps2GsWaitVblank(uint64_t seenSeq, int timeoutMs)
+ {
+     std::unique_lock<std::mutex> lock(g_vblankWaitMutex);
+diff --git a/ps2xRuntime/src/lib/ps2_runtime.cpp b/ps2xRuntime/src/lib/ps2_runtime.cpp
+--- a/ps2xRuntime/src/lib/ps2_runtime.cpp
++++ b/ps2xRuntime/src/lib/ps2_runtime.cpp
+@@ -159,6 +159,7 @@
+ uint64_t ps2GsVblankSeq(); // ps2_gs_gpu.cpp: vblank display snapshots taken (D40)
+ uint64_t ps2GsCopiedFrameTick(); // Tick belonging to the immutable pixels copied on this host thread.
+ uint64_t ps2GsWaitVblank(uint64_t seenSeq, int timeoutMs); // ps2_gs_gpu.cpp (D44)
++uint64_t ps2GsDisplayRepeats(); // ps2_gs_gpu.cpp: REO_DISPLAY_RATE in-between presents
+ void ps2GsRequestWorkerStop(); // Shutdown signal only; safe from guest/IRQ code.
+ bool ps2GsBackendFailureActive();       // ps2_gs_gpu.cpp: first graphics backend error latched.
+ const char* ps2GsBackendFailureMessage(); // Into the latched first-error text; "" when none.
+@@ -3330,6 +3331,7 @@
+     // target publish for a visible window). Guest updates are measured by the
+     // [perf] vsync/snapshot counters, never inferred from the present rate.
+     uint64_t presentAttempts = 0;
++    // REO_DISPLAY_RATE: in-between presents are issued by the GS worker (ps2_gs_gpu.cpp).
+     uint64_t presentSuccesses = 0;
+     std::function<void(bool)> presentFrame = [&](bool modal)
+     {
+@@ -3626,6 +3628,7 @@
+                               << " vsync=" << vsyncNow << "(+" << (vsyncNow - s_lastVsync) << ")"
+                               << " snap=" << snapNow << "(+" << (snapNow - s_lastSnap) << ")"
+                               << " presentTry=+" << (presentAttempts - s_lastAttempt)
++                              << " repeats=" << ps2GsDisplayRepeats()
+                               << " presentOk=+" << (presentSuccesses - s_lastPresent)
+                               << " csc=" << (csc - s_lastCsc) << " bdec=" << (bdec - s_lastBdec) << " own/wait ms:";
+                     for (int t : {1, 5, 6, 7})

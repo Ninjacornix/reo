@@ -525,6 +525,7 @@ private:
             ++warpNewFrames_;
             probeLog();  // previous frame's probe (its copy has completed by now)
             warpFlipSerial_ = reo::performance::warp::current_serial();
+            reo::performance::warp::flip_ms.store(reo::performance::steady_ms(), std::memory_order_relaxed);
             if (snapshotDepth()) { dumpDepth(); probeCopy(); }
         }
         warpApplied_ = reo::performance::warp::test(warpResult_) ||

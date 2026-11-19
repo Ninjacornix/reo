@@ -229,3 +229,48 @@ File #2 (build `file2-ready-v11`, Training scenario 20 room 1, 150 s exploration
 steps, i.e. 60 updates/s); movement per half second matches the 30 Hz run (47 units);
 exit 0, no crash or backend errors. (Zero positions in the 60 Hz samples occur only when
 the exploring driver switches the selected character; they are sampler artifacts.)
+
+### Above 60 Hz: in-between presents (`REO_DISPLAY_RATE`, experimental, 2026-11-19)
+
+`REO_DISPLAY_RATE=N` (61–360) adds presents between guest vblanks, so a monitor faster than
+60 Hz gets new pictures between game updates. They re-show the last displayed image with
+the camera warp (step 0/0b) at an in-between camera pose.
+
+- SDK patch `0135-display-rate-in-between-presents.patch`:
+  - `Backend::presentRepeat()` (default: none) and `Route::presentRepeat()`, which waits at
+    most 3 ms for the route;
+  - the **GS worker** presents repeats between its queue items on a fixed grid of display
+    intervals and skips slots within half an interval of a scanout capture; when idle it
+    wakes for the next slot;
+  - `[perf] repeats=` counts them.
+  - Earlier designs were rejected after measurement:
+    - presenting from the window thread missed `WM_CLOSE` at 144 Hz, so the driver had to
+      terminate the game;
+    - a separate helper thread rarely got the route (about 1–7 repeats/s).
+- `parallel_backend.cpp`: `presentRepeat()` re-presents the last scanout image.
+- `performance.h` / presenter: on repeats with a display rate set, the in-between camera
+  follows time. The blend is the time since the frame flipped divided by the time between
+  its view and the next one, clamped to 0–0.95, instead of the fixed half step.
+
+Measured (File #1 `file1-ready-v55`, Outbreak, third-person camera, `--warp-probe`):
+
+| Run | Exit | Warps applied | Game clock units/s |
+|---|---|---|---|
+| 30 Hz logic, no display rate (`v53b`) | 0, window close handled | 42 | 55.1 |
+| 30 Hz logic, `REO_DISPLAY_RATE=144` | 0 | 42 | 54.9 |
+| 60 Hz logic, `REO_DISPLAY_RATE=120` | 0 | 38 | 54.9 |
+| 60 Hz logic, `REO_DISPLAY_RATE=144` | 0 | 38 | 55.2 |
+
+The opening room is graphics-bound at about 55 clock units/s in every mode (27.4–28.6
+updates/s); the extra presents do not slow the game.
+
+Limits:
+
+- The test PC's monitor runs at 60 Hz (75 Hz maximum). With VSync on, which the camera
+  warp needs (with `REO_VSYNC=off` the warp does not apply; this was already so before),
+  presents beyond the monitor rate wait for the real refresh. So the visible result above
+  60 Hz has not been measured here.
+- At 120 Hz the GS worker issued about 16 repeats/s; at 144 Hz far fewer, because each
+  blocked present delays the next slot.
+- Only camera motion is interpolated. Actors move at the game's update rate.
+- Needs a 120/144 Hz monitor for a real test; not offered in the launcher yet.
