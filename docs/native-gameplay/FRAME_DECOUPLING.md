@@ -312,3 +312,37 @@ motion). Measured on `file1-ready-v62` (Outbreak, third-person camera, `--warp-p
 
 Also: the warp view ring's seqlock writers are serialized (mutex, atomic increments), so
 concurrent `publish`/`clear` cannot leave the sequence odd.
+
+### Toward full interpolation: what changes between frames (2026-11-19)
+
+Goal (as in RT64-based recomps): draw in-between frames from interpolated geometry so
+actors and objects, not only the camera, move at the display rate.
+
+`tools/hybrid/vif1_unpacks.py` walks VIF1 stream captures (`REO_VIF1_DUMP=512`,
+`REO_VIF1_DUMP_AT=<s>`) and lists each UNPACK upload. Below Freezing Point gameplay,
+60 Hz logic, 135 captured chunks:
+
+- Each game frame is three chunks in a fixed cycle: a 640-packet chunk (characters and
+  objects), an empty chunk, and a 511-packet chunk (room geometry).
+- Each VU1 kick is preceded by exactly one `V4-32` UNPACK, an object packet (mostly
+  197–198 qwords; also 8, 24, 18, 34 … qwords).
+- No per-object matrices are uploaded on their own. The affine matrices inside the
+  24-qword packets and the 8-qword uploads stay byte-identical from frame to frame:
+  static content.
+- Frame to frame, the packet **structure is identical** (same count, sizes and VU
+  addresses). Only about 96 of 640 and 11 of 511 packets change their bytes: the moving
+  content, sent as already transformed data each frame.
+
+Consequence for interpolation: in-between frames can be built generically. Pair the
+packets of frame N−1 and N by position; when the structure matches, blend the float
+payloads of the changed packets; replay the frame's VU1/GS work from scratch VU state into
+an off-screen target; present it between real frames. Where structures differ (spawns,
+cuts, room changes) the in-between frame falls back to the camera warp.
+
+Open questions before implementing:
+
+- which packet words are positions and which are flags, texture coordinates or colours
+  (blending identical values is harmless; blending discrete fields is not);
+- the replay cost: an extra VU1 pass per in-between frame (about 6–20 ms per frame by
+  chapter);
+- keeping the replay's VU and GS side effects out of the emulated state.
