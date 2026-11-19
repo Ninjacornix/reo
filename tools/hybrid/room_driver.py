@@ -34,6 +34,7 @@ ap.add_argument('--burst', help='AT:SECONDS after room arrival: capture frames a
 ap.add_argument('--capture-at', action='append', type=float, default=[], help='Extra capture SECONDS after room arrival')
 ap.add_argument('--reverse-walk', action='store_true', help='With --explore --analog: alternate forward/backward stick walks (sharp reversals)')
 ap.add_argument('--warp-probe', action='store_true', help='Idle captures before/after short right-stick turns (presentation warp validation)')
+ap.add_argument('--snapshot', action='store_true', help='With --capture-at: also save the camera, room node and actor memory (snap-at-N.json, read before and after the capture)')
 ap.add_argument('--aim-probe', action='store_true', help='Hold R1 with the left stick up/centre/down/up and dump the player actor record after each')
 args = ap.parse_args()
 args.exe = args.exe.resolve(); args.iso = args.iso.resolve(); args.out = args.out.resolve()
@@ -85,6 +86,16 @@ def snapshot(elapsed):
             'request':game[0x37], 'room':struct.unpack('<H',ram.read(0x3243dc,2))[0],
             'cacheScenario':ram.read(0x7434b0,1)[0], 'cacheRoom':ram.read(0x7434b1,1)[0],
             'roomCounter':word(0x4bade8), 'clockUnits':((game[0x30]*60+game[0x31])*60+game[0x32])*60+game[0x33], 'xyz':xyz}
+
+# File #1 camera / room / actor memory for the native renderer comparison
+# (addresses: recomp/overrides/native_camera/room_camera_adapter.cpp, ROOM_MODEL_ASSETS.md).
+SNAPSHOT_REGIONS = {'view': [0x3240e0, 0x40], 'viewport': [0x324120, 0x18], 'params': [0x324138, 0x58],
+                    'scaled': [0x294d00, 0x40], 'composite1': [0x294d40, 0x40], 'composite2': [0x294d80, 0x40],
+                    'transform2': [0x294dc0, 0x40], 'display': [0x2941a8, 0x30],
+                    'room_current': [0x49fa10, 0x2000], 'room_saved': [0x4a3c20, 0x2000],
+                    'actors': [0x4a5c30, 8 * 0x10e0]}
+def read_snapshot(ram):
+    return {name: ram.read(at, size).hex() for name, (at, size) in SNAPSHOT_REGIONS.items()}
 
 def capture(label):
     path = args.out/(label+'.png')
@@ -178,7 +189,11 @@ try:
                             (args.out/'burst.json').write_text(json.dumps(times));print('BURST frames=%d'%k,flush=True)
                     for at in args.capture_at:
                         if room_elapsed>=at and ('cap',at) not in dumped:
+                            if args.snapshot: before=read_snapshot(ram)
                             dumped.add(('cap',at));capture('at-%g'%at)
+                            if args.snapshot:
+                                after=read_snapshot(ram)
+                                (args.out/('snap-at-%g.json'%at)).write_text(json.dumps({'regions':SNAPSHOT_REGIONS,'before':before,'after':after,'stable':before==after},indent=1))
                     if room_elapsed>=4 and not initial_shot:
                         initial_shot=True;capture('opening')
                     if room_elapsed>=args.move_at:
