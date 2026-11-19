@@ -303,6 +303,7 @@ class ResidentDxgiPresenter {
     uint32_t warpLastFbp_ = 0xffffffffu;
     uint64_t warpLogged_ = 0, warpFlipSerial_ = 0, warpNewFrames_ = 0, warpDumps_ = 0, warpDumpCandidates_ = 0;
     reo::performance::warp::Result warpResult_{};
+    uint32_t warpPrinted_ = 0;  // REO_CAMERA_WARP_LOG lines printed (capped); warpLogged_ counts presents
     bool warpApplied_ = false, warpRepeat_ = false;
     const Vulkan::Buffer* depthVram_ = nullptr;
     uint32_t depthBase_ = 0, depthStride_ = 0, depthPsm_ = 0, depthSourceWidth_ = 0, depthSourceHeight_ = 0;
@@ -535,11 +536,12 @@ private:
             const char* value = std::getenv("REO_CAMERA_WARP_LOG");
             return value ? std::atoi(value) : 0;
         }();
-        if (log && warpLogged_ < 4000 && (warpApplied_ || log == 2 || (warpLogged_ % 30) == 0)) {
-            std::fprintf(stderr, "[CAMERA-WARP] present=%llu fbp=%u repeat=%d applied=%d mode=%u yaw=%.3f pitch=%.3f move=%.2f depth=%ux%u ms=%lld\n",
+        if (log && warpPrinted_ < 4000 && (warpApplied_ || log == 2 || (warpLogged_ % 30) == 0)) {
+            ++warpPrinted_;
+            std::fprintf(stderr, "[CAMERA-WARP] present=%llu fbp=%u repeat=%d applied=%d mode=%u yaw=%.3f pitch=%.3f move=%.2f depth=%ux%u ms=%lld reason=%d\n",
                          (unsigned long long)submitted_, fbp, int(warpRepeat_), int(warpApplied_), warpResult_.mode,
                          warpResult_.yaw_degrees, warpResult_.pitch_degrees, warpResult_.move, depthWidth_, depthHeight_,
-                         (long long)reo::performance::steady_ms());
+                         (long long)reo::performance::steady_ms(), reo::performance::warp::last_reason.load());
         }
         if (log) ++warpLogged_;
     }

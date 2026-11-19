@@ -291,3 +291,24 @@ instruction pairs, which one host thread cannot finish within a 16.7 ms vblank. 
 60 there needs VU1 work split across threads (independent kicks/buffers) or the
 GPU-resident VU path (`REO_VIF1_GPU_RESIDENT`, currently missing its catalogue assets).
 Game time stays real time meanwhile: those frames take the 30 Hz step.
+
+### FPS cap in the launcher; camera warp with VSync off (2026-11-19)
+
+Launcher Graphics > Display > **FPS cap**: 30 (original), 60, 120, 150, Unlimited.
+60 and above set `REO_GAME_RATE=60` (offline only; online keeps 30 Hz logic). 120/150/
+Unlimited set `REO_DISPLAY_RATE=120/150/360`.
+
+The earlier "no warp with VSync off" finding was a logging artifact. The presenter stopped
+logging after 4000 **presents**; with VSync off (150–360 presents/s) that happened during
+boot, before the camera started. The cap now counts printed lines, and the log line carries
+the reason the warp declined (`reason=`; 0 = applied, 1 = no repeat/serial, 11 = no camera
+motion). Measured on `file1-ready-v62` (Outbreak, third-person camera, `--warp-probe`,
+60 Hz logic, VSync off):
+
+| FPS cap | Repeats/s | Warped frames logged | Exit |
+|---|---|---|---|
+| 150 | about 110 | 206 | 0 |
+| Unlimited (360) | about 350 | 438 | 0 |
+
+Also: the warp view ring's seqlock writers are serialized (mutex, atomic increments), so
+concurrent `publish`/`clear` cannot leave the sequence odd.

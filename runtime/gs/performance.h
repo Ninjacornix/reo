@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <atomic>
+#include <mutex>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
@@ -117,7 +118,8 @@ inline int display_rate() {
     }();
     return rate;
 }
-inline std::atomic<int64_t> flip_ms{0};  // steady_ms() when the presenter first showed the frame
+inline std::atomic<int64_t> flip_ms{0};
+inline std::atomic<int> last_reason{0};  // diagnostics: which compute() check declined the warp (0 = none)  // steady_ms() when the presenter first showed the frame
 inline unsigned lag() {
     static const unsigned value = [] {
         const char* v = std::getenv("REO_CAMERA_WARP_LAG");
@@ -125,11 +127,15 @@ inline unsigned lag() {
     }();
     return value;
 }
+// Writers (publish/clear) can run on different threads; an unserialized load+store could
+// leave the sequence odd for good, and then every read() fails (no warp at all).
+inline std::mutex writer_lock;
 inline void write_begin() {
-    sequence.store(sequence.load(std::memory_order_relaxed) + 1, std::memory_order_release);
+    writer_lock.lock();
+    sequence.fetch_add(1, std::memory_order_acq_rel);
     std::atomic_thread_fence(std::memory_order_release);
 }
-inline void write_end() { sequence.store(sequence.load(std::memory_order_relaxed) + 1, std::memory_order_release); }
+inline void write_end() { sequence.fetch_add(1, std::memory_order_release); writer_lock.unlock(); }
 inline void publish(const float eye[3], const float forward[3], float lens, bool rotation_only) {
     write_begin();
     const auto serial = ++latest_serial;
@@ -233,39 +239,41 @@ inline float wrap(float a) {
 }
 // flip_serial: the newest camera view when the shown frame first reached the display.
 inline bool compute(bool repeat_scanout, uint64_t flip_serial, bool depth_available, Result& out) {
+    const auto fail = [](int reason) { last_reason.store(reason, std::memory_order_relaxed); return false; };
+    last_reason.store(0, std::memory_order_relaxed);
     out = Result{}; out.repeat = repeat_scanout;
-    if (!enabled() || !repeat_scanout || !flip_serial) return false;
+    if (!enabled() || !repeat_scanout || !flip_serial) return fail(1);
     View views[ring_size]; uint64_t serial = 0;
-    if (!read(views, serial)) return false;
+    if (!read(views, serial)) return fail(2);
     const auto get = [&](uint64_t s, View& v) {
-        if (!s || s > serial || serial - s >= ring_size) return false;
+        if (!s || s > serial || serial - s >= ring_size) return fail(3);
         v = views[s % ring_size];
         return v.valid && v.serial == s;
     };
     const unsigned behind = lag();
-    if (flip_serial <= behind) return false;
+    if (flip_serial <= behind) return fail(4);
     View shown, other;
-    if (!get(flip_serial - behind, shown)) return false;
-    if (steady_ms() - shown.ms > 200 || shown.lens <= 1.f || shown.lens >= 170.f) return false;
+    if (!get(flip_serial - behind, shown)) return fail(5);
+    if (steady_ms() - shown.ms > 200 || shown.lens <= 1.f || shown.lens >= 170.f) return fail(6);
     // In-between camera: halfway to the next view when it exists (exact interpolation),
     // otherwise half a step further along the last motion (extrapolation).
     float k = 0.5f;
     if (!get(shown.serial + 1, other)) {
-        if (!get(shown.serial - 1, other)) return false;
+        if (!get(shown.serial - 1, other)) return fail(7);
         k = -0.5f;
     } else if (display_rate()) {
         const float span = float(other.ms - shown.ms);
         const float elapsed = float(steady_ms() - flip_ms.load(std::memory_order_relaxed));
-        if (span < 1.f) return false;
+        if (span < 1.f) return fail(8);
         k = std::clamp(elapsed / span, 0.f, 0.95f);
-        if (k <= 0.f) return false;
+        if (k <= 0.f) return fail(9);
     }
     const float dyaw = wrap(yaw_of(other) - yaw_of(shown)), dpitch = pitch_of(other) - pitch_of(shown);
     const float dx = other.eye[0] - shown.eye[0], dy = other.eye[1] - shown.eye[1], dz = other.eye[2] - shown.eye[2];
     const float move = std::sqrt(dx * dx + dy * dy + dz * dz);
     // Cuts, recentres, view and shoulder snaps are not motion.
-    if (std::fabs(dyaw) > 0.35f || std::fabs(dpitch) > 0.35f || move > 150.f) return false;
-    if (std::fabs(dyaw) < 1e-5f && std::fabs(dpitch) < 1e-5f && move < 1e-3f) return false;
+    if (std::fabs(dyaw) > 0.35f || std::fabs(dpitch) > 0.35f || move > 150.f) return fail(10);
+    if (std::fabs(dyaw) < 1e-5f && std::fabs(dpitch) < 1e-5f && move < 1e-3f) return fail(11);
     const float yaw_t = yaw_of(shown) + k * dyaw, pitch_t = pitch_of(shown) + k * dpitch;
     const auto mapping = depth_mapping();
     if (mapping.on && depth_available) {
@@ -274,7 +282,7 @@ inline bool compute(bool repeat_scanout, uint64_t flip_serial, bool depth_availa
     } else if (shown.rotation_only || all_views()) {
         build(yaw_of(shown), pitch_of(shown), yaw_t, pitch_t, shown.lens, out);
     } else {
-        return false;
+        return fail(12);
     }
     out.yaw_degrees = k * dyaw * 57.2957795f; out.pitch_degrees = k * dpitch * 57.2957795f; out.move = std::fabs(k) * move;
     return true;
