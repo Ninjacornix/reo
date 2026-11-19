@@ -51,6 +51,17 @@ internal static class GraphicsOptionsTests {
                 check(GraphicsOptions.From(settings).Environment["REO_GAME_RATE"] == "30",
                       game + " online sessions stay at 30 Hz so peers share one update rate");
                 settings.CoopMode = "offline"; settings.GameRate60 = false;
+                check(GraphicsOptions.From(settings).Environment["REO_DISPLAY_RATE"] == "0",
+                      game + " 60 Hz refresh adds no presents between game updates");
+                foreach (int rate in new[] { 120, 144, 165, 240 }) {
+                    settings.RefreshRate = rate;
+                    check(GraphicsOptions.From(settings).Environment["REO_DISPLAY_RATE"] == rate.ToString(),
+                          game + " refresh rate " + rate + " Hz reaches the renderer");
+                }
+                settings.RefreshRate = 100;
+                check(settings.ResolvedRefreshRate == 60 && GraphicsOptions.From(settings).Environment["REO_DISPLAY_RATE"] == "0",
+                      game + " an unsupported saved refresh rate falls back to 60 Hz");
+                settings.RefreshRate = 60;
                 check(launch.Fullscreen && launch.Output == new OutputSize(3840, 2160) && !launch.GpuMovies,
                       game + " captures window and movie settings");
                 settings.Fullscreen = false;

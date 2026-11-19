@@ -20,6 +20,10 @@ public sealed partial class Settings {
     public string VSync { get; set; } = "on";
     [System.Text.Json.Serialization.JsonIgnore]
     public string ResolvedVSync => VSync is "off" or "adaptive" ? VSync : "on";
+    // Display refresh rate for presents between game updates (REO_DISPLAY_RATE, experimental).
+    public static readonly int[] RefreshRates = { 60, 120, 144, 165, 240 };
+    public int RefreshRate { get; set; } = 60;
+    public int ResolvedRefreshRate => Array.IndexOf(RefreshRates, RefreshRate) >= 0 ? RefreshRate : 60;
     public bool PerformanceOverlay { get; set; }
     // Start at the main menu: skip the boot logos and title prompt (IntroSkip.cs).
     public bool SkipIntro { get; set; } = true;

@@ -314,6 +314,16 @@
                       </ComboBox>
                       <compat:Rc1TextBlock Text="Vertical sync" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
                     </DockPanel>
+                    <DockPanel MinHeight="48">
+                      <ComboBox x:Name="RefreshRate" SelectionChanged="SettingChanged" DockPanel.Dock="Right" AutomationProperties.Name="Refresh rate" Classes="GraphicsChoice" ToolTip.Tip="Experimental. Above 60 Hz the game shows extra frames between updates, matched to your monitor. Camera movement is smoothed in them with the modern camera and Vertical sync On or Adaptive. Choose your monitor's refresh rate. Applies on the next launch.">
+                        <ComboBoxItem Content="60 Hz" />
+                        <ComboBoxItem Content="120 Hz" />
+                        <ComboBoxItem Content="144 Hz" />
+                        <ComboBoxItem Content="165 Hz" />
+                        <ComboBoxItem Content="240 Hz" />
+                      </ComboBox>
+                      <compat:Rc1TextBlock Text="Refresh rate" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
+                    </DockPanel>
                     <Border Height="1" Background="{StaticResource Line}" Margin="0,16,0,16" />
                     <compat:Rc1TextBlock Text="RENDERING" Foreground="{StaticResource Muted}" FontSize="14" Margin="0,0,0,8" />
                     <DockPanel MinHeight="48">

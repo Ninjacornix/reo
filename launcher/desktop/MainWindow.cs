@@ -56,6 +56,7 @@ public partial class MainWindow : Window {
         ScreenFit.SelectedIndex = Array.IndexOf(DisplayOptions.Fits, settings.ResolvedFit);
         VSync.SelectedIndex = settings.ResolvedVSync switch { "off" => 1, "adaptive" => 2,
                                                               _ => 0 };
+        RefreshRate.SelectedIndex = Array.IndexOf(Settings.RefreshRates, settings.ResolvedRefreshRate);
         UpdateScreenFitHint();
         Fullscreen.IsChecked = settings.Fullscreen;
         SkipIntro.IsChecked = settings.SkipIntro;
@@ -189,6 +190,8 @@ public partial class MainWindow : Window {
             2 => "adaptive",
             _ => "on"
         };
+        settings.RefreshRate = RefreshRate.SelectedIndex >= 0 && RefreshRate.SelectedIndex < Settings.RefreshRates.Length
+            ? Settings.RefreshRates[RefreshRate.SelectedIndex] : 60;
         var aspect = DisplayOptions.AspectChoices[
             Math.Clamp(AspectRatio.SelectedIndex, 0, DisplayOptions.AspectChoices.Length - 1)];
         settings.AspectRatio = aspect.Aspect;

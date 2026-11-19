@@ -20,6 +20,8 @@ internal sealed record GraphicsOptions(bool Fullscreen, OutputSize Output, bool 
             ["REO_WIDESCREEN"] = settings.ResolvedWidescreen ? "1" : "0",
             ["REO_DISPLAY_FIT"] = settings.ResolvedFit,
             ["REO_VSYNC"] = settings.ResolvedVSync,
+            // Above 60: the renderer presents between game updates at this rate (0 = off).
+            ["REO_DISPLAY_RATE"] = settings.ResolvedRefreshRate > 60 ? Number(settings.ResolvedRefreshRate) : "0",
             ["REO_DISPLAY_FILTER"] = settings.LinearFilter ? "linear" : "nearest",
             ["REO_WINDOW_WIDTH"] = Number(size.Width),
             ["REO_WINDOW_HEIGHT"] = Number(size.Height),
