@@ -35,6 +35,8 @@ public sealed partial class Settings {
     public string ResolvedFit => ScreenFit is "stretch" or "center" or "fill" ? ScreenFit : "fit";
     public bool LinearFilter { get; set; } = true;
     public bool AsyncVif { get; set; } = true;
+    // Game logic at up to 60 updates/s (engine frame step); offline only.
+    public bool GameRate60 { get; set; }
     // Legacy preference: true follows the probe, false preserves CPU decoding.
     public bool GpuMovies { get; set; } = true;
     // Set only by an explicit checkbox change. Null preserves the legacy default.

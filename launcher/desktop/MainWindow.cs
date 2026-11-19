@@ -61,6 +61,7 @@ public partial class MainWindow : Window {
         SkipIntro.IsChecked = settings.SkipIntro;
         PerformanceOverlay.IsChecked = settings.PerformanceOverlay;
         AsyncVif.IsChecked = settings.AsyncVif;
+        GameRate60.IsChecked = settings.GameRate60;
         GpuMovies.IsChecked = settings.GpuMoviesChoice ?? false;
         InitializeDeveloper();
         InitializeOnline();
@@ -200,6 +201,7 @@ public partial class MainWindow : Window {
         settings.SkipIntro = SkipIntro.IsChecked == true;
         settings.PerformanceOverlay = PerformanceOverlay.IsChecked == true;
         settings.AsyncVif = AsyncVif.IsChecked == true;
+        settings.GameRate60 = GameRate60.IsChecked == true;
         if (ReferenceEquals(sender, GpuMovies)) {
             settings.GpuMovies = GpuMovies.IsChecked == true;
             settings.GpuMoviesChoice = settings.GpuMovies;

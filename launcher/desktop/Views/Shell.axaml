@@ -375,6 +375,7 @@
                       <StackPanel>
                         <CheckBox x:Name="PerformanceOverlay" IsCheckedChanged="SaveSettings" Content="FPS counter" FontSize="14" ToolTip.Tip="Shows the in-game FPS counter. Applies on the next launch." />
                         <CheckBox x:Name="AsyncVif" IsCheckedChanged="SaveSettings" Content="Parallel geometry worker" FontSize="14" />
+                        <CheckBox x:Name="GameRate60" IsCheckedChanged="SaveSettings" Content="60 FPS gameplay (experimental)" FontSize="14" ToolTip.Tip="Runs the game logic at up to 60 updates per second at normal game speed. Play alone only; online games stay at 30. Applies on the next launch." />
                         <CheckBox x:Name="GpuMovies" IsCheckedChanged="SaveSettings" Content="Decode movies on the graphics card" FontSize="14" />
                       </StackPanel>
                     </Expander>

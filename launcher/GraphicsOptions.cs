@@ -12,6 +12,10 @@ internal sealed record GraphicsOptions(bool Fullscreen, OutputSize Output, bool 
         string Decimal(double value) => value.ToString("F2", CultureInfo.InvariantCulture);
         var environment = new Dictionary<string, string> {
             ["REO_VIF1_ASYNC"] = settings.AsyncVif ? "1" : "0",
+            // Replay-validated compiled VU1 programs before partial native kernels (File #1).
+            ["REO_VU_WHOLE_FIRST"] = "1",
+            // Peers must share one update rate, so online sessions stay at the original 30 Hz.
+            ["REO_GAME_RATE"] = settings.GameRate60 && settings.ResolvedCoopMode == "offline" ? "60" : "30",
             ["REO_DISPLAY_ASPECT"] = settings.ResolvedAspect,
             ["REO_WIDESCREEN"] = settings.ResolvedWidescreen ? "1" : "0",
             ["REO_DISPLAY_FIT"] = settings.ResolvedFit,

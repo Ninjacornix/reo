@@ -42,6 +42,15 @@ internal static class GraphicsOptionsTests {
                 };
                 check(expected.All(p => launch.Environment.GetValueOrDefault(p.Key) == p.Value),
                       game + " saved graphics settings reach the renderer contract");
+                check(launch.Environment["REO_GAME_RATE"] == "30" && launch.Environment["REO_VU_WHOLE_FIRST"] == "1",
+                      game + " keeps the original 30 Hz game logic unless 60 FPS gameplay is chosen");
+                settings.GameRate60 = true;
+                check(GraphicsOptions.From(settings).Environment["REO_GAME_RATE"] == "60",
+                      game + " 60 FPS gameplay reaches the game when playing alone");
+                settings.CoopMode = "host";
+                check(GraphicsOptions.From(settings).Environment["REO_GAME_RATE"] == "30",
+                      game + " online sessions stay at 30 Hz so peers share one update rate");
+                settings.CoopMode = "offline"; settings.GameRate60 = false;
                 check(launch.Fullscreen && launch.Output == new OutputSize(3840, 2160) && !launch.GpuMovies,
                       game + " captures window and movie settings");
                 settings.Fullscreen = false;
