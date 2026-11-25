@@ -52,6 +52,26 @@ def digest(path):
         return hashlib.file_digest(f, "sha256").hexdigest()
 
 
+def is_compiler_crash(code, log_path):
+    """Detect compiler process crashes/signals (e.g. OOM or frontend crash), not C++ errors."""
+    if code == 0:
+        return False
+    if code < 0 or code >= 0xC0000000:
+        return True
+    try:
+        with Path(log_path).open("rb") as stream:
+            stream.seek(0, 2)
+            stream.seek(max(0, stream.tell() - 65536))
+            text = stream.read().decode("utf-8", errors="replace")
+    except OSError:
+        return False
+    return bool(re.search(
+        r"clang(?:\+\+)?\s+frontend\s+command\s+failed\s+due\s+to\s+signal|"
+        r"PLEASE\s+submit\s+a\s+bug\s+report|"
+        r"Stack\s+dump:|"
+        r"fatal\s+error\s+C1001:", text, re.I))
+
+
 def compiler_failure(label, code, log_path):
     """Keep the actual diagnostic ahead of long command/workspace paths in the UI."""
     detail = "Inspect the compiler log for details"
@@ -315,13 +335,15 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
                 receipt.write_text(json.dumps({"sha256": digest(pch)}))
             precompiled[key] = pch
 
-    def compile_unit(unit):
+    def compile_unit(unit, optimization_override=None, defer_crash=False):
         name = unit["id"]
         sources = [source_file(p) for p in unit["sources"]]
         c_source = all(path.suffix.lower() == ".c" for path in sources)
         options = common + [expand(o) for o in unit.get("options", [])]
+        use_pch = bool(unit.get("pch")) and optimization_override is None
+        override_tag = f"|opt={optimization_override}" if optimization_override else ""
         signature = hashlib.sha256((base + json.dumps([stable(o) for o in options]) +
-            unit.get("pchSignature", "") +
+            (unit.get("pchSignature", "") if use_pch else "") + override_tag +
             "".join(stable(str(p)) + digest(p) for p in sources) + ("|C11" if c_source else "")).encode()).hexdigest()
         obj, receipt = objects / (name + ".obj"), objects / (name + ".json")
         if obj.exists() and receipt.exists():
@@ -334,16 +356,23 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
         source.write_text("\n".join('#include ' + json.dumps(native(p).replace("\\", "/"), ensure_ascii=False)
                                      for p in sources) + "\n", encoding="utf-8")
         pending = objects / (name + ".pending.obj")
-        command = [str(compiler), *source_flags(c_source), *options, "/Fo" + str(pending), str(source)]
         if portable:
-            pch = ["-include-pch", str(precompiled[unit["pch"]])] if unit.get("pch") else []
-            command = [str(compiler), "-c", *source_flags(c_source, portable=True),
+            flags = list(source_flags(c_source, portable=True))
+            if optimization_override:
+                flags = [optimization_override if flag == "-O2" else flag for flag in flags]
+            pch = ["-include-pch", str(precompiled[unit["pch"]])] if use_pch else []
+            command = [str(compiler), "-c", *flags,
                        *portable_flags(options), *pch, "-o", str(pending), str(source)]
+        else:
+            command = [str(compiler), *source_flags(c_source), *options, "/Fo" + str(pending), str(source)]
         started = time.perf_counter()
-        with (logs / (name + ".log")).open("wb") as log:
+        log_path = logs / (name + ".log")
+        with log_path.open("wb") as log:
             result = run(command, env=env, stdout=log, stderr=subprocess.STDOUT)
         if result.returncode:
-            raise compiler_failure(f"Compile unit {name}", result.returncode, logs / (name + '.log'))
+            if defer_crash and portable and unit.get("generated") and is_compiler_crash(result.returncode, log_path):
+                return None, False
+            raise compiler_failure(f"Compile unit {name}", result.returncode, log_path)
         pending.replace(obj)
         temporary = receipt.with_suffix(".tmp")
         temporary.write_text(json.dumps({"input": signature, "object": digest(obj),
@@ -351,7 +380,7 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
         temporary.replace(receipt)
         return obj, False
 
-    completed, reused, failures = {}, 0, []
+    completed, reused, failures, crash_retries = {}, 0, [], []
     estimates = {}
     for unit in units:
         receipt = objects / (unit['id'] + '.json')
@@ -360,7 +389,8 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
             estimates[unit['id']] = cost_estimate(size, large_guest, receipt, largest)
         else:
             estimates[unit['id']] = unit_estimates(unit, [source_file(p) for p in unit['sources']], receipt)
-    for unit, future in scheduled_results(units, compile_unit, jobs, estimates):
+    for unit, future in scheduled_results(
+            units, lambda item: compile_unit(item, defer_crash=not preflight), jobs, estimates):
         try:
             obj, cached = future.result()
         except Exception as error:
@@ -369,7 +399,25 @@ def compile_plan(kit, generated, work, output, jobs, plan_name="compile-plan.jso
             failures.append(str(error))
             print(str(error), flush=True)
             continue
+        if obj is None:
+            crash_retries.append(unit)
+            print(f"Compiler crashed on {unit['id']}; retrying serially after parallel jobs finish", flush=True)
+            continue
         completed[unit['id']] = obj
+        reused += cached
+        print(f"Compiled {len(completed)}/{len(units)} ({reused} cached)", flush=True)
+    for unit in crash_retries:
+        name = unit['id']
+        log_path = logs / (name + ".log")
+        print(f"Retrying {name} serially at -O2", flush=True)
+        try:
+            obj, cached = compile_unit(unit, optimization_override=None, defer_crash=False)
+        except RuntimeError:
+            if not is_compiler_crash(1, log_path):
+                raise
+            print(f"Retrying {name} serially at -O1 after repeated compiler crash", flush=True)
+            obj, cached = compile_unit(unit, optimization_override="-O1", defer_crash=False)
+        completed[name] = obj
         reused += cached
         print(f"Compiled {len(completed)}/{len(units)} ({reused} cached)", flush=True)
     if preflight and failures:
