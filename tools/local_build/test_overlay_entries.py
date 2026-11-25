@@ -16,12 +16,32 @@ from generate_game import recompiler_environment
 
 ROOT = Path(__file__).resolve().parents[2]
 ENTRIES = (0x5D85E0, 0x5D8620, 0x5D8630)
+FILE2_DESPERATE_TIMES_ENTRIES = (0x7077E0, 0x707810, 0x7079F0, 0x707A20, 0x707A50)
+FILE2_CALLBACK_SPLITS = {
+    (0x5F39F0, 0x5F3A30, 0x5F3A40): [(0x5F39F0, 0x5F3A2C), (0x5F3A30, 0x5F3A38), (0x5F3A40, 0x5F3C40)],
+    (0x638460, 0x638480, 0x6384A0): [(0x638460, 0x638480), (0x638480, 0x6384A0), (0x6384A0, 0x6384E8)],
+    (0x691E90, 0x691EB0): [(0x691E90, 0x691EB0), (0x691EB0, 0x691F18)],
+    (0x691F30, 0x691F60): [(0x691F30, 0x691F60), (0x691F60, 0x6920EC)],
+    (0x6B9BD0, 0x6B9BF0): [(0x6B9BD0, 0x6B9BF0), (0x6B9BF0, 0x6B9CC4)],
+    FILE2_DESPERATE_TIMES_ENTRIES: [
+        (0x7077E0, 0x707808), (0x707810, 0x7079F0), (0x7079F0, 0x707A18),
+        (0x707A20, 0x707A4C), (0x707A50, 0x707A58),
+    ],
+}
+FILE1_CALLBACK_SPLITS = {
+    (0x66B960, 0x66B990): [(0x66B960, 0x66B990), (0x66B990, 0x66BB0C)],
+    (0x688A00, 0x688A20): [(0x688A00, 0x688A20), (0x688A20, 0x688AF4)],
+}
+
+
+def map_rows(relative_path, addresses):
+    with (ROOT / relative_path).open(newline="") as stream:
+        return [row for row in csv.DictReader(stream)
+                if int(row["start"], 16) in addresses]
 
 
 def callback_rows():
-    with (ROOT / "recomp/config/overlay_maps/ovl2.csv").open(newline="") as stream:
-        return [row for row in csv.DictReader(stream)
-                if int(row["start"], 16) in ENTRIES]
+    return map_rows("recomp/config/overlay_maps/ovl2.csv", ENTRIES)
 
 
 def common_rows():
@@ -49,6 +69,26 @@ class OverlayEntryMapTests(unittest.TestCase):
         self.assertEqual(ranges[1], (ENTRIES[1], ENTRIES[1] + 8))
         self.assertLessEqual(ranges[1][1], ENTRIES[2])
         self.assertEqual(ranges[2][1], 0x5D8850)
+
+    def test_file2_desperate_times_and_shared_callbacks_are_separate_entries(self):
+        for entries, expected_ranges in FILE2_CALLBACK_SPLITS.items():
+            rows = map_rows("recomp/config/file2/overlay_maps/ovl2.csv", entries)
+            self.assertEqual([int(row["start"], 16) for row in rows], list(entries))
+            actual_ranges = [(int(row["start"], 16), int(row["end"], 16)) for row in rows]
+            self.assertEqual(actual_ranges, expected_ranges)
+            for row, (start, end) in zip(rows, actual_ranges):
+                self.assertEqual(int(row["size"]), end - start)
+                self.assertEqual(row["name"], f"sub_{start:08X}")
+
+    def test_file1_shared_dispatch_callbacks_are_separate_entries(self):
+        for entries, expected_ranges in FILE1_CALLBACK_SPLITS.items():
+            rows = map_rows("recomp/config/overlay_maps/ovl2.csv", entries)
+            self.assertEqual([int(row["start"], 16) for row in rows], list(entries))
+            actual_ranges = [(int(row["start"], 16), int(row["end"], 16)) for row in rows]
+            self.assertEqual(actual_ranges, expected_ranges)
+            for row, (start, end) in zip(rows, actual_ranges):
+                self.assertEqual(int(row["size"]), end - start)
+                self.assertEqual(row["name"], f"sub_{start:08X}")
 
 
 @unittest.skipUnless(os.environ.get("REO_TEST_RECOMPILER"),
@@ -127,6 +167,42 @@ class OverlayEntryGenerationTests(unittest.TestCase):
             self.assertIn("o2_005D8630_0x5d8630(rdram, ctx, runtime)", sources[ENTRIES[1]])
             self.assertIn("WRITE8(ADD32(GPR_U32(ctx, 4), 0)", sources[ENTRIES[0]])
             self.assertIn("WRITE8(ADD32(GPR_U32(ctx, 4), 1)", sources[ENTRIES[2]])
+            for row in rows:
+                start, end = int(row["start"], 16), int(row["end"], 16)
+                self.assertIn(f"// Address: {start:#x} - {end:#x}", sources[start])
+
+    def test_file2_desperate_times_callbacks_register_distinct_entries(self):
+        with tempfile.TemporaryDirectory(prefix="reo-file2-dt-entry-test-") as folder:
+            root = Path(folder)
+            rows = map_rows("recomp/config/file2/overlay_maps/ovl2.csv",
+                            FILE2_DESPERATE_TIMES_ENTRIES)
+            base = 0x58D000
+            code = bytearray(0x707A58 - base)
+            struct.pack_into("<4s4I", code, 0, b"MWo3", 3, base, len(code) - 64, 0)
+            # Authored synthetic bodies: each split entry returns its own constant
+            # without falling through into adjacent entries.
+            for index, entry in enumerate(FILE2_DESPERATE_TIMES_ENTRIES):
+                struct.pack_into("<II", code, entry - base, 0x03E00008, 0x24020000 | (index + 1))
+            (root / "2.elf").write_bytes(wrap_elf(code, base, len(code)))
+            with (root / "ovl2.csv").open("w", newline="") as stream:
+                writer = csv.DictWriter(stream, fieldnames=["name", "start", "end", "size"])
+                writer.writeheader()
+                writer.writerows(rows)
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "tools/overlay_recomp.py"), str(root),
+                 os.environ["REO_TEST_RECOMPILER"], "2"], cwd=root,
+                env=recompiler_environment("o2"), stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout)
+            output = root / "recomp/config/output_ovl/o2"
+            registry = (output / "register_o2.cpp").read_text()
+            registered = re.findall(
+                r"registerOverlayFunction\(0x58D000u, 0x336F574Du, 4u, 3u, "
+                r"(0x[\da-fA-F]+)u, (\w+)\);", registry)
+            self.assertEqual({int(pc, 16) for pc, _ in registered},
+                             set(FILE2_DESPERATE_TIMES_ENTRIES))
+            sources = {int(pc, 16): (output / (name + ".cpp")).read_text()
+                       for pc, name in registered}
             for row in rows:
                 start, end = int(row["start"], 16), int(row["end"], 16)
                 self.assertIn(f"// Address: {start:#x} - {end:#x}", sources[start])
